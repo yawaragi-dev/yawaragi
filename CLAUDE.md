@@ -43,6 +43,7 @@ A sake companion. Three flagship features: label scan, chat recommender, taste p
 - Do NOT inline secrets. All env vars go through `src/env.ts` (zod-validated).
 - Do NOT commit any file named `.env*` (except `.env.example`).
 - Do NOT delete or rename `CLAUDE.md`, `AGENTS.md`, `CONTEXT.md`, or files in `docs/adr/`.
+- Do NOT unit-test async React Server Components with Vitest — it doesn't support them. Write a Playwright E2E test instead. The public interface of an async RSC is the rendered page, so test it there.
 
 ## Test review checklist
 Before merging any test Claude wrote, ask:
