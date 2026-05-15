@@ -1,0 +1,28 @@
+# Build & deps
+node_modules/
+.next/
+out/
+dist/
+coverage/
+playwright-report/
+test-results/
+
+# Lockfiles (huge, low signal)
+pnpm-lock.yaml
+package-lock.json
+
+# Generated
+*.tsbuildinfo
+next-env.d.ts
+
+# Data
+data/sakenowa-raw/
+*.csv
+*.parquet
+
+# Logs / local
+.env*
+!.env.example
+*.log
+.DS_Store
+.vscode/
