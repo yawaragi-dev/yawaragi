@@ -1,6 +1,6 @@
 # Yawaragi
 
-A sake companion (working name: **Yawaragi** — 和らぎ, "the water drunk between sake sips"; cf. *yawaragi-mizu*, 和らぎ水). Helps users recognise, discover, and track the sake they enjoy through three surfaces: label scan, chat recommender, taste profile.
+A sake companion — **Yawaragi** (和らぎ, "the water drunk between sake sips"; cf. *yawaragi-mizu*, 和らぎ水). Helps users recognise, discover, and track the sake they enjoy through three surfaces: label scan, chat recommender, taste profile.
 
 Previously named "Kanpai"; renamed to avoid collision with KANPAI London Craft Sake Brewery. See `## Naming` below and ADR-0004.
 
@@ -86,7 +86,7 @@ Every record displayed to a user carries a `source` field. Values:
 
 ## Naming
 
-The project's working name is **Yawaragi** (和らぎ). It refers to *yawaragi-mizu* (和らぎ水), the water drunk between sake sips to reset the palate and pace consumption — culturally analogous to the app's role as companion and clarifier.
+The project's name is **Yawaragi** (和らぎ). It refers to *yawaragi-mizu* (和らぎ水), the water drunk between sake sips to reset the palate and pace consumption — culturally analogous to the app's role as companion and clarifier.
 
 Previously the project was called "Kanpai". That name was abandoned because KANPAI London Craft Sake Brewery (Tom & Lucy Wilson, Bermondsey, founded 2016) operates under the same name in the same European sake community the project hopes to engage. The collision created confusion risk, trademark risk, and a poor first impression with potential allies. The single word "kanpai" itself is also generic ("cheers") and saturated globally, making SEO essentially impossible.
 

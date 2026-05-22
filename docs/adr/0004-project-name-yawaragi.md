@@ -91,7 +91,7 @@ go-live commitment is high.
 
 ## Outreach
 
-Both outreach actions are deferred to the week of 2026-05-25 (one week after the rename).
+Both outreach actions are deferred to the following Monday (2026-05-25), three days after the rename.
 
 - **Sakenowa contact**: emailed *YYYY-MM-DD* coordinating on `@yawaragi/sakenowa-mcp`
   package name and attribution. Response: *[pending / received on YYYY-MM-DD]*.

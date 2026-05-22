@@ -8,7 +8,7 @@ This project follows an **open-core** model: the infrastructure is open-source u
 |---|---|---|
 | `@yawaragi/sakenowa-mcp` (the MCP server) | MIT | github.com/yawaragi-dev/sakenowa-mcp |
 | Cross-beverage bridging table | CC BY-NC-SA 4.0 | This repo, `data/cross-beverage-map.json` |
-| Curated glossary (markdown files) | CC BY-SA 4.0 | This repo, `data/glossary/` |
+| Public sake-vocabulary glossary (markdown files) | CC BY-SA 4.0 | This repo, `data/glossary/` (not yet created) |
 | Application code (Next.js app, UI, server actions) | Proprietary / All Rights Reserved | This repo |
 | Zod schemas, type definitions | MIT | This repo, `src/lib/schemas/` |
 
@@ -16,7 +16,7 @@ This project follows an **open-core** model: the infrastructure is open-source u
 
 - **MIT for the MCP server.** Anyone wrapping the public Sakenowa API would write similar code. Shipping the canonical version openly attracts contributors and positions Yawaragi as a good actor in the sake-tech ecosystem.
 - **CC BY-NC-SA 4.0 for the cross-beverage map.** This is the project's hardest-to-replicate asset — it requires palate calibration, sake-culture knowledge, and ongoing curation. The NC clause prevents a commercial competitor from lifting it into a paid product. The SA clause means anyone who modifies it must share their version under the same terms.
-- **CC BY-SA 4.0 for the glossary.** Educational content benefits from being freely usable (including commercially) as long as it's attributed and shared alike. The glossary is fundamentally a translation/explanation of public sake vocabulary; restricting commercial use would feel ungenerous.
+- **CC BY-SA 4.0 for the glossary.** Educational content benefits from being freely usable (including commercially) as long as it's attributed and shared alike. The glossary is fundamentally a translation/explanation of public sake vocabulary; restricting commercial use would feel ungenerous. *Note*: this glossary (at `data/glossary/`, to be created in Phase 5) is the **user-facing** sake-vocabulary asset — Japanese tasting terms, brewing concepts, prefecture notes. It is **not** the same as `CONTEXT.md` at the repo root, which is the **internal** domain glossary for engineers and remains All Rights Reserved per the top-level `LICENSE`.
 - **MIT for Zod schemas.** Type definitions are a thin layer over the public API contract; no defensive value in restricting them.
 - **Proprietary for app code.** Standard. Reviewable on GitHub but not licensed for reuse. If the project goes commercial later, this allows for proprietary features without untangling open-source obligations.
 

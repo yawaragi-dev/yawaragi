@@ -244,6 +244,8 @@ see docs/adr/0004-project-name-yawaragi.md and docs/NAMING-RESEARCH.md.
 
 ## 3. New ADRs
 
+> **Executed 2026-05-22.** The templates below are preserved as the historical proposal record. The realised ADRs live at: ADR-001 → [`docs/adr/0004-project-name-yawaragi.md`](./adr/0004-project-name-yawaragi.md), ADR-002 → [`docs/adr/0005-source-provenance.md`](./adr/0005-source-provenance.md), ADR-003 → [`docs/adr/0006-age-gate-jmstv.md`](./adr/0006-age-gate-jmstv.md), ADR-004 → [`docs/adr/0007-i18n-en-de.md`](./adr/0007-i18n-en-de.md). Always read the realised files; the templates below may have drifted from the final decisions.
+
 Four ADRs to create in `docs/adr/`. Templates below — fill in the chosen option.
 
 ### ADR-001 — Project naming and KANPAI London Craft Sake Brewery

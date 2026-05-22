@@ -2,6 +2,12 @@
   "name": "yawaragi",
   "version": "0.1.0",
   "private": true,
+  "description": "Yawaragi — a sake companion. Label scan, chat recommender, taste profile.",
+  "license": "SEE LICENSE IN LICENSE",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yawaragi-dev/yawaragi.git"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",

@@ -4,7 +4,7 @@
 
 ## Project: Yawaragi
 
-A sake companion (working name: Yawaragi — 和らぎ, "the water between sake sips"). Three flagship features: label scan, chat recommender, taste profile.
+A sake companion — Yawaragi (和らぎ, "the water between sake sips"). Three flagship surfaces: label scan, chat recommender, taste profile.
 
 Naming history: previously "Kanpai"; renamed to avoid collision with KANPAI London Craft Sake Brewery. See `docs/adr/0004-project-name-yawaragi.md` and `docs/NAMING-RESEARCH.md`.
 
@@ -26,7 +26,7 @@ Naming history: previously "Kanpai"; renamed to avoid collision with KANPAI Lond
 - Server-only modules: top-of-file `import 'server-only'`.
 - All Zod schemas live in `src/lib/schemas/`. Never inline.
 - AI SDK tool definitions live in `src/lib/ai/tools/`.
-- MCP server source lives in `apps/mcp/` (a pnpm workspace added in Phase 4).
+- MCP server source lives in its own repo at `github.com/yawaragi-dev/sakenowa-mcp` and is consumed by this app as the npm package `@yawaragi/sakenowa-mcp`. Do NOT add an `apps/mcp/` workspace here — that earlier plan was superseded once the MCP server became a standalone OSS asset.
 
 ## Commands
 - `pnpm dev` — Next dev server
