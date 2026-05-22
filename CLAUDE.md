@@ -148,7 +148,7 @@ Domain language lives in `/CONTEXT.md`. Read it before naming variables, functio
 
 ### Issue tracker
 
-Issues live in GitHub Issues (`BVengerov/yawaragi` — renaming pending, currently `BVengerov/kanpai`). See `docs/agents/issue-tracker.md`.
+Issues live in GitHub Issues (`yawaragi-dev/yawaragi`). See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 

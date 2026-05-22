@@ -6,7 +6,7 @@ This project follows an **open-core** model: the infrastructure is open-source u
 
 | Asset | License | Lives where |
 |---|---|---|
-| `@yawaragi/sakenowa-mcp` (the MCP server) | MIT | github.com/yawaragi/sakenowa-mcp |
+| `@yawaragi/sakenowa-mcp` (the MCP server) | MIT | github.com/yawaragi-dev/sakenowa-mcp |
 | Cross-beverage bridging table | CC BY-NC-SA 4.0 | This repo, `data/cross-beverage-map.json` |
 | Curated glossary (markdown files) | CC BY-SA 4.0 | This repo, `data/glossary/` |
 | Application code (Next.js app, UI, server actions) | Proprietary / All Rights Reserved | This repo |

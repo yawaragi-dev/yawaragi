@@ -1,57 +1,103 @@
-# Project name: Yawaragi (replacing "Kanpai")
+# ADR-0004: Project naming and the Kanpai London collision
 
-**Status:** Accepted — 2026-05-22. Review at Stage 2 go-live gate (see `docs/PRE-GO-LIVE.md` §7.6); rename to **Saketrail** only if formal trademark clearance flags a blocking conflict.
+## Status
+Decided — 2026-05-22
 
-The project's working name is **Yawaragi** (和らぎ). It refers to *yawaragi-mizu* (和らぎ水), the water drunk between sake sips to reset the palate and pace consumption — culturally analogous to the app's role as companion and clarifier. The open-source MCP server has a deliberately decoupled name, **`sakenowa-mcp`**, published as `@yawaragi/sakenowa-mcp`, so the OSS asset remains useful to other developers regardless of any future product rebrand.
+## Context
+The working name "Kanpai" collided with KANPAI London Craft Sake Brewery
+(Tom & Lucy Wilson, Bermondsey, est. 2016) — a well-known node in the
+European sake community that this project specifically wants to engage.
+The word "kanpai" itself is also generic ("cheers") and saturated globally.
 
-We renamed away from "Kanpai" because KANPAI London Craft Sake Brewery (Tom & Lucy Wilson, Bermondsey, founded 2016) operates under that name in the European sake community — Europe's first sake taproom, 100+ UK venue partnerships, and an active educational presence. They are precisely the audience the project hopes to engage; sharing a name would create direct confusion in the EU/UK sake scene, trademark risk, and a poor first impression with potential allies. The word "kanpai" is also generic ("cheers") and globally saturated, making SEO essentially impossible.
+Naming research (see `docs/NAMING-RESEARCH.md`) evaluated ~15
+candidates against pronounceability, memorability, mission alignment,
+cultural respect, SEO, visual appeal, and MCP server naming.
 
-## Considered Options
+## Decision
+Rename the project to **Yawaragi** (和らぎ).
 
-Eight candidates were evaluated in `docs/NAMING-RESEARCH.md`. The top three:
+"Yawaragi-mizu" (和らぎ水) is the water drunk between sips of sake to soften
+alcohol's impact and reset the palate. The metaphor matches the product
+mission exactly: the app accompanies and clarifies sake, it doesn't replace
+the drinker's relationship with it.
 
-- **Yawaragi (和らぎ)** — chosen. Pronounceable for EN/DE speakers, mission-aligned metaphor, no dominant brand owner, distinctive enough to trademark in software classes.
-- **Saketrail** — strong English-compound backup. Instantly comprehensible globally, no brand collisions, but weakly trademarkable and culturally thin.
-- **Kanpai Companion** — rejected. "Kanpai" remains the first word users read; would not disambiguate from Kanpai London.
+The MCP server is published separately under `@yawaragi/sakenowa-mcp` —
+the package name signals its data source (Sakenowa) rather than the
+consumer brand, which is the convention in the MCP ecosystem and respects
+the upstream attribution requirement.
 
-Several Japanese terms were eliminated for cultural-sensitivity reasons: **Kikisake** (a certified-sommelier rank), **Toji** (master-brewer title), **Sakedo** (a Kamakura-era discipline relaunched by the Sake World Association), and **Sakeology** (a formal academic discipline at Niigata University). Using a title or rank as a Western brand name would be equivalent to a non-Italian app calling itself "Sommelier".
+## Considered alternatives
+- **Kanpai Companion** — rejected; "Kanpai" remains the first word users
+  see, search, and remember.
+- **Saketrail** — kept as backup if a Yawaragi trademark conflict surfaces.
+- **Fukumi-ka, Kira, Hanayaka, Tsunagu, Shirube, Sakemap, Sakenote,
+  Sakeology, Sakedo, Kikisake** — all rejected; reasons documented in
+  the naming research file.
 
 ## Consequences
 
-The repository, package manifest, README, CLAUDE.md, CONTEXT.md, and documentation have been updated. The follow-ups split into two timed buckets.
+### Naming asset registrations (actual outcome)
 
-### This week — defensive, minimal spend (~€20, ~90 min)
+Registered or claimed:
+- Domain: `yawaragi.dev` (**Porkbun**, personal registration, WHOIS privacy)
+- npm scope: `@yawaragi`
+- npm package: `@yawaragi/sakenowa-mcp@0.0.1` (placeholder stub, MIT licensed)
+- GitHub org: `yawaragi-dev`
+- GitHub repo (MCP server): `yawaragi-dev/sakenowa-mcp`
+- GitHub repo (main app): `yawaragi-dev/yawaragi` (transferred from `BVengerov/kanpai` and renamed)
+- Bluesky: `@yawaragi.dev` (via custom-domain verification)
+- X: *pending — deferred from this-week list; will claim when audience demands it (Stage 2)*
 
-A deliberately stripped-down claim-the-essentials pass. We are *not* defending every TLD or social platform — only the ones that matter for the OSS asset and a public technical presence.
+Pattern notes:
+- The bare "yawaragi" namespace was blocked on both GitHub and Bluesky
+  by dormant accounts. The "yawaragi-dev" suffix preserves brand
+  consistency with the domain and reads as the canonical project home.
+- The npm scope (`@yawaragi`) is independent of the GitHub org and stays
+  bare — npm scopes are the user-facing identifier developers type.
+- The Bluesky handle uses domain-verification (`@yawaragi.dev`) which is
+  stronger than a `*.bsky.social` handle would have been.
 
-- Register **`yawaragi.dev`** at Cloudflare or Porkbun (~€12–15/yr).
-- Create the **`@yawaragi`** npm scope and publish **`@yawaragi/sakenowa-mcp`** as a minimal attribution-only stub.
-- Create the **`yawaragi`** GitHub organisation. Move the project repo and the (future) `sakenowa-mcp` repo under it.
-- Claim **`@yawaragi`** on X and/or Bluesky (one is enough; pick whichever the target community is more active on).
-- Adopt the dual-licence plan (MIT for the MCP server, CC BY-NC-SA 4.0 for the cross-beverage map) — see `docs/LICENSING.md`.
+### Build-plan files updated
 
-### Defer to Stage 2 go-live decision (~€900–1,400 + ~3–4 hours)
+All build-plan files (CLAUDE.md, CONTEXT.md, README, package.json,
+LICENSE, LICENSE-STRATEGY) updated from "Kanpai" to "Yawaragi" in this PR.
 
-These earn their cost only if the project clears the Phase 7.5 community gate (see `docs/PRE-GO-LIVE.md` §7.6) and commits to a public launch. Until then they are wasted spend.
+## Cost
+- ~€15 (domain registration, first year).
+- ~90 minutes setup.
+- Deferred: EUIPO trademark filing (~€900), formal trademark clearance
+  (~€200-500). Deferred until Stage 2 go-live commitment.
 
-**Legal / branding (~€900–1,400)**
+## Review trigger — Stage 2 gate
+This decision is revisited at the Stage 2 conditional go-live decision
+point (per `docs/PRE-GO-LIVE.md` §7.6). At that point:
 
-- [ ] File an **EUIPO trademark application** in Class 9 (software) + Class 41 (education services). ~€900 for both classes at standard EUIPO fees.
-- [ ] Run **formal trademark clearance** via an IP lawyer or [Markify](https://markify.com) — EUIPO TMview, USPTO TESS, JPO J-PlatPat searches in both classes for "Yawaragi" and any close variants.
-- [ ] Reserve **`yawaragi.app`** and **`yawaragi.com`** if still available. Skip `.io` unless it's clearly in danger.
-- [ ] Claim additional social handles (Instagram, Mastodon, Threads, LinkedIn) as the target audience analysis demands.
-- [ ] Draft a **migration plan** for a forced rename to **Saketrail** (or another fall-back) in case clearance flags a blocking conflict. Plan covers: env vars, npm scope, GitHub repo, domains, social handles, all docs, all in-product copy.
+1. Run formal trademark clearance: EUIPO TMview, USPTO TESS,
+   JPO J-PlatPat for "Yawaragi" in Nice Class 9 (software) and Class 41
+   (education services).
+2. If clearance is clean, file EUIPO application (€850 + €50 = €900).
+3. If clearance reveals a conflict, fall back to "Saketrail" and migrate:
+   - Re-register domain
+   - Rename GitHub org (creates redirects but breaks API consumers)
+   - Republish MCP under `@saketrail/sakenowa-mcp`, deprecate the old
+     package with a notice pointing to the new one
+   - Update Bluesky/X handles or claim new ones
+   - Communicate the rename in a blog post
 
-**Upstream / data permissions (free, async, 3–4 weeks lead time)**
+The migration cost is meaningful (~4-6 hours of work + community
+confusion) but bounded. The expected probability of a Yawaragi software
+trademark conflict is low; the value of deferring the €900 spend until
+go-live commitment is high.
 
-- [ ] Email Sakenowa requesting **written confirmation that `sakenowa-mcp` is acceptable as the npm package name** under their attribution licence. If declined, fall back to `yawaragi-sake-mcp` with Sakenowa attribution in the README.
-- [ ] Email Sakenowa to **confirm the f1–f6 → Japanese-label mapping** (see the unverified-mapping note in `CONTEXT.md` flagged ambiguities). No public product copy uses the romaji/kanji labels until this is confirmed in writing.
+## Outreach
 
-**Repo / hosting migration (free, ~30 min)**
+Both outreach actions are deferred to the week of 2026-05-25 (one week after the rename).
 
-- [ ] Once the **`yawaragi`** GitHub org exists, transfer `BVengerov/kanpai` (or its renamed form) into it. Update `docs/agents/issue-tracker.md` and the `BVengerov/yawaragi` placeholder in `CLAUDE.md` afterwards.
-- [ ] Move the local working directory `~/Projects/kanpai/` → `~/Projects/yawaragi/` and run `git remote set-url origin git@github.com:yawaragi/<repo>.git`.
-
-### Historical-name policy
-
-The historical name "Kanpai" survives in three places by deliberate exception, called out as historical context: this ADR, `docs/NAMING-RESEARCH.md`, and the "Naming" section of `CONTEXT.md`. The Anti-patterns list in `CLAUDE.md` explicitly forbids reintroducing "Kanpai" anywhere else.
+- **Sakenowa contact**: emailed *YYYY-MM-DD* coordinating on `@yawaragi/sakenowa-mcp`
+  package name and attribution. Response: *[pending / received on YYYY-MM-DD]*.
+- **Kanpai London (Tom Wilson)**: *[contacted / not contacted on YYYY-MM-DD]*
+  with brief intro: "I built a sake companion app, originally working-titled
+  Kanpai; renamed to Yawaragi to avoid confusion with your brewery; would
+  love to learn from / collaborate with you if open." Turning a potential
+  conflict into a relationship is part of the project's "respect the
+  community" thesis.
