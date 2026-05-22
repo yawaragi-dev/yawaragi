@@ -95,7 +95,7 @@ The canonical mapping (also in CONTEXT.md) is:
   f3 juko     (重厚)   ~ "heavy / full-bodied" — but NOT "tannic"
   f4 odayaka  (穏やか)  ~ "mild / calm"
   f5 dry      (ドライ)  ~ "dry"                 — closest to a 1:1 mapping
-  f6 karoyaka (軽快)   ~ "light / crisp"
+  f6 keikai   (軽快)   ~ "light / crisp"
 
 Rules:
 - The <FlavorAxisLabel /> component shows the romaji name, the kanji, and the
@@ -216,7 +216,7 @@ MStV §8(10) restrict alcohol marketing to minors.
 | f3   | juko     | 重厚    | heavy / full-bodied   | schwer / körperreich | not "tannic"; weight + amino acid        |
 | f4   | odayaka  | 穏やか   | mild / calm           | mild / sanft         | restrained aroma, not "neutral"          |
 | f5   | dry      | ドライ   | dry                   | trocken              | closest 1:1; tracks SMV broadly          |
-| f6   | karoyaka | 軽快    | light / crisp         | leicht / spritzig    | refreshing finish, low residual          |
+| f6   | keikai   | 軽快    | light / crisp         | leicht / spritzig    | refreshing finish, low residual          |
 
 These axes are derived from Sakenowa's NLP of >1M Japanese-language reviews;
 the vocabulary reflects Japanese palate descriptors and does not always map

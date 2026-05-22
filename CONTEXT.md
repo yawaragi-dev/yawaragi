@@ -19,11 +19,11 @@ A Japanese administrative region — one of the 47 prefectures (e.g. Niigata, Ya
 _Avoid_: Area, Region
 
 **FlavorProfile**:
-The continuous 6-tuple attached to a Sake, describing its position along the Sakenowa aroma/body/dryness axes. Axes are `hanayaka`, `hojun`, `juko`, `odayaka`, `keikai`, `dry` (each a float in `[0, 1]`). Used for vector similarity ("sake similar to this one") and positioning, **not** for hard filters like "sweet" or "umami". Sakenowa's `flavorChart` (f1..f6) with canonical romaji + kanji + English-approximation labelling. See the [6-axis vocabulary](#6-axis-vocabulary) table.
+The continuous 6-tuple attached to a Sake, describing its position along the Sakenowa aroma/body/dryness axes. Axes are `hanayaka`, `hojun`, `juko`, `odayaka`, `dry`, `keikai` (each a float in `[0, 1]`). Used for vector similarity ("sake similar to this one") and positioning, **not** for hard filters like "sweet" or "umami". Sakenowa's `flavorChart` (f1..f6) with canonical romaji + kanji + English-approximation labelling. See the [6-axis vocabulary](#6-axis-vocabulary) table.
 _Avoid_: FlavorChart, TasteVector, FlavorMap
 
 **FlavorAxis**:
-One of the six fixed axes of a FlavorProfile, identified by romaji name: `hanayaka` (華やか), `hojun` (芳醇), `juko` (重厚), `odayaka` (穏やか), `keikai` (軽快), `dry` (ドライ). Closed enum — never extended. English labels are *approximations only*, not canonical identifiers.
+One of the six fixed axes of a FlavorProfile, identified by romaji name: `hanayaka` (華やか), `hojun` (芳醇), `juko` (重厚), `odayaka` (穏やか), `dry` (ドライ), `keikai` (軽快). Closed enum — never extended. English labels are *approximations only*, not canonical identifiers.
 _Avoid_: f1..f6 (storage detail only), flavor dimension, taste axis
 
 **FlavorTag**:
@@ -67,10 +67,12 @@ Authoritative table for the six FlavorAxes. Romaji + kanji are canonical identif
 | f2   | hojun    | 芳醇    | mellow / rich         | vollmundig / reich   | not "creamy"; umami-and-aroma depth      |
 | f3   | juko     | 重厚    | heavy / full-bodied   | schwer / körperreich | not "tannic"; weight + amino acid        |
 | f4   | odayaka  | 穏やか   | mild / calm           | mild / sanft         | restrained aroma, not "neutral"          |
-| f5   | keikai   | 軽快    | light / crisp         | leicht / spritzig    | refreshing finish, low residual          |
-| f6   | dry      | ドライ   | dry                   | trocken              | closest 1:1; tracks SMV broadly          |
+| f5   | dry      | ドライ   | dry                   | trocken              | closest 1:1; tracks SMV broadly          |
+| f6   | keikai   | 軽快    | light / crisp         | leicht / spritzig    | refreshing finish, low residual          |
 
-These axes are derived from Sakenowa's NLP of >1M Japanese-language reviews; the vocabulary reflects Japanese palate descriptors and does not always map cleanly to Western flavor language. The exact f1–f6 → Japanese-label mapping above must be confirmed with Sakenowa before publishing public copy (the Sakenowa Data API returns only `f1..f6`, not their labels; the labels here come from Sakenowa's published documentation).
+These axes are derived from Sakenowa's NLP of >1M Japanese-language reviews; the vocabulary reflects Japanese palate descriptors and does not always map cleanly to Western flavor language. The f1–f6 → Japanese-label mapping above was verified on 2026-05-22 against Sakenowa's published data documentation at https://muro.sakenowa.com/sakenowa-data. The Sakenowa Data API itself returns only numeric `f1..f6`; the labels come from Sakenowa's accompanying type docs.
+
+Two transcription errors had been circulating across earlier drafts of this repo and are now corrected here for the record: (a) f5 and f6 were swapped (the published order is f5=ドライ, f6=軽快); (b) the romaji for 軽快 is **keikai**, not "karoyaka" (which is the reading of the unrelated word 軽やか).
 
 ## Provenance taxonomy
 
@@ -109,9 +111,9 @@ Yawaragi targets Germany / DACH as a primary market. Key constraints (full detai
 
 - Sakenowa exposes a sentinel `areaId: 0` named "その他" (Other) for Breweries with no assigned prefecture. We keep it as a Prefecture row to avoid orphaned Breweries, but it is not a real prefecture and should be excluded from any geographic ranking or filter UI.
 - **Sweet, umami, and acidic are NOT FlavorAxes.** Sakenowa's 6-axis FlavorProfile measures aroma/body/dryness, not the canonical sommelier dimensions. Sweet ≈ inverse of `dry` *but* has its own discrete FlavorTag (`甘味`, id:12). Umami and acidic live only as FlavorTags (`旨味` id:5, `酸味` id:2). When a user asks for "sweet sake", the recommender must filter by FlavorTag, not by FlavorProfile. When asked for "sake similar to this one," it must use FlavorProfile, not tags.
-- **FlavorTag and FlavorAxis overlap semantically.** `辛口` (dry) is both an axis (`dry`/f6) and a tag (id:3). `フルーティ` (fruity) overlaps with `hanayaka` (f1). When both surfaces disagree, prefer the tag for hard filters and the axis for similarity. Never expose the redundancy to users.
+- **FlavorTag and FlavorAxis overlap semantically.** `辛口` (dry) is both an axis (`dry`/f5) and a tag (id:3). `フルーティ` (fruity) overlaps with `hanayaka` (f1). When both surfaces disagree, prefer the tag for hard filters and the axis for similarity. Never expose the redundancy to users.
 - **Same-romaji collisions are possible across Breweries and Sakes.** Two distinct Japanese names (e.g. 旭酒造 / 朝日酒造) may transliterate to the same `name_romaji`. Search must disambiguate using Prefecture, the `name_ja` field, or both. Do not assume `name_romaji` is unique.
-- **The f1..f6 → Japanese-label mapping above is unverified against Sakenowa directly.** The Sakenowa Data API returns numeric `f1..f6` only; the romaji/kanji labels come from Sakenowa's published documentation but have been transcribed inconsistently across third-party sources (the prior internal write-up had f5/f6 swapped). Before any public product copy uses these mappings, confirm directly with Sakenowa.
+- ~~The f1..f6 → Japanese-label mapping above is unverified against Sakenowa directly.~~ **Resolved 2026-05-22**: mapping verified against Sakenowa's published data documentation at https://muro.sakenowa.com/sakenowa-data. The Sakenowa Data API returns numeric `f1..f6` only; the labels come from Sakenowa's accompanying type docs. The earlier internal write-up had f5/f6 swapped and used the wrong romaji ("karoyaka" for 軽快, which actually reads "keikai"); both are corrected throughout the repo. The Sakenowa outreach email is still worth sending to confirm the English/German approximations are acceptable for public copy, but the canonical f1..f6 identifiers are no longer in doubt.
 
 ## Naming convention
 

@@ -77,15 +77,15 @@ The Sakenowa f1–f6 axes are Japanese brewers' terms with no exact English equi
 | f2   | hojun    | 芳醇    | mellow / rich         | not "creamy"; umami-and-aroma depth      |
 | f3   | juko     | 重厚    | heavy / full-bodied   | not "tannic"; weight + amino acid        |
 | f4   | odayaka  | 穏やか   | mild / calm           | restrained aroma, not "neutral"          |
-| f5   | keikai   | 軽快    | light / crisp         | refreshing finish, low residual          |
-| f6   | dry      | ドライ   | dry                   | closest 1:1; tracks SMV broadly          |
+| f5   | dry      | ドライ   | dry                   | closest 1:1; tracks SMV broadly          |
+| f6   | keikai   | 軽快    | light / crisp         | refreshing finish, low residual          |
 
 Rules:
 - The `<FlavorAxisLabel />` component shows romaji + kanji + the English/German approximation in a tooltip explaining "This is a brewer's term; the English label is an approximation."
 - Never use only the English approximation in a UI element.
 - In LLM prompts, instruct the model to use the romaji name + kanji in tasting notes, with the English approximation parenthetical.
 
-The exact f1–f6 → Japanese-label mapping must be confirmed with Sakenowa before publishing public copy (see `CONTEXT.md` flagged ambiguities).
+The f1–f6 → Japanese-label mapping above was verified on 2026-05-22 against Sakenowa's published data documentation at https://muro.sakenowa.com/sakenowa-data. The Sakenowa Data API itself returns only numeric `f1..f6`; the labels come from Sakenowa's accompanying type docs.
 
 ## Cross-beverage disclaimers
 

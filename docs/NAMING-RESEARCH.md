@@ -218,7 +218,9 @@ npx -y @yawaragi/sakenowa-mcp
 
 ## 7. Sakenowa Data Note — f6 Axis Label Discrepancy
 
-The build plans reference f6 as "karoyaka (軽快)." The public Sakenowa Data API labels f6 as "ドライ" (dry), with f5 described separately. The Sakenowa flavour axes as published are:
+> **Resolved 2026-05-22.** Verified against Sakenowa's published data documentation at https://muro.sakenowa.com/sakenowa-data. The corrected mapping is below; the table previously here had **f5 and f6 swapped** and is preserved in git history. The original build plans also used the romaji "karoyaka" for 軽快 — that is the reading of the unrelated word 軽やか; 軽快 reads **keikai**. The canonical mapping now lives in `CONTEXT.md` § 6-axis vocabulary and `CLAUDE.md` § 6-axis flavor vocabulary; this section is kept as the historical record of when and how the discrepancy was first flagged.
+
+The Sakenowa flavour axes as published are:
 
 | Axis | Label | Kanji/Kana | English approximation |
 |---|---|---|---|
@@ -226,10 +228,10 @@ The build plans reference f6 as "karoyaka (軽快)." The public Sakenowa Data AP
 | f2 | hojun | 芳醇 | mellow / rich |
 | f3 | juko | 重厚 | heavy / full-bodied |
 | f4 | odayaka | 穏やか | mild / calm |
-| f5 | keikai | 軽快 | light / crisp |
-| f6 | dry | ドライ | dry |
+| f5 | dry | ドライ | dry |
+| f6 | keikai | 軽快 | light / crisp |
 
-**Action:** Confirm the exact axis mapping with Sakenowa before publishing any product copy that maps f1–f6 to Japanese terms. Get this right in CONTEXT.md and all Zod schemas.
+**Outreach still useful:** Sakenowa may have preferred English/German labels for product copy; the canonical f1..f6 identifiers above are confirmed but the *approximations* are our choices.
 
 ---
 
@@ -312,7 +314,7 @@ Published as `@yawaragi/sakenowa-mcp` on npm. Open-source under MIT. README expl
 
 - **No live WHOIS or registrar lookups were performed** — final domain verification is required before committing to any name.
 - **No formal trademark database queries** (EUIPO TMview, USPTO TESS, JPO J-PlatPat) were run. The cultural and commercial-use evidence above is from web research, not legal clearance. Engage an IP lawyer or trademark-search service before filing.
-- **The Sakenowa f6 axis label discrepancy** ("karoyaka" in the build plans vs. "ドライ/dry" on the public API) is small but meaningful for product credibility. Confirm directly with Sakenowa.
+- **The Sakenowa f6 axis label discrepancy** ("karoyaka" in the build plans vs. "ドライ/dry" on the public API) is small but meaningful for product credibility. *(Resolved 2026-05-22 — see §7. The build plans had two errors: f5/f6 were swapped, and "karoyaka" was the wrong romaji for 軽快. Canonical mapping now in CONTEXT.md.)*
 - **Pop-culture name collisions** ("Yawaragi" in Naruto) are unlikely to cause legal issues but may slightly affect initial Google search results. Monitor SERPs for the first 3 months.
 - **Competitor apps WhatSake and Sakesho** are functionally close to the planned feature set. Differentiation must live in the product (MCP recommender, cross-beverage bridging, provenance model) rather than just the name.
 - **The EUIPO trademark cost (€900)** is a real investment for a portfolio project. If budget is tight, defer the filing until the go-live decision is confirmed — but claim the domains and npm scope immediately (< €50 total) to prevent squatting.
