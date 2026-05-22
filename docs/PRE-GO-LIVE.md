@@ -222,7 +222,7 @@ These axes are derived from Sakenowa's NLP of >1M Japanese-language reviews;
 the vocabulary reflects Japanese palate descriptors and does not always map
 cleanly to Western flavor language.
 
-## German legal framework (summary; see ADR-003)
+## German legal framework (summary; see ADR-0006)
 
 - **JMStV §6(5)**: alcohol advertising must not target or appeal to minors.
 - **MStV §8(10)**: no promotion of excessive consumption.
@@ -390,7 +390,7 @@ Add the following tickets to your existing phase backlog.
 
 ### Phase 0 — Environment
 
-- `[P0-09] Resolve ADR-001 (naming) — decision + outreach if "Kanpai" retained`
+- `[P0-09] (DONE 2026-05-22) Naming resolved → Yawaragi; see ADR-0004. Stage-2 follow-ups tracked in that ADR.`
 - `[P0-10] next-intl setup; locale switcher; en + de message catalogues`
 - `[P0-11] <AgeGate /> component + route middleware blocking sake content before acceptance`
 - `[P0-12] Cookie banner (GDPR) — separate from age gate`
@@ -427,7 +427,7 @@ Add the following tickets to your existing phase backlog.
 ### Phase 6 — Evals + dev mode
 
 - `[P6-07] /dev/corrections page — review pending user-submitted corrections`
-- `[P6-08] /dev/provenance — % of displayed facts in last 7d by source (the audit view from ADR-002)`
+- `[P6-08] /dev/provenance — % of displayed facts in last 7d by source (the audit view from ADR-0005)`
 - `[P6-09] /dev/competitors — manually-curated page tracking SAKE AI and other relevant launches (last checked date, links, observations). A reminder to revisit every 2 weeks.`
 
 ### Phase 7 — Polish
@@ -485,8 +485,8 @@ A hard gate. **No public launch artefact** (blog post submitted, Show HN, Linked
 
 ### 7.1 Legal & compliance
 
-- [ ] ADR-001 (naming) is resolved and acted on. If "Kanpai" retained, Tom Wilson at Kanpai London has been contacted and has not objected.
-- [ ] ADR-003 (age gate) is implemented; verified that no sake content renders before acceptance.
+- [x] ADR-0004 (naming) is resolved — project renamed to Yawaragi (2026-05-22). Stage-2 trademark clearance still pending; see ADR-0004 Stage-2 action items.
+- [ ] ADR-0006 (age gate) is implemented; verified that no sake content renders before acceptance.
 - [ ] Impressum (§5 TMG) page is live and accurate.
 - [ ] GDPR-compliant privacy policy and cookie banner are live; cookie banner is functionally separate from age gate.
 - [ ] LLM image processing on scan flow does not retain images beyond the inference call (verified by reading the API client code).
