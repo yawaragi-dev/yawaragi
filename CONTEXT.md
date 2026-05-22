@@ -1,6 +1,8 @@
-# Kanpai
+# Yawaragi
 
-A sake companion. Helps users recognise, discover, and track the sake they enjoy through three surfaces: label scan, chat recommender, taste profile.
+A sake companion (working name: **Yawaragi** — 和らぎ, "the water drunk between sake sips"; cf. *yawaragi-mizu*, 和らぎ水). Helps users recognise, discover, and track the sake they enjoy through three surfaces: label scan, chat recommender, taste profile.
+
+Previously named "Kanpai"; renamed to avoid collision with KANPAI London Craft Sake Brewery. See `## Naming` below and ADR-0004.
 
 ## Language
 
@@ -17,12 +19,12 @@ A Japanese administrative region — one of the 47 prefectures (e.g. Niigata, Ya
 _Avoid_: Area, Region
 
 **FlavorProfile**:
-The continuous 6-tuple attached to a Sake, describing its position along the Sakenowa aroma/body/dryness axes. Axes are `floral`, `mellow`, `heavy`, `mild`, `dry`, `light`, each a float in `[0, 1]`. Used for vector similarity ("sake similar to this one") and positioning, **not** for hard filters like "sweet" or "umami". Sakenowa's `flavorChart` (f1..f6) translated.
+The continuous 6-tuple attached to a Sake, describing its position along the Sakenowa aroma/body/dryness axes. Axes are `hanayaka`, `hojun`, `juko`, `odayaka`, `keikai`, `dry` (each a float in `[0, 1]`). Used for vector similarity ("sake similar to this one") and positioning, **not** for hard filters like "sweet" or "umami". Sakenowa's `flavorChart` (f1..f6) with canonical romaji + kanji + English-approximation labelling. See the [6-axis vocabulary](#6-axis-vocabulary) table.
 _Avoid_: FlavorChart, TasteVector, FlavorMap
 
 **FlavorAxis**:
-One of the six fixed axes of a FlavorProfile: `floral`, `mellow`, `heavy`, `mild`, `dry`, `light`. Closed enum — never extended.
-_Avoid_: f1..f6, flavor dimension, taste axis
+One of the six fixed axes of a FlavorProfile, identified by romaji name: `hanayaka` (華やか), `hojun` (芳醇), `juko` (重厚), `odayaka` (穏やか), `keikai` (軽快), `dry` (ドライ). Closed enum — never extended. English labels are *approximations only*, not canonical identifiers.
+_Avoid_: f1..f6 (storage detail only), flavor dimension, taste axis
 
 **FlavorTag**:
 A discrete categorical tag attached to a Sake from Sakenowa's 117-tag vocabulary (e.g. `甘味` sweet, `旨味` umami, `酸味` acidic, `フルーティ` fruity). Used for hard filters and chat-driven queries that the 6-axis FlavorProfile cannot answer. A Sake has zero or more FlavorTags.
@@ -36,6 +38,14 @@ _Avoid_: UserProfile (collides with auth), FlavorProfile (that's the Sake's, not
 A single Sake's position-and-score within a popularity list, for a specific month. Scope is either *overall* (global top 100) or a single Prefecture (regional top N). A Sake has zero or more Rankings: it may appear in overall, in its Brewery's Prefecture, in both, or in neither. The `year_month` records which monthly snapshot the position came from. We store only the latest snapshot — never historical.
 _Avoid_: Rank, Position, PopularityRank
 
+**Provenance** (Source):
+The origin of any piece of information shown to a user. Every record carries a `source` field drawn from a closed enum (see [Provenance taxonomy](#provenance-taxonomy)). Some records also carry a `confidence` (0..1). The recommender, the chat agent, and every UI surface are required to respect provenance — Sakenowa-sourced facts and LLM-inferred facts are visually distinguished, and cross-beverage mappings carry a heuristic disclaimer.
+_Avoid_: Origin, Trust, Confidence (confidence is a separate field, not a synonym for provenance)
+
+**CrossBeverageMap**:
+A hand-curated deterministic table that bridges Western beverage descriptors (whisky / wine / beer terms like "smoky", "tannic") to positions on the 6-axis FlavorProfile. Not a scientific mapping — a heuristic for cross-domain recommendations. Always rendered with `<HeuristicDisclaimer />`. The LLM may not invent new entries beyond the table.
+_Avoid_: BeverageBridge, CrossDomainMap, BeverageTranslation
+
 ## Relationships
 
 - A **Sake** is produced by exactly one **Brewery**
@@ -45,13 +55,63 @@ _Avoid_: Rank, Position, PopularityRank
 - A **Sake** has zero or more **FlavorTags**
 - A **User** has exactly one **TasteProfile** (derived, not stored as a snapshot)
 - A **Sake** has zero or more **Rankings** (at most one *overall*, at most one per its Brewery's Prefecture, both for the current month only)
+- Every displayed record carries a **Provenance** (source + optional confidence)
+
+## 6-axis vocabulary
+
+Authoritative table for the six FlavorAxes. Romaji + kanji are canonical identifiers; English/German are user-facing approximations only.
+
+| Axis | Romaji   | Kanji   | English approximation | German approximation | Caveat                                  |
+|------|----------|---------|-----------------------|----------------------|------------------------------------------|
+| f1   | hanayaka | 華やか   | fragrant / floral     | duftig / blumig      | not "perfumed"; aromatic-ester-driven    |
+| f2   | hojun    | 芳醇    | mellow / rich         | vollmundig / reich   | not "creamy"; umami-and-aroma depth      |
+| f3   | juko     | 重厚    | heavy / full-bodied   | schwer / körperreich | not "tannic"; weight + amino acid        |
+| f4   | odayaka  | 穏やか   | mild / calm           | mild / sanft         | restrained aroma, not "neutral"          |
+| f5   | keikai   | 軽快    | light / crisp         | leicht / spritzig    | refreshing finish, low residual          |
+| f6   | dry      | ドライ   | dry                   | trocken              | closest 1:1; tracks SMV broadly          |
+
+These axes are derived from Sakenowa's NLP of >1M Japanese-language reviews; the vocabulary reflects Japanese palate descriptors and does not always map cleanly to Western flavor language. The exact f1–f6 → Japanese-label mapping above must be confirmed with Sakenowa before publishing public copy (the Sakenowa Data API returns only `f1..f6`, not their labels; the labels here come from Sakenowa's published documentation).
+
+## Provenance taxonomy
+
+Every record displayed to a user carries a `source` field. Values:
+
+- **`sakenowa`** — fetched directly from the Sakenowa Data API. Canonical, attribution required.
+- **`sakenowa_inferred`** — derived from Sakenowa data via deterministic math (e.g. cosine similarity over FlavorProfile vectors). Still trustworthy; the derivation is reproducible.
+- **`llm_extracted`** — produced by a vision LLM from a user-uploaded label image. Always has a confidence score. Renders with `<ProvenanceBadge />` and an "improve / report" affordance.
+- **`llm_inferred`** — LLM reasoning over Sakenowa tool results (e.g. a chat answer citing a tool call). Renders with `<ProvenanceBadge />`.
+- **`cross_beverage_map`** — produced by the hand-curated CrossBeverageMap. Renders with `<HeuristicDisclaimer />`.
+- **`user_corrected`** — a User has overridden any of the above. Always wins over its prior source.
+- **`manual_curation`** — hand-written content owned by maintainers (glossary entries, fixed mappings).
+
+## Naming
+
+The project's working name is **Yawaragi** (和らぎ). It refers to *yawaragi-mizu* (和らぎ水), the water drunk between sake sips to reset the palate and pace consumption — culturally analogous to the app's role as companion and clarifier.
+
+Previously the project was called "Kanpai". That name was abandoned because KANPAI London Craft Sake Brewery (Tom & Lucy Wilson, Bermondsey, founded 2016) operates under the same name in the same European sake community the project hopes to engage. The collision created confusion risk, trademark risk, and a poor first impression with potential allies. The single word "kanpai" itself is also generic ("cheers") and saturated globally, making SEO essentially impossible.
+
+The decision and its alternatives are recorded in `docs/adr/0004-project-name-yawaragi.md`; the full research is in `docs/NAMING-RESEARCH.md`.
+
+The open-source MCP server has a deliberately decoupled name: **`sakenowa-mcp`**, published as `@yawaragi/sakenowa-mcp`. This honours Sakenowa's attribution requirement, follows the ecosystem convention `@<author>/<service>-mcp`, and keeps the OSS asset useful to other developers regardless of any future product rebrand.
+
+## German legal framework (summary)
+
+Yawaragi targets Germany / DACH as a primary market. Key constraints (full detail in `docs/adr/0006-age-gate-jmstv.md` and the pre-go-live checklist):
+
+- **JMStV §6(5)** — alcohol advertising must not target or appeal to minors.
+- **MStV §8(10)** — no promotion of excessive consumption.
+- **JuSchG** — self-declared 18+ is sufficient for information products; an Altersverifikationssystem (AVS) is required only for DTC purchase or adult content.
+- **GDPR** — lawful basis required (consent for personalisation, legitimate interest for the public catalogue); minimise image retention on the scan flow.
+- **§5 TMG** — Impressum required.
+- **Sakenowa licence** — attribution required; "Flavor Chart" is Sakenowa's registered trademark.
 
 ## Flagged ambiguities
 
 - Sakenowa exposes a sentinel `areaId: 0` named "その他" (Other) for Breweries with no assigned prefecture. We keep it as a Prefecture row to avoid orphaned Breweries, but it is not a real prefecture and should be excluded from any geographic ranking or filter UI.
 - **Sweet, umami, and acidic are NOT FlavorAxes.** Sakenowa's 6-axis FlavorProfile measures aroma/body/dryness, not the canonical sommelier dimensions. Sweet ≈ inverse of `dry` *but* has its own discrete FlavorTag (`甘味`, id:12). Umami and acidic live only as FlavorTags (`旨味` id:5, `酸味` id:2). When a user asks for "sweet sake", the recommender must filter by FlavorTag, not by FlavorProfile. When asked for "sake similar to this one," it must use FlavorProfile, not tags.
-- **FlavorTag and FlavorAxis overlap semantically.** `辛口` (dry) is both an axis (`dry`/f5) and a tag (id:3). `フルーティ` (fruity) overlaps with `floral` (f1). When both surfaces disagree, prefer the tag for hard filters and the axis for similarity. Never expose the redundancy to users.
+- **FlavorTag and FlavorAxis overlap semantically.** `辛口` (dry) is both an axis (`dry`/f6) and a tag (id:3). `フルーティ` (fruity) overlaps with `hanayaka` (f1). When both surfaces disagree, prefer the tag for hard filters and the axis for similarity. Never expose the redundancy to users.
 - **Same-romaji collisions are possible across Breweries and Sakes.** Two distinct Japanese names (e.g. 旭酒造 / 朝日酒造) may transliterate to the same `name_romaji`. Search must disambiguate using Prefecture, the `name_ja` field, or both. Do not assume `name_romaji` is unique.
+- **The f1..f6 → Japanese-label mapping above is unverified against Sakenowa directly.** The Sakenowa Data API returns numeric `f1..f6` only; the romaji/kanji labels come from Sakenowa's published documentation but have been transcribed inconsistently across third-party sources (the prior internal write-up had f5/f6 swapped). Before any public product copy uses these mappings, confirm directly with Sakenowa.
 
 ## Naming convention
 
