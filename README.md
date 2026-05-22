@@ -53,4 +53,6 @@ Sake data is sourced from the [Sakenowa Data API](https://muro.sakenowa.com/sake
 
 ## Licence
 
-MIT — see [`LICENSE`](./LICENSE).
+Open-core. Application code is All Rights Reserved; the cross-beverage map (CC BY-NC-SA 4.0), the glossary (CC BY-SA 4.0), and the Zod schemas (MIT) are permissively licensed. See [`docs/LICENSE-STRATEGY.md`](./docs/LICENSE-STRATEGY.md) and [`LICENSE`](./LICENSE).
+
+The MCP server [`@yawaragi/sakenowa-mcp`](https://github.com/yawaragi/sakenowa-mcp) lives in its own repo and is MIT-licensed.
