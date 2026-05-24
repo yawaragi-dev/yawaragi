@@ -112,12 +112,30 @@ test.describe('age gate enforcement', () => {
     await context.close()
   })
 
-  test('renders the gate in German on /de/', async ({ browser }) => {
+  test('/de/ shows coming-soon (not the gate) per ADR-0008', async ({
+    browser,
+  }) => {
     const context = await browser.newContext({ locale: 'de-DE' })
     const page = await context.newPage()
 
     await page.goto('/de/')
-    await expect(page.getByText(GATE_COPY_DE)).toBeVisible()
+    await expect(page.getByTestId('coming-soon')).toBeVisible()
+    await expect(page.getByTestId('age-gate')).toBeHidden()
+    // Sake content from the EN landing must not leak through:
+    await expect(page.getByText(GATE_COPY_DE)).toBeHidden()
+
+    await context.close()
+  })
+
+  test('/de/sake/anything (gated rewrite) lands on coming-soon, not the gate', async ({
+    browser,
+  }) => {
+    const context = await browser.newContext({ locale: 'de-DE' })
+    const page = await context.newPage()
+
+    await page.goto('/de/sake/anything')
+    await expect(page.getByTestId('coming-soon')).toBeVisible()
+    await expect(page.getByTestId('age-gate')).toBeHidden()
 
     await context.close()
   })

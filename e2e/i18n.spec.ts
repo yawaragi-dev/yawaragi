@@ -37,16 +37,15 @@ test.describe('locale routing', () => {
     await context.close()
   })
 
-  test('direct /de/ renders German regardless of Accept-Language', async ({
+  test('direct /de/ renders German coming-soon regardless of Accept-Language', async ({
     browser,
   }) => {
     const context = await browser.newContext({ locale: 'en-US' })
     const page = await context.newPage()
     await page.goto('/de/')
     await expect(page.locator('html')).toHaveAttribute('lang', 'de')
-    await expect(
-      page.getByText('Ein Begleiter, um Sake kennenzulernen.'),
-    ).toBeVisible()
+    await expect(page.getByTestId('coming-soon')).toBeVisible()
+    await expect(page.getByText('Bald verfügbar')).toBeVisible()
     await context.close()
   })
 

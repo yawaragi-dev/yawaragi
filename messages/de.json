@@ -30,5 +30,10 @@
     "title": "Komm wieder, wenn du 18 bist",
     "body": "Yawaragi ist ein Informationsdienst über japanischen Sake. Das deutsche Recht verpflichtet uns, alkoholbezogene Inhalte auf Erwachsene zu beschränken. Du bist willkommen, sobald du 18 oder älter bist.",
     "imprintLink": "Zum Impressum"
+  },
+  "comingSoon": {
+    "title": "Bald verfügbar",
+    "body": "Yawaragi bereitet den Start für deutschsprachige Besucher:innen vor. Die englische Vorabversion ist heute schon zugänglich; die deutsche Edition folgt, sobald die rechtlichen Grundlagen (Impressum, Datenschutz) bereitstehen.",
+    "switchToEn": "Zur englischen Vorabversion"
   }
 }
