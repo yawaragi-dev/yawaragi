@@ -6,6 +6,13 @@ updates:
       interval: weekly
       day: monday
     open-pull-requests-limit: 5
+    # Wait 14 days before proposing an upgrade so we match the
+    # `minimumReleaseAge` quarantine in pnpm-workspace.yaml. Without this
+    # Dependabot will happily propose a brand-new version that pnpm would
+    # then refuse to install (or would silently let through via the
+    # already-resolved lockfile, defeating the quarantine).
+    cooldown:
+      default-days: 14
     groups:
       next-and-react:
         patterns:
