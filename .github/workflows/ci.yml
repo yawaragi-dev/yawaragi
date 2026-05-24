@@ -28,13 +28,15 @@ jobs:
     name: Verify (typecheck, lint, unit, audit, e2e)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11
+      # Version is pinned via package.json `packageManager` field for
+      # local/CI parity. pnpm 11.2+ added per-command lockfile audits that
+      # surface false positives on lockfiles containing recently-published
+      # entries; revisit once that's configurable.
+      - uses: pnpm/action-setup@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: pnpm

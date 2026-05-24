@@ -167,6 +167,8 @@ See `docs/adr/0007-i18n-en-de.md`.
 - Do NOT design a consent flow with pre-ticked boxes, an Accept-all button more prominent than the Reject, or no path to withdraw. Equal prominence is mandatory; withdrawal must be as easy as giving.
 - Do NOT collect Art. 9 special-category data (health, religion, race, biometric identifiers, sexual orientation). The label-scan flow is bottle labels only — never re-purpose for faces.
 - Do NOT retain label-scan images past the inference call. Process-and-discard.
+- Do NOT lower `minimumReleaseAge` in `pnpm-workspace.yaml` (currently 14 days, anti-Shai-Hulud quarantine) without a documented CVE-forced reason. If a single package needs a fresh version, add it to a `minimumReleaseAgeExclude` list rather than weakening the global default.
+- Do NOT add a new entry to `allowBuilds` (install-script approval) without checking what the package's install / postinstall script actually does. Each `: true` is a license to execute arbitrary code on `pnpm install`.
 
 ## Test review checklist
 Before merging any test Claude wrote, ask:
