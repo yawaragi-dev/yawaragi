@@ -34,7 +34,7 @@ const WINDOW_WARM = '#fcd34d' // amber-300 — lit windows + train interior
 const WINDOW_COOL = '#60a5fa' // blue-400 — distant office lights
 const YAMANOTE = '#76b04f' // green stripe on Yamanote-line cars
 
-/* ---------- Salary man ---------- */
+/* ---------- Salaryman ---------- */
 // 16 wide × 24 tall — slightly larger for better detail visibility.
 // 1 = suit (navy), 2 = white shirt strip, 3 = hair/face, 4 = briefcase brown,
 // 5 = briefcase handle (darker), 6 = red tie
