@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import en from '../../messages/en.json'
-import de from '../../messages/de.json'
+import en from '~/messages/en.json'
+import de from '~/messages/de.json'
 import { diffMessageKeys } from './messages-parity'
 
 describe('diffMessageKeys', () => {
