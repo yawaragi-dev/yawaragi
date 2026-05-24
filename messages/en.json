@@ -46,6 +46,7 @@
     "acceptAll": "Accept all",
     "rejectNonEssential": "Reject non-essential",
     "customize": "Customize",
-    "savePreferences": "Save preferences"
+    "savePreferences": "Save preferences",
+    "settingsLink": "Cookie preferences"
   }
 }

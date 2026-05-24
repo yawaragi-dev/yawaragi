@@ -209,6 +209,59 @@ test.describe('age-gate independence', () => {
   })
 })
 
+test.describe('reopening preferences after a decision', () => {
+  test('settings link reopens the banner pre-filled with the current decision', async ({
+    browser,
+  }) => {
+    const context = await browser.newContext({ locale: 'en-US' })
+    await acceptAgeGateCookie(context)
+    const page = await context.newPage()
+    await page.goto('/en/')
+
+    // Make an initial decision: analytics on, marketing off.
+    await page.getByTestId('cookie-banner-customize').click()
+    await page.getByTestId('cookie-category-analytics').check()
+    await page.getByTestId('cookie-banner-save').click()
+    await expect(page.getByTestId('cookie-banner')).toBeHidden()
+
+    // The settings link stays available; clicking it reopens the banner.
+    await page.getByTestId('cookie-settings-link').click()
+    await expect(page.getByTestId('cookie-banner')).toBeVisible()
+
+    // The customize panel is open and pre-filled with the current decision.
+    await expect(page.getByTestId('cookie-category-analytics')).toBeChecked()
+    await expect(
+      page.getByTestId('cookie-category-marketing'),
+    ).not.toBeChecked()
+
+    // Editing and saving updates the cookie.
+    await page.getByTestId('cookie-category-analytics').uncheck()
+    await page.getByTestId('cookie-category-marketing').check()
+    await page.getByTestId('cookie-banner-save').click()
+    await expect(page.getByTestId('cookie-banner')).toBeHidden()
+
+    const cookies = await context.cookies()
+    const decoded = JSON.parse(
+      decodeURIComponent(
+        cookies.find((c) => c.name === 'yawaragi_consent')!.value,
+      ),
+    )
+    expect(decoded).toMatchObject({ analytics: false, marketing: true })
+
+    await context.close()
+  })
+
+  test('settings link is visible even on first visit (before any decision)', async ({
+    browser,
+  }) => {
+    const context = await browser.newContext({ locale: 'de-DE' })
+    const page = await context.newPage()
+    await page.goto('/de/')
+    await expect(page.getByTestId('cookie-settings-link')).toBeVisible()
+    await context.close()
+  })
+})
+
 test.describe('functionality with non-essential rejected', () => {
   test('locale switcher still works after rejecting non-essential cookies', async ({
     browser,

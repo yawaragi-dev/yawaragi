@@ -46,6 +46,7 @@
     "acceptAll": "Alle akzeptieren",
     "rejectNonEssential": "Nicht-essenzielle ablehnen",
     "customize": "Anpassen",
-    "savePreferences": "Einstellungen speichern"
+    "savePreferences": "Einstellungen speichern",
+    "settingsLink": "Cookie-Einstellungen"
   }
 }

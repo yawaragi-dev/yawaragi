@@ -6,6 +6,7 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { routing } from '@/i18n/routing'
 import { CookieBanner } from '@/components/legal/cookie-banner'
+import { CookieSettingsLink } from '@/components/legal/cookie-settings-link'
 import { CONSENT_COOKIE_NAME, parseConsent } from '@/lib/legal/consent'
 import '../globals.css'
 
@@ -47,7 +48,10 @@ export default async function LocaleLayout({
       <body className="min-h-full flex flex-col">
         <NextIntlClientProvider>
           {children}
-          {!consent && <CookieBanner />}
+          <footer className="flex justify-end px-6 py-3">
+            <CookieSettingsLink />
+          </footer>
+          <CookieBanner initialDecision={consent} />
         </NextIntlClientProvider>
       </body>
     </html>

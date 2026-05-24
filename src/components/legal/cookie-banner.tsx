@@ -1,22 +1,43 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { setConsent } from '@/lib/legal/consent-actions'
+import type { ConsentDecision } from '@/lib/legal/consent'
+import { COOKIE_BANNER_OPEN_EVENT } from './cookie-banner-events'
 
-export function CookieBanner() {
+export function CookieBanner({
+  initialDecision,
+}: {
+  initialDecision: ConsentDecision | null
+}) {
   const t = useTranslations('cookieBanner')
   const [isPending, startTransition] = useTransition()
-  const [customizing, setCustomizing] = useState(false)
-  const [analytics, setAnalytics] = useState(false)
-  const [marketing, setMarketing] = useState(false)
+  const [open, setOpen] = useState(initialDecision === null)
+  const [customizing, setCustomizing] = useState(initialDecision !== null)
+  const [analytics, setAnalytics] = useState(initialDecision?.analytics ?? false)
+  const [marketing, setMarketing] = useState(initialDecision?.marketing ?? false)
+
+  useEffect(() => {
+    function handleOpen() {
+      setOpen(true)
+      setCustomizing(true)
+    }
+    window.addEventListener(COOKIE_BANNER_OPEN_EVENT, handleOpen)
+    return () => window.removeEventListener(COOKIE_BANNER_OPEN_EVENT, handleOpen)
+  }, [])
 
   function save(choice: { analytics: boolean; marketing: boolean }) {
     startTransition(async () => {
       await setConsent(choice)
+      setAnalytics(choice.analytics)
+      setMarketing(choice.marketing)
+      setOpen(false)
     })
   }
+
+  if (!open) return null
 
   return (
     <section
