@@ -47,11 +47,14 @@ jobs:
 
       - run: pnpm lint
 
-      - run: pnpm test
+      # Unit + e2e here EXCLUDE the game tests — game has its own workflow
+      # (game-ci.yml) that fires only when game files change. Saves CI
+      # minutes on PRs that don't touch the 404 mini-game.
+      - run: pnpm exec vitest run --exclude 'src/components/game/**'
 
       - run: pnpm i18n:audit
 
       - name: Register system Chrome with Playwright
         run: pnpm exec playwright install chrome
 
-      - run: pnpm test:e2e
+      - run: pnpm exec playwright test --grep-invert shibuya
