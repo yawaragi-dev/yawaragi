@@ -1,8 +1,7 @@
 allowBuilds:
   '@clerk/shared': true
+  '@parcel/watcher': true
+  '@swc/core': true
   msw: true
-  sharp: true
-  unrs-resolver: true
-ignoredBuiltDependencies:
-  - sharp
-  - unrs-resolver
+  sharp: false
+  unrs-resolver: false
