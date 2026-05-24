@@ -558,6 +558,12 @@ A hard gate. **No public launch artefact** (blog post submitted, Show HN, Linked
 - [ ] `ANTHROPIC_API_KEY` is the production key, has spend limits, and is NOT present in any shell config or local `.env` checked into git.
 - [ ] Vercel deployment uses `pnpm` not `npm` (consistency with local).
 - [ ] `robots.txt` allows indexing of `/`, `/about`, `/blog/*` only; disallows `/dev`, `/me`, `/scan`, `/chat` (avoid accidental indexing of personal pages).
+- [ ] **Plan-tier audit per vendor** ([deploying.md §5](./deploying.md#5-plan-tiers--hobby-vs-professional)). Each free/hobby tier has its own commercial-use rules:
+  - [ ] **Vercel** is on **Pro** (Hobby is explicitly non-commercial; any production-grade launch crosses the line)
+  - [ ] **GitHub** plan covers the Actions minutes used by CI (Pro / Team if private repo + active development)
+  - [ ] **Supabase** project is on a tier that matches expected DB/storage/MAU
+  - [ ] **Clerk** is on a tier that matches expected MAU (free up to 10k)
+  - [ ] Any other added vendor (Langfuse, Sentry, Cloudflare, etc.) has been re-audited against the table in deploying.md
 
 ### 7.8 Portfolio / recruiter
 
