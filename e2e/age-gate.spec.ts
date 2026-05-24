@@ -151,4 +151,32 @@ test.describe('age gate a11y', () => {
 
     await context.close()
   })
+
+  test('popup z-index strictly exceeds overlay z-index (no backdrop-over-popup regression)', async ({
+    browser,
+  }) => {
+    const context = await browser.newContext({ locale: 'en-US' })
+    const page = await context.newPage()
+    await page.goto('/en/')
+    await page.getByTestId('age-gate').waitFor()
+
+    const { overlayZ, popupZ } = await page.evaluate(() => {
+      const overlay = document.querySelector(
+        '[data-slot="dialog-overlay"]',
+      ) as HTMLElement | null
+      const popup = document.querySelector(
+        '[data-slot="dialog-content"]',
+      ) as HTMLElement | null
+      return {
+        overlayZ: overlay ? parseInt(getComputedStyle(overlay).zIndex, 10) : NaN,
+        popupZ: popup ? parseInt(getComputedStyle(popup).zIndex, 10) : NaN,
+      }
+    })
+
+    expect(Number.isFinite(overlayZ)).toBe(true)
+    expect(Number.isFinite(popupZ)).toBe(true)
+    expect(popupZ).toBeGreaterThan(overlayZ)
+
+    await context.close()
+  })
 })
