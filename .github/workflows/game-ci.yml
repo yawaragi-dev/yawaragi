@@ -1,0 +1,46 @@
+name: Game CI
+
+# Only triggers on PRs / main pushes that touch the 404 mini-game.
+# The main CI workflow (ci.yml) handles everything else and explicitly
+# excludes game tests so they don't run twice.
+on:
+  pull_request:
+    paths:
+      - 'src/components/game/**'
+      - 'e2e/shibuya-runner.spec.ts'
+  push:
+    branches: [main]
+    paths:
+      - 'src/components/game/**'
+      - 'e2e/shibuya-runner.spec.ts'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  NEXT_TELEMETRY_DISABLED: 1
+
+jobs:
+  game:
+    name: Game (unit + e2e)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm exec vitest run src/components/game
+
+      - name: Register system Chrome with Playwright
+        run: pnpm exec playwright install chrome
+
+      - run: pnpm exec playwright test --grep shibuya
