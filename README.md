@@ -1,5 +1,7 @@
 # Yawaragi 和らぎ
 
+[![CI](https://github.com/yawaragi-dev/yawaragi/actions/workflows/ci.yml/badge.svg)](https://github.com/yawaragi-dev/yawaragi/actions/workflows/ci.yml)
+
 A sake companion. Three flagship surfaces: **label scan**, **chat recommender**, **taste profile**.
 
 **Live:** <https://yawaragi.dev> — English preview is live. German edition is intentionally on a coming-soon page until the Impressum (§5 DDG) is in place; see [ADR-0008](./docs/adr/0008-en-first-launch-strategy.md).
@@ -15,6 +17,27 @@ Previously named "Kanpai"; renamed to avoid collision with [KANPAI London Craft 
 - Supabase (Postgres) · Clerk (auth) · Langfuse Cloud (tracing)
 - Vitest + happy-dom (unit) · Playwright (E2E + async RSC)
 - pnpm
+
+## Architecture
+
+```mermaid
+flowchart TD
+  V[Visitor] -->|"any path"| P["src/proxy.ts<br/>(locale + age-gate + coming-soon rewrites)"]
+  P -->|"/en/* (launched)"| LL["[locale]/layout<br/>+ NextIntlProvider<br/>+ cookie banner + footer"]
+  P -->|"/de/* (unlaunched)"| CS["[locale]/page<br/>(coming-soon)"]
+  LL --> Landing["[locale]/page<br/>(landing + age-gate)"]
+  LL --> Under18["[locale]/under-18"]
+  LL --> Sake["[locale]/sake/[brandId]<br/>(Phase 2+)"]
+  Sake --> Lookup["lib/sakenowa/lookup<br/>(Phase 2+)"]
+  Lookup --> DB[("Supabase Postgres<br/>mirror (Phase 2+)")]
+  Ingest["pnpm ingest<br/>(Phase 2+)"] --> DB
+  Sakenowa["Sakenowa Data API"] --> Ingest
+  Sake --> Tools["AI SDK tools<br/>(Phase 4+)"]
+  Tools --> Anthropic["Anthropic Claude<br/>(Phase 3+)"]
+  Anthropic --> Trace["Langfuse traces<br/>(Phase 4+)"]
+```
+
+Phase 0 (i18n + legal scaffolding + EN-first launch) is shipped. Phase 2+ nodes are placeholders for the data foundation, label scan, chat, and taste profile slices that compose with the Phase 0 surface unchanged.
 
 ## Getting started
 
