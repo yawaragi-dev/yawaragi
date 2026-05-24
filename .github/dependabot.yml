@@ -1,0 +1,45 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      next-and-react:
+        patterns:
+          - 'next'
+          - 'next-*'
+          - 'eslint-config-next'
+          - 'react'
+          - 'react-*'
+          - '@types/react*'
+      ai-sdk:
+        patterns:
+          - 'ai'
+          - '@ai-sdk/*'
+      tooling:
+        patterns:
+          - 'typescript'
+          - 'eslint*'
+          - '@vitejs/*'
+          - 'vitest'
+          - 'happy-dom'
+          - '@playwright/*'
+          - '@testing-library/*'
+          - 'tsx'
+      tailwind:
+        patterns:
+          - 'tailwindcss'
+          - '@tailwindcss/*'
+          - 'tw-animate-css'
+    labels:
+      - dependencies
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    labels:
+      - dependencies
