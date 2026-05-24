@@ -1,9 +1,13 @@
+import { cookies } from 'next/headers'
 import { hasLocale, NextIntlClientProvider } from 'next-intl'
 import { setRequestLocale } from 'next-intl/server'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { routing } from '@/i18n/routing'
+import { CookieBanner } from '@/components/legal/cookie-banner'
+import { CookieSettingsLink } from '@/components/legal/cookie-settings-link'
+import { CONSENT_COOKIE_NAME, parseConsent } from '@/lib/legal/consent'
 import '../globals.css'
 
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] })
@@ -33,13 +37,22 @@ export default async function LocaleLayout({
 
   setRequestLocale(locale)
 
+  const cookieJar = await cookies()
+  const consent = parseConsent(cookieJar.get(CONSENT_COOKIE_NAME)?.value)
+
   return (
     <html
       lang={locale}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <NextIntlClientProvider>{children}</NextIntlClientProvider>
+        <NextIntlClientProvider>
+          {children}
+          <footer className="flex justify-end px-6 py-3">
+            <CookieSettingsLink />
+          </footer>
+          <CookieBanner initialDecision={consent} />
+        </NextIntlClientProvider>
       </body>
     </html>
   )
