@@ -98,14 +98,40 @@ The open-source MCP server has a deliberately decoupled name: **`sakenowa-mcp`**
 
 ## German legal framework (summary)
 
-Yawaragi targets Germany / DACH as a primary market. Key constraints (full detail in `docs/adr/0006-age-gate-jmstv.md` and the pre-go-live checklist):
+Yawaragi targets Germany / DACH as a primary market. Key constraints (full detail in [`docs/adr/0006-age-gate-jmstv.md`](./docs/adr/0006-age-gate-jmstv.md), [`docs/adr/0008-en-first-launch-strategy.md`](./docs/adr/0008-en-first-launch-strategy.md), [`docs/adr/0009-gdpr-compliance-posture.md`](./docs/adr/0009-gdpr-compliance-posture.md), and the pre-go-live checklist):
 
-- **JMStV §6(5)** — alcohol advertising must not target or appeal to minors.
+- **JMStV §6(5)** — alcohol advertising must not target or appeal to minors. Enforced by the [Age gate](#age-gate).
 - **MStV §8(10)** — no promotion of excessive consumption.
 - **JuSchG** — self-declared 18+ is sufficient for information products; an Altersverifikationssystem (AVS) is required only for DTC purchase or adult content.
-- **GDPR** — lawful basis required (consent for personalisation, legitimate interest for the public catalogue); minimise image retention on the scan flow.
-- **§5 TMG** — Impressum required.
+- **GDPR** — lawful basis required (consent for personalisation, legitimate interest for the public catalogue); minimise image retention on the scan flow. See [Lawful basis](#lawful-basis), [DPA](#dpa--sccs), [RoPA](#ropa).
+- **§5 DDG** — Impressum required (DDG replaced TMG in May 2024; the obligation is materially unchanged). Deferred until DACH launch — see [Launched locale](#launched-locale--coming-soon).
 - **Sakenowa licence** — attribution required; "Flavor Chart" is Sakenowa's registered trademark.
+
+## Phase 0 compliance vocabulary
+
+**Age gate**:
+The JMStV §6(5) self-declared 18+ modal shown on first visit, persisted in the `yawaragi_age_gate` cookie (1-year expiry, versioned `{v, ts}` payload). No flavor data, brand pages, recommendations, or label scans render before acceptance. Distinct from the [Cookie banner](#cookie-banner) — different legal regime (JMStV vs GDPR), different UX (modal vs bottom banner), different cookie. See `docs/adr/0006-age-gate-jmstv.md`.
+_Avoid_: Age check, 18+ wall (modal is the canonical UX), Compliance modal
+
+**Cookie banner**:
+The GDPR consent surface (bottom-anchored, never modal). Three actions (Accept all / Reject non-essential / Customize) with no pre-ticked boxes and equal-prominence buttons. Persisted in the `yawaragi_consent` cookie with `{necessary, analytics, marketing, version}`. A persistent footer link reopens the banner pre-filled with the current decision (the "withdraw as easily as you gave" rule, Art. 7(3)). Bumping `CURRENT_CONSENT_VERSION` re-prompts everyone. Distinct from the [Age gate](#age-gate).
+_Avoid_: Cookie modal (it's a banner), Consent popup, GDPR popup
+
+**Lawful basis**:
+The GDPR Article 6 ground that legitimises a personal-data processing operation. Allowed values for this project: `consent` (Art. 6(1)(a)), `contract` (6(1)(b)), `legitimate_interest` (6(1)(f)), `legal_obligation` (6(1)(c)). Documented per record type in Zod schemas or in [RoPA](#ropa). No processing without a documented basis — see `docs/adr/0009-gdpr-compliance-posture.md`.
+_Avoid_: Legal ground (correct German "Rechtsgrundlage" but lawful basis is the GDPR English term), Justification
+
+**RoPA**:
+Records of Processing Activities — the table in ADR-0009 listing every personal-data processing operation, its lawful basis, retention, residency, and vendor. Treated as code: every PR that adds, removes, or modifies a processing operation updates RoPA in the same diff.
+_Avoid_: Privacy log, Processing register, Data inventory
+
+**DPA / SCCs**:
+Data Processing Agreement (the contract a controller signs with each processor — Vercel, Clerk, Supabase, Anthropic, Langfuse). Standard Contractual Clauses (the EU-approved boilerplate that legitimises cross-border data transfers, required for any non-EU processor since Schrems II). Per ADR-0009, a DPA is a **blocking dependency** — a vendor cannot be integrated until the DPA is signed and, if applicable, SCCs are in place.
+_Avoid_: Vendor contract, Subprocessor agreement
+
+**Launched locale / coming soon / `LAUNCHED_LOCALES`**:
+The launched-locale set is `new Set(['en'])` today; `/de/` renders a coming-soon page until the Impressum (§5 DDG) is in place. Defined in `src/i18n/launch-state.ts`, used by both `src/app/[locale]/page.tsx` and `src/proxy.ts`. The DACH launch flips `'de'` into the set in one line. See `docs/adr/0008-en-first-launch-strategy.md`.
+_Avoid_: Active locale (collides with the visitor's current locale), Public locale, Enabled locale
 
 ## Flagged ambiguities
 
