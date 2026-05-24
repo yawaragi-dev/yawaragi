@@ -107,6 +107,33 @@ Yawaragi is a sake information and education tool. Germany's JMStV §6(5) and MS
 
 See `docs/adr/0006-age-gate-jmstv.md`.
 
+## GDPR (data protection)
+
+GDPR applies to every line of Yawaragi that touches a user. **Compliance is part of the design**, not a layer added at the end. See `docs/adr/0009-gdpr-compliance-posture.md` for the full posture.
+
+Core rules:
+
+- **Privacy by default.** Every new feature starts from "no personal data collected" and earns each field with a stated purpose, lawful basis, and retention.
+- **Lawful basis is documented** for every processing operation (`consent`, `contract`, `legitimate_interest`, `legal_obligation`) — in the Zod schema or in ADR-0009's RoPA.
+- **Consent is granular, withdrawable, and recorded.** Cookie banner UX rules: no pre-ticked boxes, equal-prominence Accept/Reject, withdraw as easily as give (persistent settings link), versioned (bumping re-prompts).
+- **Data minimisation is the first design question**, not the last. Ask "what's the smallest sufficient subset?" before "what would be useful?".
+- **Vendor DPAs are blocking dependencies.** A SaaS integration cannot merge until a Data Processing Agreement is signed; non-EU vendors additionally need SCCs.
+- **No special-category data** (Art. 9 — health, religion, race, biometric, etc.). The label-scan flow must not be repurposed for biometric processing.
+- **User rights are implementable, not promised.** Access, rectification, erasure (with cascade), portability — implemented and end-to-end-tested before the DACH launch.
+- **Retention is per-data-type and documented.** Label-scan images discarded after inference. Langfuse traces 30 days. Account data until deletion or 24 months inactivity.
+
+### Per-PR GDPR review questions
+
+If a PR touches user data, its body answers these. If any answer is "yes" without follow-up, **the PR does not merge.**
+
+1. New personal-data processing? → lawful basis, privacy policy update, minimisation, retention, storage location.
+2. New third-party vendor? → DPA on file, data-residency declared, SCCs for non-EU, privacy policy mentions the vendor.
+3. Exposes stored personal data? → access / rectification / erasure / portability all reachable.
+4. New or modified consent prompt? → no dark patterns; unbundled; withdrawable.
+5. New data collection that should be opt-in? → default to opt-in for analytics, marketing, and any non-functional category.
+
+See ADR-0009 §"Per-PR GDPR review questions" for the canonical list. The Records of Processing Activities (RoPA) table in ADR-0009 is updated every time a new processing operation lands.
+
 ## i18n (English + German from day one)
 
 - All user-facing strings go through `next-intl`. No inline literals in JSX.
@@ -134,6 +161,12 @@ See `docs/adr/0007-i18n-en-de.md`.
 - Do NOT merge a component with English-only strings.
 - Do NOT let the LLM invent cross-beverage mappings beyond the deterministic table.
 - Do NOT introduce the old name "Kanpai" in any new artefact (code, copy, docs, branding). The exception is `docs/adr/0004-*`, `docs/NAMING-RESEARCH.md`, and `CONTEXT.md`'s Naming section, where it appears as historical context.
+- Do NOT add a field that holds personal data without documenting its lawful basis (in the Zod schema or in ADR-0009's RoPA).
+- Do NOT integrate a third-party SaaS vendor (auth, database, LLM, analytics, observability) without a signed DPA and, for non-EU vendors, SCCs on file.
+- Do NOT collect data "in case it's useful later". GDPR is opt-in per purpose; speculative collection violates Art. 5(1)(b) purpose limitation.
+- Do NOT design a consent flow with pre-ticked boxes, an Accept-all button more prominent than the Reject, or no path to withdraw. Equal prominence is mandatory; withdrawal must be as easy as giving.
+- Do NOT collect Art. 9 special-category data (health, religion, race, biometric identifiers, sexual orientation). The label-scan flow is bottle labels only — never re-purpose for faces.
+- Do NOT retain label-scan images past the inference call. Process-and-discard.
 
 ## Test review checklist
 Before merging any test Claude wrote, ask:

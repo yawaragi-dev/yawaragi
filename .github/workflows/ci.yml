@@ -19,6 +19,9 @@ concurrency:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  # Per ADR-0009 (data minimisation): we don't share build-time telemetry
+  # with Vercel without a DPA. See also `.env.example`.
+  NEXT_TELEMETRY_DISABLED: 1
 
 jobs:
   verify:
