@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { initialState, jump, start, tick, WORLD } from './engine'
+import { initialState, jump, releaseJump, start, tick, WORLD } from './engine'
 
 describe('start', () => {
   it('moves idle → running and resets distance', () => {
@@ -27,7 +27,10 @@ describe('jump', () => {
     const running = start(initialState())
     const first = jump(running)
     // simulate being mid-air
-    const midAir = { ...first, player: { y: 20, vy: first.player.vy / 2 } }
+    const midAir = {
+      ...first,
+      player: { y: 20, vy: first.player.vy / 2, jumpHoldRemaining: 0 },
+    }
     const second = jump(midAir)
     expect(second.player.vy).toBe(midAir.player.vy)
   })
@@ -141,7 +144,7 @@ describe('tick — collision', () => {
     const startState = start(initialState())
     const overhead = {
       ...startState,
-      player: { y: 40, vy: 0 },
+      player: { y: 40, vy: 0, jumpHoldRemaining: 0 },
       obstacles: [
         {
           kind: 'sake' as const,
@@ -181,5 +184,60 @@ describe('tick — milestones', () => {
     expect(after.milestones).toHaveLength(1)
     expect(after.justMilestone).toBe(true)
     expect(after.nextMilestoneIn).toBe(WORLD.milestoneInterval)
+  })
+
+  it('spawns a train milestone when distance crosses trainAtDistance', () => {
+    const s = start(initialState())
+    const justBefore = { ...s, distance: WORLD.trainAtDistance - 1 }
+    const after = tick(justBefore, { dt: 1, rand: () => 0.5 })
+    expect(after.milestones.some((m) => m.kind === 'train')).toBe(true)
+    expect(after.lastTrainDistance).toBe(WORLD.trainAtDistance)
+  })
+
+  it('spawns one train per trainAtDistance crossing, not on every tick', () => {
+    const s = start(initialState())
+    const past = {
+      ...s,
+      distance: WORLD.trainAtDistance + 100,
+      lastTrainDistance: WORLD.trainAtDistance,
+    }
+    const after = tick(past, { dt: 0.05, rand: () => 0.5 })
+    expect(after.milestones.filter((m) => m.kind === 'train')).toHaveLength(0)
+  })
+})
+
+describe('tick — variable jump (hold-to-jump-higher)', () => {
+  it('rises higher when jumpHeld is true vs false (same elapsed time)', () => {
+    const baseline = jump(start(initialState()))
+    let held = baseline
+    let tapped = baseline
+    for (let i = 0; i < 6; i++) {
+      held = tick(held, { dt: 0.02, rand: () => 0.5, jumpHeld: true })
+      tapped = tick(tapped, { dt: 0.02, rand: () => 0.5, jumpHeld: false })
+    }
+    expect(held.player.y).toBeGreaterThan(tapped.player.y)
+  })
+
+  it('releaseJump zeros the hold timer so subsequent ticks use full gravity', () => {
+    let s = jump(start(initialState()))
+    expect(s.player.jumpHoldRemaining).toBe(WORLD.maxJumpHoldTime)
+    s = releaseJump(s)
+    expect(s.player.jumpHoldRemaining).toBe(0)
+    // velocity decreases at full gravity from here even if jumpHeld arrives later
+    const before = s
+    const after = tick(s, { dt: 0.05, rand: () => 0.5, jumpHeld: true })
+    const expectedVy = before.player.vy - WORLD.gravity * 0.05
+    expect(after.player.vy).toBeCloseTo(expectedVy, 1)
+  })
+
+  it('hold has no effect once player is descending (vy <= 0)', () => {
+    const s = start(initialState())
+    const descending = {
+      ...s,
+      player: { y: 30, vy: -100, jumpHoldRemaining: WORLD.maxJumpHoldTime },
+    }
+    const after = tick(descending, { dt: 0.05, rand: () => 0.5, jumpHeld: true })
+    const expectedVy = -100 - WORLD.gravity * 0.05
+    expect(after.player.vy).toBeCloseTo(expectedVy, 1)
   })
 })

@@ -16,17 +16,20 @@ export const WORLD = {
   playerWidth: 16,
   playerHeight: 24,
   gravity: 1800, // world units / s²
-  jumpVelocity: 420, // world units / s — height ≈ 49 units, clears tallest obstacle (20)
+  jumpVelocity: 420, // world units / s — height ≈ 49 units without hold
+  jumpHoldGravityMultiplier: 0.45, // while ascending AND space held, gravity is this fraction
+  maxJumpHoldTime: 0.18, // seconds — caps the high-jump even if held forever
   initialSpeed: 220, // world units / s (obstacles drift left at this speed)
-  speedRamp: 7, // world units / s² (gradual difficulty)
-  maxSpeed: 460,
+  speedRamp: 10, // world units / s² (gradual difficulty)
+  maxSpeed: 720, // ~3.3× initial; reached around 50s of play
   spawnIntervalMin: 0.8, // seconds
   spawnIntervalMax: 1.9,
   milestoneInterval: 12, // seconds — Hachiko / scramble crossing / Shibuya tower drift past
+  trainAtDistance: 50000, // train cameo every Nth distance milestone
 } as const
 
 export type ObstacleKind = 'beer' | 'sake' | 'strongzero'
-export type MilestoneKind = 'hachiko' | 'scramble' | 'tower'
+export type MilestoneKind = 'hachiko' | 'scramble' | 'tower' | 'train'
 
 export interface Obstacle {
   kind: ObstacleKind
@@ -49,11 +52,13 @@ export interface GameState {
   distance: number // world units travelled
   best: number
   speed: number
-  player: { y: number; vy: number }
+  player: { y: number; vy: number; jumpHoldRemaining: number }
   obstacles: Obstacle[]
   milestones: Milestone[]
   nextSpawnIn: number // seconds
   nextMilestoneIn: number
+  /** Distance value of the last train cameo (so we only spawn one per crossing). */
+  lastTrainDistance: number
   /** Set when an obstacle was just dodged this tick. UI uses for sound. */
   justDodged: boolean
   /** Set when a milestone just passed this tick. UI uses for sound. */
@@ -70,6 +75,7 @@ const MILESTONE_DIMENSIONS: Record<MilestoneKind, { width: number; height: numbe
   hachiko: { width: 18, height: 22 },
   scramble: { width: 36, height: 4 },
   tower: { width: 14, height: 60 },
+  train: { width: 80, height: 22 },
 }
 
 export function initialState(best = 0): GameState {
@@ -78,11 +84,12 @@ export function initialState(best = 0): GameState {
     distance: 0,
     best,
     speed: WORLD.initialSpeed,
-    player: { y: WORLD.groundY, vy: 0 },
+    player: { y: WORLD.groundY, vy: 0, jumpHoldRemaining: 0 },
     obstacles: [],
     milestones: [],
     nextSpawnIn: WORLD.spawnIntervalMin,
     nextMilestoneIn: WORLD.milestoneInterval,
+    lastTrainDistance: 0,
     justDodged: false,
     justMilestone: false,
   }
@@ -98,7 +105,23 @@ export function jump(state: GameState): GameState {
   if (state.player.y > WORLD.groundY) return state // mid-air, no double-jump
   return {
     ...state,
-    player: { y: WORLD.groundY, vy: WORLD.jumpVelocity },
+    player: {
+      y: WORLD.groundY,
+      vy: WORLD.jumpVelocity,
+      jumpHoldRemaining: WORLD.maxJumpHoldTime,
+    },
+  }
+}
+
+/**
+ * Called when the user releases the jump key. Forces gravity back to normal
+ * so a short tap stays a small jump. Idempotent.
+ */
+export function releaseJump(state: GameState): GameState {
+  if (state.player.jumpHoldRemaining === 0) return state
+  return {
+    ...state,
+    player: { ...state.player, jumpHoldRemaining: 0 },
   }
 }
 
@@ -118,6 +141,8 @@ function pickObstacleKind(rand: number, distance: number): ObstacleKind {
 }
 
 function pickMilestoneKind(rand: number): MilestoneKind {
+  // Rotates only between non-train kinds. Train milestones are spawned
+  // separately by distance crossings (see tick).
   const kinds: MilestoneKind[] = ['hachiko', 'scramble', 'tower']
   return kinds[Math.floor(rand * kinds.length) % kinds.length]
 }
@@ -141,6 +166,8 @@ function intersects(
 export interface TickInput {
   dt: number // seconds since last tick
   rand: () => number // 0..1
+  /** Whether the jump key is currently held. Optional for tests. */
+  jumpHeld?: boolean
 }
 
 export function tick(state: GameState, input: TickInput): GameState {
@@ -148,18 +175,24 @@ export function tick(state: GameState, input: TickInput): GameState {
     return { ...state, justDodged: false, justMilestone: false }
   }
 
-  const { dt, rand } = input
+  const { dt, rand, jumpHeld = false } = input
 
   // Speed ramp
   const speed = Math.min(state.speed + WORLD.speedRamp * dt, WORLD.maxSpeed)
 
-  // Player physics
-  let { y, vy } = state.player
-  vy -= WORLD.gravity * dt
+  // Player physics — variable gravity while ascending and holding jump
+  let { y, vy, jumpHoldRemaining } = state.player
+  const stillHolding = jumpHeld && jumpHoldRemaining > 0 && vy > 0
+  const effectiveGravity = stillHolding
+    ? WORLD.gravity * WORLD.jumpHoldGravityMultiplier
+    : WORLD.gravity
+  vy -= effectiveGravity * dt
   y += vy * dt
+  jumpHoldRemaining = Math.max(0, jumpHoldRemaining - dt)
   if (y < WORLD.groundY) {
     y = WORLD.groundY
     vy = 0
+    jumpHoldRemaining = 0
   }
 
   // Drift obstacles left, drop any that left the screen
@@ -220,6 +253,21 @@ export function tick(state: GameState, input: TickInput): GameState {
   // Distance accrued this tick
   const distance = state.distance + speed * dt
 
+  // Train cameo every WORLD.trainAtDistance distance units crossed.
+  let lastTrainDistance = state.lastTrainDistance
+  const nextTrainThreshold = lastTrainDistance + WORLD.trainAtDistance
+  if (distance >= nextTrainThreshold) {
+    const dim = MILESTONE_DIMENSIONS.train
+    nextMilestones.push({
+      kind: 'train',
+      x: WORLD.width + 40,
+      width: dim.width,
+      height: dim.height,
+    })
+    lastTrainDistance = nextTrainThreshold
+    justMilestone = true
+  }
+
   // Collision check
   const playerX = WORLD.playerX
   const collided = nextObstacles.some((o) =>
@@ -242,12 +290,13 @@ export function tick(state: GameState, input: TickInput): GameState {
       status: 'over',
       best,
       distance,
-      player: { y, vy },
+      player: { y, vy, jumpHoldRemaining: 0 },
       obstacles: nextObstacles,
       milestones: nextMilestones,
       speed,
       nextSpawnIn,
       nextMilestoneIn,
+      lastTrainDistance,
       justDodged: false,
       justMilestone: false,
     }
@@ -258,11 +307,12 @@ export function tick(state: GameState, input: TickInput): GameState {
     distance,
     best: state.best,
     speed,
-    player: { y, vy },
+    player: { y, vy, jumpHoldRemaining },
     obstacles: nextObstacles,
     milestones: nextMilestones,
     nextSpawnIn,
     nextMilestoneIn,
+    lastTrainDistance,
     justDodged,
     justMilestone,
   }

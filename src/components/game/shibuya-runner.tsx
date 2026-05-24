@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import {
   initialState,
   jump,
+  releaseJump,
   start,
   tick,
   WORLD,
@@ -23,6 +24,7 @@ import {
   SKYLINE_BUILDINGS,
   STRONG_ZERO,
   TOWER,
+  TRAIN,
   type Sprite,
 } from './sprites'
 import { SoundEngine } from './sounds'
@@ -43,6 +45,7 @@ const MILESTONE_SPRITE: Record<MilestoneKind, Sprite> = {
   hachiko: HACHIKO,
   scramble: SCRAMBLE,
   tower: TOWER,
+  train: TRAIN,
 }
 
 const SKY_TOP = '#1e1b4b' // indigo-950 — Tokyo night sky
@@ -209,6 +212,7 @@ export function ShibuyaRunner() {
   const stateRef = useRef<GameState>(initialState())
   const frameRef = useRef(0)
   const soundsRef = useRef<SoundEngine>(new SoundEngine())
+  const jumpHeldRef = useRef(false)
   const [ui, setUi] = useState<UiState>({ status: 'idle', distance: 0, best: 0 })
   const [reducedMotion, setReducedMotion] = useState(false)
   const [showAnyway, setShowAnyway] = useState(false)
@@ -244,7 +248,11 @@ export function ShibuyaRunner() {
       frameRef.current += 1
 
       const previous = stateRef.current
-      const next = tick(previous, { dt, rand: Math.random })
+      const next = tick(previous, {
+        dt,
+        rand: Math.random,
+        jumpHeld: jumpHeldRef.current,
+      })
       stateRef.current = next
 
       if (next.justDodged) soundsRef.current.play('dodge')
@@ -281,17 +289,29 @@ export function ShibuyaRunner() {
   useEffect(() => {
     if (reducedMotion && !showAnyway) return
 
-    const onKey = (e: KeyboardEvent) => {
+    const onKeyDown = (e: KeyboardEvent) => {
       if (e.code === 'Space' || e.code === 'ArrowUp') {
         e.preventDefault()
-        applyInput()
+        if (e.repeat) return
+        jumpHeldRef.current = true
+        applyJumpStart()
       }
     }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.code === 'Space' || e.code === 'ArrowUp') {
+        jumpHeldRef.current = false
+        stateRef.current = releaseJump(stateRef.current)
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    window.addEventListener('keyup', onKeyUp)
+    return () => {
+      window.removeEventListener('keydown', onKeyDown)
+      window.removeEventListener('keyup', onKeyUp)
+    }
   }, [reducedMotion, showAnyway])
 
-  function applyInput() {
+  function applyJumpStart() {
     const state = stateRef.current
     if (state.status === 'idle' || state.status === 'over') {
       const next = start(state)
@@ -303,6 +323,11 @@ export function ShibuyaRunner() {
       stateRef.current = next
       if (state.player.y === 0) soundsRef.current.play('jump')
     }
+  }
+
+  function endHoldFromTap() {
+    jumpHeldRef.current = false
+    stateRef.current = releaseJump(stateRef.current)
   }
 
   if (reducedMotion && !showAnyway) {
@@ -343,9 +368,16 @@ export function ShibuyaRunner() {
       </div>
       <button
         type="button"
-        onClick={applyInput}
+        onPointerDown={(e) => {
+          e.preventDefault()
+          jumpHeldRef.current = true
+          applyJumpStart()
+        }}
+        onPointerUp={endHoldFromTap}
+        onPointerCancel={endHoldFromTap}
+        onPointerLeave={endHoldFromTap}
         aria-label={t('canvasLabel')}
-        className="block rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 overflow-hidden cursor-pointer"
+        className="block rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 overflow-hidden cursor-pointer touch-none"
         data-testid="game-canvas-wrap"
       >
         <canvas
