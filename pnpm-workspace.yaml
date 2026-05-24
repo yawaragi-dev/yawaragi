@@ -2,6 +2,7 @@ allowBuilds:
   '@clerk/shared': true
   '@parcel/watcher': true
   '@swc/core': true
+  esbuild: true
   msw: true
   sharp: false
   unrs-resolver: false
