@@ -234,6 +234,19 @@ describe('tick — boss', () => {
     const tapApexY = WORLD.jumpVelocity ** 2 / (2 * WORLD.gravity)
     expect(tapApexY).toBeLessThan(32)
   })
+
+  it('the held jump apex is strictly above the boss height (clearable)', () => {
+    // Two-phase analytic apex:
+    //   Phase 1 (hold): reduced gravity for maxJumpHoldTime
+    //   Phase 2 (release): full gravity until vy = 0
+    const v0 = WORLD.jumpVelocity
+    const tHold = WORLD.maxJumpHoldTime
+    const gHold = WORLD.gravity * WORLD.jumpHoldGravityMultiplier
+    const vyAtRelease = v0 - gHold * tHold
+    const yAtRelease = v0 * tHold - 0.5 * gHold * tHold * tHold
+    const heldApex = yAtRelease + (vyAtRelease * vyAtRelease) / (2 * WORLD.gravity)
+    expect(heldApex).toBeGreaterThan(32)
+  })
 })
 
 describe('tick — variable jump (hold-to-jump-higher)', () => {

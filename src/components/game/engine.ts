@@ -16,9 +16,9 @@ export const WORLD = {
   playerWidth: 16,
   playerHeight: 24,
   gravity: 1800, // world units / s²
-  jumpVelocity: 315, // world units / s — tap height ≈ 27 units; clears the small drinks
-  jumpHoldGravityMultiplier: 0.45, // while ascending AND space held, gravity is this fraction
-  maxJumpHoldTime: 0.18, // seconds — caps the high-jump even if held forever (≈52 units)
+  jumpVelocity: 315, // world units / s — tap height ≈ 27.5 units; clears the small drinks
+  jumpHoldGravityMultiplier: 0.30, // while ascending AND space held, gravity is this fraction
+  maxJumpHoldTime: 0.26, // seconds — caps the high-jump (held apex ≈72 units, +40% over the previous tuning)
   initialSpeed: 220, // world units / s (obstacles drift left at this speed)
   speedRamp: 10, // world units / s² (gradual difficulty)
   maxSpeed: 720, // ~3.3× initial; reached around 50s of play
