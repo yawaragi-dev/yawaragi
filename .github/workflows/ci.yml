@@ -22,6 +22,14 @@ env:
   # Per ADR-0009 (data minimisation): we don't share build-time telemetry
   # with Vercel without a DPA. See also `.env.example`.
   NEXT_TELEMETRY_DISABLED: 1
+  # Bypass minimumReleaseAge (pnpm-workspace.yaml) for ALL pnpm commands
+  # in CI. pnpm 11 re-runs the lockfile supply-chain audit on every command
+  # (not just install), which would fail any CI run whenever the lockfile
+  # contains a package version younger than the quarantine. The lockfile is
+  # the source of truth here — versions in it were already vetted at
+  # resolution time (in local dev or via Dependabot's cooldown). The
+  # quarantine still applies to local resolutions and Dependabot proposals.
+  npm_config_minimum_release_age: 0
 
 jobs:
   verify:
@@ -39,14 +47,7 @@ jobs:
           node-version: 22
           cache: pnpm
 
-      # Bypass minimumReleaseAge (pnpm-workspace.yaml) during CI install.
-      # The lockfile is the source of truth here — any version that made it
-      # into the lockfile already passed the quarantine at resolution time
-      # (in local dev or via Dependabot's cooldown). pnpm 11's lockfile audit
-      # would otherwise re-check every entry against the policy on every CI
-      # run, surfacing 600+ false positives whenever the lockfile contains
-      # any package version < 14 days old.
-      - run: pnpm install --frozen-lockfile --config.minimumReleaseAge=0
+      - run: pnpm install --frozen-lockfile
 
       - run: pnpm typecheck
 
