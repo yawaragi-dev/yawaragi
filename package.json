@@ -16,7 +16,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "i18n:audit": "tsx scripts/audit-i18n-promotional.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.77",
@@ -55,6 +56,7 @@
     "eslint-config-next": "16.2.6",
     "happy-dom": "^20.9.0",
     "tailwindcss": "^4",
+    "tsx": "^4.22.3",
     "typescript": "^5",
     "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^4.1.6"
