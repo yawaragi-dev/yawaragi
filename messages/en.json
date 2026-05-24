@@ -30,5 +30,10 @@
     "title": "Come back when you are 18",
     "body": "Yawaragi is an information service about Japanese sake. German law requires us to limit alcohol-related content to adults. You are welcome to return once you are 18 or older.",
     "imprintLink": "Read our imprint"
+  },
+  "comingSoon": {
+    "title": "Coming soon",
+    "body": "Yawaragi is preparing its launch for German-speaking visitors. The English preview is available today; the German edition follows once the legal foundations (Impressum, privacy) are in place.",
+    "switchToEn": "Open the English preview"
   }
 }

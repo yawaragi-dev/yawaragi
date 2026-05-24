@@ -6,6 +6,8 @@
 > - **§3 (ADRs)** executed: ADR-001 (naming) → `docs/adr/0004-project-name-yawaragi.md`; ADR-002 (provenance) → `docs/adr/0005-source-provenance.md`; ADR-003 (age gate) → `docs/adr/0006-age-gate-jmstv.md`; ADR-004 (i18n) → `docs/adr/0007-i18n-en-de.md`.
 > - **§4–§7** remain forward-looking — the phase tickets, the Phase 7.5 community plan, and the pre-go-live checklist itself are not yet executed.
 > - The project was renamed from "Kanpai" to **Yawaragi** during this ingestion. "Kanpai" appears below only where the historical name is load-bearing (the Kanpai London collision; the original ADR-001 discussion).
+>
+> **Update (2026-05-24):** Launch strategy is now EN-first; `/de/` renders a coming-soon page until the Impressum (§5 TMG / §5 DDG) is in place. See [ADR-0008](./adr/0008-en-first-launch-strategy.md). The pre-go-live checklist's Legal & compliance section (§7.1) treats Impressum as the **last gate** before any DACH-reachable deployment.
 
 This document folds the market-research caveats into the build plan as **build-time constraints** (so they shape every PR rather than being bolted on at the end) and **a pre-go-live gate** (so nothing ships publicly until it's earned).
 
@@ -489,9 +491,9 @@ A hard gate. **No public launch artefact** (blog post submitted, Show HN, Linked
 
 - [x] ADR-0004 (naming) is resolved — project renamed to Yawaragi (2026-05-22). Stage-2 trademark clearance still pending; see ADR-0004 Stage-2 action items.
 - [ ] ADR-0006 (age gate) is implemented; verified that no sake content renders before acceptance.
-- [ ] Impressum (§5 TMG) page is live and accurate.
+- [ ] Impressum (§5 TMG / §5 DDG) page is live and accurate.
   - **Page structure ships during Phase 0 (issue #4 / Slice 3) with placeholder `name` / `address` / `email` values.** Real values are deliberately deferred — the maintainer will not disclose personal home address. Plan: subscribe to an Impressum service (impressum-service.de, Tribee, or equivalent) for a usable postal address, then backfill `messages/{en,de}.json` and ship.
-  - **This is the LAST item to complete before go-live.** No public deployment to a DACH-reachable domain happens until the real values are in place; placeholder Impressum + DACH traffic = §5 TMG violation. Until then, the project either stays private or is deployed without a DE-targeted domain.
+  - **This is the LAST item to complete before the DACH launch.** Per [ADR-0008](./adr/0008-en-first-launch-strategy.md), the project ships publicly as EN-first; `/de/` renders coming-soon until this gate is green. Flipping DE live = subscribe to the service, fill in the Impressum/Privacy copy in `messages/{en,de}.json`, add `'de'` to `LAUNCHED_LOCALES` in `src/app/[locale]/page.tsx`. Until then, the EN-only deployment can ship on a `.dev` / `.app` / `.com` domain — the §5 DDG "directed at Germany" test is weak in that configuration.
 - [ ] GDPR-compliant privacy policy and cookie banner are live; cookie banner is functionally separate from age gate.
 - [ ] LLM image processing on scan flow does not retain images beyond the inference call (verified by reading the API client code).
 - [ ] No promotional copy anywhere (manual scan: search the codebase and translations for "buy", "kaufen", "limited", "exclusive", "exklusiv", "miss", "verpass").
