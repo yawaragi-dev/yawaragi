@@ -39,7 +39,14 @@ jobs:
           node-version: 22
           cache: pnpm
 
-      - run: pnpm install --frozen-lockfile
+      # Bypass minimumReleaseAge (pnpm-workspace.yaml) during CI install.
+      # The lockfile is the source of truth here — any version that made it
+      # into the lockfile already passed the quarantine at resolution time
+      # (in local dev or via Dependabot's cooldown). pnpm 11's lockfile audit
+      # would otherwise re-check every entry against the policy on every CI
+      # run, surfacing 600+ false positives whenever the lockfile contains
+      # any package version < 14 days old.
+      - run: pnpm install --frozen-lockfile --config.minimumReleaseAge=0
 
       - run: pnpm typecheck
 
