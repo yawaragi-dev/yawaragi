@@ -68,14 +68,14 @@ The supervisory authority is determined by where the controller's main establish
 
 | Maintainer location | Competent authority | Contact |
 |---|---|---|
-| **Berlin** (current default) | Berliner Beauftragte für Datenschutz und Informationsfreiheit (BlnBDI) | <https://www.datenschutz-berlin.de/> — online breach report form |
-| Outside Berlin, within Germany | The Land's data protection authority (e.g. LfDI Baden-Württemberg, BayLDA for Bavaria) | Look up at <https://www.bfdi.bund.de/DE/Service/Anschriften/Laender/Laender-node.html> |
+| **Bavaria** (current default — maintainer in Munich) | Bayerisches Landesamt für Datenschutzaufsicht (BayLDA), Ansbach | <https://www.lda.bayern.de/> — has a Datenpannenmeldung (breach report) form under their Service section |
+| Outside Bavaria, within Germany | The Land's data protection authority (e.g. BlnBDI for Berlin, LfDI Baden-Württemberg, HmbBfDI for Hamburg) | Directory of Länder authorities is maintained by the BfDI at <https://www.bfdi.bund.de/> |
 | Outside Germany, within EU | Member-state supervisory authority where the maintainer is established | EDPB list at <https://edpb.europa.eu/about-edpb/about-edpb/members_en> |
 | Cross-border processing | One-stop-shop lead authority per Art. 56 | Determined with the lead authority |
 
 > **Confirm with counsel before filing.** Selecting the wrong authority delays the response and is itself a procedural issue. The maintainer's current residence is the working assumption; verify on the day.
 
-The BlnBDI also accepts paper / fax filings, but the online form is faster and produces a structured record. The BfDI (federal commissioner) is **not** the right authority for a private-sector controller in Berlin — that's for federal bodies, postal/telecom, and federally-regulated sectors.
+BayLDA also accepts paper and email filings, but the online form is faster and produces a structured record they can act on. The BfDI (federal commissioner) is **not** the right authority for a private-sector controller in Bavaria — the BfDI's remit is federal bodies, postal/telecom, and federally-regulated sectors. The Bayerischer Landesbeauftragter für den Datenschutz (BayLfD) is also **not** correct — that office is for Bavarian public-sector bodies (state ministries, municipalities). Private-sector = BayLDA.
 
 ### What the Art. 33 report must contain
 
@@ -244,7 +244,7 @@ Open questions and pending tasks (track in `docs/incidents/` as they accumulate)
 - GDPR Art. 33 — Notification of a personal data breach to the supervisory authority
 - GDPR Art. 34 — Communication of a personal data breach to the data subject
 - [EDPB Guidelines 9/2022 on personal data breach notification under GDPR](https://edpb.europa.eu/our-work-tools/our-documents/guidelines/guidelines-92022-personal-data-breach-notification-under_en)
-- [BlnBDI breach reporting page](https://www.datenschutz-berlin.de/)
+- [BayLDA — Bayerisches Landesamt für Datenschutzaufsicht (homepage; Datenpannenmeldung under Service)](https://www.lda.bayern.de/)
 - ADR-0009 (GDPR compliance posture) — the controlling decision
 - PRE-GO-LIVE §7.1 — the launch gate this runbook satisfies
 - deploying.md §4 — vendor DPA matrix
