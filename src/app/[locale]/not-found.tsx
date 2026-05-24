@@ -1,5 +1,6 @@
 import { getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
+import { ShibuyaRunner } from '@/components/game/shibuya-runner'
 
 export default async function NotFound() {
   const t = await getTranslations('notFound')
@@ -21,6 +22,11 @@ export default async function NotFound() {
       >
         {t('home')}
       </Link>
+      <hr className="border-zinc-200 dark:border-zinc-800 my-2" />
+      <p className="text-sm text-zinc-600 dark:text-zinc-400 max-w-prose">
+        {t('game.intro')}
+      </p>
+      <ShibuyaRunner />
     </main>
   )
 }
