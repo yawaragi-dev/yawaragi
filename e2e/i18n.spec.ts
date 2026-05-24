@@ -69,6 +69,13 @@ test.describe('locale switcher', () => {
     browser,
   }) => {
     const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([
+      {
+        name: 'yawaragi_age_gate',
+        value: JSON.stringify({ v: 1, ts: Date.now() }),
+        url: 'http://localhost:3000',
+      },
+    ])
     const page = await context.newPage()
     await page.goto('/en/')
 
