@@ -1,6 +1,9 @@
+import { cookies } from 'next/headers'
 import { setRequestLocale } from 'next-intl/server'
 import { getTranslations } from 'next-intl/server'
 import { LocaleSwitcher } from '@/components/layout/locale-switcher'
+import { AgeGate } from '@/components/legal/age-gate'
+import { hasAcceptedAgeGate } from '@/lib/legal/age-gate-cookie'
 
 export default async function LandingPage({
   params,
@@ -10,6 +13,8 @@ export default async function LandingPage({
   const { locale } = await params
   setRequestLocale(locale)
   const t = await getTranslations('landing')
+  const cookieJar = await cookies()
+  const gateAccepted = hasAcceptedAgeGate(cookieJar)
 
   return (
     <div className="flex flex-col flex-1 bg-zinc-50 font-sans dark:bg-black">
@@ -50,6 +55,7 @@ export default async function LandingPage({
           </article>
         </section>
       </main>
+      {!gateAccepted && <AgeGate />}
     </div>
   )
 }

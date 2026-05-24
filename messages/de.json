@@ -19,5 +19,16 @@
     "label": "Sprache",
     "english": "English",
     "german": "Deutsch"
+  },
+  "ageGate": {
+    "title": "Bist du 18 oder älter?",
+    "description": "Das deutsche Recht verpflichtet uns, dein Alter zu bestätigen, bevor wir Informationen zu Sake zeigen. Yawaragi ist ein Werkzeug zum Entdecken und Lernen — kein Kauf, kein Bezahlvorgang.",
+    "accept": "Ich bin 18 oder älter",
+    "decline": "Ich bin unter 18"
+  },
+  "under18": {
+    "title": "Komm wieder, wenn du 18 bist",
+    "body": "Yawaragi ist ein Informationsdienst über japanischen Sake. Das deutsche Recht verpflichtet uns, alkoholbezogene Inhalte auf Erwachsene zu beschränken. Du bist willkommen, sobald du 18 oder älter bist.",
+    "imprintLink": "Zum Impressum"
   }
 }
