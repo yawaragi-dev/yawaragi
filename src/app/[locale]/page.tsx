@@ -1,13 +1,10 @@
 import { cookies } from 'next/headers'
 import { getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
+import { isLaunched } from '@/i18n/launch-state'
 import { LocaleSwitcher } from '@/components/layout/locale-switcher'
 import { AgeGate } from '@/components/legal/age-gate'
 import { hasAcceptedAgeGate } from '@/lib/legal/age-gate-cookie'
-
-// Per ADR-0008, only `en` is publicly launched. `de` shows a coming-soon page
-// until the Impressum (§5 TMG) and DE privacy copy are in place.
-const LAUNCHED_LOCALES = new Set(['en'])
 
 export default async function LandingPage({
   params,
@@ -16,7 +13,7 @@ export default async function LandingPage({
 }) {
   const { locale } = await params
 
-  if (!LAUNCHED_LOCALES.has(locale)) {
+  if (!isLaunched(locale)) {
     return <ComingSoonPage />
   }
 

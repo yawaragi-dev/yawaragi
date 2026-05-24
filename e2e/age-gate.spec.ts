@@ -139,6 +139,27 @@ test.describe('age gate enforcement', () => {
 
     await context.close()
   })
+
+  test('/de/sake/foo with the gate cookie accepted ALSO lands on coming-soon', async ({
+    browser,
+  }) => {
+    const context = await browser.newContext({ locale: 'de-DE' })
+    await context.addCookies([
+      {
+        name: 'yawaragi_age_gate',
+        value: JSON.stringify({ v: 1, ts: Date.now() }),
+        url: 'http://localhost:3000',
+      },
+    ])
+    const page = await context.newPage()
+
+    const response = await page.goto('/de/sake/foo')
+    expect(response?.status()).not.toBe(404)
+    await expect(page.getByTestId('coming-soon')).toBeVisible()
+    await expect(page.getByTestId('age-gate')).toBeHidden()
+
+    await context.close()
+  })
 })
 
 test.describe('age gate a11y', () => {
