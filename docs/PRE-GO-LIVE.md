@@ -490,6 +490,8 @@ A hard gate. **No public launch artefact** (blog post submitted, Show HN, Linked
 - [x] ADR-0004 (naming) is resolved — project renamed to Yawaragi (2026-05-22). Stage-2 trademark clearance still pending; see ADR-0004 Stage-2 action items.
 - [ ] ADR-0006 (age gate) is implemented; verified that no sake content renders before acceptance.
 - [ ] Impressum (§5 TMG) page is live and accurate.
+  - **Page structure ships during Phase 0 (issue #4 / Slice 3) with placeholder `name` / `address` / `email` values.** Real values are deliberately deferred — the maintainer will not disclose personal home address. Plan: subscribe to an Impressum service (impressum-service.de, Tribee, or equivalent) for a usable postal address, then backfill `messages/{en,de}.json` and ship.
+  - **This is the LAST item to complete before go-live.** No public deployment to a DACH-reachable domain happens until the real values are in place; placeholder Impressum + DACH traffic = §5 TMG violation. Until then, the project either stays private or is deployed without a DE-targeted domain.
 - [ ] GDPR-compliant privacy policy and cookie banner are live; cookie banner is functionally separate from age gate.
 - [ ] LLM image processing on scan flow does not retain images beyond the inference call (verified by reading the API client code).
 - [ ] No promotional copy anywhere (manual scan: search the codebase and translations for "buy", "kaufen", "limited", "exclusive", "exklusiv", "miss", "verpass").
