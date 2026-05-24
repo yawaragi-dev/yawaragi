@@ -1,3 +1,18 @@
+# Refuse to install any package version that was published less than 14 days
+# ago. Defends against Shai-Hulud-style supply-chain attacks where a
+# maintainer account is compromised, a malicious version is published, and
+# the community has not yet flagged it. The two-week quarantine gives socket.dev,
+# Snyk, GitHub Advisories etc. time to surface the compromise before we pull.
+#
+# If a CVE forces an urgent newer version, either:
+#   (a) set this to 0 temporarily for one install (then revert), or
+#   (b) add the package to a `minimumReleaseAgeExclude` list here.
+minimumReleaseAge: 1209600
+
+# Install-script approval. Each entry must be explicitly true or false; pnpm
+# refuses to run install scripts for unapproved packages. Another piece of the
+# supply-chain defense (prevents arbitrary code execution on `pnpm install`
+# from a freshly compromised dep).
 allowBuilds:
   '@clerk/shared': true
   '@parcel/watcher': true
