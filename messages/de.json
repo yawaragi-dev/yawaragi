@@ -35,5 +35,17 @@
     "title": "Bald verfügbar",
     "body": "Yawaragi bereitet den Start für deutschsprachige Besucher:innen vor. Die englische Vorabversion ist heute schon zugänglich; die deutsche Edition folgt, sobald die rechtlichen Grundlagen (Impressum, Datenschutz) bereitstehen.",
     "switchToEn": "Zur englischen Vorabversion"
+  },
+  "cookieBanner": {
+    "label": "Cookie-Einstellungen",
+    "description": "Wir nutzen einen kleinen Satz Cookies, damit Yawaragi funktioniert, und – mit deiner Einwilligung – um zu erfahren, wie es genutzt wird. Essenzielle Cookies sind immer aktiv; den Rest entscheidest du.",
+    "categoriesLegend": "Cookie-Kategorien",
+    "categoryNecessary": "Essenziell (immer aktiv)",
+    "categoryAnalytics": "Analyse",
+    "categoryMarketing": "Marketing",
+    "acceptAll": "Alle akzeptieren",
+    "rejectNonEssential": "Nicht-essenzielle ablehnen",
+    "customize": "Anpassen",
+    "savePreferences": "Einstellungen speichern"
   }
 }

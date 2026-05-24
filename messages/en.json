@@ -35,5 +35,17 @@
     "title": "Coming soon",
     "body": "Yawaragi is preparing its launch for German-speaking visitors. The English preview is available today; the German edition follows once the legal foundations (Impressum, privacy) are in place.",
     "switchToEn": "Open the English preview"
+  },
+  "cookieBanner": {
+    "label": "Cookie preferences",
+    "description": "We use a small set of cookies to make Yawaragi work and, with your consent, to learn how it is used. Essential cookies are always on; you decide the rest.",
+    "categoriesLegend": "Cookie categories",
+    "categoryNecessary": "Essential (always on)",
+    "categoryAnalytics": "Analytics",
+    "categoryMarketing": "Marketing",
+    "acceptAll": "Accept all",
+    "rejectNonEssential": "Reject non-essential",
+    "customize": "Customize",
+    "savePreferences": "Save preferences"
   }
 }
