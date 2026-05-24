@@ -4,10 +4,14 @@
 # the community has not yet flagged it. The two-week quarantine gives socket.dev,
 # Snyk, GitHub Advisories etc. time to surface the compromise before we pull.
 #
+# Unit is MINUTES (verified empirically against pnpm 11.3.0's error output;
+# pnpm docs say "seconds" but the runtime treats it as minutes). 14 days =
+# 14 * 24 * 60 = 20160.
+#
 # If a CVE forces an urgent newer version, either:
 #   (a) set this to 0 temporarily for one install (then revert), or
 #   (b) add the package to a `minimumReleaseAgeExclude` list here.
-minimumReleaseAge: 1209600
+minimumReleaseAge: 20160
 
 # Install-script approval. Each entry must be explicitly true or false; pnpm
 # refuses to run install scripts for unapproved packages. Another piece of the
