@@ -80,6 +80,10 @@ const UNGATED_LOCALE_PATHS: ReadonlySet<string> = new Set([
 export function isGatedPath(pathname: string): boolean {
   if (pathname === '/') return false
   if (pathname.startsWith('/_next/')) return false
+  // `/_vercel/*` is the Vercel Analytics endpoint. We don't currently use
+  // Vercel Analytics — enabling it requires an ADR-0009 review (new vendor,
+  // DPA, privacy-policy update). Allowlisting in advance so a future
+  // integration doesn't accidentally get gated.
   if (pathname.startsWith('/_vercel/')) return false
   if (pathname.startsWith('/api/')) return false
   if (pathname === '/favicon.ico') return false
