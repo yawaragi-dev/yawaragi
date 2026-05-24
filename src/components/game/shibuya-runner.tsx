@@ -15,6 +15,7 @@ import {
 } from './engine'
 import {
   BEER,
+  BOSS_LANTERN,
   HACHIKO,
   SAKE,
   SALARYMAN_JUMPING,
@@ -39,6 +40,7 @@ const OBSTACLE_SPRITE: Record<ObstacleKind, Sprite> = {
   beer: BEER,
   sake: SAKE,
   strongzero: STRONG_ZERO,
+  boss: BOSS_LANTERN,
 }
 
 const MILESTONE_SPRITE: Record<MilestoneKind, Sprite> = {
@@ -257,6 +259,7 @@ export function ShibuyaRunner() {
 
       if (next.justDodged) soundsRef.current.play('dodge')
       if (next.justMilestone) soundsRef.current.play('milestone')
+      if (next.justBoss) soundsRef.current.play('boss')
       if (previous.status === 'running' && next.status === 'over') {
         soundsRef.current.play('gameover')
         if (next.best > previous.best) saveBest(next.best)

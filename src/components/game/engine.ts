@@ -16,9 +16,9 @@ export const WORLD = {
   playerWidth: 16,
   playerHeight: 24,
   gravity: 1800, // world units / s²
-  jumpVelocity: 420, // world units / s — height ≈ 49 units without hold
+  jumpVelocity: 315, // world units / s — tap height ≈ 27 units; clears the small drinks
   jumpHoldGravityMultiplier: 0.45, // while ascending AND space held, gravity is this fraction
-  maxJumpHoldTime: 0.18, // seconds — caps the high-jump even if held forever
+  maxJumpHoldTime: 0.18, // seconds — caps the high-jump even if held forever (≈52 units)
   initialSpeed: 220, // world units / s (obstacles drift left at this speed)
   speedRamp: 10, // world units / s² (gradual difficulty)
   maxSpeed: 720, // ~3.3× initial; reached around 50s of play
@@ -26,9 +26,10 @@ export const WORLD = {
   spawnIntervalMax: 1.9,
   milestoneInterval: 12, // seconds — Hachiko / scramble crossing / Shibuya tower drift past
   trainAtDistance: 50000, // train cameo every Nth distance milestone
+  bossAtDistance: 10000, // tall boss obstacle every Nth distance — requires hold-jump
 } as const
 
-export type ObstacleKind = 'beer' | 'sake' | 'strongzero'
+export type ObstacleKind = 'beer' | 'sake' | 'strongzero' | 'boss'
 export type MilestoneKind = 'hachiko' | 'scramble' | 'tower' | 'train'
 
 export interface Obstacle {
@@ -59,16 +60,21 @@ export interface GameState {
   nextMilestoneIn: number
   /** Distance value of the last train cameo (so we only spawn one per crossing). */
   lastTrainDistance: number
+  /** Distance value of the last boss spawn. */
+  lastBossDistance: number
   /** Set when an obstacle was just dodged this tick. UI uses for sound. */
   justDodged: boolean
   /** Set when a milestone just passed this tick. UI uses for sound. */
   justMilestone: boolean
+  /** Set when a boss obstacle just spawned this tick. UI uses for sound. */
+  justBoss: boolean
 }
 
 const OBSTACLE_DIMENSIONS: Record<ObstacleKind, { width: number; height: number }> = {
   beer: { width: 12, height: 16 },
   sake: { width: 8, height: 20 },
   strongzero: { width: 10, height: 18 },
+  boss: { width: 18, height: 32 }, // akachōchin lantern — requires held jump (tap clears 27)
 }
 
 const MILESTONE_DIMENSIONS: Record<MilestoneKind, { width: number; height: number }> = {
@@ -90,8 +96,10 @@ export function initialState(best = 0): GameState {
     nextSpawnIn: WORLD.spawnIntervalMin,
     nextMilestoneIn: WORLD.milestoneInterval,
     lastTrainDistance: 0,
+    lastBossDistance: 0,
     justDodged: false,
     justMilestone: false,
+    justBoss: false,
   }
 }
 
@@ -172,7 +180,7 @@ export interface TickInput {
 
 export function tick(state: GameState, input: TickInput): GameState {
   if (state.status !== 'running') {
-    return { ...state, justDodged: false, justMilestone: false }
+    return { ...state, justDodged: false, justMilestone: false, justBoss: false }
   }
 
   const { dt, rand, jumpHeld = false } = input
@@ -268,6 +276,22 @@ export function tick(state: GameState, input: TickInput): GameState {
     justMilestone = true
   }
 
+  // Boss obstacle every WORLD.bossAtDistance distance units crossed.
+  let lastBossDistance = state.lastBossDistance
+  let justBoss = false
+  const nextBossThreshold = lastBossDistance + WORLD.bossAtDistance
+  if (distance >= nextBossThreshold) {
+    const dim = OBSTACLE_DIMENSIONS.boss
+    nextObstacles.push({
+      kind: 'boss',
+      x: WORLD.width + 30,
+      width: dim.width,
+      height: dim.height,
+    })
+    lastBossDistance = nextBossThreshold
+    justBoss = true
+  }
+
   // Collision check
   const playerX = WORLD.playerX
   const collided = nextObstacles.some((o) =>
@@ -297,8 +321,10 @@ export function tick(state: GameState, input: TickInput): GameState {
       nextSpawnIn,
       nextMilestoneIn,
       lastTrainDistance,
+      lastBossDistance,
       justDodged: false,
       justMilestone: false,
+      justBoss: false,
     }
   }
 
@@ -313,7 +339,9 @@ export function tick(state: GameState, input: TickInput): GameState {
     nextSpawnIn,
     nextMilestoneIn,
     lastTrainDistance,
+    lastBossDistance,
     justDodged,
     justMilestone,
+    justBoss,
   }
 }

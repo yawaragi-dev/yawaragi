@@ -206,6 +206,36 @@ describe('tick — milestones', () => {
   })
 })
 
+describe('tick — boss', () => {
+  it('spawns a boss obstacle when distance crosses bossAtDistance', () => {
+    const s = start(initialState())
+    const justBefore = { ...s, distance: WORLD.bossAtDistance - 1 }
+    const after = tick(justBefore, { dt: 1, rand: () => 0.5 })
+    expect(after.obstacles.some((o) => o.kind === 'boss')).toBe(true)
+    expect(after.justBoss).toBe(true)
+    expect(after.lastBossDistance).toBe(WORLD.bossAtDistance)
+  })
+
+  it('only spawns one boss per crossing, not every subsequent tick', () => {
+    const s = start(initialState())
+    const past = {
+      ...s,
+      distance: WORLD.bossAtDistance + 100,
+      lastBossDistance: WORLD.bossAtDistance,
+    }
+    const after = tick(past, { dt: 0.05, rand: () => 0.5 })
+    expect(after.obstacles.filter((o) => o.kind === 'boss')).toHaveLength(0)
+    expect(after.justBoss).toBe(false)
+  })
+
+  it('the boss obstacle is tall enough that the tap-jump cannot clear it', () => {
+    // Tap jump apex ≈ vy² / (2g) = 315² / 3600 ≈ 27.6 units
+    // Boss height = 32 units → tap-jump player y at apex < boss height → collision
+    const tapApexY = WORLD.jumpVelocity ** 2 / (2 * WORLD.gravity)
+    expect(tapApexY).toBeLessThan(32)
+  })
+})
+
 describe('tick — variable jump (hold-to-jump-higher)', () => {
   it('rises higher when jumpHeld is true vs false (same elapsed time)', () => {
     const baseline = jump(start(initialState()))

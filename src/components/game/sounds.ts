@@ -7,7 +7,13 @@
  * browser's "audio without user gesture" warnings.
  */
 
-export type SoundKind = 'jump' | 'dodge' | 'milestone' | 'gameover' | 'start'
+export type SoundKind =
+  | 'jump'
+  | 'dodge'
+  | 'milestone'
+  | 'gameover'
+  | 'start'
+  | 'boss'
 
 export class SoundEngine {
   private ctx: AudioContext | null = null
@@ -43,6 +49,11 @@ export class SoundEngine {
       case 'start':
         this.tone(523, 0.06, 'square', 0.12)
         setTimeout(() => this.tone(784, 0.08, 'square', 0.12), 80)
+        break
+      case 'boss':
+        // Two-tone descending warning sting — "DOOM-doom"
+        this.tone(220, 0.18, 'triangle', 0.22, 165)
+        setTimeout(() => this.tone(147, 0.28, 'triangle', 0.22, 110), 180)
         break
     }
   }
