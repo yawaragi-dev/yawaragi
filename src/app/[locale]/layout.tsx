@@ -5,6 +5,7 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { routing } from '@/i18n/routing'
+import { LocaleSwitcher } from '@/components/layout/locale-switcher'
 import { CookieBanner } from '@/components/legal/cookie-banner'
 import { CookieSettingsLink } from '@/components/legal/cookie-settings-link'
 import { CONSENT_COOKIE_NAME, parseConsent } from '@/lib/legal/consent'
@@ -41,8 +42,11 @@ export default async function LocaleLayout({
       lang={locale}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col bg-zinc-50 font-sans dark:bg-black">
         <NextIntlClientProvider>
+          <header className="flex justify-end px-6 py-4">
+            <LocaleSwitcher />
+          </header>
           {children}
           <footer className="flex justify-end px-6 py-3">
             <CookieSettingsLink />

@@ -2,7 +2,6 @@ import { cookies } from 'next/headers'
 import { getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
 import { isLaunched } from '@/i18n/launch-state'
-import { LocaleSwitcher } from '@/components/layout/locale-switcher'
 import { AgeGate } from '@/components/legal/age-gate'
 import { hasAcceptedAgeGate } from '@/lib/legal/age-gate-cookie'
 
@@ -22,10 +21,7 @@ export default async function LandingPage({
   const gateAccepted = hasAcceptedAgeGate(cookieJar)
 
   return (
-    <div className="flex flex-col flex-1 bg-zinc-50 font-sans dark:bg-black">
-      <header className="flex justify-end px-6 py-4">
-        <LocaleSwitcher />
-      </header>
+    <>
       <main className="flex flex-1 w-full max-w-3xl mx-auto flex-col gap-12 py-16 px-8">
         <section className="flex flex-col gap-4">
           <h1 className="text-4xl font-semibold leading-tight tracking-tight">
@@ -61,7 +57,7 @@ export default async function LandingPage({
         </section>
       </main>
       {!gateAccepted && <AgeGate />}
-    </div>
+    </>
   )
 }
 
@@ -69,28 +65,23 @@ async function ComingSoonPage() {
   const t = await getTranslations('comingSoon')
 
   return (
-    <div className="flex flex-col flex-1 bg-zinc-50 font-sans dark:bg-black">
-      <header className="flex justify-end px-6 py-4">
-        <LocaleSwitcher />
-      </header>
-      <main
-        className="flex flex-1 w-full max-w-xl mx-auto flex-col items-start justify-center gap-6 py-16 px-8"
-        data-testid="coming-soon"
+    <main
+      className="flex flex-1 w-full max-w-3xl mx-auto flex-col items-start justify-center gap-6 py-16 px-8"
+      data-testid="coming-soon"
+    >
+      <h1 className="text-4xl font-semibold leading-tight tracking-tight">
+        {t('title')}
+      </h1>
+      <p className="text-base text-zinc-700 dark:text-zinc-300 max-w-prose">
+        {t('body')}
+      </p>
+      <Link
+        href="/"
+        locale="en"
+        className="text-base font-medium underline underline-offset-4"
       >
-        <h1 className="text-4xl font-semibold leading-tight tracking-tight">
-          {t('title')}
-        </h1>
-        <p className="text-base text-zinc-700 dark:text-zinc-300 max-w-prose">
-          {t('body')}
-        </p>
-        <Link
-          href="/"
-          locale="en"
-          className="text-base font-medium underline underline-offset-4"
-        >
-          {t('switchToEn')}
-        </Link>
-      </main>
-    </div>
+        {t('switchToEn')}
+      </Link>
+    </main>
   )
 }

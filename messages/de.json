@@ -48,5 +48,10 @@
     "customize": "Anpassen",
     "savePreferences": "Einstellungen speichern",
     "settingsLink": "Cookie-Einstellungen"
+  },
+  "notFound": {
+    "title": "Seite nicht gefunden",
+    "body": "Wir konnten die gesuchte Seite nicht finden. Vielleicht wurde sie verschoben — oder sie existiert noch nicht.",
+    "home": "Zurück zur Startseite"
   }
 }
