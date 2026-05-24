@@ -1,0 +1,23 @@
+{
+  "common": {
+    "siteName": "Yawaragi",
+    "skipToContent": "Skip to content"
+  },
+  "landing": {
+    "title": "Yawaragi",
+    "tagline": "A companion for discovering sake.",
+    "intro": "Explore Japanese sake through guided flavor profiles, label scans, and a chat that learns what you enjoy. Built for the curious — at any starting point.",
+    "ctaLearnMore": "Learn how it works",
+    "sectionScanTitle": "Scan a label",
+    "sectionScanBody": "Point your camera at a bottle. We read the kanji and surface what's known about the brewery, the rice, and the style.",
+    "sectionChatTitle": "Chat your way in",
+    "sectionChatBody": "Tell us what you usually drink. We translate it into Japanese brewer vocabulary and suggest sake that fits.",
+    "sectionProfileTitle": "Build a taste profile",
+    "sectionProfileBody": "Over time, your reactions shape a personal flavor map you can compare with others."
+  },
+  "localeSwitcher": {
+    "label": "Language",
+    "english": "English",
+    "german": "Deutsch"
+  }
+}
