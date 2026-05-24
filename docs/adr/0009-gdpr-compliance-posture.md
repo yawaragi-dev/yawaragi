@@ -48,7 +48,7 @@ None of the integrations beyond cookies are wired up yet. This ADR is the prospe
 
 9. **Retention is documented per data type.** No data lives forever by default. Retention rules live in the RoPA below and in schema comments. Label-scan images: discarded after inference completes (no persistence). Langfuse traces: 30 days. Account data: until deletion or 24 months of inactivity, whichever first.
 
-10. **Breach notification process exists before any user-account feature ships.** A runbook at `docs/runbooks/breach-notification.md` documents the 72-hour notification path to the supervisory authority (Art. 33) and to data subjects when high risk (Art. 34). The runbook does not exist yet; filing it is gated alongside the first Phase 2 ticket that introduces user accounts.
+10. **Breach notification process exists before any user-account feature ships.** A runbook at [`docs/runbooks/breach-notification.md`](../runbooks/breach-notification.md) documents the 72-hour notification path to the supervisory authority (Art. 33), the high-risk-threshold notification path to data subjects (Art. 34), the vendor breach-coordination chain, and the post-incident log template. Drafted 2026-05-24; the maintainer + a German IT/data-protection lawyer must complete an end-to-end review before the first Phase 2 PR that introduces user accounts (Clerk integration) merges.
 
 ## Per-PR GDPR review questions
 
