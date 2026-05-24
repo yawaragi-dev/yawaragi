@@ -42,5 +42,14 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!api|_next|_vercel|.*\\..*).*)'],
+  // Skip:
+  //  - api / _next / _vercel internals
+  //  - Next.js metadata file conventions served at the root without an
+  //    extension (icon, apple-icon, opengraph-image, twitter-image, manifest,
+  //    sitemap, robots) — otherwise next-intl rewrites them through the
+  //    locale router and the metadata file never serves
+  //  - any path containing a dot (static asset extensions, favicon.ico, etc.)
+  matcher: [
+    '/((?!api|_next|_vercel|icon|apple-icon|opengraph-image|twitter-image|manifest|sitemap|robots|.*\\..*).*)',
+  ],
 }

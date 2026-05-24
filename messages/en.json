@@ -48,5 +48,10 @@
     "customize": "Customize",
     "savePreferences": "Save preferences",
     "settingsLink": "Cookie preferences"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "body": "We could not find the page you were looking for. It may have moved, or it may not exist yet.",
+    "home": "Back to the home page"
   }
 }
