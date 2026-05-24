@@ -10,11 +10,11 @@
 
 export const WORLD = {
   width: 480,
-  height: 80,
+  height: 110,
   groundY: 0,
   playerX: 60,
-  playerWidth: 14,
-  playerHeight: 22,
+  playerWidth: 16,
+  playerHeight: 24,
   gravity: 1800, // world units / s²
   jumpVelocity: 420, // world units / s — height ≈ 49 units, clears tallest obstacle (20)
   initialSpeed: 220, // world units / s (obstacles drift left at this speed)

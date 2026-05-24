@@ -20,6 +20,7 @@ import {
   SALARYMAN_RUN_A,
   SALARYMAN_RUN_B,
   SCRAMBLE,
+  SKYLINE_BUILDINGS,
   STRONG_ZERO,
   TOWER,
   type Sprite,
@@ -29,7 +30,7 @@ import { SoundEngine } from './sounds'
 const PIXEL = 3 // each world unit renders as this many canvas pixels (CSS scales)
 const CANVAS_W = WORLD.width * PIXEL
 const CANVAS_H = WORLD.height * PIXEL
-const GROUND_PX = 18 // canvas pixels of empty space below the ground line
+const GROUND_PX = 24 // canvas pixels of asphalt below the ground line
 const STORAGE_KEY = 'yawaragi_shibuya_runner_best'
 
 const OBSTACLE_SPRITE: Record<ObstacleKind, Sprite> = {
@@ -44,60 +45,119 @@ const MILESTONE_SPRITE: Record<MilestoneKind, Sprite> = {
   tower: TOWER,
 }
 
+const SKY_TOP = '#1e1b4b' // indigo-950 — Tokyo night sky
+const SKY_BOTTOM = '#f97316' // orange-500 — sunset glow
+const ASPHALT = '#18181b' // zinc-900
+const RAIL = '#71717a' // zinc-500
+const GROUND_LINE = '#d4d4d8' // zinc-300
+
 function drawSprite(
   ctx: CanvasRenderingContext2D,
   sprite: Sprite,
   x: number,
   y: number,
-  color: string,
 ) {
-  ctx.fillStyle = color
-  for (let row = 0; row < sprite.length; row++) {
-    const line = sprite[row]
+  for (let row = 0; row < sprite.pixels.length; row++) {
+    const line = sprite.pixels[row]
     for (let col = 0; col < line.length; col++) {
-      if (line[col] === '#') {
-        ctx.fillRect(
-          Math.round(x + col * PIXEL),
-          Math.round(y + row * PIXEL),
-          PIXEL,
-          PIXEL,
-        )
-      }
+      const ch = line[col]
+      if (ch === '.') continue
+      const color = sprite.palette[ch]
+      if (!color) continue
+      ctx.fillStyle = color
+      ctx.fillRect(
+        Math.round(x + col * PIXEL),
+        Math.round(y + row * PIXEL),
+        PIXEL,
+        PIXEL,
+      )
     }
+  }
+}
+
+function drawSky(ctx: CanvasRenderingContext2D, width: number, height: number) {
+  const grad = ctx.createLinearGradient(0, 0, 0, height)
+  grad.addColorStop(0, SKY_TOP)
+  grad.addColorStop(0.7, '#7c2d12') // orange-900 transition
+  grad.addColorStop(1, SKY_BOTTOM)
+  ctx.fillStyle = grad
+  ctx.fillRect(0, 0, width, height)
+}
+
+function drawSkyline(
+  ctx: CanvasRenderingContext2D,
+  groundCanvasY: number,
+  offset: number,
+) {
+  // Tile the skyline horizontally so it covers the full width, with a slow
+  // parallax offset.
+  const sprite = SKYLINE_BUILDINGS
+  const tileW = sprite.pixels[0].length * PIXEL
+  const heightPx = sprite.pixels.length * PIXEL
+  const yTop = groundCanvasY - heightPx
+  const startX = -(offset % tileW)
+  for (let x = startX; x < CANVAS_W + tileW; x += tileW) {
+    drawSprite(ctx, sprite, x, yTop)
+  }
+}
+
+function drawGround(
+  ctx: CanvasRenderingContext2D,
+  groundCanvasY: number,
+  offset: number,
+  width: number,
+) {
+  // Asphalt band below the ground line
+  ctx.fillStyle = ASPHALT
+  ctx.fillRect(0, groundCanvasY, width, GROUND_PX)
+
+  // Crisp ground line
+  ctx.fillStyle = GROUND_LINE
+  ctx.fillRect(0, groundCanvasY, width, 1)
+
+  // Train rails — two parallel lines with sleepers
+  const rail1Y = groundCanvasY + 8
+  const rail2Y = groundCanvasY + 16
+  ctx.fillStyle = RAIL
+  ctx.fillRect(0, rail1Y, width, 1)
+  ctx.fillRect(0, rail2Y, width, 1)
+
+  // Sleepers (ties) scroll past at game speed
+  const sleeperGap = 18
+  const sleeperW = 8
+  const sleeperStart = -(offset % sleeperGap)
+  for (let x = sleeperStart; x < width + sleeperGap; x += sleeperGap) {
+    ctx.fillRect(x, rail1Y + 2, sleeperW, 2)
   }
 }
 
 function render(canvas: HTMLCanvasElement, state: GameState, frame: number) {
   const ctx = canvas.getContext('2d')
   if (!ctx) return
-  ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-  // Ground line
+  drawSky(ctx, canvas.width, canvas.height)
+
   const groundCanvasY = canvas.height - GROUND_PX
-  ctx.fillStyle = '#a1a1aa' // zinc-400
-  ctx.fillRect(0, groundCanvasY, canvas.width, 1)
 
-  // Milestones (back layer)
+  // Parallax: skyline drifts at 1/4 of game distance, sleepers at 1×.
+  drawSkyline(ctx, groundCanvasY, state.distance * 0.25)
+
+  // Milestones (mid layer; drift at the engine-computed half speed)
   for (const m of state.milestones) {
     const sprite = MILESTONE_SPRITE[m.kind]
-    const heightPx = sprite.length * PIXEL
-    drawSprite(
-      ctx,
-      sprite,
-      m.x * PIXEL,
-      groundCanvasY - heightPx,
-      '#d4d4d8', // zinc-300 — softer, recedes into background
-    )
+    const heightPx = sprite.pixels.length * PIXEL
+    drawSprite(ctx, sprite, m.x * PIXEL, groundCanvasY - heightPx)
   }
 
-  // Obstacles
+  drawGround(ctx, groundCanvasY, state.distance, canvas.width)
+
+  // Obstacles (foreground)
   for (const o of state.obstacles) {
     drawSprite(
       ctx,
       OBSTACLE_SPRITE[o.kind],
       o.x * PIXEL,
       groundCanvasY - o.height * PIXEL,
-      '#171717', // foreground
     )
   }
 
@@ -110,7 +170,7 @@ function render(canvas: HTMLCanvasElement, state: GameState, frame: number) {
         : SALARYMAN_RUN_B
   const playerYpx =
     groundCanvasY - state.player.y * PIXEL - WORLD.playerHeight * PIXEL
-  drawSprite(ctx, playerSprite, WORLD.playerX * PIXEL, playerYpx, '#171717')
+  drawSprite(ctx, playerSprite, WORLD.playerX * PIXEL, playerYpx)
 }
 
 function loadBest(): number {
