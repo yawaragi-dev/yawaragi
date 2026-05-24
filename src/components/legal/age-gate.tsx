@@ -20,8 +20,9 @@ export function AgeGate() {
   const [isPending, startTransition] = useTransition()
 
   function onAccept() {
+    const returnTo = window.location.pathname + window.location.search
     startTransition(async () => {
-      await acceptAgeGate()
+      await acceptAgeGate(returnTo)
     })
   }
 

@@ -45,6 +45,23 @@ test.describe('age gate enforcement', () => {
     await context.close()
   })
 
+  test('accepting from a rewritten URL navigates to the original path', async ({
+    browser,
+  }) => {
+    const context = await browser.newContext({ locale: 'en-US' })
+    const page = await context.newPage()
+
+    await page.goto('/en/sake/anything')
+    await expect(page.getByTestId('age-gate')).toBeVisible()
+    expect(page.url()).toMatch(/\/en\/sake\/anything$/)
+
+    await page.getByTestId('age-gate-accept').click()
+    await page.waitForURL(/\/en\/sake\/anything$/)
+    await expect(page.getByTestId('age-gate')).toBeHidden()
+
+    await context.close()
+  })
+
   test('clearing the cookie re-prompts on the next visit', async ({
     browser,
   }) => {
