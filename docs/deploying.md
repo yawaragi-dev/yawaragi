@@ -37,7 +37,6 @@ Set these in **Vercel → Project Settings → Environment Variables** for the `
 | Variable | Lands with |
 |---|---|
 | `ANTHROPIC_API_KEY` | First LLM call (Phase 3 label scan, Phase 4 chat) |
-| `OPENAI_API_KEY` | Optional fallback model |
 | `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY` | First Supabase integration (Phase 2 data foundation) |
 | `CLERK_SECRET_KEY` / `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | First user account feature (Phase 2+) |
 | `LANGFUSE_PUBLIC_KEY` / `LANGFUSE_SECRET_KEY` / `LANGFUSE_HOST` | First LLM trace target |
@@ -53,7 +52,6 @@ Before serving any non-trivial traffic — especially any traffic that could inc
 |---|---|---|---|
 | Vercel (hosting, build) | <https://vercel.com/legal/dpa> — accept in account settings | yes (US-based) | global edge; build runs in US by default |
 | Anthropic (Claude API) | <https://www.anthropic.com/legal/dpa> — request via support | yes (US-based) | US |
-| OpenAI (optional) | <https://openai.com/policies/data-processing-addendum> | yes (US-based) | US |
 | Supabase | configurable in account settings | depends on region | **select EU region** at project creation; cannot be changed later |
 | Clerk | <https://clerk.com/legal/dpa> | yes (US-based) | US |
 | Langfuse | EU region available; verify before signup | no (if EU region) | EU when configured |
@@ -89,7 +87,7 @@ For each vendor, the practical rule of thumb:
 | **Cloudflare** (if used) | Generous free tier supports commercial use | Custom rules / WAF / higher Workers limits | **Pro** ($25/mo) |
 | **Sentry** (if added later) | Developer tier free up to ~5k events/mo | Higher volume, team features | **Team** ($26/mo) |
 | **Langfuse** | Hobby tier free with strict limits | Production volume, longer trace retention | **Core** / **Pro** |
-| **Anthropic / OpenAI** | No tiers — pay per token | n/a | n/a |
+| **Anthropic** | No tiers — pay per token | n/a | n/a |
 
 **Vercel is the most likely first violator** — its Hobby plan is explicitly non-commercial, where most other free tiers permit commercial use up to resource caps.
 

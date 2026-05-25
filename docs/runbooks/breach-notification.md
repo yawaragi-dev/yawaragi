@@ -154,7 +154,6 @@ Every vendor Yawaragi integrates with that processes personal data has a DPA-def
 | **Supabase** | Postgres, RLS, optional storage | Account email; <https://status.supabase.com> | <https://supabase.com/support> → Security | EU region selected per ADR-0009; verify region in incident scope |
 | **Anthropic** | Claude API (chat, vision) | Account email; <https://status.anthropic.com> | <https://support.anthropic.com> → Security | Label-scan images are process-and-discard per ADR-0009; trace content in Langfuse is the actual exposure surface |
 | **Langfuse** | LLM tracing | Account email; their status page | Their support contact | EU region; we control PII redaction in our trace payloads |
-| **OpenAI** (if added later) | Fallback LLM | Account email | <https://help.openai.com> → Security | Re-audit if/when wired in |
 
 ### What to ask the vendor
 
