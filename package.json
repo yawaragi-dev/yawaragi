@@ -27,7 +27,6 @@
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.77",
     "@ai-sdk/mcp": "^1.0.42",
-    "@ai-sdk/openai": "^3.0.63",
     "@ai-sdk/react": "^3.0.184",
     "@base-ui/react": "^1.4.1",
     "@clerk/nextjs": "^7.3.4",
