@@ -34,14 +34,13 @@ describe('getBrands', () => {
   })
 
   it('hits the documented Sakenowa /brands endpoint', async () => {
-    const fetchSpy = vi.fn(async () => okJson({ brands: [] }))
+    const fetchSpy = vi.fn<typeof fetch>(async () => okJson({ brands: [] }))
     vi.stubGlobal('fetch', fetchSpy)
 
     await getBrands()
 
     expect(fetchSpy).toHaveBeenCalledOnce()
-    const [calledUrl] = fetchSpy.mock.calls[0]
-    expect(String(calledUrl)).toBe('https://muro.sakenowa.com/sakenowa-data/api/brands')
+    expect(fetchSpy).toHaveBeenCalledWith('https://muro.sakenowa.com/sakenowa-data/api/brands')
   })
 
   it('throws SakenowaError on network failure', async () => {

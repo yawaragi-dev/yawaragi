@@ -21,8 +21,14 @@ describe('Brand schema', () => {
   })
 
   it('rejects a brand without a source', () => {
-    const { source: _omitted, ...withoutSource } = validBrand
-    expect(() => parseBrand(withoutSource)).toThrow()
+    expect(() =>
+      parseBrand({
+        brandId: 1,
+        name: 'Reijin',
+        nameKanji: '麗人',
+        breweryId: 49,
+      }),
+    ).toThrow()
   })
 
   it('rejects a brand with an unknown source value', () => {
