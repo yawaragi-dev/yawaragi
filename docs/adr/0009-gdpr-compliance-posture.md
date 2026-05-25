@@ -12,11 +12,11 @@ Personal-data touch points the project will have once it grows past Phase 0:
 
 | Touch point | Personal data | Lawful basis | Vendor / location |
 |---|---|---|---|
-| Clerk auth (Phase 2+) | email, name, OAuth tokens | contract (Art. 6(1)(b)) | Clerk, US — needs SCCs |
-| Supabase (Phase 2+) | taste profiles, corrections, ratings | consent / contract | Supabase, region TBD — pick EU region |
-| Label scan (Phase 3) | uploaded bottle images | consent (Art. 6(1)(a)) | Anthropic Claude vision, US — needs SCCs; do not retain past inference |
-| Chat (Phase 4) | message content, may include incidentally personal info | consent | Anthropic, US |
-| Langfuse traces | redacted prompts + completions | legitimate interest (Art. 6(1)(f)) — operational debugging | Langfuse Cloud, EU region |
+| Clerk auth (Phase 2+) | email, name, OAuth tokens | contract (Art. 6(1)(b)) | Clerk, US — DPF + SCCs |
+| Supabase (Phase 2+) | taste profiles, corrections, ratings | consent / contract | Supabase, `eu-central-1` Frankfurt |
+| Label scan (Phase 3) | uploaded bottle images | consent (Art. 6(1)(a)) | Anthropic Claude vision, US — SCCs; Yawaragi does not persist past inference, but Anthropic retains up to 30 days (see §9) |
+| Chat (Phase 4) | message content, may include incidentally personal info | consent | Anthropic, US — SCCs; 30d provider retention |
+| Langfuse traces | redacted prompts + completions | legitimate interest (Art. 6(1)(f)) — operational debugging | Langfuse Cloud, `eu-west-1` Ireland |
 | Analytics (Phase 7+) | usage events, no identifiers | consent (Art. 6(1)(a)) | provider TBD; only if user opts in via cookie banner |
 | Cookies (today) | age-gate, locale, consent flags | (necessary) / consent | self |
 
@@ -46,9 +46,11 @@ None of the integrations beyond cookies are wired up yet. This ADR is the prospe
    - Objection / restriction: a user can pause processing.
    - Withdrawal of consent: the cookie banner withdraw flow ✓ (Slice 4).
 
-9. **Retention is documented per data type.** No data lives forever by default. Retention rules live in the RoPA below and in schema comments. Label-scan images: discarded after inference completes (no persistence). Langfuse traces: 30 days. Account data: until deletion or 24 months of inactivity, whichever first.
+9. **Retention is documented per data type.** No data lives forever by default. Retention rules live in the RoPA below and in schema comments. Label-scan images: Yawaragi does not persist label-scan images past the inference call. The inference provider (Anthropic) retains inputs/outputs for up to 30 days for trust-and-safety purposes per their standard Commercial Terms; this is disclosed in the privacy policy and the label-scan UI. Pre-DACH-launch action: negotiate Zero Data Retention (ZDR) with Anthropic sales. Langfuse traces: 30 days. Account data: until deletion or 24 months of inactivity, whichever first.
 
 10. **Breach notification process exists before any user-account feature ships.** A runbook at [`docs/runbooks/breach-notification.md`](../runbooks/breach-notification.md) documents the 72-hour notification path to the supervisory authority (Art. 33), the high-risk-threshold notification path to data subjects (Art. 34), the vendor breach-coordination chain, and the post-incident log template. Drafted 2026-05-24; the maintainer + a German IT/data-protection lawyer must complete an end-to-end review before the first Phase 2 PR that introduces user accounts (Clerk integration) merges.
+
+    **Clerk-specific handling.** Clerk's DPA commits to notification "without undue delay" with no concrete hour SLA. Yawaragi's BayLDA Art. 33 clock is 72h from awareness, so a slow vendor confirmation eats the regulator-facing budget. Any unconfirmed Clerk incident (vendor email, status-page anomaly, user report) starts an internal **self-imposed 24h clock**: if Clerk has not given a definitive yes/no within 24h, the maintainer begins drafting the BayLDA notification on the assumption it's real. See [`docs/runbooks/breach-notification.md` §1 "Special handling: Clerk incidents"](../runbooks/breach-notification.md#1-detection--action-first-60-minutes) for the operational steps.
 
 ## Per-PR GDPR review questions
 
@@ -78,7 +80,7 @@ These questions also belong in any ADR that touches user data. The ADR's \"Conse
 
 ## Records of Processing Activities (RoPA) — current state
 
-Today the project processes only the following personal-data-relevant items, all in cookies:
+### Phase 0 cookies (live today)
 
 | Cookie | Data | Lawful basis | Retention | Notes |
 |---|---|---|---|---|
@@ -86,7 +88,19 @@ Today the project processes only the following personal-data-relevant items, all
 | `NEXT_LOCALE` | locale code | legitimate interest (UX) | 1 year | next-intl default. |
 | `yawaragi_consent` | per-category flags + version | not personal data per se; records consent | 1 year | Used to remember and prove consent (Art. 7(1)). |
 
-This table is updated every time a new processing operation is introduced. Treat it as code: it gets PRs.
+### Vendor processing operations (Phase 2+; from the 2026-05-25 DPA review)
+
+These rows describe the processing posture each vendor will enter at the point they go live. None are wired into production yet; the table is the gating spec.
+
+| Vendor | Role | Data categories | Location | Transfer mechanism | Retention | Sub-processor list |
+|---|---|---|---|---|---|---|
+| **Vercel** | processor (Customer Data) + independent controller (Service-Generated Data) | request logs, build artefacts, edge runtime logs | US | DPF + SCCs (fallback) | ~1 day Pro runtime-log retention; indefinite build logs | <https://security.vercel.com> |
+| **Supabase** | processor (DB) + independent controller (Usage Data) | account-linked rows (taste profiles, corrections, ratings), service usage metrics | `eu-central-1` Frankfurt | SCCs Module 2/3 | 7-day backup retention on Pro | DPA Schedule 3 |
+| **Clerk** | processor | email, name, OAuth tokens, session metadata | US (no EU region) | DPF + SCCs (fallback) | 90-day post-termination delete | <https://clerk.com/legal/subprocessors> |
+| **Anthropic** | processor | label-scan images, chat messages, redacted prompts/completions | US (no EU region on direct API) | SCCs only (no DPF) | **30 days default — acknowledged explicitly; ZDR pending sales negotiation** | <https://trust.anthropic.com/subprocessors> |
+| **Langfuse** | processor | redacted prompts + completions, trace metadata | `eu-west-1` Ireland | SCC fallback unused at residency | 30 days (configured at project level) | <https://langfuse.com/security/subprocessors> |
+
+This table is updated every time a new processing operation is introduced or a vendor's posture changes (region, retention, sub-processor list, transfer mechanism). Treat it as code: it gets PRs.
 
 ## Consequences
 
@@ -95,6 +109,7 @@ This table is updated every time a new processing operation is introduced. Treat
 - **Privacy policy is maintained alongside features**, not back-filled. Lives in `messages/{en,de}.json` under a `privacy` namespace once Slice 3 lands; updated in the same PR that introduces a new processing operation.
 - **Architectural decisions document GDPR impact in their Consequences section.** ADR-0006 (age gate), ADR-0007 (i18n), ADR-0008 (EN-first launch) already touch GDPR-adjacent surfaces; future ADRs answer the per-PR questions above where applicable.
 - **The author is not a lawyer.** Before the DACH launch, a German IT/data-protection lawyer must review the privacy policy, the cookie banner copy, the RoPA, and the DPA chain (~€200–400 for a flat-fee review).
+- **Schrems-III watch item.** All three US vendors in the current stack — Vercel, Clerk, Anthropic — rely on the EU–US Data Privacy Framework with SCCs as the fallback transfer mechanism. A Schrems-III-style invalidation of the DPF would force a simultaneous re-evaluation of all three at once: SCC supplementary measures, in-scope data minimisation, or substitution by an EU-resident alternative. Track as a Phase 7 watch item; revisit if EU–US adequacy litigation reaches the CJEU.
 
 ## References
 
