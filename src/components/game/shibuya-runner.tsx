@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { ACTIVE_THEME } from './active-theme'
 import {
   initialState,
   jump,
@@ -10,51 +11,22 @@ import {
   tick,
   WORLD,
   type GameState,
-  type MilestoneKind,
-  type ObstacleKind,
 } from './engine'
-import {
-  BEER,
-  BOSS_LANTERN,
-  HACHIKO,
-  SAKE,
-  SALARYMAN_JUMPING,
-  SALARYMAN_RUN_A,
-  SALARYMAN_RUN_B,
-  SCRAMBLE,
-  SKYLINE_BUILDINGS,
-  STRONG_ZERO,
-  TOWER,
-  TRAIN,
-  type Sprite,
-} from './sprites'
+import type { Sprite } from './sprites'
 import { SoundEngine } from './sounds'
 
 const PIXEL = 3 // each world unit renders as this many canvas pixels (CSS scales)
 const CANVAS_W = WORLD.width * PIXEL
 const CANVAS_H = WORLD.height * PIXEL
 const GROUND_PX = 24 // canvas pixels of asphalt below the ground line
-const STORAGE_KEY = 'yawaragi_shibuya_runner_best'
-
-const OBSTACLE_SPRITE: Record<ObstacleKind, Sprite> = {
-  beer: BEER,
-  sake: SAKE,
-  strongzero: STRONG_ZERO,
-  boss: BOSS_LANTERN,
-}
-
-const MILESTONE_SPRITE: Record<MilestoneKind, Sprite> = {
-  hachiko: HACHIKO,
-  scramble: SCRAMBLE,
-  tower: TOWER,
-  train: TRAIN,
-}
-
-const SKY_TOP = '#1e1b4b' // indigo-950 — Tokyo night sky
-const SKY_BOTTOM = '#f97316' // orange-500 — sunset glow
-const ASPHALT = '#18181b' // zinc-900
-const RAIL = '#71717a' // zinc-500
-const GROUND_LINE = '#d4d4d8' // zinc-300
+// Best-score storage key is theme-scoped: each theme's distance lives in
+// its own slot so flipping ACTIVE_THEME doesn't clobber the other theme's
+// high score. The shibuya key keeps its historical name for continuity
+// with players who set a best before the theme split shipped.
+const STORAGE_KEY =
+  ACTIVE_THEME.id === 'shibuya'
+    ? 'yawaragi_shibuya_runner_best'
+    : `yawaragi_runner_best_${ACTIVE_THEME.id}`
 
 function drawSprite(
   ctx: CanvasRenderingContext2D,
@@ -82,9 +54,9 @@ function drawSprite(
 
 function drawSky(ctx: CanvasRenderingContext2D, width: number, height: number) {
   const grad = ctx.createLinearGradient(0, 0, 0, height)
-  grad.addColorStop(0, SKY_TOP)
-  grad.addColorStop(0.7, '#7c2d12') // orange-900 transition
-  grad.addColorStop(1, SKY_BOTTOM)
+  grad.addColorStop(0, ACTIVE_THEME.colors.skyTop)
+  grad.addColorStop(0.7, ACTIVE_THEME.colors.skyMid)
+  grad.addColorStop(1, ACTIVE_THEME.colors.skyBottom)
   ctx.fillStyle = grad
   ctx.fillRect(0, 0, width, height)
 }
@@ -96,7 +68,7 @@ function drawSkyline(
 ) {
   // Tile the skyline horizontally so it covers the full width, with a slow
   // parallax offset.
-  const sprite = SKYLINE_BUILDINGS
+  const sprite = ACTIVE_THEME.skyline
   const tileW = sprite.pixels[0].length * PIXEL
   const heightPx = sprite.pixels.length * PIXEL
   const yTop = groundCanvasY - heightPx
@@ -112,27 +84,30 @@ function drawGround(
   offset: number,
   width: number,
 ) {
-  // Asphalt band below the ground line
-  ctx.fillStyle = ASPHALT
+  // Ground band below the horizon line
+  ctx.fillStyle = ACTIVE_THEME.colors.ground
   ctx.fillRect(0, groundCanvasY, width, GROUND_PX)
 
   // Crisp ground line
-  ctx.fillStyle = GROUND_LINE
+  ctx.fillStyle = ACTIVE_THEME.colors.groundLine
   ctx.fillRect(0, groundCanvasY, width, 1)
 
-  // Train rails — two parallel lines with sleepers
-  const rail1Y = groundCanvasY + 8
-  const rail2Y = groundCanvasY + 16
-  ctx.fillStyle = RAIL
-  ctx.fillRect(0, rail1Y, width, 1)
-  ctx.fillRect(0, rail2Y, width, 1)
+  // Rail flourish — only themes that opt in (Shibuya) get parallel rails
+  // and scrolling sleepers. Sicily has no train so the band stays clean.
+  const railColor = ACTIVE_THEME.colors.rail
+  if (railColor) {
+    const rail1Y = groundCanvasY + 8
+    const rail2Y = groundCanvasY + 16
+    ctx.fillStyle = railColor
+    ctx.fillRect(0, rail1Y, width, 1)
+    ctx.fillRect(0, rail2Y, width, 1)
 
-  // Sleepers (ties) scroll past at game speed
-  const sleeperGap = 18
-  const sleeperW = 8
-  const sleeperStart = -(offset % sleeperGap)
-  for (let x = sleeperStart; x < width + sleeperGap; x += sleeperGap) {
-    ctx.fillRect(x, rail1Y + 2, sleeperW, 2)
+    const sleeperGap = 18
+    const sleeperW = 8
+    const sleeperStart = -(offset % sleeperGap)
+    for (let x = sleeperStart; x < width + sleeperGap; x += sleeperGap) {
+      ctx.fillRect(x, rail1Y + 2, sleeperW, 2)
+    }
   }
 }
 
@@ -149,7 +124,7 @@ function render(canvas: HTMLCanvasElement, state: GameState, frame: number) {
 
   // Milestones (mid layer; drift at the engine-computed half speed)
   for (const m of state.milestones) {
-    const sprite = MILESTONE_SPRITE[m.kind]
+    const sprite = ACTIVE_THEME.milestones[m.kind]
     const heightPx = sprite.pixels.length * PIXEL
     drawSprite(ctx, sprite, m.x * PIXEL, groundCanvasY - heightPx)
   }
@@ -160,7 +135,7 @@ function render(canvas: HTMLCanvasElement, state: GameState, frame: number) {
   for (const o of state.obstacles) {
     drawSprite(
       ctx,
-      OBSTACLE_SPRITE[o.kind],
+      ACTIVE_THEME.obstacles[o.kind],
       o.x * PIXEL,
       groundCanvasY - o.height * PIXEL,
     )
@@ -169,10 +144,10 @@ function render(canvas: HTMLCanvasElement, state: GameState, frame: number) {
   // Player
   const playerSprite =
     state.player.y > 0
-      ? SALARYMAN_JUMPING
+      ? ACTIVE_THEME.player.jumping
       : frame % 16 < 8
-        ? SALARYMAN_RUN_A
-        : SALARYMAN_RUN_B
+        ? ACTIVE_THEME.player.runA
+        : ACTIVE_THEME.player.runB
   const playerYpx =
     groundCanvasY - state.player.y * PIXEL - WORLD.playerHeight * PIXEL
   drawSprite(ctx, playerSprite, WORLD.playerX * PIXEL, playerYpx)
@@ -210,6 +185,10 @@ interface UiState {
 
 export function ShibuyaRunner() {
   const t = useTranslations('notFound.game')
+  // Theme-specific copy lives under `notFound.game.themes.<id>` so flipping
+  // ACTIVE_THEME swaps the intro / canvas label / game-over hint without
+  // touching the shared score / sound / reduced-motion strings.
+  const tTheme = useTranslations(`notFound.game.themes.${ACTIVE_THEME.id}`)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const stateRef = useRef<GameState>(initialState())
   const frameRef = useRef(0)
@@ -232,9 +211,18 @@ export function ShibuyaRunner() {
     setUi({ status: fresh.status, distance: fresh.distance, best: fresh.best })
   }, [])
 
-  // Sound toggle effect
+  // Sound toggle effect — also drives the theme's optional background music.
   useEffect(() => {
-    soundsRef.current.setEnabled(soundOn)
+    const engine = soundsRef.current
+    engine.setEnabled(soundOn)
+    const music = ACTIVE_THEME.music
+    if (music) {
+      if (soundOn) music.start(engine)
+      else music.stop()
+    }
+    return () => {
+      if (music) music.stop()
+    }
   }, [soundOn])
 
   // Main game loop
@@ -379,7 +367,7 @@ export function ShibuyaRunner() {
         onPointerUp={endHoldFromTap}
         onPointerCancel={endHoldFromTap}
         onPointerLeave={endHoldFromTap}
-        aria-label={t('canvasLabel')}
+        aria-label={tTheme('canvasLabel')}
         className="block rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 overflow-hidden cursor-pointer touch-none"
         data-testid="game-canvas-wrap"
       >
@@ -394,7 +382,7 @@ export function ShibuyaRunner() {
       <p className="text-xs text-zinc-500">
         {ui.status === 'idle' && t('hintIdle')}
         {ui.status === 'running' && t('hintRunning')}
-        {ui.status === 'over' && t('hintOver')}
+        {ui.status === 'over' && tTheme('hintOver')}
       </p>
     </div>
   )

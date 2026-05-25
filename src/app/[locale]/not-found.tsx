@@ -1,9 +1,14 @@
 import { getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
+import { ACTIVE_THEME } from '@/components/game/active-theme'
 import { ShibuyaRunner } from '@/components/game/shibuya-runner'
 
 export default async function NotFound() {
   const t = await getTranslations('notFound')
+  // Intro copy is theme-scoped: the salaryman pitch reads differently from
+  // the pizzaiolo pitch. Server-component reads ACTIVE_THEME directly so
+  // the right copy is in the streamed HTML before the canvas hydrates.
+  const tTheme = await getTranslations(`notFound.game.themes.${ACTIVE_THEME.id}`)
 
   return (
     <main
@@ -24,7 +29,7 @@ export default async function NotFound() {
       </Link>
       <hr className="border-zinc-200 dark:border-zinc-800 my-2" />
       <p className="text-sm text-zinc-600 dark:text-zinc-400 max-w-prose">
-        {t('game.intro')}
+        {tTheme('intro')}
       </p>
       <ShibuyaRunner />
     </main>

@@ -58,6 +58,20 @@ export class SoundEngine {
     }
   }
 
+  /**
+   * Public single-tone helper for theme music modules. No-ops when sound
+   * is disabled, so callers don't have to gate their schedulers.
+   */
+  playTone(
+    startHz: number,
+    durationSec: number,
+    type: OscillatorType,
+    gain: number,
+    endHz?: number,
+  ) {
+    this.tone(startHz, durationSec, type, gain, endHz)
+  }
+
   private tone(
     startHz: number,
     durationSec: number,
@@ -65,7 +79,7 @@ export class SoundEngine {
     gain: number,
     endHz?: number,
   ) {
-    if (!this.ctx) return
+    if (!this.enabled || !this.ctx) return
     const ctx = this.ctx
     const osc = ctx.createOscillator()
     const g = ctx.createGain()

@@ -54,17 +54,26 @@
     "body": "Wir konnten die gesuchte Seite nicht finden. Vielleicht wurde sie verschoben — oder sie existiert noch nicht.",
     "home": "Zurück zur Startseite",
     "game": {
-      "intro": "Solange du hier bist: hilf dem Salaryman, die letzte Shibuya-Bahn zu erwischen. Weiche Bier, Sake und Strong Zero aus.",
-      "canvasLabel": "Shibuya-Runner-Spiel — drück Leertaste, Pfeil-nach-oben oder tippe, um zu springen",
       "score": "Distanz",
       "best": "Bestwert",
       "soundOn": "🔊 Ton an",
       "soundOff": "🔇 Ton aus",
       "hintIdle": "Leertaste, ↑ oder Tippen zum Starten.",
       "hintRunning": "Leertaste, ↑ oder Tippen zum Springen.",
-      "hintOver": "Ein Getränk hat dich erwischt. Leertaste, ↑ oder Tippen für einen neuen Versuch.",
       "reducedMotionNote": "Hier ist ein kleines Laufspiel versteckt — dein System bevorzugt aber reduzierte Bewegung. Das respektieren wir.",
-      "showAnyway": "Spiel trotzdem anzeigen"
+      "showAnyway": "Spiel trotzdem anzeigen",
+      "themes": {
+        "shibuya": {
+          "intro": "Solange du hier bist: hilf dem Salaryman, die letzte Shibuya-Bahn zu erwischen. Weiche Bier, Sake und Strong Zero aus.",
+          "canvasLabel": "Shibuya-Runner-Spiel — drück Leertaste, Pfeil-nach-oben oder tippe, um zu springen",
+          "hintOver": "Ein Getränk hat dich erwischt. Leertaste, ↑ oder Tippen für einen neuen Versuch."
+        },
+        "sicily": {
+          "intro": "Solange du hier bist: hilf dem Pizzaiolo durch den sizilianischen Morgen zu sprinten. Spring über die Pizzen, Arancini und Cannoli.",
+          "canvasLabel": "Sizilianischer Pizzaiolo-Runner — drück Leertaste, Pfeil-nach-oben oder tippe, um zu springen",
+          "hintOver": "Ein Gebäck hat dich erwischt. Leertaste, ↑ oder Tippen für einen neuen Versuch."
+        }
+      }
     }
   }
 }

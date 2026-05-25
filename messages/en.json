@@ -54,17 +54,26 @@
     "body": "We could not find the page you were looking for. It may have moved, or it may not exist yet.",
     "home": "Back to the home page",
     "game": {
-      "intro": "While you are here: help the salaryman catch the last Shibuya train. Avoid the beer, sake, and Strong Zero.",
-      "canvasLabel": "Shibuya runner game — press space, arrow up, or tap to jump",
       "score": "Distance",
       "best": "Best",
       "soundOn": "🔊 Sound on",
       "soundOff": "🔇 Sound off",
       "hintIdle": "Space, ↑, or tap to start.",
       "hintRunning": "Space, ↑, or tap to jump.",
-      "hintOver": "Caught by a drink. Space, ↑, or tap to try again.",
       "reducedMotionNote": "We hid a small running game here, but your system asks for reduced motion. We respect that.",
-      "showAnyway": "Show the game anyway"
+      "showAnyway": "Show the game anyway",
+      "themes": {
+        "shibuya": {
+          "intro": "While you are here: help the salaryman catch the last Shibuya train. Avoid the beer, sake, and Strong Zero.",
+          "canvasLabel": "Shibuya runner game — press space, arrow up, or tap to jump",
+          "hintOver": "Caught by a drink. Space, ↑, or tap to try again."
+        },
+        "sicily": {
+          "intro": "While you are here: help the pizzaiolo dash through the Sicilian morning. Hop over the pizzas, arancini, and cannoli.",
+          "canvasLabel": "Sicilian pizzaiolo runner — press space, arrow up, or tap to jump",
+          "hintOver": "Caught by a pastry. Space, ↑, or tap to try again."
+        }
+      }
     }
   }
 }
