@@ -560,6 +560,7 @@ A hard gate. **No public launch artefact** (blog post submitted, Show HN, Linked
 - [ ] `robots.txt` allows indexing of `/`, `/about`, `/blog/*` only; disallows `/dev`, `/me`, `/scan`, `/chat` (avoid accidental indexing of personal pages).
 - [ ] **Plan-tier audit per vendor** ([deploying.md §5](./deploying.md#5-plan-tiers--hobby-vs-professional)). Each free/hobby tier has its own commercial-use rules:
   - [ ] **Vercel** is on **Pro** (Hobby is explicitly non-commercial; any production-grade launch crosses the line)
+    - [ ] **On Vercel Hobby → Pro upgrade: DPA acceptance re-verified under the new tier scope.** The Vercel DPA self-executes via the main Agreement (Section 1 + Schedule 3 §3.vi), but Hobby's general ToS arguably incorporates the DPA less forcefully than Pro/Enterprise. After the upgrade goes through, visit <https://vercel.com/legal/dpa> and confirm the version + effective dates haven't changed; archive a fresh snapshot for the paper trail.
   - [ ] **GitHub** plan covers the Actions minutes used by CI (Pro / Team if private repo + active development)
   - [ ] **Supabase** project is on a tier that matches expected DB/storage/MAU
   - [ ] **Clerk** is on a tier that matches expected MAU (free up to 10k)
