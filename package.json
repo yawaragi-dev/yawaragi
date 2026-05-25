@@ -22,7 +22,8 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "i18n:audit": "tsx scripts/audit-i18n-promotional.ts",
-    "verify": "npm run lint && npm run typecheck && npm run test && npm run test:e2e && npm run i18n:audit"
+    "anthropic-files:audit": "tsx scripts/audit-anthropic-files-api.ts",
+    "verify": "npm run lint && npm run typecheck && npm run test && npm run test:e2e && npm run i18n:audit && npm run anthropic-files:audit"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.77",
