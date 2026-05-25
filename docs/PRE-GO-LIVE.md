@@ -563,6 +563,7 @@ A hard gate. **No public launch artefact** (blog post submitted, Show HN, Linked
     - [ ] **On Vercel Hobby → Pro upgrade: DPA acceptance re-verified under the new tier scope.** The Vercel DPA self-executes via the main Agreement (Section 1 + Schedule 3 §3.vi), but Hobby's general ToS arguably incorporates the DPA less forcefully than Pro/Enterprise. After the upgrade goes through, visit <https://vercel.com/legal/dpa> and confirm the version + effective dates haven't changed; archive a fresh snapshot for the paper trail.
   - [ ] **GitHub** plan covers the Actions minutes used by CI (Pro / Team if private repo + active development)
   - [ ] **Supabase** project is on a tier that matches expected DB/storage/MAU
+    - [ ] **SOC 2 Type 2 report accessible.** Per the executed Supabase DPA §9.8, SOC 2 / ISO 27001 reports substitute for the (paper-only) audit right in §9.3-9.4. SOC 2 reports are gated to **Team / Enterprise** tier per Supabase docs — Free and Pro do NOT have access. Upgrading at the `public-launch` milestone is the moment to verify the report is downloadable from Organization → Documents.
   - [ ] **Clerk** is on a tier that matches expected MAU (free up to 10k)
   - [ ] Any other added vendor (Langfuse, Sentry, Cloudflare, etc.) has been re-audited against the table in deploying.md
 
