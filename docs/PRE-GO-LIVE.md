@@ -562,6 +562,7 @@ A hard gate. **No public launch artefact** (blog post submitted, Show HN, Linked
   - [ ] **Vercel** is on **Pro** (Hobby is explicitly non-commercial; any production-grade launch crosses the line)
   - [ ] **GitHub** plan covers the Actions minutes used by CI (Pro / Team if private repo + active development)
   - [ ] **Supabase** project is on a tier that matches expected DB/storage/MAU
+    - [ ] **SOC 2 Type 2 report accessible.** Per the executed Supabase DPA §9.8, SOC 2 / ISO 27001 reports substitute for the (paper-only) audit right in §9.3-9.4. SOC 2 reports are gated to **Team / Enterprise** tier per Supabase docs — Free and Pro do NOT have access. Upgrading at the `public-launch` milestone is the moment to verify the report is downloadable from Organization → Documents.
   - [ ] **Clerk** is on a tier that matches expected MAU (free up to 10k)
   - [ ] Any other added vendor (Langfuse, Sentry, Cloudflare, etc.) has been re-audited against the table in deploying.md
 
