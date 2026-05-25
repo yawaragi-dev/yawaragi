@@ -58,6 +58,12 @@ Run these in parallel where you can. Don't optimise for tidiness; optimise for s
 
 The order above is deliberate: **rotate credentials before investigating**. Investigation can wait an hour; an open credential cannot.
 
+### Special handling: Clerk incidents
+
+Clerk's contract says "without undue delay" with no hour count. Treat any unconfirmed Clerk incident report (vendor email, status page anomaly, user report) as starting an internal 24h clock — if Clerk hasn't given a definitive yes/no within 24h, begin drafting the BayLDA Art. 33 notification on the assumption it's real. The 72h regulatory clock is yours, not theirs.
+
+See also [ADR-0009 §10 "Clerk-specific handling"](../adr/0009-gdpr-compliance-posture.md) for the controlling decision.
+
 ---
 
 ## 2. Article 33 — notify the supervisory authority (within 72 hours)
@@ -154,7 +160,6 @@ Every vendor Yawaragi integrates with that processes personal data has a DPA-def
 | **Supabase** | Postgres, RLS, optional storage | Account email; <https://status.supabase.com> | <https://supabase.com/support> → Security | EU region selected per ADR-0009; verify region in incident scope |
 | **Anthropic** | Claude API (chat, vision) | Account email; <https://status.anthropic.com> | <https://support.anthropic.com> → Security | Label-scan images are process-and-discard per ADR-0009; trace content in Langfuse is the actual exposure surface |
 | **Langfuse** | LLM tracing | Account email; their status page | Their support contact | EU region; we control PII redaction in our trace payloads |
-| **OpenAI** (if added later) | Fallback LLM | Account email | <https://help.openai.com> → Security | Re-audit if/when wired in |
 
 ### What to ask the vendor
 
@@ -235,6 +240,20 @@ Open questions and pending tasks (track in `docs/incidents/` as they accumulate)
 - `messages/{en,de}.json` `breach.*` namespace — adds when Clerk integration lands.
 - Cron / monitoring on Supabase RLS regressions (Phase 2 follow-up).
 - Decision on whether to subscribe to a vendor-incident-status aggregator (StatusGator, etc.) — Phase 7 polish item.
+
+### Sub-processor notification subscriptions
+
+Every vendor DPA grants Yawaragi an objection window when the vendor adds or changes a sub-processor — but silence equals consent across all of them. A missed notification is a silently-accepted sub-processor change, which can be a breach of the controller's transparency obligation downstream. Subscribe to each vendor's notification mechanism at integration time and check the inbox on the cadence below.
+
+| Vendor | Notification mechanism | Objection window |
+|---|---|---|
+| **Vercel** | Subscribe via `privacy@vercel.com` (opt-in; default = no notice) | 5 days |
+| **Supabase** | Legal notices via dashboard + inbox filter | 5 days |
+| **Clerk** | Status / security mailing list + quarterly manual page diff at <https://clerk.com/legal/subprocessors> | 10 days |
+| **Anthropic** | Page watch on <https://trust.anthropic.com/subprocessors> | 15 days |
+| **Langfuse** | Vendor notification email | 30 days |
+
+**Silence = consent in all five DPAs.** When a notification arrives, log it in `docs/incidents/` as a near-miss-shaped vendor-change entry (even if no objection is filed) so the trail exists at audit time.
 
 ---
 
