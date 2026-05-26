@@ -1,0 +1,68 @@
+// E2E coverage for /[locale]/sake/[brandId].
+//
+// Two scenarios:
+//
+// 1. /de/sake/[brandId] rewrites to coming-soon. ADR-0008 keeps the German
+//    locale gated until the Impressum is in place. The proxy intercepts
+//    before the page renders; no DB call happens. Always runs.
+//
+// 2. /en/sake/[seedBrandId] renders kanji + romaji. Requires DATABASE_URL
+//    in the dev-server's environment AND a seeded brand row (brand_id =
+//    E2E_SEED_BRAND_ID, default 1). The Playwright webServer inherits
+//    process.env, so set both before running:
+//
+//      DATABASE_URL=postgres://... E2E_SEED_BRAND_ID=1 pnpm test:e2e
+//
+//    CI skips this scenario; the Vitest+testcontainers integration test in
+//    src/lib/sakenowa/lookup.integration.test.ts covers the read-side
+//    contract.
+import { expect, test } from '@playwright/test'
+
+const AGE_GATE_COOKIE = {
+  name: 'yawaragi_age_gate',
+  value: JSON.stringify({ v: 1, ts: Date.now() }),
+  url: 'http://localhost:3000',
+}
+
+const SEED_BRAND_ID = Number.parseInt(process.env.E2E_SEED_BRAND_ID ?? '1', 10)
+const HAS_DB = Boolean(process.env.DATABASE_URL)
+
+test.describe('sake brand page', () => {
+  test('/de/sake/<brandId> rewrites to coming-soon (DE locale gated, ADR-0008)', async ({
+    browser,
+  }) => {
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([AGE_GATE_COOKIE])
+    const page = await context.newPage()
+
+    await page.goto(`/de/sake/${SEED_BRAND_ID}`)
+
+    await expect(page.getByTestId('coming-soon')).toBeVisible()
+    // And the brand-page testid should NOT be present:
+    await expect(page.getByTestId('sake-brand-page')).toHaveCount(0)
+
+    await context.close()
+  })
+
+  test('/en/sake/<seed> renders kanji + romaji', async ({ browser }, testInfo) => {
+    testInfo.skip(
+      !HAS_DB,
+      'requires DATABASE_URL in the dev-server env + a seeded brand row (see header comment)',
+    )
+
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([AGE_GATE_COOKIE])
+    const page = await context.newPage()
+
+    await page.goto(`/en/sake/${SEED_BRAND_ID}`)
+
+    await expect(page.getByTestId('sake-brand-page')).toBeVisible()
+    await expect(page.getByTestId('brand-name-kanji')).toBeVisible()
+    await expect(page.getByTestId('brand-name-romaji')).toBeVisible()
+    // The kanji element is the brand's primary name and should carry lang="ja"
+    // so screen-readers + browser font selection treat it appropriately.
+    await expect(page.getByTestId('brand-name-kanji')).toHaveAttribute('lang', 'ja')
+
+    await context.close()
+  })
+})
