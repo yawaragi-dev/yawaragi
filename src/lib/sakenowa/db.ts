@@ -6,8 +6,14 @@
  * pipeline scope all writes to a single ACID unit — failure-aborts (no
  * partial writes) follow from a real Postgres ROLLBACK in production and
  * from an explicit no-commit semantic in the fake.
+ *
+ * NOTE: deliberately no `import 'server-only'` here. `db.ts` is imported by
+ * the CLI scripts (`scripts/ingest-sakenowa.ts` via tsx, which has no
+ * `react-server` condition and would crash on the server-only stub). The
+ * meaningful protection lives at `src/lib/supabase/server-client.ts`, which
+ * is the entry that touches env / secrets. db.ts on its own only handles
+ * an injected pg client and pure data shaping.
  */
-import 'server-only'
 import type { Pool, PoolClient } from 'pg'
 import type { Brand } from '../schemas/brand'
 import type { ProvenanceSource } from '../schemas/with-provenance'
