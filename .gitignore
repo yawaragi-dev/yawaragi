@@ -43,3 +43,9 @@ yarn-error.log*
 next-env.d.ts
 # next-agents-md
 .next-docs/
+
+# Claude Code agent worktrees — temporary git checkouts the harness creates
+# under `.claude/worktrees/agent-<id>/` for parallel / isolated agent runs.
+# Each is its own checkout; nothing inside should ever be committed from
+# the main worktree.
+.claude/worktrees/
