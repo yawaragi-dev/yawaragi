@@ -26,7 +26,7 @@
     "anthropic-files:audit": "tsx scripts/audit-anthropic-files-api.ts",
     "migrate": "tsx --env-file=.env.local scripts/migrate.ts",
     "ingest": "tsx --env-file=.env.local scripts/ingest-sakenowa.ts",
-    "verify": "npm run lint && npm run typecheck && npm run test && npm run test:e2e && npm run i18n:audit && npm run anthropic-files:audit"
+    "verify": "npm run lint && npm run typecheck && npm run test && npm run test:integration && npm run test:e2e && npm run i18n:audit && npm run anthropic-files:audit"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.77",

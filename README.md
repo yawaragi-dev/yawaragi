@@ -41,24 +41,35 @@ Phase 0 (i18n + legal scaffolding + EN-first launch) is shipped. Phase 2+ nodes 
 
 ## Getting started
 
+### Prerequisites
+
+- **Node 22+** and **pnpm 11.1.2** (the `packageManager` field pins it for `corepack enable`)
+- **Docker** with a daemon reachable on the default socket (or `DOCKER_HOST` set) — required by `pnpm test:integration` / `pnpm verify`. On Linux, after installing Docker Engine, add your user to the `docker` group (`sudo usermod -aG docker $USER` then re-login). Docker Desktop, Colima, OrbStack, and rootless Docker all work; testcontainers auto-detects.
+
+### First-run
+
 ```bash
 pnpm install
 cp .env.example .env.local   # fill in API keys
+docker pull postgres:16-alpine   # one-time; the integration runner reuses this image
 pnpm dev
 ```
 
 ## Commands
 
-| Command            | Purpose                                   |
-|--------------------|-------------------------------------------|
-| `pnpm dev`         | Next dev server                           |
-| `pnpm test`        | Vitest, single run                        |
-| `pnpm test:watch`  | Vitest watch mode                         |
-| `pnpm test:e2e`    | Playwright                                |
-| `pnpm lint`        | ESLint                                    |
-| `pnpm typecheck`   | `tsc --noEmit`                            |
-| `pnpm ingest`      | Refresh Sakenowa data into Supabase       |
-| `pnpm eval`        | Run eval golden sets                      |
+| Command                   | Purpose                                                  |
+|---------------------------|----------------------------------------------------------|
+| `pnpm dev`                | Next dev server                                          |
+| `pnpm test`               | Vitest unit suite, single run                            |
+| `pnpm test:watch`         | Vitest watch mode                                        |
+| `pnpm test:integration`   | Vitest integration suite (testcontainers; needs Docker)  |
+| `pnpm test:e2e`           | Playwright                                               |
+| `pnpm lint`               | ESLint                                                   |
+| `pnpm typecheck`          | `tsc --noEmit`                                           |
+| `pnpm migrate`            | Apply pending SQL files in `supabase/migrations/`        |
+| `pnpm ingest`             | Refresh Sakenowa data into Supabase                      |
+| `pnpm verify`             | Full chain (lint + typecheck + test + integration + e2e + audits) — **needs Docker** |
+| `pnpm eval`               | Run eval golden sets                                     |
 
 ## Project documentation
 
