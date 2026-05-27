@@ -43,8 +43,26 @@ export async function runMigrations(connectionString: string): Promise<Migration
         continue
       }
       const sql = await readFile(join(MIGRATIONS_DIR, filename), 'utf8')
-      await pool.query(sql)
-      await pool.query('INSERT INTO _migrations (filename) VALUES ($1)', [filename])
+      // Wrap each migration in a single transaction so a mid-file failure
+      // rolls back cleanly. Without this, a multi-statement SQL file that
+      // throws on the 3rd statement would leave the first two committed
+      // and the _migrations row never inserted, producing a half-applied
+      // state that's painful to diagnose. The transaction makes apply
+      // all-or-nothing per file.
+      const client = await pool.connect()
+      try {
+        await client.query('BEGIN')
+        await client.query(sql)
+        await client.query('INSERT INTO _migrations (filename) VALUES ($1)', [filename])
+        await client.query('COMMIT')
+      } catch (err) {
+        await client.query('ROLLBACK').catch(() => {
+          /* swallow rollback failure; surface the original */
+        })
+        throw err
+      } finally {
+        client.release()
+      }
       applied.push(filename)
     }
   } finally {

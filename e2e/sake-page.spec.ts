@@ -44,7 +44,7 @@ test.describe('sake brand page', () => {
     await context.close()
   })
 
-  test('/en/sake/<seed> renders kanji + romaji', async ({ browser }, testInfo) => {
+  test('/en/sake/<seed> renders the brand name', async ({ browser }, testInfo) => {
     testInfo.skip(
       !HAS_DB,
       'requires DATABASE_URL in the dev-server env + a seeded brand row (see header comment)',
@@ -57,10 +57,10 @@ test.describe('sake brand page', () => {
     await page.goto(`/en/sake/${SEED_BRAND_ID}`)
 
     await expect(page.getByTestId('sake-brand-page')).toBeVisible()
+    // Kanji is always shown. Romaji is only rendered when it differs from
+    // kanji (Sakenowa-sourced rows currently have name === nameKanji, so
+    // the romaji <p> is omitted). Don't assert on `brand-name-romaji`.
     await expect(page.getByTestId('brand-name-kanji')).toBeVisible()
-    await expect(page.getByTestId('brand-name-romaji')).toBeVisible()
-    // The kanji element is the brand's primary name and should carry lang="ja"
-    // so screen-readers + browser font selection treat it appropriately.
     await expect(page.getByTestId('brand-name-kanji')).toHaveAttribute('lang', 'ja')
 
     await context.close()
