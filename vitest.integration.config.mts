@@ -9,6 +9,7 @@ export default defineConfig({
     // excludes them so `pnpm test` stays fast.
     include: ['**/*.integration.test.ts'],
     exclude: ['e2e/**', 'node_modules/**', '.next/**', '.claude/**'],
+    setupFiles: ['./vitest.setup.ts'],
     globalSetup: ['./tests/integration/setup.ts'],
     // Testcontainers spin-up is slow (~5–10s); allow generous per-test budget.
     testTimeout: 30000,
