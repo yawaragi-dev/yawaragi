@@ -20,9 +20,18 @@ export interface RunSummary {
   total: number
 }
 
+export type ProgressCallback = (current: number, total: number) => void
+
 export interface IngestionDeps {
   client: { getBrands: () => Promise<SakenowaBrand[]> }
   db: BrandsDB
+  /**
+   * Optional. Called after each row is classified (and upserted, if
+   * applicable). `current` is 1-indexed; `current === total` on the final
+   * call. The pipeline doesn't throttle — callers that hit stdout / a UI
+   * should throttle themselves.
+   */
+  onProgress?: ProgressCallback
 }
 
 export function sakenowaBrandToBrand(s: SakenowaBrand): Brand {
@@ -59,7 +68,9 @@ export async function ingestBrands(deps: IngestionDeps): Promise<RunSummary> {
     let updated = 0
     let unchanged = 0
 
-    for (const sBrand of sakenowaBrands) {
+    const total = sakenowaBrands.length
+    for (let i = 0; i < total; i++) {
+      const sBrand = sakenowaBrands[i]
       const brand = sakenowaBrandToBrand(sBrand)
       const hash = computeContentHash(brand)
       const existingHash = existing.get(brand.brandId)
@@ -73,6 +84,8 @@ export async function ingestBrands(deps: IngestionDeps): Promise<RunSummary> {
         await tx.upsertBrand(brand, hash)
         updated++
       }
+
+      deps.onProgress?.(i + 1, total)
     }
 
     return { added, updated, unchanged, total: sakenowaBrands.length }

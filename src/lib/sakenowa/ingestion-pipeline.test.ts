@@ -166,4 +166,19 @@ describe('ingestBrands', () => {
     expect(db.txOpened).toBe(1)
     expect(db.txCompleted).toBe(1)
   })
+
+  it('invokes onProgress with (current, total) for every row, 1-indexed', async () => {
+    const db = new FakeBrandsDB()
+    const calls: Array<[number, number]> = []
+    await ingestBrands({
+      client: makeClient([sBrand({ id: 1 }), sBrand({ id: 2, name: '十四代' }), sBrand({ id: 3, name: '獺祭' })]),
+      db,
+      onProgress: (current, total) => calls.push([current, total]),
+    })
+    expect(calls).toEqual([
+      [1, 3],
+      [2, 3],
+      [3, 3],
+    ])
+  })
 })
