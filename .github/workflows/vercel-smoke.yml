@@ -1,0 +1,96 @@
+name: Vercel preview smoke
+
+# Fires when Vercel reports a deployment is ready (deployment_status event).
+# We filter to preview-environment successes so we don't run on production
+# deploys (those have their own monitoring story).
+#
+# Manual trigger (workflow_dispatch) lets the maintainer re-run the smoke
+# against a known URL — useful for debugging the smoke script itself
+# without needing a fresh preview.
+on:
+  deployment_status: {}
+  workflow_dispatch:
+    inputs:
+      url:
+        description: 'Deployment URL to smoke-test (overrides the event payload)'
+        type: string
+        required: true
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.deployment_status.target_url || inputs.url }}
+  cancel-in-progress: false
+
+jobs:
+  smoke:
+    name: HTTP smoke (no 5xx)
+    runs-on: ubuntu-latest
+    # On deployment_status, only run for successful Preview deploys.
+    # workflow_dispatch always runs (manual operator decision).
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'deployment_status' &&
+       github.event.deployment_status.state == 'success' &&
+       github.event.deployment.environment == 'Preview')
+    env:
+      # Bypass token for Vercel's SSO protection on previews. Generated in
+      # Vercel project settings → Deployment Protection → "Protection Bypass
+      # for Automation"; stored as a GitHub repository secret. Without this
+      # the smoke would see 401 from every URL.
+      VERCEL_BYPASS_TOKEN: ${{ secrets.VERCEL_BYPASS_TOKEN }}
+      DEPLOY_URL: ${{ github.event_name == 'workflow_dispatch' && inputs.url || github.event.deployment_status.target_url }}
+    steps:
+      - name: Validate config
+        run: |
+          if [ -z "$VERCEL_BYPASS_TOKEN" ]; then
+            echo "::error::VERCEL_BYPASS_TOKEN secret is not set."
+            echo "Generate one at Vercel → Project → Settings → Deployment Protection →"
+            echo "  'Protection Bypass for Automation', then add it to this repo's secrets as VERCEL_BYPASS_TOKEN."
+            exit 1
+          fi
+          if [ -z "$DEPLOY_URL" ]; then
+            echo "::error::DEPLOY_URL is empty (no event payload + no manual input)."
+            exit 1
+          fi
+          echo "Smoking $DEPLOY_URL"
+
+      - name: Curl key URLs and assert no 5xx
+        run: |
+          set -u
+          # Paths smoke covers — each must respond with anything other than 5xx.
+          # 200/3xx (success/redirect), 404 (custom not-found), 401 (auth gates)
+          # are all acceptable; 500/502/503/504 are not.
+          paths=(
+            "/"
+            "/en"
+            "/de"
+            "/en/sake/1"
+            "/en/this-path-does-not-exist-on-purpose"
+          )
+
+          fail=0
+          for path in "${paths[@]}"; do
+            url="${DEPLOY_URL%/}$path"
+            # -L follows redirects; -o /dev/null discards body; -w prints status.
+            # Header form (not query param) keeps the secret out of Vercel/GitHub logs.
+            status=$(curl -sL -o /dev/null -w '%{http_code}' \
+              -H "x-vercel-protection-bypass: ${VERCEL_BYPASS_TOKEN}" \
+              -H "x-vercel-set-bypass-cookie: true" \
+              --max-time 30 \
+              "$url" || echo "000")
+
+            if [[ "$status" == "000" ]]; then
+              echo "✘ $url → curl failed (network / timeout)"
+              fail=1
+            elif [[ "$status" =~ ^5 ]]; then
+              echo "✘ $url → HTTP $status (5xx)"
+              fail=1
+            else
+              echo "✓ $url → HTTP $status"
+            fi
+          done
+
+          if [ "$fail" -ne 0 ]; then
+            echo "::error::One or more URLs returned 5xx. See per-URL lines above."
+            exit 1
+          fi
+          echo "All paths responded with non-5xx."

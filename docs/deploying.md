@@ -93,7 +93,34 @@ For each vendor, the practical rule of thumb:
 
 When you cross any of these thresholds, **the Pre-Go-Live checklist (§7.7) is the forcing function** — that section now lists each vendor and the tier audit as a hard gate before any production-grade launch.
 
-## 6. Promotion-to-production checklist
+## 6. Preview-deploy smoke check (`.github/workflows/vercel-smoke.yml`)
+
+Every Vercel preview deploy fires a `deployment_status: success` event back to GitHub. A workflow listens and curls a handful of key paths (`/`, `/en`, `/de`, `/en/sake/1`, an unknown-path 404) against the preview URL, asserting **none return 5xx**. 200, 3xx, 401, and 404 are all acceptable; 500/502/503/504 fail the check.
+
+Catches the failure mode that builds successfully but crashes at runtime — exactly the `/sake/[id]` → 500 we hit when DATABASE_URL was missing on the first Vercel preview.
+
+### One-time setup
+
+1. **Generate a bypass secret** so the smoke can skip Vercel's SSO on previews.
+   - Vercel project → **Settings → Deployment Protection** → look for **"Protection Bypass for Automation"** (or the modern label).
+   - Click **"Add Secret"** (or **"Create Token"**), name it something like `github-actions-smoke`.
+   - Copy the value once it's shown — Vercel won't show it again.
+2. **Add the secret to GitHub.**
+   - GitHub repo → **Settings → Secrets and variables → Actions → New repository secret**.
+   - Name: `VERCEL_BYPASS_TOKEN`. Value: the secret you just copied.
+3. **Verify.** Push a commit or open a PR. After Vercel reports its preview deploy as successful, the workflow runs. The Actions tab shows a "Vercel preview smoke" run with one `✓` line per smoked path.
+
+### Limitations
+
+- GitHub uses the workflow file from the **default branch** (`main`) for `deployment_status` triggers, not the PR branch's file. The smoke workflow only fires on previews **after** it lands on main — the PR that introduces it can't smoke-check itself.
+- Vercel's SSO bypass is per-project; rotating the secret in Vercel without updating the GitHub secret breaks the smoke until both sides match.
+- The smoke is HTTP-only. It catches runtime crashes and missing-env-var failures, not visual regressions, perf regressions, or a11y issues. Those are tracked separately under PRE-GO-LIVE §7.4 (Lighthouse pass) and remain manual until a follow-up.
+
+### Manual re-run
+
+Actions tab → **Vercel preview smoke** → **Run workflow** → paste a preview URL → **Run**. Useful for debugging the workflow itself, or for re-running after fixing a flaky 5xx.
+
+## 7. Promotion-to-production checklist
 
 Once you're ready to take this beyond a portfolio piece, work through:
 
