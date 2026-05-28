@@ -9,7 +9,7 @@
     "url": "git+https://github.com/yawaragi-dev/yawaragi.git"
   },
   "engines": {
-    "node": ">=22"
+    "node": "22.x"
   },
   "packageManager": "pnpm@11.1.2",
   "scripts": {
