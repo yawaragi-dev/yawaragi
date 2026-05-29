@@ -1,5 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { getBrands, getBreweries, getFlavorCharts, SakenowaError } from './client'
+import {
+  getAreas,
+  getBrands,
+  getBreweries,
+  getFlavorCharts,
+  getFlavorTags,
+  getRankings,
+  SakenowaError,
+} from './client'
 
 const stubFetch = (impl: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>) => {
   vi.stubGlobal('fetch', vi.fn(impl))
@@ -335,5 +343,194 @@ describe('getFlavorCharts', () => {
     await getFlavorCharts({ onSkippedRows: (info) => skipped.push(info) })
 
     expect(skipped[0].summary).not.toContain(SENTINEL)
+  })
+})
+
+describe('getAreas', () => {
+  it('returns parsed areas on a successful response', async () => {
+    stubFetch(async () =>
+      okJson({
+        areas: [
+          { id: 1, name: '北海道' },
+          { id: 20, name: '長野県' },
+        ],
+      }),
+    )
+
+    const areas = await getAreas()
+    expect(areas).toEqual([
+      { id: 1, name: '北海道' },
+      { id: 20, name: '長野県' },
+    ])
+  })
+
+  it('accepts areaId 0 (foreign-producer sentinel) as a real row', async () => {
+    stubFetch(async () => okJson({ areas: [{ id: 0, name: 'その他' }] }))
+    const areas = await getAreas()
+    expect(areas).toEqual([{ id: 0, name: 'その他' }])
+  })
+
+  it('hits the documented Sakenowa /areas endpoint', async () => {
+    const fetchSpy = vi.fn<typeof fetch>(async () => okJson({ areas: [] }))
+    vi.stubGlobal('fetch', fetchSpy)
+
+    await getAreas({ onSkippedRows: () => {} })
+
+    expect(fetchSpy).toHaveBeenCalledWith('https://muro.sakenowa.com/sakenowa-data/api/areas')
+  })
+
+  it('throws SakenowaError when "areas" envelope is missing', async () => {
+    stubFetch(async () => okJson([{ id: 1, name: '北海道' }]))
+    await expect(getAreas()).rejects.toThrow(/envelope failed schema validation/)
+  })
+
+  it('skips malformed rows and reports them rather than throwing', async () => {
+    stubFetch(async () =>
+      okJson({ areas: [{ id: 1, name: '北海道' }, { id: 'nope', name: 'x' }] }),
+    )
+    const skipped: unknown[] = []
+    const areas = await getAreas({ onSkippedRows: (info) => skipped.push(info) })
+
+    expect(areas).toEqual([{ id: 1, name: '北海道' }])
+    expect(skipped[0]).toMatchObject({ endpoint: '/areas', skipped: 1, total: 2 })
+  })
+
+  it('does not include rejected field values in the skip summary', async () => {
+    const SENTINEL = 'leak-me@example.com'
+    stubFetch(async () =>
+      okJson({ areas: [{ id: 'not-a-number-' + SENTINEL, name: SENTINEL }] }),
+    )
+    const skipped: { summary?: string }[] = []
+    await getAreas({ onSkippedRows: (info) => skipped.push(info) })
+    expect(skipped[0].summary).not.toContain(SENTINEL)
+  })
+})
+
+describe('getFlavorTags', () => {
+  it('returns parsed flavor tags on a successful response', async () => {
+    stubFetch(async () =>
+      okJson({
+        tags: [
+          { id: 2, tag: '酸味' },
+          { id: 3, tag: '辛口' },
+        ],
+      }),
+    )
+
+    const tags = await getFlavorTags()
+    expect(tags).toEqual([
+      { id: 2, tag: '酸味' },
+      { id: 3, tag: '辛口' },
+    ])
+  })
+
+  it('hits the documented Sakenowa /flavor-tags endpoint', async () => {
+    const fetchSpy = vi.fn<typeof fetch>(async () => okJson({ tags: [] }))
+    vi.stubGlobal('fetch', fetchSpy)
+    await getFlavorTags({ onSkippedRows: () => {} })
+    expect(fetchSpy).toHaveBeenCalledWith('https://muro.sakenowa.com/sakenowa-data/api/flavor-tags')
+  })
+
+  it('throws SakenowaError when "tags" envelope is missing', async () => {
+    stubFetch(async () => okJson({ flavor_tags: [{ id: 2, tag: '酸味' }] }))
+    await expect(getFlavorTags()).rejects.toThrow(/envelope failed schema validation/)
+  })
+
+  it('skips malformed rows and reports them rather than throwing', async () => {
+    stubFetch(async () =>
+      okJson({ tags: [{ id: 2, tag: '酸味' }, { id: 0 }] }),
+    )
+    const skipped: unknown[] = []
+    const tags = await getFlavorTags({ onSkippedRows: (info) => skipped.push(info) })
+    expect(tags).toEqual([{ id: 2, tag: '酸味' }])
+    expect(skipped[0]).toMatchObject({ endpoint: '/flavor-tags', skipped: 1, total: 2 })
+  })
+})
+
+describe('getRankings', () => {
+  it('returns parsed overall + area rankings on a successful response', async () => {
+    stubFetch(async () =>
+      okJson({
+        yearMonth: '202402',
+        overall: [
+          { rank: 1, brandId: 109, score: 4.4 },
+          { rank: 2, brandId: 660, score: 4.1 },
+        ],
+        areas: [
+          {
+            areaId: 20,
+            ranking: [{ rank: 1, brandId: 109, score: 4.4 }],
+          },
+        ],
+      }),
+    )
+
+    const rankings = await getRankings()
+    expect(rankings.yearMonth).toBe('202402')
+    expect(rankings.overall).toEqual([
+      { rank: 1, brandId: 109, score: 4.4 },
+      { rank: 2, brandId: 660, score: 4.1 },
+    ])
+    expect(rankings.areas).toEqual([
+      { areaId: 20, ranking: [{ rank: 1, brandId: 109, score: 4.4 }] },
+    ])
+  })
+
+  it('hits the documented Sakenowa /rankings endpoint', async () => {
+    const fetchSpy = vi.fn<typeof fetch>(async () =>
+      okJson({ yearMonth: '202402', overall: [], areas: [] }),
+    )
+    vi.stubGlobal('fetch', fetchSpy)
+    await getRankings({ onSkippedRows: () => {} })
+    expect(fetchSpy).toHaveBeenCalledWith('https://muro.sakenowa.com/sakenowa-data/api/rankings')
+  })
+
+  it('throws SakenowaError when the envelope drops a required key', async () => {
+    stubFetch(async () => okJson({ overall: [], areas: [] }))
+    await expect(getRankings()).rejects.toThrow(/envelope failed schema validation/)
+  })
+
+  it('throws SakenowaError when the envelope renames a scope', async () => {
+    stubFetch(async () =>
+      okJson({ yearMonth: '202402', global: [], prefectures: [] }),
+    )
+    await expect(getRankings()).rejects.toThrow(/envelope failed schema validation/)
+  })
+
+  it('filters malformed overall entries and surfaces them via the reporter', async () => {
+    stubFetch(async () =>
+      okJson({
+        yearMonth: '202402',
+        overall: [
+          { rank: 1, brandId: 109, score: 4.4 },
+          { rank: 0, brandId: 1, score: 1 }, // non-positive rank
+        ],
+        areas: [],
+      }),
+    )
+    const skipped: { summary?: string; endpoint?: string }[] = []
+    const rankings = await getRankings({ onSkippedRows: (info) => skipped.push(info) })
+
+    expect(rankings.overall).toHaveLength(1)
+    expect(skipped[0]).toMatchObject({ endpoint: '/rankings' })
+    expect(skipped[0].summary).toContain('overall:')
+  })
+
+  it('filters malformed area-scope entries and surfaces them via the reporter', async () => {
+    stubFetch(async () =>
+      okJson({
+        yearMonth: '202402',
+        overall: [],
+        areas: [
+          { areaId: 20, ranking: [{ rank: 1, brandId: 109, score: 4.4 }] },
+          { areaId: 'wrong' }, // wrong type
+        ],
+      }),
+    )
+    const skipped: { summary?: string; endpoint?: string }[] = []
+    const rankings = await getRankings({ onSkippedRows: (info) => skipped.push(info) })
+
+    expect(rankings.areas).toHaveLength(1)
+    expect(skipped.at(-1)?.summary).toContain('areas:')
   })
 })

@@ -53,6 +53,63 @@ const FlavorChartsResponse = z.object({
   flavorCharts: z.array(z.unknown()),
 })
 
+// Sakenowa areas — one row per Japanese prefecture, plus a sentinel id 0
+// row (Sakenowa: "その他" / Other) used for foreign producers.
+export const SakenowaArea = z.object({
+  id: z.number().int().nonnegative(),
+  name: z.string().min(1),
+})
+export type SakenowaArea = z.infer<typeof SakenowaArea>
+
+const AreasResponse = z.object({
+  areas: z.array(z.unknown()),
+})
+
+// Sakenowa flavor tags — the 117-tag categorical vocabulary the issue
+// refers to as "Types". Sakenowa's row key is `tag` (the label),
+// distinct from `name` on /areas, /breweries, /brands.
+export const SakenowaFlavorTag = z.object({
+  id: z.number().int().positive(),
+  tag: z.string().min(1),
+})
+export type SakenowaFlavorTag = z.infer<typeof SakenowaFlavorTag>
+
+const FlavorTagsResponse = z.object({
+  tags: z.array(z.unknown()),
+})
+
+// Sakenowa publishes a single /rankings endpoint that carries both
+// scopes — `overall` (a flat top list) and `areas` (per-prefecture
+// lists keyed by areaId). yearMonth is the snapshot month (e.g.
+// "202402"); ADR-0002 keeps only the latest, so we don't persist it
+// per-row, but we surface it from the client for the source-revision
+// hash and operator visibility.
+export const SakenowaRankingEntry = z.object({
+  rank: z.number().int().positive(),
+  brandId: z.number().int().positive(),
+  score: z.number(),
+})
+export type SakenowaRankingEntry = z.infer<typeof SakenowaRankingEntry>
+
+const RankingsResponse = z.object({
+  yearMonth: z.string().min(1),
+  overall: z.array(z.unknown()),
+  areas: z.array(z.unknown()),
+})
+
+const SakenowaAreaRanking = z.object({
+  areaId: z.number().int().nonnegative(),
+  ranking: z.array(SakenowaRankingEntry),
+})
+export type SakenowaAreaRanking = z.infer<typeof SakenowaAreaRanking>
+
+export interface SakenowaRankingsPayload {
+  yearMonth: string
+  overall: SakenowaRankingEntry[]
+  areas: SakenowaAreaRanking[]
+}
+
+
 export class SakenowaError extends Error {
   constructor(
     message: string,
@@ -76,7 +133,13 @@ const defaultSkippedReporter: SkippedRowsReporter = ({ endpoint, skipped, total,
 }
 
 async function fetchAndParseEnvelope<T>(
-  endpoint: '/brands' | '/breweries' | '/flavor-charts',
+  endpoint:
+    | '/brands'
+    | '/breweries'
+    | '/flavor-charts'
+    | '/areas'
+    | '/flavor-tags'
+    | '/rankings',
   envelope: z.ZodType<T>,
 ): Promise<T> {
   const url = `${SAKENOWA_BASE_URL}${endpoint}`
@@ -192,4 +255,73 @@ export async function getFlavorCharts(
     })
   }
   return valid
+}
+
+export async function getAreas(
+  opts: { onSkippedRows?: SkippedRowsReporter } = {},
+): Promise<SakenowaArea[]> {
+  const data = await fetchAndParseEnvelope('/areas', AreasResponse)
+  const { valid, invalid, summary } = filterRowsBySchema(data.areas, SakenowaArea)
+  if (invalid > 0) {
+    ;(opts.onSkippedRows ?? defaultSkippedReporter)({
+      endpoint: '/areas',
+      skipped: invalid,
+      total: data.areas.length,
+      summary,
+    })
+  }
+  return valid
+}
+
+export async function getFlavorTags(
+  opts: { onSkippedRows?: SkippedRowsReporter } = {},
+): Promise<SakenowaFlavorTag[]> {
+  const data = await fetchAndParseEnvelope('/flavor-tags', FlavorTagsResponse)
+  const { valid, invalid, summary } = filterRowsBySchema(data.tags, SakenowaFlavorTag)
+  if (invalid > 0) {
+    ;(opts.onSkippedRows ?? defaultSkippedReporter)({
+      endpoint: '/flavor-tags',
+      skipped: invalid,
+      total: data.tags.length,
+      summary,
+    })
+  }
+  return valid
+}
+
+// /rankings is a single envelope with two scopes. Both are strict-parsed
+// at the row level: a malformed top-list entry or area-list entry is
+// filtered out and reported. The envelope shape itself (yearMonth +
+// overall + areas keys) must match exactly — schema-shape drift throws.
+export async function getRankings(
+  opts: { onSkippedRows?: SkippedRowsReporter } = {},
+): Promise<SakenowaRankingsPayload> {
+  const data = await fetchAndParseEnvelope('/rankings', RankingsResponse)
+  const reporter = opts.onSkippedRows ?? defaultSkippedReporter
+
+  const overall = filterRowsBySchema(data.overall, SakenowaRankingEntry)
+  if (overall.invalid > 0) {
+    reporter({
+      endpoint: '/rankings',
+      skipped: overall.invalid,
+      total: data.overall.length,
+      summary: `overall: ${overall.summary}`,
+    })
+  }
+
+  const areas = filterRowsBySchema(data.areas, SakenowaAreaRanking)
+  if (areas.invalid > 0) {
+    reporter({
+      endpoint: '/rankings',
+      skipped: areas.invalid,
+      total: data.areas.length,
+      summary: `areas: ${areas.summary}`,
+    })
+  }
+
+  return {
+    yearMonth: data.yearMonth,
+    overall: overall.valid,
+    areas: areas.valid,
+  }
 }

@@ -18,18 +18,35 @@
  * cloud first-time ingest, this collapses ~5000 round trips into ~10.
  */
 import { createHash } from 'node:crypto'
-import type { SakenowaBrand, SakenowaBrewery, SakenowaFlavorChart } from './client'
 import type {
+  SakenowaArea,
+  SakenowaBrand,
+  SakenowaBrewery,
+  SakenowaFlavorChart,
+  SakenowaFlavorTag,
+  SakenowaRankingsPayload,
+} from './client'
+import type {
+  AreasDB,
+  AreaUpsert,
   BrandsDB,
   BrandUpsert,
   BreweriesDB,
   BreweryUpsert,
   FlavorChartsDB,
   FlavorChartUpsert,
+  FlavorTagsDB,
+  FlavorTagUpsert,
+  IngestionRunInsert,
+  IngestionRunsDB,
+  RankingsDB,
 } from './db'
+import type { Area } from '../schemas/area'
 import type { Brand } from '../schemas/brand'
 import type { Brewery } from '../schemas/brewery'
 import type { FlavorChart } from '../schemas/flavor-chart'
+import type { FlavorTag } from '../schemas/flavor-tag'
+import type { Ranking } from '../schemas/ranking'
 
 export interface RunSummary {
   added: number
@@ -282,6 +299,255 @@ export async function ingestFlavorCharts(
 
     return { added, updated, unchanged, total }
   })
+}
+
+// ---------- Areas ----------
+
+export interface AreaIngestionDeps {
+  client: { getAreas: () => Promise<SakenowaArea[]> }
+  db: AreasDB
+  onProgress?: ProgressCallback
+}
+
+export function sakenowaAreaToArea(s: SakenowaArea): Area {
+  return {
+    areaId: s.id,
+    name: s.name,
+    source: 'sakenowa',
+  }
+}
+
+export function computeAreaContentHash(area: Area): string {
+  const canonical = JSON.stringify({
+    areaId: area.areaId,
+    name: area.name,
+    source: area.source,
+    confidence: area.confidence ?? null,
+  })
+  return createHash('sha256').update(canonical).digest('hex')
+}
+
+export async function ingestAreas(deps: AreaIngestionDeps): Promise<RunSummary> {
+  const sakenowaAreas = await deps.client.getAreas()
+
+  return deps.db.transaction(async (tx) => {
+    const existing = await tx.getExistingAreaHashes()
+    let added = 0
+    let updated = 0
+    let unchanged = 0
+    const toUpsert: AreaUpsert[] = []
+
+    const total = sakenowaAreas.length
+    for (let i = 0; i < total; i++) {
+      const area = sakenowaAreaToArea(sakenowaAreas[i])
+      const contentHash = computeAreaContentHash(area)
+      const existingHash = existing.get(area.areaId)
+
+      if (existingHash === undefined) {
+        toUpsert.push({ area, contentHash })
+        added++
+      } else if (existingHash === contentHash) {
+        unchanged++
+      } else {
+        toUpsert.push({ area, contentHash })
+        updated++
+      }
+    }
+
+    let written = 0
+    try {
+      await tx.upsertAreasBatch(toUpsert, (rowsThisChunk) => {
+        written += rowsThisChunk
+        deps.onProgress?.(written, toUpsert.length)
+      })
+    } catch (err) {
+      throw new Error(
+        `Failed to upsert ${toUpsert.length} area row(s) (added=${added}, updated=${updated}): ${formatPgError(err)}`,
+        { cause: err },
+      )
+    }
+
+    return { added, updated, unchanged, total }
+  })
+}
+
+// ---------- FlavorTags ----------
+
+export interface FlavorTagIngestionDeps {
+  client: { getFlavorTags: () => Promise<SakenowaFlavorTag[]> }
+  db: FlavorTagsDB
+  onProgress?: ProgressCallback
+}
+
+export function sakenowaFlavorTagToFlavorTag(s: SakenowaFlavorTag): FlavorTag {
+  return {
+    tagId: s.id,
+    name: s.tag,
+    source: 'sakenowa',
+  }
+}
+
+export function computeFlavorTagContentHash(tag: FlavorTag): string {
+  const canonical = JSON.stringify({
+    tagId: tag.tagId,
+    name: tag.name,
+    source: tag.source,
+    confidence: tag.confidence ?? null,
+  })
+  return createHash('sha256').update(canonical).digest('hex')
+}
+
+export async function ingestFlavorTags(deps: FlavorTagIngestionDeps): Promise<RunSummary> {
+  const sakenowaTags = await deps.client.getFlavorTags()
+
+  return deps.db.transaction(async (tx) => {
+    const existing = await tx.getExistingFlavorTagHashes()
+    let added = 0
+    let updated = 0
+    let unchanged = 0
+    const toUpsert: FlavorTagUpsert[] = []
+
+    const total = sakenowaTags.length
+    for (let i = 0; i < total; i++) {
+      const tag = sakenowaFlavorTagToFlavorTag(sakenowaTags[i])
+      const contentHash = computeFlavorTagContentHash(tag)
+      const existingHash = existing.get(tag.tagId)
+
+      if (existingHash === undefined) {
+        toUpsert.push({ tag, contentHash })
+        added++
+      } else if (existingHash === contentHash) {
+        unchanged++
+      } else {
+        toUpsert.push({ tag, contentHash })
+        updated++
+      }
+    }
+
+    let written = 0
+    try {
+      await tx.upsertFlavorTagsBatch(toUpsert, (rowsThisChunk) => {
+        written += rowsThisChunk
+        deps.onProgress?.(written, toUpsert.length)
+      })
+    } catch (err) {
+      throw new Error(
+        `Failed to upsert ${toUpsert.length} flavor_tag row(s) (added=${added}, updated=${updated}): ${formatPgError(err)}`,
+        { cause: err },
+      )
+    }
+
+    return { added, updated, unchanged, total }
+  })
+}
+
+// ---------- Rankings ----------
+//
+// ADR-0002: latest snapshot only. We don't classify per-row; we
+// wholesale-replace the table inside the transaction. The summary
+// carries `total` only — `added/updated/unchanged` aren't meaningful
+// under the replace-all semantics.
+
+export interface RankingIngestionDeps {
+  client: { getRankings: () => Promise<SakenowaRankingsPayload> }
+  db: RankingsDB
+  onProgress?: ProgressCallback
+}
+
+export interface RankingRunSummary {
+  total: number
+  yearMonth: string
+}
+
+export function sakenowaRankingsToRankings(payload: SakenowaRankingsPayload): Ranking[] {
+  const rows: Ranking[] = []
+  for (const entry of payload.overall) {
+    rows.push({
+      kind: 'overall',
+      areaId: null,
+      rank: entry.rank,
+      brandId: entry.brandId,
+      score: entry.score,
+      source: 'sakenowa',
+    })
+  }
+  for (const area of payload.areas) {
+    for (const entry of area.ranking) {
+      rows.push({
+        kind: 'area',
+        areaId: area.areaId,
+        rank: entry.rank,
+        brandId: entry.brandId,
+        score: entry.score,
+        source: 'sakenowa',
+      })
+    }
+  }
+  return rows
+}
+
+export async function ingestRankings(deps: RankingIngestionDeps): Promise<RankingRunSummary> {
+  const payload = await deps.client.getRankings()
+  const rows = sakenowaRankingsToRankings(payload)
+
+  return deps.db.transaction(async (tx) => {
+    let written = 0
+    try {
+      await tx.replaceAll(rows, (rowsThisChunk) => {
+        written += rowsThisChunk
+        deps.onProgress?.(written, rows.length)
+      })
+    } catch (err) {
+      throw new Error(
+        `Failed to replace ${rows.length} ranking row(s): ${formatPgError(err)}`,
+        { cause: err },
+      )
+    }
+    return { total: rows.length, yearMonth: payload.yearMonth }
+  })
+}
+
+// ---------- Source revision hash ----------
+//
+// SHA-256 over the canonical JSON of every Sakenowa payload the
+// invocation fetched. Issue #54 (cron route) reads this off the latest
+// ingestion_runs row to decide "Sakenowa published new data" vs
+// "nothing changed, skip ingest". The hash is deterministic across
+// runs as long as Sakenowa's response is byte-equal.
+//
+// Inputs are typed (not raw bytes) so a non-shape-affecting Sakenowa
+// reformat (whitespace, key ordering) doesn't trigger a false-positive
+// "new data" signal.
+export interface SourceRevisionInputs {
+  brands?: SakenowaBrand[]
+  breweries?: SakenowaBrewery[]
+  flavorCharts?: SakenowaFlavorChart[]
+  areas?: SakenowaArea[]
+  flavorTags?: SakenowaFlavorTag[]
+  rankings?: SakenowaRankingsPayload
+}
+
+export function computeSourceRevisionHash(inputs: SourceRevisionInputs): string {
+  // Fixed key order so the hash is stable across invocations regardless
+  // of how the caller built the object.
+  const canonical = JSON.stringify({
+    brands: inputs.brands ?? null,
+    breweries: inputs.breweries ?? null,
+    flavorCharts: inputs.flavorCharts ?? null,
+    areas: inputs.areas ?? null,
+    flavorTags: inputs.flavorTags ?? null,
+    rankings: inputs.rankings ?? null,
+  })
+  return createHash('sha256').update(canonical).digest('hex')
+}
+
+// ---------- IngestionRuns ----------
+
+export async function recordIngestionRun(
+  db: IngestionRunsDB,
+  run: IngestionRunInsert,
+): Promise<void> {
+  await db.insertRun(run)
 }
 
 // PG errors carry actionable context in fields beyond .message — surface

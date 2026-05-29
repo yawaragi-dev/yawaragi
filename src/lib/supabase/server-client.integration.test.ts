@@ -187,6 +187,8 @@ describe('database integration smoke', () => {
     expect(rows[0].rolbypassrls).toBe(true)
   })
 
+  // --- Slice 6 (#49): flavor_charts ---
+
   it('migrations created the flavor_charts table with the expected columns', async () => {
     const { rows } = await pool.query<{ column_name: string }>(
       "SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'flavor_charts' ORDER BY column_name",
@@ -253,5 +255,148 @@ describe('database integration smoke', () => {
     )
     const names = rows.map((r) => r.indexname)
     expect(names).not.toContain('flavor_charts_content_hash_idx')
+  })
+
+  // --- Slice 9 (#52): areas, flavor_tags, rankings, ingestion_runs ---
+
+  it('migrations created the areas table with the expected columns', async () => {
+    const { rows } = await pool.query<{ column_name: string }>(
+      "SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'areas' ORDER BY column_name",
+    )
+    expect(rows.map((r) => r.column_name).sort()).toEqual(
+      ['area_id', 'confidence', 'content_hash', 'name', 'source', 'updated_at'].sort(),
+    )
+  })
+
+  it('areas table is seeded with the area_id=0 foreign-producer sentinel', async () => {
+    const { rows } = await pool.query<{ name: string; source: string }>(
+      'SELECT name, source FROM areas WHERE area_id = 0',
+    )
+    expect(rows).toHaveLength(1)
+    expect(rows[0].source).toBe('manual_curation')
+  })
+
+  it('anon can SELECT from areas; anon CANNOT INSERT', async () => {
+    await pool.query('SET ROLE anon')
+    const { rows } = await pool.query<{ count: string }>(
+      'SELECT count(*)::text AS count FROM areas',
+    )
+    expect(Number(rows[0].count)).toBeGreaterThanOrEqual(1)
+    await expect(
+      pool.query(
+        "INSERT INTO areas (area_id, name, source, content_hash) VALUES (9999, '不正', 'sakenowa', 'h')",
+      ),
+    ).rejects.toThrow()
+  })
+
+  it('migrations created the flavor_tags table with the expected columns', async () => {
+    const { rows } = await pool.query<{ column_name: string }>(
+      "SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'flavor_tags' ORDER BY column_name",
+    )
+    expect(rows.map((r) => r.column_name).sort()).toEqual(
+      ['confidence', 'content_hash', 'name', 'source', 'tag_id', 'updated_at'].sort(),
+    )
+  })
+
+  it('anon can SELECT from flavor_tags', async () => {
+    await pool.query('SET ROLE anon')
+    const { rows } = await pool.query<{ count: string }>(
+      'SELECT count(*)::text AS count FROM flavor_tags',
+    )
+    expect(rows[0].count).toBe('0')
+  })
+
+  it('migrations created the rankings table with the expected columns', async () => {
+    const { rows } = await pool.query<{ column_name: string }>(
+      "SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'rankings' ORDER BY column_name",
+    )
+    expect(rows.map((r) => r.column_name).sort()).toEqual(
+      ['area_id', 'brand_id', 'confidence', 'kind', 'rank', 'score', 'source'].sort(),
+    )
+  })
+
+  it('rankings.brand_id has a real FK to brands.brand_id', async () => {
+    const { rows } = await pool.query<{ conname: string }>(
+      `SELECT conname
+       FROM pg_constraint
+       WHERE conrelid = 'public.rankings'::regclass
+         AND contype = 'f'
+         AND confrelid = 'public.brands'::regclass`,
+    )
+    expect(rows).toHaveLength(1)
+  })
+
+  it('rankings rejects kind="overall" with a non-null area_id (SQL guards Zod)', async () => {
+    await expect(
+      pool.query(
+        "INSERT INTO rankings (kind, area_id, rank, brand_id, score, source) VALUES ('overall', 20, 1, 1, 1, 'sakenowa')",
+      ),
+    ).rejects.toThrow()
+  })
+
+  it('rankings rejects kind="area" with a null area_id (SQL guards Zod)', async () => {
+    await expect(
+      pool.query(
+        "INSERT INTO rankings (kind, area_id, rank, brand_id, score, source) VALUES ('area', NULL, 1, 1, 1, 'sakenowa')",
+      ),
+    ).rejects.toThrow()
+  })
+
+  it('anon can SELECT from rankings', async () => {
+    await pool.query('SET ROLE anon')
+    const { rows } = await pool.query<{ count: string }>(
+      'SELECT count(*)::text AS count FROM rankings',
+    )
+    expect(rows[0].count).toBe('0')
+  })
+
+  it('migrations created the ingestion_runs table with the expected columns', async () => {
+    const { rows } = await pool.query<{ column_name: string }>(
+      "SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'ingestion_runs' ORDER BY column_name",
+    )
+    expect(rows.map((r) => r.column_name).sort()).toEqual(
+      [
+        'error_message',
+        'finished_at',
+        'per_table',
+        'run_id',
+        'source_revision_hash',
+        'started_at',
+        'status',
+      ].sort(),
+    )
+  })
+
+  it('ingestion_runs is service-role-only — anon and authenticated CANNOT SELECT', async () => {
+    // Seed a row as the migration runner (BYPASSRLS), then verify both
+    // non-admin roles get a permission error. The bootstrap default-
+    // privilege grant has to be explicitly REVOKEd in the migration —
+    // this test catches a regression where that REVOKE is missing.
+    await pool.query(
+      `INSERT INTO ingestion_runs
+         (started_at, finished_at, status, per_table, source_revision_hash)
+       VALUES (NOW(), NOW(), 'success', '{}'::jsonb, 'h')`,
+    )
+    try {
+      await pool.query('SET ROLE anon')
+      await expect(pool.query('SELECT count(*) FROM ingestion_runs')).rejects.toThrow()
+      await pool.query('RESET ROLE')
+      await pool.query('SET ROLE authenticated')
+      await expect(pool.query('SELECT count(*) FROM ingestion_runs')).rejects.toThrow()
+    } finally {
+      await pool.query('RESET ROLE')
+      await pool.query('DELETE FROM ingestion_runs')
+    }
+  })
+
+  it('service_role CAN read ingestion_runs (BYPASSRLS)', async () => {
+    // service_role isn't a login role in production, but BYPASSRLS is
+    // what matters here. We can't SET ROLE through it from the test
+    // pool (the testcontainer superuser owns membership) — assert the
+    // capability is present rather than exercising a connection.
+    const { rows } = await pool.query<{ rolbypassrls: boolean }>(
+      "SELECT rolbypassrls FROM pg_roles WHERE rolname = 'service_role'",
+    )
+    expect(rows[0].rolbypassrls).toBe(true)
   })
 })
