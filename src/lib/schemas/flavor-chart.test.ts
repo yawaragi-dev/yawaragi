@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   FLAVOR_AXES,
+  FLAVOR_AXIS_ROMAJI,
   FlavorChartSchema,
   parseFlavorChart,
   type FlavorAxis,
@@ -83,5 +84,23 @@ describe('FLAVOR_AXES', () => {
   it('is assignable to FlavorAxis (type-level smoke)', () => {
     const axis: FlavorAxis = 'f3'
     expect(FLAVOR_AXES).toContain(axis)
+  })
+})
+
+describe('FLAVOR_AXIS_ROMAJI', () => {
+  it('maps each axis to its CONTEXT.md vocabulary romaji', () => {
+    expect(FLAVOR_AXIS_ROMAJI).toEqual({
+      f1: 'hanayaka',
+      f2: 'hojun',
+      f3: 'juko',
+      f4: 'odayaka',
+      f5: 'dry',
+      f6: 'keikai',
+    })
+  })
+
+  it('uses "keikai" for f6 (not the unrelated "karoyaka" reading of 軽やか)', () => {
+    // Guards the transcription correction recorded in CONTEXT.md.
+    expect(FLAVOR_AXIS_ROMAJI.f6).toBe('keikai')
   })
 })

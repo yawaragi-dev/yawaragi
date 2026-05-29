@@ -1,5 +1,5 @@
 import { getTranslations } from 'next-intl/server'
-import type { FlavorAxis } from '@/lib/schemas/flavor-chart'
+import { FLAVOR_AXIS_ROMAJI, type FlavorAxis } from '@/lib/schemas/flavor-chart'
 import { cn } from '@/lib/utils'
 
 /**
@@ -26,10 +26,10 @@ export async function FlavorAxisLabel({ axis, className }: FlavorAxisLabelProps)
   return (
     <FlavorAxisLabelView
       axis={axis}
-      romaji={t(`${axis}.romaji`)}
+      romaji={FLAVOR_AXIS_ROMAJI[axis]}
       kanji={t(`${axis}.kanji`)}
       approximation={t(`${axis}.label`)}
-      caveat={t('tooltipCaveat')}
+      caveat={t(`${axis}.caveat`)}
       className={className}
     />
   )

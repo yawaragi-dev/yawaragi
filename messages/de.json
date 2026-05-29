@@ -57,36 +57,35 @@
     }
   },
   "flavorAxis": {
-    "tooltipCaveat": "Dies ist ein Brauer-Begriff; die deutsche Bezeichnung ist eine Annäherung.",
     "f1": {
       "label": "duftig / blumig",
-      "romaji": "hanayaka",
-      "kanji": "華やか"
+      "kanji": "華やか",
+      "caveat": "Nicht 'parfümiert' — aromatische Ester. Brauer-Begriff; die deutsche Bezeichnung ist eine Annäherung."
     },
     "f2": {
       "label": "vollmundig / reich",
-      "romaji": "hojun",
-      "kanji": "芳醇"
+      "kanji": "芳醇",
+      "caveat": "Nicht 'cremig' — Tiefe aus Umami und Aroma. Brauer-Begriff; die deutsche Bezeichnung ist eine Annäherung."
     },
     "f3": {
       "label": "schwer / körperreich",
-      "romaji": "juko",
-      "kanji": "重厚"
+      "kanji": "重厚",
+      "caveat": "Nicht 'tanninhaltig' — Körper plus Aminosäuren. Brauer-Begriff; die deutsche Bezeichnung ist eine Annäherung."
     },
     "f4": {
       "label": "mild / sanft",
-      "romaji": "odayaka",
-      "kanji": "穏やか"
+      "kanji": "穏やか",
+      "caveat": "Zurückhaltendes Aroma, nicht 'neutral'. Brauer-Begriff; die deutsche Bezeichnung ist eine Annäherung."
     },
     "f5": {
       "label": "trocken",
-      "romaji": "dry",
-      "kanji": "ドライ"
+      "kanji": "ドライ",
+      "caveat": "Engste 1:1-Entsprechung; folgt grob dem SMV."
     },
     "f6": {
       "label": "leicht / spritzig",
-      "romaji": "keikai",
-      "kanji": "軽快"
+      "kanji": "軽快",
+      "caveat": "Erfrischender Abgang, geringer Restzucker. Brauer-Begriff; die deutsche Bezeichnung ist eine Annäherung."
     }
   },
   "privacy": {

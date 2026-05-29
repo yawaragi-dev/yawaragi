@@ -57,36 +57,35 @@
     }
   },
   "flavorAxis": {
-    "tooltipCaveat": "This is a brewer's term; the English label is an approximation.",
     "f1": {
       "label": "fragrant / floral",
-      "romaji": "hanayaka",
-      "kanji": "華やか"
+      "kanji": "華やか",
+      "caveat": "Not 'perfumed' — aromatic-ester-driven. Brewer's term; the English label is an approximation."
     },
     "f2": {
       "label": "mellow / rich",
-      "romaji": "hojun",
-      "kanji": "芳醇"
+      "kanji": "芳醇",
+      "caveat": "Not 'creamy' — umami-and-aroma depth. Brewer's term; the English label is an approximation."
     },
     "f3": {
       "label": "heavy / full-bodied",
-      "romaji": "juko",
-      "kanji": "重厚"
+      "kanji": "重厚",
+      "caveat": "Not 'tannic' — weight + amino acid. Brewer's term; the English label is an approximation."
     },
     "f4": {
       "label": "mild / calm",
-      "romaji": "odayaka",
-      "kanji": "穏やか"
+      "kanji": "穏やか",
+      "caveat": "Restrained aroma, not 'neutral'. Brewer's term; the English label is an approximation."
     },
     "f5": {
       "label": "dry",
-      "romaji": "dry",
-      "kanji": "ドライ"
+      "kanji": "ドライ",
+      "caveat": "Closest 1:1 to a Western descriptor; tracks SMV broadly."
     },
     "f6": {
       "label": "light / crisp",
-      "romaji": "keikai",
-      "kanji": "軽快"
+      "kanji": "軽快",
+      "caveat": "Refreshing finish, low residual. Brewer's term; the English label is an approximation."
     }
   },
   "privacy": {

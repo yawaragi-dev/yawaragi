@@ -7,7 +7,7 @@ const baseProps = {
   romaji: 'hanayaka',
   kanji: '華やか',
   approximation: 'fragrant / floral',
-  caveat: "This is a brewer's term; the English label is an approximation.",
+  caveat: "Not 'perfumed' — aromatic-ester-driven. Brewer's term; the English label is an approximation.",
 }
 
 describe('FlavorAxisLabelView', () => {
@@ -31,9 +31,26 @@ describe('FlavorAxisLabelView', () => {
     expect(tooltip).not.toBeNull()
     expect(tooltip!.getAttribute('role')).toBe('tooltip')
     expect(within(tooltip!).getByText('fragrant / floral')).toBeTruthy()
-    expect(
-      within(tooltip!).getByText(/brewer's term; the English label is an approximation/),
-    ).toBeTruthy()
+    expect(within(tooltip!).getByText(/Not 'perfumed' — aromatic-ester-driven/)).toBeTruthy()
+  })
+
+  it('shows per-axis caveat content (not a shared generic message)', () => {
+    // CONTEXT.md's vocab table carries distinct "not X" caveats per axis
+    // (f2 "not creamy", f3 "not tannic", etc.) — confirm the prop is
+    // surfaced verbatim and not collapsed into a shared placeholder.
+    render(
+      <FlavorAxisLabelView
+        {...baseProps}
+        axis="f3"
+        romaji="juko"
+        kanji="重厚"
+        approximation="heavy / full-bodied"
+        caveat="Not 'tannic' — weight + amino acid. Brewer's term; the English label is an approximation."
+      />,
+    )
+    const tooltip = screen.getByTestId('flavor-axis-f3-tooltip')
+    expect(tooltip.textContent).toContain("Not 'tannic'")
+    expect(tooltip.textContent).toContain('amino acid')
   })
 
   it('is keyboard-reachable so the tooltip can fire on focus', () => {
@@ -66,7 +83,7 @@ describe('FlavorAxisLabelView', () => {
       <FlavorAxisLabelView
         {...baseProps}
         approximation="duftig / blumig"
-        caveat="Dies ist ein Brauer-Begriff; die deutsche Bezeichnung ist eine Annäherung."
+        caveat="Nicht 'parfümiert' — aromatische Ester. Brauer-Begriff; die deutsche Bezeichnung ist eine Annäherung."
       />,
     )
 

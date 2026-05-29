@@ -3,6 +3,12 @@
 -- [0, 1]. PK on brand_id (one chart per brand); FK to brands so a deleted
 -- brand cascades its chart away.
 --
+-- NUMERIC(5, 4) keeps four decimal digits per axis — Sakenowa publishes
+-- ~12 decimals, so storage truncates. Acceptable because (a) display
+-- formats to two decimals (.toFixed(2)) and (b) the idempotency hash is
+-- computed against the in-memory float before write, so re-runs against
+-- unchanged Sakenowa data still produce zero writes.
+--
 -- Deliberately NO btree index on content_hash. The ingestion pipeline
 -- reads existing hashes into a JS Map and compares per-row; no SQL query
 -- ever WHEREs on content_hash. See #79 — the same dead index was added
