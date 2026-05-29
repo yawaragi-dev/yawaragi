@@ -51,7 +51,8 @@
   },
   "sake": {
     "brand": {
-      "backToHome": "Back to home"
+      "backToHome": "Back to home",
+      "breweryLabel": "Brewery"
     }
   },
   "privacy": {

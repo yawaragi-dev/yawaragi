@@ -60,9 +60,14 @@ test.describe('sake brand page', () => {
     await expect(page.getByTestId('sake-brand-page')).toBeVisible()
     // Kanji is always shown. Romaji is only rendered when it differs from
     // kanji (Sakenowa-sourced rows currently have name === nameKanji, so
-    // the romaji <p> is omitted). Don't assert on `brand-name-romaji`.
+    // the romaji <p> is omitted). Don't assert on `*-name-romaji`.
     await expect(page.getByTestId('brand-name-kanji')).toBeVisible()
     await expect(page.getByTestId('brand-name-kanji')).toHaveAttribute('lang', 'ja')
+
+    // Slice 5: brewery section renders below the brand.
+    await expect(page.getByTestId('brand-brewery')).toBeVisible()
+    await expect(page.getByTestId('brewery-name-kanji')).toBeVisible()
+    await expect(page.getByTestId('brewery-name-kanji')).toHaveAttribute('lang', 'ja')
 
     await context.close()
   })

@@ -1,16 +1,20 @@
 /**
  * CLI entry for `pnpm ingest` — refreshes Sakenowa reference data into the
- * Supabase brands table via the ingestion pipeline. Exit code mirrors
- * pipeline success / failure: 0 on success, 1 on any error.
+ * Supabase brands + breweries tables via the ingestion pipeline. Exit code
+ * mirrors pipeline success / failure: 0 on success, 1 on any error.
  *
  * Requires DATABASE_URL in env. Either set it in your shell, or invoke as
  * `tsx --env-file=.env.local scripts/ingest-sakenowa.ts`. The package.json
  * `ingest` script does the latter by default.
+ *
+ * Order matters: breweries first, then brands. brands.brewery_id is a real
+ * FK to breweries.brewery_id (since slice 5 / 0002_breweries.sql), so
+ * brands must see their breweries already committed.
  */
 import { Pool } from 'pg'
-import { getBrands } from '../src/lib/sakenowa/client'
-import { makePgBrandsDB } from '../src/lib/sakenowa/db'
-import { ingestBrands } from '../src/lib/sakenowa/ingestion-pipeline'
+import { getBrands, getBreweries } from '../src/lib/sakenowa/client'
+import { makePgBrandsDB, makePgBreweriesDB } from '../src/lib/sakenowa/db'
+import { ingestBrands, ingestBreweries } from '../src/lib/sakenowa/ingestion-pipeline'
 
 const BAR_WIDTH = 30
 const THROTTLE_MS = 100
@@ -54,21 +58,33 @@ async function main(): Promise<number> {
     return 1
   }
 
-  process.stdout.write('Fetching brands from Sakenowa…\n')
   const pool = new Pool({ connectionString })
   try {
     const startedAt = Date.now()
-    const onProgress = makeBarRenderer('brands')
-    const summary = await ingestBrands({
+
+    const brewerySplit = Date.now()
+    process.stdout.write('Breweries: fetching → classifying → writing…\n')
+    const brewerySummary = await ingestBreweries({
+      client: { getBreweries },
+      db: makePgBreweriesDB(pool),
+      onProgress: makeBarRenderer('  breweries write'),
+    })
+    console.log(
+      `✓ breweries: ${brewerySummary.added} added, ${brewerySummary.updated} updated, ${brewerySummary.unchanged} unchanged (${brewerySummary.total} total) in ${Date.now() - brewerySplit}ms`,
+    )
+
+    const brandSplit = Date.now()
+    process.stdout.write('Brands: fetching → classifying → writing…\n')
+    const brandSummary = await ingestBrands({
       client: { getBrands },
       db: makePgBrandsDB(pool),
-      onProgress,
+      onProgress: makeBarRenderer('  brands write'),
     })
-    const elapsedMs = Date.now() - startedAt
     console.log(
-      `✓ ingested ${summary.total} brand(s) in ${elapsedMs}ms — ` +
-        `added: ${summary.added}, updated: ${summary.updated}, unchanged: ${summary.unchanged}`,
+      `✓ brands: ${brandSummary.added} added, ${brandSummary.updated} updated, ${brandSummary.unchanged} unchanged (${brandSummary.total} total) in ${Date.now() - brandSplit}ms`,
     )
+
+    console.log(`✓ done in ${Date.now() - startedAt}ms`)
     return 0
   } catch (err) {
     process.stdout.write('\n')
