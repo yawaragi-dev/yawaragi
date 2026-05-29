@@ -52,7 +52,14 @@ jobs:
       # minutes on PRs that don't touch the 404 mini-game.
       - run: pnpm exec vitest run --exclude 'src/components/game/**'
 
+      # Integration tests (testcontainers + Postgres). GitHub-hosted runners
+      # ship Docker, so `pnpm test:integration` works out of the box. Locals
+      # without Docker should run unit tests + rely on CI for integration.
+      - run: pnpm test:integration
+
       - run: pnpm i18n:audit
+
+      - run: pnpm anthropic-files:audit
 
       - name: Register system Chrome with Playwright
         run: pnpm exec playwright install chrome

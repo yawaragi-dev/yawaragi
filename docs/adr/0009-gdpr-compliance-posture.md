@@ -90,12 +90,12 @@ These questions also belong in any ADR that touches user data. The ADR's \"Conse
 
 ### Vendor processing operations (Phase 2+; from the 2026-05-25 DPA review)
 
-These rows describe the processing posture each vendor will enter at the point they go live. None are wired into production yet; the table is the gating spec.
+These rows describe the processing posture each vendor will enter at the point they go live. Status as of Phase 2 Slice 4 (Brand tracer bullet — Supabase reference mirror): **Vercel** is live (current deployment); **Supabase** is live with the Sakenowa reference mirror only (no personal data; documented for transparency); the rest remain forward-looking. The table is the gating spec for each vendor's go-live.
 
 | Vendor | Role | Data categories | Location | Transfer mechanism | Retention | Sub-processor list |
 |---|---|---|---|---|---|---|
 | **Vercel** | processor (Customer Data) + independent controller (Service-Generated Data) | request logs, build artefacts, edge runtime logs | US | DPF + SCCs (fallback) | ~1 day Pro runtime-log retention; indefinite build logs | <https://security.vercel.com> |
-| **Supabase** | processor (DB) + independent controller (Usage Data) | account-linked rows (taste profiles, corrections, ratings), service usage metrics | `eu-central-1` Frankfurt | SCCs Module 2/3 | 7-day backup retention on Pro | DPA Schedule 3 |
+| **Supabase** | processor (DB) + independent controller (Usage Data) | Phase 2 today: Sakenowa reference mirror (brand/brewery/flavor-chart/rankings — **no personal data**, documented for transparency). Phase 2.5+: account-linked rows (taste profiles, corrections, ratings) and service usage metrics. | `eu-central-1` Frankfurt | SCCs Module 2/3 | 7-day backup retention on Pro tier (Free has no managed PITR — upgrade is a pre-launch gate per PRE-GO-LIVE §7.7) | DPA Schedule 3 |
 | **Clerk** | processor | email, name, OAuth tokens, session metadata | US (no EU region) | DPF + SCCs (fallback) | 90-day post-termination delete | <https://clerk.com/legal/subprocessors> |
 | **Anthropic** | processor | label-scan images, chat messages, redacted prompts/completions | US (no EU region on direct API) | SCCs only (no DPF) | **30 days default — acknowledged explicitly; ZDR pending sales negotiation** | <https://trust.anthropic.com/subprocessors> |
 | **Langfuse** | processor | redacted prompts + completions, trace metadata | `eu-west-1` Ireland | SCC fallback unused at residency | 30 days (configured at project level) | <https://langfuse.com/security/subprocessors> |

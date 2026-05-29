@@ -21,7 +21,15 @@ allowBuilds:
   '@clerk/shared': true
   '@parcel/watcher': true
   '@swc/core': true
+  # cpu-features / ssh2: testcontainers uses ssh2 to talk to remote Docker daemons
+  # over SSH. Local Docker socket works without ssh2's native build (falls back to
+  # pure-JS). Setting false to avoid running arbitrary native build scripts.
+  cpu-features: false
   esbuild: true
   msw: true
+  # protobufjs: install script downloads pre-built native bindings; pure-JS fallback
+  # is slower but correct. Transitive of testcontainers. Set false per defense default.
+  protobufjs: false
   sharp: false
+  ssh2: false
   unrs-resolver: false

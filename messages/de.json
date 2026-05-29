@@ -49,6 +49,24 @@
     "savePreferences": "Einstellungen speichern",
     "settingsLink": "Cookie-Einstellungen"
   },
+  "sake": {
+    "brand": {
+      "backToHome": "Zurück zur Startseite"
+    }
+  },
+  "privacy": {
+    "title": "Datenschutz",
+    "lastUpdated": "Zuletzt aktualisiert: 26.05.2026.",
+    "intro": "Yawaragi wird von der im Impressum genannten Person betrieben, die als Verantwortlicher im Sinne von Art. 4(7) DSGVO handelt. Diese Seite listet die Kategorien personenbezogener Daten auf, die wir verarbeiten, sowie die Auftragsverarbeiter, auf die wir uns stützen. Sie wird gemäß ADR-0009 mit jedem Release aktualisiert, das eine Verarbeitung einführt oder ändert.",
+    "processorsHeading": "Auftragsverarbeiter",
+    "processorVercel": "Vercel, Inc. (USA) — Hosting, Build und Edge-Logs. Übermittlungsmechanismus: EU-US Data Privacy Framework sowie EU-Standardvertragsklauseln als Rückfallebene. Service-Generated Data (Request-Logs, Build-Metadaten) verarbeitet Vercel als eigener Verantwortlicher.",
+    "processorSupabase": "Supabase, Inc. — Postgres-Datenbank für den Sakenowa-Referenzspiegel und (ab Phase 2.5) für nutzerbezogene Tabellen. Projekt-Region: eu-central-1 (Frankfurt). Übermittlungsmechanismus: EU-SCCs (Module 2 und 3) nach irischem Recht. Service-Nutzungsdaten verarbeitet Supabase als eigener Verantwortlicher gemäß Art. 6(1)(f) (Abrechnung, Sicherheit, Service-Verbesserung). Meldefrist bei Datenschutzverletzungen: 48 Stunden.",
+    "sakenowaNote": "Marken- und Brauerei-Referenzdaten werden aus der öffentlichen Sakenowa Data API (muro.sakenowa.com) gespiegelt. Der Spiegel selbst enthält keine personenbezogenen Daten.",
+    "retentionHeading": "Aufbewahrung",
+    "retention": "Cookies laufen nach einem Jahr ab. Referenzdaten der Phase 2 bleiben für die Lebensdauer des Dienstes erhalten. Künftige nutzerbezogene Daten (ab Phase 2.5) folgen den Aufbewahrungsregeln in ADR-0009.",
+    "contactHeading": "Kontakt",
+    "contact": "Für Betroffenenanfragen (Auskunft, Berichtigung, Löschung, Datenübertragbarkeit) nutze die im Impressum genannte E-Mail-Adresse."
+  },
   "notFound": {
     "title": "Seite nicht gefunden",
     "body": "Wir konnten die gesuchte Seite nicht finden. Vielleicht wurde sie verschoben — oder sie existiert noch nicht.",

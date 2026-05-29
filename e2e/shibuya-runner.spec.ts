@@ -1,9 +1,10 @@
 import { expect, test } from '@playwright/test'
+import { BASE_URL } from './_base-url'
 
 const AGE_GATE_COOKIE = {
   name: 'yawaragi_age_gate',
   value: JSON.stringify({ v: 1, ts: Date.now() }),
-  url: 'http://localhost:3000',
+  url: BASE_URL,
 }
 
 test.describe('shibuya runner on 404', () => {

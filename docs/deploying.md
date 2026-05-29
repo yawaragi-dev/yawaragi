@@ -93,7 +93,43 @@ For each vendor, the practical rule of thumb:
 
 When you cross any of these thresholds, **the Pre-Go-Live checklist (§7.7) is the forcing function** — that section now lists each vendor and the tier audit as a hard gate before any production-grade launch.
 
-## 6. Promotion-to-production checklist
+## 6. Manual deploy + smoke + E2E (`.github/workflows/vercel-deploy.yml`)
+
+Auto-preview deploys are turned **off** in this Vercel project, so PR branches don't deploy automatically — to test changes on real infra you trigger this workflow manually. It runs three jobs end-to-end:
+
+1. **Deploy** — installs the Vercel CLI, pulls the env config, builds locally (`vercel build`), and deploys the prebuilt artefact (`vercel deploy --prebuilt`). Captures the resulting URL.
+2. **Smoke** — curls `/`, `/en`, `/de`, `/en/sake/1`, an unknown-path 404 against the deployed URL with the SSO bypass header. Fails if any path returns 5xx.
+3. **Playwright** — runs the e2e suite with `PLAYWRIGHT_BASE_URL` set to the deployed URL. `playwright.config.ts` skips its local `pnpm dev` webServer when this env var is set and injects the bypass header on every request.
+
+### Triggering
+
+Actions tab → **Vercel deploy + smoke + e2e** → **Run workflow**. Three optional inputs:
+
+| Input | Default | What it does |
+|---|---|---|
+| `ref` | the trigger ref | Branch or SHA to deploy. Lets you point at any commit, not just the branch you're on. |
+| `url` | empty | Skip the deploy job and run smoke + e2e against an already-deployed URL. Useful for re-running after a flake. |
+| `environment` | `preview` | `preview` or `production`. Production uses `--prod` flags. |
+
+### One-time setup (four secrets)
+
+| Secret | Source | Used for |
+|---|---|---|
+| `VERCEL_TOKEN` | Vercel → **Account Settings → Tokens → Create** | Authenticating the CLI |
+| `VERCEL_ORG_ID` | `cat .vercel/project.json` after a one-time `vercel link` locally — the `orgId` field | Identifying your Vercel team / personal account |
+| `VERCEL_PROJECT_ID` | same file, `projectId` field | Identifying the Yawaragi project |
+| `VERCEL_BYPASS_TOKEN` | Vercel → Project → **Settings → Deployment Protection → Protection Bypass for Automation** → generate | Skipping the SSO gate so the smoke + e2e can actually hit the preview |
+
+All four go in GitHub: repo → **Settings → Secrets and variables → Actions → New repository secret**. The workflow fails loudly at its first step with a clear list of which are missing.
+
+### Limitations
+
+- The deploy step uses `vercel pull --environment=preview` (or `production`) to fetch env vars. **Whatever you've configured in Vercel for that environment is what the deploy sees.** Missing env vars in Vercel = missing env vars in the deploy.
+- Concurrency is keyed on `ref + environment` with `cancel-in-progress: false` — duplicate manual runs queue rather than cancel. Avoid kicking the same workflow 5 times in a row.
+- The E2E suite excludes the `shibuya` tests (game-specific; covered separately in `game-ci.yml`).
+- Vercel's SSO bypass is per-project; rotating the secret in Vercel without updating the GitHub secret breaks the smoke + e2e until both sides match.
+
+## 7. Promotion-to-production checklist
 
 Once you're ready to take this beyond a portfolio piece, work through:
 

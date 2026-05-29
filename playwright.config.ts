@@ -1,13 +1,46 @@
-// Teaches: Playwright config wiring — baseURL + webServer let tests run against the real Next.js dev server
+// Teaches: Playwright config wiring — baseURL + webServer let tests run
+// against either the local Next.js dev server (default) OR a deployed
+// Vercel URL when `PLAYWRIGHT_BASE_URL` is set in the runner env.
+import { existsSync } from 'node:fs'
 import { defineConfig } from '@playwright/test'
+
+// Load .env.local for the Playwright runner process. The Next.js dev server
+// (the webServer subprocess) loads .env.local itself, but the test runner
+// that reads process.env.DATABASE_URL at file-load time (e.g. the skip
+// condition in e2e/sake-page.spec.ts) needs it here too. process.loadEnvFile
+// is built into Node 22.6+ — no dotenv dep needed.
+if (existsSync('.env.local')) process.loadEnvFile('.env.local')
+
+const DEPLOYED_URL = process.env.PLAYWRIGHT_BASE_URL
+const VERCEL_BYPASS = process.env.VERCEL_BYPASS_TOKEN
+const isAgainstDeployment = Boolean(DEPLOYED_URL)
 
 export default defineConfig({
   testDir: './e2e',
-  use: { baseURL: 'http://localhost:3000', channel: 'chrome' },
-  webServer: {
-    command: 'pnpm dev',
-    url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
-    timeout: 30_000,
+  use: {
+    baseURL: DEPLOYED_URL || 'http://localhost:3000',
+    channel: 'chrome',
+    // When running against a Vercel preview, inject the SSO-bypass header
+    // on every request so the deployment protection lets us through.
+    // Locally, no headers (the dev server has no auth gate).
+    extraHTTPHeaders:
+      isAgainstDeployment && VERCEL_BYPASS
+        ? {
+            'x-vercel-protection-bypass': VERCEL_BYPASS,
+            'x-vercel-set-bypass-cookie': 'true',
+          }
+        : undefined,
+    ignoreHTTPSErrors: false,
   },
+  // Don't start a local dev server when we're testing a deployed URL —
+  // the target is already up. `webServer` is intentionally optional in
+  // Playwright config; `undefined` here means "skip it."
+  webServer: isAgainstDeployment
+    ? undefined
+    : {
+        command: 'pnpm dev',
+        url: 'http://localhost:3000',
+        reuseExistingServer: !process.env.CI,
+        timeout: 30_000,
+      },
 })
