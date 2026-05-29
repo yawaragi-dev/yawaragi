@@ -16,7 +16,11 @@ import type { BrandsDB, BreweriesDB } from './db'
 
 class FakeBrandsDB implements BrandsDB {
   rows = new Map<number, { brand: Brand; hash: string }>()
+  // Counts the number of rows actually written across all batch calls,
+  // so existing test assertions (`expect(db.upsertCalls).toBe(N)`) keep
+  // their original meaning under the batched API.
   upsertCalls = 0
+  batchCalls = 0
   txOpened = 0
   txCompleted = 0
 
@@ -24,9 +28,15 @@ class FakeBrandsDB implements BrandsDB {
     return new Map(Array.from(this.rows.entries()).map(([id, v]) => [id, v.hash]))
   }
 
-  async upsertBrand(brand: Brand, hash: string): Promise<void> {
-    this.upsertCalls++
-    this.rows.set(brand.brandId, { brand, hash })
+  async upsertBrandsBatch(
+    rows: readonly { brand: Brand; contentHash: string }[],
+  ): Promise<void> {
+    if (rows.length === 0) return
+    this.batchCalls++
+    for (const { brand, contentHash } of rows) {
+      this.upsertCalls++
+      this.rows.set(brand.brandId, { brand, hash: contentHash })
+    }
   }
 
   async transaction<T>(fn: (tx: BrandsDB) => Promise<T>): Promise<T> {
@@ -172,23 +182,31 @@ describe('ingestBrands', () => {
     expect(db.txCompleted).toBe(1)
   })
 
-  it('wraps upsert errors with brandId + breweryId + progress context', async () => {
-    // When PG rejects a row (FK, CHECK, unique) the operator needs the
-    // failing ID, not just "constraint violated". The pipeline catches
-    // and re-throws with row context; IDs are Sakenowa-public, no PII.
+  it('wraps batch upsert errors with the count + PG detail (which carries the offending key)', async () => {
+    // PG's error.detail typically reads like "Key (brewery_id)=(123) is
+    // not present in table breweries" for FK violations. We forward
+    // that verbatim so the operator sees which row is broken, without
+    // forcing the pipeline to do a per-row retry on the happy path.
     class FailingDB extends FakeBrandsDB {
-      override async upsertBrand(): Promise<void> {
-        throw new Error('relation "brands" violates foreign key constraint')
+      override async upsertBrandsBatch(): Promise<void> {
+        const err = new Error('insert or update violates foreign key constraint') as Error & {
+          detail?: string
+          code?: string
+        }
+        err.detail = 'Key (brewery_id)=(1147) is not present in table "breweries"'
+        err.code = '23503'
+        throw err
       }
     }
     const db = new FailingDB()
 
-    await expect(
-      ingestBrands({
-        client: makeClient([sBrand({ id: 6478, breweryId: 1147 })]),
-        db,
-      }),
-    ).rejects.toThrow(/brandId=6478.*breweryId=1147.*1\/1/)
+    const promise = ingestBrands({
+      client: makeClient([sBrand({ id: 6478, breweryId: 1147 })]),
+      db,
+    })
+    await expect(promise).rejects.toThrow(/Failed to upsert 1 brand row/)
+    await expect(promise).rejects.toThrow(/code=23503/)
+    await expect(promise).rejects.toThrow(/Key \(brewery_id\)=\(1147\)/)
   })
 
   it('invokes onProgress with (current, total) for every row, 1-indexed', async () => {
@@ -210,6 +228,7 @@ describe('ingestBrands', () => {
 class FakeBreweriesDB implements BreweriesDB {
   rows = new Map<number, { brewery: Brewery; hash: string }>()
   upsertCalls = 0
+  batchCalls = 0
   txOpened = 0
   txCompleted = 0
 
@@ -217,9 +236,15 @@ class FakeBreweriesDB implements BreweriesDB {
     return new Map(Array.from(this.rows.entries()).map(([id, v]) => [id, v.hash]))
   }
 
-  async upsertBrewery(brewery: Brewery, hash: string): Promise<void> {
-    this.upsertCalls++
-    this.rows.set(brewery.breweryId, { brewery, hash })
+  async upsertBreweriesBatch(
+    rows: readonly { brewery: Brewery; contentHash: string }[],
+  ): Promise<void> {
+    if (rows.length === 0) return
+    this.batchCalls++
+    for (const { brewery, contentHash } of rows) {
+      this.upsertCalls++
+      this.rows.set(brewery.breweryId, { brewery, hash: contentHash })
+    }
   }
 
   async transaction<T>(fn: (tx: BreweriesDB) => Promise<T>): Promise<T> {
@@ -353,20 +378,26 @@ describe('ingestBreweries', () => {
     expect(db.txCompleted).toBe(1)
   })
 
-  it('wraps upsert errors with breweryId + areaId + progress context', async () => {
+  it('wraps batch upsert errors with the count + PG detail', async () => {
     class FailingDB extends FakeBreweriesDB {
-      override async upsertBrewery(): Promise<void> {
-        throw new Error('value too long for type character varying(255)')
+      override async upsertBreweriesBatch(): Promise<void> {
+        const err = new Error('new row violates check constraint') as Error & {
+          detail?: string
+          constraint?: string
+        }
+        err.detail = 'Failing row contains (1147, , , 0, sakenowa, null, hash).'
+        err.constraint = 'breweries_name_check'
+        throw err
       }
     }
     const db = new FailingDB()
 
-    await expect(
-      ingestBreweries({
-        client: makeBreweryClient([sBrewery({ id: 1147, areaId: 0 })]),
-        db,
-      }),
-    ).rejects.toThrow(/breweryId=1147.*areaId=0/)
+    const promise = ingestBreweries({
+      client: makeBreweryClient([sBrewery({ id: 1147, areaId: 0 })]),
+      db,
+    })
+    await expect(promise).rejects.toThrow(/Failed to upsert 1 brewery row/)
+    await expect(promise).rejects.toThrow(/constraint=breweries_name_check/)
   })
 
   it('invokes onProgress with (current, total) for every row, 1-indexed', async () => {

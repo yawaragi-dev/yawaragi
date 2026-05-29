@@ -10,10 +10,16 @@
  *
  * Brands reference breweries via FK (see 0002_breweries.sql); the script
  * ingests breweries first.
+ *
+ * Performance: classification happens in-memory (cheap); writes go out
+ * as a single bulk `INSERT ... VALUES (...), (...) ON CONFLICT` chunked
+ * by the DB layer. Idempotent re-runs do zero writes — the existing
+ * content-hash check still gates per row. On Sakenowa-cloud → Supabase-
+ * cloud first-time ingest, this collapses ~5000 round trips into ~10.
  */
 import { createHash } from 'node:crypto'
 import type { SakenowaBrand, SakenowaBrewery } from './client'
-import type { BrandsDB, BreweriesDB } from './db'
+import type { BrandsDB, BrandUpsert, BreweriesDB, BreweryUpsert } from './db'
 import type { Brand } from '../schemas/brand'
 import type { Brewery } from '../schemas/brewery'
 
@@ -30,10 +36,10 @@ export interface IngestionDeps {
   client: { getBrands: () => Promise<SakenowaBrand[]> }
   db: BrandsDB
   /**
-   * Optional. Called after each row is classified (and upserted, if
-   * applicable). `current` is 1-indexed; `current === total` on the final
-   * call. The pipeline doesn't throttle — callers that hit stdout / a UI
-   * should throttle themselves.
+   * Optional. Called after each row is classified. `current` is
+   * 1-indexed; `current === total` on the final call. Per-row writes
+   * are batched at the end of classification, so progress here tracks
+   * the classification loop, not individual DB writes.
    */
   onProgress?: ProgressCallback
 }
@@ -77,38 +83,43 @@ export async function ingestBrands(deps: IngestionDeps): Promise<RunSummary> {
     let added = 0
     let updated = 0
     let unchanged = 0
+    const toUpsert: BrandUpsert[] = []
 
     const total = sakenowaBrands.length
     for (let i = 0; i < total; i++) {
-      const sBrand = sakenowaBrands[i]
-      const brand = sakenowaBrandToBrand(sBrand)
-      const hash = computeContentHash(brand)
+      const brand = sakenowaBrandToBrand(sakenowaBrands[i])
+      const contentHash = computeContentHash(brand)
       const existingHash = existing.get(brand.brandId)
 
-      try {
-        if (existingHash === undefined) {
-          await tx.upsertBrand(brand, hash)
-          added++
-        } else if (existingHash === hash) {
-          unchanged++
-        } else {
-          await tx.upsertBrand(brand, hash)
-          updated++
-        }
-      } catch (err) {
-        // Surface the row identifiers so an FK / constraint failure
-        // points at the offending Sakenowa row without the operator
-        // having to add prints. IDs are Sakenowa-public, no PII.
-        throw new Error(
-          `Failed to upsert brand brandId=${brand.brandId} breweryId=${brand.breweryId} (${i + 1}/${total}): ${err instanceof Error ? err.message : String(err)}`,
-          { cause: err },
-        )
+      if (existingHash === undefined) {
+        toUpsert.push({ brand, contentHash })
+        added++
+      } else if (existingHash === contentHash) {
+        unchanged++
+      } else {
+        toUpsert.push({ brand, contentHash })
+        updated++
       }
 
       deps.onProgress?.(i + 1, total)
     }
 
-    return { added, updated, unchanged, total: sakenowaBrands.length }
+    try {
+      await tx.upsertBrandsBatch(toUpsert)
+    } catch (err) {
+      // The batch failed; we don't know exactly which row triggered it,
+      // but PG's error.detail typically carries the offending value
+      // (e.g. "Key (brewery_id)=(123) is not present in table breweries"
+      // for FK violations). We forward that detail; if the operator
+      // needs more, an env-gated per-row fallback could re-run the
+      // batch one-at-a-time, but in practice the PG detail is enough.
+      throw new Error(
+        `Failed to upsert ${toUpsert.length} brand row(s) (added=${added}, updated=${updated}): ${formatPgError(err)}`,
+        { cause: err },
+      )
+    }
+
+    return { added, updated, unchanged, total }
   })
 }
 
@@ -142,34 +153,55 @@ export async function ingestBreweries(deps: BreweryIngestionDeps): Promise<RunSu
     let added = 0
     let updated = 0
     let unchanged = 0
+    const toUpsert: BreweryUpsert[] = []
 
     const total = sakenowaBreweries.length
     for (let i = 0; i < total; i++) {
-      const sBrewery = sakenowaBreweries[i]
-      const brewery = sakenowaBreweryToBrewery(sBrewery)
-      const hash = computeBreweryContentHash(brewery)
+      const brewery = sakenowaBreweryToBrewery(sakenowaBreweries[i])
+      const contentHash = computeBreweryContentHash(brewery)
       const existingHash = existing.get(brewery.breweryId)
 
-      try {
-        if (existingHash === undefined) {
-          await tx.upsertBrewery(brewery, hash)
-          added++
-        } else if (existingHash === hash) {
-          unchanged++
-        } else {
-          await tx.upsertBrewery(brewery, hash)
-          updated++
-        }
-      } catch (err) {
-        throw new Error(
-          `Failed to upsert brewery breweryId=${brewery.breweryId} areaId=${brewery.areaId} (${i + 1}/${total}): ${err instanceof Error ? err.message : String(err)}`,
-          { cause: err },
-        )
+      if (existingHash === undefined) {
+        toUpsert.push({ brewery, contentHash })
+        added++
+      } else if (existingHash === contentHash) {
+        unchanged++
+      } else {
+        toUpsert.push({ brewery, contentHash })
+        updated++
       }
 
       deps.onProgress?.(i + 1, total)
     }
 
-    return { added, updated, unchanged, total: sakenowaBreweries.length }
+    try {
+      await tx.upsertBreweriesBatch(toUpsert)
+    } catch (err) {
+      throw new Error(
+        `Failed to upsert ${toUpsert.length} brewery row(s) (added=${added}, updated=${updated}): ${formatPgError(err)}`,
+        { cause: err },
+      )
+    }
+
+    return { added, updated, unchanged, total }
   })
+}
+
+// PG errors carry actionable context in fields beyond .message — surface
+// the SQLSTATE code, table, constraint, and detail (which often names
+// the offending key value). Falls back to message + stringification.
+function formatPgError(err: unknown): string {
+  if (!(err instanceof Error)) return String(err)
+  const pg = err as Error & {
+    code?: string
+    detail?: string
+    table?: string
+    constraint?: string
+  }
+  const parts = [err.message]
+  if (pg.code) parts.push(`code=${pg.code}`)
+  if (pg.table) parts.push(`table=${pg.table}`)
+  if (pg.constraint) parts.push(`constraint=${pg.constraint}`)
+  if (pg.detail) parts.push(`detail=${pg.detail}`)
+  return parts.join(' | ')
 }

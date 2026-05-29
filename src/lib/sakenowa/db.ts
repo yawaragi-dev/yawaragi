@@ -19,11 +19,22 @@ import type { Brand } from '../schemas/brand'
 import type { Brewery } from '../schemas/brewery'
 import type { ProvenanceSource } from '../schemas/with-provenance'
 
+export interface BrandUpsert {
+  brand: Brand
+  contentHash: string
+}
+
 export interface BrandsDB {
   getExistingBrandHashes(): Promise<Map<number, string>>
-  upsertBrand(brand: Brand, contentHash: string): Promise<void>
+  upsertBrandsBatch(rows: readonly BrandUpsert[]): Promise<void>
   transaction<T>(fn: (tx: BrandsDB) => Promise<T>): Promise<T>
 }
+
+// Postgres caps placeholders at 65535/query; 7 placeholders per brand row
+// → ~9362 rows max. We pick 500 as a safety margin that also bounds the
+// SQL-string size and memory footprint per statement. One batch fits the
+// Phase 2 row counts (1733 breweries, 3167 brands) in 4-7 statements.
+const BATCH_SIZE = 500
 
 class PgBrandsDB implements BrandsDB {
   constructor(private readonly executor: Pool | PoolClient) {}
@@ -36,29 +47,43 @@ class PgBrandsDB implements BrandsDB {
     return new Map(rows.map((r) => [r.brand_id, r.content_hash]))
   }
 
-  async upsertBrand(brand: Brand, contentHash: string): Promise<void> {
-    await this.executor.query(
-      `INSERT INTO brands
-         (brand_id, name, name_kanji, brewery_id, source, confidence, content_hash, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
-       ON CONFLICT (brand_id) DO UPDATE SET
-         name         = EXCLUDED.name,
-         name_kanji   = EXCLUDED.name_kanji,
-         brewery_id   = EXCLUDED.brewery_id,
-         source       = EXCLUDED.source,
-         confidence   = EXCLUDED.confidence,
-         content_hash = EXCLUDED.content_hash,
-         updated_at   = NOW()`,
-      [
-        brand.brandId,
-        brand.name,
-        brand.nameKanji,
-        brand.breweryId,
-        brand.source,
-        brand.confidence ?? null,
-        contentHash,
-      ],
-    )
+  async upsertBrandsBatch(rows: readonly BrandUpsert[]): Promise<void> {
+    if (rows.length === 0) return
+    for (let start = 0; start < rows.length; start += BATCH_SIZE) {
+      const chunk = rows.slice(start, start + BATCH_SIZE)
+      const placeholders: string[] = []
+      const values: unknown[] = []
+      for (const { brand, contentHash } of chunk) {
+        const i = values.length
+        // 7 placeholders + literal NOW() for updated_at
+        placeholders.push(
+          `($${i + 1}, $${i + 2}, $${i + 3}, $${i + 4}, $${i + 5}, $${i + 6}, $${i + 7}, NOW())`,
+        )
+        values.push(
+          brand.brandId,
+          brand.name,
+          brand.nameKanji,
+          brand.breweryId,
+          brand.source,
+          brand.confidence ?? null,
+          contentHash,
+        )
+      }
+      await this.executor.query(
+        `INSERT INTO brands
+           (brand_id, name, name_kanji, brewery_id, source, confidence, content_hash, updated_at)
+         VALUES ${placeholders.join(', ')}
+         ON CONFLICT (brand_id) DO UPDATE SET
+           name         = EXCLUDED.name,
+           name_kanji   = EXCLUDED.name_kanji,
+           brewery_id   = EXCLUDED.brewery_id,
+           source       = EXCLUDED.source,
+           confidence   = EXCLUDED.confidence,
+           content_hash = EXCLUDED.content_hash,
+           updated_at   = NOW()`,
+        values,
+      )
+    }
   }
 
   async transaction<T>(fn: (tx: BrandsDB) => Promise<T>): Promise<T> {
@@ -88,9 +113,14 @@ export function makePgBrandsDB(pool: Pool): BrandsDB {
   return new PgBrandsDB(pool)
 }
 
+export interface BreweryUpsert {
+  brewery: Brewery
+  contentHash: string
+}
+
 export interface BreweriesDB {
   getExistingBreweryHashes(): Promise<Map<number, string>>
-  upsertBrewery(brewery: Brewery, contentHash: string): Promise<void>
+  upsertBreweriesBatch(rows: readonly BreweryUpsert[]): Promise<void>
   transaction<T>(fn: (tx: BreweriesDB) => Promise<T>): Promise<T>
 }
 
@@ -105,29 +135,42 @@ class PgBreweriesDB implements BreweriesDB {
     return new Map(rows.map((r) => [r.brewery_id, r.content_hash]))
   }
 
-  async upsertBrewery(brewery: Brewery, contentHash: string): Promise<void> {
-    await this.executor.query(
-      `INSERT INTO breweries
-         (brewery_id, name, name_kanji, area_id, source, confidence, content_hash, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
-       ON CONFLICT (brewery_id) DO UPDATE SET
-         name         = EXCLUDED.name,
-         name_kanji   = EXCLUDED.name_kanji,
-         area_id      = EXCLUDED.area_id,
-         source       = EXCLUDED.source,
-         confidence   = EXCLUDED.confidence,
-         content_hash = EXCLUDED.content_hash,
-         updated_at   = NOW()`,
-      [
-        brewery.breweryId,
-        brewery.name,
-        brewery.nameKanji,
-        brewery.areaId,
-        brewery.source,
-        brewery.confidence ?? null,
-        contentHash,
-      ],
-    )
+  async upsertBreweriesBatch(rows: readonly BreweryUpsert[]): Promise<void> {
+    if (rows.length === 0) return
+    for (let start = 0; start < rows.length; start += BATCH_SIZE) {
+      const chunk = rows.slice(start, start + BATCH_SIZE)
+      const placeholders: string[] = []
+      const values: unknown[] = []
+      for (const { brewery, contentHash } of chunk) {
+        const i = values.length
+        placeholders.push(
+          `($${i + 1}, $${i + 2}, $${i + 3}, $${i + 4}, $${i + 5}, $${i + 6}, $${i + 7}, NOW())`,
+        )
+        values.push(
+          brewery.breweryId,
+          brewery.name,
+          brewery.nameKanji,
+          brewery.areaId,
+          brewery.source,
+          brewery.confidence ?? null,
+          contentHash,
+        )
+      }
+      await this.executor.query(
+        `INSERT INTO breweries
+           (brewery_id, name, name_kanji, area_id, source, confidence, content_hash, updated_at)
+         VALUES ${placeholders.join(', ')}
+         ON CONFLICT (brewery_id) DO UPDATE SET
+           name         = EXCLUDED.name,
+           name_kanji   = EXCLUDED.name_kanji,
+           area_id      = EXCLUDED.area_id,
+           source       = EXCLUDED.source,
+           confidence   = EXCLUDED.confidence,
+           content_hash = EXCLUDED.content_hash,
+           updated_at   = NOW()`,
+        values,
+      )
+    }
   }
 
   async transaction<T>(fn: (tx: BreweriesDB) => Promise<T>): Promise<T> {
