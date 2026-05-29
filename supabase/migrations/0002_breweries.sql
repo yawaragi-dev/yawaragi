@@ -1,3 +1,11 @@
+-- Brands ingested by slice 4 reference brewery_ids that don't yet exist in
+-- the (about-to-be-created) breweries table — adding the FK below would
+-- fail on any environment where `pnpm ingest` already ran once. Brands are
+-- a pure Sakenowa-sourced reference mirror with no user data, so clearing
+-- them is safe; `pnpm ingest` (now breweries-first) re-populates both
+-- tables on the next run. On a fresh DB this TRUNCATE is a no-op.
+TRUNCATE TABLE brands;
+
 -- Breweries table — mirrors src/lib/schemas/brewery.ts.
 -- brewery_id is Sakenowa's id; same PK convention as brands.brand_id.
 -- area_id is forward-looking — slice 9 adds the areas table + an FK; this slice
