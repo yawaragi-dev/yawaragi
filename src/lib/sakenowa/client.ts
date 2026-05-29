@@ -13,6 +13,17 @@ const BrandsResponse = z.object({
   brands: z.array(SakenowaBrand),
 })
 
+export const SakenowaBrewery = z.object({
+  id: z.number().int().positive(),
+  name: z.string().min(1),
+  areaId: z.number().int().positive(),
+})
+export type SakenowaBrewery = z.infer<typeof SakenowaBrewery>
+
+const BreweriesResponse = z.object({
+  breweries: z.array(SakenowaBrewery),
+})
+
 export class SakenowaError extends Error {
   constructor(
     message: string,
@@ -50,4 +61,35 @@ export async function getBrands(): Promise<SakenowaBrand[]> {
   }
 
   return parsed.data.brands
+}
+
+export async function getBreweries(): Promise<SakenowaBrewery[]> {
+  const url = `${SAKENOWA_BASE_URL}/breweries`
+
+  let response: Response
+  try {
+    response = await fetch(url)
+  } catch (cause) {
+    throw new SakenowaError(`Network error fetching ${url}`, cause)
+  }
+
+  if (!response.ok) {
+    throw new SakenowaError(
+      `Sakenowa /breweries returned ${response.status} ${response.statusText}`,
+    )
+  }
+
+  let body: unknown
+  try {
+    body = await response.json()
+  } catch (cause) {
+    throw new SakenowaError(`Sakenowa /breweries returned non-JSON body`, cause)
+  }
+
+  const parsed = BreweriesResponse.safeParse(body)
+  if (!parsed.success) {
+    throw new SakenowaError(`Sakenowa /breweries response failed schema validation`, parsed.error)
+  }
+
+  return parsed.data.breweries
 }

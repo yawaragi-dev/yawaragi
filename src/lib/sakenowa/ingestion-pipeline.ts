@@ -1,17 +1,21 @@
 /**
- * Sakenowa → brands ingestion. Idempotent: a second run on unchanged
+ * Sakenowa → Postgres ingestion. Idempotent: a second run on unchanged
  * source data writes zero rows. Failure-aborts: any throw inside the
  * transaction rolls back the entire run (no partial writes).
  *
  * The pipeline is theme-agnostic about its dependencies — it takes a
- * Sakenowa-shaped client and a BrandsDB-shaped database, both of which
- * can be faked in tests. Production wires `getBrands` from
- * `./client` and `makePgBrandsDB(pool)` from `./db`.
+ * Sakenowa-shaped client and a typed DB contract, both of which can be
+ * faked in tests. Production wires `getBrands` / `getBreweries` from
+ * `./client` and `makePg{Brands,Breweries}DB(pool)` from `./db`.
+ *
+ * Brands reference breweries via FK (see 0002_breweries.sql); the script
+ * ingests breweries first.
  */
 import { createHash } from 'node:crypto'
-import type { SakenowaBrand } from './client'
-import type { BrandsDB } from './db'
+import type { SakenowaBrand, SakenowaBrewery } from './client'
+import type { BrandsDB, BreweriesDB } from './db'
 import type { Brand } from '../schemas/brand'
+import type { Brewery } from '../schemas/brewery'
 
 export interface RunSummary {
   added: number
@@ -31,6 +35,12 @@ export interface IngestionDeps {
    * call. The pipeline doesn't throttle — callers that hit stdout / a UI
    * should throttle themselves.
    */
+  onProgress?: ProgressCallback
+}
+
+export interface BreweryIngestionDeps {
+  client: { getBreweries: () => Promise<SakenowaBrewery[]> }
+  db: BreweriesDB
   onProgress?: ProgressCallback
 }
 
@@ -89,5 +99,60 @@ export async function ingestBrands(deps: IngestionDeps): Promise<RunSummary> {
     }
 
     return { added, updated, unchanged, total: sakenowaBrands.length }
+  })
+}
+
+export function sakenowaBreweryToBrewery(s: SakenowaBrewery): Brewery {
+  return {
+    breweryId: s.id,
+    name: s.name,
+    nameKanji: s.name,
+    areaId: s.areaId,
+    source: 'sakenowa',
+  }
+}
+
+export function computeBreweryContentHash(brewery: Brewery): string {
+  const canonical = JSON.stringify({
+    breweryId: brewery.breweryId,
+    name: brewery.name,
+    nameKanji: brewery.nameKanji,
+    areaId: brewery.areaId,
+    source: brewery.source,
+    confidence: brewery.confidence ?? null,
+  })
+  return createHash('sha256').update(canonical).digest('hex')
+}
+
+export async function ingestBreweries(deps: BreweryIngestionDeps): Promise<RunSummary> {
+  const sakenowaBreweries = await deps.client.getBreweries()
+
+  return deps.db.transaction(async (tx) => {
+    const existing = await tx.getExistingBreweryHashes()
+    let added = 0
+    let updated = 0
+    let unchanged = 0
+
+    const total = sakenowaBreweries.length
+    for (let i = 0; i < total; i++) {
+      const sBrewery = sakenowaBreweries[i]
+      const brewery = sakenowaBreweryToBrewery(sBrewery)
+      const hash = computeBreweryContentHash(brewery)
+      const existingHash = existing.get(brewery.breweryId)
+
+      if (existingHash === undefined) {
+        await tx.upsertBrewery(brewery, hash)
+        added++
+      } else if (existingHash === hash) {
+        unchanged++
+      } else {
+        await tx.upsertBrewery(brewery, hash)
+        updated++
+      }
+
+      deps.onProgress?.(i + 1, total)
+    }
+
+    return { added, updated, unchanged, total: sakenowaBreweries.length }
   })
 }

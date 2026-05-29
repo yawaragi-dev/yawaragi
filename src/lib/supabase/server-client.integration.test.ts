@@ -4,9 +4,9 @@
  * Verifies that the testcontainer harness in tests/integration/setup.ts:
  *   (1) brings up Postgres,
  *   (2) bootstraps Supabase roles,
- *   (3) applies migrations (creates the brands table + RLS policy).
+ *   (3) applies migrations (creates the brands + breweries tables + RLS policies).
  *
- * Subsequent slices (#48–#52) reuse the same harness with their own
+ * Subsequent slices (#49–#52) reuse the same harness with their own
  * `*.integration.test.ts` files. RLS coverage is the load-bearing part —
  * Phase 2 has no client-side data path yet, but the policy is in place
  * forward-looking and this test ensures the configuration stays correct.
@@ -82,6 +82,12 @@ describe('database integration smoke', () => {
   })
 
   it('anon role CANNOT INSERT into brands (no grant + RLS)', async () => {
+    // Seed brewery first so the FK isn't what causes the insert to fail —
+    // we want this test to fail-for-the-right-reason (grant/RLS), not
+    // accidentally pass because of the brewery_id FK introduced in slice 5.
+    await pool.query(
+      "INSERT INTO breweries (brewery_id, name, name_kanji, area_id, source, content_hash) VALUES (49, '麗人酒造', '麗人酒造', 20, 'sakenowa', 'brewery-hash') ON CONFLICT DO NOTHING",
+    )
     await pool.query('SET ROLE anon')
     await expect(
       pool.query(
@@ -92,10 +98,51 @@ describe('database integration smoke', () => {
 
   it('owner role (BYPASSRLS via migration runner) CAN INSERT + SELECT', async () => {
     await pool.query(
+      "INSERT INTO breweries (brewery_id, name, name_kanji, area_id, source, content_hash) VALUES (49, '麗人酒造', '麗人酒造', 20, 'sakenowa', 'brewery-hash') ON CONFLICT DO NOTHING",
+    )
+    await pool.query(
       "INSERT INTO brands (brand_id, name, name_kanji, brewery_id, source, content_hash) VALUES (1, 'Reijin', '麗人', 49, 'sakenowa', 'hash')",
     )
     const { rows } = await pool.query<{ name_kanji: string }>('SELECT name_kanji FROM brands WHERE brand_id = 1')
     expect(rows[0].name_kanji).toBe('麗人')
     await pool.query('DELETE FROM brands WHERE brand_id = 1')
+    await pool.query('DELETE FROM breweries WHERE brewery_id = 49')
+  })
+
+  it('migrations created the breweries table with the expected columns', async () => {
+    const { rows } = await pool.query<{ column_name: string }>(
+      "SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'breweries' ORDER BY column_name",
+    )
+    const names = rows.map((r) => r.column_name).sort()
+    expect(names).toEqual(
+      ['area_id', 'brewery_id', 'confidence', 'content_hash', 'name', 'name_kanji', 'source', 'updated_at'].sort(),
+    )
+  })
+
+  it('brands.brewery_id has a real FK to breweries.brewery_id', async () => {
+    const { rows } = await pool.query<{ conname: string }>(
+      `SELECT conname
+       FROM pg_constraint
+       WHERE conrelid = 'public.brands'::regclass
+         AND contype = 'f'
+         AND confrelid = 'public.breweries'::regclass`,
+    )
+    expect(rows).toHaveLength(1)
+    expect(rows[0].conname).toBe('brands_brewery_id_fkey')
+  })
+
+  it('RLS is enabled on breweries', async () => {
+    const { rows } = await pool.query<{ relrowsecurity: boolean }>(
+      "SELECT relrowsecurity FROM pg_class WHERE oid = 'public.breweries'::regclass",
+    )
+    expect(rows[0].relrowsecurity).toBe(true)
+  })
+
+  it('anon role can SELECT from breweries (RLS policy permits)', async () => {
+    await pool.query('SET ROLE anon')
+    const { rows } = await pool.query<{ count: string }>(
+      'SELECT count(*)::text AS count FROM breweries',
+    )
+    expect(rows[0].count).toBe('0')
   })
 })

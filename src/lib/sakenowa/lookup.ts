@@ -1,7 +1,8 @@
 import 'server-only'
 import type { Pool } from 'pg'
 import type { Brand } from '../schemas/brand'
-import { type BrandRow, rowToBrand } from './db'
+import type { Brewery } from '../schemas/brewery'
+import { type BrandRow, type BreweryRow, rowToBrand, rowToBrewery } from './db'
 import { getServerDbPool } from '../supabase/server-client'
 
 const SELECT_BRAND_BY_ID = `
@@ -23,4 +24,26 @@ export async function lookupBrandFromPool(brandId: number, pool: Pool): Promise<
  */
 export async function lookupBrand(brandId: number): Promise<Brand | null> {
   return lookupBrandFromPool(brandId, getServerDbPool())
+}
+
+// JOIN-via-brand so the public contract stays brand-keyed (the page has a
+// brandId; it shouldn't need to know the brewery_id to fetch a brewery).
+const SELECT_BREWERY_BY_BRAND_ID = `
+  SELECT b.brewery_id, b.name, b.name_kanji, b.area_id, b.source, b.confidence
+  FROM breweries b
+  JOIN brands br ON br.brewery_id = b.brewery_id
+  WHERE br.brand_id = $1
+`
+
+export async function lookupBreweryByBrandFromPool(
+  brandId: number,
+  pool: Pool,
+): Promise<Brewery | null> {
+  const { rows } = await pool.query<BreweryRow>(SELECT_BREWERY_BY_BRAND_ID, [brandId])
+  if (rows.length === 0) return null
+  return rowToBrewery(rows[0])
+}
+
+export async function lookupBreweryByBrand(brandId: number): Promise<Brewery | null> {
+  return lookupBreweryByBrandFromPool(brandId, getServerDbPool())
 }

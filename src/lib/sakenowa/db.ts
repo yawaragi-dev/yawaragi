@@ -16,6 +16,7 @@
  */
 import type { Pool, PoolClient } from 'pg'
 import type { Brand } from '../schemas/brand'
+import type { Brewery } from '../schemas/brewery'
 import type { ProvenanceSource } from '../schemas/with-provenance'
 
 export interface BrandsDB {
@@ -87,6 +88,73 @@ export function makePgBrandsDB(pool: Pool): BrandsDB {
   return new PgBrandsDB(pool)
 }
 
+export interface BreweriesDB {
+  getExistingBreweryHashes(): Promise<Map<number, string>>
+  upsertBrewery(brewery: Brewery, contentHash: string): Promise<void>
+  transaction<T>(fn: (tx: BreweriesDB) => Promise<T>): Promise<T>
+}
+
+class PgBreweriesDB implements BreweriesDB {
+  constructor(private readonly executor: Pool | PoolClient) {}
+
+  async getExistingBreweryHashes(): Promise<Map<number, string>> {
+    const { rows } = await this.executor.query<{
+      brewery_id: number
+      content_hash: string
+    }>('SELECT brewery_id, content_hash FROM breweries')
+    return new Map(rows.map((r) => [r.brewery_id, r.content_hash]))
+  }
+
+  async upsertBrewery(brewery: Brewery, contentHash: string): Promise<void> {
+    await this.executor.query(
+      `INSERT INTO breweries
+         (brewery_id, name, name_kanji, area_id, source, confidence, content_hash, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+       ON CONFLICT (brewery_id) DO UPDATE SET
+         name         = EXCLUDED.name,
+         name_kanji   = EXCLUDED.name_kanji,
+         area_id      = EXCLUDED.area_id,
+         source       = EXCLUDED.source,
+         confidence   = EXCLUDED.confidence,
+         content_hash = EXCLUDED.content_hash,
+         updated_at   = NOW()`,
+      [
+        brewery.breweryId,
+        brewery.name,
+        brewery.nameKanji,
+        brewery.areaId,
+        brewery.source,
+        brewery.confidence ?? null,
+        contentHash,
+      ],
+    )
+  }
+
+  async transaction<T>(fn: (tx: BreweriesDB) => Promise<T>): Promise<T> {
+    if ('release' in this.executor) {
+      return fn(this)
+    }
+    const client = await (this.executor as Pool).connect()
+    try {
+      await client.query('BEGIN')
+      const result = await fn(new PgBreweriesDB(client))
+      await client.query('COMMIT')
+      return result
+    } catch (err) {
+      await client.query('ROLLBACK').catch(() => {
+        /* swallow rollback failure; surface the original */
+      })
+      throw err
+    } finally {
+      client.release()
+    }
+  }
+}
+
+export function makePgBreweriesDB(pool: Pool): BreweriesDB {
+  return new PgBreweriesDB(pool)
+}
+
 /**
  * Row shape returned by `SELECT brand_id, name, name_kanji, brewery_id,
  * source, confidence FROM brands`. Used by lookup helpers. The check
@@ -114,4 +182,27 @@ export function rowToBrand(row: BrandRow): Brand {
     brand.confidence = Number(row.confidence)
   }
   return brand
+}
+
+export interface BreweryRow {
+  brewery_id: number
+  name: string
+  name_kanji: string
+  area_id: number
+  source: ProvenanceSource
+  confidence: string | null
+}
+
+export function rowToBrewery(row: BreweryRow): Brewery {
+  const brewery: Brewery = {
+    breweryId: row.brewery_id,
+    name: row.name,
+    nameKanji: row.name_kanji,
+    areaId: row.area_id,
+    source: row.source,
+  }
+  if (row.confidence !== null) {
+    brewery.confidence = Number(row.confidence)
+  }
+  return brewery
 }

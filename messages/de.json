@@ -51,7 +51,8 @@
   },
   "sake": {
     "brand": {
-      "backToHome": "Zurück zur Startseite"
+      "backToHome": "Zurück zur Startseite",
+      "breweryLabel": "Brauerei"
     }
   },
   "privacy": {
