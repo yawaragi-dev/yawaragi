@@ -71,4 +71,56 @@ test.describe('sake brand page', () => {
 
     await context.close()
   })
+
+  test('/en/sake/<seed> renders the 6-axis flavor chart with romaji + kanji', async ({
+    browser,
+  }, testInfo) => {
+    testInfo.skip(
+      !HAS_DB,
+      'requires DATABASE_URL in the dev-server env + a seeded brand row with a flavor_charts row',
+    )
+
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([AGE_GATE_COOKIE])
+    const page = await context.newPage()
+
+    await page.goto(`/en/sake/${SEED_BRAND_ID}`)
+
+    // The chart only renders when a flavor_charts row exists for the brand;
+    // Sakenowa publishes ~1355 charts vs. ~3167 brands, so some seeded
+    // brand_ids won't have one. Skip cleanly rather than failing if the
+    // chosen seed isn't covered.
+    const chart = page.getByTestId('brand-flavor-chart')
+    if ((await chart.count()) === 0) {
+      testInfo.skip(true, `brand ${SEED_BRAND_ID} has no flavor_chart row; pick another seed`)
+      return
+    }
+
+    await expect(chart).toBeVisible()
+
+    // f1 (hanayaka / 華やか) is enough to prove the romaji + kanji rule.
+    const romaji = page.getByTestId('flavor-axis-f1-romaji')
+    const kanji = page.getByTestId('flavor-axis-f1-kanji')
+    await expect(romaji).toBeVisible()
+    await expect(romaji).toHaveText('hanayaka')
+    await expect(kanji).toBeVisible()
+    await expect(kanji).toHaveText('華やか')
+    await expect(kanji).toHaveAttribute('lang', 'ja')
+
+    // Tooltip text is in the DOM and reachable via aria-describedby; visual
+    // visibility is hover/focus-driven (CSS-only, no JS handler).
+    const tooltip = page.getByTestId('flavor-axis-f1-tooltip')
+    await expect(tooltip).toHaveText(/fragrant \/ floral/)
+    await expect(tooltip).toHaveText(/brewer's term/)
+
+    const root = page.getByTestId('flavor-axis-f1')
+    await expect(root).toHaveAttribute('aria-describedby', 'flavor-axis-f1-tooltip')
+
+    // Focusing makes the tooltip visually appear (group-focus-visible toggles
+    // opacity on the role=tooltip span).
+    await root.focus()
+    await expect(tooltip).toBeVisible()
+
+    await context.close()
+  })
 })

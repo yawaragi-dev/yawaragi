@@ -4,9 +4,9 @@
  * Verifies that the testcontainer harness in tests/integration/setup.ts:
  *   (1) brings up Postgres,
  *   (2) bootstraps Supabase roles,
- *   (3) applies migrations (creates the brands + breweries tables + RLS policies).
+ *   (3) applies migrations (creates the brands + breweries + flavor_charts tables + RLS policies).
  *
- * Subsequent slices (#49–#52) reuse the same harness with their own
+ * Subsequent slices reuse the same harness with their own
  * `*.integration.test.ts` files. RLS coverage is the load-bearing part —
  * Phase 2 has no client-side data path yet, but the policy is in place
  * forward-looking and this test ensures the configuration stays correct.
@@ -185,5 +185,73 @@ describe('database integration smoke', () => {
       "SELECT rolbypassrls FROM pg_roles WHERE rolname = 'service_role'",
     )
     expect(rows[0].rolbypassrls).toBe(true)
+  })
+
+  it('migrations created the flavor_charts table with the expected columns', async () => {
+    const { rows } = await pool.query<{ column_name: string }>(
+      "SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'flavor_charts' ORDER BY column_name",
+    )
+    const names = rows.map((r) => r.column_name).sort()
+    expect(names).toEqual(
+      ['brand_id', 'confidence', 'content_hash', 'f1', 'f2', 'f3', 'f4', 'f5', 'f6', 'source', 'updated_at'].sort(),
+    )
+  })
+
+  it('flavor_charts.brand_id has a CASCADE FK to brands.brand_id', async () => {
+    const { rows } = await pool.query<{ conname: string; confdeltype: string }>(
+      `SELECT conname, confdeltype
+       FROM pg_constraint
+       WHERE conrelid = 'public.flavor_charts'::regclass
+         AND contype = 'f'
+         AND confrelid = 'public.brands'::regclass`,
+    )
+    expect(rows).toHaveLength(1)
+    // 'c' = CASCADE; matches ON DELETE CASCADE in 0004_flavor_charts.sql.
+    expect(rows[0].confdeltype).toBe('c')
+  })
+
+  it('RLS is enabled on flavor_charts', async () => {
+    const { rows } = await pool.query<{ relrowsecurity: boolean }>(
+      "SELECT relrowsecurity FROM pg_class WHERE oid = 'public.flavor_charts'::regclass",
+    )
+    expect(rows[0].relrowsecurity).toBe(true)
+  })
+
+  it('anon role can SELECT from flavor_charts (RLS policy permits)', async () => {
+    await pool.query('SET ROLE anon')
+    const { rows } = await pool.query<{ count: string }>(
+      'SELECT count(*)::text AS count FROM flavor_charts',
+    )
+    expect(rows[0].count).toBe('0')
+  })
+
+  it('anon role CANNOT INSERT into flavor_charts (no grant + RLS)', async () => {
+    await pool.query(
+      "INSERT INTO breweries (brewery_id, name, name_kanji, area_id, source, content_hash) VALUES (49, '麗人酒造', '麗人酒造', 20, 'sakenowa', 'b') ON CONFLICT DO NOTHING",
+    )
+    await pool.query(
+      "INSERT INTO brands (brand_id, name, name_kanji, brewery_id, source, content_hash) VALUES (1, 'Reijin', '麗人', 49, 'sakenowa', 'h') ON CONFLICT DO NOTHING",
+    )
+    await pool.query('SET ROLE anon')
+    await expect(
+      pool.query(
+        "INSERT INTO flavor_charts (brand_id, f1, f2, f3, f4, f5, f6, source, content_hash) VALUES (1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 'sakenowa', 'h')",
+      ),
+    ).rejects.toThrow()
+    await pool.query('RESET ROLE')
+    await pool.query('DELETE FROM brands WHERE brand_id = 1')
+    await pool.query('DELETE FROM breweries WHERE brewery_id = 49')
+  })
+
+  it('flavor_charts has no btree index on content_hash (#79 antipattern)', async () => {
+    // Slice 4/5 added a content_hash idx that the pipeline never reads.
+    // Slice 6 must not propagate it; the ingestion path is a JS Map lookup,
+    // not a SQL index lookup. Regression guard so a future copy-paste
+    // can't reintroduce the dead weight.
+    const { rows } = await pool.query<{ indexname: string }>(
+      "SELECT indexname FROM pg_indexes WHERE schemaname = 'public' AND tablename = 'flavor_charts'",
+    )
+    const names = rows.map((r) => r.indexname)
+    expect(names).not.toContain('flavor_charts_content_hash_idx')
   })
 })

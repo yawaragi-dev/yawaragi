@@ -18,10 +18,18 @@
  * cloud first-time ingest, this collapses ~5000 round trips into ~10.
  */
 import { createHash } from 'node:crypto'
-import type { SakenowaBrand, SakenowaBrewery } from './client'
-import type { BrandsDB, BrandUpsert, BreweriesDB, BreweryUpsert } from './db'
+import type { SakenowaBrand, SakenowaBrewery, SakenowaFlavorChart } from './client'
+import type {
+  BrandsDB,
+  BrandUpsert,
+  BreweriesDB,
+  BreweryUpsert,
+  FlavorChartsDB,
+  FlavorChartUpsert,
+} from './db'
 import type { Brand } from '../schemas/brand'
 import type { Brewery } from '../schemas/brewery'
+import type { FlavorChart } from '../schemas/flavor-chart'
 
 export interface RunSummary {
   added: number
@@ -48,6 +56,12 @@ export interface IngestionDeps {
 export interface BreweryIngestionDeps {
   client: { getBreweries: () => Promise<SakenowaBrewery[]> }
   db: BreweriesDB
+  onProgress?: ProgressCallback
+}
+
+export interface FlavorChartIngestionDeps {
+  client: { getFlavorCharts: () => Promise<SakenowaFlavorChart[]> }
+  db: FlavorChartsDB
   onProgress?: ProgressCallback
 }
 
@@ -184,6 +198,84 @@ export async function ingestBreweries(deps: BreweryIngestionDeps): Promise<RunSu
     } catch (err) {
       throw new Error(
         `Failed to upsert ${toUpsert.length} brewery row(s) (added=${added}, updated=${updated}): ${formatPgError(err)}`,
+        { cause: err },
+      )
+    }
+
+    return { added, updated, unchanged, total }
+  })
+}
+
+export function sakenowaFlavorChartToFlavorChart(s: SakenowaFlavorChart): FlavorChart {
+  return {
+    brandId: s.brandId,
+    f1: s.f1,
+    f2: s.f2,
+    f3: s.f3,
+    f4: s.f4,
+    f5: s.f5,
+    f6: s.f6,
+    source: 'sakenowa',
+  }
+}
+
+export function computeFlavorChartContentHash(chart: FlavorChart): string {
+  // Axis floats are stringified verbatim. Sakenowa publishes ~12 decimal
+  // digits; if a future Sakenowa run truncates them, the hash changes
+  // and the row gets re-written — fine, same as brand/brewery name
+  // canonicalisation.
+  const canonical = JSON.stringify({
+    brandId: chart.brandId,
+    f1: chart.f1,
+    f2: chart.f2,
+    f3: chart.f3,
+    f4: chart.f4,
+    f5: chart.f5,
+    f6: chart.f6,
+    source: chart.source,
+    confidence: chart.confidence ?? null,
+  })
+  return createHash('sha256').update(canonical).digest('hex')
+}
+
+export async function ingestFlavorCharts(
+  deps: FlavorChartIngestionDeps,
+): Promise<RunSummary> {
+  const sakenowaCharts = await deps.client.getFlavorCharts()
+
+  return deps.db.transaction(async (tx) => {
+    const existing = await tx.getExistingFlavorChartHashes()
+    let added = 0
+    let updated = 0
+    let unchanged = 0
+    const toUpsert: FlavorChartUpsert[] = []
+
+    const total = sakenowaCharts.length
+    for (let i = 0; i < total; i++) {
+      const flavorChart = sakenowaFlavorChartToFlavorChart(sakenowaCharts[i])
+      const contentHash = computeFlavorChartContentHash(flavorChart)
+      const existingHash = existing.get(flavorChart.brandId)
+
+      if (existingHash === undefined) {
+        toUpsert.push({ flavorChart, contentHash })
+        added++
+      } else if (existingHash === contentHash) {
+        unchanged++
+      } else {
+        toUpsert.push({ flavorChart, contentHash })
+        updated++
+      }
+    }
+
+    let written = 0
+    try {
+      await tx.upsertFlavorChartsBatch(toUpsert, (rowsThisChunk) => {
+        written += rowsThisChunk
+        deps.onProgress?.(written, toUpsert.length)
+      })
+    } catch (err) {
+      throw new Error(
+        `Failed to upsert ${toUpsert.length} flavor_chart row(s) (added=${added}, updated=${updated}): ${formatPgError(err)}`,
         { cause: err },
       )
     }

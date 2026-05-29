@@ -14,7 +14,11 @@
  */
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { Pool } from 'pg'
-import { lookupBrandFromPool, lookupBreweryByBrandFromPool } from './lookup'
+import {
+  lookupBrandFromPool,
+  lookupBreweryByBrandFromPool,
+  lookupFlavorChartFromPool,
+} from './lookup'
 
 const TEST_DATABASE_URL = process.env.TEST_DATABASE_URL
 
@@ -28,6 +32,13 @@ const FIXTURE_BRAND_IDS = [9001, 9002] as const
 const FIXTURE_BREWERY_IDS = [9501, 9502] as const
 
 async function cleanFixtures(): Promise<void> {
+  // flavor_charts cascades on brand delete (ON DELETE CASCADE), so the
+  // brands DELETE below cleans them too. Belt-and-braces explicit DELETE
+  // also covers any orphaned flavor_chart row a future test might create
+  // without a matching brand.
+  await pool.query('DELETE FROM flavor_charts WHERE brand_id = ANY($1::int[])', [
+    [...FIXTURE_BRAND_IDS],
+  ])
   await pool.query('DELETE FROM brands WHERE brand_id = ANY($1::int[])', [[...FIXTURE_BRAND_IDS]])
   await pool.query('DELETE FROM breweries WHERE brewery_id = ANY($1::int[])', [
     [...FIXTURE_BREWERY_IDS],
@@ -158,5 +169,78 @@ describe('lookupBreweryByBrandFromPool', () => {
 
     expect(brewery?.confidence).toBe(0.6)
     expect(brewery?.source).toBe('llm_extracted')
+  })
+})
+
+async function seedBrandWithBrewery(brandId: number, breweryId: number): Promise<void> {
+  await seedBrewery({ breweryId })
+  await pool.query(
+    `INSERT INTO brands
+       (brand_id, name, name_kanji, brewery_id, source, confidence, content_hash)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+    [brandId, 'Reijin', '麗人', breweryId, 'sakenowa', null, `hash-fixture-${brandId}`],
+  )
+}
+
+describe('lookupFlavorChartFromPool', () => {
+  it('returns null when no chart exists for the brandId', async () => {
+    await seedBrandWithBrewery(9001, 9501)
+    const result = await lookupFlavorChartFromPool(9001, pool)
+    expect(result).toBeNull()
+  })
+
+  it('returns the seeded six-axis chart for a brand', async () => {
+    await seedBrandWithBrewery(9001, 9501)
+    await pool.query(
+      `INSERT INTO flavor_charts
+         (brand_id, f1, f2, f3, f4, f5, f6, source, confidence, content_hash)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+      [9001, 0.27, 0.51, 0.31, 0.42, 0.46, 0.42, 'sakenowa', null, 'hash-chart-9001'],
+    )
+
+    const chart = await lookupFlavorChartFromPool(9001, pool)
+
+    expect(chart).toEqual({
+      brandId: 9001,
+      f1: 0.27,
+      f2: 0.51,
+      f3: 0.31,
+      f4: 0.42,
+      f5: 0.46,
+      f6: 0.42,
+      source: 'sakenowa',
+    })
+  })
+
+  it('round-trips confidence as a number when set on the chart', async () => {
+    await seedBrandWithBrewery(9002, 9502)
+    await pool.query(
+      `INSERT INTO flavor_charts
+         (brand_id, f1, f2, f3, f4, f5, f6, source, confidence, content_hash)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+      [9002, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 'llm_inferred', 0.85, 'hash-chart-9002'],
+    )
+
+    const chart = await lookupFlavorChartFromPool(9002, pool)
+
+    expect(chart?.confidence).toBe(0.85)
+    expect(chart?.source).toBe('llm_inferred')
+  })
+
+  it('cascades from brands.brand_id (deleting a brand removes its chart)', async () => {
+    // Confirms the FK cascade we declared in 0004_flavor_charts.sql so
+    // future cleanup migrations + orphan-prevention logic can rely on it.
+    await seedBrandWithBrewery(9001, 9501)
+    await pool.query(
+      `INSERT INTO flavor_charts
+         (brand_id, f1, f2, f3, f4, f5, f6, source, content_hash)
+       VALUES ($1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 'sakenowa', 'hash-chart-cascade')`,
+      [9001],
+    )
+    expect(await lookupFlavorChartFromPool(9001, pool)).not.toBeNull()
+
+    await pool.query('DELETE FROM brands WHERE brand_id = $1', [9001])
+
+    expect(await lookupFlavorChartFromPool(9001, pool)).toBeNull()
   })
 })

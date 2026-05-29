@@ -52,7 +52,41 @@
   "sake": {
     "brand": {
       "backToHome": "Zurück zur Startseite",
-      "breweryLabel": "Brauerei"
+      "breweryLabel": "Brauerei",
+      "flavorChartLabel": "Flavor Chart (Sakenowa)"
+    }
+  },
+  "flavorAxis": {
+    "tooltipCaveat": "Dies ist ein Brauer-Begriff; die deutsche Bezeichnung ist eine Annäherung.",
+    "f1": {
+      "label": "duftig / blumig",
+      "romaji": "hanayaka",
+      "kanji": "華やか"
+    },
+    "f2": {
+      "label": "vollmundig / reich",
+      "romaji": "hojun",
+      "kanji": "芳醇"
+    },
+    "f3": {
+      "label": "schwer / körperreich",
+      "romaji": "juko",
+      "kanji": "重厚"
+    },
+    "f4": {
+      "label": "mild / sanft",
+      "romaji": "odayaka",
+      "kanji": "穏やか"
+    },
+    "f5": {
+      "label": "trocken",
+      "romaji": "dry",
+      "kanji": "ドライ"
+    },
+    "f6": {
+      "label": "leicht / spritzig",
+      "romaji": "keikai",
+      "kanji": "軽快"
     }
   },
   "privacy": {

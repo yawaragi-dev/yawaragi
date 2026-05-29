@@ -33,6 +33,26 @@ const BreweriesResponse = z.object({
   breweries: z.array(z.unknown()),
 })
 
+// Sakenowa publishes flavor charts as a per-brand 6-tuple; each axis is a
+// float in [0, 1]. See src/lib/schemas/flavor-chart.ts for the storage
+// shape. Schema-shape drift (e.g. an `f7` axis arriving) throws — the
+// pipeline never silently writes partial data on a new envelope.
+const Axis = z.number().min(0).max(1)
+export const SakenowaFlavorChart = z.object({
+  brandId: z.number().int().positive(),
+  f1: Axis,
+  f2: Axis,
+  f3: Axis,
+  f4: Axis,
+  f5: Axis,
+  f6: Axis,
+})
+export type SakenowaFlavorChart = z.infer<typeof SakenowaFlavorChart>
+
+const FlavorChartsResponse = z.object({
+  flavorCharts: z.array(z.unknown()),
+})
+
 export class SakenowaError extends Error {
   constructor(
     message: string,
@@ -56,7 +76,7 @@ const defaultSkippedReporter: SkippedRowsReporter = ({ endpoint, skipped, total,
 }
 
 async function fetchAndParseEnvelope<T>(
-  endpoint: '/brands' | '/breweries',
+  endpoint: '/brands' | '/breweries' | '/flavor-charts',
   envelope: z.ZodType<T>,
 ): Promise<T> {
   const url = `${SAKENOWA_BASE_URL}${endpoint}`
@@ -152,6 +172,22 @@ export async function getBreweries(
       endpoint: '/breweries',
       skipped: invalid,
       total: data.breweries.length,
+      summary,
+    })
+  }
+  return valid
+}
+
+export async function getFlavorCharts(
+  opts: { onSkippedRows?: SkippedRowsReporter } = {},
+): Promise<SakenowaFlavorChart[]> {
+  const data = await fetchAndParseEnvelope('/flavor-charts', FlavorChartsResponse)
+  const { valid, invalid, summary } = filterRowsBySchema(data.flavorCharts, SakenowaFlavorChart)
+  if (invalid > 0) {
+    ;(opts.onSkippedRows ?? defaultSkippedReporter)({
+      endpoint: '/flavor-charts',
+      skipped: invalid,
+      total: data.flavorCharts.length,
       summary,
     })
   }

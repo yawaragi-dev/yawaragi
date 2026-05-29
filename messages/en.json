@@ -52,7 +52,41 @@
   "sake": {
     "brand": {
       "backToHome": "Back to home",
-      "breweryLabel": "Brewery"
+      "breweryLabel": "Brewery",
+      "flavorChartLabel": "Flavor Chart (Sakenowa)"
+    }
+  },
+  "flavorAxis": {
+    "tooltipCaveat": "This is a brewer's term; the English label is an approximation.",
+    "f1": {
+      "label": "fragrant / floral",
+      "romaji": "hanayaka",
+      "kanji": "華やか"
+    },
+    "f2": {
+      "label": "mellow / rich",
+      "romaji": "hojun",
+      "kanji": "芳醇"
+    },
+    "f3": {
+      "label": "heavy / full-bodied",
+      "romaji": "juko",
+      "kanji": "重厚"
+    },
+    "f4": {
+      "label": "mild / calm",
+      "romaji": "odayaka",
+      "kanji": "穏やか"
+    },
+    "f5": {
+      "label": "dry",
+      "romaji": "dry",
+      "kanji": "ドライ"
+    },
+    "f6": {
+      "label": "light / crisp",
+      "romaji": "keikai",
+      "kanji": "軽快"
     }
   },
   "privacy": {
