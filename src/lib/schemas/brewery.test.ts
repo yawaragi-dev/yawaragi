@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { BrewerySchema, parseBrewery } from './brewery'
+import { BrewerySchema, isPlaceholderBrewery, parseBrewery, type Brewery } from './brewery'
 
 const validBrewery = {
   source: 'sakenowa',
@@ -40,16 +40,40 @@ describe('Brewery schema', () => {
     expect(() => parseBrewery({ ...validBrewery, breweryId: -1 })).toThrow()
   })
 
-  it('rejects a non-positive areaId', () => {
-    expect(() => parseBrewery({ ...validBrewery, areaId: 0 })).toThrow()
+  it('rejects a negative areaId but accepts areaId 0 (Sakenowa foreign producer marker)', () => {
+    expect(() => parseBrewery({ ...validBrewery, areaId: -1 })).toThrow()
+    expect(parseBrewery({ ...validBrewery, areaId: 0 })).toMatchObject({ areaId: 0 })
   })
 
-  it('rejects empty name or nameKanji', () => {
-    expect(() => parseBrewery({ ...validBrewery, name: '' })).toThrow()
-    expect(() => parseBrewery({ ...validBrewery, nameKanji: '' })).toThrow()
+  it('accepts empty name + nameKanji (Sakenowa placeholder rows for "brewery unknown within prefecture")', () => {
+    const placeholder = parseBrewery({ ...validBrewery, name: '', nameKanji: '' })
+    expect(placeholder.name).toBe('')
+    expect(placeholder.nameKanji).toBe('')
   })
 
   it('exposes BrewerySchema for composition', () => {
     expect(BrewerySchema.parse(validBrewery)).toEqual(validBrewery)
+  })
+})
+
+describe('isPlaceholderBrewery', () => {
+  const base: Brewery = {
+    source: 'sakenowa',
+    breweryId: 785,
+    name: '',
+    nameKanji: '',
+    areaId: 2,
+  }
+
+  it('returns true for Sakenowa placeholder rows (empty name)', () => {
+    expect(isPlaceholderBrewery(base)).toBe(true)
+  })
+
+  it('returns false for fully-named breweries', () => {
+    expect(isPlaceholderBrewery({ ...base, name: '麗人酒造', nameKanji: '麗人酒造' })).toBe(false)
+  })
+
+  it('returns true regardless of areaId (placeholders cover both Japanese + foreign)', () => {
+    expect(isPlaceholderBrewery({ ...base, areaId: 0 })).toBe(true)
   })
 })

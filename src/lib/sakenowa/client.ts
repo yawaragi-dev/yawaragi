@@ -18,10 +18,14 @@ const BrandsResponse = z.object({
   brands: z.array(z.unknown()),
 })
 
+// See note in src/lib/schemas/brewery.ts: empty name is a placeholder
+// sentinel; areaId 0 means foreign producer. Both are valid Sakenowa
+// shapes — only truly malformed rows (wrong types, missing fields) are
+// dropped by the row filter downstream.
 export const SakenowaBrewery = z.object({
   id: z.number().int().positive(),
-  name: z.string().min(1),
-  areaId: z.number().int().positive(),
+  name: z.string(),
+  areaId: z.number().int().nonnegative(),
 })
 export type SakenowaBrewery = z.infer<typeof SakenowaBrewery>
 

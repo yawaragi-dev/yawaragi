@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
+import { isPlaceholderBrewery } from '@/lib/schemas/brewery'
 import { lookupBrand, lookupBreweryByBrand } from '@/lib/sakenowa/lookup'
 
 /**
@@ -66,7 +67,13 @@ export default async function SakeBrandPage({ params }: PageProps) {
   // a future romaji-transliteration step) populates `name` with the Latin
   // form and the divergence justifies two lines.
   const showBrandRomaji = brand.name !== brand.nameKanji
-  const showBreweryRomaji = brewery !== null && brewery.name !== brewery.nameKanji
+  // Hide the brewery section entirely for Sakenowa placeholder rows
+  // (~48 in the dataset). Showing "Brewery:" with no name reads worse
+  // than not showing the section at all; slice 9 (#52) adds the area /
+  // prefecture context that would make a "Unknown brewery in X" label
+  // meaningful.
+  const showBrewery = brewery !== null && !isPlaceholderBrewery(brewery)
+  const showBreweryRomaji = showBrewery && brewery.name !== brewery.nameKanji
 
   return (
     <main
@@ -88,7 +95,7 @@ export default async function SakeBrandPage({ params }: PageProps) {
           {brand.name}
         </p>
       )}
-      {brewery && (
+      {showBrewery && (
         <section
           className="flex flex-col gap-1"
           data-testid="brand-brewery"

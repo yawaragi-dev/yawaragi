@@ -173,10 +173,10 @@ describe('getBreweries', () => {
     await expect(getBreweries()).rejects.toThrow(/non-JSON/)
   })
 
-  it('skips Sakenowa placeholder rows with empty names (the real-world case)', async () => {
-    // Reproduces the slice-5 ingest failure: Sakenowa publishes ~80 rows
-    // (ids 784-863) with empty `name` strings. We skip those and ingest
-    // the rest, instead of failing the whole run.
+  it('ingests Sakenowa placeholder rows (empty name) — brands FK against them', async () => {
+    // Sakenowa publishes ~48 placeholder breweries with empty names as
+    // "specific brewery within prefecture unknown" sentinels. ~274 brands
+    // FK against them; we must not drop them on the floor.
     stubFetch(async () =>
       okJson({
         breweries: [
@@ -193,14 +193,49 @@ describe('getBreweries', () => {
 
     expect(breweries).toEqual([
       { id: 49, name: '麗人酒造', areaId: 20 },
+      { id: 784, name: '', areaId: 1 },
+      { id: 785, name: '', areaId: 2 },
       { id: 100, name: '高木酒造', areaId: 6 },
     ])
-    expect(skipped).toHaveLength(1)
-    expect(skipped[0]).toMatchObject({ endpoint: '/breweries', skipped: 2, total: 4 })
-    const summary = (skipped[0] as { summary: string }).summary
-    expect(summary).toContain('[1.name]')
-    expect(summary).toContain('[2.name]')
-    expect(summary).toContain('too_small')
+    expect(skipped).toHaveLength(0)
+  })
+
+  it('ingests foreign-producer rows (areaId 0) — brands FK against them too', async () => {
+    // Sakenowa parks non-Japanese breweries (Taiwan Tobacco & Liquor Corp,
+    // Korean producers) under areaId 0 because they don't fit the
+    // 47-prefecture scheme. Real rows, must be preserved.
+    stubFetch(async () =>
+      okJson({
+        breweries: [
+          { id: 49, name: '麗人酒造', areaId: 20 },
+          { id: 1481, name: '臺灣菸酒股份有限公司', areaId: 0 },
+        ],
+      }),
+    )
+    const skipped: unknown[] = []
+
+    const breweries = await getBreweries({ onSkippedRows: (info) => skipped.push(info) })
+
+    expect(breweries).toContainEqual({ id: 1481, name: '臺灣菸酒股份有限公司', areaId: 0 })
+    expect(skipped).toHaveLength(0)
+  })
+
+  it('still skips truly malformed rows (wrong types / missing required fields)', async () => {
+    stubFetch(async () =>
+      okJson({
+        breweries: [
+          { id: 49, name: '麗人酒造', areaId: 20 },
+          { id: 'not-a-number', name: 'x', areaId: 1 },
+          { id: 50 }, // missing name + areaId
+        ],
+      }),
+    )
+    const skipped: unknown[] = []
+
+    const breweries = await getBreweries({ onSkippedRows: (info) => skipped.push(info) })
+
+    expect(breweries).toEqual([{ id: 49, name: '麗人酒造', areaId: 20 }])
+    expect(skipped[0]).toMatchObject({ skipped: 2, total: 3 })
   })
 
   it('throws SakenowaError when "breweries" envelope is missing', async () => {

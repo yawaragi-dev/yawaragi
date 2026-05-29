@@ -85,14 +85,24 @@ export async function ingestBrands(deps: IngestionDeps): Promise<RunSummary> {
       const hash = computeContentHash(brand)
       const existingHash = existing.get(brand.brandId)
 
-      if (existingHash === undefined) {
-        await tx.upsertBrand(brand, hash)
-        added++
-      } else if (existingHash === hash) {
-        unchanged++
-      } else {
-        await tx.upsertBrand(brand, hash)
-        updated++
+      try {
+        if (existingHash === undefined) {
+          await tx.upsertBrand(brand, hash)
+          added++
+        } else if (existingHash === hash) {
+          unchanged++
+        } else {
+          await tx.upsertBrand(brand, hash)
+          updated++
+        }
+      } catch (err) {
+        // Surface the row identifiers so an FK / constraint failure
+        // points at the offending Sakenowa row without the operator
+        // having to add prints. IDs are Sakenowa-public, no PII.
+        throw new Error(
+          `Failed to upsert brand brandId=${brand.brandId} breweryId=${brand.breweryId} (${i + 1}/${total}): ${err instanceof Error ? err.message : String(err)}`,
+          { cause: err },
+        )
       }
 
       deps.onProgress?.(i + 1, total)
@@ -140,14 +150,21 @@ export async function ingestBreweries(deps: BreweryIngestionDeps): Promise<RunSu
       const hash = computeBreweryContentHash(brewery)
       const existingHash = existing.get(brewery.breweryId)
 
-      if (existingHash === undefined) {
-        await tx.upsertBrewery(brewery, hash)
-        added++
-      } else if (existingHash === hash) {
-        unchanged++
-      } else {
-        await tx.upsertBrewery(brewery, hash)
-        updated++
+      try {
+        if (existingHash === undefined) {
+          await tx.upsertBrewery(brewery, hash)
+          added++
+        } else if (existingHash === hash) {
+          unchanged++
+        } else {
+          await tx.upsertBrewery(brewery, hash)
+          updated++
+        }
+      } catch (err) {
+        throw new Error(
+          `Failed to upsert brewery breweryId=${brewery.breweryId} areaId=${brewery.areaId} (${i + 1}/${total}): ${err instanceof Error ? err.message : String(err)}`,
+          { cause: err },
+        )
       }
 
       deps.onProgress?.(i + 1, total)

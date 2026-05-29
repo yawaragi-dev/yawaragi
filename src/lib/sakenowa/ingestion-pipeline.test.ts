@@ -172,6 +172,25 @@ describe('ingestBrands', () => {
     expect(db.txCompleted).toBe(1)
   })
 
+  it('wraps upsert errors with brandId + breweryId + progress context', async () => {
+    // When PG rejects a row (FK, CHECK, unique) the operator needs the
+    // failing ID, not just "constraint violated". The pipeline catches
+    // and re-throws with row context; IDs are Sakenowa-public, no PII.
+    class FailingDB extends FakeBrandsDB {
+      override async upsertBrand(): Promise<void> {
+        throw new Error('relation "brands" violates foreign key constraint')
+      }
+    }
+    const db = new FailingDB()
+
+    await expect(
+      ingestBrands({
+        client: makeClient([sBrand({ id: 6478, breweryId: 1147 })]),
+        db,
+      }),
+    ).rejects.toThrow(/brandId=6478.*breweryId=1147.*1\/1/)
+  })
+
   it('invokes onProgress with (current, total) for every row, 1-indexed', async () => {
     const db = new FakeBrandsDB()
     const calls: Array<[number, number]> = []
@@ -332,6 +351,22 @@ describe('ingestBreweries', () => {
     await ingestBreweries({ client: makeBreweryClient([sBrewery()]), db })
     expect(db.txOpened).toBe(1)
     expect(db.txCompleted).toBe(1)
+  })
+
+  it('wraps upsert errors with breweryId + areaId + progress context', async () => {
+    class FailingDB extends FakeBreweriesDB {
+      override async upsertBrewery(): Promise<void> {
+        throw new Error('value too long for type character varying(255)')
+      }
+    }
+    const db = new FailingDB()
+
+    await expect(
+      ingestBreweries({
+        client: makeBreweryClient([sBrewery({ id: 1147, areaId: 0 })]),
+        db,
+      }),
+    ).rejects.toThrow(/breweryId=1147.*areaId=0/)
   })
 
   it('invokes onProgress with (current, total) for every row, 1-indexed', async () => {
