@@ -1,43 +1,41 @@
-name: Vercel preview smoke
+name: Vercel deploy smoke
 
-# Fires when Vercel reports a deployment is ready (deployment_status event).
-# We filter to preview-environment successes so we don't run on production
-# deploys (those have their own monitoring story).
-#
-# Manual trigger (workflow_dispatch) lets the maintainer re-run the smoke
-# against a known URL — useful for debugging the smoke script itself
-# without needing a fresh preview.
+# Why pull_request + push instead of deployment_status:
+# GitHub only fires `deployment_status` triggers from the workflow file
+# on the DEFAULT branch — so a workflow added in a feature branch can't
+# smoke-check its own preview before merging. `pull_request` works on
+# any branch; the smoke job polls GitHub's deployments API for Vercel's
+# preview URL on the current SHA, then curls it.
 on:
-  deployment_status: {}
+  pull_request: {}
+  push:
+    branches: [main]
   workflow_dispatch:
     inputs:
       url:
-        description: 'Deployment URL to smoke-test (overrides the event payload)'
+        description: 'Deployment URL to smoke-test (overrides auto-detection)'
         type: string
         required: true
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.deployment_status.target_url || inputs.url }}
-  cancel-in-progress: false
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  deployments: read
 
 jobs:
   smoke:
     name: HTTP smoke (no 5xx)
     runs-on: ubuntu-latest
-    # On deployment_status, only run for successful Preview deploys.
-    # workflow_dispatch always runs (manual operator decision).
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'deployment_status' &&
-       github.event.deployment_status.state == 'success' &&
-       github.event.deployment.environment == 'Preview')
     env:
-      # Bypass token for Vercel's SSO protection on previews. Generated in
-      # Vercel project settings → Deployment Protection → "Protection Bypass
-      # for Automation"; stored as a GitHub repository secret. Without this
-      # the smoke would see 401 from every URL.
+      # Bypass for Vercel's SSO protection on previews. Generated at
+      # Vercel → Project → Settings → Deployment Protection → "Protection
+      # Bypass for Automation"; stored as a GitHub repo secret. Without
+      # this, smoke would see 401 from every URL.
       VERCEL_BYPASS_TOKEN: ${{ secrets.VERCEL_BYPASS_TOKEN }}
-      DEPLOY_URL: ${{ github.event_name == 'workflow_dispatch' && inputs.url || github.event.deployment_status.target_url }}
+      GH_TOKEN: ${{ github.token }}
     steps:
       - name: Validate config
         run: |
@@ -45,19 +43,55 @@ jobs:
             echo "::error::VERCEL_BYPASS_TOKEN secret is not set."
             echo "Generate one at Vercel → Project → Settings → Deployment Protection →"
             echo "  'Protection Bypass for Automation', then add it to this repo's secrets as VERCEL_BYPASS_TOKEN."
+            echo "See docs/deploying.md §6 for the full setup."
             exit 1
           fi
-          if [ -z "$DEPLOY_URL" ]; then
-            echo "::error::DEPLOY_URL is empty (no event payload + no manual input)."
-            exit 1
-          fi
-          echo "Smoking $DEPLOY_URL"
 
-      - name: Curl key URLs and assert no 5xx
+      - name: Resolve deployment URL
+        id: resolve
         run: |
           set -u
-          # Paths smoke covers — each must respond with anything other than 5xx.
-          # 200/3xx (success/redirect), 404 (custom not-found), 401 (auth gates)
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            URL="${{ inputs.url }}"
+            echo "Using manual URL: $URL"
+            echo "url=$URL" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          SHA="${{ github.event.pull_request.head.sha || github.sha }}"
+          echo "Polling Vercel deploy for SHA $SHA..."
+
+          URL=""
+          for attempt in $(seq 1 60); do
+            # Newest deployment first (GitHub returns descending by created_at).
+            DEPLOY_ID=$(gh api "repos/$GITHUB_REPOSITORY/deployments?sha=$SHA&per_page=10" \
+              --jq '[.[] | select(.environment == "Preview" or .environment == "Production")] | first.id // empty')
+
+            if [ -n "$DEPLOY_ID" ] && [ "$DEPLOY_ID" != "null" ]; then
+              URL=$(gh api "repos/$GITHUB_REPOSITORY/deployments/$DEPLOY_ID/statuses" \
+                --jq '[.[] | select(.state == "success")] | first.environment_url // empty')
+              if [ -n "$URL" ] && [ "$URL" != "null" ]; then
+                echo "✓ Resolved after ${attempt}0s: $URL"
+                echo "url=$URL" >> "$GITHUB_OUTPUT"
+                exit 0
+              fi
+            fi
+            echo "  attempt $attempt: no successful Vercel deploy yet, sleeping 10s..."
+            sleep 10
+          done
+
+          echo "::error::No successful Vercel deployment found for SHA $SHA after 10 minutes."
+          echo "Did Vercel skip this build (e.g., paths-ignored, ignored-build-step), or fail the build outright?"
+          exit 1
+
+      - name: Smoke key paths
+        env:
+          DEPLOY_URL: ${{ steps.resolve.outputs.url }}
+        run: |
+          set -u
+
+          # Paths each preview/production deploy must respond to with non-5xx.
+          # 200/3xx (success/redirect), 401 (auth gates), 404 (custom not-found)
           # are all acceptable; 500/502/503/504 are not.
           paths=(
             "/"
@@ -70,15 +104,13 @@ jobs:
           fail=0
           for path in "${paths[@]}"; do
             url="${DEPLOY_URL%/}$path"
-            # -L follows redirects; -o /dev/null discards body; -w prints status.
-            # Header form (not query param) keeps the secret out of Vercel/GitHub logs.
             status=$(curl -sL -o /dev/null -w '%{http_code}' \
               -H "x-vercel-protection-bypass: ${VERCEL_BYPASS_TOKEN}" \
               -H "x-vercel-set-bypass-cookie: true" \
               --max-time 30 \
               "$url" || echo "000")
 
-            if [[ "$status" == "000" ]]; then
+            if [ "$status" = "000" ]; then
               echo "✘ $url → curl failed (network / timeout)"
               fail=1
             elif [[ "$status" =~ ^5 ]]; then

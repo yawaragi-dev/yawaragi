@@ -93,9 +93,9 @@ For each vendor, the practical rule of thumb:
 
 When you cross any of these thresholds, **the Pre-Go-Live checklist (§7.7) is the forcing function** — that section now lists each vendor and the tier audit as a hard gate before any production-grade launch.
 
-## 6. Preview-deploy smoke check (`.github/workflows/vercel-smoke.yml`)
+## 6. Deploy smoke check (`.github/workflows/vercel-smoke.yml`)
 
-Every Vercel preview deploy fires a `deployment_status: success` event back to GitHub. A workflow listens and curls a handful of key paths (`/`, `/en`, `/de`, `/en/sake/1`, an unknown-path 404) against the preview URL, asserting **none return 5xx**. 200, 3xx, 401, and 404 are all acceptable; 500/502/503/504 fail the check.
+A `pull_request` + `push: main` workflow polls GitHub's deployments API until Vercel reports a successful preview/production deploy for the current SHA, then curls a handful of key paths (`/`, `/en`, `/de`, `/en/sake/1`, an unknown-path 404) against that URL, asserting **none return 5xx**. 200, 3xx, 401, and 404 are all acceptable; 500/502/503/504 fail the check.
 
 Catches the failure mode that builds successfully but crashes at runtime — exactly the `/sake/[id]` → 500 we hit when DATABASE_URL was missing on the first Vercel preview.
 
@@ -108,17 +108,21 @@ Catches the failure mode that builds successfully but crashes at runtime — exa
 2. **Add the secret to GitHub.**
    - GitHub repo → **Settings → Secrets and variables → Actions → New repository secret**.
    - Name: `VERCEL_BYPASS_TOKEN`. Value: the secret you just copied.
-3. **Verify.** Push a commit or open a PR. After Vercel reports its preview deploy as successful, the workflow runs. The Actions tab shows a "Vercel preview smoke" run with one `✓` line per smoked path.
+3. **Verify.** Push a commit or open a PR. Actions tab → "Vercel deploy smoke" → the job's first step polls for up to 10 minutes for Vercel's deploy to be `success`, then runs the smoke. One `✓` line per smoked path on success; clear `✘` line with the offending status on failure.
+
+### Why polling instead of `deployment_status`
+
+GitHub's `deployment_status` trigger only fires from the workflow file on the **default branch**, so a PR that introduces or modifies the smoke workflow can't smoke-check its own preview. Polling on `pull_request` events sidesteps that — the workflow file from the PR branch runs, polls the deployments API, and smokes whatever URL Vercel registers. Costs ~30-60s of polling per run (Vercel's typical deploy time) but works on the very PR that adds the workflow.
 
 ### Limitations
 
-- GitHub uses the workflow file from the **default branch** (`main`) for `deployment_status` triggers, not the PR branch's file. The smoke workflow only fires on previews **after** it lands on main — the PR that introduces it can't smoke-check itself.
 - Vercel's SSO bypass is per-project; rotating the secret in Vercel without updating the GitHub secret breaks the smoke until both sides match.
 - The smoke is HTTP-only. It catches runtime crashes and missing-env-var failures, not visual regressions, perf regressions, or a11y issues. Those are tracked separately under PRE-GO-LIVE §7.4 (Lighthouse pass) and remain manual until a follow-up.
+- If Vercel skips the build (paths-ignored config, ignored-build-step), no deployment exists → the smoke times out and fails. Treat this as a config issue, not a code issue.
 
 ### Manual re-run
 
-Actions tab → **Vercel preview smoke** → **Run workflow** → paste a preview URL → **Run**. Useful for debugging the workflow itself, or for re-running after fixing a flaky 5xx.
+Actions tab → **Vercel deploy smoke** → **Run workflow** → paste a deployment URL → **Run**. Useful for debugging the smoke script itself, or for re-running after fixing a flaky 5xx.
 
 ## 7. Promotion-to-production checklist
 
