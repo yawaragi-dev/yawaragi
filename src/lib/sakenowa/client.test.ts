@@ -37,7 +37,7 @@ describe('getBrands', () => {
     const fetchSpy = vi.fn<typeof fetch>(async () => okJson({ brands: [] }))
     vi.stubGlobal('fetch', fetchSpy)
 
-    await getBrands()
+    await getBrands({ onSkippedRows: () => {} })
 
     expect(fetchSpy).toHaveBeenCalledOnce()
     expect(fetchSpy).toHaveBeenCalledWith('https://muro.sakenowa.com/sakenowa-data/api/brands')
@@ -63,17 +63,65 @@ describe('getBrands', () => {
     await expect(getBrands()).rejects.toThrow(/non-JSON/)
   })
 
-  it('throws SakenowaError when the response shape drifts', async () => {
-    // Simulates Sakenowa adding a new required field or removing one Yawaragi expects (US #31).
-    stubFetch(async () => okJson({ brands: [{ id: 1, breweryId: 49 }] }))
+  it('skips malformed rows and reports them rather than throwing', async () => {
+    // Sakenowa publishes some placeholder rows (slice 5 PR triggered this).
+    // The whole envelope is good; one row is bad — return the good rows
+    // and route the bad-row count through the reporter.
+    stubFetch(async () =>
+      okJson({
+        brands: [
+          { id: 1, name: '麗人', breweryId: 49 },
+          { id: 2, breweryId: 100 }, // missing name
+        ],
+      }),
+    )
+    const skipped: unknown[] = []
 
-    await expect(getBrands()).rejects.toThrow(/schema validation/)
+    const brands = await getBrands({ onSkippedRows: (info) => skipped.push(info) })
+
+    expect(brands).toEqual([{ id: 1, name: '麗人', breweryId: 49 }])
+    expect(skipped).toHaveLength(1)
+    expect(skipped[0]).toMatchObject({ endpoint: '/brands', skipped: 1, total: 2 })
+    expect((skipped[0] as { summary: string }).summary).toContain('[1.name]')
+  })
+
+  it('returns an empty list when every row is malformed and reports them all', async () => {
+    stubFetch(async () => okJson({ brands: [{ id: 0 }, { id: 'nope' }] }))
+    const skipped: unknown[] = []
+
+    const brands = await getBrands({ onSkippedRows: (info) => skipped.push(info) })
+
+    expect(brands).toEqual([])
+    expect(skipped[0]).toMatchObject({ skipped: 2, total: 2 })
+  })
+
+  it('does not include rejected field values in the skip summary', async () => {
+    // Forward-looking: when this same row-filter shape is reused for LLM
+    // outputs (label scan, generated tasting notes), the summary must not
+    // become a PII smuggling channel.
+    const SENTINEL = 'CUSTOMER-EMAIL@example.com'
+    stubFetch(async () =>
+      okJson({
+        brands: [{ id: 1, name: SENTINEL, breweryId: 'wrong-type-with-' + SENTINEL }],
+      }),
+    )
+    const skipped: { summary?: string }[] = []
+
+    await getBrands({ onSkippedRows: (info) => skipped.push(info) })
+
+    expect(skipped[0].summary).not.toContain(SENTINEL)
   })
 
   it('throws SakenowaError when "brands" envelope is missing', async () => {
     stubFetch(async () => okJson([{ id: 1, name: '麗人', breweryId: 49 }]))
 
-    await expect(getBrands()).rejects.toThrow(/schema validation/)
+    await expect(getBrands()).rejects.toThrow(/envelope failed schema validation/)
+  })
+
+  it('envelope-drift error names the missing key without disclosing payload', async () => {
+    stubFetch(async () => okJson({ items: [], copyright: 'irrelevant-value' }))
+
+    await expect(getBrands()).rejects.toThrow(/\[brands\]/)
   })
 })
 
@@ -99,7 +147,7 @@ describe('getBreweries', () => {
     const fetchSpy = vi.fn<typeof fetch>(async () => okJson({ breweries: [] }))
     vi.stubGlobal('fetch', fetchSpy)
 
-    await getBreweries()
+    await getBreweries({ onSkippedRows: () => {} })
 
     expect(fetchSpy).toHaveBeenCalledOnce()
     expect(fetchSpy).toHaveBeenCalledWith('https://muro.sakenowa.com/sakenowa-data/api/breweries')
@@ -125,16 +173,39 @@ describe('getBreweries', () => {
     await expect(getBreweries()).rejects.toThrow(/non-JSON/)
   })
 
-  it('throws SakenowaError when the response shape drifts', async () => {
-    // Simulates Sakenowa adding a new required field or removing one Yawaragi expects (US #31).
-    stubFetch(async () => okJson({ breweries: [{ id: 49, name: '麗人酒造' }] }))
+  it('skips Sakenowa placeholder rows with empty names (the real-world case)', async () => {
+    // Reproduces the slice-5 ingest failure: Sakenowa publishes ~80 rows
+    // (ids 784-863) with empty `name` strings. We skip those and ingest
+    // the rest, instead of failing the whole run.
+    stubFetch(async () =>
+      okJson({
+        breweries: [
+          { id: 49, name: '麗人酒造', areaId: 20 },
+          { id: 784, name: '', areaId: 1 },
+          { id: 785, name: '', areaId: 2 },
+          { id: 100, name: '高木酒造', areaId: 6 },
+        ],
+      }),
+    )
+    const skipped: unknown[] = []
 
-    await expect(getBreweries()).rejects.toThrow(/schema validation/)
+    const breweries = await getBreweries({ onSkippedRows: (info) => skipped.push(info) })
+
+    expect(breweries).toEqual([
+      { id: 49, name: '麗人酒造', areaId: 20 },
+      { id: 100, name: '高木酒造', areaId: 6 },
+    ])
+    expect(skipped).toHaveLength(1)
+    expect(skipped[0]).toMatchObject({ endpoint: '/breweries', skipped: 2, total: 4 })
+    const summary = (skipped[0] as { summary: string }).summary
+    expect(summary).toContain('[1.name]')
+    expect(summary).toContain('[2.name]')
+    expect(summary).toContain('too_small')
   })
 
   it('throws SakenowaError when "breweries" envelope is missing', async () => {
     stubFetch(async () => okJson([{ id: 49, name: '麗人酒造', areaId: 20 }]))
 
-    await expect(getBreweries()).rejects.toThrow(/schema validation/)
+    await expect(getBreweries()).rejects.toThrow(/envelope failed schema validation/)
   })
 })
