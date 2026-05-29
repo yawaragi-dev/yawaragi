@@ -4,14 +4,19 @@ import type { Metadata } from 'next'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
 import { isPlaceholderBrewery } from '@/lib/schemas/brewery'
-import { lookupBrand, lookupBreweryByBrand } from '@/lib/sakenowa/lookup'
+import {
+  lookupBrand,
+  lookupBreweryByBrand,
+  lookupFlavorChart,
+} from '@/lib/sakenowa/lookup'
+import { FlavorChartView } from '@/components/sake/flavor-chart'
 
 /**
  * Phase 2's smoke-test surface. Renders a single sake brand from the
  * Postgres mirror. The proxy rewrites `/de/sake/*` to coming-soon per
  * ADR-0008 (EN-first launch), so this page in practice only renders on
- * `/en/`. Future slices add 6-axis FlavorChart (#49),
- * SakenowaAttribution (#50), and ProvenanceBadge (#51) to the same page.
+ * `/en/`. Slice 6 (#49) adds the 6-axis FlavorChart. Future slices add
+ * SakenowaAttribution (#50) and ProvenanceBadge (#51).
  */
 interface PageProps {
   params: Promise<{ locale: string; brandId: string }>
@@ -22,6 +27,7 @@ interface PageProps {
 // Postgres twice.
 const lookupBrandCached = cache(lookupBrand)
 const lookupBreweryCached = cache(lookupBreweryByBrand)
+const lookupFlavorChartCached = cache(lookupFlavorChart)
 
 // Reject "1abc" (which `Number.parseInt('1abc', 10)` would silently coerce
 // to 1) and similar garbage. Strict numeric matching only.
@@ -53,9 +59,10 @@ export default async function SakeBrandPage({ params }: PageProps) {
     notFound()
   }
 
-  const [brand, brewery] = await Promise.all([
+  const [brand, brewery, flavorChart] = await Promise.all([
     lookupBrandCached(brandId),
     lookupBreweryCached(brandId),
+    lookupFlavorChartCached(brandId),
   ])
   if (!brand) {
     notFound()
@@ -121,6 +128,7 @@ export default async function SakeBrandPage({ params }: PageProps) {
           )}
         </section>
       )}
+      {flavorChart && <FlavorChartView chart={flavorChart} />}
       <Link
         href="/"
         className="text-base font-medium underline underline-offset-4"

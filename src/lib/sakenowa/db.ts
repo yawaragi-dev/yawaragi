@@ -17,6 +17,7 @@
 import type { Pool, PoolClient } from 'pg'
 import type { Brand } from '../schemas/brand'
 import type { Brewery } from '../schemas/brewery'
+import type { FlavorChart } from '../schemas/flavor-chart'
 import type { ProvenanceSource } from '../schemas/with-provenance'
 
 export interface BrandUpsert {
@@ -213,6 +214,105 @@ export function makePgBreweriesDB(pool: Pool): BreweriesDB {
   return new PgBreweriesDB(pool)
 }
 
+export interface FlavorChartUpsert {
+  flavorChart: FlavorChart
+  contentHash: string
+}
+
+export interface FlavorChartsDB {
+  getExistingFlavorChartHashes(): Promise<Map<number, string>>
+  upsertFlavorChartsBatch(
+    rows: readonly FlavorChartUpsert[],
+    onChunk?: BatchProgress,
+  ): Promise<void>
+  transaction<T>(fn: (tx: FlavorChartsDB) => Promise<T>): Promise<T>
+}
+
+class PgFlavorChartsDB implements FlavorChartsDB {
+  constructor(private readonly executor: Pool | PoolClient) {}
+
+  async getExistingFlavorChartHashes(): Promise<Map<number, string>> {
+    const { rows } = await this.executor.query<{
+      brand_id: number
+      content_hash: string
+    }>('SELECT brand_id, content_hash FROM flavor_charts')
+    return new Map(rows.map((r) => [r.brand_id, r.content_hash]))
+  }
+
+  async upsertFlavorChartsBatch(
+    rows: readonly FlavorChartUpsert[],
+    onChunk?: BatchProgress,
+  ): Promise<void> {
+    if (rows.length === 0) return
+    for (let start = 0; start < rows.length; start += BATCH_SIZE) {
+      const chunk = rows.slice(start, start + BATCH_SIZE)
+      const placeholders: string[] = []
+      const values: unknown[] = []
+      for (const { flavorChart, contentHash } of chunk) {
+        const i = values.length
+        // 10 placeholders + literal NOW() for updated_at
+        placeholders.push(
+          `($${i + 1}, $${i + 2}, $${i + 3}, $${i + 4}, $${i + 5}, $${i + 6}, $${i + 7}, $${i + 8}, $${i + 9}, $${i + 10}, NOW())`,
+        )
+        values.push(
+          flavorChart.brandId,
+          flavorChart.f1,
+          flavorChart.f2,
+          flavorChart.f3,
+          flavorChart.f4,
+          flavorChart.f5,
+          flavorChart.f6,
+          flavorChart.source,
+          flavorChart.confidence ?? null,
+          contentHash,
+        )
+      }
+      await this.executor.query(
+        `INSERT INTO flavor_charts
+           (brand_id, f1, f2, f3, f4, f5, f6, source, confidence, content_hash, updated_at)
+         VALUES ${placeholders.join(', ')}
+         ON CONFLICT (brand_id) DO UPDATE SET
+           f1           = EXCLUDED.f1,
+           f2           = EXCLUDED.f2,
+           f3           = EXCLUDED.f3,
+           f4           = EXCLUDED.f4,
+           f5           = EXCLUDED.f5,
+           f6           = EXCLUDED.f6,
+           source       = EXCLUDED.source,
+           confidence   = EXCLUDED.confidence,
+           content_hash = EXCLUDED.content_hash,
+           updated_at   = NOW()`,
+        values,
+      )
+      onChunk?.(chunk.length)
+    }
+  }
+
+  async transaction<T>(fn: (tx: FlavorChartsDB) => Promise<T>): Promise<T> {
+    if ('release' in this.executor) {
+      return fn(this)
+    }
+    const client = await (this.executor as Pool).connect()
+    try {
+      await client.query('BEGIN')
+      const result = await fn(new PgFlavorChartsDB(client))
+      await client.query('COMMIT')
+      return result
+    } catch (err) {
+      await client.query('ROLLBACK').catch(() => {
+        /* swallow rollback failure; surface the original */
+      })
+      throw err
+    } finally {
+      client.release()
+    }
+  }
+}
+
+export function makePgFlavorChartsDB(pool: Pool): FlavorChartsDB {
+  return new PgFlavorChartsDB(pool)
+}
+
 /**
  * Row shape returned by `SELECT brand_id, name, name_kanji, brewery_id,
  * source, confidence FROM brands`. Used by lookup helpers. The check
@@ -263,4 +363,35 @@ export function rowToBrewery(row: BreweryRow): Brewery {
     brewery.confidence = Number(row.confidence)
   }
   return brewery
+}
+
+// NUMERIC(5, 4) columns come back as strings — Number() casts them to the
+// float shape the schema expects. Same pattern as confidence on brand/brewery.
+export interface FlavorChartRow {
+  brand_id: number
+  f1: string
+  f2: string
+  f3: string
+  f4: string
+  f5: string
+  f6: string
+  source: ProvenanceSource
+  confidence: string | null
+}
+
+export function rowToFlavorChart(row: FlavorChartRow): FlavorChart {
+  const chart: FlavorChart = {
+    brandId: row.brand_id,
+    f1: Number(row.f1),
+    f2: Number(row.f2),
+    f3: Number(row.f3),
+    f4: Number(row.f4),
+    f5: Number(row.f5),
+    f6: Number(row.f6),
+    source: row.source,
+  }
+  if (row.confidence !== null) {
+    chart.confidence = Number(row.confidence)
+  }
+  return chart
 }

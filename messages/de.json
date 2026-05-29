@@ -52,7 +52,40 @@
   "sake": {
     "brand": {
       "backToHome": "Zurück zur Startseite",
-      "breweryLabel": "Brauerei"
+      "breweryLabel": "Brauerei",
+      "flavorChartLabel": "Flavor Chart (Sakenowa)"
+    }
+  },
+  "flavorAxis": {
+    "f1": {
+      "label": "duftig / blumig",
+      "kanji": "華やか",
+      "caveat": "Nicht 'parfümiert' — aromatische Ester. Brauer-Begriff; die deutsche Bezeichnung ist eine Annäherung."
+    },
+    "f2": {
+      "label": "vollmundig / reich",
+      "kanji": "芳醇",
+      "caveat": "Nicht 'cremig' — Tiefe aus Umami und Aroma. Brauer-Begriff; die deutsche Bezeichnung ist eine Annäherung."
+    },
+    "f3": {
+      "label": "schwer / körperreich",
+      "kanji": "重厚",
+      "caveat": "Nicht 'tanninhaltig' — Körper plus Aminosäuren. Brauer-Begriff; die deutsche Bezeichnung ist eine Annäherung."
+    },
+    "f4": {
+      "label": "mild / sanft",
+      "kanji": "穏やか",
+      "caveat": "Zurückhaltendes Aroma, nicht 'neutral'. Brauer-Begriff; die deutsche Bezeichnung ist eine Annäherung."
+    },
+    "f5": {
+      "label": "trocken",
+      "kanji": "ドライ",
+      "caveat": "Engste 1:1-Entsprechung; folgt grob dem SMV."
+    },
+    "f6": {
+      "label": "leicht / spritzig",
+      "kanji": "軽快",
+      "caveat": "Erfrischender Abgang, geringer Restzucker. Brauer-Begriff; die deutsche Bezeichnung ist eine Annäherung."
     }
   },
   "privacy": {

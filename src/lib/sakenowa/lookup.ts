@@ -2,7 +2,15 @@ import 'server-only'
 import type { Pool } from 'pg'
 import type { Brand } from '../schemas/brand'
 import type { Brewery } from '../schemas/brewery'
-import { type BrandRow, type BreweryRow, rowToBrand, rowToBrewery } from './db'
+import type { FlavorChart } from '../schemas/flavor-chart'
+import {
+  type BrandRow,
+  type BreweryRow,
+  type FlavorChartRow,
+  rowToBrand,
+  rowToBrewery,
+  rowToFlavorChart,
+} from './db'
 import { getServerDbPool } from '../supabase/server-client'
 
 const SELECT_BRAND_BY_ID = `
@@ -46,4 +54,23 @@ export async function lookupBreweryByBrandFromPool(
 
 export async function lookupBreweryByBrand(brandId: number): Promise<Brewery | null> {
   return lookupBreweryByBrandFromPool(brandId, getServerDbPool())
+}
+
+const SELECT_FLAVOR_CHART_BY_BRAND_ID = `
+  SELECT brand_id, f1, f2, f3, f4, f5, f6, source, confidence
+  FROM flavor_charts
+  WHERE brand_id = $1
+`
+
+export async function lookupFlavorChartFromPool(
+  brandId: number,
+  pool: Pool,
+): Promise<FlavorChart | null> {
+  const { rows } = await pool.query<FlavorChartRow>(SELECT_FLAVOR_CHART_BY_BRAND_ID, [brandId])
+  if (rows.length === 0) return null
+  return rowToFlavorChart(rows[0])
+}
+
+export async function lookupFlavorChart(brandId: number): Promise<FlavorChart | null> {
+  return lookupFlavorChartFromPool(brandId, getServerDbPool())
 }

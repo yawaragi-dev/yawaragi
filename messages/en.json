@@ -52,7 +52,40 @@
   "sake": {
     "brand": {
       "backToHome": "Back to home",
-      "breweryLabel": "Brewery"
+      "breweryLabel": "Brewery",
+      "flavorChartLabel": "Flavor Chart (Sakenowa)"
+    }
+  },
+  "flavorAxis": {
+    "f1": {
+      "label": "fragrant / floral",
+      "kanji": "華やか",
+      "caveat": "Not 'perfumed' — aromatic-ester-driven. Brewer's term; the English label is an approximation."
+    },
+    "f2": {
+      "label": "mellow / rich",
+      "kanji": "芳醇",
+      "caveat": "Not 'creamy' — umami-and-aroma depth. Brewer's term; the English label is an approximation."
+    },
+    "f3": {
+      "label": "heavy / full-bodied",
+      "kanji": "重厚",
+      "caveat": "Not 'tannic' — weight + amino acid. Brewer's term; the English label is an approximation."
+    },
+    "f4": {
+      "label": "mild / calm",
+      "kanji": "穏やか",
+      "caveat": "Restrained aroma, not 'neutral'. Brewer's term; the English label is an approximation."
+    },
+    "f5": {
+      "label": "dry",
+      "kanji": "ドライ",
+      "caveat": "Closest 1:1 to a Western descriptor; tracks SMV broadly."
+    },
+    "f6": {
+      "label": "light / crisp",
+      "kanji": "軽快",
+      "caveat": "Refreshing finish, low residual. Brewer's term; the English label is an approximation."
     }
   },
   "privacy": {

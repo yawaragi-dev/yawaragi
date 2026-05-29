@@ -12,9 +12,17 @@
  * brands must see their breweries already committed.
  */
 import { Pool } from 'pg'
-import { getBrands, getBreweries } from '../src/lib/sakenowa/client'
-import { makePgBrandsDB, makePgBreweriesDB } from '../src/lib/sakenowa/db'
-import { ingestBrands, ingestBreweries } from '../src/lib/sakenowa/ingestion-pipeline'
+import { getBrands, getBreweries, getFlavorCharts } from '../src/lib/sakenowa/client'
+import {
+  makePgBrandsDB,
+  makePgBreweriesDB,
+  makePgFlavorChartsDB,
+} from '../src/lib/sakenowa/db'
+import {
+  ingestBrands,
+  ingestBreweries,
+  ingestFlavorCharts,
+} from '../src/lib/sakenowa/ingestion-pipeline'
 
 const BAR_WIDTH = 30
 const THROTTLE_MS = 100
@@ -82,6 +90,20 @@ async function main(): Promise<number> {
     })
     console.log(
       `✓ brands: ${brandSummary.added} added, ${brandSummary.updated} updated, ${brandSummary.unchanged} unchanged (${brandSummary.total} total) in ${Date.now() - brandSplit}ms`,
+    )
+
+    // flavor_charts FK against brands.brand_id (0004) — must run after
+    // brands. Sakenowa publishes ~1.4k charts vs. ~3.2k brands; charts
+    // for brands without a published flavor chart simply don't exist.
+    const flavorChartSplit = Date.now()
+    process.stdout.write('Flavor charts: fetching → classifying → writing…\n')
+    const flavorChartSummary = await ingestFlavorCharts({
+      client: { getFlavorCharts },
+      db: makePgFlavorChartsDB(pool),
+      onProgress: makeBarRenderer('  flavor_charts write'),
+    })
+    console.log(
+      `✓ flavor_charts: ${flavorChartSummary.added} added, ${flavorChartSummary.updated} updated, ${flavorChartSummary.unchanged} unchanged (${flavorChartSummary.total} total) in ${Date.now() - flavorChartSplit}ms`,
     )
 
     console.log(`✓ done in ${Date.now() - startedAt}ms`)

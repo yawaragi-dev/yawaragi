@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { getBrands, getBreweries, SakenowaError } from './client'
+import { getBrands, getBreweries, getFlavorCharts, SakenowaError } from './client'
 
 const stubFetch = (impl: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>) => {
   vi.stubGlobal('fetch', vi.fn(impl))
@@ -242,5 +242,98 @@ describe('getBreweries', () => {
     stubFetch(async () => okJson([{ id: 49, name: '麗人酒造', areaId: 20 }]))
 
     await expect(getBreweries()).rejects.toThrow(/envelope failed schema validation/)
+  })
+})
+
+describe('getFlavorCharts', () => {
+  const sample = {
+    brandId: 2,
+    f1: 0.27,
+    f2: 0.51,
+    f3: 0.31,
+    f4: 0.42,
+    f5: 0.46,
+    f6: 0.42,
+  } as const
+
+  it('returns parsed flavor charts on a successful response', async () => {
+    stubFetch(async () => okJson({ flavorCharts: [sample] }))
+
+    const charts = await getFlavorCharts()
+    expect(charts).toEqual([sample])
+  })
+
+  it('hits the documented Sakenowa /flavor-charts endpoint', async () => {
+    const fetchSpy = vi.fn<typeof fetch>(async () => okJson({ flavorCharts: [] }))
+    vi.stubGlobal('fetch', fetchSpy)
+
+    await getFlavorCharts({ onSkippedRows: () => {} })
+
+    expect(fetchSpy).toHaveBeenCalledOnce()
+    expect(fetchSpy).toHaveBeenCalledWith(
+      'https://muro.sakenowa.com/sakenowa-data/api/flavor-charts',
+    )
+  })
+
+  it('throws SakenowaError on network failure', async () => {
+    stubFetch(async () => {
+      throw new TypeError('network down')
+    })
+
+    await expect(getFlavorCharts()).rejects.toThrow(SakenowaError)
+  })
+
+  it('throws SakenowaError on non-2xx response', async () => {
+    stubFetch(async () => new Response('', { status: 500, statusText: 'Internal Server Error' }))
+
+    await expect(getFlavorCharts()).rejects.toThrow(/500/)
+  })
+
+  it('throws SakenowaError on non-JSON body', async () => {
+    stubFetch(async () => new Response('<html>not json</html>', { status: 200 }))
+
+    await expect(getFlavorCharts()).rejects.toThrow(/non-JSON/)
+  })
+
+  it('skips malformed rows and reports them rather than throwing', async () => {
+    stubFetch(async () =>
+      okJson({
+        flavorCharts: [
+          sample,
+          { brandId: 3, f1: 1.5, f2: 0.5, f3: 0.5, f4: 0.5, f5: 0.5, f6: 0.5 }, // f1 out of range
+        ],
+      }),
+    )
+    const skipped: unknown[] = []
+
+    const charts = await getFlavorCharts({ onSkippedRows: (info) => skipped.push(info) })
+
+    expect(charts).toEqual([sample])
+    expect(skipped).toHaveLength(1)
+    expect(skipped[0]).toMatchObject({ endpoint: '/flavor-charts', skipped: 1, total: 2 })
+    expect((skipped[0] as { summary: string }).summary).toContain('[1.f1]')
+  })
+
+  it('throws SakenowaError when "flavorCharts" envelope is missing', async () => {
+    stubFetch(async () => okJson([sample]))
+
+    await expect(getFlavorCharts()).rejects.toThrow(/envelope failed schema validation/)
+  })
+
+  it('does not include rejected field values in the skip summary', async () => {
+    // Same forward-looking PII guard as the brands path — if a future
+    // Sakenowa drift surfaces sensitive content, the summary stays a
+    // path/code report, never the raw value.
+    const SENTINEL = 'CUSTOMER-EMAIL@example.com'
+    stubFetch(async () =>
+      okJson({
+        flavorCharts: [{ brandId: 'bogus-' + SENTINEL, f1: 0.5, f2: 0.5, f3: 0.5, f4: 0.5, f5: 0.5, f6: 0.5 }],
+      }),
+    )
+    const skipped: { summary?: string }[] = []
+
+    await getFlavorCharts({ onSkippedRows: (info) => skipped.push(info) })
+
+    expect(skipped[0].summary).not.toContain(SENTINEL)
   })
 })

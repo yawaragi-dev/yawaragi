@@ -2,17 +2,22 @@ import { describe, expect, it } from 'vitest'
 import {
   computeBreweryContentHash,
   computeContentHash,
+  computeFlavorChartContentHash,
   ingestBrands,
   ingestBreweries,
+  ingestFlavorCharts,
   sakenowaBrandToBrand,
   sakenowaBreweryToBrewery,
+  sakenowaFlavorChartToFlavorChart,
   type BreweryIngestionDeps,
+  type FlavorChartIngestionDeps,
   type IngestionDeps,
 } from './ingestion-pipeline'
 import type { Brand } from '../schemas/brand'
 import type { Brewery } from '../schemas/brewery'
-import type { SakenowaBrand, SakenowaBrewery } from './client'
-import type { BrandsDB, BreweriesDB } from './db'
+import type { FlavorChart } from '../schemas/flavor-chart'
+import type { SakenowaBrand, SakenowaBrewery, SakenowaFlavorChart } from './client'
+import type { BrandsDB, BreweriesDB, FlavorChartsDB } from './db'
 
 class FakeBrandsDB implements BrandsDB {
   rows = new Map<number, { brand: Brand; hash: string }>()
@@ -422,6 +427,194 @@ describe('ingestBreweries', () => {
     const calls: Array<[number, number]> = []
     await ingestBreweries({
       client: makeBreweryClient([sBrewery({ id: 1 }), sBrewery({ id: 2 }), sBrewery({ id: 3 })]),
+      db,
+      onProgress: (current, total) => calls.push([current, total]),
+    })
+    expect(calls).toEqual([[3, 3]])
+  })
+})
+
+class FakeFlavorChartsDB implements FlavorChartsDB {
+  rows = new Map<number, { flavorChart: FlavorChart; hash: string }>()
+  upsertCalls = 0
+  batchCalls = 0
+  txOpened = 0
+  txCompleted = 0
+
+  async getExistingFlavorChartHashes(): Promise<Map<number, string>> {
+    return new Map(Array.from(this.rows.entries()).map(([id, v]) => [id, v.hash]))
+  }
+
+  async upsertFlavorChartsBatch(
+    rows: readonly { flavorChart: FlavorChart; contentHash: string }[],
+    onChunk?: (rowsThisChunk: number) => void,
+  ): Promise<void> {
+    if (rows.length === 0) return
+    this.batchCalls++
+    for (const { flavorChart, contentHash } of rows) {
+      this.upsertCalls++
+      this.rows.set(flavorChart.brandId, { flavorChart, hash: contentHash })
+    }
+    onChunk?.(rows.length)
+  }
+
+  async transaction<T>(fn: (tx: FlavorChartsDB) => Promise<T>): Promise<T> {
+    this.txOpened++
+    const result = await fn(this)
+    this.txCompleted++
+    return result
+  }
+}
+
+const makeFlavorChartClient = (
+  charts: SakenowaFlavorChart[] | Error,
+): FlavorChartIngestionDeps['client'] => ({
+  getFlavorCharts: async () => {
+    if (charts instanceof Error) throw charts
+    return charts
+  },
+})
+
+const sChart = (overrides: Partial<SakenowaFlavorChart> = {}): SakenowaFlavorChart => ({
+  brandId: 2,
+  f1: 0.27,
+  f2: 0.51,
+  f3: 0.31,
+  f4: 0.42,
+  f5: 0.46,
+  f6: 0.42,
+  ...overrides,
+})
+
+describe('sakenowaFlavorChartToFlavorChart', () => {
+  it('stamps source: "sakenowa" and preserves all six axes', () => {
+    expect(sakenowaFlavorChartToFlavorChart(sChart())).toEqual({
+      brandId: 2,
+      f1: 0.27,
+      f2: 0.51,
+      f3: 0.31,
+      f4: 0.42,
+      f5: 0.46,
+      f6: 0.42,
+      source: 'sakenowa',
+    })
+  })
+})
+
+describe('computeFlavorChartContentHash', () => {
+  const base: FlavorChart = {
+    brandId: 2,
+    f1: 0.27,
+    f2: 0.51,
+    f3: 0.31,
+    f4: 0.42,
+    f5: 0.46,
+    f6: 0.42,
+    source: 'sakenowa',
+  }
+
+  it('is deterministic across calls with identical input', () => {
+    expect(computeFlavorChartContentHash(base)).toBe(computeFlavorChartContentHash(base))
+  })
+
+  it('changes when any canonical field changes', () => {
+    const h0 = computeFlavorChartContentHash(base)
+    expect(computeFlavorChartContentHash({ ...base, f1: 0.28 })).not.toBe(h0)
+    expect(computeFlavorChartContentHash({ ...base, f6: 0.5 })).not.toBe(h0)
+    expect(computeFlavorChartContentHash({ ...base, brandId: 3 })).not.toBe(h0)
+    expect(computeFlavorChartContentHash({ ...base, source: 'manual_curation' })).not.toBe(h0)
+    expect(computeFlavorChartContentHash({ ...base, confidence: 0.5 })).not.toBe(h0)
+  })
+})
+
+describe('ingestFlavorCharts', () => {
+  it('on an empty existing DB, classifies every chart as "added"', async () => {
+    const db = new FakeFlavorChartsDB()
+    const summary = await ingestFlavorCharts({
+      client: makeFlavorChartClient([sChart({ brandId: 2 }), sChart({ brandId: 3 })]),
+      db,
+    })
+    expect(summary).toEqual({ added: 2, updated: 0, unchanged: 0, total: 2 })
+    expect(db.upsertCalls).toBe(2)
+    expect(db.rows.size).toBe(2)
+  })
+
+  it('is idempotent — second run on identical source data writes zero rows', async () => {
+    const db = new FakeFlavorChartsDB()
+    const charts = [sChart({ brandId: 2 }), sChart({ brandId: 3, f1: 0.5 })]
+    await ingestFlavorCharts({ client: makeFlavorChartClient(charts), db })
+    db.upsertCalls = 0
+
+    const summary = await ingestFlavorCharts({ client: makeFlavorChartClient(charts), db })
+
+    expect(summary).toEqual({ added: 0, updated: 0, unchanged: 2, total: 2 })
+    expect(db.upsertCalls).toBe(0)
+  })
+
+  it('classifies a Sakenowa-side axis mutation as "updated"', async () => {
+    const db = new FakeFlavorChartsDB()
+    await ingestFlavorCharts({ client: makeFlavorChartClient([sChart({ brandId: 2 })]), db })
+    db.upsertCalls = 0
+
+    const summary = await ingestFlavorCharts({
+      client: makeFlavorChartClient([sChart({ brandId: 2, f1: 0.8 })]),
+      db,
+    })
+
+    expect(summary).toEqual({ added: 0, updated: 1, unchanged: 0, total: 1 })
+    expect(db.upsertCalls).toBe(1)
+  })
+
+  it('propagates client errors without opening a transaction', async () => {
+    const db = new FakeFlavorChartsDB()
+    const failure = new Error('Sakenowa offline')
+
+    await expect(
+      ingestFlavorCharts({ client: makeFlavorChartClient(failure), db }),
+    ).rejects.toThrow('Sakenowa offline')
+
+    expect(db.txOpened).toBe(0)
+    expect(db.upsertCalls).toBe(0)
+  })
+
+  it('always runs inside a transaction', async () => {
+    const db = new FakeFlavorChartsDB()
+    await ingestFlavorCharts({ client: makeFlavorChartClient([sChart()]), db })
+    expect(db.txOpened).toBe(1)
+    expect(db.txCompleted).toBe(1)
+  })
+
+  it('wraps batch upsert errors with the count + PG detail', async () => {
+    class FailingDB extends FakeFlavorChartsDB {
+      override async upsertFlavorChartsBatch(): Promise<void> {
+        const err = new Error('insert or update violates foreign key') as Error & {
+          detail?: string
+          constraint?: string
+        }
+        err.detail = 'Key (brand_id)=(99999) is not present in table "brands".'
+        err.constraint = 'flavor_charts_brand_id_fkey'
+        throw err
+      }
+    }
+    const db = new FailingDB()
+
+    const promise = ingestFlavorCharts({
+      client: makeFlavorChartClient([sChart({ brandId: 99999 })]),
+      db,
+    })
+    await expect(promise).rejects.toThrow(/Failed to upsert 1 flavor_chart row/)
+    await expect(promise).rejects.toThrow(/constraint=flavor_charts_brand_id_fkey/)
+  })
+
+  it('invokes onProgress per write chunk with cumulative (rowsWritten, totalToWrite)', async () => {
+    const db = new FakeFlavorChartsDB()
+    const calls: Array<[number, number]> = []
+    await ingestFlavorCharts({
+      client: makeFlavorChartClient([
+        sChart({ brandId: 1 }),
+        sChart({ brandId: 2 }),
+        sChart({ brandId: 3 }),
+      ]),
       db,
       onProgress: (current, total) => calls.push([current, total]),
     })
