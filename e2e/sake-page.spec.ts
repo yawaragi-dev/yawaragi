@@ -1,4 +1,5 @@
 // E2E coverage for /[locale]/sake/[brandId].
+import { BASE_URL } from './_base-url'
 //
 // Two scenarios:
 //
@@ -21,7 +22,7 @@ import { expect, test } from '@playwright/test'
 const AGE_GATE_COOKIE = {
   name: 'yawaragi_age_gate',
   value: JSON.stringify({ v: 1, ts: Date.now() }),
-  url: 'http://localhost:3000',
+  url: BASE_URL,
 }
 
 const SEED_BRAND_ID = Number.parseInt(process.env.E2E_SEED_BRAND_ID ?? '1', 10)

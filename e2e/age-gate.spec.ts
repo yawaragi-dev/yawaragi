@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { BASE_URL } from './_base-url'
 
 const GATE_COPY_EN = 'Are you 18 or older?'
 const GATE_COPY_DE = 'Bist du 18 oder älter?'
@@ -148,7 +149,7 @@ test.describe('age gate enforcement', () => {
       {
         name: 'yawaragi_age_gate',
         value: JSON.stringify({ v: 1, ts: Date.now() }),
-        url: 'http://localhost:3000',
+        url: BASE_URL,
       },
     ])
     const page = await context.newPage()

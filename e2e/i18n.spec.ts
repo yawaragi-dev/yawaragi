@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { BASE_URL } from './_base-url'
 
 test.describe('locale routing', () => {
   test('Accept-Language: de redirects / to /de/', async ({ browser }) => {
@@ -27,7 +28,7 @@ test.describe('locale routing', () => {
       {
         name: 'NEXT_LOCALE',
         value: 'de',
-        url: 'http://localhost:3000',
+        url: BASE_URL,
       },
     ])
     const page = await context.newPage()
@@ -72,7 +73,7 @@ test.describe('locale switcher', () => {
       {
         name: 'yawaragi_age_gate',
         value: JSON.stringify({ v: 1, ts: Date.now() }),
-        url: 'http://localhost:3000',
+        url: BASE_URL,
       },
     ])
     const page = await context.newPage()

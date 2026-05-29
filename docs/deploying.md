@@ -93,36 +93,41 @@ For each vendor, the practical rule of thumb:
 
 When you cross any of these thresholds, **the Pre-Go-Live checklist (§7.7) is the forcing function** — that section now lists each vendor and the tier audit as a hard gate before any production-grade launch.
 
-## 6. Deploy smoke check (`.github/workflows/vercel-smoke.yml`)
+## 6. Manual deploy + smoke + E2E (`.github/workflows/vercel-deploy.yml`)
 
-A `pull_request` + `push: main` workflow polls GitHub's deployments API until Vercel reports a successful preview/production deploy for the current SHA, then curls a handful of key paths (`/`, `/en`, `/de`, `/en/sake/1`, an unknown-path 404) against that URL, asserting **none return 5xx**. 200, 3xx, 401, and 404 are all acceptable; 500/502/503/504 fail the check.
+Auto-preview deploys are turned **off** in this Vercel project, so PR branches don't deploy automatically — to test changes on real infra you trigger this workflow manually. It runs three jobs end-to-end:
 
-Catches the failure mode that builds successfully but crashes at runtime — exactly the `/sake/[id]` → 500 we hit when DATABASE_URL was missing on the first Vercel preview.
+1. **Deploy** — installs the Vercel CLI, pulls the env config, builds locally (`vercel build`), and deploys the prebuilt artefact (`vercel deploy --prebuilt`). Captures the resulting URL.
+2. **Smoke** — curls `/`, `/en`, `/de`, `/en/sake/1`, an unknown-path 404 against the deployed URL with the SSO bypass header. Fails if any path returns 5xx.
+3. **Playwright** — runs the e2e suite with `PLAYWRIGHT_BASE_URL` set to the deployed URL. `playwright.config.ts` skips its local `pnpm dev` webServer when this env var is set and injects the bypass header on every request.
 
-### One-time setup
+### Triggering
 
-1. **Generate a bypass secret** so the smoke can skip Vercel's SSO on previews.
-   - Vercel project → **Settings → Deployment Protection** → look for **"Protection Bypass for Automation"** (or the modern label).
-   - Click **"Add Secret"** (or **"Create Token"**), name it something like `github-actions-smoke`.
-   - Copy the value once it's shown — Vercel won't show it again.
-2. **Add the secret to GitHub.**
-   - GitHub repo → **Settings → Secrets and variables → Actions → New repository secret**.
-   - Name: `VERCEL_BYPASS_TOKEN`. Value: the secret you just copied.
-3. **Verify.** Push a commit or open a PR. Actions tab → "Vercel deploy smoke" → the job's first step polls for up to 10 minutes for Vercel's deploy to be `success`, then runs the smoke. One `✓` line per smoked path on success; clear `✘` line with the offending status on failure.
+Actions tab → **Vercel deploy + smoke + e2e** → **Run workflow**. Three optional inputs:
 
-### Why polling instead of `deployment_status`
+| Input | Default | What it does |
+|---|---|---|
+| `ref` | the trigger ref | Branch or SHA to deploy. Lets you point at any commit, not just the branch you're on. |
+| `url` | empty | Skip the deploy job and run smoke + e2e against an already-deployed URL. Useful for re-running after a flake. |
+| `environment` | `preview` | `preview` or `production`. Production uses `--prod` flags. |
 
-GitHub's `deployment_status` trigger only fires from the workflow file on the **default branch**, so a PR that introduces or modifies the smoke workflow can't smoke-check its own preview. Polling on `pull_request` events sidesteps that — the workflow file from the PR branch runs, polls the deployments API, and smokes whatever URL Vercel registers. Costs ~30-60s of polling per run (Vercel's typical deploy time) but works on the very PR that adds the workflow.
+### One-time setup (four secrets)
+
+| Secret | Source | Used for |
+|---|---|---|
+| `VERCEL_TOKEN` | Vercel → **Account Settings → Tokens → Create** | Authenticating the CLI |
+| `VERCEL_ORG_ID` | `cat .vercel/project.json` after a one-time `vercel link` locally — the `orgId` field | Identifying your Vercel team / personal account |
+| `VERCEL_PROJECT_ID` | same file, `projectId` field | Identifying the Yawaragi project |
+| `VERCEL_BYPASS_TOKEN` | Vercel → Project → **Settings → Deployment Protection → Protection Bypass for Automation** → generate | Skipping the SSO gate so the smoke + e2e can actually hit the preview |
+
+All four go in GitHub: repo → **Settings → Secrets and variables → Actions → New repository secret**. The workflow fails loudly at its first step with a clear list of which are missing.
 
 ### Limitations
 
-- Vercel's SSO bypass is per-project; rotating the secret in Vercel without updating the GitHub secret breaks the smoke until both sides match.
-- The smoke is HTTP-only. It catches runtime crashes and missing-env-var failures, not visual regressions, perf regressions, or a11y issues. Those are tracked separately under PRE-GO-LIVE §7.4 (Lighthouse pass) and remain manual until a follow-up.
-- If Vercel skips the build (paths-ignored config, ignored-build-step), no deployment exists → the smoke times out and fails. Treat this as a config issue, not a code issue.
-
-### Manual re-run
-
-Actions tab → **Vercel deploy smoke** → **Run workflow** → paste a deployment URL → **Run**. Useful for debugging the smoke script itself, or for re-running after fixing a flaky 5xx.
+- The deploy step uses `vercel pull --environment=preview` (or `production`) to fetch env vars. **Whatever you've configured in Vercel for that environment is what the deploy sees.** Missing env vars in Vercel = missing env vars in the deploy.
+- Concurrency is keyed on `ref + environment` with `cancel-in-progress: false` — duplicate manual runs queue rather than cancel. Avoid kicking the same workflow 5 times in a row.
+- The E2E suite excludes the `shibuya` tests (game-specific; covered separately in `game-ci.yml`).
+- Vercel's SSO bypass is per-project; rotating the secret in Vercel without updating the GitHub secret breaks the smoke + e2e until both sides match.
 
 ## 7. Promotion-to-production checklist
 

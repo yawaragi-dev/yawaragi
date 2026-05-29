@@ -1,9 +1,10 @@
 import { expect, test, type BrowserContext } from '@playwright/test'
+import { BASE_URL } from './_base-url'
 
 const AGE_GATE_COOKIE = {
   name: 'yawaragi_age_gate',
   value: JSON.stringify({ v: 1, ts: Date.now() }),
-  url: 'http://localhost:3000',
+  url: BASE_URL,
 }
 
 async function acceptAgeGateCookie(context: BrowserContext) {
@@ -156,7 +157,7 @@ test.describe('cookie banner — decisions', () => {
           marketing: true,
           version: 0,
         }),
-        url: 'http://localhost:3000',
+        url: BASE_URL,
       },
     ])
     const page = await context.newPage()
