@@ -98,4 +98,45 @@ describe('database integration smoke', () => {
     expect(rows[0].name_kanji).toBe('麗人')
     await pool.query('DELETE FROM brands WHERE brand_id = 1')
   })
+
+  // Regression: testcontainer bootstrap (tests/integration/bootstrap.sql) must
+  // mirror Supabase's default schema-level grants. Without USAGE on public,
+  // anon couldn't resolve `public.brands` at all even with per-table SELECT.
+  // Without ALTER DEFAULT PRIVILEGES, a future migration that forgets a
+  // per-table grant would pass tests but fail in production. See #68.
+  it('anon role has USAGE on public schema (Supabase parity)', async () => {
+    const { rows } = await pool.query<{ has_usage: boolean }>(
+      "SELECT has_schema_privilege('anon', 'public', 'USAGE') AS has_usage",
+    )
+    expect(rows[0].has_usage).toBe(true)
+  })
+
+  it('authenticated role has USAGE on public schema (Supabase parity)', async () => {
+    const { rows } = await pool.query<{ has_usage: boolean }>(
+      "SELECT has_schema_privilege('authenticated', 'public', 'USAGE') AS has_usage",
+    )
+    expect(rows[0].has_usage).toBe(true)
+  })
+
+  it('default privileges grant anon SELECT on newly-created public tables', async () => {
+    // Create an ephemeral table as the migration runner (CURRENT_USER) and
+    // verify the ALTER DEFAULT PRIVILEGES from bootstrap.sql applies — anon
+    // gets SELECT without an explicit per-table GRANT.
+    await pool.query('CREATE TABLE bootstrap_default_grants_probe (id INTEGER)')
+    try {
+      const { rows } = await pool.query<{ has_select: boolean }>(
+        "SELECT has_table_privilege('anon', 'public.bootstrap_default_grants_probe', 'SELECT') AS has_select",
+      )
+      expect(rows[0].has_select).toBe(true)
+    } finally {
+      await pool.query('DROP TABLE bootstrap_default_grants_probe')
+    }
+  })
+
+  it('service_role bypasses RLS (BYPASSRLS attribute)', async () => {
+    const { rows } = await pool.query<{ rolbypassrls: boolean }>(
+      "SELECT rolbypassrls FROM pg_roles WHERE rolname = 'service_role'",
+    )
+    expect(rows[0].rolbypassrls).toBe(true)
+  })
 })
