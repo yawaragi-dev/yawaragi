@@ -30,11 +30,13 @@ Naming history: previously "Kanpai"; renamed to avoid collision with KANPAI Lond
 
 ## Commands
 - `pnpm dev` — Next dev server
-- `pnpm test` — Vitest, single run
+- `pnpm test` — Vitest, single run (unit; integration tests excluded)
 - `pnpm test:watch` — Vitest watch
+- `pnpm test:integration` — Vitest integration suite via testcontainers + Postgres. **Requires Docker** on the local machine. CI runs it automatically; locals without Docker rely on CI.
 - `pnpm test:e2e` — Playwright
 - `pnpm lint` — ESLint
 - `pnpm typecheck` — tsc --noEmit
+- `pnpm migrate` — apply pending SQL files in `supabase/migrations/` to `DATABASE_URL`
 - `pnpm ingest` — refresh Sakenowa data into Supabase
 - `pnpm eval` — run eval golden sets
 

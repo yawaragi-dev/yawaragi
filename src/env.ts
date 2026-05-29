@@ -8,6 +8,11 @@ import { z } from 'zod'
  */
 const Env = z.object({
   ANTHROPIC_API_KEY: z.string().optional(),
+  // Postgres connection string for the Supabase project (Project → Settings →
+  // Database → Connection string). Used by the pg.Pool in server-client.ts.
+  // Stays optional in the schema so the app boots without it; the pool
+  // constructor throws at first use with a clear message.
+  DATABASE_URL: z.string().url().optional(),
   NEXT_PUBLIC_SUPABASE_URL: z.string().url().optional(),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
