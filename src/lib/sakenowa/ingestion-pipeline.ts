@@ -36,10 +36,11 @@ export interface IngestionDeps {
   client: { getBrands: () => Promise<SakenowaBrand[]> }
   db: BrandsDB
   /**
-   * Optional. Called after each row is classified. `current` is
-   * 1-indexed; `current === total` on the final call. Per-row writes
-   * are batched at the end of classification, so progress here tracks
-   * the classification loop, not individual DB writes.
+   * Optional. Called after each *batch write* completes. `current` is
+   * the cumulative row count written so far; `total` is the row count
+   * the pipeline plans to write (excluding unchanged rows). On an
+   * idempotent re-run with nothing changed, this never fires — there's
+   * nothing slow happening for the bar to track.
    */
   onProgress?: ProgressCallback
 }
@@ -100,12 +101,14 @@ export async function ingestBrands(deps: IngestionDeps): Promise<RunSummary> {
         toUpsert.push({ brand, contentHash })
         updated++
       }
-
-      deps.onProgress?.(i + 1, total)
     }
 
+    let written = 0
     try {
-      await tx.upsertBrandsBatch(toUpsert)
+      await tx.upsertBrandsBatch(toUpsert, (rowsThisChunk) => {
+        written += rowsThisChunk
+        deps.onProgress?.(written, toUpsert.length)
+      })
     } catch (err) {
       // The batch failed; we don't know exactly which row triggered it,
       // but PG's error.detail typically carries the offending value
@@ -170,12 +173,14 @@ export async function ingestBreweries(deps: BreweryIngestionDeps): Promise<RunSu
         toUpsert.push({ brewery, contentHash })
         updated++
       }
-
-      deps.onProgress?.(i + 1, total)
     }
 
+    let written = 0
     try {
-      await tx.upsertBreweriesBatch(toUpsert)
+      await tx.upsertBreweriesBatch(toUpsert, (rowsThisChunk) => {
+        written += rowsThisChunk
+        deps.onProgress?.(written, toUpsert.length)
+      })
     } catch (err) {
       throw new Error(
         `Failed to upsert ${toUpsert.length} brewery row(s) (added=${added}, updated=${updated}): ${formatPgError(err)}`,

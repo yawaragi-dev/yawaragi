@@ -62,29 +62,29 @@ async function main(): Promise<number> {
   try {
     const startedAt = Date.now()
 
-    process.stdout.write('Fetching breweries from Sakenowa…\n')
+    const brewerySplit = Date.now()
+    process.stdout.write('Breweries: fetching → classifying → writing…\n')
     const brewerySummary = await ingestBreweries({
       client: { getBreweries },
       db: makePgBreweriesDB(pool),
-      onProgress: makeBarRenderer('breweries'),
+      onProgress: makeBarRenderer('  breweries write'),
     })
     console.log(
-      `✓ ingested ${brewerySummary.total} brewery/breweries — ` +
-        `added: ${brewerySummary.added}, updated: ${brewerySummary.updated}, unchanged: ${brewerySummary.unchanged}`,
+      `✓ breweries: ${brewerySummary.added} added, ${brewerySummary.updated} updated, ${brewerySummary.unchanged} unchanged (${brewerySummary.total} total) in ${Date.now() - brewerySplit}ms`,
     )
 
-    process.stdout.write('Fetching brands from Sakenowa…\n')
+    const brandSplit = Date.now()
+    process.stdout.write('Brands: fetching → classifying → writing…\n')
     const brandSummary = await ingestBrands({
       client: { getBrands },
       db: makePgBrandsDB(pool),
-      onProgress: makeBarRenderer('brands'),
+      onProgress: makeBarRenderer('  brands write'),
     })
-    const elapsedMs = Date.now() - startedAt
     console.log(
-      `✓ ingested ${brandSummary.total} brand(s) — ` +
-        `added: ${brandSummary.added}, updated: ${brandSummary.updated}, unchanged: ${brandSummary.unchanged}`,
+      `✓ brands: ${brandSummary.added} added, ${brandSummary.updated} updated, ${brandSummary.unchanged} unchanged (${brandSummary.total} total) in ${Date.now() - brandSplit}ms`,
     )
-    console.log(`✓ done in ${elapsedMs}ms`)
+
+    console.log(`✓ done in ${Date.now() - startedAt}ms`)
     return 0
   } catch (err) {
     process.stdout.write('\n')

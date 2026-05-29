@@ -24,9 +24,16 @@ export interface BrandUpsert {
   contentHash: string
 }
 
+/**
+ * Called after each PG-side chunk write completes. Argument is the
+ * number of rows persisted by that one statement (i.e. chunk size).
+ * Callers compose this into cumulative progress.
+ */
+export type BatchProgress = (rowsThisChunk: number) => void
+
 export interface BrandsDB {
   getExistingBrandHashes(): Promise<Map<number, string>>
-  upsertBrandsBatch(rows: readonly BrandUpsert[]): Promise<void>
+  upsertBrandsBatch(rows: readonly BrandUpsert[], onChunk?: BatchProgress): Promise<void>
   transaction<T>(fn: (tx: BrandsDB) => Promise<T>): Promise<T>
 }
 
@@ -47,7 +54,10 @@ class PgBrandsDB implements BrandsDB {
     return new Map(rows.map((r) => [r.brand_id, r.content_hash]))
   }
 
-  async upsertBrandsBatch(rows: readonly BrandUpsert[]): Promise<void> {
+  async upsertBrandsBatch(
+    rows: readonly BrandUpsert[],
+    onChunk?: BatchProgress,
+  ): Promise<void> {
     if (rows.length === 0) return
     for (let start = 0; start < rows.length; start += BATCH_SIZE) {
       const chunk = rows.slice(start, start + BATCH_SIZE)
@@ -83,6 +93,7 @@ class PgBrandsDB implements BrandsDB {
            updated_at   = NOW()`,
         values,
       )
+      onChunk?.(chunk.length)
     }
   }
 
@@ -120,7 +131,7 @@ export interface BreweryUpsert {
 
 export interface BreweriesDB {
   getExistingBreweryHashes(): Promise<Map<number, string>>
-  upsertBreweriesBatch(rows: readonly BreweryUpsert[]): Promise<void>
+  upsertBreweriesBatch(rows: readonly BreweryUpsert[], onChunk?: BatchProgress): Promise<void>
   transaction<T>(fn: (tx: BreweriesDB) => Promise<T>): Promise<T>
 }
 
@@ -135,7 +146,10 @@ class PgBreweriesDB implements BreweriesDB {
     return new Map(rows.map((r) => [r.brewery_id, r.content_hash]))
   }
 
-  async upsertBreweriesBatch(rows: readonly BreweryUpsert[]): Promise<void> {
+  async upsertBreweriesBatch(
+    rows: readonly BreweryUpsert[],
+    onChunk?: BatchProgress,
+  ): Promise<void> {
     if (rows.length === 0) return
     for (let start = 0; start < rows.length; start += BATCH_SIZE) {
       const chunk = rows.slice(start, start + BATCH_SIZE)
@@ -170,6 +184,7 @@ class PgBreweriesDB implements BreweriesDB {
            updated_at   = NOW()`,
         values,
       )
+      onChunk?.(chunk.length)
     }
   }
 

@@ -30,6 +30,7 @@ class FakeBrandsDB implements BrandsDB {
 
   async upsertBrandsBatch(
     rows: readonly { brand: Brand; contentHash: string }[],
+    onChunk?: (rowsThisChunk: number) => void,
   ): Promise<void> {
     if (rows.length === 0) return
     this.batchCalls++
@@ -37,6 +38,7 @@ class FakeBrandsDB implements BrandsDB {
       this.upsertCalls++
       this.rows.set(brand.brandId, { brand, hash: contentHash })
     }
+    onChunk?.(rows.length)
   }
 
   async transaction<T>(fn: (tx: BrandsDB) => Promise<T>): Promise<T> {
@@ -209,7 +211,7 @@ describe('ingestBrands', () => {
     await expect(promise).rejects.toThrow(/Key \(brewery_id\)=\(1147\)/)
   })
 
-  it('invokes onProgress with (current, total) for every row, 1-indexed', async () => {
+  it('invokes onProgress per write chunk with cumulative (rowsWritten, totalToWrite)', async () => {
     const db = new FakeBrandsDB()
     const calls: Array<[number, number]> = []
     await ingestBrands({
@@ -217,11 +219,24 @@ describe('ingestBrands', () => {
       db,
       onProgress: (current, total) => calls.push([current, total]),
     })
-    expect(calls).toEqual([
-      [1, 3],
-      [2, 3],
-      [3, 3],
-    ])
+    // Fake writes the whole batch in one chunk → one progress tick at the end.
+    expect(calls).toEqual([[3, 3]])
+  })
+
+  it('does not invoke onProgress on a fully-idempotent re-run (nothing to write)', async () => {
+    const db = new FakeBrandsDB()
+    const brands = [sBrand({ id: 1 }), sBrand({ id: 2 })]
+    await ingestBrands({ client: makeClient(brands), db })
+    const calls: Array<[number, number]> = []
+
+    const summary = await ingestBrands({
+      client: makeClient(brands),
+      db,
+      onProgress: (current, total) => calls.push([current, total]),
+    })
+
+    expect(summary).toMatchObject({ unchanged: 2 })
+    expect(calls).toEqual([])
   })
 })
 
@@ -238,6 +253,7 @@ class FakeBreweriesDB implements BreweriesDB {
 
   async upsertBreweriesBatch(
     rows: readonly { brewery: Brewery; contentHash: string }[],
+    onChunk?: (rowsThisChunk: number) => void,
   ): Promise<void> {
     if (rows.length === 0) return
     this.batchCalls++
@@ -245,6 +261,7 @@ class FakeBreweriesDB implements BreweriesDB {
       this.upsertCalls++
       this.rows.set(brewery.breweryId, { brewery, hash: contentHash })
     }
+    onChunk?.(rows.length)
   }
 
   async transaction<T>(fn: (tx: BreweriesDB) => Promise<T>): Promise<T> {
@@ -400,7 +417,7 @@ describe('ingestBreweries', () => {
     await expect(promise).rejects.toThrow(/constraint=breweries_name_check/)
   })
 
-  it('invokes onProgress with (current, total) for every row, 1-indexed', async () => {
+  it('invokes onProgress per write chunk with cumulative (rowsWritten, totalToWrite)', async () => {
     const db = new FakeBreweriesDB()
     const calls: Array<[number, number]> = []
     await ingestBreweries({
@@ -408,10 +425,6 @@ describe('ingestBreweries', () => {
       db,
       onProgress: (current, total) => calls.push([current, total]),
     })
-    expect(calls).toEqual([
-      [1, 3],
-      [2, 3],
-      [3, 3],
-    ])
+    expect(calls).toEqual([[3, 3]])
   })
 })
