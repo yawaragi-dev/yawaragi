@@ -60,6 +60,22 @@
     "poweredBy": "Bereitgestellt mit Daten von Sakenowa",
     "linkLabel": "Sakenowa besuchen"
   },
+  "provenance": {
+    "badge": {
+      "llmExtracted": {
+        "label": "KI-erkannt",
+        "tooltip": "Dieser Wert wurde von einem KI-Modell aus einem Bild oder Dokument abgelesen — eher ein Ausgangspunkt als eine geprüfte Angabe."
+      },
+      "llmInferred": {
+        "label": "KI-abgeleitet",
+        "tooltip": "Ein KI-Modell hat über Referenzdaten geschlossen, um diesen Wert zu bilden. Die Grunddaten sind belastbar; die Interpretation nicht."
+      },
+      "crossBeverageMap": {
+        "label": "Getränke-Bezug",
+        "tooltip": "Aus einer Nicht-Sake-Quelle (Whisky, Wein, Bier) mit einer handgepflegten Näherung übertragen. Westliche Begriffe entsprechen nicht exakt einer Sake-Eigenschaft."
+      }
+    }
+  },
   "flavorAxis": {
     "f1": {
       "label": "duftig / blumig",

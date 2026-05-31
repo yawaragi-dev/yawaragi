@@ -10,15 +10,17 @@ import {
   lookupFlavorChart,
 } from '@/lib/sakenowa/lookup'
 import { FlavorChartView } from '@/components/sake/flavor-chart'
+import { ProvenanceBadge } from '@/components/sake/provenance-badge'
 import { SakenowaAttribution } from '@/components/sake/sakenowa-attribution'
 
 /**
  * Phase 2's smoke-test surface. Renders a single sake brand from the
  * Postgres mirror. The proxy rewrites `/de/sake/*` to coming-soon per
  * ADR-0008 (EN-first launch), so this page in practice only renders on
- * `/en/`. Slice 6 (#49) adds the 6-axis FlavorChart. Future slices add
- * SakenowaAttribution (slice 7, #50 — above-fold banner) and slice 8's
- * ProvenanceBadge (#51).
+ * `/en/`. Slice 6 (#49) adds the 6-axis FlavorChart, slice 7 (#50) the
+ * above-fold SakenowaAttribution, slice 8 (#51) the ProvenanceBadge
+ * (renders nothing for Phase 2's sakenowa-sourced data; wired up so
+ * Phase 3+ LLM-derived attachments slot in without page churn).
  */
 interface PageProps {
   params: Promise<{ locale: string; brandId: string }>
@@ -90,13 +92,20 @@ export default async function SakeBrandPage({ params }: PageProps) {
       data-testid="sake-brand-page"
     >
       <SakenowaAttribution placement="above-fold" />
-      <h1
-        className="text-4xl font-semibold leading-tight tracking-tight"
-        lang="ja"
-        data-testid="brand-name-kanji"
-      >
-        {brand.nameKanji}
-      </h1>
+      <div className="flex flex-wrap items-baseline gap-3">
+        <h1
+          className="text-4xl font-semibold leading-tight tracking-tight"
+          lang="ja"
+          data-testid="brand-name-kanji"
+        >
+          {brand.nameKanji}
+        </h1>
+        {/* Phase 2: brand.source is always 'sakenowa', so the badge
+            renders nothing. The import is intentional — Phase 3+ data
+            attached to the brand (LLM tasting notes, cross-beverage
+            mappings) will flow through this same attachment point. */}
+        <ProvenanceBadge source={brand.source} confidence={brand.confidence} />
+      </div>
       {showBrandRomaji && (
         <p
           className="text-xl text-zinc-700 dark:text-zinc-300"

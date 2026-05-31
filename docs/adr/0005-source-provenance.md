@@ -12,4 +12,9 @@ We chose this rather than the more common approach (display LLM output undisting
 - Phase 5 (taste profile) records which rating event came from which source.
 - A `/dev/provenance` page shows the share of displayed facts in the last 7 days by source, as an internal audit and an external trust signal.
 
-The cross-beverage map (`source: "cross_beverage_map"`) is the only deterministic-but-heuristic source in the taxonomy. It always renders with `<HeuristicDisclaimer />` rather than `<ProvenanceBadge />` because the failure mode is "the mapping is wrong" rather than "the LLM hallucinated", and the disclaimer copy reflects that.
+The cross-beverage map (`source: "cross_beverage_map"`) is the only deterministic-but-heuristic source in the taxonomy. It renders with **both** `<ProvenanceBadge />` and `<HeuristicDisclaimer />` — the two components serve different purposes and coexist:
+
+- The badge identifies the **provenance kind** so a glance tells the user "this didn't come from Sakenowa". `shouldRenderBadge('cross_beverage_map')` returns `true` for that reason (see [`src/lib/provenance/policy.ts`](../../src/lib/provenance/policy.ts) shipped in slice 8 / #51).
+- The disclaimer carries the **failure-mode caveat** ("Cross-beverage mappings are approximations. Western descriptors like 'smoky' or 'tannic' have no direct sake equivalent.") because the failure mode is "the mapping is wrong" rather than "the LLM hallucinated", and the badge alone doesn't convey that.
+
+Previous wording of this paragraph said "renders with `<HeuristicDisclaimer />` rather than `<ProvenanceBadge />`" — that was the original intent before slice 8 (#51) committed to badging the kind separately from the disclaimer copy. Updated 2026-05-31.
