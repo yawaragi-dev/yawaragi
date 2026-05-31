@@ -23,6 +23,7 @@
     "test:integration": "vitest run --config vitest.integration.config.mts",
     "test:e2e": "playwright test",
     "i18n:audit": "tsx scripts/audit-i18n-promotional.ts",
+    "progress": "tsx scripts/progress-dashboard.ts",
     "anthropic-files:audit": "tsx scripts/audit-anthropic-files-api.ts",
     "migrate": "tsx --env-file=.env.local scripts/migrate.ts",
     "db:reset": "tsx --env-file=.env.local scripts/reset-db.ts",

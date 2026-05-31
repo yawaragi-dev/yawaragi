@@ -1,0 +1,68 @@
+name: Refresh milestone progress
+
+# Regenerates the README progress block + docs/PROGRESS.md after every
+# merge to main. Without this the dashboard goes stale the moment a PR
+# lands, breaking the "5-second glance status" promise of the surface.
+#
+# Loop guard: the workflow's own commit message includes "[skip ci]",
+# which GitHub natively interprets as "don't trigger workflows for
+# this commit". The bot user is also distinct (github-actions[bot]),
+# so a future workflow that ignores the marker can still detect-and-
+# skip via committer identity.
+
+on:
+  push:
+    branches: [main]
+
+# Need write to push the regenerated dashboard back to main.
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-progress-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  NEXT_TELEMETRY_DISABLED: 1
+
+jobs:
+  refresh:
+    name: Regenerate dashboard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # GITHUB_TOKEN already has contents:write via the permissions
+          # block above. fetch-depth: 0 so the bot can push back without
+          # a shallow-history rejection.
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # pnpm progress shells out to `gh` for issue + PR JSON. GH_TOKEN
+      # is what gh reads to auth — GITHUB_TOKEN is sufficient for
+      # read-only issue + PR list scopes on the same repo.
+      - name: Refresh dashboard
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: pnpm progress
+
+      - name: Commit + push if changed
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          if [[ -z "$(git status --porcelain README.md docs/PROGRESS.md)" ]]; then
+            echo 'no dashboard changes — skipping commit'
+            exit 0
+          fi
+          git add README.md docs/PROGRESS.md
+          git commit -m 'chore(dashboard): refresh milestone progress [skip ci]'
+          git push
