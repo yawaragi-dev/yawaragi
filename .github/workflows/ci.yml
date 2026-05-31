@@ -22,6 +22,13 @@ env:
   # Per ADR-0009 (data minimisation): we don't share build-time telemetry
   # with Vercel without a DPA. See also `.env.example`.
   NEXT_TELEMETRY_DISABLED: 1
+  # src/env.ts validates CRON_SECRET (z.string().min(16)) at module load.
+  # CI's Playwright webServer otherwise crashes the Next.js dev server on
+  # the first request because the env shape fails to parse. This dummy is
+  # CI-scoped only; rotation in production is handled via the Vercel env
+  # var per slice 10 (#54). The value must be ≥ 16 chars to satisfy the
+  # schema.
+  CRON_SECRET: ci-only-dummy-32-char-shared-secret
 
 jobs:
   verify:

@@ -20,7 +20,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from '@testcontainers/postgresql'
 import { Pool } from 'pg'
-import { runMigrations } from '../../scripts/migrate'
+import { runMigrations } from '~/scripts/migrate'
 
 const BOOTSTRAP_SQL_PATH = join(dirname(fileURLToPath(import.meta.url)), 'bootstrap.sql')
 

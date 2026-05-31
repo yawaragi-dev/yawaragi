@@ -1,8 +1,15 @@
+import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
   resolve: {
     tsconfigPaths: true,
+    alias: {
+      // Mirror the unit-suite stub so integration tests can import
+      // server-only modules (e.g. lookup.ts) without Vite's
+      // import-analysis tripping over the missing transitive.
+      'server-only': fileURLToPath(new URL('./tests/stubs/server-only.ts', import.meta.url)),
+    },
   },
   test: {
     // Only co-located *.integration.test.ts files; the main vitest.config.ts

@@ -1,6 +1,6 @@
 import 'server-only'
 import { Pool } from 'pg'
-import { env } from '../../env'
+import { env } from '@/env'
 
 /**
  * Phase 2 deviates from the PRD's literal "supabase-js client" wording: this slice

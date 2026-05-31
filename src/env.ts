@@ -28,6 +28,14 @@ const Env = z.object({
   LANGFUSE_PUBLIC_KEY: empty(z.string().optional()),
   LANGFUSE_SECRET_KEY: empty(z.string().optional()),
   LANGFUSE_HOST: empty(z.string().url().optional()),
-  CRON_SECRET: empty(z.string().min(16).optional()),
+  // Shared secret for the POST /api/cron/ingest route (#54). Required
+  // because the route is the only auth gate — a missing secret would
+  // either crash the route at first request or, worse, fall through to
+  // an open endpoint. `min(16)` is the entropy floor for a shared
+  // secret used as `Bearer <secret>`: 16 random URL-safe chars give
+  // ~95 bits of entropy, well past brute-force range for a route that
+  // legitimately fires once an hour. Rotate by changing the env var
+  // (Vercel / hosting platform) — no code change required (US #32).
+  CRON_SECRET: empty(z.string().min(16)),
 })
 export const env = Env.parse(process.env)
