@@ -6,6 +6,20 @@ A sake companion. Three flagship surfaces: **label scan**, **chat recommender**,
 
 **Live:** <https://yawaragi.dev> — English preview is live. German edition is intentionally on a coming-soon page until the Impressum (§5 DDG) is in place; see [ADR-0008](./docs/adr/0008-en-first-launch-strategy.md).
 
+<!-- progress:start -->
+
+## Milestone progress
+
+_Snapshot generated 2026-05-31 from GitHub Issues + merged PRs. Regenerate with `pnpm progress`. Detail: [docs/PROGRESS.md](./docs/PROGRESS.md)._
+
+| Milestone | Progress | Issues | ETA (median) |
+| --- | --- | --- | --- |
+| **M1 (Phase 0) — Compliance & i18n foundation** | `████████████████░░░░` 80% | 4 / 5 | 2026-06-02 |
+| **M2 (Phase 2) — Data foundation** | `██████████████░░░░░░` 68% | 8 / 12 | 2026-06-05 |
+| **M3 (Phases 3–5) — Flagship surfaces** | `░░░░░░░░░░░░░░░░░░░░` n/a | — / — | not scoped |
+
+<!-- progress:end -->
+
 > *Yawaragi-mizu* (和らぎ水) is the water drunk between sake sips — a palate reset, not a replacement. This app accompanies and clarifies; it doesn't compete with the sake.
 
 Previously named "Kanpai"; renamed to avoid collision with [KANPAI London Craft Sake Brewery](https://kanpai.london/). Decision and rationale in [`docs/adr/0004-project-name-yawaragi.md`](./docs/adr/0004-project-name-yawaragi.md). Full naming research: [`docs/NAMING-RESEARCH.md`](./docs/NAMING-RESEARCH.md).
@@ -70,6 +84,7 @@ pnpm dev
 | `pnpm ingest`             | Refresh Sakenowa data into Supabase                      |
 | `pnpm verify`             | Full chain (lint + typecheck + test + integration + e2e + audits) — **needs Docker** |
 | `pnpm eval`               | Run eval golden sets                                     |
+| `pnpm progress`           | Refresh the milestone-progress dashboard (README block + `docs/PROGRESS.md`) |
 
 ## Project documentation
 
@@ -77,6 +92,7 @@ pnpm dev
 - [`CONTEXT.md`](./CONTEXT.md) — domain glossary; read before naming variables/types
 - [`docs/adr/`](./docs/adr) — architecture decision records
 - [`docs/PRE-GO-LIVE.md`](./docs/PRE-GO-LIVE.md) — hard gates before any public launch
+- [`docs/PROGRESS.md`](./docs/PROGRESS.md) — milestone-progress dashboard with ETAs, methodology, and what is NOT measured
 - [`docs/deploying.md`](./docs/deploying.md) — Vercel deployment, env vars, vendor DPAs, plan-tier audit
 - [`docs/NAMING-RESEARCH.md`](./docs/NAMING-RESEARCH.md) — naming decision rationale
 
