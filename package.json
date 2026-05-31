@@ -20,7 +20,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:integration": "vitest run --config vitest.integration.config.mts",
+    "test:integration": "tsx scripts/test-integration.ts",
     "test:e2e": "playwright test",
     "i18n:audit": "tsx scripts/audit-i18n-promotional.ts",
     "anthropic-files:audit": "tsx scripts/audit-anthropic-files-api.ts",
