@@ -44,6 +44,14 @@ Set these in **Vercel → Project Settings → Environment Variables** for the `
 
 `src/env.ts` declares most fields as `.optional()` (#17) so the app can boot without every integration wired. When a PR introduces an integration, that PR tightens its field(s) back to a required shape so a missing secret fails at import time. `CRON_SECRET` is the first such field to graduate (slice 10 / #54): required and `.min(16)`.
 
+### 3.1 Vercel Cron schedule for `POST /api/cron/ingest`
+
+The schedule lives in [`vercel.json`](../vercel.json) at the repo root: `0 4 * * *` UTC (daily 04:00). Sakenowa publishes monthly ranking snapshots and reference data drifts slowly; daily is plenty. Tighten the cadence if a use-case ever demands fresher data.
+
+Vercel Cron automatically attaches `Authorization: Bearer $CRON_SECRET` to scheduled calls — no extra wiring needed beyond setting the env var in the Vercel dashboard. The route's `authorizeCronRequest` validates that header constant-time.
+
+Vercel runs cron only on the **production** deployment, not on previews. Manual `curl` against a preview URL still works as long as `CRON_SECRET` is set in the Preview env scope. See [`src/app/api/cron/ingest/route.ts`](../src/app/api/cron/ingest/route.ts) for the auth contract.
+
 ## 4. GDPR and vendor obligations (per ADR-0009)
 
 Before serving any non-trivial traffic — especially any traffic that could include EU residents — sign the vendor DPAs. Don't skip this for a portfolio piece if the deployment URL is publicly shareable.
