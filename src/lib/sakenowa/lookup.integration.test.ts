@@ -15,6 +15,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { Pool } from 'pg'
 import {
+  listRankingFromPool,
   lookupBrandFromPool,
   lookupBreweryByBrandFromPool,
   lookupFlavorChartFromPool,
@@ -32,11 +33,14 @@ const FIXTURE_BRAND_IDS = [9001, 9002] as const
 const FIXTURE_BREWERY_IDS = [9501, 9502] as const
 
 async function cleanFixtures(): Promise<void> {
-  // flavor_charts cascades on brand delete (ON DELETE CASCADE), so the
-  // brands DELETE below cleans them too. Belt-and-braces explicit DELETE
-  // also covers any orphaned flavor_chart row a future test might create
-  // without a matching brand.
+  // FK direction: rankings + flavor_charts → brands → breweries. Delete
+  // children first. flavor_charts ON DELETE CASCADE makes the explicit
+  // DELETE belt-and-braces, but it also covers orphan rows that future
+  // tests might create without a matching brand.
   await pool.query('DELETE FROM flavor_charts WHERE brand_id = ANY($1::int[])', [
+    [...FIXTURE_BRAND_IDS],
+  ])
+  await pool.query('DELETE FROM rankings WHERE brand_id = ANY($1::int[])', [
     [...FIXTURE_BRAND_IDS],
   ])
   await pool.query('DELETE FROM brands WHERE brand_id = ANY($1::int[])', [[...FIXTURE_BRAND_IDS]])
@@ -242,5 +246,71 @@ describe('lookupFlavorChartFromPool', () => {
     await pool.query('DELETE FROM brands WHERE brand_id = $1', [9001])
 
     expect(await lookupFlavorChartFromPool(9001, pool)).toBeNull()
+  })
+})
+
+describe('listRankingFromPool', () => {
+  async function seedRankingFixture(): Promise<void> {
+    await seedBrewery({ breweryId: 9501 })
+    await seedBrewery({ breweryId: 9502 })
+    await pool.query(
+      `INSERT INTO brands (brand_id, name, name_kanji, brewery_id, source, content_hash)
+       VALUES ($1, 'Reijin', '麗人', 9501, 'sakenowa', 'h1'),
+              ($2, 'Other',  '別',  9502, 'sakenowa', 'h2')`,
+      [9001, 9002],
+    )
+    await pool.query(
+      `INSERT INTO rankings (kind, area_id, rank, brand_id, score, source)
+       VALUES
+         ('overall', NULL, 1, $1, 4.4, 'sakenowa'),
+         ('overall', NULL, 2, $2, 4.1, 'sakenowa'),
+         ('area',    20,   1, $1, 4.4, 'sakenowa'),
+         ('area',    20,   2, $2, 4.0, 'sakenowa')`,
+      [9001, 9002],
+    )
+  }
+
+  it('returns the top-N overall rows in rank order', async () => {
+    await seedRankingFixture()
+    const rows = await listRankingFromPool({ kind: 'overall', limit: 10 }, pool)
+    expect(rows.map((r) => r.rank)).toEqual([1, 2])
+    expect(rows[0]).toMatchObject({
+      kind: 'overall',
+      areaId: null,
+      brandId: 9001,
+      source: 'sakenowa',
+    })
+    expect(rows[0].score).toBeCloseTo(4.4)
+  })
+
+  it('honours limit', async () => {
+    await seedRankingFixture()
+    const rows = await listRankingFromPool({ kind: 'overall', limit: 1 }, pool)
+    expect(rows).toHaveLength(1)
+    expect(rows[0].rank).toBe(1)
+  })
+
+  it("returns the area-scoped rows when kind='area' and areaId set", async () => {
+    await seedRankingFixture()
+    const rows = await listRankingFromPool({ kind: 'area', limit: 10, areaId: 20 }, pool)
+    expect(rows).toHaveLength(2)
+    expect(rows.every((r) => r.kind === 'area' && r.areaId === 20)).toBe(true)
+  })
+
+  it("throws when kind='area' is requested without an areaId", async () => {
+    await expect(
+      listRankingFromPool({ kind: 'area', limit: 10 }, pool),
+    ).rejects.toThrow(/requires an areaId/)
+  })
+
+  it('returns [] when limit is 0 (avoids a needless query)', async () => {
+    const rows = await listRankingFromPool({ kind: 'overall', limit: 0 }, pool)
+    expect(rows).toEqual([])
+  })
+
+  it('returns [] for an areaId with no rankings rather than throwing', async () => {
+    await seedRankingFixture()
+    const rows = await listRankingFromPool({ kind: 'area', limit: 10, areaId: 99 }, pool)
+    expect(rows).toEqual([])
   })
 })

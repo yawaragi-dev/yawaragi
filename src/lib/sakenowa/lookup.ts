@@ -3,13 +3,16 @@ import type { Pool } from 'pg'
 import type { Brand } from '../schemas/brand'
 import type { Brewery } from '../schemas/brewery'
 import type { FlavorChart } from '../schemas/flavor-chart'
+import type { Ranking, RankingKind } from '../schemas/ranking'
 import {
   type BrandRow,
   type BreweryRow,
   type FlavorChartRow,
+  type RankingRow,
   rowToBrand,
   rowToBrewery,
   rowToFlavorChart,
+  rowToRanking,
 } from './db'
 import { getServerDbPool } from '../supabase/server-client'
 
@@ -73,4 +76,49 @@ export async function lookupFlavorChartFromPool(
 
 export async function lookupFlavorChart(brandId: number): Promise<FlavorChart | null> {
   return lookupFlavorChartFromPool(brandId, getServerDbPool())
+}
+
+// listRanking returns the top-N rows for a single ranking scope. For
+// kind='area' the caller must pass `areaId`; for kind='overall' the
+// scope is implicit (one global list per ADR-0002).
+export interface ListRankingArgs {
+  kind: RankingKind
+  limit: number
+  areaId?: number
+}
+
+const LIST_RANKING_OVERALL = `
+  SELECT kind, area_id, rank, brand_id, score, source, confidence
+  FROM rankings
+  WHERE kind = 'overall'
+  ORDER BY rank ASC
+  LIMIT $1
+`
+
+const LIST_RANKING_AREA = `
+  SELECT kind, area_id, rank, brand_id, score, source, confidence
+  FROM rankings
+  WHERE kind = 'area' AND area_id = $1
+  ORDER BY rank ASC
+  LIMIT $2
+`
+
+export async function listRankingFromPool(
+  args: ListRankingArgs,
+  pool: Pool,
+): Promise<Ranking[]> {
+  if (args.limit <= 0) return []
+  if (args.kind === 'overall') {
+    const { rows } = await pool.query<RankingRow>(LIST_RANKING_OVERALL, [args.limit])
+    return rows.map(rowToRanking)
+  }
+  if (args.areaId === undefined) {
+    throw new Error("listRanking: kind='area' requires an areaId")
+  }
+  const { rows } = await pool.query<RankingRow>(LIST_RANKING_AREA, [args.areaId, args.limit])
+  return rows.map(rowToRanking)
+}
+
+export async function listRanking(args: ListRankingArgs): Promise<Ranking[]> {
+  return listRankingFromPool(args, getServerDbPool())
 }
