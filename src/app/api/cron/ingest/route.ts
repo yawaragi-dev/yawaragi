@@ -1,6 +1,6 @@
 import 'server-only'
 import { Pool } from 'pg'
-import { env } from '../../../../env'
+import { env } from '@/env'
 import {
   getAreas,
   getBrands,
@@ -8,7 +8,7 @@ import {
   getFlavorCharts,
   getFlavorTags,
   getRankings,
-} from '../../../../lib/sakenowa/client'
+} from '@/lib/sakenowa/client'
 import {
   makePgAreasDB,
   makePgBrandsDB,
@@ -17,9 +17,9 @@ import {
   makePgFlavorTagsDB,
   makePgIngestionRunsDB,
   makePgRankingsDB,
-} from '../../../../lib/sakenowa/db'
-import { driveIngest, type IngestDriverResult } from '../../../../lib/sakenowa/ingest-driver'
-import { authorizeCronRequest } from '../../../../lib/cron/authorize'
+} from '@/lib/sakenowa/db'
+import { driveIngest, type IngestDriverResult } from '@/lib/sakenowa/ingest-driver'
+import { authorizeCronRequest } from '@/lib/cron/authorize'
 
 /**
  * `POST /api/cron/ingest` — runs the full Sakenowa ingestion pipeline.

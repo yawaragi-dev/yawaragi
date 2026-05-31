@@ -173,6 +173,7 @@ See `docs/adr/0007-i18n-en-de.md`.
 - Do NOT close a phase (last slice merged, parent issue closed) without updating the README's architecture diagram and any other parts of the README that reflect project state. The diagram is the recruiter-facing source of truth — if it lags behind the code, the README lies. Capture this in the phase's final PR, not a follow-up.
 - Do NOT lower `minimumReleaseAge` in `pnpm-workspace.yaml` (currently 14 days, anti-Shai-Hulud quarantine) without a documented CVE-forced reason. If a single package needs a fresh version, add it to a `minimumReleaseAgeExclude` list rather than weakening the global default.
 - Do NOT add a new entry to `allowBuilds` (install-script approval) without checking what the package's install / postinstall script actually does. Each `: true` is a license to execute arbitrary code on `pnpm install`.
+- Do NOT use deep relative imports (`../../*`, `../../../*`, etc.). Use the `@/` path alias for anything under `src/`, or `~/` for repo-root paths (`~/scripts/`, `~/messages/`). Single-level `../sibling` stays allowed for closely-coupled neighbour files in the same module. Enforced by `no-restricted-imports` in `eslint.config.mjs`.
 
 ## Test review checklist
 Before merging any test Claude wrote, ask:

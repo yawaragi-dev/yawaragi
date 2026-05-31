@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { handleCronIngestRequest, type CronRouteDeps } from './route'
-import { driveIngest } from '../../../../lib/sakenowa/ingest-driver'
+import { driveIngest } from '@/lib/sakenowa/ingest-driver'
 import type {
   AreasDB,
   BrandsDB,
@@ -10,8 +10,8 @@ import type {
   IngestionRunInsert,
   IngestionRunsDB,
   RankingsDB,
-} from '../../../../lib/sakenowa/db'
-import { parseIngestionRun } from '../../../../lib/schemas/ingestion-run'
+} from '@/lib/sakenowa/db'
+import { parseIngestionRun } from '@/lib/schemas/ingestion-run'
 
 const EXPECTED_SECRET = 'aaaaaaaaaaaaaaaa' // 16 chars, matches env.ts min
 
