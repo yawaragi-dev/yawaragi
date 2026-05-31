@@ -114,7 +114,6 @@ export function ProvenanceBadgeView({
         <span
           className="text-[0.65rem] tabular-nums opacity-75"
           data-testid="provenance-badge-confidence"
-          aria-label={`${confidencePct}%`}
         >
           {confidencePct}%
         </span>

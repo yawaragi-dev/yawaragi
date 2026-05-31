@@ -82,7 +82,7 @@ Every record displayed to a user carries a `source` field. Values:
 - **`sakenowa_inferred`** — derived from Sakenowa data via deterministic math (e.g. cosine similarity over FlavorProfile vectors). Still trustworthy; the derivation is reproducible.
 - **`llm_extracted`** — produced by a vision LLM from a user-uploaded label image. Always has a confidence score. Renders with `<ProvenanceBadge />` and an "improve / report" affordance.
 - **`llm_inferred`** — LLM reasoning over Sakenowa tool results (e.g. a chat answer citing a tool call). Renders with `<ProvenanceBadge />`.
-- **`cross_beverage_map`** — produced by the hand-curated CrossBeverageMap. Renders with `<HeuristicDisclaimer />`.
+- **`cross_beverage_map`** — produced by the hand-curated CrossBeverageMap. Renders with **both** `<ProvenanceBadge />` (identifies the source kind) **and** `<HeuristicDisclaimer />` (carries the "Western descriptors don't translate exactly" failure-mode caveat). See ADR-0005 §"deterministic-but-heuristic source" for the rationale.
 - **`user_corrected`** — a User has overridden any of the above. Always wins over its prior source.
 - **`manual_curation`** — hand-written content owned by maintainers (glossary entries, fixed mappings).
 
