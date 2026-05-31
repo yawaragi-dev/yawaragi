@@ -69,6 +69,27 @@ test.describe('sake brand page', () => {
     await expect(page.getByTestId('brewery-name-kanji')).toBeVisible()
     await expect(page.getByTestId('brewery-name-kanji')).toHaveAttribute('lang', 'ja')
 
+    // Slice 7: Sakenowa attribution appears above the fold (above the brand
+    // kanji <h1>) — Sakenowa's licence forbids footer-only attribution.
+    const attribution = page.getByTestId('sakenowa-attribution-above-fold')
+    await expect(attribution).toBeVisible()
+    await expect(attribution).toContainText('Powered by Sakenowa')
+    const attributionLink = attribution.getByRole('link', { name: 'Visit Sakenowa' })
+    await expect(attributionLink).toHaveAttribute('href', 'https://sakenowa.com')
+    await expect(attributionLink).toHaveAttribute('target', '_blank')
+    await expect(attributionLink).toHaveAttribute('rel', 'noopener noreferrer')
+
+    // DOM order: attribution before brand kanji, confirming "above the fold"
+    // is a structural guarantee, not just CSS. compareDocumentPosition's
+    // FOLLOWING bit (0x04) is set when the second arg follows the first.
+    const isAttributionBeforeKanji = await page.evaluate(() => {
+      const a = document.querySelector('[data-testid="sakenowa-attribution-above-fold"]')
+      const b = document.querySelector('[data-testid="brand-name-kanji"]')
+      if (!a || !b) return false
+      return (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0
+    })
+    expect(isAttributionBeforeKanji).toBe(true)
+
     await context.close()
   })
 

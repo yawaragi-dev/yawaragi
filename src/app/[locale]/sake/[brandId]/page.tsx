@@ -10,13 +10,15 @@ import {
   lookupFlavorChart,
 } from '@/lib/sakenowa/lookup'
 import { FlavorChartView } from '@/components/sake/flavor-chart'
+import { SakenowaAttribution } from '@/components/sake/sakenowa-attribution'
 
 /**
  * Phase 2's smoke-test surface. Renders a single sake brand from the
  * Postgres mirror. The proxy rewrites `/de/sake/*` to coming-soon per
  * ADR-0008 (EN-first launch), so this page in practice only renders on
  * `/en/`. Slice 6 (#49) adds the 6-axis FlavorChart. Future slices add
- * SakenowaAttribution (#50) and ProvenanceBadge (#51).
+ * SakenowaAttribution (slice 7, #50 — above-fold banner) and slice 8's
+ * ProvenanceBadge (#51).
  */
 interface PageProps {
   params: Promise<{ locale: string; brandId: string }>
@@ -87,6 +89,7 @@ export default async function SakeBrandPage({ params }: PageProps) {
       className="flex flex-1 w-full max-w-3xl mx-auto flex-col gap-6 py-16 px-8"
       data-testid="sake-brand-page"
     >
+      <SakenowaAttribution placement="above-fold" />
       <h1
         className="text-4xl font-semibold leading-tight tracking-tight"
         lang="ja"

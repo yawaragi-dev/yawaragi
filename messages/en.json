@@ -56,6 +56,10 @@
       "flavorChartLabel": "Flavor Chart (Sakenowa)"
     }
   },
+  "sakenowaAttribution": {
+    "poweredBy": "Powered by Sakenowa",
+    "linkLabel": "Visit Sakenowa"
+  },
   "flavorAxis": {
     "f1": {
       "label": "fragrant / floral",
