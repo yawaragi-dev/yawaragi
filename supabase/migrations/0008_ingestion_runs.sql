@@ -9,14 +9,21 @@
 --
 -- gen_random_uuid() is built into PostgreSQL 13+ so no extension is
 -- needed (Supabase's PG is 15+).
+-- source + confidence mirror src/lib/schemas/ingestion-run.ts (extends
+-- WithProvenance like every other record type). Telemetry rows are always
+-- `manual_curation` because the script hand-stamps them; the DEFAULT
+-- encodes that, the column exists so future readers can `parseIngestionRun`
+-- a row without the schema rejecting it for a missing field.
 CREATE TABLE ingestion_runs (
-  run_id               UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
-  started_at           TIMESTAMPTZ  NOT NULL,
-  finished_at          TIMESTAMPTZ  NOT NULL,
-  status               TEXT         NOT NULL CHECK (status IN ('success', 'failed')),
-  per_table            JSONB        NOT NULL,
-  source_revision_hash TEXT         NOT NULL CHECK (length(source_revision_hash) > 0),
-  error_message        TEXT
+  run_id               UUID              PRIMARY KEY DEFAULT gen_random_uuid(),
+  started_at           TIMESTAMPTZ       NOT NULL,
+  finished_at          TIMESTAMPTZ       NOT NULL,
+  status               TEXT              NOT NULL CHECK (status IN ('success', 'failed')),
+  per_table            JSONB             NOT NULL,
+  source_revision_hash TEXT              NOT NULL CHECK (length(source_revision_hash) > 0),
+  error_message        TEXT,
+  source               provenance_source NOT NULL DEFAULT 'manual_curation',
+  confidence           NUMERIC(3, 2)              CHECK (confidence IS NULL OR (confidence >= 0 AND confidence <= 1))
 );
 
 -- Common access pattern: "most recent run" for dashboards / cron skip

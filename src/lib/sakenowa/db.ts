@@ -724,6 +724,12 @@ export interface IngestionRunInsert {
   errorMessage: string | null
 }
 
+// Telemetry rows are always hand-stamped by the ingestion script, so the
+// provenance is `manual_curation` by definition — encoded here rather than
+// taken from the caller so it's impossible to lie about. Mirrors the SQL
+// DEFAULT in 0008 and the WithProvenance requirement on IngestionRunSchema.
+const INGESTION_RUN_SOURCE = 'manual_curation' satisfies ProvenanceSource
+
 class PgIngestionRunsDB implements IngestionRunsDB {
   constructor(private readonly executor: Pool | PoolClient) {}
 
@@ -731,8 +737,8 @@ class PgIngestionRunsDB implements IngestionRunsDB {
     if (run.runId) {
       await this.executor.query(
         `INSERT INTO ingestion_runs
-           (run_id, started_at, finished_at, status, per_table, source_revision_hash, error_message)
-         VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7)`,
+           (run_id, started_at, finished_at, status, per_table, source_revision_hash, error_message, source)
+         VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7, $8)`,
         [
           run.runId,
           run.startedAt.toISOString(),
@@ -741,14 +747,15 @@ class PgIngestionRunsDB implements IngestionRunsDB {
           JSON.stringify(run.perTable),
           run.sourceRevisionHash,
           run.errorMessage,
+          INGESTION_RUN_SOURCE,
         ],
       )
       return
     }
     await this.executor.query(
       `INSERT INTO ingestion_runs
-         (started_at, finished_at, status, per_table, source_revision_hash, error_message)
-       VALUES ($1, $2, $3, $4::jsonb, $5, $6)`,
+         (started_at, finished_at, status, per_table, source_revision_hash, error_message, source)
+       VALUES ($1, $2, $3, $4::jsonb, $5, $6, $7)`,
       [
         run.startedAt.toISOString(),
         run.finishedAt.toISOString(),
@@ -756,6 +763,7 @@ class PgIngestionRunsDB implements IngestionRunsDB {
         JSON.stringify(run.perTable),
         run.sourceRevisionHash,
         run.errorMessage,
+        INGESTION_RUN_SOURCE,
       ],
     )
   }

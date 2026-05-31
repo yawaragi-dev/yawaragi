@@ -356,15 +356,37 @@ describe('database integration smoke', () => {
     )
     expect(rows.map((r) => r.column_name).sort()).toEqual(
       [
+        'confidence',
         'error_message',
         'finished_at',
         'per_table',
         'run_id',
+        'source',
         'source_revision_hash',
         'started_at',
         'status',
       ].sort(),
     )
+  })
+
+  it("ingestion_runs.source defaults to 'manual_curation' so callers can't omit it accidentally", async () => {
+    // Caller convenience + contract guard: inserting without a `source`
+    // value still produces a parse-able row. Mirrors the IngestionRunSchema
+    // (WithProvenance) requirement so #54 cron can parseIngestionRun(row)
+    // without the row being rejected for a missing field.
+    await pool.query(
+      `INSERT INTO ingestion_runs
+         (started_at, finished_at, status, per_table, source_revision_hash)
+       VALUES (NOW(), NOW(), 'success', '{}'::jsonb, 'h')`,
+    )
+    try {
+      const { rows } = await pool.query<{ source: string }>(
+        "SELECT source FROM ingestion_runs ORDER BY started_at DESC LIMIT 1",
+      )
+      expect(rows[0].source).toBe('manual_curation')
+    } finally {
+      await pool.query('DELETE FROM ingestion_runs')
+    }
   })
 
   it('ingestion_runs is service-role-only — anon and authenticated CANNOT SELECT', async () => {
