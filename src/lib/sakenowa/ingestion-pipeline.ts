@@ -529,12 +529,16 @@ export async function ingestRankings(deps: RankingIngestionDeps): Promise<Rankin
 // SHA-256 over the canonical JSON of every Sakenowa payload the
 // invocation fetched. Issue #54 (cron route) reads this off the latest
 // ingestion_runs row to decide "Sakenowa published new data" vs
-// "nothing changed, skip ingest". The hash is deterministic across
-// runs as long as Sakenowa's response is byte-equal.
+// "nothing changed, skip ingest".
 //
-// Inputs are typed (not raw bytes) so a non-shape-affecting Sakenowa
-// reformat (whitespace, key ordering) doesn't trigger a false-positive
-// "new data" signal.
+// The outer wrapper below sets keys in a fixed order so the hash is
+// stable across invocations regardless of how the caller built the
+// `inputs` object. The hash is NOT invariant to Sakenowa-side key
+// reordering inside a single payload — JSON.stringify honours the
+// object's existing key order, so a `{yearMonth, areas, overall}`
+// response would hash differently from `{yearMonth, overall, areas}`.
+// In practice Sakenowa's order is stable, so the false-positive risk
+// is low; tighten to a deep canonicalisation only if it ever bites.
 export interface SourceRevisionInputs {
   brands?: SakenowaBrand[]
   breweries?: SakenowaBrewery[]

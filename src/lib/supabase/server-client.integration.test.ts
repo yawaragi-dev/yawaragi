@@ -268,12 +268,15 @@ describe('database integration smoke', () => {
     )
   })
 
-  it('areas table is seeded with the area_id=0 foreign-producer sentinel', async () => {
+  it('areas table is seeded with the area_id=0 foreign-producer sentinel matching Sakenowa', async () => {
+    // Seed values mirror what /areas publishes (name='その他', source='sakenowa')
+    // so the row reports as "unchanged" on the first ingest rather than churning.
     const { rows } = await pool.query<{ name: string; source: string }>(
       'SELECT name, source FROM areas WHERE area_id = 0',
     )
     expect(rows).toHaveLength(1)
-    expect(rows[0].source).toBe('manual_curation')
+    expect(rows[0].name).toBe('その他')
+    expect(rows[0].source).toBe('sakenowa')
   })
 
   it('anon can SELECT from areas; anon CANNOT INSERT', async () => {
