@@ -97,7 +97,7 @@ function summaryCounts(s: RunSummary): PerTableCounts {
 }
 
 function rankingCounts(s: RankingRunSummary): PerTableCounts {
-  return { total: s.total }
+  return { total: s.total, yearMonth: s.yearMonth }
 }
 
 async function main(): Promise<number> {

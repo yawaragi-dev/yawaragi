@@ -63,4 +63,24 @@ describe('IngestionRun schema', () => {
   it('exposes IngestionRunSchema for composition', () => {
     expect(IngestionRunSchema.parse(validRun)).toEqual(validRun)
   })
+
+  it('accepts yearMonth on perTable.rankings (Sakenowa snapshot month for #54)', () => {
+    // CONTEXT.md "Ranking" defines year_month as part of the concept;
+    // #54's cron route reads this to compare "fresh snapshot vs. same
+    // as last run" before deciding to re-ingest.
+    const withYearMonth = parseIngestionRun({
+      ...validRun,
+      perTable: { rankings: { total: 100, yearMonth: '202402' } },
+    })
+    expect(withYearMonth.perTable.rankings).toMatchObject({ yearMonth: '202402' })
+  })
+
+  it('rejects an empty-string yearMonth', () => {
+    expect(() =>
+      parseIngestionRun({
+        ...validRun,
+        perTable: { rankings: { total: 100, yearMonth: '' } },
+      }),
+    ).toThrow()
+  })
 })
