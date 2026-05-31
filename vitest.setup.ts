@@ -2,6 +2,11 @@ import { vi } from 'vitest'
 
 // Env-var stubs — add real values in .env.test if needed
 process.env.NEXT_PUBLIC_APP_URL ??= 'http://localhost:3000'
+// CRON_SECRET is required (min 16) per src/env.ts since #54 made it
+// non-optional. Tests that import the env module need a value at
+// validation time; route auth tests override this with their own
+// stub-injected expected secret via the test seam.
+process.env.CRON_SECRET ??= 'test-cron-secret-32-bytes-of-padding'
 
 // `server-only` is a marker package shipped with Next.js (transitive of `next`)
 // that throws if a module imports it from a client bundle. It has no runtime

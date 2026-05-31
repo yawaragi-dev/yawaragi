@@ -40,9 +40,9 @@ Set these in **Vercel → Project Settings → Environment Variables** for the `
 | `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY` | First Supabase integration (Phase 2 data foundation) |
 | `CLERK_SECRET_KEY` / `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | First user account feature (Phase 2+) |
 | `LANGFUSE_PUBLIC_KEY` / `LANGFUSE_SECRET_KEY` / `LANGFUSE_HOST` | First LLM trace target |
-| `CRON_SECRET` (≥16 chars) | First cron-protected endpoint (`pnpm ingest`) |
+| `CRON_SECRET` (≥16 chars, **required**) | Now required — `POST /api/cron/ingest` (slice 10 / #54) gates ingestion behind `Authorization: Bearer $CRON_SECRET`. Generate with `openssl rand -hex 32`. |
 
-`src/env.ts` declares every field as `.optional()` today (#17). When a PR introduces an integration, that PR tightens its field(s) back to `.min(1)` in the schema so a missing secret fails at import time.
+`src/env.ts` declares most fields as `.optional()` (#17) so the app can boot without every integration wired. When a PR introduces an integration, that PR tightens its field(s) back to a required shape so a missing secret fails at import time. `CRON_SECRET` is the first such field to graduate (slice 10 / #54): required and `.min(16)`.
 
 ## 4. GDPR and vendor obligations (per ADR-0009)
 
