@@ -60,6 +60,22 @@
     "poweredBy": "Powered by Sakenowa",
     "linkLabel": "Visit Sakenowa"
   },
+  "provenance": {
+    "badge": {
+      "llmExtracted": {
+        "label": "AI-extracted",
+        "tooltip": "This value was read from an image or document by an AI model — treat it as a starting point, not a verified fact."
+      },
+      "llmInferred": {
+        "label": "AI-inferred",
+        "tooltip": "An AI model reasoned over reference data to produce this value. The underlying numbers are canonical; the interpretation is not."
+      },
+      "crossBeverageMap": {
+        "label": "Cross-beverage",
+        "tooltip": "Mapped from a non-sake reference (whisky, wine, beer) using a hand-curated approximation. Western descriptors do not translate exactly to sake."
+      }
+    }
+  },
   "flavorAxis": {
     "f1": {
       "label": "fragrant / floral",

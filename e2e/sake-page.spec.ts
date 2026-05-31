@@ -90,6 +90,12 @@ test.describe('sake brand page', () => {
     })
     expect(isAttributionBeforeKanji).toBe(true)
 
+    // Slice 8: <ProvenanceBadge /> is imported on this page but renders
+    // null for canonical sources. All Phase 2 brand rows are
+    // source: 'sakenowa', so no badge should appear. The absence is the
+    // test — Phase 3+ will assert the inverse on LLM-sourced surfaces.
+    await expect(page.getByTestId('provenance-badge')).toHaveCount(0)
+
     await context.close()
   })
 
