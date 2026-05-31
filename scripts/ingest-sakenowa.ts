@@ -228,8 +228,12 @@ async function main(): Promise<number> {
       onProgress: makeBarRenderer('  rankings write'),
     })
     perTable.rankings = rankingCounts(rankingsSummary)
+    const droppedSuffix =
+      rankingsSummary.dropped > 0
+        ? `, ${rankingsSummary.dropped} dropped (orphan brand_ids)`
+        : ''
     console.log(
-      `✓ rankings: ${rankingsSummary.total} rows (yearMonth=${rankingsSummary.yearMonth}) in ${Date.now() - rankingsSplit}ms`,
+      `✓ rankings: ${rankingsSummary.total} rows${droppedSuffix} (yearMonth=${rankingsSummary.yearMonth}) in ${Date.now() - rankingsSplit}ms`,
     )
 
     console.log(`✓ done in ${Date.now() - startedAt.getTime()}ms`)

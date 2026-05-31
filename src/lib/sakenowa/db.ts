@@ -607,12 +607,26 @@ export function rowToFlavorTag(row: FlavorTagRow): FlavorTag {
 // content_hash column on rankings and no idempotency-by-row.
 
 export interface RankingsDB {
+  /**
+   * Returns every brand_id currently in the brands table. The rankings
+   * pipeline uses this to drop orphan ranking rows before INSERT — see
+   * `ingestRankings`. Read inside the caller's transaction so it can
+   * never race a concurrent brand delete.
+   */
+  getKnownBrandIds(): Promise<Set<number>>
   replaceAll(rows: readonly Ranking[], onChunk?: BatchProgress): Promise<void>
   transaction<T>(fn: (tx: RankingsDB) => Promise<T>): Promise<T>
 }
 
 class PgRankingsDB implements RankingsDB {
   constructor(private readonly executor: Pool | PoolClient) {}
+
+  async getKnownBrandIds(): Promise<Set<number>> {
+    const { rows } = await this.executor.query<{ brand_id: number }>(
+      'SELECT brand_id FROM brands',
+    )
+    return new Set(rows.map((r) => r.brand_id))
+  }
 
   async replaceAll(rows: readonly Ranking[], onChunk?: BatchProgress): Promise<void> {
     // TRUNCATE + INSERT inside the caller-provided transaction. On

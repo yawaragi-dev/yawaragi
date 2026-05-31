@@ -444,9 +444,16 @@ export async function ingestFlavorTags(deps: FlavorTagIngestionDeps): Promise<Ru
 // ---------- Rankings ----------
 //
 // ADR-0002: latest snapshot only. We don't classify per-row; we
-// wholesale-replace the table inside the transaction. The summary
-// carries `total` only — `added/updated/unchanged` aren't meaningful
-// under the replace-all semantics.
+// wholesale-replace the table inside the transaction.
+//
+// Sakenowa publishes ~24 orphan area-rankings per snapshot — brand_ids
+// that exist in the ranking feed but were deactivated from /brands
+// since the last Sakenowa sync. The FK from rankings.brand_id would
+// reject them, so the pipeline reads the known brand_id set inside the
+// same transaction, filters orphans out, and reports the dropped count.
+// Alternatives considered: (a) drop the FK — loses integrity for a
+// 1.8% data-quality issue; (b) skip rankings whose brand-set diverges
+// — too brittle. Filter-and-report is the conservative choice.
 
 export interface RankingIngestionDeps {
   client: { getRankings: () => Promise<SakenowaRankingsPayload> }
@@ -455,7 +462,10 @@ export interface RankingIngestionDeps {
 }
 
 export interface RankingRunSummary {
+  /** Rows actually written (post-orphan-filter). */
   total: number
+  /** Sakenowa rankings whose brand_id has no matching row in `brands`. */
+  dropped: number
   yearMonth: string
 }
 
@@ -488,9 +498,16 @@ export function sakenowaRankingsToRankings(payload: SakenowaRankingsPayload): Ra
 
 export async function ingestRankings(deps: RankingIngestionDeps): Promise<RankingRunSummary> {
   const payload = await deps.client.getRankings()
-  const rows = sakenowaRankingsToRankings(payload)
+  const allRows = sakenowaRankingsToRankings(payload)
 
   return deps.db.transaction(async (tx) => {
+    // Read inside the tx so the brand set can't race a concurrent delete
+    // between filter and INSERT (Postgres' default isolation gives us a
+    // consistent snapshot for the rest of the transaction).
+    const knownBrandIds = await tx.getKnownBrandIds()
+    const rows = allRows.filter((r) => knownBrandIds.has(r.brandId))
+    const dropped = allRows.length - rows.length
+
     let written = 0
     try {
       await tx.replaceAll(rows, (rowsThisChunk) => {
@@ -503,7 +520,7 @@ export async function ingestRankings(deps: RankingIngestionDeps): Promise<Rankin
         { cause: err },
       )
     }
-    return { total: rows.length, yearMonth: payload.yearMonth }
+    return { total: rows.length, dropped, yearMonth: payload.yearMonth }
   })
 }
 

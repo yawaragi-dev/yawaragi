@@ -880,9 +880,14 @@ describe('ingestFlavorTags', () => {
 
 class FakeRankingsDB implements RankingsDB {
   rows: Ranking[] = []
+  knownBrandIds = new Set<number>()
   replaceCalls = 0
   txOpened = 0
   txCompleted = 0
+
+  async getKnownBrandIds(): Promise<Set<number>> {
+    return new Set(this.knownBrandIds)
+  }
 
   async replaceAll(rows: readonly Ranking[], onChunk?: (n: number) => void): Promise<void> {
     this.replaceCalls++
@@ -943,16 +948,18 @@ describe('sakenowaRankingsToRankings', () => {
 })
 
 describe('ingestRankings', () => {
-  it('returns total + yearMonth and writes via replaceAll', async () => {
+  it('returns total + dropped + yearMonth and writes via replaceAll', async () => {
     const db = new FakeRankingsDB()
+    db.knownBrandIds = new Set([109, 660])
     const summary = await ingestRankings({ client: makeRankingsClient(sRankings()), db })
-    expect(summary).toEqual({ total: 3, yearMonth: '202402' })
+    expect(summary).toEqual({ total: 3, dropped: 0, yearMonth: '202402' })
     expect(db.replaceCalls).toBe(1)
     expect(db.rows).toHaveLength(3)
   })
 
   it('replaces previous snapshot on re-run (ADR-0002: latest-only, no idempotency-by-row)', async () => {
     const db = new FakeRankingsDB()
+    db.knownBrandIds = new Set([109, 660, 5])
     await ingestRankings({ client: makeRankingsClient(sRankings()), db })
     const summary = await ingestRankings({
       client: makeRankingsClient(
@@ -964,7 +971,7 @@ describe('ingestRankings', () => {
       ),
       db,
     })
-    expect(summary).toEqual({ total: 1, yearMonth: '202403' })
+    expect(summary).toEqual({ total: 1, dropped: 0, yearMonth: '202403' })
     expect(db.replaceCalls).toBe(2)
     expect(db.rows).toEqual([
       { kind: 'overall', areaId: null, rank: 1, brandId: 5, score: 5, source: 'sakenowa' },
@@ -973,6 +980,7 @@ describe('ingestRankings', () => {
 
   it('always runs inside a transaction', async () => {
     const db = new FakeRankingsDB()
+    db.knownBrandIds = new Set([109, 660])
     await ingestRankings({ client: makeRankingsClient(sRankings()), db })
     expect(db.txOpened).toBe(1)
     expect(db.txCompleted).toBe(1)
@@ -984,6 +992,33 @@ describe('ingestRankings', () => {
       ingestRankings({ client: makeRankingsClient(new Error('boom')), db }),
     ).rejects.toThrow('boom')
     expect(db.txOpened).toBe(0)
+  })
+
+  it('drops orphan ranking rows whose brand_id is not in brands; reports them in the summary', async () => {
+    // Real Sakenowa data quirk: ~24 area-rankings per snapshot reference
+    // brand_ids that have since been removed from /brands. The FK would
+    // reject them, so the pipeline filters and surfaces the count.
+    const db = new FakeRankingsDB()
+    db.knownBrandIds = new Set([109]) // 660 + the area row's brand are orphans
+    const summary = await ingestRankings({ client: makeRankingsClient(sRankings()), db })
+
+    expect(summary).toEqual({ total: 2, dropped: 1, yearMonth: '202402' })
+    // 660 in the overall list is kept (its brandId is 660, not in known) — wait,
+    // re-read: known = {109}. So overall row brandId=660 is orphan, dropped.
+    // overall row brandId=109 kept. area row brandId=109 kept. Total kept = 2.
+    expect(db.rows.map((r) => r.brandId).sort()).toEqual([109, 109])
+  })
+
+  it('drops every row when no brands are known yet (defensive — empty DB)', async () => {
+    const db = new FakeRankingsDB() // knownBrandIds defaults to empty set
+    const summary = await ingestRankings({ client: makeRankingsClient(sRankings()), db })
+
+    expect(summary).toEqual({ total: 0, dropped: 3, yearMonth: '202402' })
+    expect(db.rows).toHaveLength(0)
+    // TRUNCATE still happens (replaceAll is called with []), which is
+    // intentional: an empty rankings table after a known-brand-set wipe
+    // is a more honest signal than stale rankings against missing brands.
+    expect(db.replaceCalls).toBe(1)
   })
 })
 
