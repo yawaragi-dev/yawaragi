@@ -11,8 +11,11 @@
 //   M3 = Phase 3 / 4 / 5   — the three flagship surfaces (label scan,
 //                            chat recommender, taste profile)
 //
-// Phase 1 was absorbed into Phase 0 before any issues were filed (see
-// PRE-GO-LIVE.md §4); we collapse it into M1 if it ever appears.
+// No Phase 1 exists in the build plan today — the structure goes
+// Phase 0 → Phase 2 → Phase 3+. The `phase <= 1 → M1` clause is a
+// forward-looking guard, not a documented absorption; if a Phase 1
+// is ever filed we'd want it grouped with the Phase 0 compliance /
+// i18n foundation rather than dropped on the floor.
 // Phase 6+ (evals, polish, community, launch) is out of scope for the
 // "how close is the product" dashboard — it's gating, not building, and
 // would dominate the bar visually for work that's already deferred.
