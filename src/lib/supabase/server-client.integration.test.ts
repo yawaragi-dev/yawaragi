@@ -399,4 +399,33 @@ describe('database integration smoke', () => {
     )
     expect(rows[0].rolbypassrls).toBe(true)
   })
+
+  // --- #79 / 0009 cleanup: original content_hash indexes dropped ---
+
+  // Closes out the same antipattern on the original two tables. 0001
+  // and 0002 created these by mistake; 0009 dropped them. Asserting on
+  // the negative protects against a future re-add.
+  it('brands has no btree index on content_hash (#79 dropped)', async () => {
+    const { rows } = await pool.query<{ indexname: string }>(
+      "SELECT indexname FROM pg_indexes WHERE schemaname = 'public' AND tablename = 'brands'",
+    )
+    expect(rows.map((r) => r.indexname)).not.toContain('brands_content_hash_idx')
+  })
+
+  it('breweries has no btree index on content_hash (#79 dropped)', async () => {
+    const { rows } = await pool.query<{ indexname: string }>(
+      "SELECT indexname FROM pg_indexes WHERE schemaname = 'public' AND tablename = 'breweries'",
+    )
+    expect(rows.map((r) => r.indexname)).not.toContain('breweries_content_hash_idx')
+  })
+
+  // The brewery_id FK lookup index (slice 4) MUST stay — the brand page's
+  // brewery JOIN uses it and it appears in plans as the brand catalogue
+  // grows. Scope-guard from the #79 body.
+  it('brands_brewery_id_idx still exists (FK lookup helper, scope-guarded out of #79)', async () => {
+    const { rows } = await pool.query<{ indexname: string }>(
+      "SELECT indexname FROM pg_indexes WHERE schemaname = 'public' AND tablename = 'brands'",
+    )
+    expect(rows.map((r) => r.indexname)).toContain('brands_brewery_id_idx')
+  })
 })
