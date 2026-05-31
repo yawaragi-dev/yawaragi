@@ -1,6 +1,6 @@
 # Milestone progress (detail)
 
-_Snapshot generated 2026-05-31T19:21:41.054Z (UTC). Regenerate with `pnpm progress`._
+_Snapshot generated 2026-05-31T19:38:29.979Z (UTC). Regenerate with `pnpm progress`._
 
 ## TL;DR
 
