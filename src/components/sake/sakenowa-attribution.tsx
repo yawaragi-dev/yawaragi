@@ -56,24 +56,16 @@ export function SakenowaAttributionView({
   linkLabel,
   className,
 }: SakenowaAttributionViewProps) {
-  const isAboveFold = placement === 'above-fold'
-  const testId =
-    placement === 'above-fold'
-      ? 'sakenowa-attribution-above-fold'
-      : 'sakenowa-attribution-inline'
-
-  return (
-    <aside
-      className={cn(
-        isAboveFold
-          ? 'flex w-full items-center justify-between gap-3 rounded-md border border-zinc-200 bg-zinc-50 px-4 py-2 text-sm dark:border-zinc-800 dark:bg-zinc-900'
-          : 'inline-flex items-center gap-1 text-xs text-zinc-600 dark:text-zinc-400',
-        className,
-      )}
-      data-testid={testId}
-      aria-label={poweredBy}
-    >
-      <span className={isAboveFold ? 'font-medium' : undefined}>{poweredBy}</span>
+  // above-fold is a discrete attribution region — `<aside>` (a
+  // "complementary" landmark) reads naturally to a screen-reader user
+  // skipping by landmark. inline lives inside the flow of a card / list
+  // item, so it's a `<span>` to avoid landmark inflation in the document
+  // outline. Both render the same visible phrase + link.
+  const visibleText = (
+    <>
+      <span className={placement === 'above-fold' ? 'font-medium' : undefined}>
+        {poweredBy}
+      </span>
       <a
         href={SAKENOWA_URL}
         target="_blank"
@@ -83,6 +75,32 @@ export function SakenowaAttributionView({
       >
         {linkLabel}
       </a>
-    </aside>
+    </>
+  )
+
+  if (placement === 'above-fold') {
+    return (
+      <aside
+        className={cn(
+          'flex w-full items-center justify-between gap-3 rounded-md border border-zinc-200 bg-zinc-50 px-4 py-2 text-sm dark:border-zinc-800 dark:bg-zinc-900',
+          className,
+        )}
+        data-testid="sakenowa-attribution-above-fold"
+      >
+        {visibleText}
+      </aside>
+    )
+  }
+
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-1 text-xs text-zinc-600 dark:text-zinc-400',
+        className,
+      )}
+      data-testid="sakenowa-attribution-inline"
+    >
+      {visibleText}
+    </span>
   )
 }
