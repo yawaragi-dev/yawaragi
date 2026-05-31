@@ -554,6 +554,7 @@ A hard gate. **No public launch artefact** (blog post submitted, Show HN, Linked
 
 - [ ] Cost ledger (`/dev/cost`) shows < €15/month at current usage with a documented per-user rate-limit headroom.
 - [ ] `CRON_SECRET` rotated since first deployment.
+- [ ] `POST /api/cron/ingest` has fired successfully at least once in production — verified via `SELECT * FROM ingestion_runs ORDER BY started_at DESC LIMIT 1` returning a recent `status='success'` row, NOT a stale row from manual testing. Catches the silent-401 failure mode where the prod `CRON_SECRET` is misconfigured and Vercel Cron daily-loops without any visible alert.
 - [ ] Supabase RLS policies verified end-to-end on `user_taste_vectors` and corrections.
 - [ ] `ANTHROPIC_API_KEY` is the production key, has spend limits, and is NOT present in any shell config or local `.env` checked into git.
 - [ ] Vercel deployment uses `pnpm` not `npm` (consistency with local).

@@ -52,7 +52,7 @@ flowchart TD
   Anthropic --> Trace["Langfuse traces<br/>(Phase 4+)"]
 ```
 
-Phase 0 (i18n + legal scaffolding + EN-first launch) is shipped. Phase 2+ nodes are placeholders for the data foundation, label scan, chat, and taste profile slices that compose with the Phase 0 surface unchanged.
+Phase 0 (i18n + legal scaffolding + EN-first launch) is shipped. Phase 2 (data foundation, attribution + provenance UI, scheduled cron ingest) is ~85% — see the milestone bar above for the live status. Phases 3+ nodes (label scan, chat, taste profile) are placeholders until those slices land.
 
 ## Getting started
 
