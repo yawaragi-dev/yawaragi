@@ -24,42 +24,45 @@ beforeEach(() => {
 })
 
 describe('getUserScopedClient', () => {
-  it('throws a clear error when the Clerk session has no JWT', async () => {
-    mockAuth.mockResolvedValue({ getToken: async () => null })
-    const { getUserScopedClient } = await import('./user-client')
-
-    await expect(getUserScopedClient()).rejects.toThrow(
-      /signed in|authenticated/i,
-    )
-    expect(mockCreateClient).not.toHaveBeenCalled()
-  })
-
-  it('forwards the Clerk JWT as a Supabase Authorization header', async () => {
-    mockAuth.mockResolvedValue({ getToken: async () => 'clerk.jwt.token' })
+  it('returns a supabase-js client configured against the anon key', async () => {
     const sentinel = { from: () => null }
     mockCreateClient.mockReturnValue(sentinel)
     const { getUserScopedClient } = await import('./user-client')
 
-    const client = await getUserScopedClient()
+    const client = getUserScopedClient()
 
     expect(client).toBe(sentinel)
     expect(mockCreateClient).toHaveBeenCalledTimes(1)
-    const [url, key, options] = mockCreateClient.mock.calls[0]
+    const [url, key] = mockCreateClient.mock.calls[0]
     expect(url).toBe('https://test.supabase.co')
     expect(key).toBe('anon-key')
-    expect(options.global.headers.Authorization).toBe('Bearer clerk.jwt.token')
-    expect(options.auth.persistSession).toBe(false)
-    expect(options.auth.autoRefreshToken).toBe(false)
   })
 
-  it('asks Clerk for the "supabase" JWT template (matches Supabase Third-Party Auth wiring)', async () => {
-    const getToken = vi.fn(async () => 'token')
-    mockAuth.mockResolvedValue({ getToken })
+  it('passes an accessToken callback that pulls the Clerk session token', async () => {
     mockCreateClient.mockReturnValue({})
+    const getToken = vi.fn(async () => 'clerk.jwt.token')
+    mockAuth.mockResolvedValue({ getToken })
     const { getUserScopedClient } = await import('./user-client')
 
-    await getUserScopedClient()
+    getUserScopedClient()
 
-    expect(getToken).toHaveBeenCalledWith({ template: 'supabase' })
+    const [, , options] = mockCreateClient.mock.calls[0]
+    expect(typeof options.accessToken).toBe('function')
+
+    const token = await options.accessToken()
+    expect(token).toBe('clerk.jwt.token')
+    expect(getToken).toHaveBeenCalledWith()
+  })
+
+  it('returns null from the accessToken callback when the caller is anonymous', async () => {
+    mockCreateClient.mockReturnValue({})
+    mockAuth.mockResolvedValue({ getToken: async () => null })
+    const { getUserScopedClient } = await import('./user-client')
+
+    getUserScopedClient()
+
+    const [, , options] = mockCreateClient.mock.calls[0]
+    const token = await options.accessToken()
+    expect(token).toBeNull()
   })
 })
