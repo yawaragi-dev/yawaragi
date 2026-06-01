@@ -69,11 +69,19 @@ export function ageGateCookieAttrs(
 }
 
 const LOCALE_PREFIX_REGEX = /^\/(en|de)(?=\/|$)/
+// The legal-page paths appear here both in their canonical (en) form AND
+// their German-localised form because the proxy sees the EXTERNAL request
+// URL before next-intl rewrites it back to the canonical segment. Adding a
+// new locale that uses different external paths means adding entries here
+// AND extending routing.ts#pathnames in the same change-set; the two lists
+// are intentionally kept side-by-side rather than derived.
 const UNGATED_LOCALE_PATHS: ReadonlySet<string> = new Set([
   '',
   '/',
   '/imprint',
+  '/Impressum',
   '/privacy',
+  '/Datenschutz',
   '/under-18',
 ])
 

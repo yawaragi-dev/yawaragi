@@ -3,6 +3,10 @@
     "siteName": "Yawaragi",
     "skipToContent": "Zum Inhalt springen"
   },
+  "footer": {
+    "imprintLink": "Impressum",
+    "privacyLink": "Datenschutz"
+  },
   "landing": {
     "title": "Yawaragi",
     "tagline": "Ein Begleiter, um Sake kennenzulernen.",
@@ -120,6 +124,24 @@
     "retention": "Cookies laufen nach einem Jahr ab. Referenzdaten der Phase 2 bleiben für die Lebensdauer des Dienstes erhalten. Künftige nutzerbezogene Daten (ab Phase 2.5) folgen den Aufbewahrungsregeln in ADR-0009.",
     "contactHeading": "Kontakt",
     "contact": "Für Betroffenenanfragen (Auskunft, Berichtigung, Löschung, Datenübertragbarkeit) nutze die im Impressum genannte E-Mail-Adresse."
+  },
+  "imprint": {
+    "title": "Impressum",
+    "lastUpdated": "Zuletzt aktualisiert: 01.06.2026.",
+    "intro": "Angaben gemäß §5 TMG / DDG.",
+    "providerHeading": "Diensteanbieter",
+    "providerName": "[TODO: replace with real name from Impressum service before public-launch]",
+    "providerAddressHeading": "Postanschrift",
+    "providerAddress": "[TODO: replace with real address from Impressum service before public-launch — use \\n for line breaks, e.g. \"Musterstr. 1\\n80331 München\"]",
+    "contactHeading": "Kontakt",
+    "providerEmailLabel": "E-Mail",
+    "providerEmail": "[TODO: replace with real contact email before public-launch]",
+    "responsibilityHeading": "Redaktionelle Verantwortung",
+    "responsibilityStatement": "Verantwortlich für den Inhalt nach §18(2) MStV: der oben genannte Diensteanbieter unter der oben genannten Anschrift.",
+    "disputeResolutionHeading": "Online-Streitbeilegung",
+    "disputeResolutionBody": "Die Europäische Kommission stellt unter https://ec.europa.eu/consumers/odr eine Plattform zur Online-Streitbeilegung bereit. Der Betreiber ist weder bereit noch verpflichtet, an einem Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.",
+    "liabilityHeading": "Haftung für Inhalte und Links",
+    "liabilityBody": "Als Diensteanbieter ist der Betreiber für eigene Inhalte auf diesen Seiten nach den allgemeinen Gesetzen verantwortlich. Eine Verpflichtung, übermittelte oder gespeicherte fremde Informationen zu überwachen, besteht nicht. Verpflichtungen zur Entfernung oder Sperrung rechtswidriger Informationen nach Kenntnisnahme bleiben unberührt."
   },
   "notFound": {
     "title": "Seite nicht gefunden",

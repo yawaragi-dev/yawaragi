@@ -3,6 +3,10 @@
     "siteName": "Yawaragi",
     "skipToContent": "Skip to content"
   },
+  "footer": {
+    "imprintLink": "Imprint",
+    "privacyLink": "Privacy"
+  },
   "landing": {
     "title": "Yawaragi",
     "tagline": "A companion for discovering sake.",
@@ -120,6 +124,24 @@
     "retention": "Cookies expire after one year. Phase 2 reference data is retained for the lifetime of the service. Future per-user data (Phase 2.5+) follows the retention rules in ADR-0009.",
     "contactHeading": "Contact",
     "contact": "For data-subject requests (access, rectification, erasure, portability), use the email address in the Impressum."
+  },
+  "imprint": {
+    "title": "Imprint",
+    "lastUpdated": "Last updated: 2026-06-01.",
+    "intro": "Information pursuant to §5 of the German Telemedia Act (TMG / DDG).",
+    "providerHeading": "Service provider",
+    "providerName": "[TODO: replace with real name from Impressum service before public-launch]",
+    "providerAddressHeading": "Postal address",
+    "providerAddress": "[TODO: replace with real address from Impressum service before public-launch — use \\n for line breaks, e.g. \"Musterstr. 1\\n80331 München\"]",
+    "contactHeading": "Contact",
+    "providerEmailLabel": "Email",
+    "providerEmail": "[TODO: replace with real contact email before public-launch]",
+    "responsibilityHeading": "Editorial responsibility",
+    "responsibilityStatement": "Responsible for the content pursuant to §18(2) MStV: the service provider named above, at the address above.",
+    "disputeResolutionHeading": "Online dispute resolution",
+    "disputeResolutionBody": "The European Commission provides a platform for online dispute resolution at https://ec.europa.eu/consumers/odr. The maintainer is neither willing nor obliged to participate in dispute resolution proceedings before a consumer arbitration board.",
+    "liabilityHeading": "Liability for content and links",
+    "liabilityBody": "As a service provider, the maintainer is responsible for own content on these pages under general law. The maintainer is not obliged to monitor transmitted or stored third-party information. Obligations to remove or block unlawful information once known remain unaffected."
   },
   "notFound": {
     "title": "Page not found",

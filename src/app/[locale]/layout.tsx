@@ -1,10 +1,11 @@
 import { cookies } from 'next/headers'
 import { hasLocale, NextIntlClientProvider } from 'next-intl'
-import { setRequestLocale } from 'next-intl/server'
+import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { routing } from '@/i18n/routing'
+import { Link } from '@/i18n/navigation'
 import { LocaleSwitcher } from '@/components/layout/locale-switcher'
 import { CookieBanner } from '@/components/legal/cookie-banner'
 import { CookieSettingsLink } from '@/components/legal/cookie-settings-link'
@@ -36,6 +37,7 @@ export default async function LocaleLayout({
 
   const cookieJar = await cookies()
   const consent = parseConsent(cookieJar.get(CONSENT_COOKIE_NAME)?.value)
+  const tFooter = await getTranslations({ locale, namespace: 'footer' })
 
   return (
     <html
@@ -48,7 +50,24 @@ export default async function LocaleLayout({
             <LocaleSwitcher />
           </header>
           {children}
-          <footer className="flex justify-end px-6 py-3">
+          <footer
+            className="flex flex-wrap items-center justify-end gap-4 px-6 py-3"
+            data-testid="site-footer"
+          >
+            <Link
+              href="/imprint"
+              data-testid="footer-imprint-link"
+              className="text-sm text-zinc-500 underline underline-offset-4 hover:text-zinc-900 dark:hover:text-zinc-50"
+            >
+              {tFooter('imprintLink')}
+            </Link>
+            <Link
+              href="/privacy"
+              data-testid="footer-privacy-link"
+              className="text-sm text-zinc-500 underline underline-offset-4 hover:text-zinc-900 dark:hover:text-zinc-50"
+            >
+              {tFooter('privacyLink')}
+            </Link>
             <CookieSettingsLink />
           </footer>
           <CookieBanner initialDecision={consent} />

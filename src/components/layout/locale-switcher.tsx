@@ -2,6 +2,7 @@
 
 import { useTransition } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
+import { useParams } from 'next/navigation'
 import { usePathname, useRouter } from '@/i18n/navigation'
 import { routing, type Locale } from '@/i18n/routing'
 
@@ -9,13 +10,22 @@ export function LocaleSwitcher() {
   const t = useTranslations('localeSwitcher')
   const locale = useLocale()
   const pathname = usePathname()
+  const params = useParams()
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
   function switchTo(next: Locale) {
     if (next === locale) return
     startTransition(() => {
-      router.replace(pathname, { locale: next })
+      // Pass {pathname, params} together so next-intl can rebuild a
+      // dynamic route (e.g. /sake/[brandId]) under the target locale.
+      // For static routes `params` is empty and the call collapses to
+      // the same shape as the pre-pathnames version.
+      router.replace(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        { pathname, params: params as any },
+        { locale: next },
+      )
     })
   }
 
