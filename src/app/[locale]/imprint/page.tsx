@@ -62,7 +62,7 @@ export default async function ImprintPage({
         <h2 className="text-xl font-medium">{t('contactHeading')}</h2>
         <p className="text-base text-zinc-700 dark:text-zinc-300">
           <span className="text-zinc-500">{t('providerEmailLabel')}: </span>
-          {t('providerEmail')}
+          <ProviderEmail email={t('providerEmail')} />
         </p>
       </section>
 
@@ -87,5 +87,21 @@ export default async function ImprintPage({
         </p>
       </section>
     </main>
+  )
+}
+
+// Render the maintainer email as a mailto link once a real value is in place;
+// keep the [TODO ...] placeholder as plain text so QA doesn't get a malformed
+// mailto: URI from clicking the underline. §5 TMG expects the email to be
+// reachable, not merely visible.
+function ProviderEmail({ email }: { email: string }) {
+  if (email.startsWith('[TODO')) return <>{email}</>
+  return (
+    <a
+      href={`mailto:${email}`}
+      className="underline underline-offset-4 hover:text-zinc-900 dark:hover:text-zinc-50"
+    >
+      {email}
+    </a>
   )
 }

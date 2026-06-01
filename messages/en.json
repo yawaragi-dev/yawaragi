@@ -132,7 +132,7 @@
     "providerHeading": "Service provider",
     "providerName": "[TODO: replace with real name from Impressum service before public-launch]",
     "providerAddressHeading": "Postal address",
-    "providerAddress": "[TODO: replace with real address from Impressum service before public-launch]",
+    "providerAddress": "[TODO: replace with real address from Impressum service before public-launch — use \\n for line breaks, e.g. \"Musterstr. 1\\n80331 München\"]",
     "contactHeading": "Contact",
     "providerEmailLabel": "Email",
     "providerEmail": "[TODO: replace with real contact email before public-launch]",
