@@ -36,8 +36,9 @@ Previously named "Kanpai"; renamed to avoid collision with [KANPAI London Craft 
 
 ```mermaid
 flowchart TD
-  V[Visitor] -->|"any path"| P["src/proxy.ts<br/>(locale + age-gate + coming-soon rewrites)"]
-  P -->|"/en/* (launched)"| LL["[locale]/layout<br/>+ NextIntlProvider<br/>+ cookie banner + footer"]
+  V[Visitor] -->|"any path"| P["src/proxy.ts<br/>clerkMiddleware → next-intl<br/>→ age-gate + coming-soon rewrites"]
+  P -->|"/en/* (launched)"| LL["[locale]/layout<br/>+ ClerkProvider<br/>+ NextIntlProvider<br/>+ cookie banner + footer"]
+  UC["lib/supabase/user-client<br/>(Phase 2.5+, Clerk JWT)"] -.->|"future"| LL
   P -->|"/de/* (unlaunched)"| CS["[locale]/page<br/>(coming-soon)"]
   LL --> Landing["[locale]/page<br/>(landing + age-gate)"]
   LL --> Under18["[locale]/under-18"]
