@@ -29,6 +29,15 @@ env:
   # var per slice 10 (#54). The value must be ≥ 16 chars to satisfy the
   # schema.
   CRON_SECRET: ci-only-dummy-32-char-shared-secret
+  # Clerk keys — required as .min(1) in src/env.ts since slice 12 (#55).
+  # Both values come from the maintainer's Clerk *development* instance
+  # (pk_test_ / sk_test_) and live in repo secrets so the workflow yml
+  # stays clean of vendor-instance identifiers. Production rotation is
+  # handled via the Vercel env var as usual. NEXT_PUBLIC_* is a Next.js
+  # client-bundle marker — the publishable key ships to browsers anyway,
+  # so the secret storage is a hygiene choice, not a security one.
+  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+  CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
 
 jobs:
   verify:

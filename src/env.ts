@@ -23,8 +23,12 @@ const Env = z.object({
   NEXT_PUBLIC_SUPABASE_URL: empty(z.string().url().optional()),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: empty(z.string().optional()),
   SUPABASE_SERVICE_ROLE_KEY: empty(z.string().optional()),
-  CLERK_SECRET_KEY: empty(z.string().optional()),
-  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: empty(z.string().optional()),
+  // Tightened to required by Slice 12 (#55). `<ClerkProvider>` (root
+  // layout) and `clerkMiddleware` (src/proxy.ts) both fail with cryptic
+  // runtime errors when these are missing; failing at env.parse keeps
+  // the failure mode obvious in dev + CI.
+  CLERK_SECRET_KEY: empty(z.string().min(1)),
+  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: empty(z.string().min(1)),
   LANGFUSE_PUBLIC_KEY: empty(z.string().optional()),
   LANGFUSE_SECRET_KEY: empty(z.string().optional()),
   LANGFUSE_HOST: empty(z.string().url().optional()),

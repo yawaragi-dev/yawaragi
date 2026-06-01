@@ -49,3 +49,6 @@ next-env.d.ts
 # Each is its own checkout; nothing inside should ever be committed from
 # the main worktree.
 .claude/worktrees/
+
+# clerk configuration (can include secrets)
+/.clerk/
