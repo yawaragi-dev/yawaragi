@@ -26,6 +26,7 @@ Only if this PR touches user data, vendors, or consent surfaces. Skip otherwise.
 ### Verification
 - [ ] `pnpm verify` runs clean locally
 - [ ] CI green
+- [ ] If this PR rotates or introduces a deploy-time secret (anything read via `src/env.ts`), a "redeploy production after merge" step is documented in the body. Vercel Cron and other env-injected callers read the **build-time** value; rotating a secret without a redeploy will 401 every invocation until the next deploy.
 
 ### Deviations from spec
 <!-- List any deviations from the linked issue's acceptance criteria, with rationale. -->
