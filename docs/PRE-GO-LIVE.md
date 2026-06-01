@@ -496,7 +496,7 @@ A hard gate. **No public launch artefact** (blog post submitted, Show HN, Linked
   - **This is the LAST item to complete before the DACH launch.** Per [ADR-0008](./adr/0008-en-first-launch-strategy.md), the project ships publicly as EN-first; `/de/` renders coming-soon until this gate is green. Flipping DE live = subscribe to the service, fill in the Impressum/Privacy copy in `messages/{en,de}.json`, add `'de'` to `LAUNCHED_LOCALES` in `src/app/[locale]/page.tsx`. Until then, the EN-only deployment can ship on a `.dev` / `.app` / `.com` domain — the §5 DDG "directed at Germany" test is weak in that configuration.
 - [ ] GDPR-compliant privacy policy and cookie banner are live; cookie banner is functionally separate from age gate. See [ADR-0009](./adr/0009-gdpr-compliance-posture.md) for the full posture.
   - [ ] **Lawful basis** documented (in Zod schema or ADR-0009 RoPA) for every record type that holds personal data.
-  - [ ] **DPAs signed** with every third-party vendor that processes personal data: Clerk, Supabase, Anthropic, Langfuse, Vercel (or wherever the app is hosted). For each non-EU vendor, **SCCs** are also in place.
+  - [ ] **DPAs in force** with every third-party vendor that processes personal data: Clerk, Supabase, Anthropic, Langfuse, Vercel (or wherever the app is hosted). For each non-EU vendor, **SCCs** are also in place. "In force" covers both countersigned-PDF and ToS-incorporated DPAs: Supabase countersigns via PandaDoc, Vercel + Clerk are auto-incorporated through their Standard Terms at signup (Clerk's countersigned PDF is Enterprise-only per Clerk support 2026-06-01 — see #93). Archive the DPA URL + version + DPF certification reference for each vendor as the paper trail of record.
   - [ ] **Data residency** declared per vendor (EU/US); EU region selected where the vendor offers it (Supabase, Langfuse).
   - [ ] **Privacy policy** in `messages/{en,de}.json` covers every processing operation in the RoPA — vendor names, categories of data, retention, lawful basis, contact for data subject requests.
   - [ ] **Cookie banner UX audit:** no pre-ticked boxes; Accept and Reject buttons of equal prominence; withdraw flow (footer settings link) reopens the banner pre-filled. Manual click-through in both locales.
@@ -565,7 +565,7 @@ A hard gate. **No public launch artefact** (blog post submitted, Show HN, Linked
   - [ ] **GitHub** plan covers the Actions minutes used by CI (Pro / Team if private repo + active development)
   - [ ] **Supabase** project is on a tier that matches expected DB/storage/MAU
     - [ ] **SOC 2 Type 2 report accessible.** Per the executed Supabase DPA §9.8, SOC 2 / ISO 27001 reports substitute for the (paper-only) audit right in §9.3-9.4. SOC 2 reports are gated to **Team / Enterprise** tier per Supabase docs — Free and Pro do NOT have access. Upgrading at the `public-launch` milestone is the moment to verify the report is downloadable from Organization → Documents.
-  - [ ] **Clerk** is on a tier that matches expected MAU (free up to 10k)
+  - [ ] **Clerk** is on a tier that matches expected MAU (Free covers up to 50,000 MAU as of 2026; paid Pro starts at $25/mo + $0.02/MAU above 10k). Pro tier note: countersigned PDF of the DPA remains Enterprise-only — auto-incorporation via ToS stays the paper trail until then.
   - [ ] Any other added vendor (Langfuse, Sentry, Cloudflare, etc.) has been re-audited against the table in deploying.md
 
 ### 7.8 Portfolio / recruiter
