@@ -1,10 +1,20 @@
 import { expect, test } from '@playwright/test'
 
+// Localised external paths come from src/i18n/routing.ts#pathnames — kept
+// duplicated here so the spec stays self-contained and a missing pathname
+// entry surfaces as an obvious test failure rather than a silent route
+// change.
+const LEGAL_PATHS = {
+  imprint: { en: '/imprint', de: '/Impressum' },
+  privacy: { en: '/privacy', de: '/Datenschutz' },
+} as const
+
 const LOCALES = ['en', 'de'] as const
 
 test.describe('imprint page (§5 TMG)', () => {
   for (const locale of LOCALES) {
-    test(`${locale}: /${locale}/imprint renders without the age-gate cookie`, async ({
+    const path = LEGAL_PATHS.imprint[locale]
+    test(`${locale}: /${locale}${path} renders without the age-gate cookie`, async ({
       browser,
     }) => {
       const context = await browser.newContext({
@@ -12,17 +22,18 @@ test.describe('imprint page (§5 TMG)', () => {
       })
       const page = await context.newPage()
 
-      const response = await page.goto(`/${locale}/imprint`)
+      const response = await page.goto(`/${locale}${path}`)
       expect(response?.status()).toBe(200)
-      expect(page.url()).toMatch(new RegExp(`/${locale}/imprint$`))
+      expect(page.url()).toMatch(new RegExp(`/${locale}${path}$`))
 
       await expect(page.getByTestId('imprint-page')).toBeVisible()
       await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
       // The §18(2) MStV responsibility statement must be present in both
       // locales — it is the legal core of the page, not optional flavour.
       await expect(page.getByText(/18\(2\) MStV/)).toBeVisible()
-      // Age-gate dialog must NOT appear — /imprint is in the ungated
-      // allowlist so a visitor can identify the operator before consenting.
+      // Age-gate dialog must NOT appear — the legal pages are in the
+      // ungated allowlist so a visitor can identify the operator before
+      // consenting.
       await expect(page.getByTestId('age-gate')).toBeHidden()
 
       await context.close()
@@ -32,7 +43,8 @@ test.describe('imprint page (§5 TMG)', () => {
 
 test.describe('privacy page (GDPR)', () => {
   for (const locale of LOCALES) {
-    test(`${locale}: /${locale}/privacy renders without the age-gate cookie`, async ({
+    const path = LEGAL_PATHS.privacy[locale]
+    test(`${locale}: /${locale}${path} renders without the age-gate cookie`, async ({
       browser,
     }) => {
       const context = await browser.newContext({
@@ -40,9 +52,9 @@ test.describe('privacy page (GDPR)', () => {
       })
       const page = await context.newPage()
 
-      const response = await page.goto(`/${locale}/privacy`)
+      const response = await page.goto(`/${locale}${path}`)
       expect(response?.status()).toBe(200)
-      expect(page.url()).toMatch(new RegExp(`/${locale}/privacy$`))
+      expect(page.url()).toMatch(new RegExp(`/${locale}${path}$`))
 
       await expect(page.getByTestId('privacy-page')).toBeVisible()
       await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
@@ -60,7 +72,10 @@ test.describe('legal pages without JavaScript', () => {
   // are server-rendered with no client-only components in the critical
   // render path.
   for (const locale of LOCALES) {
-    test(`${locale}: /${locale}/imprint renders with JavaScript disabled`, async ({
+    const imprintPath = LEGAL_PATHS.imprint[locale]
+    const privacyPath = LEGAL_PATHS.privacy[locale]
+
+    test(`${locale}: /${locale}${imprintPath} renders with JavaScript disabled`, async ({
       browser,
     }) => {
       const context = await browser.newContext({
@@ -69,7 +84,7 @@ test.describe('legal pages without JavaScript', () => {
       })
       const page = await context.newPage()
 
-      const response = await page.goto(`/${locale}/imprint`)
+      const response = await page.goto(`/${locale}${imprintPath}`)
       expect(response?.status()).toBe(200)
       await expect(page.getByTestId('imprint-page')).toBeVisible()
       await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
@@ -77,7 +92,7 @@ test.describe('legal pages without JavaScript', () => {
       await context.close()
     })
 
-    test(`${locale}: /${locale}/privacy renders with JavaScript disabled`, async ({
+    test(`${locale}: /${locale}${privacyPath} renders with JavaScript disabled`, async ({
       browser,
     }) => {
       const context = await browser.newContext({
@@ -86,7 +101,7 @@ test.describe('legal pages without JavaScript', () => {
       })
       const page = await context.newPage()
 
-      const response = await page.goto(`/${locale}/privacy`)
+      const response = await page.goto(`/${locale}${privacyPath}`)
       expect(response?.status()).toBe(200)
       await expect(page.getByTestId('privacy-page')).toBeVisible()
       await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
@@ -98,7 +113,10 @@ test.describe('legal pages without JavaScript', () => {
 
 test.describe('footer legal links', () => {
   for (const locale of LOCALES) {
-    test(`${locale}: footer links to /imprint and /privacy in the current locale`, async ({
+    const imprintPath = LEGAL_PATHS.imprint[locale]
+    const privacyPath = LEGAL_PATHS.privacy[locale]
+
+    test(`${locale}: footer links to the localised imprint + privacy paths`, async ({
       browser,
     }) => {
       const context = await browser.newContext({
@@ -106,10 +124,10 @@ test.describe('footer legal links', () => {
       })
       const page = await context.newPage()
 
-      // Use /imprint as a stable landing — the EN homepage shows the age
-      // gate (which would obscure the footer in some viewports), and the
-      // DE homepage shows coming-soon (different layout).
-      await page.goto(`/${locale}/imprint`)
+      // Use the imprint page as a stable landing — the EN homepage shows
+      // the age gate (which would obscure the footer in some viewports),
+      // and the DE homepage shows coming-soon (different layout).
+      await page.goto(`/${locale}${imprintPath}`)
 
       const footer = page.getByTestId('site-footer')
       await expect(footer).toBeVisible()
@@ -120,16 +138,82 @@ test.describe('footer legal links', () => {
       await expect(imprintLink).toBeVisible()
       await expect(privacyLink).toBeVisible()
 
-      // Locale-prefixed URLs — next-intl's Link prepends the active locale.
+      // Locale-prefixed AND locale-localised URLs — next-intl's Link
+      // resolves the pathnames entry, so the EN visitor sees /en/imprint
+      // and the DE visitor sees /de/impressum (likewise for privacy /
+      // datenschutz).
       await expect(imprintLink).toHaveAttribute(
         'href',
-        new RegExp(`^/${locale}/imprint`),
+        new RegExp(`^/${locale}${imprintPath}`),
       )
       await expect(privacyLink).toHaveAttribute(
         'href',
-        new RegExp(`^/${locale}/privacy`),
+        new RegExp(`^/${locale}${privacyPath}`),
       )
 
+      await context.close()
+    })
+  }
+})
+
+// Locale-switch coverage. The locale switcher uses next-intl's
+// router.replace({pathname, params}, {locale: next}) so the destination
+// URL re-resolves through the routing.ts#pathnames manifest. A switch
+// from /en/imprint must land on /de/Impressum (and vice versa), not
+// /de/imprint (which next-intl redirects to the localised path but
+// should never be the landing URL).
+test.describe('locale switcher resolves localised legal paths', () => {
+  for (const { from, to, fromPath, toPath, label } of [
+    { from: 'en', to: 'de', fromPath: LEGAL_PATHS.imprint.en, toPath: LEGAL_PATHS.imprint.de, label: 'imprint' },
+    { from: 'de', to: 'en', fromPath: LEGAL_PATHS.imprint.de, toPath: LEGAL_PATHS.imprint.en, label: 'imprint' },
+    { from: 'en', to: 'de', fromPath: LEGAL_PATHS.privacy.en, toPath: LEGAL_PATHS.privacy.de, label: 'privacy' },
+    { from: 'de', to: 'en', fromPath: LEGAL_PATHS.privacy.de, toPath: LEGAL_PATHS.privacy.en, label: 'privacy' },
+  ] as const) {
+    test(`${label}: /${from}${fromPath} → switch to ${to} → /${to}${toPath}`, async ({
+      browser,
+    }) => {
+      const context = await browser.newContext({
+        locale: from === 'en' ? 'en-US' : 'de-DE',
+      })
+      const page = await context.newPage()
+      await page.goto(`/${from}${fromPath}`)
+
+      await page
+        .getByTestId('locale-switcher')
+        .getByRole('button', { name: to === 'en' ? 'English' : 'Deutsch' })
+        .click()
+
+      await page.waitForURL(new RegExp(`/${to}${toPath}$`))
+      expect(page.url()).toMatch(new RegExp(`/${to}${toPath}$`))
+
+      await context.close()
+    })
+  }
+})
+
+// English-form-in-German-locale coverage. Visiting /de/imprint (the
+// internal English key under the German locale) must redirect to the
+// canonical localised path /de/Impressum — next-intl handles this via
+// the pathnames manifest, and the test pins the contract so a future
+// routing refactor can't silently turn the redirect into a 404 (or
+// into a duplicate-content 200 on the English-form URL).
+//
+// Note: lowercase German variants like /de/impressum are NOT in the
+// pathnames manifest and currently fall through to the locale-segment
+// fallback (rewrites to /de homepage). That's a SEO duplicate-content
+// risk worth fixing before public launch; tracked separately, out of
+// scope here.
+test.describe('English-form legal URLs in German locale redirect to canonical', () => {
+  for (const { wrong, canonical } of [
+    { wrong: '/de/imprint', canonical: LEGAL_PATHS.imprint.de },
+    { wrong: '/de/privacy', canonical: LEGAL_PATHS.privacy.de },
+  ] as const) {
+    test(`${wrong} → /de${canonical}`, async ({ browser }) => {
+      const context = await browser.newContext({ locale: 'de-DE' })
+      const page = await context.newPage()
+      const response = await page.goto(wrong)
+      expect(response?.status()).toBe(200)
+      expect(page.url()).toMatch(new RegExp(`/de${canonical}$`))
       await context.close()
     })
   }
