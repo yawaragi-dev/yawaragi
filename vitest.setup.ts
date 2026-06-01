@@ -8,6 +8,14 @@ process.env.NEXT_PUBLIC_APP_URL ??= 'http://localhost:3000'
 // stub-injected expected secret via the test seam.
 process.env.CRON_SECRET ??= 'test-cron-secret-32-bytes-of-padding'
 
+// Clerk keys are required (.min(1)) per src/env.ts since #55. Tests
+// that import the app root or proxy module need a value at validation
+// time. Unit tests don't exercise the real Clerk SDK — these are just
+// boot-time placeholders. E2Es / production set real pk_test_ /
+// sk_test_ values from the Clerk dashboard.
+process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ??= 'pk_test_placeholder-for-unit-tests'
+process.env.CLERK_SECRET_KEY ??= 'sk_test_placeholder-for-unit-tests'
+
 // `server-only` is a marker package shipped with Next.js (transitive of `next`)
 // that throws if a module imports it from a client bundle. It has no runtime
 // behaviour in a server context — just empty exports. pnpm's strict isolation

@@ -4,6 +4,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
+import { ClerkProvider } from '@clerk/nextjs'
 import { routing } from '@/i18n/routing'
 import { Link } from '@/i18n/navigation'
 import { LocaleSwitcher } from '@/components/layout/locale-switcher'
@@ -39,40 +40,47 @@ export default async function LocaleLayout({
   const consent = parseConsent(cookieJar.get(CONSENT_COOKIE_NAME)?.value)
   const tFooter = await getTranslations({ locale, namespace: 'footer' })
 
+  // ClerkProvider wraps NextIntlClientProvider so Clerk's auth context is
+  // available to any client component that also needs the intl context.
+  // Phase 2 renders no Clerk UI (no <SignIn/>, <SignUp/>, <UserButton/>) —
+  // this is the deliberate exception to the "no half-finished" rule
+  // documented in PRD #21 / issue #55. Phase 2.5+ surfaces attach here.
   return (
-    <html
-      lang={locale}
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col bg-zinc-50 font-sans dark:bg-black">
-        <NextIntlClientProvider>
-          <header className="flex justify-end px-6 py-4">
-            <LocaleSwitcher />
-          </header>
-          {children}
-          <footer
-            className="flex flex-wrap items-center justify-end gap-4 px-6 py-3"
-            data-testid="site-footer"
-          >
-            <Link
-              href="/imprint"
-              data-testid="footer-imprint-link"
-              className="text-sm text-zinc-500 underline underline-offset-4 hover:text-zinc-900 dark:hover:text-zinc-50"
+    <ClerkProvider>
+      <html
+        lang={locale}
+        className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      >
+        <body className="min-h-full flex flex-col bg-zinc-50 font-sans dark:bg-black">
+          <NextIntlClientProvider>
+            <header className="flex justify-end px-6 py-4">
+              <LocaleSwitcher />
+            </header>
+            {children}
+            <footer
+              className="flex flex-wrap items-center justify-end gap-4 px-6 py-3"
+              data-testid="site-footer"
             >
-              {tFooter('imprintLink')}
-            </Link>
-            <Link
-              href="/privacy"
-              data-testid="footer-privacy-link"
-              className="text-sm text-zinc-500 underline underline-offset-4 hover:text-zinc-900 dark:hover:text-zinc-50"
-            >
-              {tFooter('privacyLink')}
-            </Link>
-            <CookieSettingsLink />
-          </footer>
-          <CookieBanner initialDecision={consent} />
-        </NextIntlClientProvider>
-      </body>
-    </html>
+              <Link
+                href="/imprint"
+                data-testid="footer-imprint-link"
+                className="text-sm text-zinc-500 underline underline-offset-4 hover:text-zinc-900 dark:hover:text-zinc-50"
+              >
+                {tFooter('imprintLink')}
+              </Link>
+              <Link
+                href="/privacy"
+                data-testid="footer-privacy-link"
+                className="text-sm text-zinc-500 underline underline-offset-4 hover:text-zinc-900 dark:hover:text-zinc-50"
+              >
+                {tFooter('privacyLink')}
+              </Link>
+              <CookieSettingsLink />
+            </footer>
+            <CookieBanner initialDecision={consent} />
+          </NextIntlClientProvider>
+        </body>
+      </html>
+    </ClerkProvider>
   )
 }

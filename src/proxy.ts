@@ -1,5 +1,6 @@
 import createMiddleware from 'next-intl/middleware'
 import { NextResponse, type NextRequest } from 'next/server'
+import { clerkMiddleware } from '@clerk/nextjs/server'
 import { routing } from '@/i18n/routing'
 import { isLaunched } from '@/i18n/launch-state'
 import {
@@ -9,7 +10,16 @@ import {
 
 const handleI18n = createMiddleware(routing)
 
-export function proxy(request: NextRequest) {
+// Execution order (per issue #55):
+//   1. clerkMiddleware identifies the user and populates auth() context.
+//      No route is force-protected at this layer — Phase 2 has no auth UI;
+//      route protection lands with Phase 2.5+ surfaces.
+//   2. next-intl resolves the locale, emits NEXT_LOCALE, and may redirect.
+//   3. Age-gate + non-launched-locale rewrite logic runs unchanged.
+// Clerk wraps the whole pipeline so server components downstream (the RSC
+// tree) can call auth() / currentUser() — that populates the JWT used by
+// getUserScopedClient() in Phase 2.5+ (ADR-0010).
+function runIntlAndAgeGate(request: NextRequest) {
   const intlResponse = handleI18n(request)
 
   if (intlResponse.headers.has('location')) {
@@ -40,6 +50,8 @@ export function proxy(request: NextRequest) {
   }
   return rewrite
 }
+
+export const proxy = clerkMiddleware((_auth, request) => runIntlAndAgeGate(request))
 
 export const config = {
   // Skip:
