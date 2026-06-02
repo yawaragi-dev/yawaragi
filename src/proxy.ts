@@ -3,10 +3,8 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { clerkMiddleware } from '@clerk/nextjs/server'
 import { routing } from '@/i18n/routing'
 import { isLaunched } from '@/i18n/launch-state'
-import {
-  hasAcceptedAgeGate,
-  isGatedPath,
-} from '@/lib/legal/age-gate-cookie'
+import { isGatedPath } from '@/lib/legal/age-gate-cookie'
+import { getComplianceState } from '@/lib/legal/compliance-state'
 
 const handleI18n = createMiddleware(routing)
 
@@ -36,7 +34,12 @@ function runIntlAndAgeGate(request: NextRequest) {
 
   // For launched locales we honour the age-gate cookie; for non-launched
   // locales every gated path rewrites to the coming-soon landing regardless.
-  if (isLaunched(locale) && hasAcceptedAgeGate(request.cookies)) {
+  // The compliance-state read seam composes age-gate + consent reads; only
+  // the JMStV `ageGate` field gates routing here. GDPR `consent` is read by
+  // the layout for the cookie banner — distinct regimes (see ADR-0006 vs
+  // ADR-0009), shared read.
+  const { ageGate } = getComplianceState(request.cookies)
+  if (isLaunched(locale) && ageGate) {
     return intlResponse
   }
 

@@ -10,7 +10,7 @@ import { Link } from '@/i18n/navigation'
 import { LocaleSwitcher } from '@/components/layout/locale-switcher'
 import { CookieBanner } from '@/components/legal/cookie-banner'
 import { CookieSettingsLink } from '@/components/legal/cookie-settings-link'
-import { CONSENT_COOKIE_NAME, parseConsent } from '@/lib/legal/consent'
+import { getComplianceState } from '@/lib/legal/compliance-state'
 import '../globals.css'
 
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] })
@@ -37,7 +37,10 @@ export default async function LocaleLayout({
   setRequestLocale(locale)
 
   const cookieJar = await cookies()
-  const consent = parseConsent(cookieJar.get(CONSENT_COOKIE_NAME)?.value)
+  // Only the GDPR `consent` field is needed here (the cookie banner is GDPR,
+  // not JMStV). The age-gate / JMStV check lives in `src/proxy.ts`. The two
+  // regimes stay distinct; only the cookie read is shared via the seam.
+  const { consent } = getComplianceState(cookieJar)
   const tFooter = await getTranslations({ locale, namespace: 'footer' })
 
   // ClerkProvider wraps NextIntlClientProvider so Clerk's auth context is
