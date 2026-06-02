@@ -153,3 +153,9 @@ export function createProductionDeps(): CronRouteDeps {
 export async function POST(request: Request): Promise<Response> {
   return handleCronIngestRequest(request, createProductionDeps)
 }
+
+// Vercel Cron invokes scheduled endpoints with GET, not POST. Without this
+// alias every scheduled fire 405s and no `ingestion_runs` row is written
+// (auth + telemetry never run). POST stays exported so manual smoke and
+// the local CLI keep their semantically-correct mutating method.
+export const GET = POST
