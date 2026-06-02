@@ -46,7 +46,7 @@ flowchart TD
   Sake --> Lookup["lib/sakenowa/lookup<br/>(Phase 2+)"]
   Lookup --> DB[("Supabase Postgres<br/>mirror (Phase 2+)")]
   Ingest["pnpm ingest<br/>(Phase 2+)"] --> DB
-  CronRoute["POST /api/cron/ingest<br/>Bearer CRON_SECRET<br/>(Phase 2+)"] --> Ingest
+  CronRoute["GET /api/cron/ingest<br/>Bearer CRON_SECRET<br/>(Phase 2+, Vercel Cron)"] --> Ingest
   Sakenowa["Sakenowa Data API"] --> Ingest
   Sake --> Tools["AI SDK tools<br/>(Phase 4+)"]
   Tools --> Anthropic["Anthropic Claude<br/>(Phase 3+)"]

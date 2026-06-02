@@ -101,7 +101,7 @@ describe('POST /api/cron/ingest unexpected throw', () => {
     // route mustn't return an unhandled rejection (which Next would
     // turn into an opaque 500 with no JSON body).
     const buildAndDrive = vi.fn(async () => {
-      throw new Error('DATABASE_URL is not set — POST /api/cron/ingest cannot run.')
+      throw new Error('DATABASE_URL is not set — /api/cron/ingest cannot run.')
     })
     const deps: CronRouteDeps = { expectedSecret: EXPECTED_SECRET, buildAndDrive }
 
@@ -112,7 +112,7 @@ describe('POST /api/cron/ingest unexpected throw', () => {
 
     expect(response.status).toBe(500)
     expect(await response.json()).toEqual({
-      error: 'DATABASE_URL is not set — POST /api/cron/ingest cannot run.',
+      error: 'DATABASE_URL is not set — /api/cron/ingest cannot run.',
       status: 'failed',
     })
   })

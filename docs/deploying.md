@@ -40,13 +40,15 @@ Set these in **Vercel → Project Settings → Environment Variables** for the `
 | `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY` | First Supabase integration (Phase 2 data foundation) |
 | `CLERK_SECRET_KEY` / `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | First user account feature (Phase 2+) |
 | `LANGFUSE_PUBLIC_KEY` / `LANGFUSE_SECRET_KEY` / `LANGFUSE_HOST` | First LLM trace target |
-| `CRON_SECRET` (≥16 chars, **required**) | Now required — `POST /api/cron/ingest` (slice 10 / #54) gates ingestion behind `Authorization: Bearer $CRON_SECRET`. Generate with `openssl rand -hex 32`. |
+| `CRON_SECRET` (≥16 chars, **required**) | Now required — `/api/cron/ingest` (slice 10 / #54) gates ingestion behind `Authorization: Bearer $CRON_SECRET`. Generate with `openssl rand -hex 32`. |
 
 `src/env.ts` declares most fields as `.optional()` (#17) so the app can boot without every integration wired. When a PR introduces an integration, that PR tightens its field(s) back to a required shape so a missing secret fails at import time. `CRON_SECRET` is the first such field to graduate (slice 10 / #54): required and `.min(16)`.
 
-### 3.1 Vercel Cron schedule for `POST /api/cron/ingest`
+### 3.1 Vercel Cron schedule for `/api/cron/ingest`
 
-The schedule lives in [`vercel.json`](../vercel.json) at the repo root: `0 4 * * *` UTC (daily 04:00). Sakenowa publishes monthly ranking snapshots and reference data drifts slowly; daily is plenty. Tighten the cadence if a use-case ever demands fresher data.
+The schedule lives in [`vercel.json`](../vercel.json) at the repo root: `0 4 * * *` UTC (daily 04:00). On Hobby tier Vercel only guarantees the scheduled hour (fire anywhere 04:00–04:59 UTC), per [Vercel cron pricing](https://vercel.com/docs/cron-jobs/usage-and-pricing). Sakenowa publishes monthly ranking snapshots and reference data drifts slowly; daily is plenty. Tighten the cadence (and the plan) if a use-case ever demands fresher data.
+
+Vercel Cron invokes the route with **GET**, not POST (per [Vercel cron docs](https://vercel.com/docs/cron-jobs#how-cron-jobs-work)). The route exports both — `GET = POST` — so manual smoke (`curl -X POST …`) and Vercel's scheduled GET both succeed against the same handler. A POST-only export 405s every scheduled fire silently (no `ingestion_runs` row written, since auth runs after method match). This was the 2026-06-02 incident.
 
 Vercel Cron automatically attaches `Authorization: Bearer $CRON_SECRET` to scheduled calls — no extra wiring needed beyond setting the env var in the Vercel dashboard. The route's `authorizeCronRequest` validates that header constant-time.
 

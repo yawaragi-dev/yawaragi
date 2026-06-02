@@ -32,7 +32,7 @@ const Env = z.object({
   LANGFUSE_PUBLIC_KEY: empty(z.string().optional()),
   LANGFUSE_SECRET_KEY: empty(z.string().optional()),
   LANGFUSE_HOST: empty(z.string().url().optional()),
-  // Shared secret for the POST /api/cron/ingest route (#54). Required
+  // Shared secret for the /api/cron/ingest route (#54). Required
   // because the route is the only auth gate — a missing secret would
   // either crash the route at first request or, worse, fall through to
   // an open endpoint. `min(16)` is the entropy floor for a shared
