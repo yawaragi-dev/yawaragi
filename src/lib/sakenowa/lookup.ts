@@ -15,6 +15,7 @@ import {
   rowToRanking,
 } from './db'
 import { publicQuery } from '../supabase/public-query'
+import { getServerDbPool } from '../supabase/server-client'
 
 const SELECT_BRAND_BY_ID = `
   SELECT brand_id, name, name_kanji, brewery_id, source, confidence
@@ -34,9 +35,7 @@ export async function lookupBrandFromPool(brandId: number, pool: Pool): Promise<
  * instead so they don't depend on a `DATABASE_URL` env var.
  */
 export async function lookupBrand(brandId: number): Promise<Brand | null> {
-  const { rows } = await publicQuery<BrandRow>('brands', SELECT_BRAND_BY_ID, [brandId])
-  if (rows.length === 0) return null
-  return rowToBrand(rows[0])
+  return lookupBrandFromPool(brandId, getServerDbPool())
 }
 
 // JOIN-via-brand so the public contract stays brand-keyed (the page has a
@@ -63,9 +62,7 @@ export async function lookupBreweryByBrandFromPool(
 }
 
 export async function lookupBreweryByBrand(brandId: number): Promise<Brewery | null> {
-  const { rows } = await publicQuery<BreweryRow>('breweries', SELECT_BREWERY_BY_BRAND_ID, [brandId])
-  if (rows.length === 0) return null
-  return rowToBrewery(rows[0])
+  return lookupBreweryByBrandFromPool(brandId, getServerDbPool())
 }
 
 const SELECT_FLAVOR_CHART_BY_BRAND_ID = `
@@ -89,13 +86,7 @@ export async function lookupFlavorChartFromPool(
 }
 
 export async function lookupFlavorChart(brandId: number): Promise<FlavorChart | null> {
-  const { rows } = await publicQuery<FlavorChartRow>(
-    'flavor_charts',
-    SELECT_FLAVOR_CHART_BY_BRAND_ID,
-    [brandId],
-  )
-  if (rows.length === 0) return null
-  return rowToFlavorChart(rows[0])
+  return lookupFlavorChartFromPool(brandId, getServerDbPool())
 }
 
 // listRanking returns the top-N rows for a single ranking scope. For
@@ -150,18 +141,5 @@ export async function listRankingFromPool(
 }
 
 export async function listRanking(args: ListRankingArgs): Promise<Ranking[]> {
-  if (args.limit <= 0) return []
-  if (args.kind === 'overall') {
-    const { rows } = await publicQuery<RankingRow>('rankings', LIST_RANKING_OVERALL, [args.limit])
-    return rows.map(rowToRanking)
-  }
-  if (args.areaId === undefined) {
-    throw new Error("listRanking: kind='area' requires an areaId")
-  }
-  const { rows } = await publicQuery<RankingRow>(
-    'rankings',
-    LIST_RANKING_AREA,
-    [args.areaId, args.limit],
-  )
-  return rows.map(rowToRanking)
+  return listRankingFromPool(args, getServerDbPool())
 }
