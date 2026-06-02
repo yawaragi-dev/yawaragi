@@ -60,6 +60,18 @@ describe('IngestionRun schema', () => {
     expect(() => parseIngestionRun(withoutSource)).toThrow()
   })
 
+  it('rejects any source other than the manual_curation literal', () => {
+    // Telemetry rows are hand-stamped by the ingestion script — none of
+    // the other 6 provenance kinds can produce an IngestionRun. Pinning
+    // the literal here mirrors the DB DEFAULT in 0008_ingestion_runs.sql.
+    expect(() => parseIngestionRun({ ...validRun, source: 'sakenowa' })).toThrow()
+    expect(() => parseIngestionRun({ ...validRun, source: 'sakenowa_inferred' })).toThrow()
+    expect(() => parseIngestionRun({ ...validRun, source: 'llm_extracted' })).toThrow()
+    expect(() => parseIngestionRun({ ...validRun, source: 'llm_inferred' })).toThrow()
+    expect(() => parseIngestionRun({ ...validRun, source: 'cross_beverage_map' })).toThrow()
+    expect(() => parseIngestionRun({ ...validRun, source: 'user_corrected' })).toThrow()
+  })
+
   it('exposes IngestionRunSchema for composition', () => {
     expect(IngestionRunSchema.parse(validRun)).toEqual(validRun)
   })

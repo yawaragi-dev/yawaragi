@@ -15,7 +15,7 @@ describe('Brand schema', () => {
   })
 
   it('accepts confidence on the WithProvenance mixin', () => {
-    expect(parseBrand({ ...validBrand, source: 'llm_extracted', confidence: 0.8 })).toMatchObject({
+    expect(parseBrand({ ...validBrand, source: 'sakenowa_inferred', confidence: 0.8 })).toMatchObject({
       confidence: 0.8,
     })
   })
@@ -33,6 +33,22 @@ describe('Brand schema', () => {
 
   it('rejects a brand with an unknown source value', () => {
     expect(() => parseBrand({ ...validBrand, source: 'mystery_provider' })).toThrow()
+  })
+
+  it('rejects sources that are valid in the wide taxonomy but illegitimate for Brand', () => {
+    // ADR-0005: Brand mirrors Sakenowa data. An LLM-extracted brand, a
+    // cross-beverage map row, or a "manually-curated" brand are all
+    // category errors — none of these provenance kinds produce Brand rows.
+    expect(() => parseBrand({ ...validBrand, source: 'llm_extracted' })).toThrow()
+    expect(() => parseBrand({ ...validBrand, source: 'llm_inferred' })).toThrow()
+    expect(() => parseBrand({ ...validBrand, source: 'cross_beverage_map' })).toThrow()
+    expect(() => parseBrand({ ...validBrand, source: 'manual_curation' })).toThrow()
+  })
+
+  it('accepts each source within the legitimate Brand subset', () => {
+    for (const source of ['sakenowa', 'sakenowa_inferred', 'user_corrected'] as const) {
+      expect(parseBrand({ ...validBrand, source })).toMatchObject({ source })
+    }
   })
 
   it('rejects a non-positive brandId', () => {

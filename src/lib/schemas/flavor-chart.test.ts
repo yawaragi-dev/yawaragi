@@ -31,8 +31,23 @@ describe('FlavorChart schema', () => {
 
   it('accepts confidence on the WithProvenance mixin', () => {
     expect(
-      parseFlavorChart({ ...validFlavorChart, source: 'llm_inferred', confidence: 0.9 }),
+      parseFlavorChart({ ...validFlavorChart, source: 'sakenowa_inferred', confidence: 0.9 }),
     ).toMatchObject({ confidence: 0.9 })
+  })
+
+  it('rejects sources that are valid in the wide taxonomy but illegitimate for FlavorChart', () => {
+    // ADR-0005: a FlavorChart is Sakenowa-mirrored. LLM extraction /
+    // inference and the cross-beverage map cannot produce one.
+    expect(() => parseFlavorChart({ ...validFlavorChart, source: 'llm_extracted' })).toThrow()
+    expect(() => parseFlavorChart({ ...validFlavorChart, source: 'llm_inferred' })).toThrow()
+    expect(() => parseFlavorChart({ ...validFlavorChart, source: 'cross_beverage_map' })).toThrow()
+    expect(() => parseFlavorChart({ ...validFlavorChart, source: 'manual_curation' })).toThrow()
+  })
+
+  it('accepts each source within the legitimate FlavorChart subset', () => {
+    for (const source of ['sakenowa', 'sakenowa_inferred', 'user_corrected'] as const) {
+      expect(parseFlavorChart({ ...validFlavorChart, source })).toMatchObject({ source })
+    }
   })
 
   it('rejects axis values outside [0, 1]', () => {

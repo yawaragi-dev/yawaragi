@@ -15,13 +15,13 @@
  * an injected pg client and pure data shaping.
  */
 import type { Pool, PoolClient } from 'pg'
-import type { Area } from '../schemas/area'
-import type { Brand } from '../schemas/brand'
-import type { Brewery } from '../schemas/brewery'
-import type { FlavorChart } from '../schemas/flavor-chart'
-import type { FlavorTag } from '../schemas/flavor-tag'
+import type { Area, AreaSource } from '../schemas/area'
+import type { Brand, BrandSource } from '../schemas/brand'
+import type { Brewery, BrewerySource } from '../schemas/brewery'
+import type { FlavorChart, FlavorChartSource } from '../schemas/flavor-chart'
+import type { FlavorTag, FlavorTagSource } from '../schemas/flavor-tag'
 import type { IngestionRun, IngestionRunStatus, PerTableCounts } from '../schemas/ingestion-run'
-import type { Ranking, RankingKind } from '../schemas/ranking'
+import type { Ranking, RankingKind, RankingSource } from '../schemas/ranking'
 import type { ProvenanceSource } from '../schemas/with-provenance'
 
 export interface BrandUpsert {
@@ -321,14 +321,18 @@ export function makePgFlavorChartsDB(pool: Pool): FlavorChartsDB {
  * Row shape returned by `SELECT brand_id, name, name_kanji, brewery_id,
  * source, confidence FROM brands`. Used by lookup helpers. The check
  * constraint + the provenance_source ENUM in 0001_brands.sql guarantee
- * `source` is one of the canonical 7 values; the cast is safe.
+ * `source` is one of the canonical 7 values; we additionally narrow to
+ * the per-record subset here so the type matches the parse-time
+ * invariant in `BrandSchema` (ADR-0005). A row whose stored `source`
+ * falls outside `BrandSource` is a data-corruption bug, not a normal
+ * case the type system should accommodate.
  */
 export interface BrandRow {
   brand_id: number
   name: string
   name_kanji: string
   brewery_id: number
-  source: ProvenanceSource
+  source: BrandSource
   confidence: string | null
 }
 
@@ -351,7 +355,7 @@ export interface BreweryRow {
   name: string
   name_kanji: string
   area_id: number
-  source: ProvenanceSource
+  source: BrewerySource
   confidence: string | null
 }
 
@@ -379,7 +383,7 @@ export interface FlavorChartRow {
   f4: string
   f5: string
   f6: string
-  source: ProvenanceSource
+  source: FlavorChartSource
   confidence: string | null
 }
 
@@ -464,7 +468,7 @@ export function makePgAreasDB(pool: Pool): AreasDB {
 export interface AreaRow {
   area_id: number
   name: string
-  source: ProvenanceSource
+  source: AreaSource
   confidence: string | null
 }
 
@@ -584,7 +588,7 @@ export function makePgFlavorTagsDB(pool: Pool): FlavorTagsDB {
 export interface FlavorTagRow {
   tag_id: number
   name: string
-  source: ProvenanceSource
+  source: FlavorTagSource
   confidence: string | null
 }
 
@@ -685,7 +689,7 @@ export interface RankingRow {
   rank: number
   brand_id: number
   score: string
-  source: ProvenanceSource
+  source: RankingSource
   confidence: string | null
 }
 

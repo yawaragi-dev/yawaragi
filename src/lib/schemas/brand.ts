@@ -1,7 +1,15 @@
 import { z } from 'zod'
-import { WithProvenance } from './with-provenance'
+import { withProvenance } from './with-provenance'
 
-export const BrandSchema = WithProvenance.extend({
+// Brand is a Sakenowa-mirrored record. ADR-0005 binds `source` to the
+// kind: a brand row only ever originates from Sakenowa (raw or derived)
+// or from a user override. `llm_extracted`, `llm_inferred`,
+// `cross_beverage_map`, and `manual_curation` are all semantic mismatches
+// here — pinning the source at parse time is the seam that catches them.
+export const BrandSource = z.enum(['sakenowa', 'sakenowa_inferred', 'user_corrected'])
+export type BrandSource = z.infer<typeof BrandSource>
+
+export const BrandSchema = withProvenance(BrandSource).extend({
   brandId: z.number().int().positive(),
   name: z.string().min(1),
   nameKanji: z.string().min(1),

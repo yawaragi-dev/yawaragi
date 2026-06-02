@@ -16,7 +16,7 @@ describe('Brewery schema', () => {
 
   it('accepts confidence on the WithProvenance mixin', () => {
     expect(
-      parseBrewery({ ...validBrewery, source: 'llm_extracted', confidence: 0.8 }),
+      parseBrewery({ ...validBrewery, source: 'sakenowa_inferred', confidence: 0.8 }),
     ).toMatchObject({ confidence: 0.8 })
   })
 
@@ -33,6 +33,19 @@ describe('Brewery schema', () => {
 
   it('rejects a brewery with an unknown source value', () => {
     expect(() => parseBrewery({ ...validBrewery, source: 'mystery_provider' })).toThrow()
+  })
+
+  it('rejects sources that are valid in the wide taxonomy but illegitimate for Brewery', () => {
+    expect(() => parseBrewery({ ...validBrewery, source: 'llm_extracted' })).toThrow()
+    expect(() => parseBrewery({ ...validBrewery, source: 'llm_inferred' })).toThrow()
+    expect(() => parseBrewery({ ...validBrewery, source: 'cross_beverage_map' })).toThrow()
+    expect(() => parseBrewery({ ...validBrewery, source: 'manual_curation' })).toThrow()
+  })
+
+  it('accepts each source within the legitimate Brewery subset', () => {
+    for (const source of ['sakenowa', 'sakenowa_inferred', 'user_corrected'] as const) {
+      expect(parseBrewery({ ...validBrewery, source })).toMatchObject({ source })
+    }
   })
 
   it('rejects a non-positive breweryId', () => {

@@ -36,6 +36,19 @@ describe('Ranking schema', () => {
     expect(() => parseRanking({ ...validOverall, source: 'mystery_provider' })).toThrow()
   })
 
+  it('rejects sources that are valid in the wide taxonomy but illegitimate for Ranking', () => {
+    expect(() => parseRanking({ ...validOverall, source: 'llm_extracted' })).toThrow()
+    expect(() => parseRanking({ ...validOverall, source: 'llm_inferred' })).toThrow()
+    expect(() => parseRanking({ ...validOverall, source: 'cross_beverage_map' })).toThrow()
+    expect(() => parseRanking({ ...validOverall, source: 'manual_curation' })).toThrow()
+  })
+
+  it('accepts each source within the legitimate Ranking subset', () => {
+    for (const source of ['sakenowa', 'sakenowa_inferred', 'user_corrected'] as const) {
+      expect(parseRanking({ ...validOverall, source })).toMatchObject({ source })
+    }
+  })
+
   it('rejects an unknown kind', () => {
     expect(() => parseRanking({ ...validOverall, kind: 'historical' })).toThrow()
   })

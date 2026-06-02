@@ -26,6 +26,26 @@ describe('Area schema', () => {
     expect(() => parseArea({ ...validArea, source: 'mystery_provider' })).toThrow()
   })
 
+  it('rejects sources that are valid in the wide taxonomy but illegitimate for Area', () => {
+    // Area legitimately accepts `manual_curation` (areaId 0 sentinel for
+    // foreign producers — see schema comment + CONTEXT.md). LLM kinds
+    // and the cross-beverage map remain category errors.
+    expect(() => parseArea({ ...validArea, source: 'llm_extracted' })).toThrow()
+    expect(() => parseArea({ ...validArea, source: 'llm_inferred' })).toThrow()
+    expect(() => parseArea({ ...validArea, source: 'cross_beverage_map' })).toThrow()
+  })
+
+  it('accepts each source within the legitimate Area subset', () => {
+    for (const source of [
+      'sakenowa',
+      'sakenowa_inferred',
+      'user_corrected',
+      'manual_curation',
+    ] as const) {
+      expect(parseArea({ ...validArea, source })).toMatchObject({ source })
+    }
+  })
+
   it('accepts areaId 0 (Sakenowa foreign-producer sentinel) and rejects negatives', () => {
     expect(parseArea({ ...validArea, areaId: 0 })).toMatchObject({ areaId: 0 })
     expect(() => parseArea({ ...validArea, areaId: -1 })).toThrow()

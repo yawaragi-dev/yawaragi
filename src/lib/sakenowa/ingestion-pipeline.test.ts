@@ -129,7 +129,7 @@ describe('computeContentHash', () => {
     expect(computeContentHash({ ...base, name: 'Different' })).not.toBe(h0)
     expect(computeContentHash({ ...base, nameKanji: '別' })).not.toBe(h0)
     expect(computeContentHash({ ...base, breweryId: 50 })).not.toBe(h0)
-    expect(computeContentHash({ ...base, source: 'manual_curation' })).not.toBe(h0)
+    expect(computeContentHash({ ...base, source: 'user_corrected' })).not.toBe(h0)
     expect(computeContentHash({ ...base, confidence: 0.5 })).not.toBe(h0)
   })
 
@@ -357,7 +357,7 @@ describe('computeBreweryContentHash', () => {
     expect(computeBreweryContentHash({ ...base, name: 'Different' })).not.toBe(h0)
     expect(computeBreweryContentHash({ ...base, nameKanji: '別' })).not.toBe(h0)
     expect(computeBreweryContentHash({ ...base, areaId: 21 })).not.toBe(h0)
-    expect(computeBreweryContentHash({ ...base, source: 'manual_curation' })).not.toBe(h0)
+    expect(computeBreweryContentHash({ ...base, source: 'user_corrected' })).not.toBe(h0)
     expect(computeBreweryContentHash({ ...base, confidence: 0.5 })).not.toBe(h0)
   })
 
@@ -734,7 +734,7 @@ describe('computeFlavorChartContentHash', () => {
     expect(computeFlavorChartContentHash({ ...base, f1: 0.28 })).not.toBe(h0)
     expect(computeFlavorChartContentHash({ ...base, f6: 0.5 })).not.toBe(h0)
     expect(computeFlavorChartContentHash({ ...base, brandId: 3 })).not.toBe(h0)
-    expect(computeFlavorChartContentHash({ ...base, source: 'manual_curation' })).not.toBe(h0)
+    expect(computeFlavorChartContentHash({ ...base, source: 'user_corrected' })).not.toBe(h0)
     expect(computeFlavorChartContentHash({ ...base, confidence: 0.5 })).not.toBe(h0)
   })
 })
