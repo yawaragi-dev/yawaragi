@@ -12,6 +12,7 @@ import {
   ingestFlavorCharts,
   ingestFlavorTags,
   ingestRankings,
+  ingestSakenowaTable,
   recordIngestionRun,
   sakenowaAreaToArea,
   sakenowaBrandToBrand,
@@ -24,8 +25,10 @@ import {
   type FlavorChartIngestionDeps,
   type FlavorTagIngestionDeps,
   type IngestionDeps,
+  type ProgressCallback,
   type RankingIngestionDeps,
 } from './ingestion-pipeline'
+import type { BatchProgress } from './db'
 import type { Area } from '../schemas/area'
 import type { Brand } from '../schemas/brand'
 import type { Brewery } from '../schemas/brewery'
@@ -1116,5 +1119,212 @@ describe('recordIngestionRun', () => {
       errorMessage: 'Sakenowa /brands returned 500',
     })
     expect(db.rows[0]).toMatchObject({ status: 'failed', errorMessage: 'Sakenowa /brands returned 500' })
+  })
+})
+
+// ============================================================
+// ingestSakenowaTable — the extracted generic orchestration.
+//
+// The per-table `ingestX` functions all share the exact same shape:
+// fetch → open tx → read existing hashes → classify each row as
+// added / updated / unchanged → batched upsert → wrap errors. The
+// helper concentrates that loop at one seam so each per-table call
+// reduces to a config + a mapping function.
+//
+// These tests exercise the helper with a deliberately minimal
+// in-memory fake to prove the orchestration without depending on
+// any concrete schema/DB shape.
+// ============================================================
+
+describe('ingestSakenowaTable', () => {
+  interface FakePayload {
+    id: number
+    name: string
+  }
+  interface FakeRecord {
+    key: number
+    name: string
+  }
+  interface FakeUpsertRow {
+    record: FakeRecord
+    contentHash: string
+  }
+  class FakeGenericDB {
+    rows = new Map<number, { record: FakeRecord; hash: string }>()
+    upsertedRowCount = 0
+    batchCalls = 0
+    txOpened = 0
+    txCompleted = 0
+
+    async getHashes(): Promise<Map<number, string>> {
+      return new Map(Array.from(this.rows.entries()).map(([k, v]) => [k, v.hash]))
+    }
+
+    async upsert(rows: readonly FakeUpsertRow[], onChunk?: BatchProgress): Promise<void> {
+      if (rows.length === 0) return
+      this.batchCalls++
+      for (const { record, contentHash } of rows) {
+        this.upsertedRowCount++
+        this.rows.set(record.key, { record, hash: contentHash })
+      }
+      onChunk?.(rows.length)
+    }
+
+    async transaction<T>(fn: (tx: FakeGenericDB) => Promise<T>): Promise<T> {
+      this.txOpened++
+      const result = await fn(this)
+      this.txCompleted++
+      return result
+    }
+  }
+
+  // A trivially-distinct hash so we can assert classification flips
+  // without invoking sha256.
+  const fakeHash = (r: FakeRecord) => `${r.key}:${r.name}`
+
+  const makeConfig = (
+    db: FakeGenericDB,
+    payload: FakePayload[] | Error,
+    extras: { onProgress?: ProgressCallback } = {},
+  ) => ({
+    label: 'fake',
+    db,
+    fetch: async () => {
+      if (payload instanceof Error) throw payload
+      return payload
+    },
+    toRecord: (p: FakePayload): FakeRecord => ({ key: p.id, name: p.name }),
+    hashOf: fakeHash,
+    keyOf: (r: FakeRecord) => r.key,
+    toUpsertRow: (record: FakeRecord, contentHash: string): FakeUpsertRow => ({
+      record,
+      contentHash,
+    }),
+    getExistingHashes: (tx: FakeGenericDB) => tx.getHashes(),
+    upsertBatch: (tx: FakeGenericDB, rows: FakeUpsertRow[], onChunk?: BatchProgress) =>
+      tx.upsert(rows, onChunk),
+    onProgress: extras.onProgress,
+  })
+
+  it('classifies every row as "added" on an empty DB', async () => {
+    const db = new FakeGenericDB()
+    const summary = await ingestSakenowaTable(
+      makeConfig(db, [
+        { id: 1, name: 'a' },
+        { id: 2, name: 'b' },
+      ]),
+    )
+    expect(summary).toEqual({ added: 2, updated: 0, unchanged: 0, total: 2 })
+    expect(db.upsertedRowCount).toBe(2)
+  })
+
+  it('is idempotent — a re-run on identical input writes zero rows', async () => {
+    const db = new FakeGenericDB()
+    const payload = [
+      { id: 1, name: 'a' },
+      { id: 2, name: 'b' },
+    ]
+    await ingestSakenowaTable(makeConfig(db, payload))
+    db.upsertedRowCount = 0
+
+    const summary = await ingestSakenowaTable(makeConfig(db, payload))
+
+    expect(summary).toEqual({ added: 0, updated: 0, unchanged: 2, total: 2 })
+    expect(db.upsertedRowCount).toBe(0)
+  })
+
+  it('classifies a content-hash mismatch as "updated"', async () => {
+    const db = new FakeGenericDB()
+    await ingestSakenowaTable(makeConfig(db, [{ id: 1, name: 'a' }]))
+    db.upsertedRowCount = 0
+
+    const summary = await ingestSakenowaTable(makeConfig(db, [{ id: 1, name: 'a-renamed' }]))
+
+    expect(summary).toEqual({ added: 0, updated: 1, unchanged: 0, total: 1 })
+    expect(db.upsertedRowCount).toBe(1)
+  })
+
+  it('mixes added + updated + unchanged in a single run', async () => {
+    const db = new FakeGenericDB()
+    await ingestSakenowaTable(
+      makeConfig(db, [
+        { id: 1, name: 'a' },
+        { id: 2, name: 'b' },
+      ]),
+    )
+    db.upsertedRowCount = 0
+
+    const summary = await ingestSakenowaTable(
+      makeConfig(db, [
+        { id: 1, name: 'a' },         // unchanged
+        { id: 2, name: 'b-renamed' }, // updated
+        { id: 3, name: 'c' },         // added
+      ]),
+    )
+    expect(summary).toEqual({ added: 1, updated: 1, unchanged: 1, total: 3 })
+    expect(db.upsertedRowCount).toBe(2)
+  })
+
+  it('propagates client errors without opening a transaction', async () => {
+    const db = new FakeGenericDB()
+    await expect(
+      ingestSakenowaTable(makeConfig(db, new Error('Sakenowa offline'))),
+    ).rejects.toThrow('Sakenowa offline')
+    expect(db.txOpened).toBe(0)
+    expect(db.upsertedRowCount).toBe(0)
+  })
+
+  it('always runs inside a transaction', async () => {
+    const db = new FakeGenericDB()
+    await ingestSakenowaTable(makeConfig(db, [{ id: 1, name: 'a' }]))
+    expect(db.txOpened).toBe(1)
+    expect(db.txCompleted).toBe(1)
+  })
+
+  it('wraps batch upsert errors with the row count, counts, and PG detail (label-tagged)', async () => {
+    const db = new FakeGenericDB()
+    db.upsert = async () => {
+      const err = new Error('insert violates fk') as Error & {
+        detail?: string
+        code?: string
+      }
+      err.detail = 'Key (parent_id)=(42) is not present in table "parents"'
+      err.code = '23503'
+      throw err
+    }
+    const promise = ingestSakenowaTable(makeConfig(db, [{ id: 1, name: 'a' }]))
+    await expect(promise).rejects.toThrow(/Failed to upsert 1 fake row/)
+    await expect(promise).rejects.toThrow(/code=23503/)
+    await expect(promise).rejects.toThrow(/Key \(parent_id\)=\(42\)/)
+  })
+
+  it('reports cumulative (rowsWritten, totalToWrite) to onProgress per write chunk', async () => {
+    const db = new FakeGenericDB()
+    const calls: Array<[number, number]> = []
+    await ingestSakenowaTable(
+      makeConfig(
+        db,
+        [
+          { id: 1, name: 'a' },
+          { id: 2, name: 'b' },
+          { id: 3, name: 'c' },
+        ],
+        { onProgress: (current, total) => calls.push([current, total]) },
+      ),
+    )
+    expect(calls).toEqual([[3, 3]])
+  })
+
+  it('does not invoke onProgress on a fully-idempotent re-run', async () => {
+    const db = new FakeGenericDB()
+    const payload = [{ id: 1, name: 'a' }]
+    await ingestSakenowaTable(makeConfig(db, payload))
+    const calls: Array<[number, number]> = []
+
+    const summary = await ingestSakenowaTable(
+      makeConfig(db, payload, { onProgress: (c, t) => calls.push([c, t]) }),
+    )
+    expect(summary.unchanged).toBe(1)
+    expect(calls).toEqual([])
   })
 })

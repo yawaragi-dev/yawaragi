@@ -29,6 +29,7 @@ import type {
 import type {
   AreasDB,
   AreaUpsert,
+  BatchProgress,
   BrandsDB,
   BrandUpsert,
   BreweriesDB,
@@ -107,53 +108,132 @@ export function computeContentHash(brand: Brand): string {
   return createHash('sha256').update(canonical).digest('hex')
 }
 
-export async function ingestBrands(deps: IngestionDeps): Promise<RunSummary> {
-  const sakenowaBrands = await deps.client.getBrands()
+/**
+ * One DB shape the helper can drive: it must expose its own
+ * `transaction(fn)` so the helper stays inside one ACID unit. The
+ * existing per-table interfaces (BrandsDB, BreweriesDB, etc.) all
+ * satisfy this; the constraint is enforced structurally below.
+ */
+interface TxDB<Self> {
+  transaction<T>(fn: (tx: Self) => Promise<T>): Promise<T>
+}
 
-  return deps.db.transaction(async (tx) => {
-    const existing = await tx.getExistingBrandHashes()
+/**
+ * Generic config for one Sakenowa → Postgres upsert table.
+ *
+ * - `TPayload`  : the raw Sakenowa shape (e.g. `SakenowaBrand`).
+ * - `TRecord`   : the project-internal schema shape (e.g. `Brand`).
+ * - `TDB`       : the per-table DB interface (e.g. `BrandsDB`).
+ * - `TUpsertRow`: the per-table upsert tuple (e.g. `BrandUpsert`).
+ *
+ * The split between `toRecord` and `toUpsertRow` keeps the public
+ * `sakenowa*To*` mappers — which other code uses on their own — out
+ * of the helper's bookkeeping. The helper computes `contentHash`
+ * exactly once and hands it back through `toUpsertRow`.
+ */
+export interface IngestTableConfig<TPayload, TRecord, TDB extends TxDB<TDB>, TUpsertRow> {
+  /** Surfaced inside the wrapping error message; e.g. `"brand"`. */
+  label: string
+  db: TDB
+  fetch: () => Promise<TPayload[]>
+  toRecord: (payload: TPayload) => TRecord
+  hashOf: (record: TRecord) => string
+  /** Primary key used to look up the existing hash in the map. */
+  keyOf: (record: TRecord) => number
+  toUpsertRow: (record: TRecord, contentHash: string) => TUpsertRow
+  /** Per-table read: e.g. `(tx) => tx.getExistingBrandHashes()`. */
+  getExistingHashes: (tx: TDB) => Promise<Map<number, string>>
+  /** Per-table write: e.g. `(tx, rows, cb) => tx.upsertBrandsBatch(rows, cb)`. */
+  upsertBatch: (tx: TDB, rows: TUpsertRow[], onChunk?: BatchProgress) => Promise<void>
+  onProgress?: ProgressCallback
+}
+
+/**
+ * Generic orchestration shared by every per-table Sakenowa upsert
+ * (`ingestBrands`, `ingestBreweries`, `ingestFlavorCharts`,
+ * `ingestAreas`, `ingestFlavorTags`).
+ *
+ * Sequence: fetch → open tx → read existing hashes → classify each
+ * row as added / updated / unchanged → batched upsert → wrap PG
+ * errors with row counts + tagged label. Idempotent: a re-run on
+ * unchanged source data writes zero rows and skips `onProgress`.
+ *
+ * The mapping functions (`toRecord` / `toUpsertRow` / `hashOf` /
+ * `keyOf`) and the per-table DB calls stay caller-supplied; the
+ * loop and error-shape are what the helper concentrates.
+ */
+export async function ingestSakenowaTable<
+  TPayload,
+  TRecord,
+  TDB extends TxDB<TDB>,
+  TUpsertRow,
+>(config: IngestTableConfig<TPayload, TRecord, TDB, TUpsertRow>): Promise<RunSummary> {
+  const payloads = await config.fetch()
+
+  return config.db.transaction(async (tx) => {
+    const existing = await config.getExistingHashes(tx)
     let added = 0
     let updated = 0
     let unchanged = 0
-    const toUpsert: BrandUpsert[] = []
+    const toUpsert: TUpsertRow[] = []
 
-    const total = sakenowaBrands.length
+    const total = payloads.length
     for (let i = 0; i < total; i++) {
-      const brand = sakenowaBrandToBrand(sakenowaBrands[i])
-      const contentHash = computeContentHash(brand)
-      const existingHash = existing.get(brand.brandId)
+      const record = config.toRecord(payloads[i])
+      const contentHash = config.hashOf(record)
+      const existingHash = existing.get(config.keyOf(record))
 
       if (existingHash === undefined) {
-        toUpsert.push({ brand, contentHash })
+        toUpsert.push(config.toUpsertRow(record, contentHash))
         added++
       } else if (existingHash === contentHash) {
         unchanged++
       } else {
-        toUpsert.push({ brand, contentHash })
+        toUpsert.push(config.toUpsertRow(record, contentHash))
         updated++
       }
     }
 
     let written = 0
     try {
-      await tx.upsertBrandsBatch(toUpsert, (rowsThisChunk) => {
+      await config.upsertBatch(tx, toUpsert, (rowsThisChunk) => {
         written += rowsThisChunk
-        deps.onProgress?.(written, toUpsert.length)
+        config.onProgress?.(written, toUpsert.length)
       })
     } catch (err) {
-      // The batch failed; we don't know exactly which row triggered it,
-      // but PG's error.detail typically carries the offending value
-      // (e.g. "Key (brewery_id)=(123) is not present in table breweries"
-      // for FK violations). We forward that detail; if the operator
-      // needs more, an env-gated per-row fallback could re-run the
-      // batch one-at-a-time, but in practice the PG detail is enough.
+      // The batch failed; we don't know exactly which row triggered
+      // it, but PG's error.detail typically carries the offending
+      // value (e.g. "Key (brewery_id)=(123) is not present in table
+      // breweries" for FK violations). `formatPgError` forwards that
+      // detail. If the operator needs more, an env-gated per-row
+      // fallback could re-run one-at-a-time, but in practice the PG
+      // detail is enough.
       throw new Error(
-        `Failed to upsert ${toUpsert.length} brand row(s) (added=${added}, updated=${updated}): ${formatPgError(err)}`,
+        `Failed to upsert ${toUpsert.length} ${config.label} row(s) (added=${added}, updated=${updated}): ${formatPgError(err)}`,
         { cause: err },
       )
     }
 
     return { added, updated, unchanged, total }
+  })
+}
+
+export async function ingestBrands(deps: IngestionDeps): Promise<RunSummary> {
+  return ingestSakenowaTable({
+    label: 'brand',
+    db: deps.db,
+    // Bound through the closure so an object-method client that relies
+    // on `this` keeps working — `deps.client.getBrands` detached loses
+    // its receiver. Anonymous-arrow clients (tests, the driver) don't
+    // care, but the closure is harmless for them.
+    fetch: () => deps.client.getBrands(),
+    toRecord: sakenowaBrandToBrand,
+    hashOf: computeContentHash,
+    keyOf: (brand) => brand.brandId,
+    toUpsertRow: (brand, contentHash): BrandUpsert => ({ brand, contentHash }),
+    getExistingHashes: (tx) => tx.getExistingBrandHashes(),
+    upsertBatch: (tx, rows, onChunk) => tx.upsertBrandsBatch(rows, onChunk),
+    onProgress: deps.onProgress,
   })
 }
 
@@ -180,46 +260,17 @@ export function computeBreweryContentHash(brewery: Brewery): string {
 }
 
 export async function ingestBreweries(deps: BreweryIngestionDeps): Promise<RunSummary> {
-  const sakenowaBreweries = await deps.client.getBreweries()
-
-  return deps.db.transaction(async (tx) => {
-    const existing = await tx.getExistingBreweryHashes()
-    let added = 0
-    let updated = 0
-    let unchanged = 0
-    const toUpsert: BreweryUpsert[] = []
-
-    const total = sakenowaBreweries.length
-    for (let i = 0; i < total; i++) {
-      const brewery = sakenowaBreweryToBrewery(sakenowaBreweries[i])
-      const contentHash = computeBreweryContentHash(brewery)
-      const existingHash = existing.get(brewery.breweryId)
-
-      if (existingHash === undefined) {
-        toUpsert.push({ brewery, contentHash })
-        added++
-      } else if (existingHash === contentHash) {
-        unchanged++
-      } else {
-        toUpsert.push({ brewery, contentHash })
-        updated++
-      }
-    }
-
-    let written = 0
-    try {
-      await tx.upsertBreweriesBatch(toUpsert, (rowsThisChunk) => {
-        written += rowsThisChunk
-        deps.onProgress?.(written, toUpsert.length)
-      })
-    } catch (err) {
-      throw new Error(
-        `Failed to upsert ${toUpsert.length} brewery row(s) (added=${added}, updated=${updated}): ${formatPgError(err)}`,
-        { cause: err },
-      )
-    }
-
-    return { added, updated, unchanged, total }
+  return ingestSakenowaTable({
+    label: 'brewery',
+    db: deps.db,
+    fetch: () => deps.client.getBreweries(),
+    toRecord: sakenowaBreweryToBrewery,
+    hashOf: computeBreweryContentHash,
+    keyOf: (brewery) => brewery.breweryId,
+    toUpsertRow: (brewery, contentHash): BreweryUpsert => ({ brewery, contentHash }),
+    getExistingHashes: (tx) => tx.getExistingBreweryHashes(),
+    upsertBatch: (tx, rows, onChunk) => tx.upsertBreweriesBatch(rows, onChunk),
+    onProgress: deps.onProgress,
   })
 }
 
@@ -258,46 +309,17 @@ export function computeFlavorChartContentHash(chart: FlavorChart): string {
 export async function ingestFlavorCharts(
   deps: FlavorChartIngestionDeps,
 ): Promise<RunSummary> {
-  const sakenowaCharts = await deps.client.getFlavorCharts()
-
-  return deps.db.transaction(async (tx) => {
-    const existing = await tx.getExistingFlavorChartHashes()
-    let added = 0
-    let updated = 0
-    let unchanged = 0
-    const toUpsert: FlavorChartUpsert[] = []
-
-    const total = sakenowaCharts.length
-    for (let i = 0; i < total; i++) {
-      const flavorChart = sakenowaFlavorChartToFlavorChart(sakenowaCharts[i])
-      const contentHash = computeFlavorChartContentHash(flavorChart)
-      const existingHash = existing.get(flavorChart.brandId)
-
-      if (existingHash === undefined) {
-        toUpsert.push({ flavorChart, contentHash })
-        added++
-      } else if (existingHash === contentHash) {
-        unchanged++
-      } else {
-        toUpsert.push({ flavorChart, contentHash })
-        updated++
-      }
-    }
-
-    let written = 0
-    try {
-      await tx.upsertFlavorChartsBatch(toUpsert, (rowsThisChunk) => {
-        written += rowsThisChunk
-        deps.onProgress?.(written, toUpsert.length)
-      })
-    } catch (err) {
-      throw new Error(
-        `Failed to upsert ${toUpsert.length} flavor_chart row(s) (added=${added}, updated=${updated}): ${formatPgError(err)}`,
-        { cause: err },
-      )
-    }
-
-    return { added, updated, unchanged, total }
+  return ingestSakenowaTable({
+    label: 'flavor_chart',
+    db: deps.db,
+    fetch: () => deps.client.getFlavorCharts(),
+    toRecord: sakenowaFlavorChartToFlavorChart,
+    hashOf: computeFlavorChartContentHash,
+    keyOf: (flavorChart) => flavorChart.brandId,
+    toUpsertRow: (flavorChart, contentHash): FlavorChartUpsert => ({ flavorChart, contentHash }),
+    getExistingHashes: (tx) => tx.getExistingFlavorChartHashes(),
+    upsertBatch: (tx, rows, onChunk) => tx.upsertFlavorChartsBatch(rows, onChunk),
+    onProgress: deps.onProgress,
   })
 }
 
@@ -328,46 +350,17 @@ export function computeAreaContentHash(area: Area): string {
 }
 
 export async function ingestAreas(deps: AreaIngestionDeps): Promise<RunSummary> {
-  const sakenowaAreas = await deps.client.getAreas()
-
-  return deps.db.transaction(async (tx) => {
-    const existing = await tx.getExistingAreaHashes()
-    let added = 0
-    let updated = 0
-    let unchanged = 0
-    const toUpsert: AreaUpsert[] = []
-
-    const total = sakenowaAreas.length
-    for (let i = 0; i < total; i++) {
-      const area = sakenowaAreaToArea(sakenowaAreas[i])
-      const contentHash = computeAreaContentHash(area)
-      const existingHash = existing.get(area.areaId)
-
-      if (existingHash === undefined) {
-        toUpsert.push({ area, contentHash })
-        added++
-      } else if (existingHash === contentHash) {
-        unchanged++
-      } else {
-        toUpsert.push({ area, contentHash })
-        updated++
-      }
-    }
-
-    let written = 0
-    try {
-      await tx.upsertAreasBatch(toUpsert, (rowsThisChunk) => {
-        written += rowsThisChunk
-        deps.onProgress?.(written, toUpsert.length)
-      })
-    } catch (err) {
-      throw new Error(
-        `Failed to upsert ${toUpsert.length} area row(s) (added=${added}, updated=${updated}): ${formatPgError(err)}`,
-        { cause: err },
-      )
-    }
-
-    return { added, updated, unchanged, total }
+  return ingestSakenowaTable({
+    label: 'area',
+    db: deps.db,
+    fetch: () => deps.client.getAreas(),
+    toRecord: sakenowaAreaToArea,
+    hashOf: computeAreaContentHash,
+    keyOf: (area) => area.areaId,
+    toUpsertRow: (area, contentHash): AreaUpsert => ({ area, contentHash }),
+    getExistingHashes: (tx) => tx.getExistingAreaHashes(),
+    upsertBatch: (tx, rows, onChunk) => tx.upsertAreasBatch(rows, onChunk),
+    onProgress: deps.onProgress,
   })
 }
 
@@ -398,46 +391,17 @@ export function computeFlavorTagContentHash(tag: FlavorTag): string {
 }
 
 export async function ingestFlavorTags(deps: FlavorTagIngestionDeps): Promise<RunSummary> {
-  const sakenowaTags = await deps.client.getFlavorTags()
-
-  return deps.db.transaction(async (tx) => {
-    const existing = await tx.getExistingFlavorTagHashes()
-    let added = 0
-    let updated = 0
-    let unchanged = 0
-    const toUpsert: FlavorTagUpsert[] = []
-
-    const total = sakenowaTags.length
-    for (let i = 0; i < total; i++) {
-      const tag = sakenowaFlavorTagToFlavorTag(sakenowaTags[i])
-      const contentHash = computeFlavorTagContentHash(tag)
-      const existingHash = existing.get(tag.tagId)
-
-      if (existingHash === undefined) {
-        toUpsert.push({ tag, contentHash })
-        added++
-      } else if (existingHash === contentHash) {
-        unchanged++
-      } else {
-        toUpsert.push({ tag, contentHash })
-        updated++
-      }
-    }
-
-    let written = 0
-    try {
-      await tx.upsertFlavorTagsBatch(toUpsert, (rowsThisChunk) => {
-        written += rowsThisChunk
-        deps.onProgress?.(written, toUpsert.length)
-      })
-    } catch (err) {
-      throw new Error(
-        `Failed to upsert ${toUpsert.length} flavor_tag row(s) (added=${added}, updated=${updated}): ${formatPgError(err)}`,
-        { cause: err },
-      )
-    }
-
-    return { added, updated, unchanged, total }
+  return ingestSakenowaTable({
+    label: 'flavor_tag',
+    db: deps.db,
+    fetch: () => deps.client.getFlavorTags(),
+    toRecord: sakenowaFlavorTagToFlavorTag,
+    hashOf: computeFlavorTagContentHash,
+    keyOf: (tag) => tag.tagId,
+    toUpsertRow: (tag, contentHash): FlavorTagUpsert => ({ tag, contentHash }),
+    getExistingHashes: (tx) => tx.getExistingFlavorTagHashes(),
+    upsertBatch: (tx, rows, onChunk) => tx.upsertFlavorTagsBatch(rows, onChunk),
+    onProgress: deps.onProgress,
   })
 }
 
