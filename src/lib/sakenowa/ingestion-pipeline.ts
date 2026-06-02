@@ -222,10 +222,8 @@ export async function ingestBrands(deps: IngestionDeps): Promise<RunSummary> {
   return ingestSakenowaTable({
     label: 'brand',
     db: deps.db,
-    // Bound through the closure so an object-method client that relies
-    // on `this` keeps working — `deps.client.getBrands` detached loses
-    // its receiver. Anonymous-arrow clients (tests, the driver) don't
-    // care, but the closure is harmless for them.
+    // Closure-wrapped so a method-style client keeps its `this` binding —
+    // passing `deps.client.getBrands` bare would detach the receiver.
     fetch: () => deps.client.getBrands(),
     toRecord: sakenowaBrandToBrand,
     hashOf: computeContentHash,
