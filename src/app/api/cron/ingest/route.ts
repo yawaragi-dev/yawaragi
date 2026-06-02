@@ -22,7 +22,12 @@ import { driveIngest, type IngestDriverResult } from '@/lib/sakenowa/ingest-driv
 import { authorizeCronRequest } from '@/lib/cron/authorize'
 
 /**
- * `POST /api/cron/ingest` — runs the full Sakenowa ingestion pipeline.
+ * `/api/cron/ingest` — runs the full Sakenowa ingestion pipeline.
+ *
+ * Methods: `GET` for Vercel Cron (which always sends GET); `POST` for
+ * manual smoke and the local CLI (semantically correct since the route
+ * mutates state). Both export the same handler — see `GET = POST` below
+ * for the 2026-06-02 incident this guards against.
  *
  * Auth: `Authorization: Bearer <CRON_SECRET>`. Header is checked via a
  * constant-time comparison (see `authorizeCronRequest`); failure returns
@@ -116,7 +121,7 @@ export function createProductionDeps(): CronRouteDeps {
     expectedSecret: env.CRON_SECRET,
     buildAndDrive: async () => {
       if (!env.DATABASE_URL) {
-        throw new Error('DATABASE_URL is not set — POST /api/cron/ingest cannot run.')
+        throw new Error('DATABASE_URL is not set — /api/cron/ingest cannot run.')
       }
       const dataPool = new Pool({ connectionString: env.DATABASE_URL })
       const telemetryPool = new Pool({ connectionString: env.DATABASE_URL })
@@ -153,3 +158,9 @@ export function createProductionDeps(): CronRouteDeps {
 export async function POST(request: Request): Promise<Response> {
   return handleCronIngestRequest(request, createProductionDeps)
 }
+
+// Vercel Cron invokes scheduled endpoints with GET, not POST. Without this
+// alias every scheduled fire 405s and no `ingestion_runs` row is written
+// (auth + telemetry never run). POST stays exported so manual smoke and
+// the local CLI keep their semantically-correct mutating method.
+export const GET = POST

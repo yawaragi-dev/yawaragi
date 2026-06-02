@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { handleCronIngestRequest, type CronRouteDeps } from './route'
+import { GET, handleCronIngestRequest, POST, type CronRouteDeps } from './route'
 import { driveIngest } from '@/lib/sakenowa/ingest-driver'
 import type {
   AreasDB,
@@ -101,7 +101,7 @@ describe('POST /api/cron/ingest unexpected throw', () => {
     // route mustn't return an unhandled rejection (which Next would
     // turn into an opaque 500 with no JSON body).
     const buildAndDrive = vi.fn(async () => {
-      throw new Error('DATABASE_URL is not set — POST /api/cron/ingest cannot run.')
+      throw new Error('DATABASE_URL is not set — /api/cron/ingest cannot run.')
     })
     const deps: CronRouteDeps = { expectedSecret: EXPECTED_SECRET, buildAndDrive }
 
@@ -112,7 +112,7 @@ describe('POST /api/cron/ingest unexpected throw', () => {
 
     expect(response.status).toBe(500)
     expect(await response.json()).toEqual({
-      error: 'DATABASE_URL is not set — POST /api/cron/ingest cannot run.',
+      error: 'DATABASE_URL is not set — /api/cron/ingest cannot run.',
       status: 'failed',
     })
   })
@@ -177,6 +177,16 @@ const stubFlavorChartsDB = stubBreweriesDB as unknown as FlavorChartsDB
 const stubAreasDB = stubBreweriesDB as unknown as AreasDB
 const stubFlavorTagsDB = stubBreweriesDB as unknown as FlavorTagsDB
 const stubRankingsDB = stubBreweriesDB as unknown as RankingsDB
+
+describe('GET /api/cron/ingest', () => {
+  it('GET is the same handler as POST so Vercel Cron (which sends GET) is accepted', () => {
+    // The bug class this guards: Vercel Cron always invokes with GET. If
+    // someone refactors POST and forgets to keep the GET alias in sync,
+    // every scheduled fire silently 405s and no `ingestion_runs` row is
+    // written — exactly the 2026-06-02 failure mode.
+    expect(GET).toBe(POST)
+  })
+})
 
 describe('POST /api/cron/ingest pipeline failure', () => {
   it('returns 500 with the error body AND still writes an ingestion_runs row with status="failed"', async () => {
