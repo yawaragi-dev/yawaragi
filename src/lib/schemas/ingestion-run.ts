@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { WithProvenance } from './with-provenance'
+import { withProvenance } from './with-provenance'
 
 // Per-table counts shape. `total` is the only universally-meaningful field
 // (it always tracks the source row count); add/update/unchanged apply to
@@ -27,13 +27,14 @@ export const IngestionRunStatus = z.enum(['success', 'failed'])
 export type IngestionRunStatus = z.infer<typeof IngestionRunStatus>
 
 // Telemetry, not user-facing — but the project's "every record carries
-// provenance" rule still applies. source='manual_curation' because the
-// row is hand-stamped by the ingestion script, not derived from Sakenowa
-// content.
+// provenance" rule still applies. Source is pinned to the single literal
+// `manual_curation` because the row is hand-stamped by the ingestion
+// script, not derived from Sakenowa content. The DB DEFAULT in
+// 0008_ingestion_runs.sql matches this single value.
 //
 // The `perTable` shape is the contract #54 (cron route) reads. Keys
 // mirror the ingestion order; add new ones rather than renaming.
-export const IngestionRunSchema = WithProvenance.extend({
+export const IngestionRunSchema = withProvenance(z.literal('manual_curation')).extend({
   runId: z.string().uuid(),
   startedAt: z.string().datetime({ offset: true }),
   finishedAt: z.string().datetime({ offset: true }),

@@ -13,7 +13,7 @@ describe('FlavorTag schema', () => {
   })
 
   it('accepts confidence on the WithProvenance mixin', () => {
-    expect(parseFlavorTag({ ...validTag, source: 'llm_extracted', confidence: 0.4 })).toMatchObject(
+    expect(parseFlavorTag({ ...validTag, source: 'sakenowa_inferred', confidence: 0.4 })).toMatchObject(
       { confidence: 0.4 },
     )
   })
@@ -24,6 +24,19 @@ describe('FlavorTag schema', () => {
 
   it('rejects a tag with an unknown source value', () => {
     expect(() => parseFlavorTag({ ...validTag, source: 'mystery_provider' })).toThrow()
+  })
+
+  it('rejects sources that are valid in the wide taxonomy but illegitimate for FlavorTag', () => {
+    expect(() => parseFlavorTag({ ...validTag, source: 'llm_extracted' })).toThrow()
+    expect(() => parseFlavorTag({ ...validTag, source: 'llm_inferred' })).toThrow()
+    expect(() => parseFlavorTag({ ...validTag, source: 'cross_beverage_map' })).toThrow()
+    expect(() => parseFlavorTag({ ...validTag, source: 'manual_curation' })).toThrow()
+  })
+
+  it('accepts each source within the legitimate FlavorTag subset', () => {
+    for (const source of ['sakenowa', 'sakenowa_inferred', 'user_corrected'] as const) {
+      expect(parseFlavorTag({ ...validTag, source })).toMatchObject({ source })
+    }
   })
 
   it('rejects a non-positive tagId', () => {

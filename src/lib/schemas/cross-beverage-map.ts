@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { WithProvenance } from './with-provenance'
+import { withProvenance } from './with-provenance'
 
 // Phase 2 stub: schema is exported but intentionally unused until Phase 5
 // ships the hand-curated table and UI. PRD #21 ("Out of Scope" → "Cross-beverage
@@ -7,12 +7,12 @@ import { WithProvenance } from './with-provenance'
 //
 // Shape is the minimal record Phase 5 needs: a Western beverage descriptor
 // (e.g. "smoky", "tannic", "hoppy"), the beverage kind, and a target position
-// on the 6-axis flavor chart. WithProvenance contributes the optional
-// `confidence`; `source` is pinned to the literal here to make every
-// CrossBeverageMap row self-identify as heuristic so the UI renders the
-// HeuristicDisclaimer (see CONTEXT.md "CrossBeverageMap").
-export const CrossBeverageMapSchema = WithProvenance.extend({
-  source: z.literal('cross_beverage_map'),
+// on the 6-axis flavor chart. Source is pinned to the single literal via
+// the `withProvenance` factory so every CrossBeverageMap row self-identifies
+// as heuristic and the UI renders the HeuristicDisclaimer (see CONTEXT.md
+// "CrossBeverageMap"). Pinning at the parse seam means no caller — pipeline,
+// chat tool, future ingest — can accidentally widen this.
+export const CrossBeverageMapSchema = withProvenance(z.literal('cross_beverage_map')).extend({
   descriptor: z.string().min(1),
   beverage: z.enum(['whisky', 'wine', 'beer']),
   f1: z.number().min(0).max(1),
