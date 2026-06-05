@@ -14,6 +14,7 @@ import {
   rowToFlavorChart,
   rowToRanking,
 } from './db'
+import { publicQuery } from '../supabase/public-query'
 import { getServerDbPool } from '../supabase/server-client'
 
 const SELECT_BRAND_BY_ID = `
@@ -23,7 +24,7 @@ const SELECT_BRAND_BY_ID = `
 `
 
 export async function lookupBrandFromPool(brandId: number, pool: Pool): Promise<Brand | null> {
-  const { rows } = await pool.query<BrandRow>(SELECT_BRAND_BY_ID, [brandId])
+  const { rows } = await publicQuery<BrandRow>('brands', SELECT_BRAND_BY_ID, [brandId], pool)
   if (rows.length === 0) return null
   return rowToBrand(rows[0])
 }
@@ -50,7 +51,12 @@ export async function lookupBreweryByBrandFromPool(
   brandId: number,
   pool: Pool,
 ): Promise<Brewery | null> {
-  const { rows } = await pool.query<BreweryRow>(SELECT_BREWERY_BY_BRAND_ID, [brandId])
+  const { rows } = await publicQuery<BreweryRow>(
+    'breweries',
+    SELECT_BREWERY_BY_BRAND_ID,
+    [brandId],
+    pool,
+  )
   if (rows.length === 0) return null
   return rowToBrewery(rows[0])
 }
@@ -69,7 +75,12 @@ export async function lookupFlavorChartFromPool(
   brandId: number,
   pool: Pool,
 ): Promise<FlavorChart | null> {
-  const { rows } = await pool.query<FlavorChartRow>(SELECT_FLAVOR_CHART_BY_BRAND_ID, [brandId])
+  const { rows } = await publicQuery<FlavorChartRow>(
+    'flavor_charts',
+    SELECT_FLAVOR_CHART_BY_BRAND_ID,
+    [brandId],
+    pool,
+  )
   if (rows.length === 0) return null
   return rowToFlavorChart(rows[0])
 }
@@ -109,13 +120,23 @@ export async function listRankingFromPool(
 ): Promise<Ranking[]> {
   if (args.limit <= 0) return []
   if (args.kind === 'overall') {
-    const { rows } = await pool.query<RankingRow>(LIST_RANKING_OVERALL, [args.limit])
+    const { rows } = await publicQuery<RankingRow>(
+      'rankings',
+      LIST_RANKING_OVERALL,
+      [args.limit],
+      pool,
+    )
     return rows.map(rowToRanking)
   }
   if (args.areaId === undefined) {
     throw new Error("listRanking: kind='area' requires an areaId")
   }
-  const { rows } = await pool.query<RankingRow>(LIST_RANKING_AREA, [args.areaId, args.limit])
+  const { rows } = await publicQuery<RankingRow>(
+    'rankings',
+    LIST_RANKING_AREA,
+    [args.areaId, args.limit],
+    pool,
+  )
   return rows.map(rowToRanking)
 }
 
