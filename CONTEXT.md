@@ -117,6 +117,10 @@ _Avoid_: Age check, 18+ wall (modal is the canonical UX), Compliance modal
 The GDPR consent surface (bottom-anchored, never modal). Three actions (Accept all / Reject non-essential / Customize) with no pre-ticked boxes and equal-prominence buttons. Persisted in the `yawaragi_consent` cookie with `{necessary, analytics, marketing, version}`. A persistent footer link reopens the banner pre-filled with the current decision (the "withdraw as easily as you gave" rule, Art. 7(3)). Bumping `CURRENT_CONSENT_VERSION` re-prompts everyone. Distinct from the [Age gate](#age-gate).
 _Avoid_: Cookie modal (it's a banner), Consent popup, GDPR popup
 
+**Anonymous session**:
+A signed opaque session identifier issued on a visitor's first call to any rate-limited paid-API surface (label scan, suggestions) and persisted in the `yawaragi_session` cookie (24h sliding TTL). Used together with a transient hashed-IP fallback as the rate-limit key — neither identifier is ever written to Postgres or logs; both live only in Edge KV. The same identifier serves multiple paid-API surfaces under one [lawful basis](#lawful-basis): legitimate interest in cost protection of the vision and LLM APIs. Distinct from the [Age gate](#age-gate) (JMStV; acceptance gate) and the [Cookie banner](#cookie-banner) (GDPR consent surface).
+_Avoid_: Scan cookie, Visitor id, Anonymous user (we do not have users without auth — there are visitors with anonymous sessions)
+
 **Lawful basis**:
 The GDPR Article 6 ground that legitimises a personal-data processing operation. Allowed values for this project: `consent` (Art. 6(1)(a)), `contract` (6(1)(b)), `legitimate_interest` (6(1)(f)), `legal_obligation` (6(1)(c)). Documented per record type in Zod schemas or in [RoPA](#ropa). No processing without a documented basis — see `docs/adr/0009-gdpr-compliance-posture.md`.
 _Avoid_: Legal ground (correct German "Rechtsgrundlage" but lawful basis is the GDPR English term), Justification

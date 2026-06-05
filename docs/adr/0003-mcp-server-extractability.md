@@ -11,3 +11,19 @@ We chose to keep the MCP server as a separate repo published as an npm package �
 - The MCP server repo carries its own Supabase query layer, its own Zod schemas for Sakenowa data, and its own ingest module. There is short-term duplication with the Yawaragi app — both repos define `Sake`, `Brewery`, etc. The duplication is deliberate: making the MCP server self-contained is the whole point. If duplication later becomes painful, the right move is to publish the shared types as a third npm package (`@yawaragi/sake-types` or similar), not to merge the repos.
 - The ingest module (fetch Sakenowa → validate → upsert) lives in the MCP server repo as a CLI (`pnpm ingest` inside `yawaragi-dev/sakenowa-mcp`). Yawaragi's nightly Vercel-cron route handler either invokes that CLI or duplicates the logic; either is acceptable.
 - The chat agent's user-aware queries ("recommend for THIS user") live in Yawaragi under `src/lib/recommend/`. They call Clerk and user-owned Supabase tables directly. The MCP server tool surface remains domain-pure and never sees a user identity.
+
+## Amendment — 2026-06-05: cross-beverage map stays in-app
+
+The original "Sakenowa-mirrored read operations only" rule for the MCP tool surface was implicit in the examples (`search_sakes_by_name`, `find_similar_sakes`, `get_top_ranked`). The 2026-06-05 grill made it explicit by testing it against a concrete adjacent case: the **CrossBeverageMap** (whisky / wine / beer descriptors → 6-axis FlavorProfile). Cross-beverage is domain-pure and has no user identity, so it doesn't violate the rule that excludes user-aware queries — but it isn't Sakenowa-mirrored data either. It's our hand-curated bridge table.
+
+The decision: **cross-beverage stays in the Yawaragi app**, exposed to the chat agent as a local AI SDK tool (`src/lib/ai/tools/map-cross-beverage.ts`), not as an MCP tool. The chat agent mixes local AI SDK tools with MCP-sourced tools in one tool surface; the AI SDK supports this directly.
+
+Reasons:
+
+- **Iteration cadence**: cross-beverage table edits would otherwise require a new `@yawaragi/sakenowa-mcp` release per edit. The table is expected to grow and be tuned frequently in early Phase 4; a release dance for each tuning iteration is overhead with no upside.
+- **OSS identity**: the MCP server's identity as "the open-source Sakenowa wrapper" is sharper without an adjacent hand-curated heuristic bundled in. External consumers (Claude Desktop users, other sake-tech projects) get exactly what's on the label.
+- **Disclaimer co-location**: the `<HeuristicDisclaimer />` rendering requirement (and the existing schema-level `source: 'cross_beverage_map'` provenance enforcement from PR #100) all live in this repo. Splitting the tool definition into the MCP server would split the failure-mode caveat away from where the schema enforces it.
+
+Generalised rule restatement: **the MCP server tool surface is restricted to read operations over the Sakenowa-mirrored schema.** Our own deterministic-but-heuristic mappings (cross-beverage, future cross-domain bridges, hand-curated similarity overrides) stay in the app as local AI SDK tools regardless of whether they happen to be user-aware.
+
+This amendment does not change any other consequence of the original ADR.
