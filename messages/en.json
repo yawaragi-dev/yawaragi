@@ -60,6 +60,22 @@
       "flavorChartLabel": "Flavor Chart (Sakenowa)"
     }
   },
+  "scan": {
+    "entry": {
+      "title": "Scan a label",
+      "intro": "Point your camera at a sake bottle. We read the kanji and surface what's known about the brewery, the rice, and the style."
+    },
+    "form": {
+      "pickLabel": "Open camera or pick a photo",
+      "pending": "Reading the label…",
+      "inputAriaLabel": "Choose a label photo to scan",
+      "matched": "Match found. Opening the sake page…",
+      "noMatch": "We read the label, but the sake isn't in our catalogue yet.",
+      "ambiguous": "Several sakes share this name and brewery. Pick one to continue.",
+      "errorInvalidInput": "We couldn't read that file. Try a clear photo of the bottle label.",
+      "errorDownscale": "Your browser couldn't prepare this image. Try a different photo."
+    }
+  },
   "sakenowaAttribution": {
     "poweredBy": "Powered by Sakenowa",
     "linkLabel": "Visit Sakenowa"

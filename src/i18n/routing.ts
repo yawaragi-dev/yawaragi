@@ -29,6 +29,7 @@ export const routing = defineRouting({
     },
     '/under-18': '/under-18',
     '/sake/[brandId]': '/sake/[brandId]',
+    '/scan': '/scan',
   },
 })
 

@@ -60,6 +60,22 @@
       "flavorChartLabel": "Flavor Chart (Sakenowa)"
     }
   },
+  "scan": {
+    "entry": {
+      "title": "Etikett scannen",
+      "intro": "Richte deine Kamera auf eine Sake-Flasche. Wir lesen die Kanji und zeigen, was über die Brauerei, den Reis und den Stil bekannt ist."
+    },
+    "form": {
+      "pickLabel": "Kamera öffnen oder Foto wählen",
+      "pending": "Etikett wird gelesen…",
+      "inputAriaLabel": "Foto eines Etiketts zum Scannen wählen",
+      "matched": "Treffer gefunden. Die Sake-Seite wird geöffnet…",
+      "noMatch": "Wir haben das Etikett gelesen, der Sake ist aber noch nicht im Katalog.",
+      "ambiguous": "Mehrere Sake teilen sich diesen Namen und diese Brauerei. Wähle einen aus, um fortzufahren.",
+      "errorInvalidInput": "Die Datei konnte nicht gelesen werden. Versuche ein deutliches Foto des Flaschenetiketts.",
+      "errorDownscale": "Dein Browser konnte dieses Bild nicht vorbereiten. Versuche ein anderes Foto."
+    }
+  },
   "sakenowaAttribution": {
     "poweredBy": "Bereitgestellt mit Daten von Sakenowa",
     "linkLabel": "Sakenowa besuchen"

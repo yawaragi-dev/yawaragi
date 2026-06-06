@@ -143,3 +143,78 @@ export async function listRankingFromPool(
 export async function listRanking(args: ListRankingArgs): Promise<Ranking[]> {
   return listRankingFromPool(args, getServerDbPool())
 }
+
+// ---------- findSakeByExtraction ----------
+//
+// Given a `LabelScanExtraction` (kanji name + kanji brewery), resolve it
+// to a Sakenowa-mirrored Sake brand. PRD #105 §"Sakenowa lookup for
+// extraction" — match strategy is exact on `brands.name_kanji` joined to
+// `breweries.name_kanji`. Romaji is deliberately NOT a fallback at this
+// seam: CONTEXT.md "Same-romaji collisions are possible across Breweries
+// and Sakes", and the LLM extraction returns Japanese script.
+//
+// The function returns a tagged union so the caller (the Server Action,
+// the result UI) branches on `kind` rather than on tuple-of-arrays
+// patterns that hide intent.
+//
+// Ambiguous-match seeding is deferred to S4 per the issue spec; the
+// `ambiguous` arm exists from day 1 so the union is closed and the UI
+// renders the placeholder in case Sakenowa produces a duplicate name
+// pair in the wild.
+
+/**
+ * What the lookup matched against. Captures both fields the caller passed
+ * so result-UI copy ("we couldn't find 獺祭 by 旭酒造") doesn't have to
+ * re-thread the extraction back through props.
+ */
+export interface SakeLookupQuery {
+  nameJa: string
+  breweryJa: string
+}
+
+export type FindSakeByExtractionResult =
+  | { kind: 'exact'; sake: Brand }
+  | { kind: 'ambiguous'; candidates: readonly Brand[]; query: SakeLookupQuery }
+  | { kind: 'no_match'; query: SakeLookupQuery }
+
+// Pulls brand rows whose `name_kanji` matches exactly AND whose joined
+// brewery's `name_kanji` matches exactly. LIMIT 2 — we don't need every
+// candidate; we only need to know whether the match is unique (1 row) or
+// ambiguous (2+).
+const SELECT_BRANDS_BY_KANJI_EXTRACTION = `
+  SELECT br.brand_id, br.name, br.name_kanji, br.brewery_id, br.source, br.confidence
+  FROM brands br
+  JOIN breweries b ON b.brewery_id = br.brewery_id
+  WHERE br.name_kanji = $1 AND b.name_kanji = $2
+  ORDER BY br.brand_id
+  LIMIT 2
+`
+
+export async function findSakeByExtractionFromPool(
+  query: SakeLookupQuery,
+  pool: Pool,
+): Promise<FindSakeByExtractionResult> {
+  const { rows } = await publicQuery<BrandRow>(
+    'brands',
+    SELECT_BRANDS_BY_KANJI_EXTRACTION,
+    [query.nameJa, query.breweryJa],
+    pool,
+  )
+  if (rows.length === 0) {
+    return { kind: 'no_match', query }
+  }
+  if (rows.length === 1) {
+    return { kind: 'exact', sake: rowToBrand(rows[0]) }
+  }
+  return {
+    kind: 'ambiguous',
+    candidates: rows.map(rowToBrand),
+    query,
+  }
+}
+
+export async function findSakeByExtraction(
+  query: SakeLookupQuery,
+): Promise<FindSakeByExtractionResult> {
+  return findSakeByExtractionFromPool(query, getServerDbPool())
+}
