@@ -51,3 +51,23 @@ export async function findBrandWithFlavorChartId(): Promise<number | null> {
   `)
   return row?.brand_id ?? null
 }
+
+// The brand_id Phase 3 / S1's hardcoded extraction resolves to: a sake
+// row whose `name_kanji = '獺祭'` joined to a brewery whose
+// `name_kanji = '旭酒造'`. The scan flow always returns Dassai by Asahi
+// Shuzo in S1 (the vision provider is stubbed), so the Playwright spec
+// upload-to-landing-page assertion needs to know that brand's id at
+// runtime. Returns null when Sakenowa hasn't published Dassai under the
+// expected names (so the e2e spec skips rather than failing CI in a
+// data-shape regression).
+export async function findScanS1FixtureBrandId(): Promise<number | null> {
+  const row = await queryOne<{ brand_id: number }>(`
+    SELECT br.brand_id
+    FROM brands br
+    JOIN breweries b ON b.brewery_id = br.brewery_id
+    WHERE br.name_kanji = '獺祭' AND b.name_kanji = '旭酒造'
+    ORDER BY br.brand_id
+    LIMIT 1
+  `)
+  return row?.brand_id ?? null
+}

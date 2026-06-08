@@ -83,6 +83,13 @@ const UNGATED_LOCALE_PATHS: ReadonlySet<string> = new Set([
   '/privacy',
   '/Datenschutz',
   '/under-18',
+  // PRD #105 §"Age-gate interaction" / issue #106: the scan entry CTA is a
+  // discovery affordance and is allowed pre-age-gate. The scan RESULT is
+  // not — the matched-state UI redirects to `/[locale]/sake/[brandId]`,
+  // which IS gated, so an unaccepted visitor still hits the gate landing
+  // before any flavor / brand data renders. Adding `/scan` here applies
+  // only to the entry CTA, not to results.
+  '/scan',
 ])
 
 export function isGatedPath(pathname: string): boolean {

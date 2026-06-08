@@ -15,6 +15,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { Pool } from 'pg'
 import {
+  findSakeByExtractionFromPool,
   listRankingFromPool,
   lookupBrandFromPool,
   lookupBreweryByBrandFromPool,
@@ -312,5 +313,79 @@ describe('listRankingFromPool', () => {
     await seedRankingFixture()
     const rows = await listRankingFromPool({ kind: 'area', limit: 10, areaId: 99 }, pool)
     expect(rows).toEqual([])
+  })
+})
+
+describe('findSakeByExtractionFromPool', () => {
+  // Per the slice spec (#106): exact-match (happy path) and no-match are
+  // covered here. Ambiguous-match seeding is deferred to S4 — the union
+  // arm exists in the implementation today so the result UI compiles
+  // closed, but the seeded duplicate-name fixtures land with S4.
+
+  it('returns {kind: "exact"} with the single matched Brand when both kanji join', async () => {
+    // Mirror the PRD's Dassai happy path: 獺祭 (the sake) by 旭酒造 (the brewery).
+    // PRD #105 §"Sakenowa lookup for extraction" — exact kanji match on
+    // brands.name_kanji × breweries.name_kanji.
+    await seedBrewery({
+      breweryId: 9501,
+      name: 'Asahi Shuzo',
+      nameKanji: '旭酒造',
+      areaId: 35,
+    })
+    await pool.query(
+      `INSERT INTO brands
+         (brand_id, name, name_kanji, brewery_id, source, confidence, content_hash)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [9001, 'Dassai', '獺祭', 9501, 'sakenowa', null, 'hash-dassai-9001'],
+    )
+
+    const result = await findSakeByExtractionFromPool(
+      { nameJa: '獺祭', breweryJa: '旭酒造' },
+      pool,
+    )
+
+    expect(result.kind).toBe('exact')
+    if (result.kind !== 'exact') throw new Error('unreachable; for narrowing only')
+    expect(result.sake).toEqual({
+      brandId: 9001,
+      name: 'Dassai',
+      nameKanji: '獺祭',
+      breweryId: 9501,
+      source: 'sakenowa',
+    })
+  })
+
+  it('returns {kind: "no_match"} when neither kanji pair matches any seeded brand', async () => {
+    // Seed something else so the query has at least one brand row to
+    // compare against, then look up a pair that doesn't exist.
+    await seedBrandWithBrewery(9001, 9501)
+
+    const query = { nameJa: '存在しない酒', breweryJa: '架空酒造' }
+    const result = await findSakeByExtractionFromPool(query, pool)
+
+    expect(result.kind).toBe('no_match')
+    if (result.kind !== 'no_match') throw new Error('unreachable; for narrowing only')
+    // The query is echoed back so the UI can render "we couldn't find X by Y".
+    expect(result.query).toEqual(query)
+  })
+
+  it('returns {kind: "no_match"} when the sake kanji matches but the brewery kanji does not', async () => {
+    // CONTEXT.md "Same-romaji collisions are possible". The join MUST
+    // require BOTH kanji to match — a sake with the right name produced
+    // by a different brewery is not the match the user scanned.
+    await seedBrewery({ breweryId: 9501, name: 'Asahi Shuzo', nameKanji: '旭酒造' })
+    await pool.query(
+      `INSERT INTO brands
+         (brand_id, name, name_kanji, brewery_id, source, confidence, content_hash)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [9001, 'Dassai', '獺祭', 9501, 'sakenowa', null, 'hash-dassai-9001'],
+    )
+
+    const result = await findSakeByExtractionFromPool(
+      { nameJa: '獺祭', breweryJa: '別の酒造' },
+      pool,
+    )
+
+    expect(result.kind).toBe('no_match')
   })
 })
