@@ -36,7 +36,12 @@ export function phaseToMilestone(phase: number): MilestoneId | null {
   return null
 }
 
-const SLICE_REGEX = /\bSlice\s+\d+/i
+// Matches the long form "Slice 3" (legacy, case-insensitive) or the
+// short form "S3" / "S12" — the abbreviation used from the M3 reorder
+// onward in issue titles like "Phase 3 / S2: …". The short form is
+// deliberately case-sensitive: lowercase `s\d+` would false-positive
+// on things like a future "Galaxy S22 reference image" issue title.
+const SLICE_REGEX = /\b(?:[Ss]lice\s+\d+|S\d+)\b/
 
 export function classifyIssue(issue: IssueRecord): ClassifiedIssue {
   const phase = detectPhaseNumber(issue.title)
