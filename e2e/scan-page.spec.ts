@@ -104,4 +104,53 @@ test.describe('scan entry route', () => {
     testInfo.skip(true, 'DE locale is pre-launch (ADR-0008); upload form does not render')
     void browser
   })
+
+  test('/en/scan rate-limit — 6th scan in the same window shows the localized cap message', async ({
+    browser,
+  }, testInfo) => {
+    // Phase 3 / S2 (#107): drive the form past the 5-call cap and verify
+    // the localized rate-limit copy renders. Requires both DATABASE_URL
+    // (so the matched sake page resolves on calls 1-5) AND the
+    // rate-limit env triplet (so the action's enforceRateLimit() runs
+    // against a real Upstash). CI without that wiring skips — the
+    // anonymousRateLimit module's vitest suite covers the same shape
+    // against an in-memory KV.
+    testInfo.skip(
+      dassaiBrandId === null,
+      'DATABASE_URL not set or Dassai not in the Sakenowa mirror — DB-bound spec',
+    )
+    const hasRateLimitEnv =
+      Boolean(process.env.SESSION_COOKIE_SECRET) &&
+      Boolean(process.env.IP_HASH_SALT) &&
+      Boolean(process.env.UPSTASH_REDIS_REST_URL) &&
+      Boolean(process.env.UPSTASH_REDIS_REST_TOKEN)
+    testInfo.skip(
+      !hasRateLimitEnv,
+      'Rate-limit env triplet not set (SESSION_COOKIE_SECRET / IP_HASH_SALT / UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN)',
+    )
+
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([AGE_GATE_COOKIE])
+    const page = await context.newPage()
+
+    // First 5 scans land on the matched sake page; reset between
+    // submissions so each one starts at /en/scan.
+    for (let i = 0; i < 5; i++) {
+      await page.goto('/en/scan')
+      await expect(page.getByTestId('scan-entry-page')).toBeVisible()
+      await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
+      await page.waitForURL(new RegExp(`/en/sake/${dassaiBrandId}$`))
+    }
+
+    // Sixth scan in the same 24h window — the rate-limited copy renders
+    // in place of the matched navigation.
+    await page.goto('/en/scan')
+    await expect(page.getByTestId('scan-entry-page')).toBeVisible()
+    await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
+    await expect(page.getByTestId('scan-error-rate-limited')).toBeVisible()
+    // Page does not navigate away — the visitor stays on /en/scan.
+    expect(page.url()).toMatch(/\/en\/scan$/)
+
+    await context.close()
+  })
 })

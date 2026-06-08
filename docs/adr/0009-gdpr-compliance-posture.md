@@ -87,6 +87,7 @@ These questions also belong in any ADR that touches user data. The ADR's \"Conse
 | `yawaragi_age_gate` | `{v, ts}` — no identifiers | legitimate interest (JMStV compliance, Art. 6(1)(f)) | 1 year | Not strictly personal data, but documented for transparency. |
 | `NEXT_LOCALE` | locale code | legitimate interest (UX) | 1 year | next-intl default. |
 | `yawaragi_consent` | per-category flags + version | not personal data per se; records consent | 1 year | Used to remember and prove consent (Art. 7(1)). |
+| `yawaragi_session` | signed `{v, ts, sid}` — opaque random sid, no identifiers | legitimate interest (cost protection of paid AI APIs, Art. 6(1)(f)) | 24h sliding | Phase 3 / S2 (#107). Pairs with a transient salted SHA-256 of the visitor IP (kept only as a KV query key under the same 24h TTL — never written to a DB or log) to cap per-visitor calls on the vision-scan surface. Cookie is signed (HMAC-SHA256, `SESSION_COOKIE_SECRET`) so a forged sid can't reset the budget. Vendor: Upstash, Inc. (EU region, e.g. eu-central-1 Frankfurt) — see vendor row below. |
 
 ### Vendor processing operations (Phase 2+; from the 2026-05-25 DPA review)
 
@@ -99,6 +100,7 @@ These rows describe the processing posture each vendor will enter at the point t
 | **Clerk** | processor | email, name, OAuth tokens, session metadata | US (no EU region) | DPF + SCCs (fallback) | 90-day post-termination delete | <https://clerk.com/legal/subprocessors> |
 | **Anthropic** | processor | label-scan images, chat messages, redacted prompts/completions | US (no EU region on direct API) | SCCs only (no DPF) | **30 days default — acknowledged explicitly; ZDR pending sales negotiation** | <https://trust.anthropic.com/subprocessors> |
 | **Langfuse** | processor | redacted prompts + completions, trace metadata | `eu-west-1` Ireland | SCC fallback unused at residency | 30 days (configured at project level) | <https://langfuse.com/security/subprocessors> |
+| **Upstash** | processor | rate-limit budget store: salted SHA-256 of visitor IP + opaque `yawaragi_session.sid` — both keyed only (never plaintext); no account identifiers | EU region (e.g. `eu-central-1` Frankfurt) — selected at database provisioning time | EU SCCs (data does not leave the EU region) | 24h (TTL applied on every write; abandoned sessions garbage-collect at the window boundary) | <https://upstash.com/trust> — **DPA: pending signature before Production deployment** (see consequences below) |
 
 This table is updated every time a new processing operation is introduced or a vendor's posture changes (region, retention, sub-processor list, transfer mechanism). Treat it as code: it gets PRs.
 

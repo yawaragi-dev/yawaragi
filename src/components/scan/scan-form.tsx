@@ -159,6 +159,23 @@ export function ScanForm({ locale }: ScanFormProps) {
           {t('errorInvalidInput')}
         </p>
       )}
+      {state.status === 'rate_limited' && (
+        // PRD #105 §"Rate-limit policy v1" + issue #107: discovery /
+        // learning copy with the human-friendly retry time. The
+        // numeric retryAfterSec is rendered as a rounded-up hours
+        // figure via the ICU `plural` message — we deliberately
+        // over-estimate (always round up) so the visitor never bumps
+        // into the wall again before our reported window closes.
+        <p
+          role="alert"
+          className="text-sm text-amber-700 dark:text-amber-300"
+          data-testid="scan-error-rate-limited"
+        >
+          {t('rateLimited', {
+            hours: Math.max(1, Math.ceil(state.retryAfterSec / 3600)),
+          })}
+        </p>
+      )}
       {downscaleFailed && (
         <p
           role="alert"

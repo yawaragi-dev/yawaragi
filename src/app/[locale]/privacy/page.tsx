@@ -45,12 +45,22 @@ export default async function PrivacyPage({
       </header>
 
       <section className="flex flex-col gap-3">
+        <h2 className="text-xl font-medium">{t('anonymousSessionHeading')}</h2>
+        <p className="text-base text-zinc-700 dark:text-zinc-300 max-w-prose">
+          {t('anonymousSessionBody')}
+        </p>
+      </section>
+
+      <section className="flex flex-col gap-3">
         <h2 className="text-xl font-medium">{t('processorsHeading')}</h2>
         <p className="text-base text-zinc-700 dark:text-zinc-300 max-w-prose">
           {t('processorVercel')}
         </p>
         <p className="text-base text-zinc-700 dark:text-zinc-300 max-w-prose">
           {t('processorSupabase')}
+        </p>
+        <p className="text-base text-zinc-700 dark:text-zinc-300 max-w-prose">
+          {t('processorUpstash')}
         </p>
         <p className="text-base text-zinc-700 dark:text-zinc-300 max-w-prose">
           {t('sakenowaNote')}
