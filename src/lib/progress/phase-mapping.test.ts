@@ -60,6 +60,21 @@ describe('classifyIssue', () => {
     expect(c.isParent).toBe(false)
   })
 
+  it('flags short-form slice titles ("S1") as non-parent', () => {
+    const c = classifyIssue(fixture({ title: 'Phase 3 / S2: Anonymous session cookie + vision-scan rate limit' }))
+    expect(c.milestone).toBe('M3')
+    expect(c.isSlice).toBe(true)
+    expect(c.isParent).toBe(false)
+  })
+
+  it('does not false-positive on lowercase "s" followed by digits', () => {
+    const c = classifyIssue(fixture({ title: 'Phase 3 — Galaxy s22 reference image fixture' }))
+    expect(c.milestone).toBe('M3')
+    // Lowercase "s22" must not be read as a slice marker — leaving this a parent.
+    expect(c.isSlice).toBe(false)
+    expect(c.isParent).toBe(true)
+  })
+
   it('flags a phase-level umbrella issue as parent', () => {
     const c = classifyIssue(fixture({ title: 'Phase 2 — Data foundation' }))
     expect(c.milestone).toBe('M2')

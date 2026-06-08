@@ -1,6 +1,6 @@
 # Milestone progress (detail)
 
-_Snapshot generated 2026-06-08T15:27:41.536Z (UTC). Regenerate with `pnpm progress`._
+_Snapshot generated 2026-06-08T15:39:48.360Z (UTC). Regenerate with `pnpm progress`._
 
 ## TL;DR
 
@@ -8,7 +8,7 @@ _Snapshot generated 2026-06-08T15:27:41.536Z (UTC). Regenerate with `pnpm progre
 | --- | --- | --- | --- | --- |
 | **M1** — Compliance & i18n foundation | Phase 0 | 5 / 5 | 3938 / 3938 (100%) | `████████████████████` |
 | **M2** — Data foundation | Phase 2 | 11 / 12 | 13118 / 13974 (94%) | `███████████████████░` |
-| **M3** — Flagship surfaces | Phases 3–5 | not scoped | not scoped | `░░░░░░░░░░░░░░░░░░░░` |
+| **M3** — Flagship surfaces | Phases 3–5 | 1 / 5 | 856 / 4280 (20%) | `████░░░░░░░░░░░░░░░░` |
 
 ## Per-milestone detail
 
@@ -48,9 +48,19 @@ _Based on 26 PR(s) merged over the last 14 days (~1156 LoC/day)._
 
 Label scan (vision LLM), chat recommender (AI SDK tools + MCP), taste profile + cross-beverage map.
 
-_No issues filed under this milestone yet._
+**Issues:** 1 closed / 5 total
 
-_Not yet scoped — no issues filed under this milestone._
+**Weight (LoC of merged PRs):** 856 closed / 4280 total — 20% done
+
+`████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░`
+
+**ETA**
+
+- **Optimistic:** 2026-06-10
+- **Median:**     2026-06-11
+- **Pessimistic:** 2026-06-14
+
+_Based on 26 PR(s) merged over the last 14 days (~1156 LoC/day)._
 
 ## Methodology
 

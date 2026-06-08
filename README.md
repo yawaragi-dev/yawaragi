@@ -16,7 +16,7 @@ _Snapshot generated 2026-06-08 from GitHub Issues + merged PRs. Regenerate with 
 | --- | --- | --- | --- |
 | **M1 (Phase 0) — Compliance & i18n foundation** | `████████████████████` 100% | 5 / 5 | done |
 | **M2 (Phase 2) — Data foundation** | `███████████████████░` 94% | 11 / 12 | 2026-06-09 |
-| **M3 (Phases 3–5) — Flagship surfaces** | `░░░░░░░░░░░░░░░░░░░░` n/a | — / — | not scoped |
+| **M3 (Phases 3–5) — Flagship surfaces** | `████░░░░░░░░░░░░░░░░` 20% | 1 / 5 | 2026-06-11 |
 
 <!-- progress:end -->
 
@@ -38,22 +38,32 @@ Previously named "Kanpai"; renamed to avoid collision with [KANPAI London Craft 
 flowchart TD
   V[Visitor] -->|"any path"| P["src/proxy.ts<br/>clerkMiddleware → next-intl<br/>→ age-gate + coming-soon rewrites"]
   P -->|"/en/* (launched)"| LL["[locale]/layout<br/>+ ClerkProvider<br/>+ NextIntlProvider<br/>+ cookie banner + footer"]
-  UC["lib/supabase/user-client<br/>(Phase 2.5+, Clerk JWT)"] -.->|"future"| LL
   P -->|"/de/* (unlaunched)"| CS["[locale]/page<br/>(coming-soon)"]
   LL --> Landing["[locale]/page<br/>(landing + age-gate)"]
   LL --> Under18["[locale]/under-18"]
-  LL --> Sake["[locale]/sake/[brandId]<br/>(Phase 2+)"]
-  Sake --> Lookup["lib/sakenowa/lookup<br/>(Phase 2+)"]
-  Lookup --> DB[("Supabase Postgres<br/>mirror (Phase 2+)")]
-  Ingest["pnpm ingest<br/>(Phase 2+)"] --> DB
-  CronRoute["GET /api/cron/ingest<br/>Bearer CRON_SECRET<br/>(Phase 2+, Vercel Cron)"] --> Ingest
+  LL --> Sake["[locale]/sake/[brandId]"]
+  LL --> Scan["[locale]/scan<br/>(Phase 3, in flight)"]
+  Scan --> ScanAction["lib/scan/scan-action"]
+  ScanAction -.->|"S2"| RateLimit["lib/rate-limit<br/>yawaragi_session + Edge KV"]
+  ScanAction -.->|"S3"| Vision["lib/ai/vision<br/>(Anthropic Haiku 4.5)"]
+  ScanAction --> Lookup
+  Sake --> Lookup["lib/sakenowa/lookup"]
+  Lookup --> DB[("Supabase Postgres<br/>mirror")]
+  Ingest["pnpm ingest"] --> DB
+  CronRoute["GET /api/cron/ingest<br/>Bearer CRON_SECRET<br/>Vercel Cron"] --> Ingest
   Sakenowa["Sakenowa Data API"] --> Ingest
-  Sake --> Tools["AI SDK tools<br/>(Phase 4+)"]
-  Tools --> Anthropic["Anthropic Claude<br/>(Phase 3+)"]
-  Anthropic --> Trace["Langfuse traces<br/>(Phase 4+)"]
+  LL -.-> Suggest["[locale]/suggest<br/>(Phase 4, planned)"]
+  Suggest -.-> SuggestAction["lib/suggest/suggest-action"]
+  SuggestAction -.-> MCP["@yawaragi/sakenowa-mcp<br/>(v0.1.0 in flight)"]
+  SuggestAction -.-> CrossBev["lib/ai/tools/<br/>map-cross-beverage"]
+  SuggestAction -.-> Anthropic
+  Vision -.-> Anthropic["Anthropic Claude"]
+  MCP -.-> DB
+  Anthropic -.-> Trace["Langfuse traces<br/>(Phase 4+)"]
+  UC["lib/supabase/user-client<br/>(Phase 5, deferred with auth)"] -.->|"deferred"| LL
 ```
 
-Phase 0 (i18n + legal scaffolding + EN-first launch) is shipped. Phase 2 (data foundation, attribution + provenance UI, scheduled cron ingest) is ~85% — see the milestone bar above for the live status. Phases 3+ nodes (label scan, chat, taste profile) are placeholders until those slices land.
+Phase 0 (i18n + legal scaffolding + EN-first launch) and Phase 2 (data foundation, Sakenowa mirror, scheduled cron ingest, provenance schemas) are shipped. **Phase 3 (anonymous label scan)** is in flight — see the milestone bar above for the live status. The first slice (entry page + form + canvas downscale + Sakenowa lookup, with the vision call stubbed by a hardcoded extraction) is live; the next slices wire the anonymous-session rate limit (S2), the real Anthropic Haiku 4.5 vision provider (S3), the three-tier confidence UX (S4), and the eval harness (S5). **Phase 4 (single-shot suggestions over MCP + cross-beverage)** follows. **Phase 5 (taste profile, ratings)** is deferred along with auth resumption. Every Phase 3+ surface is designed to survive being wrapped in a native webview shell per [ADR-0012](./docs/adr/0012-webview-able-architecture.md).
 
 ## Getting started
 
@@ -101,7 +111,7 @@ pnpm dev
 
 ## Open-source
 
-The MCP server that exposes the Sakenowa-mirrored sake catalogue lives in its own repo at [`yawaragi-dev/sakenowa-mcp`](https://github.com/yawaragi-dev/sakenowa-mcp) and is consumed by this app as the npm package **`@yawaragi/sakenowa-mcp`** (v0.0.1 stub published; full implementation in Phase 4). It deliberately depends on neither Next.js nor Clerk nor any Yawaragi-specific logic, so anyone with a Sakenowa mirror in Postgres can run it standalone. See [`docs/adr/0003-mcp-server-extractability.md`](./docs/adr/0003-mcp-server-extractability.md).
+The MCP server that exposes the Sakenowa-mirrored sake catalogue lives in its own repo at [`yawaragi-dev/sakenowa-mcp`](https://github.com/yawaragi-dev/sakenowa-mcp) and is consumed by this app as the npm package **`@yawaragi/sakenowa-mcp`**. v0.0.1 reserves the npm name; **v0.1.0 is in development** — six read-only tools over the Sakenowa schema, per the [spec doc](https://github.com/yawaragi-dev/sakenowa-mcp/blob/main/docs/specs/v0.1.0.md) and [issue tree](https://github.com/yawaragi-dev/sakenowa-mcp/issues). The server deliberately depends on neither Next.js nor Clerk nor any Yawaragi-specific logic, so anyone with a Sakenowa mirror in Postgres can run it standalone. See [`docs/adr/0003-mcp-server-extractability.md`](./docs/adr/0003-mcp-server-extractability.md).
 
 ## Attribution
 
