@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { MockLanguageModelV3 } from 'ai/test'
 import { createAnthropicHaikuProvider } from './anthropic-haiku-provider'
 
@@ -154,23 +154,37 @@ describe('createAnthropicHaikuProvider', () => {
     expect(filePart.mediaType).toMatch(/^image\//)
   })
 
-  it('refuses to call the model in production when ZDR is not active', async () => {
+  it('warns once (does NOT throw) in production when ZDR is not active', async () => {
+    // ADR-0009 documents 7-day standard Anthropic retention as the
+    // acceptable baseline; ZDR is the pre-DACH-launch upgrade, not a
+    // hard prerequisite. The provider warns to keep the maintainer
+    // honest about flipping ZDR_ACTIVE once the contract lands, but
+    // does not refuse to serve traffic — that would brick prod scans
+    // for a documented-as-acceptable retention posture.
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const provider = createAnthropicHaikuProvider({
       model: mockReturning(DASSAI_OBJECT),
       zdrActive: false,
       nodeEnv: 'production',
     })
 
-    await expect(provider.extractLabel(jpegBlob())).rejects.toThrow(
-      /Zero Data Retention is not active/,
-    )
+    await expect(provider.extractLabel(jpegBlob())).resolves.toEqual(DASSAI_OBJECT)
+    expect(warn).toHaveBeenCalledTimes(1)
+    expect(warn.mock.calls[0][0]).toMatch(/Zero Data Retention is not active/)
+
+    // Second call on the same provider must not re-warn — memoised
+    // per-factory so a busy production cold start logs once, not on
+    // every scan.
+    await provider.extractLabel(jpegBlob())
+    expect(warn).toHaveBeenCalledTimes(1)
+
+    warn.mockRestore()
   })
 
-  it('runs in non-production even when ZDR is not active (so local dev + CI keep working)', async () => {
-    // Hand-testing in `pnpm dev` without ZDR signed is the intended
-    // path for the slice during development. The production-only
-    // refusal above is the load-bearing safety; this test fences off a
-    // regression that would block dev.
+  it('does not warn in non-production even when ZDR is not active', async () => {
+    // Local dev + CI don't need the reminder; the warning is for the
+    // operator who'd be looking at production logs.
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const provider = createAnthropicHaikuProvider({
       model: mockReturning(DASSAI_OBJECT),
       zdrActive: false,
@@ -178,5 +192,7 @@ describe('createAnthropicHaikuProvider', () => {
     })
 
     await expect(provider.extractLabel(jpegBlob())).resolves.toEqual(DASSAI_OBJECT)
+    expect(warn).not.toHaveBeenCalled()
+    warn.mockRestore()
   })
 })

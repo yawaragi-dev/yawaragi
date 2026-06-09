@@ -25,15 +25,15 @@ import type { VisionProvider } from './vision-provider'
  *     `/v1/messages` — it never reaches `/v1/files`. The forbidden-pattern
  *     scan in `scripts/audit-anthropic-files-api.ts` stays clean against
  *     this module. CLAUDE.md § "Anthropic Files API ban".
- *   - `ZDR_ACTIVE` is read from the source-of-truth and the provider
- *     refuses to run in production when ZDR is off. The label image is
- *     personal data adjacent (a bottle photo can incidentally include
- *     surroundings), and ADR-0009 binds us to the documented 7-day
- *     retention window. Without ZDR, the only way to keep that promise is
- *     to never reach the model — so we throw early, before the upload.
- *     Non-production environments are allowed to call without ZDR for
- *     local hand-testing; the same env-driven branch keeps CI's stubbed
- *     provider (`MockLanguageModelV3`) usable.
+ *   - `ZDR_ACTIVE` is read from the source-of-truth. ADR-0009 documents
+ *     7-day standard Anthropic retention (reduced from 30 on 2025-09-14)
+ *     as the acceptable baseline; ZDR is a pre-DACH-launch action, not a
+ *     hard prerequisite for any production call. So in production with
+ *     ZDR off we log a once-per-cold-start warning that the project's
+ *     documented baseline is in effect — and proceed. Flip
+ *     `ZDR_ACTIVE = true` in `src/lib/ai/zdr-status.ts` after the
+ *     Anthropic sales-negotiated ZDR contract is on file to silence the
+ *     warning. Non-production paths don't log at all.
  *
  * @param overrides — escape hatch used by the unit tests in this slice and
  * (eventually) by the Playwright spec to inject a `MockLanguageModelV3`.
@@ -49,14 +49,15 @@ export interface AnthropicHaikuProviderOptions {
    */
   model?: LanguageModel
   /**
-   * Optional override for the ZDR gate. Tests usually pass `true` so the
-   * production refusal doesn't fire in vitest's NODE_ENV='test'. The
-   * production path reads `ZDR_ACTIVE` directly.
+   * Optional override for the ZDR-warning gate. The production path
+   * reads `ZDR_ACTIVE` directly; tests force the value to assert the
+   * warning either fires or doesn't.
    */
   zdrActive?: boolean
   /**
-   * Optional override for the NODE_ENV check. Tests can force
-   * `'production'` to assert the ZDR refusal fires.
+   * Optional override for the NODE_ENV check. Tests pass
+   * `'production'` to assert the warning fires; `'development'` to
+   * assert it doesn't.
    */
   nodeEnv?: string
 }
@@ -82,22 +83,26 @@ export function createAnthropicHaikuProvider(
   // The model is resolved lazily so a missing `ANTHROPIC_API_KEY` only
   // throws when the provider is actually used (tests don't need it).
   const model = options.model
+  // Memoised so production cold start logs once, not on every scan.
+  // Per-factory rather than module-level so vitest can assert "warn
+  // fired" on a fresh provider per test without a beforeEach reset.
+  let zdrWarnedOnce = false
 
   return {
     async extractLabel(jpegBlob: Blob): Promise<LabelScanExtraction> {
-      if (nodeEnv === 'production' && !zdrActive) {
-        // ADR-0009 § "Retention is documented per data type": without
-        // Zero Data Retention signed, Anthropic retains inputs/outputs
-        // for up to 7 days (reduced from 30 on 2025-09-14) for trust-
-        // and-safety. A bottle-label image can incidentally include
-        // the visitor's surroundings, and Phase 3's "process-and-
-        // discard" promise to the user is only honored end-to-end
-        // under ZDR. Fail closed in production until ZDR_ACTIVE flips.
-        // See `src/lib/ai/zdr-status.ts` (source-of-truth) and
-        // ADR-0009 for the negotiation status.
-        throw new Error(
-          'Anthropic Zero Data Retention is not active. Refusing to send label image to /v1/messages in production. See src/lib/ai/zdr-status.ts and ADR-0009.',
+      if (nodeEnv === 'production' && !zdrActive && !zdrWarnedOnce) {
+        // ADR-0009 § "Retention is documented per data type" already
+        // documents 7-day standard Anthropic retention as the
+        // acceptable baseline (reduced from 30 on 2025-09-14). ZDR is
+        // the pre-DACH-launch upgrade, not a hard prerequisite for any
+        // production call. Warn (rather than throw) so the application
+        // stays in sync with the documented posture: the warning is a
+        // reminder to flip ZDR_ACTIVE once the contract is on file,
+        // not a refusal to serve traffic.
+        console.warn(
+          '[scan] Anthropic Zero Data Retention is not active; calls go to /v1/messages with the 7-day standard retention window (acknowledged in ADR-0009 RoPA). Flip ZDR_ACTIVE in src/lib/ai/zdr-status.ts after the ZDR contract is on file to silence this warning.',
         )
+        zdrWarnedOnce = true
       }
 
       const resolvedModel = model ?? anthropic('claude-haiku-4-5')
