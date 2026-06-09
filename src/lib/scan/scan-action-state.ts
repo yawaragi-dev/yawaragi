@@ -24,5 +24,16 @@ export type ScanActionState =
       extraction: LabelScanExtraction
       brandIds: readonly number[]
     }
+  /**
+   * Phase 3 / S2 (#107): the per-visitor rate limit on the vision-scan
+   * bucket has been exhausted. The UI renders a localized "you've
+   * reached today's limit, try again in X" message using
+   * `retryAfterSec` for the human-readable retry time. No promotional
+   * copy per CLAUDE.md JMStV rules — discovery/learning register.
+   */
+  | {
+      status: 'rate_limited'
+      retryAfterSec: number
+    }
 
 export const INITIAL_SCAN_ACTION_STATE: ScanActionState = { status: 'idle' }

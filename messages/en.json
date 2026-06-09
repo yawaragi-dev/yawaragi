@@ -73,7 +73,8 @@
       "noMatch": "We read the label, but the sake isn't in our catalogue yet.",
       "ambiguous": "Several sakes share this name and brewery. Pick one to continue.",
       "errorInvalidInput": "We couldn't read that file. Try a clear photo of the bottle label.",
-      "errorDownscale": "Your browser couldn't prepare this image. Try a different photo."
+      "errorDownscale": "Your browser couldn't prepare this image. Try a different photo.",
+      "rateLimited": "You've reached today's scan limit. {hours, plural, =1 {Please try again in about an hour.} other {Please try again in about # hours.}}"
     }
   },
   "sakenowaAttribution": {
@@ -132,9 +133,12 @@
     "title": "Privacy",
     "lastUpdated": "Last updated: 2026-06-01.",
     "intro": "Yawaragi is operated by the maintainer named in the Impressum, who acts as the data controller under GDPR Art. 4(7). This page lists the categories of personal data we process and the third-party processors we rely on. It is updated alongside every release that introduces or changes a processing operation, per ADR-0009.",
+    "anonymousSessionHeading": "Anonymous session cookie (yawaragi_session)",
+    "anonymousSessionBody": "When you use a feature that calls a paid AI service (today: the label scan), we set a signed, opaque cookie named `yawaragi_session` with a 24-hour sliding lifetime. The cookie holds a random identifier — never your name, email, or IP. We use it together with a short-lived hash of your IP address (kept only as a query key, never stored as plaintext and never written to a database or log) to cap how many scans a single visitor can run per day, so the AI bill stays bounded. Lawful basis: legitimate interest in cost protection of paid AI surfaces (GDPR Art. 6(1)(f)). Retention: 24 hours, sliding. Data residency: EU (rate-limit storage hosted in an EU region of Upstash Redis).",
     "processorsHeading": "Data processors",
     "processorVercel": "Vercel, Inc. (USA) — hosting, build, and edge logs. Transfer mechanism: EU-US Data Privacy Framework plus EU SCCs as a fallback. Vercel processes service-generated data (request logs, build metadata) as an independent controller.",
     "processorSupabase": "Supabase, Inc. — Postgres database for the Sakenowa reference mirror and (from Phase 2.5) user-scoped tables. Project region: eu-central-1 (Frankfurt). Transfer mechanism: EU SCCs (Modules 2 and 3) governed by Irish law. Service usage telemetry is processed by Supabase as an independent controller under Art. 6(1)(f) (billing, security, service improvement). Breach notification SLA: 48 hours.",
+    "processorUpstash": "Upstash, Inc. — Redis key-value store hosted in an EU region (e.g. eu-central-1 Frankfurt) used as the rate-limit budget store for the anonymous-session cookie described above. Stored data: the salted SHA-256 hash of the visitor IP and the opaque session id, each with a 24-hour TTL. No plaintext IPs, no account identifiers. Transfer mechanism: EU SCCs (data does not leave the EU region). Data Processing Agreement: pending signature before Production deployment.",
     "processorClerk": "Clerk, Inc. (USA) — user authentication (sign-in, session, JWT issuance) starting Phase 2.5. Data categories: email address, given name, family name, and short-lived email-verification codes used to confirm sign-in. Lawful basis: Art. 6(1)(b) (performance of contract — Clerk holds the credentials required to operate an account). Transfer mechanism: EU-US Data Privacy Framework plus EU SCCs as a fallback. Retention: until account deletion or 24 months of account inactivity (per ADR-0009). Clerk does not publish a fixed breach-notification SLA; per the breach runbook, we treat an unconfirmed Clerk incident as starting an internal 24-hour clock toward BayLDA Art. 33 notification.",
     "sakenowaNote": "Sake brand and brewery reference data is mirrored from the public Sakenowa Data API (muro.sakenowa.com). The mirror itself contains no personal data.",
     "retentionHeading": "Retention",
