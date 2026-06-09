@@ -64,7 +64,8 @@
     "panel": {
       "title": "Debug",
       "emptyHint": "Warte auf das erste Ereignis…",
-      "closeLabel": "Debug-Panel schließen"
+      "closeLabel": "Debug-Panel schließen",
+      "clearLabel": "Leeren"
     }
   },
   "scan": {

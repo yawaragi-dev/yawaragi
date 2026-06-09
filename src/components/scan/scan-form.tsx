@@ -10,10 +10,10 @@ import type { FormEvent } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { DebugPanel } from '@/components/debug/debug-panel'
 import { ProvenanceBadgeView } from '@/components/sake/provenance-badge'
 import { SakenowaAttributionView } from '@/components/sake/sakenowa-attribution'
 import type { DebugEvent } from '@/lib/debug/debug-log'
+import { appendDebugEvents } from '@/lib/debug/debug-store'
 import {
   browserBitmapDecoder,
   browserCanvasFactory,
@@ -31,9 +31,11 @@ interface ScanFormProps {
   /**
    * Server-rendered debug-mode flag (sourced from the `yawaragi_debug`
    * cookie at request time, since the cookie is HttpOnly and not
-   * readable from client JS). When true, the `<DebugPanel />` overlay
-   * renders below the form and accumulates per-step client + server
-   * trace events for the current scan.
+   * readable from client JS). When true, the form pushes its
+   * per-step events (file picked, downscale done, action returned)
+   * into the app-level debug store; the layout's `<DebugPanelMount />`
+   * picks them up and renders them. When false, every push is a
+   * no-op.
    */
   debugMode?: boolean
 }
@@ -66,7 +68,6 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
   // the extraction came back with source: 'llm_extracted'.
   const tBadge = useTranslations('provenance.badge.llmExtracted')
   const tAttribution = useTranslations('sakenowaAttribution')
-  const tDebug = useTranslations('debug.panel')
   const router = useRouter()
   const inputRef = useRef<HTMLInputElement | null>(null)
   const [state, formAction, isActionPending] = useActionState<ScanActionState, FormData>(
@@ -78,20 +79,19 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
   // discovery-framed i18n string ('errorDownscale'), not the raw browser
   // exception, to keep DACH copy on-brand.
   const [downscaleFailed, setDownscaleFailed] = useState(false)
-  // Per-scan client-side trace. Cleared on each new file pick so the
-  // panel always shows just the current attempt. Server-side events
-  // are merged in from `state.debugLog` when the action returns.
-  const [clientEvents, setClientEvents] = useState<DebugEvent[]>([])
-  // Initialized to 0 (not Date.now()) so the ref initializer stays
-  // pure for React 19's render-purity rules. `onFileChange` writes the
-  // real epoch ms before the first event is pushed, so the panel never
-  // sees a 0-based timestamp.
+  // Per-scan timing origin. Initialized to 0 so the ref initializer
+  // stays pure for React 19's render-purity rules. `onFileChange`
+  // writes the real epoch ms before the first event is pushed, so the
+  // panel never sees a 0-based timestamp.
   const scanStartedAtRef = useRef<number>(0)
+  // Tracks the last server `debugLog` we mirrored into the app-level
+  // store so a re-render with the same state doesn't double-push the
+  // same events.
+  const lastServerLogRef = useRef<ReadonlyArray<DebugEvent> | null>(null)
 
   function pushClientEvent(message: string, data?: Record<string, unknown>): void {
     if (!debugMode) return
-    setClientEvents((prev) => [
-      ...prev,
+    appendDebugEvents([
       {
         tMs: Date.now() - scanStartedAtRef.current,
         source: 'ScanForm',
@@ -111,6 +111,18 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
     }
   }, [router, state])
 
+  // Mirror the server-side trace from the latest action result into
+  // the app-level debug store. Guarded against re-renders that carry
+  // the same `state.debugLog` reference: we only push when the array
+  // identity changes (every action invocation produces a fresh array).
+  useEffect(() => {
+    if (!debugMode) return
+    const serverLog = state.debugLog
+    if (!serverLog || serverLog === lastServerLogRef.current) return
+    lastServerLogRef.current = serverLog
+    appendDebugEvents(serverLog)
+  }, [debugMode, state.debugLog])
+
   function onPickClick() {
     setDownscaleFailed(false)
     inputRef.current?.click()
@@ -121,10 +133,11 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
     if (!file) return
     setDownscaleFailed(false)
     setIsDownscaling(true)
-    // New scan attempt — restart the per-attempt client trace and reset
-    // the relative-time origin so the panel shows time since pick.
+    // New scan attempt — reset the relative-time origin so subsequent
+    // events show time since pick. Events accumulate in the app-level
+    // store (intentionally NOT cleared here) so the operator can scroll
+    // back across multiple attempts.
     scanStartedAtRef.current = Date.now()
-    setClientEvents([])
     pushClientEvent(`picked file "${file.name}" (${file.size} bytes, ${file.type || 'no MIME'})`)
     try {
       const downscaleStart = Date.now()
@@ -293,19 +306,6 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
           </div>
           <p className="text-sm text-zinc-700 dark:text-zinc-300">{t('matched')}</p>
         </div>
-      )}
-      {debugMode && (
-        // Causal order: client events from the in-progress scan come
-        // first; the server-side trace from `state.debugLog` appends as
-        // soon as the action returns. Both arrays use independent
-        // relative timestamps — the panel renders insertion order, not
-        // tMs comparison, since the two clocks aren't synchronised.
-        <DebugPanel
-          events={[...clientEvents, ...(state.debugLog ?? [])]}
-          title={tDebug('title')}
-          emptyHint={tDebug('emptyHint')}
-          closeLabel={tDebug('closeLabel')}
-        />
       )}
     </form>
   )

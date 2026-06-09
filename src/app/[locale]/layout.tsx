@@ -8,8 +8,10 @@ import { ClerkProvider } from '@clerk/nextjs'
 import { routing } from '@/i18n/routing'
 import { Link } from '@/i18n/navigation'
 import { LocaleSwitcher } from '@/components/layout/locale-switcher'
+import { DebugPanelMount } from '@/components/debug/debug-panel-mount'
 import { CookieBanner } from '@/components/legal/cookie-banner'
 import { CookieSettingsLink } from '@/components/legal/cookie-settings-link'
+import { isDebugEnabledFromCookies } from '@/lib/debug/debug-mode'
 import { getComplianceState } from '@/lib/legal/compliance-state'
 import '../globals.css'
 
@@ -41,6 +43,12 @@ export default async function LocaleLayout({
   // not JMStV). The age-gate / JMStV check lives in `src/proxy.ts`. The two
   // regimes stay distinct; only the cookie read is shared via the seam.
   const { consent } = getComplianceState(cookieJar)
+  // ADR-0013: every feature exposes a per-request trace to the operator
+  // when the `yawaragi_debug` cookie is set. The mount lives at layout
+  // level so the panel persists across page navigations and reloads —
+  // events accumulate in sessionStorage and survive the matched-scan
+  // redirect from /scan to /sake/[brandId].
+  const debugMode = isDebugEnabledFromCookies(cookieJar)
   const tFooter = await getTranslations({ locale, namespace: 'footer' })
 
   // ClerkProvider wraps NextIntlClientProvider so Clerk's auth context is
@@ -81,6 +89,7 @@ export default async function LocaleLayout({
               <CookieSettingsLink />
             </footer>
             <CookieBanner initialDecision={consent} />
+            <DebugPanelMount debugMode={debugMode} />
           </NextIntlClientProvider>
         </body>
       </html>

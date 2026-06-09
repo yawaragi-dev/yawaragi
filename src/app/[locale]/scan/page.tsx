@@ -5,6 +5,9 @@ import { ScanForm } from '@/components/scan/scan-form'
 import { AgeGate } from '@/components/legal/age-gate'
 import { isDebugEnabledFromCookies } from '@/lib/debug/debug-mode'
 import { hasAcceptedAgeGate } from '@/lib/legal/age-gate-cookie'
+// `DebugPanelMount` lives at the layout level (renders persistently
+// across navigations). This page only sources the boolean prop the
+// form uses to gate its per-step pushes into the app-level store.
 import { isLaunched } from '@/i18n/launch-state'
 import { hasLocale } from 'next-intl'
 import { routing } from '@/i18n/routing'

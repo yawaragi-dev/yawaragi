@@ -33,6 +33,10 @@ export interface DebugPanelProps {
   emptyHint: string
   /** Close-button accessible label. */
   closeLabel: string
+  /** Clear-button accessible label. */
+  clearLabel: string
+  /** Handler for the Clear button — wipes the persisted event store. */
+  onClear: () => void
 }
 
 const SOURCE_COLORS: Record<DebugEventSource, string> = {
@@ -49,7 +53,14 @@ const LEVEL_PREFIX = {
   error: '✗ ',
 } as const
 
-export function DebugPanel({ events, title, emptyHint, closeLabel }: DebugPanelProps) {
+export function DebugPanel({
+  events,
+  title,
+  emptyHint,
+  closeLabel,
+  clearLabel,
+  onClear,
+}: DebugPanelProps) {
   const scrollRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -76,15 +87,29 @@ export function DebugPanel({ events, title, emptyHint, closeLabel }: DebugPanelP
     >
       <header className="flex items-center justify-between border-b border-zinc-200 px-3 py-2 text-xs font-semibold dark:border-zinc-800">
         <span>{title}</span>
-        <a
-          // `?debug=0` triggers the proxy's deactivation branch — clear
-          // cookie, redirect to the same URL minus the param.
-          href="?debug=0"
-          aria-label={closeLabel}
-          className="inline-flex h-6 w-6 items-center justify-center rounded text-zinc-500 hover:bg-zinc-200 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
-        >
-          ×
-        </a>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={onClear}
+            aria-label={clearLabel}
+            className="inline-flex h-6 items-center justify-center rounded px-2 text-zinc-500 hover:bg-zinc-200 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+            data-testid="debug-panel-clear"
+          >
+            {clearLabel}
+          </button>
+          <a
+            // `?debug=0` triggers the proxy's deactivation branch — clear
+            // cookie, redirect to the same URL minus the param. Storage
+            // is cleared on the next mount when `debugMode` flips false
+            // → unmount → next activation starts fresh.
+            href="?debug=0"
+            aria-label={closeLabel}
+            className="inline-flex h-6 w-6 items-center justify-center rounded text-zinc-500 hover:bg-zinc-200 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+            data-testid="debug-panel-close"
+          >
+            ×
+          </a>
+        </div>
       </header>
       <div
         ref={scrollRef}
