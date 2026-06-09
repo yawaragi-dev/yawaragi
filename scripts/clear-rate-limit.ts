@@ -48,19 +48,20 @@ async function exec(cmd: ReadonlyArray<string>): Promise<unknown> {
   return json.result
 }
 
-const keys = (await exec(['KEYS', 'rl:*'])) as string[]
+// Wrapped in an async IIFE because `tsx` transpiles scripts to CJS and
+// CJS does not support top-level `await`. The IIFE keeps the script's
+// runtime behaviour identical.
+void (async () => {
+  const keys = (await exec(['KEYS', 'rl:*'])) as string[]
 
-if (keys.length === 0) {
-  console.log('Already clean — no `rl:*` keys in Upstash.')
-  process.exit(0)
-}
+  if (keys.length === 0) {
+    console.log('Already clean — no `rl:*` keys in Upstash.')
+    return
+  }
 
-console.log(`Found ${keys.length} rate-limit key(s):`)
-for (const k of keys) console.log(`  ${k}`)
+  console.log(`Found ${keys.length} rate-limit key(s):`)
+  for (const k of keys) console.log(`  ${k}`)
 
-const deleted = (await exec(['DEL', ...keys])) as number
-console.log(`Deleted ${deleted} key(s). Your next scan starts at 5 remaining.`)
-
-// Make this file a module so TS allows top-level `await`. The script
-// has no exports for consumers — this is purely a TS-mode requirement.
-export {}
+  const deleted = (await exec(['DEL', ...keys])) as number
+  console.log(`Deleted ${deleted} key(s). Your next scan starts at 5 remaining.`)
+})()
