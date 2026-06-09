@@ -10,6 +10,7 @@ import {
   readAnonymousSessionCookie,
 } from '@/lib/legal/anonymous-session-cookie'
 import { anonymousRateLimit } from '@/lib/rate-limit/anonymous-rate-limit'
+import { assertRateLimitConfig } from '@/lib/rate-limit/config-gate'
 import { extractIp, hashIp } from '@/lib/rate-limit/ip-hash'
 import { UpstashKVClient } from '@/lib/rate-limit/upstash-kv-client'
 import { findSakeByExtraction } from '@/lib/sakenowa/lookup'
@@ -147,22 +148,29 @@ interface RateLimitDecision {
  * keep working on machines without Upstash credentials.
  */
 async function enforceRateLimit(): Promise<RateLimitDecision> {
-  const secret = env.SESSION_COOKIE_SECRET
-  const salt = env.IP_HASH_SALT
-  const kvUrl = env.UPSTASH_REDIS_REST_URL
-  const kvToken = env.UPSTASH_REDIS_REST_TOKEN
-
-  if (!secret || !salt || !kvUrl || !kvToken) {
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error(
-        'Rate-limit configuration missing in production — set SESSION_COOKIE_SECRET, IP_HASH_SALT, UPSTASH_REDIS_REST_URL, and UPSTASH_REDIS_REST_TOKEN.',
-      )
-    }
+  // Production fail-closed: any missing key throws (with the specific
+  // key name) before we touch the cookie or KV. Non-production returns
+  // null and we skip enforcement with a warning. The check is extracted
+  // so the prod-throw branch is unit-testable per-variable — see
+  // `config-gate.test.ts`. The same gate runs at boot in
+  // `src/instrumentation.ts`, so a misconfigured Production deploy
+  // fails at cold start rather than at first scan request.
+  const config = assertRateLimitConfig(
+    {
+      secret: env.SESSION_COOKIE_SECRET,
+      salt: env.IP_HASH_SALT,
+      kvUrl: env.UPSTASH_REDIS_REST_URL,
+      kvToken: env.UPSTASH_REDIS_REST_TOKEN,
+    },
+    process.env.NODE_ENV === 'production',
+  )
+  if (!config) {
     console.warn(
       '[scan] rate-limit env not set; skipping enforcement (non-production only).',
     )
     return { allowed: true, retryAfterSec: 0 }
   }
+  const { secret, salt, kvUrl, kvToken } = config
 
   const cookieJar = await cookies()
   const requestHeaders = await headers()
