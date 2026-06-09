@@ -3,10 +3,43 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { clerkMiddleware } from '@clerk/nextjs/server'
 import { routing } from '@/i18n/routing'
 import { isLaunched } from '@/i18n/launch-state'
+import {
+  DEBUG_URL_PARAM,
+  clearDebugCookie,
+  readDebugUrlParam,
+  setDebugCookie,
+} from '@/lib/debug/debug-mode'
 import { isGatedPath } from '@/lib/legal/age-gate-cookie'
 import { getComplianceState } from '@/lib/legal/compliance-state'
 
 const handleI18n = createMiddleware(routing)
+
+/**
+ * Handle `?debug=...` activation / deactivation at the edge:
+ *   - On `enable` (1 / true): set the debug cookie + redirect to the
+ *     same URL with the param stripped, so the address bar stays clean.
+ *   - On `disable` (0 / false): clear the cookie + redirect.
+ *   - On no debug param: pass through (returns null).
+ *
+ * The redirect carries the cookie set / clear directly so the next
+ * navigation sees the updated state — no race between cookie write
+ * and downstream reads.
+ */
+function handleDebugActivation(request: NextRequest): NextResponse | null {
+  const directive = readDebugUrlParam(request.nextUrl.searchParams)
+  if (directive === null) return null
+
+  const cleaned = request.nextUrl.clone()
+  cleaned.searchParams.delete(DEBUG_URL_PARAM)
+
+  const response = NextResponse.redirect(cleaned)
+  if (directive === 'enable') {
+    setDebugCookie(response)
+  } else {
+    clearDebugCookie(response)
+  }
+  return response
+}
 
 // Execution order (per issue #55):
 //   1. clerkMiddleware identifies the user and populates auth() context.
@@ -18,6 +51,13 @@ const handleI18n = createMiddleware(routing)
 // tree) can call auth() / currentUser() — that populates the JWT used by
 // getUserScopedClient() in Phase 2.5+ (ADR-0010).
 function runIntlAndAgeGate(request: NextRequest) {
+  // Debug activation runs first — it short-circuits with a redirect
+  // so the cookie write lands on a clean URL before intl / age-gate
+  // get a chance to rewrite. The intl + age-gate logic re-runs on the
+  // redirected request just like any other navigation.
+  const debugResponse = handleDebugActivation(request)
+  if (debugResponse !== null) return debugResponse
+
   const intlResponse = handleI18n(request)
 
   if (intlResponse.headers.has('location')) {

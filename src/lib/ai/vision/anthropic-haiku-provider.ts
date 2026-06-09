@@ -8,6 +8,7 @@ import {
   type LabelScanExtraction,
 } from '@/lib/schemas/label-scan-extraction'
 import { ZDR_ACTIVE } from '@/lib/ai/zdr-status'
+import { debugAdd } from '@/lib/debug/debug-log'
 import type { VisionProvider } from './vision-provider'
 
 /**
@@ -115,6 +116,17 @@ export function createAnthropicHaikuProvider(
       const arrayBuffer = await jpegBlob.arrayBuffer()
       const bytes = new Uint8Array(arrayBuffer)
 
+      debugAdd('Vision', `calling claude-haiku-4-5 with ${bytes.length} bytes of inline JPEG`, {
+        mediaType: jpegBlob.type || 'image/jpeg',
+        modelId:
+          typeof resolvedModel === 'object' &&
+          resolvedModel !== null &&
+          'modelId' in resolvedModel
+            ? String((resolvedModel as { modelId: unknown }).modelId)
+            : 'unknown',
+      })
+
+      const start = Date.now()
       const { object } = await generateObject({
         model: resolvedModel,
         schema: LabelScanExtractionSchema,
@@ -135,6 +147,13 @@ export function createAnthropicHaikuProvider(
             ],
           },
         ],
+      })
+      const elapsedMs = Date.now() - start
+
+      debugAdd('Vision', `model returned in ${elapsedMs}ms`, {
+        name_ja: object.name_ja,
+        brewery_ja: object.brewery_ja,
+        confidence: object.confidence,
       })
 
       // `generateObject` already runs the schema parse, so `object` is

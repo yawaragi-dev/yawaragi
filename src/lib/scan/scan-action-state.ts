@@ -1,3 +1,4 @@
+import type { DebugEvent } from '@/lib/debug/debug-log'
 import type { LabelScanExtraction } from '@/lib/schemas/label-scan-extraction'
 
 /**
@@ -6,7 +7,7 @@ import type { LabelScanExtraction } from '@/lib/schemas/label-scan-extraction'
  * actions file — only async functions are allowed. Types and constants
  * have to live somewhere else and be re-imported on both sides.
  */
-export type ScanActionState =
+type ScanActionStateBase =
   | { status: 'idle' }
   | { status: 'invalid_input'; reason: 'missing_image' | 'unsupported_locale' }
   | {
@@ -53,5 +54,17 @@ export type ScanActionState =
       status: 'low_confidence'
       extraction: LabelScanExtraction
     }
+
+/**
+ * Optional server-side trace attached to every action result when the
+ * caller has the debug cookie set (`yawaragi_debug=1`). The client
+ * `<DebugPanel />` renders these events alongside its own client-side
+ * events (file picked, downscale done, etc.). Undefined when debug is
+ * off — and stripped at the server boundary so debug data never leaks
+ * to a non-debug visitor.
+ */
+export type ScanActionState = ScanActionStateBase & {
+  debugLog?: ReadonlyArray<DebugEvent>
+}
 
 export const INITIAL_SCAN_ACTION_STATE: ScanActionState = { status: 'idle' }

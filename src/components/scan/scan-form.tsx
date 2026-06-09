@@ -10,8 +10,10 @@ import type { FormEvent } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
+import { DebugPanel } from '@/components/debug/debug-panel'
 import { ProvenanceBadgeView } from '@/components/sake/provenance-badge'
 import { SakenowaAttributionView } from '@/components/sake/sakenowa-attribution'
+import type { DebugEvent } from '@/lib/debug/debug-log'
 import {
   browserBitmapDecoder,
   browserCanvasFactory,
@@ -26,6 +28,14 @@ import type { Locale } from '@/i18n/routing'
 
 interface ScanFormProps {
   locale: Locale
+  /**
+   * Server-rendered debug-mode flag (sourced from the `yawaragi_debug`
+   * cookie at request time, since the cookie is HttpOnly and not
+   * readable from client JS). When true, the `<DebugPanel />` overlay
+   * renders below the form and accumulates per-step client + server
+   * trace events for the current scan.
+   */
+  debugMode?: boolean
 }
 
 /**
@@ -47,7 +57,7 @@ interface ScanFormProps {
  * Out of scope for S1: medium/low confidence UX, disambiguation list,
  * no-match copy with a "submit to Sakenowa" affordance.
  */
-export function ScanForm({ locale }: ScanFormProps) {
+export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
   const t = useTranslations('scan.form')
   // ProvenanceBadgeView + SakenowaAttributionView are the sync presentational
   // halves; we resolve their strings via the client-side translator since this
@@ -56,6 +66,7 @@ export function ScanForm({ locale }: ScanFormProps) {
   // the extraction came back with source: 'llm_extracted'.
   const tBadge = useTranslations('provenance.badge.llmExtracted')
   const tAttribution = useTranslations('sakenowaAttribution')
+  const tDebug = useTranslations('debug.panel')
   const router = useRouter()
   const inputRef = useRef<HTMLInputElement | null>(null)
   const [state, formAction, isActionPending] = useActionState<ScanActionState, FormData>(
@@ -67,6 +78,29 @@ export function ScanForm({ locale }: ScanFormProps) {
   // discovery-framed i18n string ('errorDownscale'), not the raw browser
   // exception, to keep DACH copy on-brand.
   const [downscaleFailed, setDownscaleFailed] = useState(false)
+  // Per-scan client-side trace. Cleared on each new file pick so the
+  // panel always shows just the current attempt. Server-side events
+  // are merged in from `state.debugLog` when the action returns.
+  const [clientEvents, setClientEvents] = useState<DebugEvent[]>([])
+  // Initialized to 0 (not Date.now()) so the ref initializer stays
+  // pure for React 19's render-purity rules. `onFileChange` writes the
+  // real epoch ms before the first event is pushed, so the panel never
+  // sees a 0-based timestamp.
+  const scanStartedAtRef = useRef<number>(0)
+
+  function pushClientEvent(message: string, data?: Record<string, unknown>): void {
+    if (!debugMode) return
+    setClientEvents((prev) => [
+      ...prev,
+      {
+        tMs: Date.now() - scanStartedAtRef.current,
+        source: 'ScanForm',
+        level: 'info',
+        message,
+        data,
+      },
+    ])
+  }
 
   // After a successful match, navigate to the sake detail page. We don't
   // render anything in the matched-state branch because the next paint is
@@ -87,14 +121,25 @@ export function ScanForm({ locale }: ScanFormProps) {
     if (!file) return
     setDownscaleFailed(false)
     setIsDownscaling(true)
+    // New scan attempt — restart the per-attempt client trace and reset
+    // the relative-time origin so the panel shows time since pick.
+    scanStartedAtRef.current = Date.now()
+    setClientEvents([])
+    pushClientEvent(`picked file "${file.name}" (${file.size} bytes, ${file.type || 'no MIME'})`)
     try {
+      const downscaleStart = Date.now()
       const downscaled = await downscaleImage(file, {
         decode: browserBitmapDecoder,
         createContext: browserCanvasFactory,
       })
+      pushClientEvent(
+        `downscaled to ${downscaled.size} bytes in ${Date.now() - downscaleStart}ms`,
+        { ratio: Number((downscaled.size / file.size).toFixed(2)) },
+      )
       const formData = new FormData()
       formData.set('image', downscaled, 'label.jpg')
       formData.set('locale', locale)
+      pushClientEvent('submitting FormData to scanAction')
       // useActionState's action must be invoked from a transition. We
       // can't keep the await above inside startTransition (transitions
       // can't span an async boundary), so we open one here once the
@@ -106,6 +151,7 @@ export function ScanForm({ locale }: ScanFormProps) {
       // a decodable image — surface the localized hint, not the raw
       // exception (no promotional copy per JMStV).
       setDownscaleFailed(true)
+      pushClientEvent('downscale failed; surfaced localized error', undefined)
     } finally {
       setIsDownscaling(false)
       // Reset the input so picking the same file again still fires
@@ -247,6 +293,19 @@ export function ScanForm({ locale }: ScanFormProps) {
           </div>
           <p className="text-sm text-zinc-700 dark:text-zinc-300">{t('matched')}</p>
         </div>
+      )}
+      {debugMode && (
+        // Causal order: client events from the in-progress scan come
+        // first; the server-side trace from `state.debugLog` appends as
+        // soon as the action returns. Both arrays use independent
+        // relative timestamps — the panel renders insertion order, not
+        // tMs comparison, since the two clocks aren't synchronised.
+        <DebugPanel
+          events={[...clientEvents, ...(state.debugLog ?? [])]}
+          title={tDebug('title')}
+          emptyHint={tDebug('emptyHint')}
+          closeLabel={tDebug('closeLabel')}
+        />
       )}
     </form>
   )

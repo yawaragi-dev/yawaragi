@@ -1,5 +1,6 @@
 import 'server-only'
 import type { Pool } from 'pg'
+import { debugAdd } from '@/lib/debug/debug-log'
 import type { Brand } from '../schemas/brand'
 import type { Brewery } from '../schemas/brewery'
 import type { FlavorChart } from '../schemas/flavor-chart'
@@ -194,12 +195,18 @@ export async function findSakeByExtractionFromPool(
   query: SakeLookupQuery,
   pool: Pool,
 ): Promise<FindSakeByExtractionResult> {
+  debugAdd(
+    'Sakenowa',
+    `querying brands WHERE name_kanji = '${query.nameJa}' AND brewery.name_kanji = '${query.breweryJa}'`,
+    { nameJa: query.nameJa, breweryJa: query.breweryJa },
+  )
   const { rows } = await publicQuery<BrandRow>(
     'brands',
     SELECT_BRANDS_BY_KANJI_EXTRACTION,
     [query.nameJa, query.breweryJa],
     pool,
   )
+  debugAdd('Sakenowa', `query returned ${rows.length} row(s)`)
   if (rows.length === 0) {
     return { kind: 'no_match', query }
   }

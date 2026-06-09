@@ -6,6 +6,8 @@ import { getPathname } from '@/i18n/navigation'
 import type { Locale } from '@/i18n/routing'
 import { routing } from '@/i18n/routing'
 import { getDefaultVisionProvider } from '@/lib/ai/vision/registry'
+import { DebugLog, debugAdd, runWithDebugLog } from '@/lib/debug/debug-log'
+import { isDebugEnabledFromCookies } from '@/lib/debug/debug-mode'
 import {
   anonymousSessionCookieAttrs,
   readAnonymousSessionCookie,
@@ -85,65 +87,98 @@ export async function scanAction(
   _prev: ScanActionState,
   formData: FormData,
 ): Promise<ScanActionState> {
-  const image = formData.get('image')
-  if (!(image instanceof Blob) || image.size === 0) {
-    return { status: 'invalid_input', reason: 'missing_image' }
-  }
-  const localeRaw = formData.get('locale')
-  if (typeof localeRaw !== 'string' || !isLocale(localeRaw)) {
-    return { status: 'invalid_input', reason: 'unsupported_locale' }
-  }
+  // Read the debug cookie up-front. When set, every downstream module
+  // (rate-limit, vision, Sakenowa) appends per-step events via
+  // `getCurrentDebugLog()` / `debugAdd(...)` — no parameter threading
+  // through stable seams. The accumulated events are attached to the
+  // response under `debugLog` so the client `<DebugPanel />` can render
+  // them next to its own client-side events.
+  const cookieJar = await cookies()
+  const log = isDebugEnabledFromCookies(cookieJar) ? new DebugLog() : undefined
 
-  // Rate-limit gate. Issues / refreshes `yawaragi_session` and consults
-  // the vision-scan bucket. On exhaustion the action returns the tagged
-  // `rate_limited` state and never reaches the vision provider.
-  const rateLimit = await enforceRateLimit()
-  if (!rateLimit.allowed) {
-    return { status: 'rate_limited', retryAfterSec: rateLimit.retryAfterSec }
-  }
+  const result = await runWithDebugLog(log, async (): Promise<ScanActionState> => {
+    const image = formData.get('image')
+    if (!(image instanceof Blob) || image.size === 0) {
+      debugAdd('ScanAction', 'invalid_input: missing or empty image blob', undefined, 'warn')
+      return { status: 'invalid_input', reason: 'missing_image' }
+    }
+    debugAdd('ScanAction', `received image (${image.size} bytes, ${image.type || 'no MIME'})`)
 
-  // Real vision call (S3). The provider is resolved from the registry
-  // (`VISION_PROVIDER` env, default `anthropic-haiku-4-5`). The downscaled
-  // JPEG goes inline as base64 on /v1/messages; the Anthropic Files API
-  // is forbidden (`pnpm anthropic-files:audit`). The provider parses the
-  // model output through `LabelScanExtractionSchema`, pinning `source`
-  // to `'llm_extracted'`.
-  const extraction = await getDefaultVisionProvider().extractLabel(image)
+    const localeRaw = formData.get('locale')
+    if (typeof localeRaw !== 'string' || !isLocale(localeRaw)) {
+      debugAdd('ScanAction', `invalid_input: unsupported locale "${String(localeRaw)}"`, undefined, 'warn')
+      return { status: 'invalid_input', reason: 'unsupported_locale' }
+    }
 
-  // S3 placeholder for medium / low confidence. The three-tier UI lands
-  // in S4 (#109); for now anything below the auto threshold falls
-  // through to a tagged state the form renders as a "try a closer
-  // shot" hint. The extraction is carried so S4's confirm-card can
-  // reuse it without a second scan.
-  if (extraction.confidence < AUTO_CONFIDENCE_THRESHOLD) {
-    return { status: 'low_confidence', extraction }
-  }
+    // Rate-limit gate. Issues / refreshes `yawaragi_session` and consults
+    // the vision-scan bucket. On exhaustion the action returns the tagged
+    // `rate_limited` state and never reaches the vision provider.
+    const rateLimit = await enforceRateLimit()
+    if (!rateLimit.allowed) {
+      return { status: 'rate_limited', retryAfterSec: rateLimit.retryAfterSec }
+    }
 
-  const lookup = await findSakeByExtraction({
-    nameJa: extraction.name_ja,
-    breweryJa: extraction.brewery_ja,
+    // Real vision call (S3). The provider is resolved from the registry
+    // (`VISION_PROVIDER` env, default `anthropic-haiku-4-5`). The downscaled
+    // JPEG goes inline as base64 on /v1/messages; the Anthropic Files API
+    // is forbidden (`pnpm anthropic-files:audit`). The provider parses the
+    // model output through `LabelScanExtractionSchema`, pinning `source`
+    // to `'llm_extracted'`.
+    const extraction = await getDefaultVisionProvider().extractLabel(image)
+    debugAdd('ScanAction', `extraction confidence ${extraction.confidence.toFixed(2)}`, {
+      threshold: AUTO_CONFIDENCE_THRESHOLD,
+      branch: extraction.confidence < AUTO_CONFIDENCE_THRESHOLD ? 'low_confidence' : 'lookup',
+    })
+
+    // S3 placeholder for medium / low confidence. The three-tier UI lands
+    // in S4 (#109); for now anything below the auto threshold falls
+    // through to a tagged state the form renders as a "try a closer
+    // shot" hint. The extraction is carried so S4's confirm-card can
+    // reuse it without a second scan.
+    if (extraction.confidence < AUTO_CONFIDENCE_THRESHOLD) {
+      return { status: 'low_confidence', extraction }
+    }
+
+    const lookup = await findSakeByExtraction({
+      nameJa: extraction.name_ja,
+      breweryJa: extraction.brewery_ja,
+    })
+
+    if (lookup.kind === 'exact') {
+      const sakeHref = getPathname({
+        locale: localeRaw,
+        href: { pathname: '/sake/[brandId]', params: { brandId: String(lookup.sake.brandId) } },
+      })
+      debugAdd('ScanAction', 'returning matched', {
+        brandId: lookup.sake.brandId,
+        sakeHref,
+      })
+      return {
+        status: 'matched',
+        extraction,
+        brandId: lookup.sake.brandId,
+        sakeHref,
+      }
+    }
+    if (lookup.kind === 'ambiguous') {
+      debugAdd('ScanAction', 'returning ambiguous', {
+        candidates: lookup.candidates.map((c) => c.brandId),
+      })
+      return {
+        status: 'ambiguous',
+        extraction,
+        brandIds: lookup.candidates.map((c) => c.brandId),
+      }
+    }
+    debugAdd('ScanAction', 'returning no_match', {
+      attempted: { name_ja: extraction.name_ja, brewery_ja: extraction.brewery_ja },
+    })
+    return { status: 'no_match', extraction }
   })
 
-  if (lookup.kind === 'exact') {
-    const sakeHref = getPathname({
-      locale: localeRaw,
-      href: { pathname: '/sake/[brandId]', params: { brandId: String(lookup.sake.brandId) } },
-    })
-    return {
-      status: 'matched',
-      extraction,
-      brandId: lookup.sake.brandId,
-      sakeHref,
-    }
-  }
-  if (lookup.kind === 'ambiguous') {
-    return {
-      status: 'ambiguous',
-      extraction,
-      brandIds: lookup.candidates.map((c) => c.brandId),
-    }
-  }
-  return { status: 'no_match', extraction }
+  // Attach the accumulated trace to the response. Stripped when debug
+  // is off so non-debug visitors never see it.
+  return log ? { ...result, debugLog: log.toArray() } : result
 }
 
 interface RateLimitDecision {
@@ -184,6 +219,7 @@ async function enforceRateLimit(): Promise<RateLimitDecision> {
     console.warn(
       '[scan] rate-limit env not set; skipping enforcement (non-production only).',
     )
+    debugAdd('RateLimit', 'env unset → skipping enforcement (non-production)', undefined, 'warn')
     return { allowed: true, retryAfterSec: 0 }
   }
   const { secret, salt, kvUrl, kvToken } = config
@@ -214,6 +250,19 @@ async function enforceRateLimit(): Promise<RateLimitDecision> {
   const result = await anonymousRateLimit(
     { cookieId: session.sid, ipHashed, bucket: 'vision-scan' },
     { kv },
+  )
+
+  debugAdd(
+    'RateLimit',
+    result.allowed
+      ? `allowed (${result.remaining} remaining in vision-scan bucket)`
+      : `denied — retryAfter ${result.retryAfterSec}s`,
+    {
+      bucket: 'vision-scan',
+      cookieKey: `rl:vision-scan:cookie:${session.sid.slice(0, 8)}…`,
+      allowed: result.allowed,
+    },
+    result.allowed ? 'info' : 'warn',
   )
 
   return { allowed: result.allowed, retryAfterSec: result.retryAfterSec }

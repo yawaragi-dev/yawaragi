@@ -1,5 +1,6 @@
 import 'server-only'
 
+import { debugAdd } from '@/lib/debug/debug-log'
 import {
   LabelScanExtractionSchema,
   type LabelScanExtraction,
@@ -43,6 +44,11 @@ export function createE2eStubVisionProvider(): VisionProvider {
         // but failing here keeps the error specific to the cause.
         throw new Error('e2e-stub: empty image blob')
       }
+      debugAdd(
+        'Vision',
+        `e2e-stub: returning fixed Dassai extraction (no model call)`,
+        { name_ja: STUB_EXTRACTION.name_ja, confidence: STUB_EXTRACTION.confidence },
+      )
       return STUB_EXTRACTION
     },
   }

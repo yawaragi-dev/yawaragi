@@ -60,6 +60,13 @@
       "flavorChartLabel": "Flavor Chart (Sakenowa)"
     }
   },
+  "debug": {
+    "panel": {
+      "title": "Debug",
+      "emptyHint": "Warte auf das erste Ereignis…",
+      "closeLabel": "Debug-Panel schließen"
+    }
+  },
   "scan": {
     "entry": {
       "title": "Etikett scannen",
