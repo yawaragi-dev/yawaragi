@@ -94,6 +94,7 @@ pnpm dev
 | `pnpm typecheck`          | `tsc --noEmit`                                           |
 | `pnpm migrate`            | Apply pending SQL files in `supabase/migrations/`        |
 | `pnpm ingest`             | Refresh Sakenowa data into Supabase                      |
+| `pnpm rate-limit:reset`   | Wipe `rl:*` keys in Upstash so the next scan starts at 5/5 (maintainer testing) |
 | `pnpm db:resync`          | One-shot: `db:reset --yes && migrate && ingest`          |
 | `pnpm verify`             | Full chain (lint + typecheck + test + integration + e2e + audits) — **needs Docker** |
 | `pnpm eval`               | Run eval golden sets                                     |

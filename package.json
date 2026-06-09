@@ -28,6 +28,7 @@
     "migrate": "tsx --env-file=.env.local scripts/migrate.ts",
     "db:reset": "tsx --env-file=.env.local scripts/reset-db.ts",
     "ingest": "tsx --env-file=.env.local scripts/ingest-sakenowa.ts",
+    "rate-limit:reset": "tsx --env-file=.env.local scripts/clear-rate-limit.ts",
     "db:resync": "npm run db:reset -- --yes && npm run migrate && npm run ingest",
     "verify": "npm run lint && npm run typecheck && npm run test && npm run test:integration && npm run test:e2e && npm run i18n:audit && npm run anthropic-files:audit"
   },
