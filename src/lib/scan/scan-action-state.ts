@@ -35,5 +35,23 @@ export type ScanActionState =
       status: 'rate_limited'
       retryAfterSec: number
     }
+  /**
+   * Phase 3 / S3 (#108) PLACEHOLDER: the vision provider produced an
+   * extraction whose confidence is below the auto/confirm threshold.
+   * S3 has no UI for medium / low confidence yet — S4 (#109) lands the
+   * three-tier UX (auto/confirm/retry). Until then the action returns
+   * this tagged state and the UI renders a localized "we couldn't read
+   * the label clearly, try a closer shot" message. The `extraction` is
+   * carried through so a future S4 confirm-card can use it without a
+   * second scan.
+   *
+   * S4 will likely split this into `confirm` (medium) and `retry`
+   * (low), at which point the placeholder copy is replaced; the action
+   * change is local and the rest of the wire-shape is unaffected.
+   */
+  | {
+      status: 'low_confidence'
+      extraction: LabelScanExtraction
+    }
 
 export const INITIAL_SCAN_ACTION_STATE: ScanActionState = { status: 'idle' }

@@ -21,6 +21,16 @@ if (!process.env.CLERK_SECRET_KEY) {
   process.env.CLERK_SECRET_KEY = 'sk_test_placeholder-for-unit-tests'
 }
 
+// ANTHROPIC_API_KEY tightened to .min(1) by S3 (#108). Unit tests never
+// reach the real Anthropic endpoint — the vision provider tests inject a
+// `MockLanguageModelV3` — but the env.parse still runs at module load,
+// so any test that touches a module which transitively imports `@/env`
+// needs a truthy value here. Same truthy-not-defined check as the Clerk
+// stubs above so an injected empty string is replaced.
+if (!process.env.ANTHROPIC_API_KEY) {
+  process.env.ANTHROPIC_API_KEY = 'sk-ant-test-placeholder-for-unit-tests'
+}
+
 // `server-only` is a marker package shipped with Next.js (transitive of `next`)
 // that throws if a module imports it from a client bundle. It has no runtime
 // behaviour in a server context — just empty exports. pnpm's strict isolation

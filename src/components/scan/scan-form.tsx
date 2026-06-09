@@ -185,6 +185,20 @@ export function ScanForm({ locale }: ScanFormProps) {
           {t('errorDownscale')}
         </p>
       )}
+      {state.status === 'low_confidence' && (
+        // Phase 3 / S3 (#108) placeholder. S4 (#109) replaces this with
+        // the three-tier auto / confirm / retry UI; for now we render a
+        // single discovery-framed hint that nudges the visitor toward a
+        // clearer photo. The extraction is on the state but deliberately
+        // not displayed yet — S4 owns the confirm-card design.
+        <p
+          role="alert"
+          className="text-sm text-amber-700 dark:text-amber-300"
+          data-testid="scan-error-low-confidence"
+        >
+          {t('lowConfidence')}
+        </p>
+      )}
       {state.status === 'no_match' && (
         <p
           className="text-sm text-zinc-700 dark:text-zinc-300"

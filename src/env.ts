@@ -14,7 +14,16 @@ const empty = <T extends z.ZodTypeAny>(schema: T) =>
   z.preprocess((v) => (v === '' ? undefined : v), schema)
 
 const Env = z.object({
-  ANTHROPIC_API_KEY: empty(z.string().optional()),
+  // Tightened to required by Phase 3 / S3 (#108). The vision provider
+  // (Anthropic Haiku 4.5 via AI SDK) reads the key at module load through
+  // the `anthropic` provider factory; an empty/missing key is a fatal
+  // mis-deploy of the only paid-LLM surface in Phase 3. Same fail-at-
+  // env.parse pattern as `CLERK_SECRET_KEY` (PR #92) — keep the failure
+  // mode obvious in dev + CI rather than letting it surface as a cryptic
+  // 401 on first scan. Must be set in Production, Preview, and
+  // Development on Vercel (see PR #92 § "tighten env check all
+  // environments" memory).
+  ANTHROPIC_API_KEY: empty(z.string().min(1)),
   // Postgres connection string for the Supabase project (Project → Settings →
   // Database → Connection string). Used by the pg.Pool in server-client.ts.
   // Stays optional in the schema so the app boots without it; the pool
@@ -65,5 +74,13 @@ const Env = z.object({
   // before Production deployment.
   UPSTASH_REDIS_REST_URL: empty(z.string().url().optional()),
   UPSTASH_REDIS_REST_TOKEN: empty(z.string().optional()),
+  // -------- Phase 3 / S3 — vision provider seam (#108) ----------------
+  // Named key into the vision-provider registry. Default is
+  // `anthropic-haiku-4-5`. The eventual second vendor (Phase 4-ish
+  // failover slice) lands as a new registry entry + an env-var swap
+  // here, not a code rewrite of the scan action. Validated against the
+  // registry's known keys at first use, not at env.parse time, so a
+  // new vendor can be added without first updating this schema.
+  VISION_PROVIDER: empty(z.string().min(1).optional()),
 })
 export const env = Env.parse(process.env)

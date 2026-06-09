@@ -5,6 +5,7 @@ import { env } from '@/env'
 import { getPathname } from '@/i18n/navigation'
 import type { Locale } from '@/i18n/routing'
 import { routing } from '@/i18n/routing'
+import { getDefaultVisionProvider } from '@/lib/ai/vision/registry'
 import {
   anonymousSessionCookieAttrs,
   readAnonymousSessionCookie,
@@ -14,27 +15,21 @@ import { assertRateLimitConfig } from '@/lib/rate-limit/config-gate'
 import { extractIp, hashIp } from '@/lib/rate-limit/ip-hash'
 import { UpstashKVClient } from '@/lib/rate-limit/upstash-kv-client'
 import { findSakeByExtraction } from '@/lib/sakenowa/lookup'
-import {
-  type LabelScanExtraction,
-  parseLabelScanExtraction,
-} from '@/lib/schemas/label-scan-extraction'
 import type { ScanActionState } from './scan-action-state'
 
 /**
- * Phase 3 / S1 + S2 scan Server Action.
+ * Phase 3 / S1 + S2 + S3 scan Server Action.
  *
  * What S1 (#106) shipped:
  *   - Accepts the FormData from the client `<ScanForm />`.
- *   - Returns a HARDCODED extraction. The vision provider seam is wired
- *     in S3 (#108); until then, the action proves out the wire shape and
- *     end-to-end happy path.
- *   - Parses the hardcoded result through `LabelScanExtractionSchema` so
- *     the source pinning is the same parse-time seam the real provider
- *     will hit, and a future broken provider can't silently regress.
+ *   - Returned a HARDCODED extraction (Dassai / Asahi Shuzo) to prove out
+ *     the wire shape and the end-to-end happy path.
+ *   - Parses the result through `LabelScanExtractionSchema` so the source
+ *     pinning is the same parse-time seam the real provider hits.
  *   - Runs the real `findSakeByExtraction` against the Sakenowa mirror.
  *   - Returns a tagged-union result for `useActionState` to render.
  *
- * What S2 (#107, this slice) adds:
+ * What S2 (#107) added:
  *   - Issues / refreshes the `yawaragi_session` cookie (signed opaque
  *     ~16-byte id, 24h sliding TTL). The cookie's `sid` is one of two
  *     rate-limit budget keys.
@@ -42,30 +37,38 @@ import type { ScanActionState } from './scan-action-state'
  *     (5 calls per identifier per 24h, sliding window). On exhaustion
  *     the action returns a tagged `rate_limited` state and the form UI
  *     renders the localized "try again in X" copy.
- *   - Neither identifier reaches Postgres or any log line. The plaintext
- *     IP is hashed inside `extractIp` → `hashIp` before it touches the
- *     rate-limit module; only the salted hash is ever a KV key.
+ *   - Neither identifier reaches Postgres or any log line.
  *
- * Out of scope for S2 (defer to later slices per #105):
- *   - Real vision call (S3 / #108)
- *   - Medium/low confidence UX states (S4)
+ * What S3 (#108, this slice) replaces:
+ *   - The hardcoded extraction is gone. The action now calls
+ *     `getDefaultVisionProvider().extractLabel(blob)` against the real
+ *     downscaled JPEG. The default registry key is
+ *     `anthropic-haiku-4-5`; the Playwright spec overrides with
+ *     `VISION_PROVIDER=e2e-stub` so CI does not burn Anthropic credit.
+ *   - The rate-limit gate still runs BEFORE the vision call — there is
+ *     no path that reaches the paid model without first paying the
+ *     bucket. CLAUDE.md JMStV / cost-protection invariant.
+ *   - For high-confidence extractions (≥ AUTO_CONFIDENCE_THRESHOLD) the
+ *     existing matched / ambiguous / no_match branches still fire. For
+ *     anything below the threshold the action returns a placeholder
+ *     `low_confidence` state — S4 (#109) replaces this with the
+ *     three-tier auto / confirm / retry UX.
+ *
+ * Out of scope for S3 (defer to later slices per #105):
+ *   - Three-tier confidence UI (S4 / #109)
  *   - Disambiguation list UI (S4)
- *   - Age-gate "requires_age_gate" gate-resume flow (S4 wiring; the
- *     existing proxy already keeps the result page out of reach for an
- *     un-gated visitor, so the S1 happy-path arrives at `/sake/[brandId]`
- *     only when the gate is accepted)
+ *   - Age-gate "requires_age_gate" gate-resume flow (S4 wiring)
  */
 
-// Hardcoded test extraction. Dassai / Asahi Shuzo — picked because it's
-// the canonical sake referenced in CONTEXT.md "Language" §Sake. Confidence
-// is pinned at 0.95 (high) so the happy-path UI tier resolution always
-// returns `auto`.
-const HARDCODED_EXTRACTION = {
-  source: 'llm_extracted',
-  name_ja: '獺祭',
-  brewery_ja: '旭酒造',
-  confidence: 0.95,
-} satisfies LabelScanExtraction
+/**
+ * Confidence at or above which the action treats the extraction as
+ * high-confidence and runs the Sakenowa lookup → matched/ambiguous/
+ * no_match branches. Below this, the action returns the `low_confidence`
+ * placeholder for S4 to replace. PRD #105 § "Confidence tier resolver"
+ * pins 0.85 as the auto/confirm boundary; S4 will introduce the second
+ * threshold (0.6) for retry vs. confirm.
+ */
+const AUTO_CONFIDENCE_THRESHOLD = 0.85
 
 function isLocale(value: string): value is Locale {
   return (routing.locales as readonly string[]).includes(value)
@@ -99,9 +102,22 @@ export async function scanAction(
     return { status: 'rate_limited', retryAfterSec: rateLimit.retryAfterSec }
   }
 
-  // S1: the vision provider is stubbed. The blob is accepted but not
-  // sent anywhere — S3 (#108) wires the real Haiku 4.5 call here.
-  const extraction = parseLabelScanExtraction(HARDCODED_EXTRACTION)
+  // Real vision call (S3). The provider is resolved from the registry
+  // (`VISION_PROVIDER` env, default `anthropic-haiku-4-5`). The downscaled
+  // JPEG goes inline as base64 on /v1/messages; the Anthropic Files API
+  // is forbidden (`pnpm anthropic-files:audit`). The provider parses the
+  // model output through `LabelScanExtractionSchema`, pinning `source`
+  // to `'llm_extracted'`.
+  const extraction = await getDefaultVisionProvider().extractLabel(image)
+
+  // S3 placeholder for medium / low confidence. The three-tier UI lands
+  // in S4 (#109); for now anything below the auto threshold falls
+  // through to a tagged state the form renders as a "try a closer
+  // shot" hint. The extraction is carried so S4's confirm-card can
+  // reuse it without a second scan.
+  if (extraction.confidence < AUTO_CONFIDENCE_THRESHOLD) {
+    return { status: 'low_confidence', extraction }
+  }
 
   const lookup = await findSakeByExtraction({
     nameJa: extraction.name_ja,
