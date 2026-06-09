@@ -61,7 +61,15 @@ export function DebugPanel({ events, title, emptyHint, closeLabel }: DebugPanelP
   return (
     <aside
       data-testid="debug-panel"
-      className="fixed inset-x-0 bottom-0 z-50 mx-auto max-w-2xl border-t border-zinc-300 bg-zinc-50/95 backdrop-blur dark:border-zinc-700 dark:bg-zinc-950/95"
+      className="fixed inset-x-0 z-50 mx-auto max-w-2xl border-t border-zinc-300 bg-zinc-50/95 backdrop-blur dark:border-zinc-700 dark:bg-zinc-950/95"
+      // `bottom` is driven by a CSS custom property the cookie banner
+      // publishes (see `cookie-banner.tsx`). When the banner is open,
+      // the variable equals the banner's rendered height so the debug
+      // panel stacks above it; when the banner is closed (or never
+      // mounted) the fallback `0px` parks the panel at the screen edge.
+      // ResizeObserver in the banner keeps the value live across locale
+      // copy length, customize-toggle, and viewport-width changes.
+      style={{ bottom: 'var(--cookie-banner-h, 0px)' }}
       // The panel is not interactive beyond the close button; aria-label
       // gives screen readers a way to skip it.
       aria-label={title}
