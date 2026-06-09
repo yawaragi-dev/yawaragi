@@ -10,13 +10,13 @@ A sake companion. Three flagship surfaces: **label scan**, **chat recommender**,
 
 ## Milestone progress
 
-_Snapshot generated 2026-06-08 from GitHub Issues + merged PRs. Regenerate with `pnpm progress`. Detail: [docs/PROGRESS.md](./docs/PROGRESS.md)._
+_Snapshot generated 2026-06-09 from GitHub Issues + merged PRs. Regenerate with `pnpm progress`. Detail: [docs/PROGRESS.md](./docs/PROGRESS.md)._
 
 | Milestone | Progress | Issues | ETA (median) |
 | --- | --- | --- | --- |
 | **M1 (Phase 0) — Compliance & i18n foundation** | `████████████████████` 100% | 5 / 5 | done |
-| **M2 (Phase 2) — Data foundation** | `███████████████████░` 94% | 11 / 12 | 2026-06-09 |
-| **M3 (Phases 3–5) — Flagship surfaces** | `████░░░░░░░░░░░░░░░░` 20% | 1 / 5 | 2026-06-11 |
+| **M2 (Phase 2) — Data foundation** | `███████████████████░` 94% | 11 / 12 | 2026-06-10 |
+| **M3 (Phases 3–5) — Flagship surfaces** | `████████░░░░░░░░░░░░` 40% | 2 / 5 | 2026-06-12 |
 
 <!-- progress:end -->
 
@@ -94,6 +94,7 @@ pnpm dev
 | `pnpm typecheck`          | `tsc --noEmit`                                           |
 | `pnpm migrate`            | Apply pending SQL files in `supabase/migrations/`        |
 | `pnpm ingest`             | Refresh Sakenowa data into Supabase                      |
+| `pnpm rate-limit:reset`   | Wipe `rl:*` keys in Upstash so the next scan starts at 5/5 (maintainer testing) |
 | `pnpm db:resync`          | One-shot: `db:reset --yes && migrate && ingest`          |
 | `pnpm verify`             | Full chain (lint + typecheck + test + integration + e2e + audits) — **needs Docker** |
 | `pnpm eval`               | Run eval golden sets                                     |
