@@ -1,11 +1,20 @@
 'use client'
 
-import { useEffect, useState, useTransition } from 'react'
+import { useEffect, useRef, useState, useTransition } from 'react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { setConsent } from '@/lib/legal/consent-actions'
 import type { ConsentDecision } from '@/lib/legal/consent'
 import { COOKIE_BANNER_OPEN_EVENT } from './cookie-banner-events'
+
+/**
+ * CSS custom property the banner publishes on `<html>` so other
+ * bottom-anchored overlays (`<DebugPanel />`, future toasts) can sit
+ * above it without colliding. Value is the banner's current rendered
+ * height in pixels, kept in sync by a `ResizeObserver` while the
+ * banner is open. Cleared when the banner closes.
+ */
+const COOKIE_BANNER_HEIGHT_CSS_VAR = '--cookie-banner-h'
 
 export function CookieBanner({
   initialDecision,
@@ -18,6 +27,7 @@ export function CookieBanner({
   const [customizing, setCustomizing] = useState(initialDecision !== null)
   const [analytics, setAnalytics] = useState(initialDecision?.analytics ?? false)
   const [marketing, setMarketing] = useState(initialDecision?.marketing ?? false)
+  const bannerRef = useRef<HTMLElement | null>(null)
 
   useEffect(() => {
     function handleOpen() {
@@ -27,6 +37,33 @@ export function CookieBanner({
     window.addEventListener(COOKIE_BANNER_OPEN_EVENT, handleOpen)
     return () => window.removeEventListener(COOKIE_BANNER_OPEN_EVENT, handleOpen)
   }, [])
+
+  // Publish the banner's rendered height so other fixed bottom
+  // overlays can stack above it. Falls back to 0 (no offset needed)
+  // when the banner is closed.
+  useEffect(() => {
+    if (!open) {
+      document.documentElement.style.removeProperty(COOKIE_BANNER_HEIGHT_CSS_VAR)
+      return
+    }
+    const el = bannerRef.current
+    if (!el) return
+
+    const update = () => {
+      document.documentElement.style.setProperty(
+        COOKIE_BANNER_HEIGHT_CSS_VAR,
+        `${el.offsetHeight}px`,
+      )
+    }
+    update()
+    const observer = new ResizeObserver(update)
+    observer.observe(el)
+
+    return () => {
+      observer.disconnect()
+      document.documentElement.style.removeProperty(COOKIE_BANNER_HEIGHT_CSS_VAR)
+    }
+  }, [open, customizing])
 
   function save(choice: { analytics: boolean; marketing: boolean }) {
     startTransition(async () => {
@@ -41,6 +78,7 @@ export function CookieBanner({
 
   return (
     <section
+      ref={bannerRef}
       role="region"
       aria-label={t('label')}
       data-testid="cookie-banner"

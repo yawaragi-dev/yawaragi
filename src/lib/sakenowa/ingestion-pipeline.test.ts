@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import {
   computeAreaContentHash,
   computeBreweryContentHash,
@@ -108,6 +108,10 @@ describe('sakenowaBrandToBrand', () => {
       brandId: 1,
       name: '麗人',
       nameKanji: '麗人',
+      // Romaji is populated by the transliteration enrichment hook
+      // before upsert (issue #121). The pure record conversion leaves
+      // it null — the enrichment is a separate pipeline stage.
+      nameRomaji: null,
       breweryId: 49,
       source: 'sakenowa',
     })
@@ -119,6 +123,7 @@ describe('computeContentHash', () => {
     brandId: 1,
     name: 'Reijin',
     nameKanji: '麗人',
+    nameRomaji: null,
     breweryId: 49,
     source: 'sakenowa',
   }
@@ -280,6 +285,98 @@ describe('ingestBrands', () => {
     expect(summary).toMatchObject({ unchanged: 2 })
     expect(calls).toEqual([])
   })
+
+  // Integration coverage for the new (#121) romaji enrichment hook on
+  // `ingestBrands`. The hook lives on `IngestTableConfig.enrichBeforeUpsert`
+  // and is the contract that lets the LLM transliteration step run only on
+  // rows the classifier identified as added or updated.
+
+  it('enrichBeforeUpsert: populates nameRomaji on added rows via the injected transliterateBatch', async () => {
+    const db = new FakeBrandsDB()
+    const calls: Array<ReadonlyArray<{ id: number; nameKanji: string }>> = []
+    const summary = await ingestBrands({
+      client: makeClient([
+        sBrand({ id: 1, name: '獺祭' }),
+        sBrand({ id: 2, name: '久保田' }),
+      ]),
+      db,
+      transliterateBatch: async (items) => {
+        calls.push(items)
+        return items.map((i) => ({
+          id: i.id,
+          nameRomaji: i.nameKanji === '獺祭' ? 'Dassai' : 'Kubota',
+        }))
+      },
+    })
+
+    expect(summary).toEqual({ added: 2, updated: 0, unchanged: 0, total: 2 })
+    // Both rows were classified as added → both reached the enrichment.
+    expect(calls).toEqual([
+      [
+        { id: 1, nameKanji: '獺祭' },
+        { id: 2, nameKanji: '久保田' },
+      ],
+    ])
+    // Romaji landed in the upsert.
+    expect(db.rows.get(1)?.brand.nameRomaji).toBe('Dassai')
+    expect(db.rows.get(2)?.brand.nameRomaji).toBe('Kubota')
+  })
+
+  it('enrichBrandsWithRomaji: short-circuits the LLM call when no rows changed', async () => {
+    const db = new FakeBrandsDB()
+    // Seed an existing row whose hash will match the next ingest.
+    const initial = sakenowaBrandToBrand(sBrand({ id: 1 }))
+    db.rows.set(1, { brand: { ...initial, nameRomaji: 'Reijin' }, hash: computeContentHash(initial) })
+
+    const transliterateBatch = vi.fn(async (items: ReadonlyArray<unknown>) =>
+      items.map(() => ({ id: -1, nameRomaji: null })),
+    )
+    const summary = await ingestBrands({
+      client: makeClient([sBrand({ id: 1 })]), // same kanji → same hash
+      db,
+      transliterateBatch,
+    })
+
+    expect(summary).toMatchObject({ unchanged: 1 })
+    // The brand-side wrapper (`enrichBrandsWithRomaji`) short-circuits
+    // when there are zero records to enrich — saves an empty LLM
+    // round-trip. The injected fn must therefore NOT have been called.
+    expect(transliterateBatch).not.toHaveBeenCalled()
+  })
+
+  it('transliterateBatch: null disables enrichment entirely; nameRomaji stays null on new rows', async () => {
+    const db = new FakeBrandsDB()
+    const summary = await ingestBrands({
+      client: makeClient([sBrand({ id: 1, name: '獺祭' })]),
+      db,
+      transliterateBatch: null,
+    })
+
+    expect(summary).toEqual({ added: 1, updated: 0, unchanged: 0, total: 1 })
+    // No transliteration step → nameRomaji stays null on the upserted row.
+    expect(db.rows.get(1)?.brand.nameRomaji).toBeNull()
+  })
+
+  it('failed transliteration leaves nameRomaji null without sinking the ingest', async () => {
+    const db = new FakeBrandsDB()
+    const summary = await ingestBrands({
+      client: makeClient([
+        sBrand({ id: 1, name: '獺祭' }),
+        sBrand({ id: 2, name: '久保田' }),
+      ]),
+      db,
+      transliterateBatch: async (items) =>
+        items.map((i) => ({
+          id: i.id,
+          nameRomaji: i.id === 1 ? 'Dassai' : null,
+          error: i.id === 2 ? 'AI_TestError' : undefined,
+        })),
+    })
+
+    expect(summary).toEqual({ added: 2, updated: 0, unchanged: 0, total: 2 })
+    expect(db.rows.get(1)?.brand.nameRomaji).toBe('Dassai')
+    expect(db.rows.get(2)?.brand.nameRomaji).toBeNull()
+  })
 })
 
 class FakeBreweriesDB implements BreweriesDB {
@@ -336,6 +433,9 @@ describe('sakenowaBreweryToBrewery', () => {
       breweryId: 49,
       name: '麗人酒造',
       nameKanji: '麗人酒造',
+      // Same as sakenowaBrandToBrand — null until the romaji
+      // enrichment pass runs (issue #121).
+      nameRomaji: null,
       areaId: 20,
       source: 'sakenowa',
     })
@@ -347,6 +447,7 @@ describe('computeBreweryContentHash', () => {
     breweryId: 49,
     name: 'Reijin Shuzo',
     nameKanji: '麗人酒造',
+    nameRomaji: null,
     areaId: 20,
     source: 'sakenowa',
   }
@@ -373,6 +474,7 @@ describe('computeBreweryContentHash', () => {
       brandId: 49,
       name: 'Reijin Shuzo',
       nameKanji: '麗人酒造',
+      nameRomaji: null,
       breweryId: 20,
       source: 'sakenowa',
     }

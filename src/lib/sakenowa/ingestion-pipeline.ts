@@ -26,6 +26,7 @@ import type {
   SakenowaFlavorTag,
   SakenowaRankingsPayload,
 } from './client'
+import { transliterateBatch as defaultTransliterateBatch } from './romaji'
 import type {
   AreasDB,
   AreaUpsert,
@@ -58,6 +59,18 @@ export interface RunSummary {
 
 export type ProgressCallback = (current: number, total: number) => void
 
+/**
+ * Romaji-batch contract: the dep slot accepts any function with the
+ * same shape as the production `transliterateBatch` in
+ * `./romaji.ts`. The split is mostly for testability — tests inject
+ * a deterministic stub, production callers leave it undefined and
+ * the default Anthropic-backed implementation runs. Passing
+ * explicitly `null` is supported too, for cases where the operator
+ * wants to skip transliteration on a particular ingest (offline
+ * eval, schema-migration test, etc.).
+ */
+export type TransliterateBatchFn = typeof import('./romaji.js').transliterateBatch
+
 export interface IngestionDeps {
   client: { getBrands: () => Promise<SakenowaBrand[]> }
   db: BrandsDB
@@ -69,12 +82,26 @@ export interface IngestionDeps {
    * nothing slow happening for the bar to track.
    */
   onProgress?: ProgressCallback
+  /**
+   * Inject a transliteration function to populate `nameRomaji` on
+   * added / updated brands. Defaults to the production Anthropic
+   * caller. Set explicitly to `null` to skip transliteration (the
+   * column stays NULL on new rows; existing values are preserved by
+   * the upsert's COALESCE rule).
+   */
+  transliterateBatch?: TransliterateBatchFn | null
+  /** Optional progress callback for the romaji pass. */
+  onRomajiProgress?: ProgressCallback
 }
 
 export interface BreweryIngestionDeps {
   client: { getBreweries: () => Promise<SakenowaBrewery[]> }
   db: BreweriesDB
   onProgress?: ProgressCallback
+  /** See `IngestionDeps.transliterateBatch`. */
+  transliterateBatch?: TransliterateBatchFn | null
+  /** See `IngestionDeps.onRomajiProgress`. */
+  onRomajiProgress?: ProgressCallback
 }
 
 export interface FlavorChartIngestionDeps {
@@ -86,17 +113,26 @@ export interface FlavorChartIngestionDeps {
 export function sakenowaBrandToBrand(s: SakenowaBrand): Brand {
   return {
     brandId: s.id,
-    // Sakenowa returns one Japanese name (typically kanji) — populate both
-    // `name` and `nameKanji` with it until a romaji transliteration step
-    // arrives in a later slice / Phase 5+.
+    // Sakenowa publishes one Japanese name (typically kanji); we store
+    // it in both `name` and `nameKanji`. `nameRomaji` lands NULL here
+    // and gets populated by the transliteration pass (`enrichRomaji`)
+    // before the row reaches the upsert path.
     name: s.name,
     nameKanji: s.name,
+    nameRomaji: null,
     breweryId: s.breweryId,
     source: 'sakenowa',
   }
 }
 
 export function computeContentHash(brand: Brand): string {
+  // `nameRomaji` is intentionally excluded from the canonical hash —
+  // it's a DERIVED display field, not a Sakenowa-published one. A row
+  // whose kanji haven't changed should hash identically across
+  // ingests so the change-detection loop skips it (zero LLM calls on
+  // a re-ingest). When the kanji DO change, the hash differs, the row
+  // gets re-classified as updated, and the transliteration pass
+  // refreshes the romaji.
   const canonical = JSON.stringify({
     brandId: brand.brandId,
     name: brand.name,
@@ -146,6 +182,20 @@ export interface IngestTableConfig<TPayload, TRecord, TDB extends TxDB<TDB>, TUp
   /** Per-table write: e.g. `(tx, rows, cb) => tx.upsertBrandsBatch(rows, cb)`. */
   upsertBatch: (tx: TDB, rows: TUpsertRow[], onChunk?: BatchProgress) => Promise<void>
   onProgress?: ProgressCallback
+  /**
+   * Optional post-classification, pre-upsert enrichment hook.
+   *
+   * Receives the records that survived classification (added +
+   * updated), can asynchronously transform them — typically by
+   * filling in derived fields like `name_romaji` via an LLM call —
+   * and returns the same-length array in the same order.
+   *
+   * Unchanged rows never reach this hook, so a stable kanji surface
+   * means zero work. Skipping the hook (leaving it undefined) makes
+   * the pipeline behave exactly as before: this is a pure additive
+   * extension.
+   */
+  enrichBeforeUpsert?: (records: TRecord[]) => Promise<TRecord[]>
 }
 
 /**
@@ -175,7 +225,12 @@ export async function ingestSakenowaTable<
     let added = 0
     let updated = 0
     let unchanged = 0
-    const toUpsert: TUpsertRow[] = []
+    // Records that need to be written, held in record-form so the
+    // optional `enrichBeforeUpsert` hook can mutate them before they
+    // get serialised into the upsert tuple. Order is preserved end-
+    // to-end so the enriched record at index N becomes the upsert
+    // row at index N.
+    const recordsToWrite: { record: TRecord; contentHash: string }[] = []
 
     const total = payloads.length
     for (let i = 0; i < total; i++) {
@@ -184,15 +239,29 @@ export async function ingestSakenowaTable<
       const existingHash = existing.get(config.keyOf(record))
 
       if (existingHash === undefined) {
-        toUpsert.push(config.toUpsertRow(record, contentHash))
+        recordsToWrite.push({ record, contentHash })
         added++
       } else if (existingHash === contentHash) {
         unchanged++
       } else {
-        toUpsert.push(config.toUpsertRow(record, contentHash))
+        recordsToWrite.push({ record, contentHash })
         updated++
       }
     }
+
+    const enrichedRecords = config.enrichBeforeUpsert
+      ? await config.enrichBeforeUpsert(recordsToWrite.map((r) => r.record))
+      : recordsToWrite.map((r) => r.record)
+
+    if (enrichedRecords.length !== recordsToWrite.length) {
+      throw new Error(
+        `enrichBeforeUpsert returned ${enrichedRecords.length} records for ${recordsToWrite.length} ${config.label} inputs — length mismatch invalidates the per-index pairing with contentHash.`,
+      )
+    }
+
+    const toUpsert: TUpsertRow[] = enrichedRecords.map((record, i) =>
+      config.toUpsertRow(record, recordsToWrite[i].contentHash),
+    )
 
     let written = 0
     try {
@@ -232,7 +301,35 @@ export async function ingestBrands(deps: IngestionDeps): Promise<RunSummary> {
     getExistingHashes: (tx) => tx.getExistingBrandHashes(),
     upsertBatch: (tx, rows, onChunk) => tx.upsertBrandsBatch(rows, onChunk),
     onProgress: deps.onProgress,
+    enrichBeforeUpsert: (brands) => enrichBrandsWithRomaji(brands, deps),
   })
+}
+
+/**
+ * Calls the romaji transliteration service on each brand that the
+ * pipeline classified as added / updated. Returns the brands in the
+ * same order, with `nameRomaji` populated where the model call
+ * succeeded. Failed calls leave the row with `nameRomaji: null` and
+ * log to stderr; the next ingest re-tries.
+ *
+ * The `deps.transliterateBatch` injection point lets tests stub the
+ * model call; production callers leave it undefined and the default
+ * Anthropic-backed implementation runs.
+ */
+async function enrichBrandsWithRomaji(
+  brands: Brand[],
+  deps: IngestionDeps,
+): Promise<Brand[]> {
+  if (brands.length === 0 || deps.transliterateBatch === null) return brands
+  const fn = deps.transliterateBatch ?? defaultTransliterateBatch
+  const results = await fn(
+    brands.map((b) => ({ id: b.brandId, nameKanji: b.nameKanji })),
+    { onProgress: deps.onRomajiProgress },
+  )
+  return brands.map((brand, i) => ({
+    ...brand,
+    nameRomaji: results[i]?.nameRomaji ?? null,
+  }))
 }
 
 export function sakenowaBreweryToBrewery(s: SakenowaBrewery): Brewery {
@@ -240,6 +337,11 @@ export function sakenowaBreweryToBrewery(s: SakenowaBrewery): Brewery {
     breweryId: s.id,
     name: s.name,
     nameKanji: s.name,
+    // Set by the transliteration pass before upsert; see
+    // `sakenowaBrandToBrand` for the same pattern. Placeholder rows
+    // (`isPlaceholderBrewery`) keep `nameRomaji: null` permanently —
+    // there's no kanji to transliterate.
+    nameRomaji: null,
     areaId: s.areaId,
     source: 'sakenowa',
   }
@@ -269,7 +371,30 @@ export async function ingestBreweries(deps: BreweryIngestionDeps): Promise<RunSu
     getExistingHashes: (tx) => tx.getExistingBreweryHashes(),
     upsertBatch: (tx, rows, onChunk) => tx.upsertBreweriesBatch(rows, onChunk),
     onProgress: deps.onProgress,
+    enrichBeforeUpsert: (breweries) => enrichBreweriesWithRomaji(breweries, deps),
   })
+}
+
+/**
+ * Brewery counterpart to `enrichBrandsWithRomaji`. Skips Sakenowa's
+ * placeholder rows (empty `nameKanji`) at the romaji-batch level —
+ * the batch helper short-circuits empties to `null` rather than
+ * burning a model call.
+ */
+async function enrichBreweriesWithRomaji(
+  breweries: Brewery[],
+  deps: BreweryIngestionDeps,
+): Promise<Brewery[]> {
+  if (breweries.length === 0 || deps.transliterateBatch === null) return breweries
+  const fn = deps.transliterateBatch ?? defaultTransliterateBatch
+  const results = await fn(
+    breweries.map((b) => ({ id: b.breweryId, nameKanji: b.nameKanji })),
+    { onProgress: deps.onRomajiProgress },
+  )
+  return breweries.map((brewery, i) => ({
+    ...brewery,
+    nameRomaji: results[i]?.nameRomaji ?? null,
+  }))
 }
 
 export function sakenowaFlavorChartToFlavorChart(s: SakenowaFlavorChart): FlavorChart {

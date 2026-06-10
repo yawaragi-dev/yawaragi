@@ -13,6 +13,22 @@ export const BrandSchema = withProvenance(BrandSource).extend({
   brandId: z.number().int().positive(),
   name: z.string().min(1),
   nameKanji: z.string().min(1),
+  /**
+   * Latin-alphabet transliteration of `nameKanji`. NULL until the
+   * romaji-ingest pipeline (issue #121) has run against this row.
+   * Editorial / LLM-derived per CONTEXT.md "Naming convention" —
+   * not a Sakenowa-published field.
+   *
+   * Display-only. Joins still go through `nameKanji` because two
+   * distinct kanji rows can transliterate to the same romaji
+   * (CONTEXT.md § "Same-romaji collisions").
+   *
+   * `default(null)` so callers building a Brand from scratch don't
+   * have to include the field — the field is omitted in older
+   * fixtures and inferred to null. Already-parsed values still have
+   * the `string | null` type.
+   */
+  nameRomaji: z.string().min(1).nullable().default(null),
   breweryId: z.number().int().positive(),
 })
 export type Brand = z.infer<typeof BrandSchema>

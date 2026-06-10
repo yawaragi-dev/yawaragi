@@ -1,3 +1,4 @@
+import type { DebugEvent } from '@/lib/debug/debug-log'
 import type { LabelScanExtraction } from '@/lib/schemas/label-scan-extraction'
 
 /**
@@ -6,7 +7,7 @@ import type { LabelScanExtraction } from '@/lib/schemas/label-scan-extraction'
  * actions file — only async functions are allowed. Types and constants
  * have to live somewhere else and be re-imported on both sides.
  */
-export type ScanActionState =
+type ScanActionStateBase =
   | { status: 'idle' }
   | { status: 'invalid_input'; reason: 'missing_image' | 'unsupported_locale' }
   | {
@@ -35,5 +36,53 @@ export type ScanActionState =
       status: 'rate_limited'
       retryAfterSec: number
     }
+  /**
+   * Phase 3 / S3 (#108) PLACEHOLDER: the vision provider produced an
+   * extraction whose confidence is below the auto/confirm threshold.
+   * S3 has no UI for medium / low confidence yet — S4 (#109) lands the
+   * three-tier UX (auto/confirm/retry). Until then the action returns
+   * this tagged state and the UI renders a localized "we couldn't read
+   * the label clearly, try a closer shot" message. The `extraction` is
+   * carried through so a future S4 confirm-card can use it without a
+   * second scan.
+   *
+   * S4 will likely split this into `confirm` (medium) and `retry`
+   * (low), at which point the placeholder copy is replaced; the action
+   * change is local and the rest of the wire-shape is unaffected.
+   */
+  | {
+      status: 'low_confidence'
+      extraction: LabelScanExtraction
+    }
+  /**
+   * Catch-all for unhandled throws inside the action — Anthropic API
+   * outages, the vision schema parse failing after retries on a
+   * non-sake image, Sakenowa DB connectivity, etc. Without this state
+   * the action would surface a Next.js error digest (`ERROR 3102…`)
+   * and the operator would lose the entire server-side debug trace.
+   *
+   * `reason` is the thrown error's name (e.g. `AI_RetryError`,
+   * `ZodError`). The `message` is intentionally NOT carried — full
+   * error messages can leak server-side detail. The UI renders a
+   * polite localized "couldn't process this image" copy; the panel
+   * shows the technical detail via the debugLog the action attached
+   * before returning.
+   */
+  | {
+      status: 'extraction_failed'
+      reason: string
+    }
+
+/**
+ * Optional server-side trace attached to every action result when the
+ * caller has the debug cookie set (`yawaragi_debug=1`). The client
+ * `<DebugPanel />` renders these events alongside its own client-side
+ * events (file picked, downscale done, etc.). Undefined when debug is
+ * off — and stripped at the server boundary so debug data never leaks
+ * to a non-debug visitor.
+ */
+export type ScanActionState = ScanActionStateBase & {
+  debugLog?: ReadonlyArray<DebugEvent>
+}
 
 export const INITIAL_SCAN_ACTION_STATE: ScanActionState = { status: 'idle' }

@@ -48,14 +48,41 @@ export interface BrandsDB {
 // Phase 2 row counts (1733 breweries, 3167 brands) in 4-7 statements.
 const BATCH_SIZE = 500
 
+/**
+ * Sentinel content-hash returned by `getExistingBrand/BreweryHashes`
+ * for rows that need the romaji-enrichment pass to run on the next
+ * ingest (typically: rows created before migration 0010, whose
+ * `name_romaji` is still NULL). Chosen to be impossible as a real
+ * SHA-256 hex value — the surrounding double-underscore marker won't
+ * appear in a hex string.
+ */
+const ROMAJI_BACKFILL_SENTINEL = '__needs_romaji_backfill__'
+
 class PgBrandsDB implements BrandsDB {
   constructor(private readonly executor: Pool | PoolClient) {}
 
   async getExistingBrandHashes(): Promise<Map<number, string>> {
+    // Rows whose `name_romaji` hasn't been populated yet need the
+    // enrichment pass to run — even if their kanji haven't changed.
+    // We return a sentinel "hash" that can't collide with any real
+    // SHA-256 hex value, so the pipeline classifies them as
+    // "updated" and routes them through enrichBeforeUpsert.
+    //
+    // This handles the pre-migration backfill cleanly: rows created
+    // before migration 0010 have `name_romaji IS NULL`; their first
+    // post-migration `pnpm ingest` reclassifies them as updated,
+    // fills the romaji, recomputes the hash, and writes back. A
+    // second ingest with no Sakenowa changes is a true no-op.
     const { rows } = await this.executor.query<{
       brand_id: number
       content_hash: string
-    }>('SELECT brand_id, content_hash FROM brands')
+    }>(
+      `SELECT brand_id,
+              CASE WHEN name_romaji IS NULL THEN '${ROMAJI_BACKFILL_SENTINEL}'
+                   ELSE content_hash
+              END AS content_hash
+       FROM brands`,
+    )
     return new Map(rows.map((r) => [r.brand_id, r.content_hash]))
   }
 
@@ -70,14 +97,18 @@ class PgBrandsDB implements BrandsDB {
       const values: unknown[] = []
       for (const { brand, contentHash } of chunk) {
         const i = values.length
-        // 7 placeholders + literal NOW() for updated_at
+        // 8 placeholders + literal NOW() for updated_at. The new
+        // `name_romaji` slot is nullable; if the transliteration step
+        // hasn't run (offline ingest, eval harness, …) the column
+        // stays NULL until the next ingest fills it.
         placeholders.push(
-          `($${i + 1}, $${i + 2}, $${i + 3}, $${i + 4}, $${i + 5}, $${i + 6}, $${i + 7}, NOW())`,
+          `($${i + 1}, $${i + 2}, $${i + 3}, $${i + 4}, $${i + 5}, $${i + 6}, $${i + 7}, $${i + 8}, NOW())`,
         )
         values.push(
           brand.brandId,
           brand.name,
           brand.nameKanji,
+          brand.nameRomaji,
           brand.breweryId,
           brand.source,
           brand.confidence ?? null,
@@ -86,11 +117,16 @@ class PgBrandsDB implements BrandsDB {
       }
       await this.executor.query(
         `INSERT INTO brands
-           (brand_id, name, name_kanji, brewery_id, source, confidence, content_hash, updated_at)
+           (brand_id, name, name_kanji, name_romaji, brewery_id, source, confidence, content_hash, updated_at)
          VALUES ${placeholders.join(', ')}
          ON CONFLICT (brand_id) DO UPDATE SET
            name         = EXCLUDED.name,
            name_kanji   = EXCLUDED.name_kanji,
+           -- Preserve the existing romaji when the incoming row
+           -- didn't supply one (e.g. an ingest that skipped the
+           -- transliteration step). Only overwrite when there's a
+           -- non-NULL value to overwrite with.
+           name_romaji  = COALESCE(EXCLUDED.name_romaji, brands.name_romaji),
            brewery_id   = EXCLUDED.brewery_id,
            source       = EXCLUDED.source,
            confidence   = EXCLUDED.confidence,
@@ -144,10 +180,23 @@ class PgBreweriesDB implements BreweriesDB {
   constructor(private readonly executor: Pool | PoolClient) {}
 
   async getExistingBreweryHashes(): Promise<Map<number, string>> {
+    // Same sentinel trick as `getExistingBrandHashes`. Extra clause
+    // here for brewery rows: the ~48 Sakenowa placeholder rows have
+    // empty `name_kanji`, so their `name_romaji` is genuinely
+    // permanent-NULL — we don't want to mark them as needing
+    // backfill because the transliteration call would just no-op
+    // anyway and the row would round-trip with no real change.
     const { rows } = await this.executor.query<{
       brewery_id: number
       content_hash: string
-    }>('SELECT brewery_id, content_hash FROM breweries')
+    }>(
+      `SELECT brewery_id,
+              CASE WHEN name_romaji IS NULL AND length(name_kanji) > 0
+                   THEN '${ROMAJI_BACKFILL_SENTINEL}'
+                   ELSE content_hash
+              END AS content_hash
+       FROM breweries`,
+    )
     return new Map(rows.map((r) => [r.brewery_id, r.content_hash]))
   }
 
@@ -162,13 +211,15 @@ class PgBreweriesDB implements BreweriesDB {
       const values: unknown[] = []
       for (const { brewery, contentHash } of chunk) {
         const i = values.length
+        // 8 placeholders + NOW() — new `name_romaji` slot.
         placeholders.push(
-          `($${i + 1}, $${i + 2}, $${i + 3}, $${i + 4}, $${i + 5}, $${i + 6}, $${i + 7}, NOW())`,
+          `($${i + 1}, $${i + 2}, $${i + 3}, $${i + 4}, $${i + 5}, $${i + 6}, $${i + 7}, $${i + 8}, NOW())`,
         )
         values.push(
           brewery.breweryId,
           brewery.name,
           brewery.nameKanji,
+          brewery.nameRomaji,
           brewery.areaId,
           brewery.source,
           brewery.confidence ?? null,
@@ -177,11 +228,15 @@ class PgBreweriesDB implements BreweriesDB {
       }
       await this.executor.query(
         `INSERT INTO breweries
-           (brewery_id, name, name_kanji, area_id, source, confidence, content_hash, updated_at)
+           (brewery_id, name, name_kanji, name_romaji, area_id, source, confidence, content_hash, updated_at)
          VALUES ${placeholders.join(', ')}
          ON CONFLICT (brewery_id) DO UPDATE SET
            name         = EXCLUDED.name,
            name_kanji   = EXCLUDED.name_kanji,
+           -- Same COALESCE rule as brands.upsertBrandsBatch: don't
+           -- clobber an existing romaji with a NULL just because the
+           -- incoming ingest skipped transliteration.
+           name_romaji  = COALESCE(EXCLUDED.name_romaji, breweries.name_romaji),
            area_id      = EXCLUDED.area_id,
            source       = EXCLUDED.source,
            confidence   = EXCLUDED.confidence,
@@ -331,6 +386,7 @@ export interface BrandRow {
   brand_id: number
   name: string
   name_kanji: string
+  name_romaji: string | null
   brewery_id: number
   source: BrandSource
   confidence: string | null
@@ -341,6 +397,7 @@ export function rowToBrand(row: BrandRow): Brand {
     brandId: row.brand_id,
     name: row.name,
     nameKanji: row.name_kanji,
+    nameRomaji: row.name_romaji,
     breweryId: row.brewery_id,
     source: row.source,
   }
@@ -354,6 +411,7 @@ export interface BreweryRow {
   brewery_id: number
   name: string
   name_kanji: string
+  name_romaji: string | null
   area_id: number
   source: BrewerySource
   confidence: string | null
@@ -364,6 +422,7 @@ export function rowToBrewery(row: BreweryRow): Brewery {
     breweryId: row.brewery_id,
     name: row.name,
     nameKanji: row.name_kanji,
+    nameRomaji: row.name_romaji,
     areaId: row.area_id,
     source: row.source,
   }

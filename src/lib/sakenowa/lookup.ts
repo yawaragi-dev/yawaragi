@@ -1,5 +1,6 @@
 import 'server-only'
 import type { Pool } from 'pg'
+import { debugAdd } from '@/lib/debug/debug-log'
 import type { Brand } from '../schemas/brand'
 import type { Brewery } from '../schemas/brewery'
 import type { FlavorChart } from '../schemas/flavor-chart'
@@ -14,11 +15,12 @@ import {
   rowToFlavorChart,
   rowToRanking,
 } from './db'
+import { generateKanjiVariants } from './kanji-variants'
 import { publicQuery } from '../supabase/public-query'
 import { getServerDbPool } from '../supabase/server-client'
 
 const SELECT_BRAND_BY_ID = `
-  SELECT brand_id, name, name_kanji, brewery_id, source, confidence
+  SELECT brand_id, name, name_kanji, name_romaji, brewery_id, source, confidence
   FROM brands
   WHERE brand_id = $1
 `
@@ -41,7 +43,7 @@ export async function lookupBrand(brandId: number): Promise<Brand | null> {
 // JOIN-via-brand so the public contract stays brand-keyed (the page has a
 // brandId; it shouldn't need to know the brewery_id to fetch a brewery).
 const SELECT_BREWERY_BY_BRAND_ID = `
-  SELECT b.brewery_id, b.name, b.name_kanji, b.area_id, b.source, b.confidence
+  SELECT b.brewery_id, b.name, b.name_kanji, b.name_romaji, b.area_id, b.source, b.confidence
   FROM breweries b
   JOIN brands br ON br.brewery_id = b.brewery_id
   WHERE br.brand_id = $1
@@ -182,10 +184,16 @@ export type FindSakeByExtractionResult =
 // candidate; we only need to know whether the match is unique (1 row) or
 // ambiguous (2+).
 const SELECT_BRANDS_BY_KANJI_EXTRACTION = `
-  SELECT br.brand_id, br.name, br.name_kanji, br.brewery_id, br.source, br.confidence
+  SELECT br.brand_id, br.name, br.name_kanji, br.name_romaji, br.brewery_id, br.source, br.confidence
   FROM brands br
   JOIN breweries b ON b.brewery_id = br.brewery_id
-  WHERE br.name_kanji = $1 AND b.name_kanji = $2
+  -- ANY($1) / ANY($2) match the kanji-variant-expanded arrays so a
+  -- vision-model output that uses 新字体 (new-form, e.g. 蔵王) still
+  -- joins against Sakenowas 旧字体 row (e.g. 藏王). The variant
+  -- expansion happens in JS in generateKanjiVariants. Most strings
+  -- expand to 1 element (no variant kanji); worst case is 2-3
+  -- elements, well within ANY()s performance envelope.
+  WHERE br.name_kanji = ANY($1) AND b.name_kanji = ANY($2)
   ORDER BY br.brand_id
   LIMIT 2
 `
@@ -194,12 +202,30 @@ export async function findSakeByExtractionFromPool(
   query: SakeLookupQuery,
   pool: Pool,
 ): Promise<FindSakeByExtractionResult> {
+  // Expand each kanji input to its old-form / new-form siblings so a
+  // model output of 蔵王 (新字体) matches Sakenowa's 藏王 (旧字体).
+  // For strings without variant kanji, the arrays collapse to a
+  // single element and the query behaves identically to the previous
+  // exact-match shape.
+  const nameVariants = generateKanjiVariants(query.nameJa)
+  const breweryVariants = generateKanjiVariants(query.breweryJa)
+  debugAdd(
+    'Sakenowa',
+    `querying brands WHERE name_kanji ∈ {${nameVariants.join('|')}} AND brewery.name_kanji ∈ {${breweryVariants.join('|')}}`,
+    {
+      nameJa: query.nameJa,
+      breweryJa: query.breweryJa,
+      nameVariants,
+      breweryVariants,
+    },
+  )
   const { rows } = await publicQuery<BrandRow>(
     'brands',
     SELECT_BRANDS_BY_KANJI_EXTRACTION,
-    [query.nameJa, query.breweryJa],
+    [nameVariants, breweryVariants],
     pool,
   )
+  debugAdd('Sakenowa', `query returned ${rows.length} row(s)`)
   if (rows.length === 0) {
     return { kind: 'no_match', query }
   }

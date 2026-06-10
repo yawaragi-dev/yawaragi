@@ -6,6 +6,11 @@ const validBrand = {
   brandId: 1,
   name: 'Reijin',
   nameKanji: '麗人',
+  // `nameRomaji` defaults to null when omitted from input (see the
+  // schema's `.default(null)`); including it explicitly keeps the
+  // equality assertion exact since the parsed value ALWAYS carries
+  // the field even when input doesn't.
+  nameRomaji: null,
   breweryId: 49,
 } as const
 

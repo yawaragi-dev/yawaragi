@@ -57,7 +57,16 @@
     "brand": {
       "backToHome": "Zurück zur Startseite",
       "breweryLabel": "Brauerei",
+      "prefectureLabel": "Präfektur",
       "flavorChartLabel": "Flavor Chart (Sakenowa)"
+    }
+  },
+  "debug": {
+    "panel": {
+      "title": "Debug",
+      "emptyHint": "Warte auf das erste Ereignis…",
+      "closeLabel": "Debug-Panel schließen",
+      "clearLabel": "Leeren"
     }
   },
   "scan": {
@@ -74,7 +83,9 @@
       "ambiguous": "Mehrere Sake teilen sich diesen Namen und diese Brauerei. Wähle einen aus, um fortzufahren.",
       "errorInvalidInput": "Die Datei konnte nicht gelesen werden. Versuche ein deutliches Foto des Flaschenetiketts.",
       "errorDownscale": "Dein Browser konnte dieses Bild nicht vorbereiten. Versuche ein anderes Foto.",
-      "rateLimited": "Du hast das heutige Scan-Limit erreicht. {hours, plural, =1 {Versuche es in etwa einer Stunde noch einmal.} other {Versuche es in etwa # Stunden noch einmal.}}"
+      "rateLimited": "Du hast das heutige Scan-Limit erreicht. {hours, plural, =1 {Versuche es in etwa einer Stunde noch einmal.} other {Versuche es in etwa # Stunden noch einmal.}}",
+      "lowConfidence": "Das Etikett ließ sich nicht deutlich lesen. Versuche eine Nahaufnahme bei besserem Licht.",
+      "extractionFailed": "Dieses Bild konnte nicht verarbeitet werden. Versuche ein deutliches Foto eines Sake-Flaschenetiketts."
     }
   },
   "sakenowaAttribution": {

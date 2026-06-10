@@ -38,6 +38,13 @@ env:
   # so the secret storage is a hygiene choice, not a security one.
   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
   CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+  # src/env.ts tightened ANTHROPIC_API_KEY to .min(1) in slice S3 (#108).
+  # CI's vitest + Playwright dev server otherwise crash at env.parse before
+  # the first request. The Playwright webServer overrides
+  # VISION_PROVIDER=e2e-stub so no real Anthropic call is made; this dummy
+  # only satisfies the env schema. Production / Preview / Development on
+  # Vercel carry real `sk-ant-…` values.
+  ANTHROPIC_API_KEY: ci-only-dummy-anthropic-key
 
 jobs:
   verify:

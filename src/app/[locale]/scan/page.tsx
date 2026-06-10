@@ -3,7 +3,11 @@ import { cookies } from 'next/headers'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { ScanForm } from '@/components/scan/scan-form'
 import { AgeGate } from '@/components/legal/age-gate'
+import { isDebugEnabledFromCookies } from '@/lib/debug/debug-mode'
 import { hasAcceptedAgeGate } from '@/lib/legal/age-gate-cookie'
+// `DebugPanelMount` lives at the layout level (renders persistently
+// across navigations). This page only sources the boolean prop the
+// form uses to gate its per-step pushes into the app-level store.
 import { isLaunched } from '@/i18n/launch-state'
 import { hasLocale } from 'next-intl'
 import { routing } from '@/i18n/routing'
@@ -78,6 +82,10 @@ export default async function ScanEntryPage({ params }: PageProps) {
   const t = await getTranslations({ locale, namespace: 'scan.entry' })
   const cookieJar = await cookies()
   const gateAccepted = hasAcceptedAgeGate(cookieJar)
+  // Server-rendered: the debug cookie is HttpOnly, so the form can't
+  // read it from client JS. We pass the boolean down as a prop and the
+  // form skips the panel + per-step accumulation when it's false.
+  const debugMode = isDebugEnabledFromCookies(cookieJar)
 
   return (
     <>
@@ -91,7 +99,7 @@ export default async function ScanEntryPage({ params }: PageProps) {
         <p className="text-base text-zinc-700 dark:text-zinc-300 max-w-prose">
           {t('intro')}
         </p>
-        <ScanForm locale={locale} />
+        <ScanForm locale={locale} debugMode={debugMode} />
       </main>
       {/* The age gate keeps the RESULT off-screen: when ScanForm matches,
           it router.push()es to /sake/[brandId] — that path IS gated, so

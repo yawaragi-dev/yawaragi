@@ -5,6 +5,9 @@ import { env } from '@/env'
 import { getPathname } from '@/i18n/navigation'
 import type { Locale } from '@/i18n/routing'
 import { routing } from '@/i18n/routing'
+import { getDefaultVisionProvider } from '@/lib/ai/vision/registry'
+import { DebugLog, debugAdd, runWithDebugLog } from '@/lib/debug/debug-log'
+import { isDebugEnabledFromCookies } from '@/lib/debug/debug-mode'
 import {
   anonymousSessionCookieAttrs,
   readAnonymousSessionCookie,
@@ -14,27 +17,21 @@ import { assertRateLimitConfig } from '@/lib/rate-limit/config-gate'
 import { extractIp, hashIp } from '@/lib/rate-limit/ip-hash'
 import { UpstashKVClient } from '@/lib/rate-limit/upstash-kv-client'
 import { findSakeByExtraction } from '@/lib/sakenowa/lookup'
-import {
-  type LabelScanExtraction,
-  parseLabelScanExtraction,
-} from '@/lib/schemas/label-scan-extraction'
 import type { ScanActionState } from './scan-action-state'
 
 /**
- * Phase 3 / S1 + S2 scan Server Action.
+ * Phase 3 / S1 + S2 + S3 scan Server Action.
  *
  * What S1 (#106) shipped:
  *   - Accepts the FormData from the client `<ScanForm />`.
- *   - Returns a HARDCODED extraction. The vision provider seam is wired
- *     in S3 (#108); until then, the action proves out the wire shape and
- *     end-to-end happy path.
- *   - Parses the hardcoded result through `LabelScanExtractionSchema` so
- *     the source pinning is the same parse-time seam the real provider
- *     will hit, and a future broken provider can't silently regress.
+ *   - Returned a HARDCODED extraction (Dassai / Asahi Shuzo) to prove out
+ *     the wire shape and the end-to-end happy path.
+ *   - Parses the result through `LabelScanExtractionSchema` so the source
+ *     pinning is the same parse-time seam the real provider hits.
  *   - Runs the real `findSakeByExtraction` against the Sakenowa mirror.
  *   - Returns a tagged-union result for `useActionState` to render.
  *
- * What S2 (#107, this slice) adds:
+ * What S2 (#107) added:
  *   - Issues / refreshes the `yawaragi_session` cookie (signed opaque
  *     ~16-byte id, 24h sliding TTL). The cookie's `sid` is one of two
  *     rate-limit budget keys.
@@ -42,33 +39,73 @@ import type { ScanActionState } from './scan-action-state'
  *     (5 calls per identifier per 24h, sliding window). On exhaustion
  *     the action returns a tagged `rate_limited` state and the form UI
  *     renders the localized "try again in X" copy.
- *   - Neither identifier reaches Postgres or any log line. The plaintext
- *     IP is hashed inside `extractIp` → `hashIp` before it touches the
- *     rate-limit module; only the salted hash is ever a KV key.
+ *   - Neither identifier reaches Postgres or any log line.
  *
- * Out of scope for S2 (defer to later slices per #105):
- *   - Real vision call (S3 / #108)
- *   - Medium/low confidence UX states (S4)
+ * What S3 (#108, this slice) replaces:
+ *   - The hardcoded extraction is gone. The action now calls
+ *     `getDefaultVisionProvider().extractLabel(blob)` against the real
+ *     downscaled JPEG. The default registry key is
+ *     `anthropic-haiku-4-5`; the Playwright spec overrides with
+ *     `VISION_PROVIDER=e2e-stub` so CI does not burn Anthropic credit.
+ *   - The rate-limit gate still runs BEFORE the vision call — there is
+ *     no path that reaches the paid model without first paying the
+ *     bucket. CLAUDE.md JMStV / cost-protection invariant.
+ *   - For high-confidence extractions (≥ AUTO_CONFIDENCE_THRESHOLD) the
+ *     existing matched / ambiguous / no_match branches still fire. For
+ *     anything below the threshold the action returns a placeholder
+ *     `low_confidence` state — S4 (#109) replaces this with the
+ *     three-tier auto / confirm / retry UX.
+ *
+ * Out of scope for S3 (defer to later slices per #105):
+ *   - Three-tier confidence UI (S4 / #109)
  *   - Disambiguation list UI (S4)
- *   - Age-gate "requires_age_gate" gate-resume flow (S4 wiring; the
- *     existing proxy already keeps the result page out of reach for an
- *     un-gated visitor, so the S1 happy-path arrives at `/sake/[brandId]`
- *     only when the gate is accepted)
+ *   - Age-gate "requires_age_gate" gate-resume flow (S4 wiring)
  */
 
-// Hardcoded test extraction. Dassai / Asahi Shuzo — picked because it's
-// the canonical sake referenced in CONTEXT.md "Language" §Sake. Confidence
-// is pinned at 0.95 (high) so the happy-path UI tier resolution always
-// returns `auto`.
-const HARDCODED_EXTRACTION = {
-  source: 'llm_extracted',
-  name_ja: '獺祭',
-  brewery_ja: '旭酒造',
-  confidence: 0.95,
-} satisfies LabelScanExtraction
+/**
+ * Confidence at or above which the action treats the extraction as
+ * high-confidence and runs the Sakenowa lookup → matched/ambiguous/
+ * no_match branches. Below this, the action returns the `low_confidence`
+ * placeholder for S4 to replace. PRD #105 § "Confidence tier resolver"
+ * pins 0.85 as the auto/confirm boundary; S4 will introduce the second
+ * threshold (0.6) for retry vs. confirm.
+ */
+// Lowered 0.85 → 0.70 after 2026-06-10 real-world phone-photo testing
+// showed Haiku 4.5 clustering most readable mobile photos around
+// 0.72-0.75 confidence — the original 0.85 (from PRD #105 §"Confidence
+// tier resolver") was literally the upper edge of typical mobile-clean
+// confidence and rejected most usable scans.
+//
+// Why the relaxation is safe:
+// - Hallucinated extractions at 0.72 still flow through the Sakenowa
+//   lookup; non-existent brand+brewery returns `no_match` and the
+//   visitor sees "not in catalogue", never a wrong sake page.
+// - The S4 (#109) three-tier UX will introduce a second threshold
+//   below this one (confirm-vs-retry). When that lands, this constant
+//   should be reviewed — keeping 0.70 here means the confirm tier
+//   compresses to ~0.60-0.70 instead of the originally-planned 0.60-0.85.
+// - PRD #105 §"Confidence tier resolver" recorded 0.85 as a guess
+//   ahead of any real-world data. This is the first revision based
+//   on actual confidence-distribution evidence from production
+//   testing — exactly the kind of tuning the Finetune & failover
+//   task (#113) was filed for.
+const AUTO_CONFIDENCE_THRESHOLD = 0.7
 
 function isLocale(value: string): value is Locale {
   return (routing.locales as readonly string[]).includes(value)
+}
+
+/**
+ * Hiragana (U+3040–309F) + Katakana (U+30A0–30FF) + CJK Unified
+ * Ideographs (U+4E00–9FFF). The three blocks cover every script the
+ * label-scan extraction should produce for `name_ja` / `brewery_ja`.
+ * Latin-only output is the failure mode this catches — see the
+ * `containsNoJapaneseScript` call site for the operational context.
+ */
+const JAPANESE_SCRIPT_REGEX = /[぀-ゟ゠-ヿ一-鿿]/
+
+function containsNoJapaneseScript(value: string): boolean {
+  return !JAPANESE_SCRIPT_REGEX.test(value)
 }
 
 /**
@@ -82,52 +119,159 @@ export async function scanAction(
   _prev: ScanActionState,
   formData: FormData,
 ): Promise<ScanActionState> {
-  const image = formData.get('image')
-  if (!(image instanceof Blob) || image.size === 0) {
-    return { status: 'invalid_input', reason: 'missing_image' }
-  }
-  const localeRaw = formData.get('locale')
-  if (typeof localeRaw !== 'string' || !isLocale(localeRaw)) {
-    return { status: 'invalid_input', reason: 'unsupported_locale' }
-  }
+  // Read the debug cookie up-front. When set, every downstream module
+  // (rate-limit, vision, Sakenowa) appends per-step events via
+  // `getCurrentDebugLog()` / `debugAdd(...)` — no parameter threading
+  // through stable seams. The accumulated events are attached to the
+  // response under `debugLog` so the client `<DebugPanel />` can render
+  // them next to its own client-side events.
+  const cookieJar = await cookies()
+  const log = isDebugEnabledFromCookies(cookieJar) ? new DebugLog() : undefined
 
-  // Rate-limit gate. Issues / refreshes `yawaragi_session` and consults
-  // the vision-scan bucket. On exhaustion the action returns the tagged
-  // `rate_limited` state and never reaches the vision provider.
-  const rateLimit = await enforceRateLimit()
-  if (!rateLimit.allowed) {
-    return { status: 'rate_limited', retryAfterSec: rateLimit.retryAfterSec }
-  }
+  const result = await runWithDebugLog(log, async (): Promise<ScanActionState> => {
+    const image = formData.get('image')
+    if (!(image instanceof Blob) || image.size === 0) {
+      debugAdd('ScanAction', 'invalid_input: missing or empty image blob', undefined, 'warn')
+      return { status: 'invalid_input', reason: 'missing_image' }
+    }
+    debugAdd('ScanAction', `received image (${image.size} bytes, ${image.type || 'no MIME'})`)
 
-  // S1: the vision provider is stubbed. The blob is accepted but not
-  // sent anywhere — S3 (#108) wires the real Haiku 4.5 call here.
-  const extraction = parseLabelScanExtraction(HARDCODED_EXTRACTION)
+    const localeRaw = formData.get('locale')
+    if (typeof localeRaw !== 'string' || !isLocale(localeRaw)) {
+      debugAdd('ScanAction', `invalid_input: unsupported locale "${String(localeRaw)}"`, undefined, 'warn')
+      return { status: 'invalid_input', reason: 'unsupported_locale' }
+    }
 
-  const lookup = await findSakeByExtraction({
-    nameJa: extraction.name_ja,
-    breweryJa: extraction.brewery_ja,
+    // Rate-limit gate. Issues / refreshes `yawaragi_session` and consults
+    // the vision-scan bucket. On exhaustion the action returns the tagged
+    // `rate_limited` state and never reaches the vision provider.
+    const rateLimit = await enforceRateLimit()
+    if (!rateLimit.allowed) {
+      return { status: 'rate_limited', retryAfterSec: rateLimit.retryAfterSec }
+    }
+
+    // Real vision call (S3) + Sakenowa lookup, wrapped in a single
+    // try/catch so an Anthropic outage, a schema-validation retry
+    // exhaustion (random non-sake images regularly bottom out here —
+    // the model returns empty strings, the schema rejects, the AI SDK
+    // gives up), or a DB connectivity blip all surface as a tagged
+    // `extraction_failed` state instead of a 500 + Next.js error
+    // digest. Without this catch the server-side debug trace is lost
+    // when the throw bubbles up, because the response never lands on
+    // the client to carry it.
+    try {
+      // Provider resolution from the registry (`VISION_PROVIDER` env,
+      // default `anthropic-haiku-4-5`). The downscaled JPEG goes
+      // inline as base64 on /v1/messages; the Anthropic Files API is
+      // forbidden (`pnpm anthropic-files:audit`). The provider parses
+      // the model output through `LabelScanExtractionSchema`, pinning
+      // `source` to `'llm_extracted'`.
+      const extraction = await getDefaultVisionProvider().extractLabel(image)
+      debugAdd('ScanAction', `extraction confidence ${extraction.confidence.toFixed(2)}`, {
+        threshold: AUTO_CONFIDENCE_THRESHOLD,
+        branch: extraction.confidence < AUTO_CONFIDENCE_THRESHOLD ? 'low_confidence' : 'lookup',
+      })
+
+      // S3 placeholder for medium / low confidence. The three-tier UI
+      // lands in S4 (#109); for now anything below the auto threshold
+      // falls through to a tagged state the form renders as a "try a
+      // closer shot" hint. The extraction is carried so S4's
+      // confirm-card can reuse it without a second scan.
+      if (extraction.confidence < AUTO_CONFIDENCE_THRESHOLD) {
+        return { status: 'low_confidence', extraction }
+      }
+
+      // Defensive guard against the model returning Latin (romaji /
+      // English) where the contract demanded kanji. Real-world case:
+      // a 龍力 bottle returned `brewery_ja: "Sankei Nishiki"` — the
+      // model misread a rice-variety call-out (山田錦) as the brewery
+      // and converted it to romaji. The prompt is tightened to
+      // forbid this (`anthropic-haiku-provider.ts` SYSTEM_PROMPT),
+      // but the prompt isn't a hard contract — a Latin-only field
+      // here is a sign the model defaulted, the brewery (or brand)
+      // is misidentified, and the lookup will return no_match for
+      // confusing reasons. Surface as low_confidence with a specific
+      // debug-overlay event so the operator can see what happened.
+      if (containsNoJapaneseScript(extraction.name_ja) || containsNoJapaneseScript(extraction.brewery_ja)) {
+        debugAdd(
+          'ScanAction',
+          'extraction has Latin-only field(s) — routing to low_confidence (model ignored kanji-only contract)',
+          {
+            name_ja: extraction.name_ja,
+            brewery_ja: extraction.brewery_ja,
+            nameJaIsLatinOnly: containsNoJapaneseScript(extraction.name_ja),
+            breweryJaIsLatinOnly: containsNoJapaneseScript(extraction.brewery_ja),
+          },
+          'warn',
+        )
+        return { status: 'low_confidence', extraction }
+      }
+
+      const lookup = await findSakeByExtraction({
+        nameJa: extraction.name_ja,
+        breweryJa: extraction.brewery_ja,
+      })
+
+      if (lookup.kind === 'exact') {
+        const sakeHref = getPathname({
+          locale: localeRaw,
+          href: { pathname: '/sake/[brandId]', params: { brandId: String(lookup.sake.brandId) } },
+        })
+        debugAdd('ScanAction', 'returning matched', {
+          brandId: lookup.sake.brandId,
+          sakeHref,
+        })
+        return {
+          status: 'matched',
+          extraction,
+          brandId: lookup.sake.brandId,
+          sakeHref,
+        }
+      }
+      if (lookup.kind === 'ambiguous') {
+        debugAdd('ScanAction', 'returning ambiguous', {
+          candidates: lookup.candidates.map((c) => c.brandId),
+        })
+        return {
+          status: 'ambiguous',
+          extraction,
+          brandIds: lookup.candidates.map((c) => c.brandId),
+        }
+      }
+      debugAdd('ScanAction', 'returning no_match', {
+        attempted: { name_ja: extraction.name_ja, brewery_ja: extraction.brewery_ja },
+      })
+      return { status: 'no_match', extraction }
+    } catch (err) {
+      const name = err instanceof Error ? err.name : 'UnknownError'
+      const message = err instanceof Error ? err.message : String(err)
+      // `AI_NoObjectGeneratedError` fires when the AI SDK's
+      // `generateObject` exhausts schema-validation retries — the
+      // typical cause is a non-sake image: the model correctly
+      // refuses to invent a sake name, returns empty fields, our
+      // `min(1)` schema rejects them, the SDK retries, gives up.
+      // That's a healthy outcome — not a system error — so we
+      // surface it at `warn` level (yellow ⚠ in the panel) instead
+      // of `error` (red ✗). Real outages (Anthropic 5xx, network
+      // blip, TypeError) keep the `error` level.
+      const isExpectedNoObject = name === 'AI_NoObjectGeneratedError'
+      debugAdd(
+        'ScanAction',
+        `extraction threw: ${name}`,
+        // The full message is for the debug overlay only — the
+        // tagged state passed to the UI carries just the error name
+        // so localized copy stays generic. We slice to 500 chars to
+        // bound the panel rendering cost on a degenerate trace.
+        { message: message.slice(0, 500) },
+        isExpectedNoObject ? 'warn' : 'error',
+      )
+      return { status: 'extraction_failed', reason: name }
+    }
   })
 
-  if (lookup.kind === 'exact') {
-    const sakeHref = getPathname({
-      locale: localeRaw,
-      href: { pathname: '/sake/[brandId]', params: { brandId: String(lookup.sake.brandId) } },
-    })
-    return {
-      status: 'matched',
-      extraction,
-      brandId: lookup.sake.brandId,
-      sakeHref,
-    }
-  }
-  if (lookup.kind === 'ambiguous') {
-    return {
-      status: 'ambiguous',
-      extraction,
-      brandIds: lookup.candidates.map((c) => c.brandId),
-    }
-  }
-  return { status: 'no_match', extraction }
+  // Attach the accumulated trace to the response. Stripped when debug
+  // is off so non-debug visitors never see it.
+  return log ? { ...result, debugLog: log.toArray() } : result
 }
 
 interface RateLimitDecision {
@@ -168,6 +312,7 @@ async function enforceRateLimit(): Promise<RateLimitDecision> {
     console.warn(
       '[scan] rate-limit env not set; skipping enforcement (non-production only).',
     )
+    debugAdd('RateLimit', 'env unset → skipping enforcement (non-production)', undefined, 'warn')
     return { allowed: true, retryAfterSec: 0 }
   }
   const { secret, salt, kvUrl, kvToken } = config
@@ -198,6 +343,19 @@ async function enforceRateLimit(): Promise<RateLimitDecision> {
   const result = await anonymousRateLimit(
     { cookieId: session.sid, ipHashed, bucket: 'vision-scan' },
     { kv },
+  )
+
+  debugAdd(
+    'RateLimit',
+    result.allowed
+      ? `allowed (${result.remaining} remaining in vision-scan bucket)`
+      : `denied — retryAfter ${result.retryAfterSec}s`,
+    {
+      bucket: 'vision-scan',
+      cookieKey: `rl:vision-scan:cookie:${session.sid.slice(0, 8)}…`,
+      allowed: result.allowed,
+    },
+    result.allowed ? 'info' : 'warn',
   )
 
   return { allowed: result.allowed, retryAfterSec: result.retryAfterSec }

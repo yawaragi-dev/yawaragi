@@ -20,6 +20,21 @@ export const BrewerySchema = withProvenance(BrewerySource).extend({
   breweryId: z.number().int().positive(),
   name: z.string(),
   nameKanji: z.string(),
+  /**
+   * Latin-alphabet transliteration of `nameKanji`. NULL until the
+   * romaji-ingest pipeline (issue #121) has run, AND remains NULL
+   * for placeholder rows (`isPlaceholderBrewery`) since there's no
+   * kanji to transliterate. Editorial / LLM-derived per CONTEXT.md
+   * "Naming convention".
+   *
+   * Display-only. The strip-`株式会社`-style legal suffixes rule
+   * lives in the transliteration prompt; the stored value is the
+   * already-stripped display form ("旭酒造株式会社" → "Asahi Shuzo").
+   *
+   * `default(null)` so callers building a Brewery from scratch don't
+   * have to include the field — see the same comment in brand.ts.
+   */
+  nameRomaji: z.string().min(1).nullable().default(null),
   areaId: z.number().int().nonnegative(),
 })
 export type Brewery = z.infer<typeof BrewerySchema>

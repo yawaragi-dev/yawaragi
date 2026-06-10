@@ -49,7 +49,17 @@ describe('database integration smoke', () => {
     )
     const names = rows.map((r) => r.column_name).sort()
     expect(names).toEqual(
-      ['brand_id', 'brewery_id', 'confidence', 'content_hash', 'name', 'name_kanji', 'source', 'updated_at'].sort(),
+      [
+        'brand_id',
+        'brewery_id',
+        'confidence',
+        'content_hash',
+        'name',
+        'name_kanji',
+        'name_romaji',
+        'source',
+        'updated_at',
+      ].sort(),
     )
   })
 
@@ -115,7 +125,17 @@ describe('database integration smoke', () => {
     )
     const names = rows.map((r) => r.column_name).sort()
     expect(names).toEqual(
-      ['area_id', 'brewery_id', 'confidence', 'content_hash', 'name', 'name_kanji', 'source', 'updated_at'].sort(),
+      [
+        'area_id',
+        'brewery_id',
+        'confidence',
+        'content_hash',
+        'name',
+        'name_kanji',
+        'name_romaji',
+        'source',
+        'updated_at',
+      ].sort(),
     )
   })
 
