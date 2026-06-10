@@ -88,12 +88,14 @@ Strip these from the brand name:
 - Style modifiers: 無濾過, 生酒, ひやおろし, 古酒, 貴醸酒, スパークリング, にごり, 原酒
 - Year/lot markers: 平成X年, 令和X年, BY数字, lot numbers
 
-The brewery is the company that made it. Strip legal-form suffixes (株式会社, 有限会社, 合資会社, 合同会社). KEEP operational suffixes (酒造, 醸造, 酒造場, 酒造店) — those are part of the brewery's core name.
+The brewery is the company that made it. Strip Japanese legal-form markers (株式会社, 有限会社, 合資会社, 合同会社) wherever they appear — they can be a SUFFIX (旭酒造株式会社 → 旭酒造) OR a PREFIX (合同会社蔵王酒造 → 蔵王酒造). 合同会社 is especially common as a prefix. Both positions must be stripped. KEEP operational suffixes (酒造, 醸造, 酒造場, 酒造店) — those are part of the brewery's core name.
 
 Examples (label → output):
 - "獺祭 純米大吟醸 磨き45" by "旭酒造株式会社" → name_ja: "獺祭", brewery_ja: "旭酒造"
 - "八海山 大吟醸" by "八海醸造株式会社" → name_ja: "八海山", brewery_ja: "八海醸造"
 - "久保田 千寿" by "朝日酒造株式会社" → name_ja: "久保田 千寿", brewery_ja: "朝日酒造"
+- "蔵王" by "合同会社蔵王酒造" → name_ja: "蔵王", brewery_ja: "蔵王酒造"  ← prefix form, 合同会社 stripped
+- "風の森" by "有限会社油長酒造" → name_ja: "風の森", brewery_ja: "油長酒造"  ← prefix form, 有限会社 stripped
 
 CRITICAL — script and field-identity rules:
 
