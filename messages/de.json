@@ -82,12 +82,16 @@
       "matchedBrandOnly": "Wir haben die Marke erkannt, aber die Brauerei auf dem Etikett passt nicht zu unserem Katalog.",
       "matchedBrandOnlyDivergence": "Etikett: {extracted} · Katalog: {stored}",
       "matchedBrandOnlyOpen": "Sake-Seite trotzdem öffnen",
+      "confirmTitle": "Ist das die Flasche?",
+      "confirmAccept": "Ja, Sake-Seite öffnen",
+      "confirmRescan": "Nein, erneut scannen",
       "noMatch": "Wir haben das Etikett gelesen, der Sake ist aber noch nicht im Katalog.",
       "ambiguous": "Mehrere Sake teilen sich diesen Namen und diese Brauerei. Wähle einen aus, um fortzufahren.",
       "errorInvalidInput": "Die Datei konnte nicht gelesen werden. Versuche ein deutliches Foto des Flaschenetiketts.",
       "errorDownscale": "Dein Browser konnte dieses Bild nicht vorbereiten. Versuche ein anderes Foto.",
       "rateLimited": "Du hast das heutige Scan-Limit erreicht. {hours, plural, =1 {Versuche es in etwa einer Stunde noch einmal.} other {Versuche es in etwa # Stunden noch einmal.}}",
       "lowConfidence": "Das Etikett ließ sich nicht deutlich lesen. Versuche eine Nahaufnahme bei besserem Licht.",
+      "retryRescan": "Erneut scannen",
       "extractionFailed": "Dieses Bild konnte nicht verarbeitet werden. Versuche ein deutliches Foto eines Sake-Flaschenetiketts."
     }
   },

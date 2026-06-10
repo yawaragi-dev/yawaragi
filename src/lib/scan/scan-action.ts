@@ -17,6 +17,7 @@ import { assertRateLimitConfig } from '@/lib/rate-limit/config-gate'
 import { extractIp, hashIp } from '@/lib/rate-limit/ip-hash'
 import { UpstashKVClient } from '@/lib/rate-limit/upstash-kv-client'
 import { findSakeByExtraction } from '@/lib/sakenowa/lookup'
+import { resolveConfidenceTier } from './confidence-tier'
 import type { ScanActionState } from './scan-action-state'
 
 /**
@@ -50,46 +51,32 @@ import type { ScanActionState } from './scan-action-state'
  *   - The rate-limit gate still runs BEFORE the vision call — there is
  *     no path that reaches the paid model without first paying the
  *     bucket. CLAUDE.md JMStV / cost-protection invariant.
- *   - For high-confidence extractions (≥ AUTO_CONFIDENCE_THRESHOLD) the
- *     existing matched / ambiguous / no_match branches still fire. For
- *     anything below the threshold the action returns a placeholder
- *     `low_confidence` state — S4 (#109) replaces this with the
- *     three-tier auto / confirm / retry UX.
+ *   - Extractions in the `confirm` or `auto` tier run the Sakenowa
+ *     lookup → matched / matched_brand_only / ambiguous / no_match
+ *     branches. Extractions in the `retry` tier short-circuit to the
+ *     `low_confidence` state and never touch Sakenowa. The UI splits
+ *     auto vs confirm presentation by re-calling
+ *     `resolveConfidenceTier` on the extraction's confidence — the
+ *     action returns the same `matched` shape for both.
  *
- * Out of scope for S3 (defer to later slices per #105):
- *   - Three-tier confidence UI (S4 / #109)
- *   - Disambiguation list UI (S4)
- *   - Age-gate "requires_age_gate" gate-resume flow (S4 wiring)
+ * Out of scope for this slice (deferred to S4 PR B / #109):
+ *   - Disambiguation list UI (renders the candidates as tappable rows
+ *     with brewery + prefecture)
+ *   - No-match enrichment (renders extracted name + provenance badge)
+ *   - "Not this one?" affordance on the matched sake page
+ *   - Playwright specs covering every branch in EN + DE
+ *   - Age-gate "requires_age_gate" gate-resume flow
  */
 
 /**
  * Confidence at or above which the action treats the extraction as
  * high-confidence and runs the Sakenowa lookup → matched/ambiguous/
- * no_match branches. Below this, the action returns the `low_confidence`
- * placeholder for S4 to replace. PRD #105 § "Confidence tier resolver"
- * pins 0.85 as the auto/confirm boundary; S4 will introduce the second
- * threshold (0.6) for retry vs. confirm.
+ * no_match branches. Below the retry threshold, the action returns
+ * the `low_confidence` state and the UI surfaces a retry CTA. The
+ * `confirm` tier (0.60–0.85) still runs the lookup; the UI's confirm
+ * card is what differentiates it from `auto` (≥ 0.85). See
+ * `confidence-tier.ts` for the pure resolver.
  */
-// Lowered 0.85 → 0.70 after 2026-06-10 real-world phone-photo testing
-// showed Haiku 4.5 clustering most readable mobile photos around
-// 0.72-0.75 confidence — the original 0.85 (from PRD #105 §"Confidence
-// tier resolver") was literally the upper edge of typical mobile-clean
-// confidence and rejected most usable scans.
-//
-// Why the relaxation is safe:
-// - Hallucinated extractions at 0.72 still flow through the Sakenowa
-//   lookup; non-existent brand+brewery returns `no_match` and the
-//   visitor sees "not in catalogue", never a wrong sake page.
-// - The S4 (#109) three-tier UX will introduce a second threshold
-//   below this one (confirm-vs-retry). When that lands, this constant
-//   should be reviewed — keeping 0.70 here means the confirm tier
-//   compresses to ~0.60-0.70 instead of the originally-planned 0.60-0.85.
-// - PRD #105 §"Confidence tier resolver" recorded 0.85 as a guess
-//   ahead of any real-world data. This is the first revision based
-//   on actual confidence-distribution evidence from production
-//   testing — exactly the kind of tuning the Finetune & failover
-//   task (#113) was filed for.
-const AUTO_CONFIDENCE_THRESHOLD = 0.7
 
 function isLocale(value: string): value is Locale {
   return (routing.locales as readonly string[]).includes(value)
@@ -167,17 +154,19 @@ export async function scanAction(
       // the model output through `LabelScanExtractionSchema`, pinning
       // `source` to `'llm_extracted'`.
       const extraction = await getDefaultVisionProvider().extractLabel(image)
-      debugAdd('ScanAction', `extraction confidence ${extraction.confidence.toFixed(2)}`, {
-        threshold: AUTO_CONFIDENCE_THRESHOLD,
-        branch: extraction.confidence < AUTO_CONFIDENCE_THRESHOLD ? 'low_confidence' : 'lookup',
+      const tier = resolveConfidenceTier(extraction.confidence)
+      debugAdd('ScanAction', `extraction confidence ${extraction.confidence.toFixed(2)} → tier "${tier}"`, {
+        confidence: extraction.confidence,
+        tier,
       })
 
-      // S3 placeholder for medium / low confidence. The three-tier UI
-      // lands in S4 (#109); for now anything below the auto threshold
-      // falls through to a tagged state the form renders as a "try a
-      // closer shot" hint. The extraction is carried so S4's
-      // confirm-card can reuse it without a second scan.
-      if (extraction.confidence < AUTO_CONFIDENCE_THRESHOLD) {
+      // Retry tier short-circuits before the lookup — there's no point
+      // pinging Sakenowa when the model itself isn't confident enough
+      // to want to commit to a (name, brewery) pair. The UI renders the
+      // "try a closer shot" CTA. The extraction is still carried so
+      // future iterations could surface "we read X but weren't sure"
+      // even on retry; today the visitor just gets the localized hint.
+      if (tier === 'retry') {
         return { status: 'low_confidence', extraction }
       }
 

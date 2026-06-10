@@ -19,6 +19,7 @@ import {
   browserCanvasFactory,
   downscaleImage,
 } from '@/lib/scan/downscale'
+import { resolveConfidenceTier } from '@/lib/scan/confidence-tier'
 import { scanAction } from '@/lib/scan/scan-action'
 import {
   INITIAL_SCAN_ACTION_STATE,
@@ -108,13 +109,15 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
     ])
   }
 
-  // After a successful match, navigate to the sake detail page. We don't
-  // render anything in the matched-state branch because the next paint is
-  // the destination page; the badge + attribution already live there.
+  // Auto-navigate only when the matched extraction is in the `auto`
+  // confidence tier (≥ 0.85 per PRD #105). Confirm tier (0.60–0.85)
+  // renders the confirm card and waits for an explicit tap — see the
+  // `matched` JSX branch below. Without this gate the visitor would
+  // be silently routed to a sake they're not sure matches.
   useEffect(() => {
-    if (state.status === 'matched') {
-      router.push(state.sakeHref)
-    }
+    if (state.status !== 'matched') return
+    if (resolveConfidenceTier(state.extraction.confidence) !== 'auto') return
+    router.push(state.sakeHref)
   }, [router, state])
 
   // Mirror the server-side trace from the latest action result into
@@ -267,18 +270,34 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
         </p>
       )}
       {state.status === 'low_confidence' && (
-        // Phase 3 / S3 (#108) placeholder. S4 (#109) replaces this with
-        // the three-tier auto / confirm / retry UI; for now we render a
-        // single discovery-framed hint that nudges the visitor toward a
-        // clearer photo. The extraction is on the state but deliberately
-        // not displayed yet — S4 owns the confirm-card design.
-        <p
-          role="alert"
-          className="text-sm text-amber-700 dark:text-amber-300"
-          data-testid="scan-error-low-confidence"
+        // Retry tier (confidence < 0.60). No lookup attempted upstream
+        // — the model isn't confident enough about the (name, brewery)
+        // pair to be worth checking against Sakenowa. We surface a
+        // discovery-framed hint ("try a closer shot") plus an explicit
+        // rescan button so the visitor doesn't have to scroll back up
+        // to the file picker.
+        <div
+          className="flex flex-col gap-2"
+          data-testid="scan-result-retry"
         >
-          {t('lowConfidence')}
-        </p>
+          <p
+            role="alert"
+            className="text-sm text-amber-700 dark:text-amber-300"
+            data-testid="scan-error-low-confidence"
+          >
+            {t('lowConfidence')}
+          </p>
+          <div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onPickClick}
+              data-testid="scan-result-retry-rescan"
+            >
+              {t('retryRescan')}
+            </Button>
+          </div>
+        </div>
       )}
       {state.status === 'no_match' && (
         <p
@@ -296,12 +315,13 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
           {t('ambiguous')}
         </p>
       )}
-      {state.status === 'matched' && (
-        // The matched-state UI is visible briefly before the router push
-        // resolves. CLAUDE.md "Do NOT show LLM-extracted data without a
-        // ProvenanceBadge" — every LLM-extracted value here is rendered
-        // adjacent to its badge. The Sakenowa attribution renders too,
-        // since the result includes the Sakenowa-matched brand id.
+      {state.status === 'matched' && resolveConfidenceTier(state.extraction.confidence) === 'auto' && (
+        // Auto tier (confidence ≥ 0.85). The useEffect above auto-navigates
+        // to `state.sakeHref`; this block is the brief flash before the
+        // route change resolves. CLAUDE.md "Do NOT show LLM-extracted data
+        // without a ProvenanceBadge" — every LLM-extracted value here is
+        // rendered adjacent to its badge. The Sakenowa attribution
+        // renders too, since the result includes the matched brand id.
         <div
           className="flex flex-col gap-3"
           data-testid="scan-result-matched"
@@ -327,6 +347,67 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
             />
           </div>
           <p className="text-sm text-zinc-700 dark:text-zinc-300">{t('matched')}</p>
+        </div>
+      )}
+      {state.status === 'matched' && resolveConfidenceTier(state.extraction.confidence) === 'confirm' && (
+        // Confirm tier (0.60 ≤ confidence < 0.85). Renders a confirm
+        // card: the extracted brand kanji with provenance, a "is this
+        // the bottle?" prompt, and explicit Confirm / Rescan
+        // actions. NO auto-navigate — the visitor decides. The
+        // brewery from the extraction is shown alongside the brand
+        // so a misread brewery (caught by brewery-fallback at
+        // `matched_brand_only` for divergence) doesn't slip past.
+        <div
+          className="flex flex-col gap-3"
+          data-testid="scan-result-confirm"
+        >
+          <SakenowaAttributionView
+            placement="inline"
+            poweredBy={tAttribution('poweredBy')}
+            linkLabel={tAttribution('linkLabel')}
+          />
+          <p className="text-sm text-zinc-700 dark:text-zinc-300">{t('confirmTitle')}</p>
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <span
+                className="text-base font-medium"
+                lang="ja"
+                data-testid="scan-result-name-ja"
+              >
+                {state.extraction.name_ja}
+              </span>
+              <ProvenanceBadgeView
+                kind="llmExtracted"
+                label={tBadge('label')}
+                tooltip={tBadge('tooltip')}
+                confidence={state.extraction.confidence}
+              />
+            </div>
+            <span
+              className="text-sm text-zinc-600 dark:text-zinc-400"
+              lang="ja"
+              data-testid="scan-result-confirm-brewery"
+            >
+              {state.extraction.brewery_ja}
+            </span>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              onClick={() => router.push(state.sakeHref)}
+              data-testid="scan-result-confirm-accept"
+            >
+              {t('confirmAccept')}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onPickClick}
+              data-testid="scan-result-confirm-rescan"
+            >
+              {t('confirmRescan')}
+            </Button>
+          </div>
         </div>
       )}
       {state.status === 'matched_brand_only' && (

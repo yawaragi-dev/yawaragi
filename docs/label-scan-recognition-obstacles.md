@@ -102,7 +102,7 @@ The deeper issue is that the model's self-reported confidence isn't well-calibra
 
 **Example.** A series of ~10 well-lit phone photos produced a distribution like `[0.42, 0.72, 0.72, 0.74, 0.75, 0.75, 0.75, 0.85, 0.85, 0.90]`. The single 0.42 was a legitimately tough shot worth rejecting. Everything else should have gone to lookup. A 0.85 threshold rejected 7 out of 10 correctly-extracted bottles.
 
-**Status.** Implemented (interim). Threshold lowered to 0.70 (commit `f6e5568`). Permanent calibration depends on the eval harness landing first so we have ground-truth data to fit a threshold against, rather than eyeballing distributions.
+**Status.** Implemented. The three-tier UX (#109 / S4 PR A) replaced the single-threshold model with `resolveConfidenceTier(confidence)` returning `'auto' | 'confirm' | 'retry'`. Thresholds: `< 0.60` → retry CTA (no lookup), `0.60 ≤ x < 0.85` → confirm card (visitor taps to accept or rescan), `≥ 0.85` → auto-navigate. The interim single-threshold tune at 0.70 was a temporary fix until the confirm tier landed; with three tiers in place, every "would-have-auto-matched" bottle in the 0.60–0.85 range now requires a confirm tap. Permanent threshold calibration still depends on the eval harness (#110).
 
 **Tracking.** PR [#117](https://github.com/yawaragi-dev/yawaragi/pull/117), commit `f6e5568`. Long-term calibration blocked by eval harness [#110](https://github.com/yawaragi-dev/yawaragi/issues/110) and finetune decision [#113](https://github.com/yawaragi-dev/yawaragi/issues/113).
 
