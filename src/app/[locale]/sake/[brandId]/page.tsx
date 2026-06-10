@@ -112,12 +112,22 @@ export default async function SakeBrandPage({ params }: PageProps) {
         <ProvenanceBadge source={brand.source} confidence={brand.confidence} />
       </div>
       {showBrandRomaji && (
+        // ProvenanceBadge with source='llm_inferred' is load-bearing
+        // here per CLAUDE.md anti-pattern "Do NOT show LLM-extracted
+        // data without a ProvenanceBadge". The brand RECORD itself is
+        // Sakenowa-sourced (the badge attached to the kanji above
+        // renders nothing for that source); the romaji FIELD is LLM-
+        // derived (Hepburn romanisation of the kanji by Anthropic
+        // Haiku — see src/lib/sakenowa/romaji.ts). ADR-0005's
+        // taxonomy is per-record, not per-field, so we render the
+        // badge on the displayed field rather than re-architect the
+        // schema for per-field provenance.
         <p
-          className="text-xl text-zinc-700 dark:text-zinc-300"
+          className="flex items-baseline gap-2 text-xl text-zinc-700 dark:text-zinc-300"
           data-testid="brand-name-romaji"
-          lang="en"
         >
-          {brand.nameRomaji}
+          <span lang="en">{brand.nameRomaji}</span>
+          <ProvenanceBadge source="llm_inferred" />
         </p>
       )}
       {showBrewery && (
@@ -137,12 +147,14 @@ export default async function SakeBrandPage({ params }: PageProps) {
             {brewery.nameKanji}
           </p>
           {showBreweryRomaji && (
+            // Same LLM-derived-romaji-on-a-Sakenowa-record story as
+            // the brand romaji above.
             <p
-              className="text-base text-zinc-700 dark:text-zinc-300"
+              className="flex items-baseline gap-2 text-base text-zinc-700 dark:text-zinc-300"
               data-testid="brewery-name-romaji"
-              lang="en"
             >
-              {brewery.nameRomaji}
+              <span lang="en">{brewery.nameRomaji}</span>
+              <ProvenanceBadge source="llm_inferred" />
             </p>
           )}
         </section>

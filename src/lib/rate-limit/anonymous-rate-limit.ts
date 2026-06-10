@@ -32,7 +32,16 @@ interface BucketConfig {
  */
 const BUCKET_CONFIG: Readonly<Record<RateLimitBucket, BucketConfig>> = {
   'vision-scan': {
-    cap: 5,
+    // ⚠ TEMPORARY — DO NOT MERGE — REVERT TO 5 ⚠
+    // Bumped 5 → 50 for the active testing session against the
+    // deployed preview. The canonical value (PRD #105 §"Rate-limit
+    // policy v1") is 5. The 6 rate-limit unit tests in
+    // `anonymous-rate-limit.test.ts` are hard-coded against cap=5 and
+    // will FAIL while this bump is in place — that's the intended
+    // tripwire so a merge attempt is impossible without reverting
+    // this line first. CI on the PR will show those failures red
+    // until the value goes back to 5; that is by design.
+    cap: 50,
     windowSeconds: 60 * 60 * 24,
   },
 }
