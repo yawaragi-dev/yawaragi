@@ -54,6 +54,24 @@ type ScanActionStateBase =
       status: 'low_confidence'
       extraction: LabelScanExtraction
     }
+  /**
+   * Catch-all for unhandled throws inside the action — Anthropic API
+   * outages, the vision schema parse failing after retries on a
+   * non-sake image, Sakenowa DB connectivity, etc. Without this state
+   * the action would surface a Next.js error digest (`ERROR 3102…`)
+   * and the operator would lose the entire server-side debug trace.
+   *
+   * `reason` is the thrown error's name (e.g. `AI_RetryError`,
+   * `ZodError`). The `message` is intentionally NOT carried — full
+   * error messages can leak server-side detail. The UI renders a
+   * polite localized "couldn't process this image" copy; the panel
+   * shows the technical detail via the debugLog the action attached
+   * before returning.
+   */
+  | {
+      status: 'extraction_failed'
+      reason: string
+    }
 
 /**
  * Optional server-side trace attached to every action result when the

@@ -244,6 +244,23 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
           {t('errorDownscale')}
         </p>
       )}
+      {state.status === 'extraction_failed' && (
+        // The action wraps the vision call + Sakenowa lookup in a
+        // try/catch (see scan-action.ts). Random non-sake images
+        // routinely bottom out the AI SDK's schema-validation retries
+        // and surface here. Anthropic outages, content moderation
+        // rejections, and DB blips share the same UI — the localized
+        // copy stays generic; the debug overlay carries the
+        // technical name (`AI_RetryError`, `ZodError`, etc.) and a
+        // sliced error message.
+        <p
+          role="alert"
+          className="text-sm text-amber-700 dark:text-amber-300"
+          data-testid="scan-error-extraction-failed"
+        >
+          {t('extractionFailed')}
+        </p>
+      )}
       {state.status === 'low_confidence' && (
         // Phase 3 / S3 (#108) placeholder. S4 (#109) replaces this with
         // the three-tier auto / confirm / retry UI; for now we render a

@@ -118,62 +118,87 @@ export async function scanAction(
       return { status: 'rate_limited', retryAfterSec: rateLimit.retryAfterSec }
     }
 
-    // Real vision call (S3). The provider is resolved from the registry
-    // (`VISION_PROVIDER` env, default `anthropic-haiku-4-5`). The downscaled
-    // JPEG goes inline as base64 on /v1/messages; the Anthropic Files API
-    // is forbidden (`pnpm anthropic-files:audit`). The provider parses the
-    // model output through `LabelScanExtractionSchema`, pinning `source`
-    // to `'llm_extracted'`.
-    const extraction = await getDefaultVisionProvider().extractLabel(image)
-    debugAdd('ScanAction', `extraction confidence ${extraction.confidence.toFixed(2)}`, {
-      threshold: AUTO_CONFIDENCE_THRESHOLD,
-      branch: extraction.confidence < AUTO_CONFIDENCE_THRESHOLD ? 'low_confidence' : 'lookup',
-    })
-
-    // S3 placeholder for medium / low confidence. The three-tier UI lands
-    // in S4 (#109); for now anything below the auto threshold falls
-    // through to a tagged state the form renders as a "try a closer
-    // shot" hint. The extraction is carried so S4's confirm-card can
-    // reuse it without a second scan.
-    if (extraction.confidence < AUTO_CONFIDENCE_THRESHOLD) {
-      return { status: 'low_confidence', extraction }
-    }
-
-    const lookup = await findSakeByExtraction({
-      nameJa: extraction.name_ja,
-      breweryJa: extraction.brewery_ja,
-    })
-
-    if (lookup.kind === 'exact') {
-      const sakeHref = getPathname({
-        locale: localeRaw,
-        href: { pathname: '/sake/[brandId]', params: { brandId: String(lookup.sake.brandId) } },
+    // Real vision call (S3) + Sakenowa lookup, wrapped in a single
+    // try/catch so an Anthropic outage, a schema-validation retry
+    // exhaustion (random non-sake images regularly bottom out here —
+    // the model returns empty strings, the schema rejects, the AI SDK
+    // gives up), or a DB connectivity blip all surface as a tagged
+    // `extraction_failed` state instead of a 500 + Next.js error
+    // digest. Without this catch the server-side debug trace is lost
+    // when the throw bubbles up, because the response never lands on
+    // the client to carry it.
+    try {
+      // Provider resolution from the registry (`VISION_PROVIDER` env,
+      // default `anthropic-haiku-4-5`). The downscaled JPEG goes
+      // inline as base64 on /v1/messages; the Anthropic Files API is
+      // forbidden (`pnpm anthropic-files:audit`). The provider parses
+      // the model output through `LabelScanExtractionSchema`, pinning
+      // `source` to `'llm_extracted'`.
+      const extraction = await getDefaultVisionProvider().extractLabel(image)
+      debugAdd('ScanAction', `extraction confidence ${extraction.confidence.toFixed(2)}`, {
+        threshold: AUTO_CONFIDENCE_THRESHOLD,
+        branch: extraction.confidence < AUTO_CONFIDENCE_THRESHOLD ? 'low_confidence' : 'lookup',
       })
-      debugAdd('ScanAction', 'returning matched', {
-        brandId: lookup.sake.brandId,
-        sakeHref,
-      })
-      return {
-        status: 'matched',
-        extraction,
-        brandId: lookup.sake.brandId,
-        sakeHref,
+
+      // S3 placeholder for medium / low confidence. The three-tier UI
+      // lands in S4 (#109); for now anything below the auto threshold
+      // falls through to a tagged state the form renders as a "try a
+      // closer shot" hint. The extraction is carried so S4's
+      // confirm-card can reuse it without a second scan.
+      if (extraction.confidence < AUTO_CONFIDENCE_THRESHOLD) {
+        return { status: 'low_confidence', extraction }
       }
-    }
-    if (lookup.kind === 'ambiguous') {
-      debugAdd('ScanAction', 'returning ambiguous', {
-        candidates: lookup.candidates.map((c) => c.brandId),
+
+      const lookup = await findSakeByExtraction({
+        nameJa: extraction.name_ja,
+        breweryJa: extraction.brewery_ja,
       })
-      return {
-        status: 'ambiguous',
-        extraction,
-        brandIds: lookup.candidates.map((c) => c.brandId),
+
+      if (lookup.kind === 'exact') {
+        const sakeHref = getPathname({
+          locale: localeRaw,
+          href: { pathname: '/sake/[brandId]', params: { brandId: String(lookup.sake.brandId) } },
+        })
+        debugAdd('ScanAction', 'returning matched', {
+          brandId: lookup.sake.brandId,
+          sakeHref,
+        })
+        return {
+          status: 'matched',
+          extraction,
+          brandId: lookup.sake.brandId,
+          sakeHref,
+        }
       }
+      if (lookup.kind === 'ambiguous') {
+        debugAdd('ScanAction', 'returning ambiguous', {
+          candidates: lookup.candidates.map((c) => c.brandId),
+        })
+        return {
+          status: 'ambiguous',
+          extraction,
+          brandIds: lookup.candidates.map((c) => c.brandId),
+        }
+      }
+      debugAdd('ScanAction', 'returning no_match', {
+        attempted: { name_ja: extraction.name_ja, brewery_ja: extraction.brewery_ja },
+      })
+      return { status: 'no_match', extraction }
+    } catch (err) {
+      const name = err instanceof Error ? err.name : 'UnknownError'
+      const message = err instanceof Error ? err.message : String(err)
+      debugAdd(
+        'ScanAction',
+        `extraction threw: ${name}`,
+        // The full message is for the debug overlay only — the
+        // tagged state passed to the UI carries just the error name
+        // so localized copy stays generic. We slice to 500 chars to
+        // bound the panel rendering cost on a degenerate trace.
+        { message: message.slice(0, 500) },
+        'error',
+      )
+      return { status: 'extraction_failed', reason: name }
     }
-    debugAdd('ScanAction', 'returning no_match', {
-      attempted: { name_ja: extraction.name_ja, brewery_ja: extraction.brewery_ja },
-    })
-    return { status: 'no_match', extraction }
   })
 
   // Attach the accumulated trace to the response. Stripped when debug
