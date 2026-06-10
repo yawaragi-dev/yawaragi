@@ -16,6 +16,26 @@ type ScanActionStateBase =
       brandId: number
       sakeHref: string
     }
+  /**
+   * Phase 3 / #123: the `(brand AND brewery)` exact-match join
+   * returned 0 rows, but the brand-only fallback found exactly one
+   * match. The brand is unambiguous, but the brewery the model
+   * extracted (`breweryDivergence.extracted`) does not match what
+   * Sakenowa stores (`breweryDivergence.stored`). The UI MUST surface
+   * the divergence honestly and require a deliberate tap to navigate
+   * to the sake page — silently routing the visitor to a sake whose
+   * brewery doesn't match the label is worse than saying "we're not
+   * sure". `sakeHref` is included for the explicit-tap navigation;
+   * `useEffect` MUST NOT auto-push to it (see `matched` above for
+   * contrast).
+   */
+  | {
+      status: 'matched_brand_only'
+      extraction: LabelScanExtraction
+      brandId: number
+      sakeHref: string
+      breweryDivergence: { extracted: string; stored: string }
+    }
   | {
       status: 'no_match'
       extraction: LabelScanExtraction

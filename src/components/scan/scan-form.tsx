@@ -324,6 +324,60 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
           <p className="text-sm text-zinc-700 dark:text-zinc-300">{t('matched')}</p>
         </div>
       )}
+      {state.status === 'matched_brand_only' && (
+        // Phase 3 / #123: brand-only fallback succeeded but the
+        // brewery on the label diverged from the catalogue. NO
+        // auto-navigate — the visitor must make a conscious tap so
+        // the divergence is acknowledged. Side-by-side display of the
+        // two brewery values (label vs catalogue) so the visitor can
+        // judge whether the brand match is the one they meant.
+        <div
+          className="flex flex-col gap-3"
+          data-testid="scan-result-matched-brand-only"
+        >
+          <SakenowaAttributionView
+            placement="inline"
+            poweredBy={tAttribution('poweredBy')}
+            linkLabel={tAttribution('linkLabel')}
+          />
+          <div className="flex items-center gap-2">
+            <span
+              className="text-base font-medium"
+              lang="ja"
+              data-testid="scan-result-name-ja"
+            >
+              {state.extraction.name_ja}
+            </span>
+            <ProvenanceBadgeView
+              kind="llmExtracted"
+              label={tBadge('label')}
+              tooltip={tBadge('tooltip')}
+              confidence={state.extraction.confidence}
+            />
+          </div>
+          <p className="text-sm text-zinc-700 dark:text-zinc-300">
+            {t('matchedBrandOnly')}
+          </p>
+          <p
+            className="text-sm text-zinc-600 dark:text-zinc-400"
+            data-testid="scan-result-brewery-divergence"
+          >
+            <span lang="ja">
+              {t('matchedBrandOnlyDivergence', {
+                extracted: state.breweryDivergence.extracted,
+                stored: state.breweryDivergence.stored,
+              })}
+            </span>
+          </p>
+          <a
+            href={state.sakeHref}
+            className="text-sm font-medium text-blue-700 underline-offset-2 hover:underline dark:text-blue-300"
+            data-testid="scan-result-matched-brand-only-link"
+          >
+            {t('matchedBrandOnlyOpen')}
+          </a>
+        </div>
+      )}
     </form>
   )
 }

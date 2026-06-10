@@ -176,13 +176,30 @@ export interface SakeLookupQuery {
 
 export type FindSakeByExtractionResult =
   | { kind: 'exact'; sake: Brand }
+  /**
+   * The first-pass `(brand AND brewery)` join returned zero, but the
+   * brand-only fallback (#123) found exactly one row. The brand is
+   * unambiguously identified, but the brewery the model extracted
+   * doesn't match what Sakenowa stores for that brand. UI MUST
+   * surface this divergence honestly — silently navigating to a sake
+   * whose brewery doesn't match the label is worse than saying "we're
+   * not sure". `breweryDivergence.stored` is the canonical brewery
+   * kanji from Sakenowa; `extracted` is what the model returned.
+   */
+  | {
+      kind: 'matched_brand_only'
+      sake: Brand
+      brewery: Brewery
+      breweryDivergence: { extracted: string; stored: string }
+      query: SakeLookupQuery
+    }
   | { kind: 'ambiguous'; candidates: readonly Brand[]; query: SakeLookupQuery }
   | { kind: 'no_match'; query: SakeLookupQuery }
 
-// Pulls brand rows whose `name_kanji` matches exactly AND whose joined
-// brewery's `name_kanji` matches exactly. LIMIT 2 — we don't need every
-// candidate; we only need to know whether the match is unique (1 row) or
-// ambiguous (2+).
+// First-pass: pulls brand rows whose `name_kanji` matches exactly AND
+// whose joined brewery's `name_kanji` matches exactly. LIMIT 2 — we
+// don't need every candidate; we only need to know whether the match
+// is unique (1 row) or ambiguous (2+).
 const SELECT_BRANDS_BY_KANJI_EXTRACTION = `
   SELECT br.brand_id, br.name, br.name_kanji, br.name_romaji, br.brewery_id, br.source, br.confidence
   FROM brands br
@@ -198,6 +215,78 @@ const SELECT_BRANDS_BY_KANJI_EXTRACTION = `
   LIMIT 2
 `
 
+// Second-pass (#123): brand kanji only — used when the first pass
+// returns 0 rows. Pulls brand columns AND brewery columns from the
+// same JOIN so the matched_brand_only branch has the stored brewery
+// kanji to surface in the divergence UI without a second round-trip.
+// Column aliases are namespaced (`brand_*` / `brewery_*`) because both
+// tables carry overlapping column names (brand_id, name, name_kanji,
+// source, confidence) — the namespacing makes the pg row object
+// unambiguous to deserialise.
+const SELECT_BRANDS_AND_BREWERIES_BY_BRAND_KANJI = `
+  SELECT
+    br.brand_id          AS brand_brand_id,
+    br.name              AS brand_name,
+    br.name_kanji        AS brand_name_kanji,
+    br.name_romaji       AS brand_name_romaji,
+    br.brewery_id        AS brand_brewery_id,
+    br.source            AS brand_source,
+    br.confidence        AS brand_confidence,
+    b.brewery_id         AS brewery_brewery_id,
+    b.name               AS brewery_name,
+    b.name_kanji         AS brewery_name_kanji,
+    b.name_romaji        AS brewery_name_romaji,
+    b.area_id            AS brewery_area_id,
+    b.source             AS brewery_source,
+    b.confidence         AS brewery_confidence
+  FROM brands br
+  JOIN breweries b ON b.brewery_id = br.brewery_id
+  WHERE br.name_kanji = ANY($1)
+  ORDER BY br.brand_id
+  LIMIT 2
+`
+
+interface BrandWithBreweryRow {
+  brand_brand_id: number
+  brand_name: string
+  brand_name_kanji: string
+  brand_name_romaji: string | null
+  brand_brewery_id: number
+  brand_source: BrandRow['source']
+  brand_confidence: string | null
+  brewery_brewery_id: number
+  brewery_name: string
+  brewery_name_kanji: string
+  brewery_name_romaji: string | null
+  brewery_area_id: number
+  brewery_source: BreweryRow['source']
+  brewery_confidence: string | null
+}
+
+function brandFromJoinedRow(row: BrandWithBreweryRow): Brand {
+  return rowToBrand({
+    brand_id: row.brand_brand_id,
+    name: row.brand_name,
+    name_kanji: row.brand_name_kanji,
+    name_romaji: row.brand_name_romaji,
+    brewery_id: row.brand_brewery_id,
+    source: row.brand_source,
+    confidence: row.brand_confidence,
+  })
+}
+
+function breweryFromJoinedRow(row: BrandWithBreweryRow): Brewery {
+  return rowToBrewery({
+    brewery_id: row.brewery_brewery_id,
+    name: row.brewery_name,
+    name_kanji: row.brewery_name_kanji,
+    name_romaji: row.brewery_name_romaji,
+    area_id: row.brewery_area_id,
+    source: row.brewery_source,
+    confidence: row.brewery_confidence,
+  })
+}
+
 export async function findSakeByExtractionFromPool(
   query: SakeLookupQuery,
   pool: Pool,
@@ -211,7 +300,7 @@ export async function findSakeByExtractionFromPool(
   const breweryVariants = generateKanjiVariants(query.breweryJa)
   debugAdd(
     'Sakenowa',
-    `querying brands WHERE name_kanji ∈ {${nameVariants.join('|')}} AND brewery.name_kanji ∈ {${breweryVariants.join('|')}}`,
+    `first-pass: querying brands WHERE name_kanji ∈ {${nameVariants.join('|')}} AND brewery.name_kanji ∈ {${breweryVariants.join('|')}}`,
     {
       nameJa: query.nameJa,
       breweryJa: query.breweryJa,
@@ -225,16 +314,57 @@ export async function findSakeByExtractionFromPool(
     [nameVariants, breweryVariants],
     pool,
   )
-  debugAdd('Sakenowa', `query returned ${rows.length} row(s)`)
-  if (rows.length === 0) {
-    return { kind: 'no_match', query }
-  }
+  debugAdd('Sakenowa', `first-pass returned ${rows.length} row(s)`)
   if (rows.length === 1) {
     return { kind: 'exact', sake: rowToBrand(rows[0]) }
   }
+  if (rows.length >= 2) {
+    return {
+      kind: 'ambiguous',
+      candidates: rows.map(rowToBrand),
+      query,
+    }
+  }
+
+  // First pass returned 0. Brewery names are smaller on most labels,
+  // often stylised, and the model's correctness rate on brewery is
+  // meaningfully worse than on brand (issue #123 motivating example:
+  // 蔵王 bottle where the model hallucinated 宮鉄酒造 — brand kanji
+  // correct, brewery kanji invented). Retry brand-only and surface
+  // the divergence if exactly one brand matches.
+  debugAdd(
+    'Sakenowa',
+    `first-pass returned 0 rows; trying brand-only fallback (#123) on name_kanji ∈ {${nameVariants.join('|')}}`,
+  )
+  const { rows: brandOnlyRows } = await publicQuery<BrandWithBreweryRow>(
+    'brands',
+    SELECT_BRANDS_AND_BREWERIES_BY_BRAND_KANJI,
+    [nameVariants],
+    pool,
+  )
+  debugAdd('Sakenowa', `brand-only fallback returned ${brandOnlyRows.length} row(s)`)
+
+  if (brandOnlyRows.length === 0) {
+    return { kind: 'no_match', query }
+  }
+  if (brandOnlyRows.length === 1) {
+    const matched = brandOnlyRows[0]
+    const brand = brandFromJoinedRow(matched)
+    const brewery = breweryFromJoinedRow(matched)
+    return {
+      kind: 'matched_brand_only',
+      sake: brand,
+      brewery,
+      breweryDivergence: {
+        extracted: query.breweryJa,
+        stored: brewery.nameKanji,
+      },
+      query,
+    }
+  }
   return {
     kind: 'ambiguous',
-    candidates: rows.map(rowToBrand),
+    candidates: brandOnlyRows.map(brandFromJoinedRow),
     query,
   }
 }
