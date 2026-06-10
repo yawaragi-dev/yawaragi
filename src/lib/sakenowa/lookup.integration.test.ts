@@ -109,6 +109,7 @@ describe('lookupBrandFromPool', () => {
       brandId: 9001,
       name: 'Reijin',
       nameKanji: '麗人',
+      nameRomaji: null,
       breweryId: 9501,
       source: 'sakenowa',
     })
@@ -156,6 +157,7 @@ describe('lookupBreweryByBrandFromPool', () => {
       breweryId: 9501,
       name: 'Reijin Shuzo',
       nameKanji: '麗人酒造',
+      nameRomaji: null,
       areaId: 20,
       source: 'sakenowa',
     })
@@ -350,6 +352,7 @@ describe('findSakeByExtractionFromPool', () => {
       brandId: 9001,
       name: 'Dassai',
       nameKanji: '獺祭',
+      nameRomaji: null,
       breweryId: 9501,
       source: 'sakenowa',
     })
