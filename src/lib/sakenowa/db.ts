@@ -48,14 +48,41 @@ export interface BrandsDB {
 // Phase 2 row counts (1733 breweries, 3167 brands) in 4-7 statements.
 const BATCH_SIZE = 500
 
+/**
+ * Sentinel content-hash returned by `getExistingBrand/BreweryHashes`
+ * for rows that need the romaji-enrichment pass to run on the next
+ * ingest (typically: rows created before migration 0010, whose
+ * `name_romaji` is still NULL). Chosen to be impossible as a real
+ * SHA-256 hex value — the surrounding double-underscore marker won't
+ * appear in a hex string.
+ */
+const ROMAJI_BACKFILL_SENTINEL = '__needs_romaji_backfill__'
+
 class PgBrandsDB implements BrandsDB {
   constructor(private readonly executor: Pool | PoolClient) {}
 
   async getExistingBrandHashes(): Promise<Map<number, string>> {
+    // Rows whose `name_romaji` hasn't been populated yet need the
+    // enrichment pass to run — even if their kanji haven't changed.
+    // We return a sentinel "hash" that can't collide with any real
+    // SHA-256 hex value, so the pipeline classifies them as
+    // "updated" and routes them through enrichBeforeUpsert.
+    //
+    // This handles the pre-migration backfill cleanly: rows created
+    // before migration 0010 have `name_romaji IS NULL`; their first
+    // post-migration `pnpm ingest` reclassifies them as updated,
+    // fills the romaji, recomputes the hash, and writes back. A
+    // second ingest with no Sakenowa changes is a true no-op.
     const { rows } = await this.executor.query<{
       brand_id: number
       content_hash: string
-    }>('SELECT brand_id, content_hash FROM brands')
+    }>(
+      `SELECT brand_id,
+              CASE WHEN name_romaji IS NULL THEN '${ROMAJI_BACKFILL_SENTINEL}'
+                   ELSE content_hash
+              END AS content_hash
+       FROM brands`,
+    )
     return new Map(rows.map((r) => [r.brand_id, r.content_hash]))
   }
 
@@ -153,10 +180,23 @@ class PgBreweriesDB implements BreweriesDB {
   constructor(private readonly executor: Pool | PoolClient) {}
 
   async getExistingBreweryHashes(): Promise<Map<number, string>> {
+    // Same sentinel trick as `getExistingBrandHashes`. Extra clause
+    // here for brewery rows: the ~48 Sakenowa placeholder rows have
+    // empty `name_kanji`, so their `name_romaji` is genuinely
+    // permanent-NULL — we don't want to mark them as needing
+    // backfill because the transliteration call would just no-op
+    // anyway and the row would round-trip with no real change.
     const { rows } = await this.executor.query<{
       brewery_id: number
       content_hash: string
-    }>('SELECT brewery_id, content_hash FROM breweries')
+    }>(
+      `SELECT brewery_id,
+              CASE WHEN name_romaji IS NULL AND length(name_kanji) > 0
+                   THEN '${ROMAJI_BACKFILL_SENTINEL}'
+                   ELSE content_hash
+              END AS content_hash
+       FROM breweries`,
+    )
     return new Map(rows.map((r) => [r.brewery_id, r.content_hash]))
   }
 
