@@ -45,8 +45,14 @@ interface ScanFormProps {
  *
  * Flow (PRD #105 §"Wire shape"):
  *   1. Visitor taps the button → the hidden `<input type="file"
- *      accept="image/*" capture="environment">` opens the OS camera
- *      (mobile) or file picker (desktop).
+ *      accept="image/*">` opens the OS picker. On mobile this is the
+ *      iOS / Android sheet that offers BOTH "take a new photo" and
+ *      "choose from library". We previously pinned `capture="environment"`
+ *      which jumped straight to the camera — useful for live capture
+ *      but blocked re-scanning an existing photo from the gallery,
+ *      which is the dominant flow during testing and when a visitor
+ *      has already photographed a bottle. Without `capture` the
+ *      browser still offers the camera; the visitor picks the path.
  *   2. On change, we downscale the captured file in the browser via
  *      `<canvas>.toBlob` and `createImageBitmap({ imageOrientation:
  *      'from-image' })`.
@@ -194,7 +200,6 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
         type="file"
         name="image-picker"
         accept="image/*"
-        capture="environment"
         onChange={onFileChange}
         className="sr-only"
         data-testid="scan-file-input"
@@ -322,6 +327,60 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
             />
           </div>
           <p className="text-sm text-zinc-700 dark:text-zinc-300">{t('matched')}</p>
+        </div>
+      )}
+      {state.status === 'matched_brand_only' && (
+        // Phase 3 / #123: brand-only fallback succeeded but the
+        // brewery on the label diverged from the catalogue. NO
+        // auto-navigate — the visitor must make a conscious tap so
+        // the divergence is acknowledged. Side-by-side display of the
+        // two brewery values (label vs catalogue) so the visitor can
+        // judge whether the brand match is the one they meant.
+        <div
+          className="flex flex-col gap-3"
+          data-testid="scan-result-matched-brand-only"
+        >
+          <SakenowaAttributionView
+            placement="inline"
+            poweredBy={tAttribution('poweredBy')}
+            linkLabel={tAttribution('linkLabel')}
+          />
+          <div className="flex items-center gap-2">
+            <span
+              className="text-base font-medium"
+              lang="ja"
+              data-testid="scan-result-name-ja"
+            >
+              {state.extraction.name_ja}
+            </span>
+            <ProvenanceBadgeView
+              kind="llmExtracted"
+              label={tBadge('label')}
+              tooltip={tBadge('tooltip')}
+              confidence={state.extraction.confidence}
+            />
+          </div>
+          <p className="text-sm text-zinc-700 dark:text-zinc-300">
+            {t('matchedBrandOnly')}
+          </p>
+          <p
+            className="text-sm text-zinc-600 dark:text-zinc-400"
+            data-testid="scan-result-brewery-divergence"
+          >
+            <span lang="ja">
+              {t('matchedBrandOnlyDivergence', {
+                extracted: state.breweryDivergence.extracted,
+                stored: state.breweryDivergence.stored,
+              })}
+            </span>
+          </p>
+          <a
+            href={state.sakeHref}
+            className="text-sm font-medium text-blue-700 underline-offset-2 hover:underline dark:text-blue-300"
+            data-testid="scan-result-matched-brand-only-link"
+          >
+            {t('matchedBrandOnlyOpen')}
+          </a>
         </div>
       )}
     </form>
