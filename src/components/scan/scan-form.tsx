@@ -45,8 +45,14 @@ interface ScanFormProps {
  *
  * Flow (PRD #105 §"Wire shape"):
  *   1. Visitor taps the button → the hidden `<input type="file"
- *      accept="image/*" capture="environment">` opens the OS camera
- *      (mobile) or file picker (desktop).
+ *      accept="image/*">` opens the OS picker. On mobile this is the
+ *      iOS / Android sheet that offers BOTH "take a new photo" and
+ *      "choose from library". We previously pinned `capture="environment"`
+ *      which jumped straight to the camera — useful for live capture
+ *      but blocked re-scanning an existing photo from the gallery,
+ *      which is the dominant flow during testing and when a visitor
+ *      has already photographed a bottle. Without `capture` the
+ *      browser still offers the camera; the visitor picks the path.
  *   2. On change, we downscale the captured file in the browser via
  *      `<canvas>.toBlob` and `createImageBitmap({ imageOrientation:
  *      'from-image' })`.
@@ -194,7 +200,6 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
         type="file"
         name="image-picker"
         accept="image/*"
-        capture="environment"
         onChange={onFileChange}
         className="sr-only"
         data-testid="scan-file-input"
