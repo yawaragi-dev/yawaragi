@@ -70,7 +70,26 @@ import type { ScanActionState } from './scan-action-state'
  * pins 0.85 as the auto/confirm boundary; S4 will introduce the second
  * threshold (0.6) for retry vs. confirm.
  */
-const AUTO_CONFIDENCE_THRESHOLD = 0.85
+// Lowered 0.85 → 0.70 after 2026-06-10 real-world phone-photo testing
+// showed Haiku 4.5 clustering most readable mobile photos around
+// 0.72-0.75 confidence — the original 0.85 (from PRD #105 §"Confidence
+// tier resolver") was literally the upper edge of typical mobile-clean
+// confidence and rejected most usable scans.
+//
+// Why the relaxation is safe:
+// - Hallucinated extractions at 0.72 still flow through the Sakenowa
+//   lookup; non-existent brand+brewery returns `no_match` and the
+//   visitor sees "not in catalogue", never a wrong sake page.
+// - The S4 (#109) three-tier UX will introduce a second threshold
+//   below this one (confirm-vs-retry). When that lands, this constant
+//   should be reviewed — keeping 0.70 here means the confirm tier
+//   compresses to ~0.60-0.70 instead of the originally-planned 0.60-0.85.
+// - PRD #105 §"Confidence tier resolver" recorded 0.85 as a guess
+//   ahead of any real-world data. This is the first revision based
+//   on actual confidence-distribution evidence from production
+//   testing — exactly the kind of tuning the Finetune & failover
+//   task (#113) was filed for.
+const AUTO_CONFIDENCE_THRESHOLD = 0.7
 
 function isLocale(value: string): value is Locale {
   return (routing.locales as readonly string[]).includes(value)
