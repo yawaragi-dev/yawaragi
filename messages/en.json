@@ -57,6 +57,7 @@
     "brand": {
       "backToHome": "Back to home",
       "breweryLabel": "Brewery",
+      "prefectureLabel": "Prefecture",
       "flavorChartLabel": "Flavor Chart (Sakenowa)"
     }
   },

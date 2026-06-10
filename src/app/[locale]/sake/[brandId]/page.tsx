@@ -9,6 +9,7 @@ import {
   lookupBreweryByBrand,
   lookupFlavorChart,
 } from '@/lib/sakenowa/lookup'
+import { getPrefectureNames } from '@/lib/sakenowa/prefecture'
 import { FlavorChartView } from '@/components/sake/flavor-chart'
 import { ProvenanceBadge } from '@/components/sake/provenance-badge'
 import { SakenowaAttribution } from '@/components/sake/sakenowa-attribution'
@@ -85,6 +86,13 @@ export default async function SakeBrandPage({ params }: PageProps) {
   // meaningful.
   const showBrewery = brewery !== null && !isPlaceholderBrewery(brewery)
   const showBreweryRomaji = showBrewery && brewery.name !== brewery.nameKanji
+  // Prefecture is editorially mapped (manual_curation per ADR-0005)
+  // because Sakenowa's /areas endpoint publishes Japanese names only.
+  // For the in-Japan brewery rows the lookup always returns a value;
+  // for placeholder + foreign-producer rows it can be null or the
+  // "International" sentinel — we still show the sentinel because
+  // "International" is more useful than a hidden field.
+  const prefecture = showBrewery ? getPrefectureNames(brewery.areaId) : null
 
   return (
     <main
@@ -138,6 +146,32 @@ export default async function SakeBrandPage({ params }: PageProps) {
               {brewery.name}
             </p>
           )}
+        </section>
+      )}
+      {prefecture && (
+        // Prefecture name in both languages. The English form is
+        // editorially-mapped (Hepburn romanisation, suffix stripped
+        // per English geography convention) — see
+        // `src/lib/sakenowa/prefecture.ts`. The Sakenowa-sourced
+        // kanji form is the source of truth for matching; the EN
+        // form is the supplementary display per the operator ask.
+        <section
+          className="flex flex-col gap-1"
+          data-testid="brand-prefecture"
+          aria-label={t('prefectureLabel')}
+        >
+          <p className="text-sm uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+            {t('prefectureLabel')}
+          </p>
+          <p className="text-base">
+            <span lang="en" data-testid="prefecture-name-en">
+              {prefecture.nameEn}
+            </span>
+            <span className="mx-2 text-zinc-400 dark:text-zinc-600">·</span>
+            <span lang="ja" data-testid="prefecture-name-ja">
+              {prefecture.nameJa}
+            </span>
+          </p>
         </section>
       )}
       {flavorChart && <FlavorChartView chart={flavorChart} />}
