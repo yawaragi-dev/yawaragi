@@ -187,6 +187,16 @@ export async function scanAction(
     } catch (err) {
       const name = err instanceof Error ? err.name : 'UnknownError'
       const message = err instanceof Error ? err.message : String(err)
+      // `AI_NoObjectGeneratedError` fires when the AI SDK's
+      // `generateObject` exhausts schema-validation retries — the
+      // typical cause is a non-sake image: the model correctly
+      // refuses to invent a sake name, returns empty fields, our
+      // `min(1)` schema rejects them, the SDK retries, gives up.
+      // That's a healthy outcome — not a system error — so we
+      // surface it at `warn` level (yellow ⚠ in the panel) instead
+      // of `error` (red ✗). Real outages (Anthropic 5xx, network
+      // blip, TypeError) keep the `error` level.
+      const isExpectedNoObject = name === 'AI_NoObjectGeneratedError'
       debugAdd(
         'ScanAction',
         `extraction threw: ${name}`,
@@ -195,7 +205,7 @@ export async function scanAction(
         // so localized copy stays generic. We slice to 500 chars to
         // bound the panel rendering cost on a degenerate trace.
         { message: message.slice(0, 500) },
-        'error',
+        isExpectedNoObject ? 'warn' : 'error',
       )
       return { status: 'extraction_failed', reason: name }
     }
