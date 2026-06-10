@@ -19,7 +19,7 @@ import { publicQuery } from '../supabase/public-query'
 import { getServerDbPool } from '../supabase/server-client'
 
 const SELECT_BRAND_BY_ID = `
-  SELECT brand_id, name, name_kanji, brewery_id, source, confidence
+  SELECT brand_id, name, name_kanji, name_romaji, brewery_id, source, confidence
   FROM brands
   WHERE brand_id = $1
 `
@@ -42,7 +42,7 @@ export async function lookupBrand(brandId: number): Promise<Brand | null> {
 // JOIN-via-brand so the public contract stays brand-keyed (the page has a
 // brandId; it shouldn't need to know the brewery_id to fetch a brewery).
 const SELECT_BREWERY_BY_BRAND_ID = `
-  SELECT b.brewery_id, b.name, b.name_kanji, b.area_id, b.source, b.confidence
+  SELECT b.brewery_id, b.name, b.name_kanji, b.name_romaji, b.area_id, b.source, b.confidence
   FROM breweries b
   JOIN brands br ON br.brewery_id = b.brewery_id
   WHERE br.brand_id = $1
@@ -183,7 +183,7 @@ export type FindSakeByExtractionResult =
 // candidate; we only need to know whether the match is unique (1 row) or
 // ambiguous (2+).
 const SELECT_BRANDS_BY_KANJI_EXTRACTION = `
-  SELECT br.brand_id, br.name, br.name_kanji, br.brewery_id, br.source, br.confidence
+  SELECT br.brand_id, br.name, br.name_kanji, br.name_romaji, br.brewery_id, br.source, br.confidence
   FROM brands br
   JOIN breweries b ON b.brewery_id = br.brewery_id
   WHERE br.name_kanji = $1 AND b.name_kanji = $2

@@ -6,6 +6,10 @@ const validBrewery = {
   breweryId: 49,
   name: 'Reijin Shuzo',
   nameKanji: '麗人酒造',
+  // See brand.test.ts for the same comment — `.default(null)` so this
+  // fixture also parses cleanly if omitted, but we include it here so
+  // the equality assertion is exact.
+  nameRomaji: null,
   areaId: 20,
 } as const
 
@@ -75,6 +79,7 @@ describe('isPlaceholderBrewery', () => {
     breweryId: 785,
     name: '',
     nameKanji: '',
+    nameRomaji: null,
     areaId: 2,
   }
 

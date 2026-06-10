@@ -74,18 +74,15 @@ export default async function SakeBrandPage({ params }: PageProps) {
   }
 
   const t = await getTranslations('sake.brand')
-  // While the Sakenowa-sourced rows have `name === nameKanji` (both are the
-  // Japanese name), don't render the romaji line redundantly. Phase 5+ (or
-  // a future romaji-transliteration step) populates `name` with the Latin
-  // form and the divergence justifies two lines.
-  const showBrandRomaji = brand.name !== brand.nameKanji
+  // Render the romaji line when the ingest pipeline populated it
+  // (issue #121). NULL means "transliteration hasn't run yet on this
+  // row" — the operator runs `pnpm ingest` to fill the column.
+  const showBrandRomaji = brand.nameRomaji !== null
   // Hide the brewery section entirely for Sakenowa placeholder rows
   // (~48 in the dataset). Showing "Brewery:" with no name reads worse
-  // than not showing the section at all; slice 9 (#52) adds the area /
-  // prefecture context that would make a "Unknown brewery in X" label
-  // meaningful.
+  // than not showing the section at all.
   const showBrewery = brewery !== null && !isPlaceholderBrewery(brewery)
-  const showBreweryRomaji = showBrewery && brewery.name !== brewery.nameKanji
+  const showBreweryRomaji = showBrewery && brewery.nameRomaji !== null
   // Prefecture is editorially mapped (manual_curation per ADR-0005)
   // because Sakenowa's /areas endpoint publishes Japanese names only.
   // For the in-Japan brewery rows the lookup always returns a value;
@@ -118,8 +115,9 @@ export default async function SakeBrandPage({ params }: PageProps) {
         <p
           className="text-xl text-zinc-700 dark:text-zinc-300"
           data-testid="brand-name-romaji"
+          lang="en"
         >
-          {brand.name}
+          {brand.nameRomaji}
         </p>
       )}
       {showBrewery && (
@@ -142,8 +140,9 @@ export default async function SakeBrandPage({ params }: PageProps) {
             <p
               className="text-base text-zinc-700 dark:text-zinc-300"
               data-testid="brewery-name-romaji"
+              lang="en"
             >
-              {brewery.name}
+              {brewery.nameRomaji}
             </p>
           )}
         </section>

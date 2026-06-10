@@ -108,6 +108,10 @@ describe('sakenowaBrandToBrand', () => {
       brandId: 1,
       name: '麗人',
       nameKanji: '麗人',
+      // Romaji is populated by the transliteration enrichment hook
+      // before upsert (issue #121). The pure record conversion leaves
+      // it null — the enrichment is a separate pipeline stage.
+      nameRomaji: null,
       breweryId: 49,
       source: 'sakenowa',
     })
@@ -119,6 +123,7 @@ describe('computeContentHash', () => {
     brandId: 1,
     name: 'Reijin',
     nameKanji: '麗人',
+    nameRomaji: null,
     breweryId: 49,
     source: 'sakenowa',
   }
@@ -336,6 +341,9 @@ describe('sakenowaBreweryToBrewery', () => {
       breweryId: 49,
       name: '麗人酒造',
       nameKanji: '麗人酒造',
+      // Same as sakenowaBrandToBrand — null until the romaji
+      // enrichment pass runs (issue #121).
+      nameRomaji: null,
       areaId: 20,
       source: 'sakenowa',
     })
@@ -347,6 +355,7 @@ describe('computeBreweryContentHash', () => {
     breweryId: 49,
     name: 'Reijin Shuzo',
     nameKanji: '麗人酒造',
+    nameRomaji: null,
     areaId: 20,
     source: 'sakenowa',
   }
@@ -373,6 +382,7 @@ describe('computeBreweryContentHash', () => {
       brandId: 49,
       name: 'Reijin Shuzo',
       nameKanji: '麗人酒造',
+      nameRomaji: null,
       breweryId: 20,
       source: 'sakenowa',
     }

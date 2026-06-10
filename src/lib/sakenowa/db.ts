@@ -70,14 +70,18 @@ class PgBrandsDB implements BrandsDB {
       const values: unknown[] = []
       for (const { brand, contentHash } of chunk) {
         const i = values.length
-        // 7 placeholders + literal NOW() for updated_at
+        // 8 placeholders + literal NOW() for updated_at. The new
+        // `name_romaji` slot is nullable; if the transliteration step
+        // hasn't run (offline ingest, eval harness, …) the column
+        // stays NULL until the next ingest fills it.
         placeholders.push(
-          `($${i + 1}, $${i + 2}, $${i + 3}, $${i + 4}, $${i + 5}, $${i + 6}, $${i + 7}, NOW())`,
+          `($${i + 1}, $${i + 2}, $${i + 3}, $${i + 4}, $${i + 5}, $${i + 6}, $${i + 7}, $${i + 8}, NOW())`,
         )
         values.push(
           brand.brandId,
           brand.name,
           brand.nameKanji,
+          brand.nameRomaji,
           brand.breweryId,
           brand.source,
           brand.confidence ?? null,
@@ -86,11 +90,16 @@ class PgBrandsDB implements BrandsDB {
       }
       await this.executor.query(
         `INSERT INTO brands
-           (brand_id, name, name_kanji, brewery_id, source, confidence, content_hash, updated_at)
+           (brand_id, name, name_kanji, name_romaji, brewery_id, source, confidence, content_hash, updated_at)
          VALUES ${placeholders.join(', ')}
          ON CONFLICT (brand_id) DO UPDATE SET
            name         = EXCLUDED.name,
            name_kanji   = EXCLUDED.name_kanji,
+           -- Preserve the existing romaji when the incoming row
+           -- didn't supply one (e.g. an ingest that skipped the
+           -- transliteration step). Only overwrite when there's a
+           -- non-NULL value to overwrite with.
+           name_romaji  = COALESCE(EXCLUDED.name_romaji, brands.name_romaji),
            brewery_id   = EXCLUDED.brewery_id,
            source       = EXCLUDED.source,
            confidence   = EXCLUDED.confidence,
@@ -162,13 +171,15 @@ class PgBreweriesDB implements BreweriesDB {
       const values: unknown[] = []
       for (const { brewery, contentHash } of chunk) {
         const i = values.length
+        // 8 placeholders + NOW() — new `name_romaji` slot.
         placeholders.push(
-          `($${i + 1}, $${i + 2}, $${i + 3}, $${i + 4}, $${i + 5}, $${i + 6}, $${i + 7}, NOW())`,
+          `($${i + 1}, $${i + 2}, $${i + 3}, $${i + 4}, $${i + 5}, $${i + 6}, $${i + 7}, $${i + 8}, NOW())`,
         )
         values.push(
           brewery.breweryId,
           brewery.name,
           brewery.nameKanji,
+          brewery.nameRomaji,
           brewery.areaId,
           brewery.source,
           brewery.confidence ?? null,
@@ -177,11 +188,15 @@ class PgBreweriesDB implements BreweriesDB {
       }
       await this.executor.query(
         `INSERT INTO breweries
-           (brewery_id, name, name_kanji, area_id, source, confidence, content_hash, updated_at)
+           (brewery_id, name, name_kanji, name_romaji, area_id, source, confidence, content_hash, updated_at)
          VALUES ${placeholders.join(', ')}
          ON CONFLICT (brewery_id) DO UPDATE SET
            name         = EXCLUDED.name,
            name_kanji   = EXCLUDED.name_kanji,
+           -- Same COALESCE rule as brands.upsertBrandsBatch: don't
+           -- clobber an existing romaji with a NULL just because the
+           -- incoming ingest skipped transliteration.
+           name_romaji  = COALESCE(EXCLUDED.name_romaji, breweries.name_romaji),
            area_id      = EXCLUDED.area_id,
            source       = EXCLUDED.source,
            confidence   = EXCLUDED.confidence,
@@ -331,6 +346,7 @@ export interface BrandRow {
   brand_id: number
   name: string
   name_kanji: string
+  name_romaji: string | null
   brewery_id: number
   source: BrandSource
   confidence: string | null
@@ -341,6 +357,7 @@ export function rowToBrand(row: BrandRow): Brand {
     brandId: row.brand_id,
     name: row.name,
     nameKanji: row.name_kanji,
+    nameRomaji: row.name_romaji,
     breweryId: row.brewery_id,
     source: row.source,
   }
@@ -354,6 +371,7 @@ export interface BreweryRow {
   brewery_id: number
   name: string
   name_kanji: string
+  name_romaji: string | null
   area_id: number
   source: BrewerySource
   confidence: string | null
@@ -364,6 +382,7 @@ export function rowToBrewery(row: BreweryRow): Brewery {
     breweryId: row.brewery_id,
     name: row.name,
     nameKanji: row.name_kanji,
+    nameRomaji: row.name_romaji,
     areaId: row.area_id,
     source: row.source,
   }
