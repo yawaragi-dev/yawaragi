@@ -96,6 +96,19 @@ function isLocale(value: string): value is Locale {
 }
 
 /**
+ * Hiragana (U+3040–309F) + Katakana (U+30A0–30FF) + CJK Unified
+ * Ideographs (U+4E00–9FFF). The three blocks cover every script the
+ * label-scan extraction should produce for `name_ja` / `brewery_ja`.
+ * Latin-only output is the failure mode this catches — see the
+ * `containsNoJapaneseScript` call site for the operational context.
+ */
+const JAPANESE_SCRIPT_REGEX = /[぀-ゟ゠-ヿ一-鿿]/
+
+function containsNoJapaneseScript(value: string): boolean {
+  return !JAPANESE_SCRIPT_REGEX.test(value)
+}
+
+/**
  * Server Action invoked by `<ScanForm />`. `_prev` is the previous
  * `useActionState` value (ignored — every submission is fresh). The
  * `formData` carries the downscaled JPEG under `image` and the visitor's
@@ -165,6 +178,32 @@ export async function scanAction(
       // closer shot" hint. The extraction is carried so S4's
       // confirm-card can reuse it without a second scan.
       if (extraction.confidence < AUTO_CONFIDENCE_THRESHOLD) {
+        return { status: 'low_confidence', extraction }
+      }
+
+      // Defensive guard against the model returning Latin (romaji /
+      // English) where the contract demanded kanji. Real-world case:
+      // a 龍力 bottle returned `brewery_ja: "Sankei Nishiki"` — the
+      // model misread a rice-variety call-out (山田錦) as the brewery
+      // and converted it to romaji. The prompt is tightened to
+      // forbid this (`anthropic-haiku-provider.ts` SYSTEM_PROMPT),
+      // but the prompt isn't a hard contract — a Latin-only field
+      // here is a sign the model defaulted, the brewery (or brand)
+      // is misidentified, and the lookup will return no_match for
+      // confusing reasons. Surface as low_confidence with a specific
+      // debug-overlay event so the operator can see what happened.
+      if (containsNoJapaneseScript(extraction.name_ja) || containsNoJapaneseScript(extraction.brewery_ja)) {
+        debugAdd(
+          'ScanAction',
+          'extraction has Latin-only field(s) — routing to low_confidence (model ignored kanji-only contract)',
+          {
+            name_ja: extraction.name_ja,
+            brewery_ja: extraction.brewery_ja,
+            nameJaIsLatinOnly: containsNoJapaneseScript(extraction.name_ja),
+            breweryJaIsLatinOnly: containsNoJapaneseScript(extraction.brewery_ja),
+          },
+          'warn',
+        )
         return { status: 'low_confidence', extraction }
       }
 

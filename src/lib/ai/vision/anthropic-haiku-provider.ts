@@ -95,7 +95,15 @@ Examples (label → output):
 - "八海山 大吟醸" by "八海醸造株式会社" → name_ja: "八海山", brewery_ja: "八海醸造"
 - "久保田 千寿" by "朝日酒造株式会社" → name_ja: "久保田 千寿", brewery_ja: "朝日酒造"
 
-Return only what is visible on the label. Do not translate, romanise, or invent any field. If a value is genuinely not visible, lower the confidence score rather than fabricating it. If the image is not a sake label at all, lower the confidence score significantly rather than producing a plausible-sounding guess.`
+CRITICAL — script and field-identity rules:
+
+1. ALWAYS return Japanese script (kanji + kana) in name_ja and brewery_ja. NEVER return romaji or English even if a Latin transliteration is printed on the label alongside the kanji. If you cannot read a field's kanji clearly, drop the confidence score sharply (below 0.5) rather than returning the romaji or English form.
+
+2. Do NOT confuse the brewery with RICE-VARIETY call-outs. Sake labels frequently advertise the rice cultivar — 山田錦 (Yamada Nishiki), 雄町 (Omachi), 五百万石 (Gohyakumangoku), 美山錦 (Miyama Nishiki), 出羽燦々 (Dewa Sansan), 秋田酒こまち (Akita Sake Komachi), 愛山 (Aiyama). These are RICE varieties, NOT breweries. Never put a rice-variety name in brewery_ja. The brewery is the company / 酒造 / 醸造, typically printed in a smaller block elsewhere on the label.
+
+3. Do NOT confuse the brewery with sake-rice ratings or grade markers. 精米歩合 (polishing ratio percentages), 日本酒度 (SMV), 酸度 (acidity), 使用酵母 (yeast strain) are all data ABOUT the sake — never put them in name_ja or brewery_ja.
+
+Return only what is visible on the label. Do not translate, invent any field, or fall back to romaji. If a value is genuinely not visible or readable as kanji, lower the confidence score rather than fabricating or romanising it. If the image is not a sake label at all, lower the confidence score significantly rather than producing a plausible-sounding guess.`
 
 const USER_PROMPT =
   'Read this sake bottle label and return the brand and brewery in their original Japanese script, plus a confidence score between 0 and 1. Follow the brand / SKU stripping rules in the system prompt.'
