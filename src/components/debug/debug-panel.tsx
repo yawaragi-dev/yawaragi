@@ -72,14 +72,25 @@ export function DebugPanel({
   return (
     <aside
       data-testid="debug-panel"
-      className="fixed inset-x-0 z-50 mx-auto max-w-2xl border-t border-zinc-300 bg-zinc-50/95 backdrop-blur dark:border-zinc-700 dark:bg-zinc-950/95"
+      // Layout — mobile-first then desktop:
+      //   Mobile (< md): full-width strip pinned to the bottom, capped
+      //     at max-w-2xl and centred. Bottom edge stacks above the
+      //     cookie banner via `--cookie-banner-h`.
+      //   Desktop (md+): right-side rail running the full viewport
+      //     height from `top-0` down to the cookie-banner offset.
+      //     Width capped at w-96 so the page reading region behind it
+      //     stays usable. The `md:flex md:flex-col` lets the header
+      //     stay a natural-height child while the events list flexes
+      //     to fill the remaining height.
+      className="fixed z-50 mx-auto max-w-2xl border-t border-zinc-300 bg-zinc-50/95 backdrop-blur inset-x-0 dark:border-zinc-700 dark:bg-zinc-950/95 md:inset-x-auto md:right-0 md:top-0 md:mx-0 md:w-96 md:max-w-none md:border-l md:border-t-0 md:flex md:flex-col"
       // `bottom` is driven by a CSS custom property the cookie banner
       // publishes (see `cookie-banner.tsx`). When the banner is open,
       // the variable equals the banner's rendered height so the debug
       // panel stacks above it; when the banner is closed (or never
       // mounted) the fallback `0px` parks the panel at the screen edge.
-      // ResizeObserver in the banner keeps the value live across locale
-      // copy length, customize-toggle, and viewport-width changes.
+      // Applies on both mobile (panel rises from above the banner) and
+      // desktop (panel's bottom edge stops at the banner top), so the
+      // banner is never occluded.
       style={{ bottom: 'var(--cookie-banner-h, 0px)' }}
       // The panel is not interactive beyond the close button; aria-label
       // gives screen readers a way to skip it.
@@ -113,7 +124,11 @@ export function DebugPanel({
       </header>
       <div
         ref={scrollRef}
-        className="max-h-[35vh] overflow-y-auto px-3 py-2 text-xs leading-relaxed"
+        // Mobile cap (35vh) prevents the strip from eating most of the
+        // screen. On desktop the rail fills its parent (`md:flex-1`)
+        // and the cap is lifted so long traces are scrollable across
+        // the full height.
+        className="max-h-[35vh] overflow-y-auto px-3 py-2 text-xs leading-relaxed md:max-h-none md:flex-1"
       >
         {events.length === 0 ? (
           <p className="text-zinc-500 italic">{emptyHint}</p>
