@@ -63,18 +63,42 @@ export interface AnthropicHaikuProviderOptions {
   nodeEnv?: string
 }
 
-// The system prompt is deliberately terse. The structured-output schema
-// already constrains the shape; we only need the model to know what to
-// look at on the image. Romaji is explicitly excluded — the lookup joins
-// on kanji (CONTEXT.md § "Same-romaji collisions are possible").
-const SYSTEM_PROMPT = [
-  'You read sake bottle labels and extract the sake name and brewery name in their original Japanese script.',
-  'Return only what is visible on the label. Do not translate, romanise, or guess.',
-  'If you are not confident about a field, lower the confidence score rather than fabricating a value.',
-].join(' ')
+// The system prompt teaches the model the difference between the
+// SAKE BRAND (銘柄, Sakenowa's brand row) and SKU-level modifiers
+// (grade, polishing ratio, style). Initial tuning observation: the
+// model is happy to extract the full label string verbatim ("獺祭 純米
+// 大吟醸 磨き45"), but Sakenowa's `brands.name_kanji` stores just
+// "獺祭" — exact-match joins return zero rows for any specific bottle.
+// Stripping the SKU modifiers brings the extraction in line with the
+// lookup key. Romaji is explicitly excluded — the lookup joins on
+// kanji (CONTEXT.md § "Same-romaji collisions are possible").
+//
+// The brewery side has a parallel issue at a different scale: labels
+// often write the brewery with a legal-form suffix ("旭酒造株式会社")
+// while Sakenowa stores just "旭酒造". Strip those suffixes; keep
+// the operational suffix (酒造 / 醸造 / 酒造場) which is part of the
+// brewery's core name.
+const SYSTEM_PROMPT = `You identify the sake brand and the brewery on a sake bottle label.
+
+The brand (銘柄) is the main product LINE name — the prominent kanji that identifies the sake family. Strip grade descriptors, polishing-ratio markers, and style modifiers from it.
+
+Strip these from the brand name:
+- Grade descriptors: 純米大吟醸, 大吟醸, 純米吟醸, 純米, 本醸造, 特別純米, 特別本醸造, 吟醸
+- Polishing-ratio markers: 磨き45, 磨き35, 磨き二割三分, 精米歩合50%
+- Style modifiers: 無濾過, 生酒, ひやおろし, 古酒, 貴醸酒, スパークリング, にごり, 原酒
+- Year/lot markers: 平成X年, 令和X年, BY数字, lot numbers
+
+The brewery is the company that made it. Strip legal-form suffixes (株式会社, 有限会社, 合資会社, 合同会社). KEEP operational suffixes (酒造, 醸造, 酒造場, 酒造店) — those are part of the brewery's core name.
+
+Examples (label → output):
+- "獺祭 純米大吟醸 磨き45" by "旭酒造株式会社" → name_ja: "獺祭", brewery_ja: "旭酒造"
+- "八海山 大吟醸" by "八海醸造株式会社" → name_ja: "八海山", brewery_ja: "八海醸造"
+- "久保田 千寿" by "朝日酒造株式会社" → name_ja: "久保田 千寿", brewery_ja: "朝日酒造"
+
+Return only what is visible on the label. Do not translate, romanise, or invent any field. If a value is genuinely not visible, lower the confidence score rather than fabricating it. If the image is not a sake label at all, lower the confidence score significantly rather than producing a plausible-sounding guess.`
 
 const USER_PROMPT =
-  'Read this sake bottle label and return the sake name and brewery name as written on the label (kanji / kana), plus a confidence score between 0 and 1.'
+  'Read this sake bottle label and return the brand and brewery in their original Japanese script, plus a confidence score between 0 and 1. Follow the brand / SKU stripping rules in the system prompt.'
 
 export function createAnthropicHaikuProvider(
   options: AnthropicHaikuProviderOptions = {},
