@@ -1,4 +1,9 @@
-import 'server-only'
+// NOTE: no `import 'server-only'` here. This module is intentionally
+// reachable from `scripts/ingest-sakenowa.ts`, a Node CLI that runs
+// outside of any Next.js request context — `server-only` throws on
+// load in that environment. The module is still server-only by
+// convention (it calls Anthropic and reads ANTHROPIC_API_KEY);
+// nothing client-side imports it.
 
 import { anthropic } from '@ai-sdk/anthropic'
 import { generateObject } from 'ai'
