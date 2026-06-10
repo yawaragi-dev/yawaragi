@@ -53,6 +53,15 @@ const LEVEL_PREFIX = {
   error: '✗ ',
 } as const
 
+/**
+ * Tailwind's `md` breakpoint = 768px. We treat anything below that as
+ * mobile (the bottom-strip layout that needs body-padding compensation
+ * so it doesn't overlay content). Anything at-or-above = desktop (the
+ * right-rail layout, which can't overlay since it occupies its own
+ * column).
+ */
+const MOBILE_QUERY = '(max-width: 767.98px)'
+
 export function DebugPanel({
   events,
   title,
@@ -62,6 +71,7 @@ export function DebugPanel({
   onClear,
 }: DebugPanelProps) {
   const scrollRef = useRef<HTMLDivElement | null>(null)
+  const panelRef = useRef<HTMLElement | null>(null)
 
   useEffect(() => {
     // Stick to the latest event when the list grows.
@@ -69,8 +79,42 @@ export function DebugPanel({
     if (el) el.scrollTop = el.scrollHeight
   }, [events.length])
 
+  // Publish `--debug-panel-h` on mobile so the layout can reserve
+  // bottom padding equal to the panel's height — the "sticky footer"
+  // shape: panel still pinned to bottom-of-viewport, but content
+  // above doesn't get covered by it. On desktop the panel is a right
+  // rail (separate horizontal column) and never overlays the content,
+  // so the variable is cleared and the body padding collapses to 0.
+  // ResizeObserver keeps the value live across the panel filling with
+  // events; matchMedia keeps it correct across orientation changes.
+  useEffect(() => {
+    const el = panelRef.current
+    if (!el || typeof window === 'undefined') return
+    const mql = window.matchMedia(MOBILE_QUERY)
+
+    const update = () => {
+      if (mql.matches) {
+        document.documentElement.style.setProperty('--debug-panel-h', `${el.offsetHeight}px`)
+      } else {
+        document.documentElement.style.removeProperty('--debug-panel-h')
+      }
+    }
+
+    update()
+    const observer = new ResizeObserver(update)
+    observer.observe(el)
+    mql.addEventListener('change', update)
+
+    return () => {
+      observer.disconnect()
+      mql.removeEventListener('change', update)
+      document.documentElement.style.removeProperty('--debug-panel-h')
+    }
+  }, [])
+
   return (
     <aside
+      ref={panelRef}
       data-testid="debug-panel"
       // Layout — mobile-first then desktop:
       //   Mobile (< md): full-width strip pinned to the bottom, capped

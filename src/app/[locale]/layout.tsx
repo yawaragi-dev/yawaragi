@@ -62,7 +62,17 @@ export default async function LocaleLayout({
         lang={locale}
         className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       >
-        <body className="min-h-full flex flex-col bg-zinc-50 font-sans dark:bg-black">
+        <body
+          className="min-h-full flex flex-col bg-zinc-50 font-sans dark:bg-black"
+          // Reserve bottom space for the mobile debug-panel strip so it
+          // behaves like a sticky footer (content scrolls above it
+          // instead of being overlaid). The variable is published by
+          // `<DebugPanel />` only on mobile (matchMedia gate); on
+          // desktop the panel is a right rail and the variable stays
+          // unset, so this resolves to 0 and the body padding
+          // collapses.
+          style={{ paddingBottom: 'var(--debug-panel-h, 0px)' }}
+        >
           <NextIntlClientProvider>
             <header className="flex justify-end px-6 py-4">
               <LocaleSwitcher />
