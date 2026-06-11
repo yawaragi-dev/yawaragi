@@ -16,7 +16,13 @@ import { anonymousRateLimit } from '@/lib/rate-limit/anonymous-rate-limit'
 import { assertRateLimitConfig } from '@/lib/rate-limit/config-gate'
 import { extractIp, hashIp } from '@/lib/rate-limit/ip-hash'
 import { UpstashKVClient } from '@/lib/rate-limit/upstash-kv-client'
-import { findSakeByBreweryOnly, findSakeByExtraction } from '@/lib/sakenowa/lookup'
+import {
+  findSakeByBreweryOnly,
+  findSakeByExtraction,
+  lookupBreweryByBrand,
+} from '@/lib/sakenowa/lookup'
+import type { Brand } from '@/lib/schemas/brand'
+import type { Brewery } from '@/lib/schemas/brewery'
 import { resolveConfidenceTier } from './confidence-tier'
 import type { ScanActionState } from './scan-action-state'
 
@@ -93,6 +99,23 @@ const JAPANESE_SCRIPT_REGEX = /[぀-ゟ゠-ヿ一-鿿]/
 
 function containsNoJapaneseScript(value: string): boolean {
   return !JAPANESE_SCRIPT_REGEX.test(value)
+}
+
+/**
+ * Best-available English label for a Sakenowa entity. Prefers the
+ * LLM-derived `nameRomaji` (cleaner, populated by the romaji-ingest
+ * pipeline from #121) over Sakenowa's published `name` (the
+ * canonical fallback). Returns `null` only if neither is present —
+ * the schemas declare `name` as required so this is effectively
+ * non-null in practice, but the optional chaining keeps it safe
+ * against a future Brewery whose `name` legitimately empties out
+ * (CONTEXT.md "Naming convention" allows brewery.name to be an
+ * empty string in some Sakenowa fixtures).
+ */
+function bestRomaji(entity: Pick<Brand | Brewery, 'name' | 'nameRomaji'>): string | null {
+  if (entity.nameRomaji) return entity.nameRomaji
+  if (entity.name) return entity.name
+  return null
 }
 
 /**
@@ -267,7 +290,11 @@ export async function scanAction(
             extraction,
             brandId: breweryOnly.sake.brandId,
             sakeHref,
-            brandDivergence: breweryOnly.brandDivergence,
+            brandDivergence: {
+              ...breweryOnly.brandDivergence,
+              storedRomaji: bestRomaji(breweryOnly.sake),
+            },
+            breweryRomaji: bestRomaji(breweryOnly.brewery),
           }
         }
         if (breweryOnly.kind === 'ambiguous') {
@@ -297,6 +324,14 @@ export async function scanAction(
           locale: localeRaw,
           href: { pathname: '/sake/[brandId]', params: { brandId: String(lookup.sake.brandId) } },
         })
+        // Fetch the brewery for its romaji — the first-pass SQL
+        // joins through brewery for the WHERE but doesn't select
+        // brewery columns. Cheap extra round-trip on the happy path
+        // is the simplest path to a non-null `breweryRomaji` on the
+        // confirm card. `lookupBreweryByBrand` may return null if a
+        // race deleted the brewery between the two queries — UI
+        // tolerates a null romaji.
+        const brewery = await lookupBreweryByBrand(lookup.sake.brandId)
         debugAdd('ScanAction', 'returning matched', {
           brandId: lookup.sake.brandId,
           sakeHref,
@@ -306,6 +341,8 @@ export async function scanAction(
           extraction,
           brandId: lookup.sake.brandId,
           sakeHref,
+          sakeRomaji: bestRomaji(lookup.sake),
+          breweryRomaji: brewery ? bestRomaji(brewery) : null,
         }
       }
       if (lookup.kind === 'matched_brand_only') {
@@ -324,7 +361,11 @@ export async function scanAction(
           extraction,
           brandId: lookup.sake.brandId,
           sakeHref,
-          breweryDivergence: lookup.breweryDivergence,
+          breweryDivergence: {
+            ...lookup.breweryDivergence,
+            storedRomaji: bestRomaji(lookup.brewery),
+          },
+          sakeRomaji: bestRomaji(lookup.sake),
         }
       }
       if (lookup.kind === 'matched_brewery_only') {
@@ -343,7 +384,11 @@ export async function scanAction(
           extraction,
           brandId: lookup.sake.brandId,
           sakeHref,
-          brandDivergence: lookup.brandDivergence,
+          brandDivergence: {
+            ...lookup.brandDivergence,
+            storedRomaji: bestRomaji(lookup.sake),
+          },
+          breweryRomaji: bestRomaji(lookup.brewery),
         }
       }
       if (lookup.kind === 'ambiguous') {

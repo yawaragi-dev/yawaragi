@@ -161,15 +161,23 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
       // misread brand kanji — store the brand's CATALOGUE kanji
       // (already on `brandDivergence.stored`) so the history's
       // displayed kanji and the consensus card both show the
-      // correct value, not the hallucination.
+      // correct value, not the hallucination. Same for the romaji:
+      // the brewery-only state's `brandDivergence.storedRomaji` is
+      // the catalogue brand's romaji; the other two carry it on
+      // `sakeRomaji` directly.
       const nameKanji =
         state.status === 'matched_brewery_only'
           ? state.brandDivergence.stored
           : state.extraction.name_ja
+      const nameRomaji =
+        state.status === 'matched_brewery_only'
+          ? state.brandDivergence.storedRomaji
+          : state.sakeRomaji
       appendMatchToHistory({
         brandId: state.brandId,
         sakeHref: state.sakeHref,
         nameKanji,
+        nameRomaji,
         tMs: Date.now(),
       })
     }
@@ -390,12 +398,22 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
             {t('consensusTitle')}
           </p>
           <div className="flex flex-col gap-1">
-            <span
-              className="text-base font-medium"
-              lang="ja"
-              data-testid="scan-result-consensus-kanji"
-            >
-              {consensus.nameKanji}
+            <span className="flex items-baseline gap-2">
+              <span
+                className="text-base font-medium"
+                lang="ja"
+                data-testid="scan-result-consensus-kanji"
+              >
+                {consensus.nameKanji}
+              </span>
+              {consensus.nameRomaji && (
+                <span
+                  className="text-sm text-zinc-600 dark:text-zinc-400"
+                  data-testid="scan-result-consensus-romaji"
+                >
+                  ({consensus.nameRomaji})
+                </span>
+              )}
             </span>
             <span
               className="text-xs text-zinc-500 dark:text-zinc-500"
@@ -522,7 +540,7 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
           />
           <p className="text-sm text-zinc-700 dark:text-zinc-300">{t('confirmTitle')}</p>
           <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <span
                 className="text-base font-medium"
                 lang="ja"
@@ -530,6 +548,14 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
               >
                 {state.extraction.name_ja}
               </span>
+              {state.sakeRomaji && (
+                <span
+                  className="text-sm text-zinc-600 dark:text-zinc-400"
+                  data-testid="scan-result-confirm-sake-romaji"
+                >
+                  ({state.sakeRomaji})
+                </span>
+              )}
               <ProvenanceBadgeView
                 kind="llmExtracted"
                 label={tBadge('label')}
@@ -538,11 +564,15 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
               />
             </div>
             <span
-              className="text-sm text-zinc-600 dark:text-zinc-400"
-              lang="ja"
+              className="text-sm text-zinc-600 dark:text-zinc-400 flex items-baseline gap-2 flex-wrap"
               data-testid="scan-result-confirm-brewery"
             >
-              {state.extraction.brewery_ja}
+              <span lang="ja">{state.extraction.brewery_ja}</span>
+              {state.breweryRomaji && (
+                <span data-testid="scan-result-confirm-brewery-romaji">
+                  ({state.breweryRomaji})
+                </span>
+              )}
             </span>
           </div>
           <div className="flex gap-2">
@@ -580,7 +610,7 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
             poweredBy={tAttribution('poweredBy')}
             linkLabel={tAttribution('linkLabel')}
           />
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span
               className="text-base font-medium"
               lang="ja"
@@ -588,6 +618,14 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
             >
               {state.extraction.name_ja}
             </span>
+            {state.sakeRomaji && (
+              <span
+                className="text-sm text-zinc-600 dark:text-zinc-400"
+                data-testid="scan-result-matched-brand-only-sake-romaji"
+              >
+                ({state.sakeRomaji})
+              </span>
+            )}
             <ProvenanceBadgeView
               kind="llmExtracted"
               label={tBadge('label')}
@@ -608,6 +646,14 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
                 stored: state.breweryDivergence.stored,
               })}
             </span>
+            {state.breweryDivergence.storedRomaji && (
+              <>
+                {' '}
+                <span data-testid="scan-result-brewery-divergence-romaji">
+                  ({state.breweryDivergence.storedRomaji})
+                </span>
+              </>
+            )}
           </p>
           <a
             href={state.sakeHref}
@@ -637,7 +683,7 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
             poweredBy={tAttribution('poweredBy')}
             linkLabel={tAttribution('linkLabel')}
           />
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span
               className="text-base font-medium"
               lang="ja"
@@ -645,6 +691,14 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
             >
               {state.brandDivergence.stored}
             </span>
+            {state.brandDivergence.storedRomaji && (
+              <span
+                className="text-sm text-zinc-600 dark:text-zinc-400"
+                data-testid="scan-result-matched-brewery-only-sake-romaji"
+              >
+                ({state.brandDivergence.storedRomaji})
+              </span>
+            )}
             <ProvenanceBadgeView
               kind="llmExtracted"
               label={tBadge('label')}
@@ -652,6 +706,15 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
               confidence={state.extraction.confidence}
             />
           </div>
+          {state.breweryRomaji && (
+            <span
+              className="text-sm text-zinc-600 dark:text-zinc-400 flex items-baseline gap-2 flex-wrap"
+              data-testid="scan-result-matched-brewery-only-brewery"
+            >
+              <span lang="ja">{state.extraction.brewery_ja}</span>
+              <span>({state.breweryRomaji})</span>
+            </span>
+          )}
           <p className="text-sm text-zinc-700 dark:text-zinc-300">
             {t('matchedBreweryOnly')}
           </p>
@@ -665,6 +728,14 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
                 stored: state.brandDivergence.stored,
               })}
             </span>
+            {state.brandDivergence.storedRomaji && (
+              <>
+                {' '}
+                <span data-testid="scan-result-brand-divergence-romaji">
+                  ({state.brandDivergence.storedRomaji})
+                </span>
+              </>
+            )}
           </p>
           <a
             href={state.sakeHref}

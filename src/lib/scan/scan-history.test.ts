@@ -11,6 +11,7 @@ function entry(brandId: number, suffix = ''): ScanHistoryEntry {
     brandId,
     sakeHref: `/en/sake/${brandId}${suffix}`,
     nameKanji: `テスト${brandId}`,
+    nameRomaji: `Test${brandId}`,
     tMs: Date.now(),
   }
 }
@@ -94,15 +95,32 @@ describe('scan-history', () => {
       expect(consensus?.total).toBe(10)
     })
 
-    it('uses the latest entry for the winning brand to source nameKanji + sakeHref', () => {
-      appendMatchToHistory({ ...entry(1009), nameKanji: '蔵玉', sakeHref: '/en/sake/1009' })
+    it('uses the latest entry for the winning brand to source nameKanji + nameRomaji + sakeHref', () => {
+      appendMatchToHistory({ ...entry(1009), nameKanji: '蔵玉', nameRomaji: 'Zougyoku', sakeHref: '/en/sake/1009' })
       appendMatchToHistory(entry(2000))
-      appendMatchToHistory({ ...entry(1009), nameKanji: '蔵王', sakeHref: '/en/sake/1009?refreshed=1' })
+      appendMatchToHistory({ ...entry(1009), nameKanji: '蔵王', nameRomaji: 'Zao', sakeHref: '/en/sake/1009?refreshed=1' })
       const consensus = getConsensusFromHistory()
       // The latest 1009 entry had nameKanji '蔵王' and the refreshed
-      // href — those win, not the older '蔵玉' / vanilla href.
+      // href — those win, not the older '蔵玉' / vanilla href. The
+      // romaji refresh follows the same rule.
       expect(consensus?.nameKanji).toBe('蔵王')
+      expect(consensus?.nameRomaji).toBe('Zao')
       expect(consensus?.sakeHref).toBe('/en/sake/1009?refreshed=1')
+    })
+
+    it('back-fills nameRomaji to null when reading older history entries that lack the field', () => {
+      // Simulate an entry written before nameRomaji existed — the
+      // sessionStorage payload won't have the field. The validator
+      // should accept it (defensive back-fill) so existing visitors
+      // don't lose their history on the version bump.
+      const legacyEntries = [
+        { brandId: 1009, sakeHref: '/en/sake/1009', nameKanji: '獺祭', tMs: 1 },
+        { brandId: 1009, sakeHref: '/en/sake/1009', nameKanji: '獺祭', tMs: 2 },
+      ]
+      window.sessionStorage.setItem('yawaragi_scan_history', JSON.stringify(legacyEntries))
+      const consensus = getConsensusFromHistory()
+      expect(consensus?.brandId).toBe(1009)
+      expect(consensus?.nameRomaji).toBeNull()
     })
   })
 

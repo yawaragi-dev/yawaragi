@@ -31,6 +31,13 @@ export interface ScanHistoryEntry {
   sakeHref: string
   /** Brand kanji at match time (display only). */
   nameKanji: string
+  /**
+   * Romaji / English transliteration of the brand at match time. May
+   * be `null` for older entries written before this field existed
+   * (the schema check filters those defensively) or when the
+   * Sakenowa row has no `nameRomaji` / `name`. Display only.
+   */
+  nameRomaji: string | null
   /** Wall-clock ms when the match was appended. */
   tMs: number
 }
@@ -39,6 +46,8 @@ export interface ConsensusMatch {
   brandId: number
   sakeHref: string
   nameKanji: string
+  /** Display-only; null when the latest winning entry has no romaji. */
+  nameRomaji: string | null
   /** How many entries in `entries` resolved to this `brandId`. */
   votes: number
   /** Total entries considered. `votes > total / 2` is the consensus condition. */
@@ -84,6 +93,7 @@ export function getConsensusFromHistory(): ConsensusMatch | null {
     brandId: winnerId,
     sakeHref: latestForWinner.sakeHref,
     nameKanji: latestForWinner.nameKanji,
+    nameRomaji: latestForWinner.nameRomaji ?? null,
     votes: winnerVotes,
     total: entries.length,
   }
@@ -153,10 +163,21 @@ function readHistory(): ScanHistoryEntry[] {
 function isScanHistoryEntry(value: unknown): value is ScanHistoryEntry {
   if (value === null || typeof value !== 'object') return false
   const v = value as Record<string, unknown>
-  return (
-    typeof v.brandId === 'number' &&
-    typeof v.sakeHref === 'string' &&
-    typeof v.nameKanji === 'string' &&
-    typeof v.tMs === 'number'
-  )
+  // `nameRomaji` is an optional string-or-null and is forgivingly
+  // back-filled to null below for entries written before this field
+  // existed — its absence shouldn't disqualify an older entry.
+  if (
+    typeof v.brandId !== 'number' ||
+    typeof v.sakeHref !== 'string' ||
+    typeof v.nameKanji !== 'string' ||
+    typeof v.tMs !== 'number'
+  ) {
+    return false
+  }
+  if (!('nameRomaji' in v)) {
+    v.nameRomaji = null
+  } else if (typeof v.nameRomaji !== 'string' && v.nameRomaji !== null) {
+    return false
+  }
+  return true
 }

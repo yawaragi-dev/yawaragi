@@ -15,6 +15,18 @@ type ScanActionStateBase =
       extraction: LabelScanExtraction
       brandId: number
       sakeHref: string
+      /**
+       * Romaji / English transliteration of the matched brand and
+       * brewery, surfaced alongside the kanji on the confirm-tier
+       * card so non-Japanese-readers can still tell what they're
+       * about to open. `null` when neither `Brand.nameRomaji` nor
+       * Sakenowa's `Brand.name` is set (extremely rare — `name` is
+       * required in the Brand schema). The action computes the
+       * `nameRomaji ?? name` fallback once so the UI doesn't have
+       * to.
+       */
+      sakeRomaji: string | null
+      breweryRomaji: string | null
     }
   /**
    * Phase 3 / #123: the `(brand AND brewery)` exact-match join
@@ -34,7 +46,19 @@ type ScanActionStateBase =
       extraction: LabelScanExtraction
       brandId: number
       sakeHref: string
-      breweryDivergence: { extracted: string; stored: string }
+      /**
+       * `storedRomaji` is the catalogue brewery's romaji shown
+       * alongside the kanji in the divergence row. `null` if the
+       * Sakenowa brewery has neither a `nameRomaji` nor a `name`
+       * (rare). No romaji for `extracted` — it's the model's
+       * Japanese-only output.
+       */
+      breweryDivergence: { extracted: string; stored: string; storedRomaji: string | null }
+      /**
+       * Romaji of the matched brand (the trusted side). Used next to
+       * the kanji on the divergence card.
+       */
+      sakeRomaji: string | null
     }
   /**
    * Structural dual of `matched_brand_only`: the first-pass and the
@@ -51,7 +75,16 @@ type ScanActionStateBase =
       extraction: LabelScanExtraction
       brandId: number
       sakeHref: string
-      brandDivergence: { extracted: string; stored: string }
+      /**
+       * `storedRomaji` is the catalogue brand's romaji. Same
+       * structure as `matched_brand_only.breweryDivergence` but for
+       * the brand field.
+       */
+      brandDivergence: { extracted: string; stored: string; storedRomaji: string | null }
+      /**
+       * Romaji of the matched brewery (the trusted side here).
+       */
+      breweryRomaji: string | null
     }
   | {
       status: 'no_match'
