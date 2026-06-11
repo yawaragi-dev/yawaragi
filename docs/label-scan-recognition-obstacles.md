@@ -211,6 +211,32 @@ The brewery `高清水酒造` is the correct, well-formed Takashimizu Shuzō. Th
 
 ---
 
+## 16. Single-shot variance (and multi-shot consensus)
+
+**What it is.** The vision model's output is not deterministic across multiple scans of the same image. Confidence stays roughly constant (0.72–0.85 on well-lit mobile photos) but the extracted brand kanji *changes between attempts*. This is distinct from §7 (the model is miscalibrated) — calibration is about the relationship between confidence and correctness; variance is about the relationship between attempts.
+
+When the model's per-attempt accuracy on a given bottle is, say, 60%, individual scans are unreliable but **the visitor scans the same bottle multiple times during a session**. A consensus mechanism over recent successful scans converts noisy individual reads into a reliable signal — the failure modes are uncorrelated across attempts, the correct answer accumulates votes, hallucinations spread thinly.
+
+**Example.** 2026-06-11 Takashimizu trace, five attempts on the same `23940.jpg`:
+
+```
+Attempt 1: name_ja: 紀   brewery_ja: 高清水酒造  conf: 0.75
+Attempt 2: name_ja: 斗   brewery_ja: 高清水     conf: 0.75
+Attempt 3: name_ja: 幻   brewery_ja: 高清水     conf: 0.75
+Attempt 4: name_ja: 寺田  brewery_ja: 高清水酒造  conf: 0.72
+Attempt 5: name_ja: 昇   brewery_ja: 高清水     conf: 0.75
+```
+
+Five different brand kanji, five times the same brewery, confidence pinned in a narrow band. Per-attempt the brand is a hallucination; across attempts the brewery converges. The defensive guards from §6 / §14 catch individual shots; the consensus from this entry catches the *next* attempt by leaning on what previous successful scans agreed on.
+
+**Status.** Implemented in PR #128. `src/lib/scan/scan-history.ts` writes every successful match (`matched`, `matched_brand_only`, `matched_brewery_only`) into a per-tab `sessionStorage` array, capped at 10 entries. `getConsensusFromHistory()` returns the brand if more than half of the recent entries resolved to the same `brandId` — a strict-majority rule, never a plurality. `useScanHistoryConsensus()` is a `useSyncExternalStore` hook the form subscribes to. When the visitor's latest scan lands in `low_confidence` AND a consensus exists, the UI surfaces a card: *"Based on your recent scans, this looks like X · 3 of your last 5 scans agreed"* with explicit Yes / Rescan. Stored kanji prefers the *catalogue* value over the latest extraction for matched_brewery_only (the model's extracted brand was junk), so the consensus card displays the canonical brand kanji.
+
+**Privacy.** sessionStorage is per-tab, ephemeral (cleared when the tab closes), and never crosses an origin. No new GDPR processing operation — pure UI state about brand IDs the visitor already saw within this tab. Lawful basis Art. 6(1)(f) legitimate interest in UX continuity within a single tab session. No consent banner involvement.
+
+**Tracking.** Shipped in PR #128. The eval harness ([#110](https://github.com/yawaragi-dev/yawaragi/issues/110)) is what will tell us whether the strict-majority threshold is right — a future tuning could use a weighted vote (auto > confirm > matched_brand_only > matched_brewery_only) or a confidence-weighted vote, but those depend on having ground truth.
+
+---
+
 ## Capture-layer obstacles
 
 Upstream of recognition but shape its failure modes.
