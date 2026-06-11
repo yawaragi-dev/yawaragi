@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { DebugEvent, DebugEventSource } from '@/lib/debug/debug-log'
 
 /**
@@ -35,6 +35,10 @@ export interface DebugPanelProps {
   closeLabel: string
   /** Clear-button accessible label. */
   clearLabel: string
+  /** Copy-button accessible label. */
+  copyLabel: string
+  /** Copy-button feedback label shown briefly after a successful copy. */
+  copiedLabel: string
   /** Handler for the Clear button — wipes the persisted event store. */
   onClear: () => void
 }
@@ -54,6 +58,27 @@ const LEVEL_PREFIX = {
 } as const
 
 /**
+ * Serialises the events as plain text in the shape the operator
+ * tends to paste back into chat with us — one event per block,
+ * timestamp / source / message / optional JSON each on their own
+ * line. Matches the layout the panel itself renders so a "copy and
+ * paste the trace" workflow stays one tap, not a manual rewrite.
+ */
+function formatEventsAsPlainText(events: ReadonlyArray<DebugEvent>): string {
+  return events
+    .map((event) => {
+      const lines = [
+        `+${(event.tMs / 1000).toFixed(2)}s`,
+        event.source,
+        `${LEVEL_PREFIX[event.level]}${event.message}`,
+      ]
+      if (event.data) lines.push(JSON.stringify(event.data))
+      return lines.join('\n')
+    })
+    .join('\n')
+}
+
+/**
  * Tailwind's `md` breakpoint = 768px. We treat anything below that as
  * mobile (the bottom-strip layout that needs body-padding compensation
  * so it doesn't overlay content). Anything at-or-above = desktop (the
@@ -68,10 +93,30 @@ export function DebugPanel({
   emptyHint,
   closeLabel,
   clearLabel,
+  copyLabel,
+  copiedLabel,
   onClear,
 }: DebugPanelProps) {
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const panelRef = useRef<HTMLElement | null>(null)
+  // Briefly swaps the button copy from "Copy" → "Copied" after a
+  // successful clipboard write so the operator gets feedback even on
+  // mobile (no hover-state confirmation available).
+  const [justCopied, setJustCopied] = useState(false)
+
+  async function onCopy() {
+    if (events.length === 0) return
+    try {
+      await navigator.clipboard.writeText(formatEventsAsPlainText(events))
+      setJustCopied(true)
+      setTimeout(() => setJustCopied(false), 1500)
+    } catch {
+      // Clipboard API can refuse in insecure contexts, in iframes
+      // without permission, or when the visitor denies the
+      // permission prompt. Silent no-op — the button stays "Copy"
+      // and the operator picks the event text manually.
+    }
+  }
 
   useEffect(() => {
     // Stick to the latest event when the list grows.
@@ -143,6 +188,16 @@ export function DebugPanel({
       <header className="flex items-center justify-between border-b border-zinc-200 px-3 py-2 text-xs font-semibold dark:border-zinc-800">
         <span>{title}</span>
         <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={onCopy}
+            disabled={events.length === 0}
+            aria-label={copyLabel}
+            className="inline-flex h-6 items-center justify-center rounded px-2 text-zinc-500 hover:bg-zinc-200 hover:text-zinc-900 disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+            data-testid="debug-panel-copy"
+          >
+            {justCopied ? copiedLabel : copyLabel}
+          </button>
           <button
             type="button"
             onClick={onClear}

@@ -44,6 +44,8 @@ export function DebugPanelMount({ debugMode }: { debugMode: boolean }) {
       emptyHint={t('emptyHint')}
       closeLabel={t('closeLabel')}
       clearLabel={t('clearLabel')}
+      copyLabel={t('copyLabel')}
+      copiedLabel={t('copiedLabel')}
       onClear={clearDebugEvents}
     />
   )
