@@ -253,11 +253,17 @@ name_ja: 斗   brewery_ja: 高清水      ← same; name_ja is hallucinated sing
 
 The §14 single-char guard fires on `name_ja` (correct — it's junk). The §15 brewery-only rescue tries `高清水` as a brewery — but Sakenowa has `高清水` as a *brand*, not a brewery, so 0 rows. Without a field-swap fallback the visitor sees the retry CTA on a bottle that's actually fully identifiable.
 
-**Status.** Implemented in PR #128 across two iterations:
+**Status.** Implemented in PR #128 across three iterations:
 
 1. **Initial rescue path.** After the §14 single-char guard's brewery-only rescue misses, the action calls `findSakeByBrandOnly` with `nameJa = extraction.brewery_ja` — treating the brewery field AS the brand. If exactly one brand matches, returns `matched_brand_only` carrying the canonical brand kanji on a new `sakeKanji` field plus a brewery divergence `{ extracted: <what label labelled "brewery">, stored: <real brewery from Sakenowa> }`. The UI's matched_brand_only branch reads `state.sakeKanji` for the prominent kanji display instead of `state.extraction.name_ja`.
 
 2. **Suffix-stripping refinement.** First live test on the Takashimizu bottle still missed because the model returned `brewery_ja: '高清水酒造'` (brand + operational suffix), and `findSakeByBrandOnly` queried verbatim — Sakenowa stores the brand as `高清水` (no suffix). `expandPossibleBrandVariants` was added in `brewery-variants.ts` as the dual of `expandBreweryVariants`: when the input ends with an operational suffix (`酒造`, `醸造`, `酒造店`, `酒造場`), it adds the stem as a lookup candidate. Field-swap now finds `高清水` even when the model adds the suffix.
+
+3. **Generalised to the full-extraction path.** Until 2026-06-12 the field-swap rescue only fired inside the single-char guard (`name_ja.length === 1`). Two new traces motivated the generalisation:
+   - **22175.jpg** `(name_ja: '崇麗', brewery_ja: '杉玉酒造')` — brand `崇麗` is 2 chars (passes single-char guard), but is actually junk. The real brand is `杉玉` (Sakenowa Brand 14, by `桃川` Brewery 12); the model put it in `brewery_ja` with the `酒造` suffix attached.
+   - **22176.jpg** `(name_ja: '山田錦', brewery_ja: '白鹿')` — brand field has a *rice variety* (§5 in inverted direction), brewery field has the real brand `白鹿` (Sakenowa has it from two different breweries).
+
+   `findSakeByExtractionFromPool` now runs a **4th pass** after the first three miss: `findSakeByBrandOnly({ nameJa: query.breweryJa, … })`. If exactly one row → `matched_brand_only` with field-swap divergence. If 2+ → `ambiguous` (Hakushika case lands here — multiple breweries share the brand). Echoes the original query back so the divergence card shows the visitor's actual brewery_ja, not the swapped value. Same logic as the single-char rescue, but available to any extraction shape.
 
 **Verified Sakenowa data.** A 2026-06-12 freshness check confirmed `高清水` (Brand 81, breweryId 56) and `秋田酒類製造` (Brewery 56) are both in our mirror. This obstacle is fully code-rescued in the common case. The earlier hypothesis that Takashimizu was absent from Sakenowa was wrong — the gap was the missing suffix-strip in the brand-only path.
 

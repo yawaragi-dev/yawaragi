@@ -499,6 +499,73 @@ describe('findSakeByExtractionFromPool', () => {
     if (result.kind !== 'ambiguous') throw new Error('unreachable; for narrowing only')
     expect(result.candidates.map((c) => c.brandId).sort()).toEqual([9001, 9002])
   })
+
+  it('returns {kind: "matched_brand_only"} via 4th-pass field-swap (2026-06-12 Sugitama shape)', async () => {
+    // First three passes all miss; the brewery_ja field actually
+    // holds the brand name with `酒造` appended. 4th pass calls
+    // brand-only on `extraction.brewery_ja` (杉玉酒造) — suffix
+    // expansion adds `杉玉` as a candidate — matches the seeded
+    // brand. Result echoes back the original query so the
+    // divergence shows the visitor's original brewery_ja.
+    await seedBrewery({
+      breweryId: 9501,
+      name: 'Momokawa',
+      nameKanji: '桃川',
+      areaId: 2,
+    })
+    await pool.query(
+      `INSERT INTO brands
+         (brand_id, name, name_kanji, brewery_id, source, confidence, content_hash)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [9001, 'Sugitama', '杉玉', 9501, 'sakenowa', null, 'hash-sugitama-fieldswap-9001'],
+    )
+
+    const result = await findSakeByExtractionFromPool(
+      // Real model output for the 2026-06-12 22175.jpg trace:
+      // brand `崇麗` (junk) + brewery `杉玉酒造` (brand+酒造).
+      { nameJa: '崇麗', breweryJa: '杉玉酒造' },
+      pool,
+    )
+
+    expect(result.kind).toBe('matched_brand_only')
+    if (result.kind !== 'matched_brand_only') throw new Error('unreachable; for narrowing only')
+    expect(result.sake).toMatchObject({ brandId: 9001, nameKanji: '杉玉' })
+    expect(result.brewery).toMatchObject({ breweryId: 9501, nameKanji: '桃川' })
+    expect(result.breweryDivergence).toEqual({
+      extracted: '杉玉酒造',
+      stored: '桃川',
+    })
+    // Echo back the ORIGINAL query, not the field-swapped one.
+    expect(result.query).toEqual({ nameJa: '崇麗', breweryJa: '杉玉酒造' })
+  })
+
+  it('returns {kind: "ambiguous"} via 4th-pass when the field-swap brand has multiple breweries (Hakushika shape)', async () => {
+    // Real 2026-06-12 trace on `22176.jpg`: model returned
+    // `name_ja: '山田錦'` (rice variety!) and `brewery_ja: '白鹿'`
+    // (the actual brand). Sakenowa has two breweries that produce
+    // 白鹿. 4th pass → ambiguous, which is what we want.
+    await seedBrewery({ breweryId: 9501, name: 'Ishioka', nameKanji: '石岡酒造', areaId: 8 })
+    await seedBrewery({ breweryId: 9502, name: 'Tatsuuma', nameKanji: '辰馬本家酒造', areaId: 28 })
+    await pool.query(
+      `INSERT INTO brands
+         (brand_id, name, name_kanji, brewery_id, source, confidence, content_hash)
+       VALUES ($1, $2, $3, $4, $5, $6, $7), ($8, $9, $10, $11, $12, $13, $14)`,
+      [
+        9001, 'Hakushika', '白鹿', 9501, 'sakenowa', null, 'hash-hakushika-multi-9001',
+        9002, 'Hakushika', '白鹿', 9502, 'sakenowa', null, 'hash-hakushika-multi-9002',
+      ],
+    )
+
+    const result = await findSakeByExtractionFromPool(
+      { nameJa: '山田錦', breweryJa: '白鹿' },
+      pool,
+    )
+
+    expect(result.kind).toBe('ambiguous')
+    if (result.kind !== 'ambiguous') throw new Error('unreachable; for narrowing only')
+    expect(result.candidates.map((c) => c.brandId).sort()).toEqual([9001, 9002])
+    expect(result.query).toEqual({ nameJa: '山田錦', breweryJa: '白鹿' })
+  })
 })
 
 describe('findSakeByBreweryOnlyFromPool', () => {

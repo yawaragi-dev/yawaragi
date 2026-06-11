@@ -396,7 +396,40 @@ export async function findSakeByExtractionFromPool(
   // third pass — also reachable on its own from scan-action.ts when
   // the single-character-hallucination guard fires (brand suspect,
   // brewery still worth a shot).
-  return findSakeByBreweryOnlyFromPool(query, pool)
+  const breweryOnly = await findSakeByBreweryOnlyFromPool(query, pool)
+  if (breweryOnly.kind !== 'no_match') return breweryOnly
+
+  // Fourth pass: field-swap rescue at the general-lookup level.
+  // 2026-06-12 trace on a `杉玉` (Sugitama) bottle: model returned
+  // `name_ja: '崇麗'` (junk) and `brewery_ja: '杉玉酒造'` — the brand
+  // with `酒造` appended. The first three passes all miss because
+  // `杉玉酒造` isn't a brewery (`杉玉` is a brand). Treating the
+  // brewery_ja value AS the brand name lets `findSakeByBrandOnly`
+  // find brand 14 via `expandPossibleBrandVariants` (which strips
+  // the operational suffix, so `杉玉酒造` → also tries `杉玉`).
+  //
+  // The single-char rescue path in scan-action.ts already does this
+  // for the brand-is-junk case (`name_ja.length === 1`); this 4th
+  // pass extends the same logic to extractions where the brand
+  // looks plausible but is also wrong (rice variety, season label,
+  // hallucination of 2+ chars).
+  //
+  // Result query is re-echoed to the original so callers see the
+  // visitor's actual brewery_ja in the divergence, not the swapped
+  // value (which happens to be identical here but the rewrite is
+  // explicit for clarity).
+  debugAdd(
+    'Sakenowa',
+    `brewery-only missed; trying field-swap (brand-only on brewery_ja "${query.breweryJa}")`,
+  )
+  const fieldSwap = await findSakeByBrandOnlyFromPool(
+    { nameJa: query.breweryJa, breweryJa: query.breweryJa },
+    pool,
+  )
+  if (fieldSwap.kind === 'matched_brand_only' || fieldSwap.kind === 'ambiguous') {
+    return { ...fieldSwap, query }
+  }
+  return { kind: 'no_match', query }
 }
 
 /**
