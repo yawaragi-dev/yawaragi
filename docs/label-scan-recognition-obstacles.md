@@ -166,9 +166,13 @@ Real sake brand names are essentially never a single character. The shortest bra
 
 **Example.** 2026-06-11 live test on `jin_junmai_manzairaku.jpg` — bottle is **萬歳楽 (Manzairaku)** by 小堀酒造店. Model returned `name_ja: '梗', brewery_ja: '高賢樂', confidence: 0.72` — `tier 'confirm'`. The brand-only fallback correctly returned 0 (no Sakenowa brand is `梗`). Pre-fix: visitor sees "not in our catalogue" which falsely suggests the bottle isn't in the DB. Post-fix: visitor sees the retry CTA ("couldn't read clearly — try again") and the debug overlay carries a specific event explaining the route.
 
-**Status.** Implemented. `src/lib/scan/scan-action.ts` runs `looksLikeSingleCharHallucination(name_ja)` after the Latin-only guard (§6) and before the Sakenowa lookup. Uses `Array.from(name_ja).length === 1` (code-point count, so a surrogate-pair kanji counts as 1, not 2). Routes to `low_confidence` with a warn-level debug event identifying the single character and the model's confidence.
+**Status.** Implemented in two layers (PR #128):
 
-**Tracking.** Shipped in PR #128 (S4 PR A). Not its own issue — the single-character heuristic is a follow-up defensive guard on the same calibration / hallucination surface as §6 and §8.
+1. **Detection.** `src/lib/scan/scan-action.ts` runs `looksLikeSingleCharHallucination(name_ja)` after the Latin-only guard (§6) and before the Sakenowa lookup. Uses `Array.from(name_ja).length === 1` (code-point count, so a surrogate-pair kanji counts as 1, not 2). Fires a warn-level debug event identifying the single character and the model's confidence.
+
+2. **Rescue.** When the guard fires, the action **does not immediately return `low_confidence`** — it first calls `findSakeByBreweryOnly` (the standalone third-pass seam factored out from `findSakeByExtractionFromPool`) against the extracted brewery. Motivation: across 5 attempts on the same Takashimizu image (2026-06-11 testing), the model returned 5 different single-char brand kanji (`紀, 斗, 幻, 寺田, 昇`) AT 0.72-0.75 confidence each — but the brewery `高清水酒造` was correct every time. The brand is junk, the brewery is signal. Outcomes match the standalone seam: 1 row → `matched_brewery_only` with `brandDivergence: { extracted: <the 1-char garbage>, stored: <the catalogue brand kanji> }`; 2+ rows → `ambiguous`; 0 rows → fall through to `low_confidence` as before. The visitor sees the honest "we matched the brewery but the brand on your label didn't match our catalogue" card instead of the retry CTA.
+
+**Tracking.** Shipped in PR #128. Not its own issue — the single-character heuristic + brewery-rescue path is a defensive guard on the same calibration / hallucination surface as §6, §8, and §15.
 
 ---
 

@@ -421,17 +421,38 @@ export async function findSakeByExtractionFromPool(
     }
   }
 
-  // Brand-only fallback returned 0. Try brewery-only — the structural
-  // dual of #123. Real-world failure shape: Takashimizu bottle, model
-  // returns brewery 高清水酒造 correctly but brand `寺田` (a
-  // hallucinated surname). Brand-only misses; brewery-only finds the
-  // single Takashimizu brand line and we surface the divergence on
-  // the brand field this time. Mono-brand breweries land here
-  // cleanly; multi-brand breweries return 2+ rows and route to
-  // ambiguous.
+  // Brand-only fallback returned 0. Delegate to the brewery-only
+  // third pass — also reachable on its own from scan-action.ts when
+  // the single-character-hallucination guard fires (brand suspect,
+  // brewery still worth a shot).
+  return findSakeByBreweryOnlyFromPool(query, pool)
+}
+
+/**
+ * Brewery-only fallback as a standalone seam. Used as the third pass
+ * of `findSakeByExtractionFromPool` AND as a direct call from
+ * scan-action.ts when the single-character-hallucination guard fires
+ * — the brand is likely junk, but if the brewery is real and
+ * mono-brand, we can still resolve to the right sake.
+ *
+ * Returns a strict subset of `FindSakeByExtractionResult` — the
+ * exact / matched_brand_only arms aren't reachable through this
+ * function. Callers union-narrow with that in mind.
+ */
+export type BreweryOnlyLookupResult = Extract<
+  FindSakeByExtractionResult,
+  { kind: 'matched_brewery_only' } | { kind: 'ambiguous' } | { kind: 'no_match' }
+>
+
+export async function findSakeByBreweryOnlyFromPool(
+  query: SakeLookupQuery,
+  pool: Pool,
+): Promise<BreweryOnlyLookupResult> {
+  const breweryVariants = generateKanjiVariants(query.breweryJa)
   debugAdd(
     'Sakenowa',
-    `brand-only fallback returned 0 rows; trying brewery-only fallback on brewery.name_kanji ∈ {${breweryVariants.join('|')}}`,
+    `brewery-only lookup on brewery.name_kanji ∈ {${breweryVariants.join('|')}}`,
+    { breweryJa: query.breweryJa, breweryVariants },
   )
   const { rows: breweryOnlyRows } = await publicQuery<BrandWithBreweryRow>(
     'brands',
@@ -439,7 +460,7 @@ export async function findSakeByExtractionFromPool(
     [breweryVariants],
     pool,
   )
-  debugAdd('Sakenowa', `brewery-only fallback returned ${breweryOnlyRows.length} row(s)`)
+  debugAdd('Sakenowa', `brewery-only lookup returned ${breweryOnlyRows.length} row(s)`)
 
   if (breweryOnlyRows.length === 0) {
     return { kind: 'no_match', query }
@@ -464,6 +485,12 @@ export async function findSakeByExtractionFromPool(
     candidates: breweryOnlyRows.map(brandFromJoinedRow),
     query,
   }
+}
+
+export async function findSakeByBreweryOnly(
+  query: SakeLookupQuery,
+): Promise<BreweryOnlyLookupResult> {
+  return findSakeByBreweryOnlyFromPool(query, getServerDbPool())
 }
 
 export async function findSakeByExtraction(

@@ -16,7 +16,7 @@ import { anonymousRateLimit } from '@/lib/rate-limit/anonymous-rate-limit'
 import { assertRateLimitConfig } from '@/lib/rate-limit/config-gate'
 import { extractIp, hashIp } from '@/lib/rate-limit/ip-hash'
 import { UpstashKVClient } from '@/lib/rate-limit/upstash-kv-client'
-import { findSakeByExtraction } from '@/lib/sakenowa/lookup'
+import { findSakeByBreweryOnly, findSakeByExtraction } from '@/lib/sakenowa/lookup'
 import { resolveConfidenceTier } from './confidence-tier'
 import type { ScanActionState } from './scan-action-state'
 
@@ -224,13 +224,22 @@ export async function scanAction(
       // Single-character brand hallucination guard. See the
       // `looksLikeSingleCharHallucination` doc comment for context —
       // a 1-character name_ja is a near-certain "high-confidence
-      // coherent garbage" signal. Route to low_confidence so the
-      // visitor sees "couldn't read clearly, try again" rather than
-      // a misleading "not in our catalogue".
+      // coherent garbage" signal.
+      //
+      // Before retreating to `low_confidence`, try the brewery-only
+      // fallback. Real-world motivation (2026-06-11 testing on a
+      // Takashimizu bottle): across 5 attempts on the same image the
+      // model returned 5 different 1-char brands (`紀, 斗, 幻, 寺田, 昇`)
+      // but the brewery `高清水酒造` every time. The single-char
+      // guard correctly identifies the brand as junk; routing to
+      // low_confidence ignores a perfectly good brewery signal. If
+      // the brewery resolves to a mono-brand brewery, we still get a
+      // `matched_brewery_only` with the brand-divergence card —
+      // exactly the right UX for this shape.
       if (looksLikeSingleCharHallucination(extraction.name_ja)) {
         debugAdd(
           'ScanAction',
-          `extraction name_ja is a single character ("${extraction.name_ja}") — likely high-confidence hallucination, routing to low_confidence`,
+          `extraction name_ja is a single character ("${extraction.name_ja}") — likely high-confidence hallucination, trying brewery-only fallback before low_confidence`,
           {
             name_ja: extraction.name_ja,
             brewery_ja: extraction.brewery_ja,
@@ -238,6 +247,43 @@ export async function scanAction(
           },
           'warn',
         )
+        const breweryOnly = await findSakeByBreweryOnly({
+          nameJa: extraction.name_ja,
+          breweryJa: extraction.brewery_ja,
+        })
+        if (breweryOnly.kind === 'matched_brewery_only') {
+          const sakeHref = getPathname({
+            locale: localeRaw,
+            href: { pathname: '/sake/[brandId]', params: { brandId: String(breweryOnly.sake.brandId) } },
+          })
+          debugAdd('ScanAction', 'single-char guard rescued by brewery-only fallback — matched_brewery_only', {
+            brandId: breweryOnly.sake.brandId,
+            sakeHref,
+            extractedBrand: breweryOnly.brandDivergence.extracted,
+            storedBrand: breweryOnly.brandDivergence.stored,
+          })
+          return {
+            status: 'matched_brewery_only',
+            extraction,
+            brandId: breweryOnly.sake.brandId,
+            sakeHref,
+            brandDivergence: breweryOnly.brandDivergence,
+          }
+        }
+        if (breweryOnly.kind === 'ambiguous') {
+          debugAdd('ScanAction', 'single-char guard + brewery-only fallback → ambiguous', {
+            candidates: breweryOnly.candidates.map((c) => c.brandId),
+          })
+          return {
+            status: 'ambiguous',
+            extraction,
+            brandIds: breweryOnly.candidates.map((c) => c.brandId),
+          }
+        }
+        // Brewery-only also missed — the brewery was probably
+        // hallucinated too, or it's genuinely not in Sakenowa.
+        // Fall through to low_confidence as before.
+        debugAdd('ScanAction', 'single-char guard + brewery-only fallback both missed — routing to low_confidence')
         return { status: 'low_confidence', extraction }
       }
 
