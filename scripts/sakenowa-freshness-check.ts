@@ -62,6 +62,12 @@ const CANARY_BRANDS: ReadonlyArray<string> = [
   '高清水', // Takashimizu — 2026-06-11 motivating gap
   '蔵王', // Zao — variant-kanji fixture (#117)
   '萬歳楽', // Manzairaku — single-char-hallucination fixture (#14)
+  '楯野川', // Tatenokawa — 2026-06-12 sub-brand-mismatch fixture (§18).
+  //           Bottle label says 七垂二十貫 (Nanatare Nijukkan), a SKU
+  //           line within the 楯野川 family; Sakenowa stores only the
+  //           main brand 楯野川. This canary checks the *main* brand
+  //           is present — the sub-brand mismatch is a separate
+  //           catalogue-coverage problem documented in §18.
 ]
 
 const CANARY_BREWERIES: ReadonlyArray<string> = [
@@ -70,6 +76,7 @@ const CANARY_BREWERIES: ReadonlyArray<string> = [
   '朝日酒造',
   '秋田酒類製造', // Takashimizu's brewery
   '小堀酒造店', // Manzairaku's brewery
+  '楯の川酒造', // Tatenokawa's brewery — paired with the §18 fixture
 ]
 
 async function fetchUpstream<T>(path: string): Promise<T> {

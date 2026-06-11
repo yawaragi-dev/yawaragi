@@ -265,6 +265,33 @@ The §14 single-char guard fires on `name_ja` (correct — it's junk). The §15 
 
 ---
 
+## 18. Sub-brand / SKU name on label, main brand in catalogue
+
+**What it is.** Some sake families have multiple named product lines under a single Sakenowa brand. The bottle's prominent kanji is the *line name* (a unique product), but Sakenowa only stores the *main brand* — the line isn't its own catalogue entry. The model reads what's prominent (correct from the model's point of view), the lookup queries that, and nothing matches because the kanji the visitor sees on the bottle isn't a Sakenowa key.
+
+Distinct from §1 (grade descriptors like `純米大吟醸 磨き45`, which we strip via prompt rules). A grade descriptor is a documented stripable token. A *unique line name* like `七垂二十貫` is the brand name from the visitor's point of view — there's no rule that says "strip this" because every brewery's line names are different and we'd be enumerating an unbounded list.
+
+**Example.** 2026-06-12 live test on `22181.jpg`. The bottle is **楯野川** (Tatenokawa) by **楯の川酒造** — a Yamagata brewery (areaId 6) — and the specific product line on the label is **七垂二十貫** (Nanatare Nijukkan), an ultra-premium polishing-rate sake. Sakenowa stores brand `楯野川` (id 120, breweryId 83); it does NOT store `七垂二十貫` as a separate brand.
+
+Model returned `name_ja: '七垂二十', brewery_ja: '沢農家', confidence: 0.75`. Two failures stacked:
+
+1. **Brand**: model read the prominent line name `七垂二十貫` but dropped the final `貫`. Even with the full kanji, the lookup would still miss — `七垂二十貫` isn't in Sakenowa under any spelling.
+2. **Brewery**: `沢農家` ("swamp farmhouse") is a hallucination — the real brewery `楯の川酒造` is small / in a corner of the label. The single-char guard doesn't fire (3 chars), brewery-only fallback misses (no such brewery in Sakenowa).
+
+Net: `no_match`. Pre-fix, post-fix, all-fix — same outcome. The lookup chain has nothing to anchor on.
+
+**Status.** Open. No code-level rescue available. Three potential approaches, ranked by effort:
+
+- **Sub-brand → main-brand mapping table.** Hand-curated rows: `{ '七垂二十貫': '楯野川', '磨き二割三分': '獺祭', … }`. Catches the dominant famous sake lines. Sub-brand of §11's `manual_curation` provenance. High maintenance, narrow coverage, but the cases it catches are exactly the cases the visitor most expects to work.
+- **Embedding similarity (§8 / [#124](https://github.com/yawaragi-dev/yawaragi/issues/124)) won't help here.** `七垂二十貫` has near-zero character-level similarity to `楯野川` — they share no kanji. Embedding similarity catches *one-character* misreads; whole-brand mismatches need a different mechanism.
+- **Eval-harness coverage ([#110](https://github.com/yawaragi-dev/yawaragi/issues/110))** so we measure how often this happens in the wild before investing in a fix. The mapping table is the obvious next step *if* the eval shows famous sub-brand lines are a meaningful chunk of failures.
+
+**Verification tooling.** The `pnpm sakenowa:freshness` canary now includes 楯野川 + 楯の川酒造 so a future regression where the *main brand* drops from the mirror is caught immediately. The sub-brand mismatch itself is structural and won't show up in a freshness check.
+
+**Tracking.** Documented here; not fileable as a single-PR issue. Resolution depends on either (a) the eval harness motivating a sub-brand mapping or (b) Sakenowa publishing line-level data we can mirror.
+
+---
+
 ## Capture-layer obstacles
 
 Upstream of recognition but shape its failure modes.
