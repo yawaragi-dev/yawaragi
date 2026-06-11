@@ -172,6 +172,37 @@ Real sake brand names are essentially never a single character. The shortest bra
 
 ---
 
+## 15. Brand hallucination with correct brewery
+
+**What it is.** The structural dual of §4 (brewery hallucination). The vision model reads the BREWERY kanji correctly but hallucinates a plausible-looking *brand* kanji — typically a real Japanese surname or word the model has high-frequency exposure to. This happens most when the brewery name is the visually-dominant kanji on the label (common for mono-brand breweries where the brand and brewery share a name), and the model invents a separate "brand" because its prior says brand and brewery are distinct fields.
+
+The first-pass `(brand AND brewery)` join misses. The brand-only second-pass (§4 / [#123](https://github.com/yawaragi-dev/yawaragi/issues/123)) also misses — the hallucinated brand kanji isn't in Sakenowa. Both fallbacks built so far assume the brand is right and the brewery is wrong; the inverse failure shape needed its own pass.
+
+**Example.** 2026-06-11 live test on a Takashimizu (高清水) bottle:
+
+```
+Attempt 1 (caught by §14 single-char guard):
+  name_ja:    幻             ← 1-char hallucination
+  brewery_ja: 高清水          ← correct brewery
+  confidence: 0.75 → guard routed to retry
+
+Attempt 2 (motivated this entry):
+  name_ja:    寺田           ← 2 chars; passes the §14 guard; real
+                                surname (Terada — actually a totally
+                                different brewery, 寺田本家)
+  brewery_ja: 高清水酒造      ← correct brewery
+  confidence: 0.72
+  → first-pass miss, brand-only miss, no_match
+```
+
+The brewery `高清水酒造` is the correct, well-formed Takashimizu Shuzō. The brand `寺田` is plausible (looks like a normal sake brand name) but invented. Pre-fix: `no_match`. Post-fix: brewery-only third pass finds the single Takashimizu brand line and surfaces it as `matched_brewery_only` with a brand-divergence card showing `Label: 寺田 · Catalogue: 高清水`.
+
+**Status.** Implemented in PR #128. `findSakeByExtractionFromPool` runs a third pass when first-pass + brand-only both return 0 rows: `WHERE b.name_kanji = ANY($brewery_variants)`. Outcomes mirror the brand-only pass — 1 row → `matched_brewery_only` with `brandDivergence: { extracted, stored }`; 2+ rows → `ambiguous` (so multi-brand breweries like 旭酒造 / 八海醸造 with multiple lines route to disambiguation rather than picking arbitrarily); 0 rows → `no_match`. The UI mirrors `matched_brand_only` — explicit-tap navigation, no auto-push, side-by-side display of `Label: X · Catalogue: Y`. The matched brand also lands in the per-tab consensus history so subsequent retry-mode scans can vote on it.
+
+**Tracking.** Shipped in PR #128. Conceptually a follow-up to [#123](https://github.com/yawaragi-dev/yawaragi/issues/123) — same divergence-surfacing pattern, opposite field.
+
+---
+
 ## Capture-layer obstacles
 
 Upstream of recognition but shape its failure modes.

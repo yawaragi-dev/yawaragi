@@ -152,11 +152,24 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
   // dedupe because every action invocation produces a fresh state
   // object with a fresh `tMs` upstream.
   useEffect(() => {
-    if (state.status === 'matched' || state.status === 'matched_brand_only') {
+    if (
+      state.status === 'matched' ||
+      state.status === 'matched_brand_only' ||
+      state.status === 'matched_brewery_only'
+    ) {
+      // For brewery-only matches the extracted name_ja is the
+      // misread brand kanji — store the brand's CATALOGUE kanji
+      // (already on `brandDivergence.stored`) so the history's
+      // displayed kanji and the consensus card both show the
+      // correct value, not the hallucination.
+      const nameKanji =
+        state.status === 'matched_brewery_only'
+          ? state.brandDivergence.stored
+          : state.extraction.name_ja
       appendMatchToHistory({
         brandId: state.brandId,
         sakeHref: state.sakeHref,
-        nameKanji: state.extraction.name_ja,
+        nameKanji,
         tMs: Date.now(),
       })
     }
@@ -602,6 +615,63 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
             data-testid="scan-result-matched-brand-only-link"
           >
             {t('matchedBrandOnlyOpen')}
+          </a>
+        </div>
+      )}
+      {state.status === 'matched_brewery_only' && (
+        // Structural dual of `matched_brand_only` (#123). The
+        // brand-only fallback also missed, but brewery-only found a
+        // mono-brand brewery: the brewery is identified, the brand
+        // the model extracted does NOT match what Sakenowa stores
+        // for that brewery. NO auto-navigate — explicit-tap required
+        // so the divergence is acknowledged. The CATALOGUE brand
+        // kanji is shown prominently (it's the trusted value) with
+        // the extracted brand surfaced via the divergence line below
+        // alongside the LLM-extracted provenance badge.
+        <div
+          className="flex flex-col gap-3"
+          data-testid="scan-result-matched-brewery-only"
+        >
+          <SakenowaAttributionView
+            placement="inline"
+            poweredBy={tAttribution('poweredBy')}
+            linkLabel={tAttribution('linkLabel')}
+          />
+          <div className="flex items-center gap-2">
+            <span
+              className="text-base font-medium"
+              lang="ja"
+              data-testid="scan-result-name-ja"
+            >
+              {state.brandDivergence.stored}
+            </span>
+            <ProvenanceBadgeView
+              kind="llmExtracted"
+              label={tBadge('label')}
+              tooltip={tBadge('tooltip')}
+              confidence={state.extraction.confidence}
+            />
+          </div>
+          <p className="text-sm text-zinc-700 dark:text-zinc-300">
+            {t('matchedBreweryOnly')}
+          </p>
+          <p
+            className="text-sm text-zinc-600 dark:text-zinc-400"
+            data-testid="scan-result-brand-divergence"
+          >
+            <span lang="ja">
+              {t('matchedBreweryOnlyDivergence', {
+                extracted: state.brandDivergence.extracted,
+                stored: state.brandDivergence.stored,
+              })}
+            </span>
+          </p>
+          <a
+            href={state.sakeHref}
+            className="text-sm font-medium text-blue-700 underline-offset-2 hover:underline dark:text-blue-300"
+            data-testid="scan-result-matched-brewery-only-link"
+          >
+            {t('matchedBreweryOnlyOpen')}
           </a>
         </div>
       )}

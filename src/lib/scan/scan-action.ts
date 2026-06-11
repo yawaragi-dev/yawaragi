@@ -281,6 +281,25 @@ export async function scanAction(
           breweryDivergence: lookup.breweryDivergence,
         }
       }
+      if (lookup.kind === 'matched_brewery_only') {
+        const sakeHref = getPathname({
+          locale: localeRaw,
+          href: { pathname: '/sake/[brandId]', params: { brandId: String(lookup.sake.brandId) } },
+        })
+        debugAdd('ScanAction', 'returning matched_brewery_only — brand divergence surfaced', {
+          brandId: lookup.sake.brandId,
+          sakeHref,
+          extractedBrand: lookup.brandDivergence.extracted,
+          storedBrand: lookup.brandDivergence.stored,
+        })
+        return {
+          status: 'matched_brewery_only',
+          extraction,
+          brandId: lookup.sake.brandId,
+          sakeHref,
+          brandDivergence: lookup.brandDivergence,
+        }
+      }
       if (lookup.kind === 'ambiguous') {
         debugAdd('ScanAction', 'returning ambiguous', {
           candidates: lookup.candidates.map((c) => c.brandId),

@@ -36,6 +36,23 @@ type ScanActionStateBase =
       sakeHref: string
       breweryDivergence: { extracted: string; stored: string }
     }
+  /**
+   * Structural dual of `matched_brand_only`: the first-pass and the
+   * brand-only fallback both missed, but the brewery-only third pass
+   * found exactly one brand under that brewery. Brewery is
+   * unambiguously identified; the brand the model extracted does NOT
+   * match what Sakenowa stores for that brewery. Same divergence-
+   * surfacing UX — explicit-tap navigation, no auto-push. Real-world
+   * motivation: Takashimizu bottles where the model reads the
+   * brewery (高清水酒造) but hallucinates a wrong brand kanji.
+   */
+  | {
+      status: 'matched_brewery_only'
+      extraction: LabelScanExtraction
+      brandId: number
+      sakeHref: string
+      brandDivergence: { extracted: string; stored: string }
+    }
   | {
       status: 'no_match'
       extraction: LabelScanExtraction

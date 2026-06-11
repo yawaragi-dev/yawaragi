@@ -435,4 +435,66 @@ describe('findSakeByExtractionFromPool', () => {
     expect(result.candidates.map((c) => c.brandId).sort()).toEqual([9001, 9002])
     expect(result.query).toEqual({ nameJa: '菊姫', breweryJa: '存在しない酒造' })
   })
+
+  it('returns {kind: "matched_brewery_only"} when first-pass + brand-only both miss but brewery-only finds a mono-brand brewery', async () => {
+    // The motivating real-world case: Takashimizu bottle, model
+    // returned brewery 高清水酒造 correctly but hallucinated brand
+    // 寺田 (a real surname, not Takashimizu's brand line). Brand-only
+    // fallback misses (no Sakenowa brand is 寺田); brewery-only third
+    // pass finds the single Takashimizu brand line and surfaces the
+    // brand divergence.
+    await seedBrewery({
+      breweryId: 9501,
+      name: 'Takashimizu Shuzo',
+      nameKanji: '高清水酒造',
+      areaId: 5,
+    })
+    await pool.query(
+      `INSERT INTO brands
+         (brand_id, name, name_kanji, brewery_id, source, confidence, content_hash)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [9001, 'Takashimizu', '高清水', 9501, 'sakenowa', null, 'hash-takashimizu-9001'],
+    )
+
+    const result = await findSakeByExtractionFromPool(
+      { nameJa: '寺田', breweryJa: '高清水酒造' },
+      pool,
+    )
+
+    expect(result.kind).toBe('matched_brewery_only')
+    if (result.kind !== 'matched_brewery_only') throw new Error('unreachable; for narrowing only')
+    expect(result.sake).toMatchObject({ brandId: 9001, nameKanji: '高清水' })
+    expect(result.brewery).toMatchObject({ breweryId: 9501, nameKanji: '高清水酒造' })
+    expect(result.brandDivergence).toEqual({
+      extracted: '寺田',
+      stored: '高清水',
+    })
+    expect(result.query).toEqual({ nameJa: '寺田', breweryJa: '高清水酒造' })
+  })
+
+  it('returns {kind: "ambiguous"} when brewery-only finds multiple brands under a multi-brand brewery', async () => {
+    // 旭酒造 (Asahi Shuzo) makes more than one Sakenowa brand line.
+    // Model returned a hallucinated brand → brand-only fallback
+    // misses → brewery-only finds 2+ candidates → ambiguous (S4
+    // PR B's disambiguation list takes it from here).
+    await seedBrewery({ breweryId: 9501, name: 'Asahi Shuzo', nameKanji: '旭酒造', areaId: 35 })
+    await pool.query(
+      `INSERT INTO brands
+         (brand_id, name, name_kanji, brewery_id, source, confidence, content_hash)
+       VALUES ($1, $2, $3, $4, $5, $6, $7), ($8, $9, $10, $11, $12, $13, $14)`,
+      [
+        9001, 'Dassai', '獺祭', 9501, 'sakenowa', null, 'hash-dassai-multibrand-9001',
+        9002, 'Sakura', '桜', 9501, 'sakenowa', null, 'hash-sakura-multibrand-9002',
+      ],
+    )
+
+    const result = await findSakeByExtractionFromPool(
+      { nameJa: '架空の銘柄', breweryJa: '旭酒造' },
+      pool,
+    )
+
+    expect(result.kind).toBe('ambiguous')
+    if (result.kind !== 'ambiguous') throw new Error('unreachable; for narrowing only')
+    expect(result.candidates.map((c) => c.brandId).sort()).toEqual([9001, 9002])
+  })
 })

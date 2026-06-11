@@ -193,6 +193,25 @@ export type FindSakeByExtractionResult =
       breweryDivergence: { extracted: string; stored: string }
       query: SakeLookupQuery
     }
+  /**
+   * The structural dual of `matched_brand_only`. First-pass missed,
+   * brand-only fallback also missed, but a third-pass brewery-only
+   * lookup found exactly one brand under that brewery. The brewery
+   * is unambiguously identified (a mono-brand brewery, or a brewery
+   * where Sakenowa has only one brand line), but the brand the model
+   * extracted doesn't match what Sakenowa stores for that brewery.
+   * Same divergence-surfacing UX as `matched_brand_only` — UI shows
+   * the gap honestly and requires an explicit tap to navigate.
+   * `brandDivergence.stored` is the canonical brand kanji from
+   * Sakenowa; `extracted` is what the model returned.
+   */
+  | {
+      kind: 'matched_brewery_only'
+      sake: Brand
+      brewery: Brewery
+      brandDivergence: { extracted: string; stored: string }
+      query: SakeLookupQuery
+    }
   | { kind: 'ambiguous'; candidates: readonly Brand[]; query: SakeLookupQuery }
   | { kind: 'no_match'; query: SakeLookupQuery }
 
@@ -223,6 +242,9 @@ const SELECT_BRANDS_BY_KANJI_EXTRACTION = `
 // tables carry overlapping column names (brand_id, name, name_kanji,
 // source, confidence) — the namespacing makes the pg row object
 // unambiguous to deserialise.
+//
+// Third-pass (brewery-only) below uses the same joined shape under a
+// different WHERE clause.
 const SELECT_BRANDS_AND_BREWERIES_BY_BRAND_KANJI = `
   SELECT
     br.brand_id          AS brand_brand_id,
@@ -242,6 +264,38 @@ const SELECT_BRANDS_AND_BREWERIES_BY_BRAND_KANJI = `
   FROM brands br
   JOIN breweries b ON b.brewery_id = br.brewery_id
   WHERE br.name_kanji = ANY($1)
+  ORDER BY br.brand_id
+  LIMIT 2
+`
+
+// Third-pass: brewery kanji only — used when the first pass AND the
+// brand-only second pass both return 0 rows. Real-world motivation
+// (2026-06-11 testing): a Takashimizu bottle where the model
+// returned a hallucinated brand `寺田` but read the brewery correctly
+// as `高清水酒造`. Brand-only fallback missed (no Sakenowa brand is
+// `寺田`); brewery-only fallback finds the Takashimizu line because
+// the brewery exists. Mono-brand breweries match cleanly here;
+// multi-brand breweries return 2+ rows and route to ambiguous
+// (which S4 PR B's disambiguation list will surface properly).
+const SELECT_BRANDS_AND_BREWERIES_BY_BREWERY_KANJI = `
+  SELECT
+    br.brand_id          AS brand_brand_id,
+    br.name              AS brand_name,
+    br.name_kanji        AS brand_name_kanji,
+    br.name_romaji       AS brand_name_romaji,
+    br.brewery_id        AS brand_brewery_id,
+    br.source            AS brand_source,
+    br.confidence        AS brand_confidence,
+    b.brewery_id         AS brewery_brewery_id,
+    b.name               AS brewery_name,
+    b.name_kanji         AS brewery_name_kanji,
+    b.name_romaji        AS brewery_name_romaji,
+    b.area_id            AS brewery_area_id,
+    b.source             AS brewery_source,
+    b.confidence         AS brewery_confidence
+  FROM brands br
+  JOIN breweries b ON b.brewery_id = br.brewery_id
+  WHERE b.name_kanji = ANY($1)
   ORDER BY br.brand_id
   LIMIT 2
 `
@@ -344,9 +398,6 @@ export async function findSakeByExtractionFromPool(
   )
   debugAdd('Sakenowa', `brand-only fallback returned ${brandOnlyRows.length} row(s)`)
 
-  if (brandOnlyRows.length === 0) {
-    return { kind: 'no_match', query }
-  }
   if (brandOnlyRows.length === 1) {
     const matched = brandOnlyRows[0]
     const brand = brandFromJoinedRow(matched)
@@ -362,9 +413,55 @@ export async function findSakeByExtractionFromPool(
       query,
     }
   }
+  if (brandOnlyRows.length >= 2) {
+    return {
+      kind: 'ambiguous',
+      candidates: brandOnlyRows.map(brandFromJoinedRow),
+      query,
+    }
+  }
+
+  // Brand-only fallback returned 0. Try brewery-only — the structural
+  // dual of #123. Real-world failure shape: Takashimizu bottle, model
+  // returns brewery 高清水酒造 correctly but brand `寺田` (a
+  // hallucinated surname). Brand-only misses; brewery-only finds the
+  // single Takashimizu brand line and we surface the divergence on
+  // the brand field this time. Mono-brand breweries land here
+  // cleanly; multi-brand breweries return 2+ rows and route to
+  // ambiguous.
+  debugAdd(
+    'Sakenowa',
+    `brand-only fallback returned 0 rows; trying brewery-only fallback on brewery.name_kanji ∈ {${breweryVariants.join('|')}}`,
+  )
+  const { rows: breweryOnlyRows } = await publicQuery<BrandWithBreweryRow>(
+    'brands',
+    SELECT_BRANDS_AND_BREWERIES_BY_BREWERY_KANJI,
+    [breweryVariants],
+    pool,
+  )
+  debugAdd('Sakenowa', `brewery-only fallback returned ${breweryOnlyRows.length} row(s)`)
+
+  if (breweryOnlyRows.length === 0) {
+    return { kind: 'no_match', query }
+  }
+  if (breweryOnlyRows.length === 1) {
+    const matched = breweryOnlyRows[0]
+    const brand = brandFromJoinedRow(matched)
+    const brewery = breweryFromJoinedRow(matched)
+    return {
+      kind: 'matched_brewery_only',
+      sake: brand,
+      brewery,
+      brandDivergence: {
+        extracted: query.nameJa,
+        stored: brand.nameKanji,
+      },
+      query,
+    }
+  }
   return {
     kind: 'ambiguous',
-    candidates: brandOnlyRows.map(brandFromJoinedRow),
+    candidates: breweryOnlyRows.map(brandFromJoinedRow),
     query,
   }
 }
