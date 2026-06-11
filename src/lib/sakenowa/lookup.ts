@@ -15,7 +15,7 @@ import {
   rowToFlavorChart,
   rowToRanking,
 } from './db'
-import { expandBreweryVariants } from './brewery-variants'
+import { expandBreweryVariants, expandPossibleBrandVariants } from './brewery-variants'
 import { generateKanjiVariants } from './kanji-variants'
 import { publicQuery } from '../supabase/public-query'
 import { getServerDbPool } from '../supabase/server-client'
@@ -425,7 +425,13 @@ export async function findSakeByBrandOnlyFromPool(
   query: SakeLookupQuery,
   pool: Pool,
 ): Promise<BrandOnlyLookupResult> {
-  const nameVariants = generateKanjiVariants(query.nameJa)
+  // `expandPossibleBrandVariants` adds the stem if the input ends
+  // with an operational suffix — so `高清水酒造` also tries
+  // `高清水`. Real Sakenowa brand names don't carry operational
+  // suffixes; this catches the scan-action field-swap case where
+  // the model put a brand-with-suffix in the brewery field, and
+  // any general "brand-shaped-as-brewery" misread.
+  const nameVariants = expandPossibleBrandVariants(query.nameJa)
   debugAdd(
     'Sakenowa',
     `brand-only lookup on name_kanji ∈ {${nameVariants.join('|')}}`,

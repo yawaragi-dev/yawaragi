@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { expandBreweryVariants } from './brewery-variants'
+import {
+  expandBreweryVariants,
+  expandPossibleBrandVariants,
+  stripOperationalSuffix,
+} from './brewery-variants'
 
 describe('expandBreweryVariants', () => {
   it('returns just the verbatim form when the input already ends with 酒造', () => {
@@ -68,5 +72,67 @@ describe('expandBreweryVariants', () => {
 
   it('handles empty input safely', () => {
     expect(expandBreweryVariants('')).toEqual([''])
+  })
+})
+
+describe('stripOperationalSuffix', () => {
+  it('strips 酒造 from the end', () => {
+    expect(stripOperationalSuffix('高清水酒造')).toBe('高清水')
+  })
+
+  it('strips 醸造 from the end', () => {
+    expect(stripOperationalSuffix('八海醸造')).toBe('八海')
+  })
+
+  it('strips the longer 酒造店 before short-circuiting on 酒造', () => {
+    expect(stripOperationalSuffix('齋彌酒造店')).toBe('齋彌')
+  })
+
+  it('strips 酒造場 cleanly', () => {
+    expect(stripOperationalSuffix('鈴木酒造場')).toBe('鈴木')
+  })
+
+  it('returns null when no operational suffix is present', () => {
+    expect(stripOperationalSuffix('高清水')).toBeNull()
+    expect(stripOperationalSuffix('獺祭')).toBeNull()
+    expect(stripOperationalSuffix('Dassai')).toBeNull()
+  })
+
+  it('returns null for empty input', () => {
+    expect(stripOperationalSuffix('')).toBeNull()
+  })
+})
+
+describe('expandPossibleBrandVariants', () => {
+  it('returns just the verbatim form when the input has no operational suffix', () => {
+    expect(expandPossibleBrandVariants('高清水')).toEqual(['高清水'])
+    expect(expandPossibleBrandVariants('獺祭')).toEqual(['獺祭'])
+  })
+
+  it('adds the stem when the input has an operational suffix (2026-06-11 Takashimizu field-swap)', () => {
+    // Motivating real-world case: scan-action's field-swap rescue
+    // is handed `extraction.brewery_ja = "高清水酒造"`. The brand
+    // exists in Sakenowa as `高清水` (no suffix). Without stem
+    // expansion the rescue misses; with it the lookup finds the
+    // canonical brand row.
+    const variants = expandPossibleBrandVariants('高清水酒造')
+    expect(variants).toContain('高清水酒造')
+    expect(variants).toContain('高清水')
+  })
+
+  it('composes with kanji-variant expansion on both the verbatim form and the stem', () => {
+    // 醸 ↔ 釀 is a 旧/新 form pair. Applied to `八海醸造`:
+    //   baseForms = ['八海醸造', '八海']
+    //   variant expansion adds 八海釀造 (only the 醸造 form has a
+    //   variant char; 八海 has none)
+    const variants = expandPossibleBrandVariants('八海醸造')
+    expect(variants).toContain('八海醸造')
+    expect(variants).toContain('八海')
+    expect(variants).toContain('八海釀造')
+    expect(variants).toHaveLength(3)
+  })
+
+  it('handles empty input safely', () => {
+    expect(expandPossibleBrandVariants('')).toEqual([''])
   })
 })

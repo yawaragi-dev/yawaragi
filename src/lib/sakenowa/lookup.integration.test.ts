@@ -574,6 +574,37 @@ describe('findSakeByBreweryOnlyFromPool', () => {
     expect(result.kind).toBe('no_match')
   })
 
+  it('strips the operational suffix when the input ends with 酒造 (2026-06-12 Takashimizu fix)', async () => {
+    // The 2026-06-11 fix shipped the field-swap rescue but the
+    // lookup queried `extraction.brewery_ja` verbatim — for a
+    // Takashimizu bottle that's `高清水酒造`. Sakenowa stores the
+    // brand as `高清水` (no suffix). expandPossibleBrandVariants
+    // now adds the stem so this lookup hits.
+    await seedBrewery({
+      breweryId: 9501,
+      name: 'Akita Shurui Seizo',
+      nameKanji: '秋田酒類製造',
+      areaId: 5,
+    })
+    await pool.query(
+      `INSERT INTO brands
+         (brand_id, name, name_kanji, brewery_id, source, confidence, content_hash)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [9001, 'Takashimizu', '高清水', 9501, 'sakenowa', null, 'hash-takashimizu-suffix-9001'],
+    )
+
+    const result = await findSakeByBrandOnlyFromPool(
+      // Query with the 酒造 suffix the model added — stem expansion
+      // strips it and the lookup finds 高清水.
+      { nameJa: '高清水酒造', breweryJa: '高清水酒造' },
+      pool,
+    )
+
+    expect(result.kind).toBe('matched_brand_only')
+    if (result.kind !== 'matched_brand_only') throw new Error('unreachable; for narrowing only')
+    expect(result.sake).toMatchObject({ brandId: 9001, nameKanji: '高清水' })
+  })
+
   it('matches via brand-only when called with a field-swap query (2026-06-11 Takashimizu shape)', async () => {
     // Field-swap: model returned a hallucinated `name_ja` but put
     // the real brand `高清水` in `brewery_ja`. scan-action.ts calls

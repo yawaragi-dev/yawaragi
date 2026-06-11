@@ -52,3 +52,45 @@ export function expandBreweryVariants(brewery: string): string[] {
   const all = suffixVariants.flatMap((s) => generateKanjiVariants(s))
   return [...new Set(all)]
 }
+
+/**
+ * If `text` ends with one of the operational suffixes, returns the
+ * stem (suffix removed). Returns `null` if there's no recognised
+ * suffix to strip. Longest suffixes are checked first, mirroring
+ * `hasOperationalSuffix`, so `齋彌酒造店` is stripped to `齋彌`,
+ * not to `齋彌酒造店` minus a final `店`.
+ */
+export function stripOperationalSuffix(text: string): string | null {
+  for (const suffix of OPERATIONAL_SUFFIXES) {
+    if (text.endsWith(suffix)) {
+      return text.slice(0, text.length - suffix.length)
+    }
+  }
+  return null
+}
+
+/**
+ * Generates the candidate set when we're trying to interpret a
+ * string as a BRAND kanji. Mirrors `expandBreweryVariants` in
+ * reverse: if the input has an operational suffix (`酒造`, etc),
+ * also include the stem because real brand names are never
+ * suffixed. Then runs kanji-variant expansion (旧字体 ↔ 新字体) over
+ * the whole set.
+ *
+ * Motivating case (2026-06-11): scan-action's field-swap rescue
+ * calls findSakeByBrandOnly with `extraction.brewery_ja` =
+ * `高清水酒造`. The verbatim form has no Sakenowa brand row.
+ * Stripping the `酒造` suffix gives `高清水` which IS a brand
+ * (Takashimizu). Without the stem expansion the rescue misses and
+ * the bottle goes to low_confidence even though it's fully
+ * identifiable.
+ */
+export function expandPossibleBrandVariants(text: string): string[] {
+  if (text.length === 0) return [text]
+
+  const stem = stripOperationalSuffix(text)
+  const baseForms = stem !== null ? [text, stem] : [text]
+
+  const all = baseForms.flatMap((s) => generateKanjiVariants(s))
+  return [...new Set(all)]
+}

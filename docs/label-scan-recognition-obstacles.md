@@ -253,11 +253,15 @@ name_ja: 斗   brewery_ja: 高清水      ← same; name_ja is hallucinated sing
 
 The §14 single-char guard fires on `name_ja` (correct — it's junk). The §15 brewery-only rescue tries `高清水` as a brewery — but Sakenowa has `高清水` as a *brand*, not a brewery, so 0 rows. Without a field-swap fallback the visitor sees the retry CTA on a bottle that's actually fully identifiable.
 
-**Status.** Implemented in PR #128. After the §14 single-char guard's brewery-only rescue misses, the action calls `findSakeByBrandOnly` with `nameJa = extraction.brewery_ja` — treating the brewery field AS the brand. If exactly one brand matches, returns `matched_brand_only` carrying the canonical brand kanji on a new `sakeKanji` field plus a brewery divergence `{ extracted: <what label labelled "brewery">, stored: <real brewery from Sakenowa> }`. The UI's matched_brand_only branch now reads `state.sakeKanji` for the prominent kanji display instead of `state.extraction.name_ja`, so the field-swap rescue surfaces the correct brand kanji (not the model's single-char hallucination).
+**Status.** Implemented in PR #128 across two iterations:
 
-**Sakenowa data dependency.** This rescue path only fires when Sakenowa actually has the brand under some brewery. If a major-brand brewery is missing from Sakenowa entirely (Takashimizu may be one such gap based on the live preview testing), no code-level rescue helps and the visitor still sees `low_confidence`. The eval harness ([#110](https://github.com/yawaragi-dev/yawaragi/issues/110)) is the right place to catalogue which expected brands are absent from the ingested mirror.
+1. **Initial rescue path.** After the §14 single-char guard's brewery-only rescue misses, the action calls `findSakeByBrandOnly` with `nameJa = extraction.brewery_ja` — treating the brewery field AS the brand. If exactly one brand matches, returns `matched_brand_only` carrying the canonical brand kanji on a new `sakeKanji` field plus a brewery divergence `{ extracted: <what label labelled "brewery">, stored: <real brewery from Sakenowa> }`. The UI's matched_brand_only branch reads `state.sakeKanji` for the prominent kanji display instead of `state.extraction.name_ja`.
 
-**Tracking.** Shipped in PR #128. New standalone seam `findSakeByBrandOnly` extracted from the inline second pass of `findSakeByExtractionFromPool` to make the field-swap callsite cleanly reusable.
+2. **Suffix-stripping refinement.** First live test on the Takashimizu bottle still missed because the model returned `brewery_ja: '高清水酒造'` (brand + operational suffix), and `findSakeByBrandOnly` queried verbatim — Sakenowa stores the brand as `高清水` (no suffix). `expandPossibleBrandVariants` was added in `brewery-variants.ts` as the dual of `expandBreweryVariants`: when the input ends with an operational suffix (`酒造`, `醸造`, `酒造店`, `酒造場`), it adds the stem as a lookup candidate. Field-swap now finds `高清水` even when the model adds the suffix.
+
+**Verified Sakenowa data.** A 2026-06-12 freshness check confirmed `高清水` (Brand 81, breweryId 56) and `秋田酒類製造` (Brewery 56) are both in our mirror. This obstacle is fully code-rescued in the common case. The earlier hypothesis that Takashimizu was absent from Sakenowa was wrong — the gap was the missing suffix-strip in the brand-only path.
+
+**Tracking.** Shipped in PR #128. New standalone seam `findSakeByBrandOnly` extracted from the inline second pass of `findSakeByExtractionFromPool` for clean reuse from the field-swap callsite. `pnpm sakenowa:freshness` is the operational tool for confirming a recurring failure is a code gap, not a mirror gap.
 
 ---
 
@@ -294,6 +298,7 @@ Upstream of recognition but shape its failure modes.
 - ADR [docs/adr/0013-feature-debuggability-requirement.md](./adr/0013-feature-debuggability-requirement.md) — the debug-overlay rule that lets us diagnose any of the above from a phone in the wild.
 - `/CONTEXT.md` — domain glossary, including the same-romaji-collision note (§11).
 - Eval harness [#110](https://github.com/yawaragi-dev/yawaragi/issues/110) — the ground-truth dataset every "tune this against real data" claim above depends on.
+- `pnpm sakenowa:freshness` (`scripts/sakenowa-freshness-check.ts`) — verifies the local mirror against Sakenowa's upstream API. Surfaces brand / brewery count deltas plus a canary check against well-known bottles. Use when a recurring scan failure smells like a data gap to confirm or refute the hypothesis before chasing code.
 
 ---
 
