@@ -45,15 +45,17 @@ interface ScanFormProps {
  * `<ScanForm />` — the client-side capture surface for Phase 3 / S1.
  *
  * Flow (PRD #105 §"Wire shape"):
- *   1. Visitor taps the button → the hidden `<input type="file"
- *      accept="image/*">` opens the OS picker. On mobile this is the
- *      iOS / Android sheet that offers BOTH "take a new photo" and
- *      "choose from library". We previously pinned `capture="environment"`
- *      which jumped straight to the camera — useful for live capture
- *      but blocked re-scanning an existing photo from the gallery,
- *      which is the dominant flow during testing and when a visitor
- *      has already photographed a bottle. Without `capture` the
- *      browser still offers the camera; the visitor picks the path.
+ *   1. Visitor sees two buttons: "Take photo" (mobile / touchscreen
+ *      only — `(any-pointer: coarse)`) and "Upload photo" (always
+ *      visible). Each is wired to its own hidden `<input type="file">`:
+ *      the camera input pins `capture="environment"` and always opens
+ *      the back camera; the upload input has no `capture` and always
+ *      opens the photo-library / file picker. The two-input pattern
+ *      gives the visitor a deterministic choice rather than relying on
+ *      the OS to show its (browser- and version-dependent)
+ *      "Photo Library / Take Photo / Choose File" sheet — many
+ *      Android Chrome builds and older iOS versions skip the sheet
+ *      and jump straight to one path, hiding the other.
  *   2. On change, we downscale the captured file in the browser via
  *      `<canvas>.toBlob` and `createImageBitmap({ imageOrientation:
  *      'from-image' })`.
@@ -76,7 +78,18 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
   const tBadge = useTranslations('provenance.badge.llmExtracted')
   const tAttribution = useTranslations('sakenowaAttribution')
   const router = useRouter()
-  const inputRef = useRef<HTMLInputElement | null>(null)
+  // Two distinct file inputs so the visitor gets a deterministic
+  // choice between the camera and the photo library on mobile —
+  // without depending on the OS to show its (browser- and
+  // version-dependent) "Photo Library / Take Photo / Choose File"
+  // sheet. The upload input has no `capture` attribute and always
+  // opens the picker; the camera input pins `capture="environment"`
+  // and always opens the back camera. The camera button itself is
+  // hidden on devices without a coarse pointer (desktop without a
+  // touchscreen), so the dual layout only shows up where it adds
+  // value.
+  const uploadInputRef = useRef<HTMLInputElement | null>(null)
+  const cameraInputRef = useRef<HTMLInputElement | null>(null)
   const [state, formAction, isActionPending] = useActionState<ScanActionState, FormData>(
     scanAction,
     INITIAL_SCAN_ACTION_STATE,
@@ -132,10 +145,22 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
     appendDebugEvents(serverLog)
   }, [debugMode, state.debugLog])
 
-  function onPickClick() {
+  function onUploadClick() {
     setDownscaleFailed(false)
-    inputRef.current?.click()
+    uploadInputRef.current?.click()
   }
+
+  function onCameraClick() {
+    setDownscaleFailed(false)
+    cameraInputRef.current?.click()
+  }
+
+  // Both buttons share the same handler when the existing UI calls
+  // `onPickClick` (rescan paths inside the result branches). Pick the
+  // upload one as the default — it works on every device, including
+  // desktops without a camera, where the camera input would just
+  // fall back to a file picker anyway.
+  const onPickClick = onUploadClick
 
   async function onFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
@@ -176,9 +201,12 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
       pushClientEvent('downscale failed; surfaced localized error', undefined)
     } finally {
       setIsDownscaling(false)
-      // Reset the input so picking the same file again still fires
-      // onChange (browsers suppress duplicate-value events).
-      if (inputRef.current) inputRef.current.value = ''
+      // Reset both inputs so picking the same file again still fires
+      // onChange (browsers suppress duplicate-value events). We don't
+      // know which of the two inputs triggered the change handler, so
+      // clear both — they're cheap.
+      if (uploadInputRef.current) uploadInputRef.current.value = ''
+      if (cameraInputRef.current) cameraInputRef.current.value = ''
     }
   }
 
@@ -199,23 +227,53 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
       className="flex flex-col items-start gap-4"
     >
       <input
-        ref={inputRef}
+        ref={uploadInputRef}
         type="file"
         name="image-picker"
         accept="image/*"
         onChange={onFileChange}
         className="sr-only"
         data-testid="scan-file-input"
-        aria-label={t('inputAriaLabel')}
+        aria-label={t('uploadAriaLabel')}
       />
-      <Button
-        type="button"
-        onClick={onPickClick}
-        disabled={isPending}
-        data-testid="scan-pick-button"
-      >
-        {isPending ? t('pending') : t('pickLabel')}
-      </Button>
+      <input
+        ref={cameraInputRef}
+        type="file"
+        name="image-picker-camera"
+        accept="image/*"
+        capture="environment"
+        onChange={onFileChange}
+        className="sr-only"
+        data-testid="scan-camera-input"
+        aria-label={t('cameraAriaLabel')}
+      />
+      <div className="flex flex-wrap items-center gap-2">
+        {/*
+          Take-photo button is gated on `(any-pointer: coarse)` —
+          shows on phones / tablets / touchscreen laptops, hides on
+          desktops without touch. On desktop the camera input would
+          just fall back to a file picker, duplicating the upload
+          button below.
+        */}
+        <Button
+          type="button"
+          onClick={onCameraClick}
+          disabled={isPending}
+          data-testid="scan-camera-button"
+          className="hidden [@media(any-pointer:coarse)]:inline-flex"
+        >
+          {isPending ? t('pending') : t('takePhoto')}
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onUploadClick}
+          disabled={isPending}
+          data-testid="scan-pick-button"
+        >
+          {isPending ? t('pending') : t('uploadPhoto')}
+        </Button>
+      </div>
 
       {state.status === 'invalid_input' && (
         <p

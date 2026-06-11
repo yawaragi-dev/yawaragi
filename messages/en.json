@@ -75,9 +75,11 @@
       "intro": "Point your camera at a sake bottle. We read the kanji and surface what's known about the brewery, the rice, and the style."
     },
     "form": {
-      "pickLabel": "Open camera or pick a photo",
+      "takePhoto": "Take photo",
+      "uploadPhoto": "Upload photo",
       "pending": "Reading the label…",
-      "inputAriaLabel": "Choose a label photo to scan",
+      "uploadAriaLabel": "Choose a label photo from your library",
+      "cameraAriaLabel": "Take a photo of the label with your camera",
       "matched": "Match found. Opening the sake page…",
       "matchedBrandOnly": "We matched the brand, but the brewery on the label didn't match our catalogue.",
       "matchedBrandOnlyDivergence": "Label: {extracted} · Catalogue: {stored}",
