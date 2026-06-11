@@ -15,6 +15,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { Pool } from 'pg'
 import {
+  findSakeByBrandOnlyFromPool,
   findSakeByBreweryOnlyFromPool,
   findSakeByExtractionFromPool,
   listRankingFromPool,
@@ -571,6 +572,45 @@ describe('findSakeByBreweryOnlyFromPool', () => {
       pool,
     )
     expect(result.kind).toBe('no_match')
+  })
+
+  it('matches via brand-only when called with a field-swap query (2026-06-11 Takashimizu shape)', async () => {
+    // Field-swap: model returned a hallucinated `name_ja` but put
+    // the real brand `高清水` in `brewery_ja`. scan-action.ts calls
+    // `findSakeByBrandOnly({ nameJa: extraction.brewery_ja, … })`
+    // after the brewery-only fallback misses. If `高清水` exists as
+    // a brand in Sakenowa, this seam finds it under its actual
+    // brewery (`秋田酒類製造`) and surfaces matched_brand_only with
+    // brewery-divergence semantics: extracted = what the model put
+    // in the brewery field (the brand itself), stored = the
+    // catalogue brewery.
+    await seedBrewery({
+      breweryId: 9501,
+      name: 'Akita Shurui Seizo',
+      nameKanji: '秋田酒類製造',
+      areaId: 5,
+    })
+    await pool.query(
+      `INSERT INTO brands
+         (brand_id, name, name_kanji, brewery_id, source, confidence, content_hash)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [9001, 'Takashimizu', '高清水', 9501, 'sakenowa', null, 'hash-takashimizu-fieldswap-9001'],
+    )
+
+    const result = await findSakeByBrandOnlyFromPool(
+      // Field-swap shape: action calls with nameJa = extraction.brewery_ja
+      { nameJa: '高清水', breweryJa: '高清水' },
+      pool,
+    )
+
+    expect(result.kind).toBe('matched_brand_only')
+    if (result.kind !== 'matched_brand_only') throw new Error('unreachable; for narrowing only')
+    expect(result.sake).toMatchObject({ brandId: 9001, nameKanji: '高清水' })
+    expect(result.brewery).toMatchObject({ breweryId: 9501, nameKanji: '秋田酒類製造' })
+    expect(result.breweryDivergence).toEqual({
+      extracted: '高清水',
+      stored: '秋田酒類製造',
+    })
   })
 
   it('matches when the model dropped the 酒造 operational suffix (2026-06-11 Takashimizu shape)', async () => {

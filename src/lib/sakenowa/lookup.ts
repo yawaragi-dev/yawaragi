@@ -386,26 +386,62 @@ export async function findSakeByExtractionFromPool(
     }
   }
 
-  // First pass returned 0. Brewery names are smaller on most labels,
-  // often stylised, and the model's correctness rate on brewery is
-  // meaningfully worse than on brand (issue #123 motivating example:
-  // 蔵王 bottle where the model hallucinated 宮鉄酒造 — brand kanji
-  // correct, brewery kanji invented). Retry brand-only and surface
-  // the divergence if exactly one brand matches.
+  // First pass returned 0. Delegate to the brand-only second pass
+  // (also reachable from scan-action.ts when a field-swap is
+  // suspected).
+  const brandOnly = await findSakeByBrandOnlyFromPool(query, pool)
+  if (brandOnly.kind !== 'no_match') return brandOnly
+
+  // Brand-only fallback returned 0. Delegate to the brewery-only
+  // third pass — also reachable on its own from scan-action.ts when
+  // the single-character-hallucination guard fires (brand suspect,
+  // brewery still worth a shot).
+  return findSakeByBreweryOnlyFromPool(query, pool)
+}
+
+/**
+ * Brand-only fallback as a standalone seam. Real-world use cases:
+ *
+ * - Issue [#123] brewery-hallucination shape: model returns the right
+ *   brand kanji but an invented brewery. Brand-only finds the
+ *   unique row and surfaces the brewery divergence.
+ *
+ * - 2026-06-11 Takashimizu field-swap shape: model puts the BRAND
+ *   in the brewery field because the brand is the prominent kanji
+ *   on the label. Scan-action calls this with `nameJa =
+ *   extraction.brewery_ja` to try interpreting the brewery field
+ *   AS the brand. If 1 row → we know what bottle this is even
+ *   though the model labelled the fields wrong.
+ *
+ * Returns a strict subset of `FindSakeByExtractionResult`. Callers
+ * union-narrow with `matched_brand_only | ambiguous | no_match`.
+ */
+export type BrandOnlyLookupResult = Extract<
+  FindSakeByExtractionResult,
+  { kind: 'matched_brand_only' } | { kind: 'ambiguous' } | { kind: 'no_match' }
+>
+
+export async function findSakeByBrandOnlyFromPool(
+  query: SakeLookupQuery,
+  pool: Pool,
+): Promise<BrandOnlyLookupResult> {
+  const nameVariants = generateKanjiVariants(query.nameJa)
   debugAdd(
     'Sakenowa',
-    `first-pass returned 0 rows; trying brand-only fallback (#123) on name_kanji ∈ {${nameVariants.join('|')}}`,
+    `brand-only lookup on name_kanji ∈ {${nameVariants.join('|')}}`,
+    { nameJa: query.nameJa, nameVariants },
   )
-  const { rows: brandOnlyRows } = await publicQuery<BrandWithBreweryRow>(
+  const { rows } = await publicQuery<BrandWithBreweryRow>(
     'brands',
     SELECT_BRANDS_AND_BREWERIES_BY_BRAND_KANJI,
     [nameVariants],
     pool,
   )
-  debugAdd('Sakenowa', `brand-only fallback returned ${brandOnlyRows.length} row(s)`)
+  debugAdd('Sakenowa', `brand-only lookup returned ${rows.length} row(s)`)
 
-  if (brandOnlyRows.length === 1) {
-    const matched = brandOnlyRows[0]
+  if (rows.length === 0) return { kind: 'no_match', query }
+  if (rows.length === 1) {
+    const matched = rows[0]
     const brand = brandFromJoinedRow(matched)
     const brewery = breweryFromJoinedRow(matched)
     return {
@@ -419,19 +455,17 @@ export async function findSakeByExtractionFromPool(
       query,
     }
   }
-  if (brandOnlyRows.length >= 2) {
-    return {
-      kind: 'ambiguous',
-      candidates: brandOnlyRows.map(brandFromJoinedRow),
-      query,
-    }
+  return {
+    kind: 'ambiguous',
+    candidates: rows.map(brandFromJoinedRow),
+    query,
   }
+}
 
-  // Brand-only fallback returned 0. Delegate to the brewery-only
-  // third pass — also reachable on its own from scan-action.ts when
-  // the single-character-hallucination guard fires (brand suspect,
-  // brewery still worth a shot).
-  return findSakeByBreweryOnlyFromPool(query, pool)
+export async function findSakeByBrandOnly(
+  query: SakeLookupQuery,
+): Promise<BrandOnlyLookupResult> {
+  return findSakeByBrandOnlyFromPool(query, getServerDbPool())
 }
 
 /**

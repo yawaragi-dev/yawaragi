@@ -165,9 +165,20 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
       // the brewery-only state's `brandDivergence.storedRomaji` is
       // the catalogue brand's romaji; the other two carry it on
       // `sakeRomaji` directly.
+      // Prefer the catalogue brand kanji over the model's
+      // extraction whenever it's available — the canonical form is
+      // always more accurate, and in the field-swap rescue path the
+      // extraction's name_ja is the model's single-char hallucination
+      // (not the brand at all). `matched_brand_only` carries
+      // `sakeKanji`; `matched_brewery_only` puts the canonical brand
+      // kanji on `brandDivergence.stored`; `matched` (auto / confirm
+      // tier) doesn't carry it today, so fall back to extraction
+      // there.
       const nameKanji =
         state.status === 'matched_brewery_only'
           ? state.brandDivergence.stored
+          : state.status === 'matched_brand_only'
+          ? state.sakeKanji
           : state.extraction.name_ja
       const nameRomaji =
         state.status === 'matched_brewery_only'
@@ -616,7 +627,7 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
               lang="ja"
               data-testid="scan-result-name-ja"
             >
-              {state.extraction.name_ja}
+              {state.sakeKanji}
             </span>
             {state.sakeRomaji && (
               <span

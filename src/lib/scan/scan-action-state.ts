@@ -55,6 +55,18 @@ type ScanActionStateBase =
        */
       breweryDivergence: { extracted: string; stored: string; storedRomaji: string | null }
       /**
+       * Canonical brand kanji from Sakenowa. Displayed prominently in
+       * the divergence card. We prefer the catalogue form over
+       * `extraction.name_ja` because (a) it survives the kanji-variant
+       * mismatch (extracted `蔵王` matches stored `藏王` via variant
+       * expansion, but the visitor sees the canonical form), and (b)
+       * for the field-swap rescue path (single-char guard → brand-only
+       * on the *brewery* field) the extraction's `name_ja` is the
+       * model's hallucinated single character — we MUST display the
+       * canonical brand kanji here, not the junk.
+       */
+      sakeKanji: string
+      /**
        * Romaji of the matched brand (the trusted side). Used next to
        * the kanji on the divergence card.
        */

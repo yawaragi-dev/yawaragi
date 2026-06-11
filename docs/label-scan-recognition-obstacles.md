@@ -237,6 +237,30 @@ Five different brand kanji, five times the same brewery, confidence pinned in a 
 
 ---
 
+## 17. Field-swap: brand kanji in the brewery field
+
+**What it is.** Bottles where the brand is the visually dominant kanji and the brewery is small / in a corner / not what catches the eye. The model "sees" the prominent kanji, reads it correctly, but assigns it to the WRONG field — `brewery_ja` instead of `name_ja`. The `name_ja` field then ends up with whatever the model hallucinates to fill the gap, often a single-character junk (caught by §14).
+
+The structural issue is that the model's prior assumes brand and brewery are *distinct* labels on the bottle. When they're not (mono-brand breweries where one name dominates), the model invents a separate brand to satisfy its schema rather than putting the same name in both fields.
+
+**Example.** 2026-06-11 Takashimizu testing on `23940.jpg`. The bottle's prominent kanji is `高清水` (the brand, Takashimizu). The actual brewery is `秋田酒類製造` (Akita Shurui Seizo) — printed small at the corner of the label. Multiple attempts:
+
+```
+name_ja: 北   brewery_ja: 高清水酒造  ← model puts brand+酒造 in brewery field
+name_ja: 貴   brewery_ja: 高清水      ← brand alone in brewery field
+name_ja: 斗   brewery_ja: 高清水      ← same; name_ja is hallucinated single char
+```
+
+The §14 single-char guard fires on `name_ja` (correct — it's junk). The §15 brewery-only rescue tries `高清水` as a brewery — but Sakenowa has `高清水` as a *brand*, not a brewery, so 0 rows. Without a field-swap fallback the visitor sees the retry CTA on a bottle that's actually fully identifiable.
+
+**Status.** Implemented in PR #128. After the §14 single-char guard's brewery-only rescue misses, the action calls `findSakeByBrandOnly` with `nameJa = extraction.brewery_ja` — treating the brewery field AS the brand. If exactly one brand matches, returns `matched_brand_only` carrying the canonical brand kanji on a new `sakeKanji` field plus a brewery divergence `{ extracted: <what label labelled "brewery">, stored: <real brewery from Sakenowa> }`. The UI's matched_brand_only branch now reads `state.sakeKanji` for the prominent kanji display instead of `state.extraction.name_ja`, so the field-swap rescue surfaces the correct brand kanji (not the model's single-char hallucination).
+
+**Sakenowa data dependency.** This rescue path only fires when Sakenowa actually has the brand under some brewery. If a major-brand brewery is missing from Sakenowa entirely (Takashimizu may be one such gap based on the live preview testing), no code-level rescue helps and the visitor still sees `low_confidence`. The eval harness ([#110](https://github.com/yawaragi-dev/yawaragi/issues/110)) is the right place to catalogue which expected brands are absent from the ingested mirror.
+
+**Tracking.** Shipped in PR #128. New standalone seam `findSakeByBrandOnly` extracted from the inline second pass of `findSakeByExtractionFromPool` to make the field-swap callsite cleanly reusable.
+
+---
+
 ## Capture-layer obstacles
 
 Upstream of recognition but shape its failure modes.

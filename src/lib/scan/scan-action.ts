@@ -17,6 +17,7 @@ import { assertRateLimitConfig } from '@/lib/rate-limit/config-gate'
 import { extractIp, hashIp } from '@/lib/rate-limit/ip-hash'
 import { UpstashKVClient } from '@/lib/rate-limit/upstash-kv-client'
 import {
+  findSakeByBrandOnly,
   findSakeByBreweryOnly,
   findSakeByExtraction,
   lookupBreweryByBrand,
@@ -307,10 +308,63 @@ export async function scanAction(
             brandIds: breweryOnly.candidates.map((c) => c.brandId),
           }
         }
-        // Brewery-only also missed — the brewery was probably
-        // hallucinated too, or it's genuinely not in Sakenowa.
-        // Fall through to low_confidence as before.
-        debugAdd('ScanAction', 'single-char guard + brewery-only fallback both missed — routing to low_confidence')
+        // Brewery-only missed. One more rescue: the model may have
+        // committed a FIELD SWAP — putting the brand kanji in the
+        // brewery_ja field because the brand is the prominent kanji
+        // on the bottle and the real brewery (e.g. `秋田酒類製造`
+        // for Takashimizu) is small / in the corner. Try a brand-only
+        // lookup on the brewery_ja value. If exactly one brand
+        // matches, we know what the bottle is — surface as
+        // matched_brand_only with the divergence semantics "what
+        // the label labelled the brewery vs the catalogue brewery
+        // for the matched brand".
+        debugAdd(
+          'ScanAction',
+          `brewery-only missed; trying brand-only on brewery_ja "${extraction.brewery_ja}" — checking for field-swap (model put brand in brewery field)`,
+        )
+        const swapAttempt = await findSakeByBrandOnly({
+          nameJa: extraction.brewery_ja,
+          breweryJa: extraction.brewery_ja,
+        })
+        if (swapAttempt.kind === 'matched_brand_only') {
+          const sakeHref = getPathname({
+            locale: localeRaw,
+            href: { pathname: '/sake/[brandId]', params: { brandId: String(swapAttempt.sake.brandId) } },
+          })
+          debugAdd('ScanAction', 'field-swap rescue succeeded — matched_brand_only via brewery_ja', {
+            brandId: swapAttempt.sake.brandId,
+            sakeHref,
+            extractedBrandKanji: swapAttempt.sake.nameKanji,
+            extractedBrewery: extraction.brewery_ja,
+            storedBrewery: swapAttempt.brewery.nameKanji,
+          })
+          return {
+            status: 'matched_brand_only',
+            extraction,
+            brandId: swapAttempt.sake.brandId,
+            sakeHref,
+            breweryDivergence: {
+              ...swapAttempt.breweryDivergence,
+              storedRomaji: bestRomaji(swapAttempt.brewery),
+            },
+            sakeKanji: swapAttempt.sake.nameKanji,
+            sakeRomaji: bestRomaji(swapAttempt.sake),
+          }
+        }
+        if (swapAttempt.kind === 'ambiguous') {
+          debugAdd('ScanAction', 'field-swap rescue → ambiguous', {
+            candidates: swapAttempt.candidates.map((c) => c.brandId),
+          })
+          return {
+            status: 'ambiguous',
+            extraction,
+            brandIds: swapAttempt.candidates.map((c) => c.brandId),
+          }
+        }
+        // Field-swap rescue also missed. Brand was probably
+        // hallucinated AND the brewery field doesn't correspond to
+        // any known brand or brewery. Fall through to low_confidence.
+        debugAdd('ScanAction', 'single-char guard + brewery-only + field-swap rescue all missed — routing to low_confidence')
         return { status: 'low_confidence', extraction }
       }
 
@@ -365,6 +419,7 @@ export async function scanAction(
             ...lookup.breweryDivergence,
             storedRomaji: bestRomaji(lookup.brewery),
           },
+          sakeKanji: lookup.sake.nameKanji,
           sakeRomaji: bestRomaji(lookup.sake),
         }
       }
