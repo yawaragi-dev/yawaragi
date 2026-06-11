@@ -15,6 +15,7 @@ import {
   rowToFlavorChart,
   rowToRanking,
 } from './db'
+import { expandBreweryVariants } from './brewery-variants'
 import { generateKanjiVariants } from './kanji-variants'
 import { publicQuery } from '../supabase/public-query'
 import { getServerDbPool } from '../supabase/server-client'
@@ -350,8 +351,13 @@ export async function findSakeByExtractionFromPool(
   // For strings without variant kanji, the arrays collapse to a
   // single element and the query behaves identically to the previous
   // exact-match shape.
+  //
+  // Brewery additionally expands to cover missing operational
+  // suffixes (`高清水` → `{高清水, 高清水酒造, …}`) — the SYSTEM_PROMPT
+  // tells the model to keep them but in production it drops them
+  // inconsistently. See `expandBreweryVariants`.
   const nameVariants = generateKanjiVariants(query.nameJa)
-  const breweryVariants = generateKanjiVariants(query.breweryJa)
+  const breweryVariants = expandBreweryVariants(query.breweryJa)
   debugAdd(
     'Sakenowa',
     `first-pass: querying brands WHERE name_kanji ∈ {${nameVariants.join('|')}} AND brewery.name_kanji ∈ {${breweryVariants.join('|')}}`,
@@ -448,7 +454,10 @@ export async function findSakeByBreweryOnlyFromPool(
   query: SakeLookupQuery,
   pool: Pool,
 ): Promise<BreweryOnlyLookupResult> {
-  const breweryVariants = generateKanjiVariants(query.breweryJa)
+  // Same composed expansion as the first-pass — kanji-variant +
+  // operational-suffix — so a model that returned `高清水` (no
+  // 酒造) still finds the stored `高清水酒造`.
+  const breweryVariants = expandBreweryVariants(query.breweryJa)
   debugAdd(
     'Sakenowa',
     `brewery-only lookup on brewery.name_kanji ∈ {${breweryVariants.join('|')}}`,

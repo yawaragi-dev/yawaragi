@@ -36,9 +36,13 @@ The subtlety is that not every suffix gets stripped: `酒造`, `醸造`, `酒造
 
 **Example.** Label says `旭酒造株式会社`. Sakenowa has `旭酒造`. Strip `株式会社`, keep the rest.
 
-**Status.** Implemented. Same prompt section as §1.
+**Status.** Implemented in two layers:
 
-**Tracking.** PR [#117](https://github.com/yawaragi-dev/yawaragi/pull/117), `src/lib/ai/vision/anthropic-haiku-provider.ts`.
+1. **Prompt.** SYSTEM_PROMPT teaches stripping of legal-form markers (including PREFIXED `合同会社X`) AND preservation of operational suffixes (`酒造` etc). PR [#117](https://github.com/yawaragi-dev/yawaragi/pull/117), `src/lib/ai/vision/anthropic-haiku-provider.ts`. Later tightened in PR #128 with explicit prefix examples after a 蔵王 trace showed the model dropping `合同会社`.
+
+2. **Defensive lookup.** Even with the prompt explicit, the model drops operational suffixes inconsistently in production — a Takashimizu trace returned `高清水` (no suffix), `高清水酒造` (with), and `高瀬醸` (truncated) across attempts on the same bottle. `src/lib/sakenowa/brewery-variants.ts` expands a suffix-less brewery into the verbatim form + each suffix (`高清水` → `{高清水, 高清水酒造, 高清水醸造, 高清水酒造店, 高清水酒造場}`) and composes that with kanji-variant expansion. Used in both the first-pass `(brand AND brewery)` join and the brewery-only third pass (§4 / §15 / §14-rescue).
+
+**Tracking.** Prompt: PR [#117](https://github.com/yawaragi-dev/yawaragi/pull/117). Defensive expansion: PR #128.
 
 ---
 

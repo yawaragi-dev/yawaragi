@@ -572,4 +572,36 @@ describe('findSakeByBreweryOnlyFromPool', () => {
     )
     expect(result.kind).toBe('no_match')
   })
+
+  it('matches when the model dropped the 酒造 operational suffix (2026-06-11 Takashimizu shape)', async () => {
+    // Sakenowa stores `高清水酒造`. Model returned `高清水` (no
+    // suffix). `expandBreweryVariants` should add the 酒造 suffix
+    // candidate so the lookup still finds the canonical brewery.
+    await seedBrewery({
+      breweryId: 9501,
+      name: 'Takashimizu Shuzo',
+      nameKanji: '高清水酒造',
+      areaId: 5,
+    })
+    await pool.query(
+      `INSERT INTO brands
+         (brand_id, name, name_kanji, brewery_id, source, confidence, content_hash)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [9001, 'Takashimizu', '高清水', 9501, 'sakenowa', null, 'hash-takashimizu-no-suffix-9001'],
+    )
+
+    const result = await findSakeByBreweryOnlyFromPool(
+      { nameJa: '斗', breweryJa: '高清水' },
+      pool,
+    )
+
+    expect(result.kind).toBe('matched_brewery_only')
+    if (result.kind !== 'matched_brewery_only') throw new Error('unreachable; for narrowing only')
+    expect(result.sake).toMatchObject({ brandId: 9001, nameKanji: '高清水' })
+    expect(result.brewery).toMatchObject({ breweryId: 9501, nameKanji: '高清水酒造' })
+    expect(result.brandDivergence).toEqual({
+      extracted: '斗',
+      stored: '高清水',
+    })
+  })
 })
