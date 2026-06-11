@@ -114,7 +114,7 @@ The deeper issue is that the model's self-reported confidence isn't well-calibra
 
 The variant-kanji approach from §3 catches the dominant `旧字体 ↔ 新字体` failure mode but is structurally exact-match underneath. A residual class of misses needs a similarity-based approach.
 
-**Example.** A heavily-brushed brand kanji where the model returns one character off and the variant-pair list doesn't bridge the gap. (We haven't yet hit one in production; this is anticipated rather than observed.)
+**Example.** 2026-06-11 live test on `Zao_Tokubetsu_mit_Box_VERY_GOOD.webp` — a 蔵王 (Zao) bottle with brushed kanji. Model returned `name_ja: '蔵玉'` at confidence 0.92 (auto tier). The misread is **one stroke**: `王` (king) vs `玉` (jewel) differ only by the bottom-right dot. The variant-kanji fix from §3 correctly tried `{蔵玉, 藏玉}` and the brewery `{蔵玉酒造, 藏玉酒造}` — but `王/玉` aren't a 旧字体↔新字体 pair, they're a visual-similarity pair with different meanings, so the expansion can't reach the real row. Confidence 0.92 because the model is confident it *read* what it sees — the misidentification is below its character-recognition resolution.
 
 **Status.** Proposed (long-term). Pre-compute character-level / kanji n-gram embeddings for every Sakenowa brand + brewery `name_kanji`. Lookup runs exact-match (§3) first; on 0 rows runs a cosine-similarity query through pgvector and returns the top match with `kind: 'fuzzy_match'` and a similarity score. Provenance becomes `sakenowa_inferred` per ADR-0005 (deterministic math over canonical data). Threshold has to be tuned against the eval harness.
 
@@ -155,6 +155,20 @@ The variant-kanji approach from §3 catches the dominant `旧字体 ↔ 新字�
 **Status.** Open. Resolution depends on the §10 design: same-romaji results route to `ambiguous`, the visitor disambiguates by tapping. The disambiguation UX comes for free from the three-tier confidence work in [#109](https://github.com/yawaragi-dev/yawaragi/issues/109).
 
 **Tracking.** Issue [#122](https://github.com/yawaragi-dev/yawaragi/issues/122). Domain context in `/CONTEXT.md` under "Same-romaji collisions".
+
+---
+
+## 14. Single-character coherent-garbage hallucination
+
+**What it is.** A model failure mode distinct from the "low-confidence honest unknown" case. The model returns a *single kanji* in the brand field at moderate-to-high confidence (0.65–0.80) — a character that *looks* plausible as a brand name on its own (`梗` "stem", `斗` "dipper", `炎` "flame") but is actually a fragment the model hallucinated when the calligraphy defeated it. The model thinks it read correctly; it didn't. Distinct from §6 (romaji) because the script is correct; distinct from §8 (character substitution) because the issue is missing characters, not wrong ones.
+
+Real sake brand names are essentially never a single character. The shortest brand kanji in Sakenowa we've observed is two characters (`磯自慢`, `黒龍`, `酔鯨`, `獺祭` — all 2+). A one-character `name_ja` is therefore a near-certain hallucination signal independent of the model's self-reported confidence.
+
+**Example.** 2026-06-11 live test on `jin_junmai_manzairaku.jpg` — bottle is **萬歳楽 (Manzairaku)** by 小堀酒造店. Model returned `name_ja: '梗', brewery_ja: '高賢樂', confidence: 0.72` — `tier 'confirm'`. The brand-only fallback correctly returned 0 (no Sakenowa brand is `梗`). Pre-fix: visitor sees "not in our catalogue" which falsely suggests the bottle isn't in the DB. Post-fix: visitor sees the retry CTA ("couldn't read clearly — try again") and the debug overlay carries a specific event explaining the route.
+
+**Status.** Implemented. `src/lib/scan/scan-action.ts` runs `looksLikeSingleCharHallucination(name_ja)` after the Latin-only guard (§6) and before the Sakenowa lookup. Uses `Array.from(name_ja).length === 1` (code-point count, so a surrogate-pair kanji counts as 1, not 2). Routes to `low_confidence` with a warn-level debug event identifying the single character and the model's confidence.
+
+**Tracking.** Shipped in PR #128 (S4 PR A). Not its own issue — the single-character heuristic is a follow-up defensive guard on the same calibration / hallucination surface as §6 and §8.
 
 ---
 

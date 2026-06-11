@@ -96,6 +96,31 @@ function containsNoJapaneseScript(value: string): boolean {
 }
 
 /**
+ * Real-world sake brand names in Sakenowa are essentially never a
+ * single character — the shortest brand kanji we've observed is two
+ * characters (e.g. `磯自慢`, `黒龍`, `酔鯨`). A one-character `name_ja`
+ * is a strong signal that the model produced "high-confidence
+ * coherent garbage" — it returned a single kanji that *looks*
+ * plausible (`梗` "stem", `斗` "dipper") at a confidence that
+ * normally implies a clean read, but it's a hallucinated fragment,
+ * not a real brand. Caught in 2026-06-11 mobile testing on a
+ * `jin_junmai_manzairaku.jpg` photo: model returned `name_ja: '梗'`
+ * at confidence 0.72 (tier 'confirm') — Sakenowa lookup correctly
+ * returned no_match, but the visitor never gets to see *why* the
+ * scan failed unless we surface the heuristic in the debug overlay.
+ *
+ * Routing to `low_confidence` is the right outcome: the visitor sees
+ * a "couldn't read clearly" CTA and re-scans, instead of a confusing
+ * "not in our catalogue" message that suggests the bottle isn't in
+ * Sakenowa when really the model just hallucinated.
+ */
+function looksLikeSingleCharHallucination(name_ja: string): boolean {
+  // `Array.from` counts code points, not UTF-16 units, so a surrogate-
+  // pair kanji (rare in sake names, but possible) reads as 1 not 2.
+  return Array.from(name_ja).length === 1
+}
+
+/**
  * Server Action invoked by `<ScanForm />`. `_prev` is the previous
  * `useActionState` value (ignored — every submission is fresh). The
  * `formData` carries the downscaled JPEG under `image` and the visitor's
@@ -190,6 +215,26 @@ export async function scanAction(
             brewery_ja: extraction.brewery_ja,
             nameJaIsLatinOnly: containsNoJapaneseScript(extraction.name_ja),
             breweryJaIsLatinOnly: containsNoJapaneseScript(extraction.brewery_ja),
+          },
+          'warn',
+        )
+        return { status: 'low_confidence', extraction }
+      }
+
+      // Single-character brand hallucination guard. See the
+      // `looksLikeSingleCharHallucination` doc comment for context —
+      // a 1-character name_ja is a near-certain "high-confidence
+      // coherent garbage" signal. Route to low_confidence so the
+      // visitor sees "couldn't read clearly, try again" rather than
+      // a misleading "not in our catalogue".
+      if (looksLikeSingleCharHallucination(extraction.name_ja)) {
+        debugAdd(
+          'ScanAction',
+          `extraction name_ja is a single character ("${extraction.name_ja}") — likely high-confidence hallucination, routing to low_confidence`,
+          {
+            name_ja: extraction.name_ja,
+            brewery_ja: extraction.brewery_ja,
+            confidence: extraction.confidence,
           },
           'warn',
         )
