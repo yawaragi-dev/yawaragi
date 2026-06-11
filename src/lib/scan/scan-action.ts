@@ -16,6 +16,7 @@ import { anonymousRateLimit } from '@/lib/rate-limit/anonymous-rate-limit'
 import { assertRateLimitConfig } from '@/lib/rate-limit/config-gate'
 import { extractIp, hashIp } from '@/lib/rate-limit/ip-hash'
 import { UpstashKVClient } from '@/lib/rate-limit/upstash-kv-client'
+import { isKanjiVariant } from '@/lib/sakenowa/kanji-variants'
 import {
   findSakeByBrandOnly,
   findSakeByBreweryOnly,
@@ -117,6 +118,23 @@ function bestRomaji(entity: Pick<Brand | Brewery, 'name' | 'nameRomaji'>): strin
   if (entity.nameRomaji) return entity.nameRomaji
   if (entity.name) return entity.name
   return null
+}
+
+/**
+ * Returns the brand kanji to display prominently on the
+ * matched_brand_only divergence card. Prefers the visitor's
+ * extracted form (`extracted`) when it's a kanji-variant of the
+ * canonical catalogue form (`canonical`) — so a visitor who
+ * scanned `蔵王` sees `蔵王` even when Sakenowa stores `藏王`. The
+ * lookup already matched the canonical row through variant
+ * expansion; only the displayed string follows the visitor's eye.
+ *
+ * For the field-swap rescue path the `extracted` value is the
+ * model's single-char hallucination — `isKanjiVariant` returns
+ * false there and we correctly fall back to the canonical form.
+ */
+function preferExtractedWhenVariant(extracted: string, canonical: string): string {
+  return isKanjiVariant(extracted, canonical) ? extracted : canonical
 }
 
 /**
@@ -347,7 +365,13 @@ export async function scanAction(
               ...swapAttempt.breweryDivergence,
               storedRomaji: bestRomaji(swapAttempt.brewery),
             },
-            sakeKanji: swapAttempt.sake.nameKanji,
+            // Field-swap path: extraction.name_ja is a single-char
+            // hallucination, never a variant of the catalogue brand.
+            // `preferExtractedWhenVariant` correctly returns the
+            // canonical form here. We could pass `extraction.name_ja`
+            // directly to be explicit; using the helper keeps the
+            // two return sites symmetrical.
+            sakeKanji: preferExtractedWhenVariant(extraction.name_ja, swapAttempt.sake.nameKanji),
             sakeRomaji: bestRomaji(swapAttempt.sake),
           }
         }
@@ -419,7 +443,12 @@ export async function scanAction(
             ...lookup.breweryDivergence,
             storedRomaji: bestRomaji(lookup.brewery),
           },
-          sakeKanji: lookup.sake.nameKanji,
+          // Standard brand-only fallback path: if the visitor's
+          // extracted kanji is a 旧/新 variant of the canonical
+          // catalogue form, show the visitor's form so the card
+          // matches the bottle in hand. Otherwise fall back to the
+          // catalogue form.
+          sakeKanji: preferExtractedWhenVariant(extraction.name_ja, lookup.sake.nameKanji),
           sakeRomaji: bestRomaji(lookup.sake),
         }
       }

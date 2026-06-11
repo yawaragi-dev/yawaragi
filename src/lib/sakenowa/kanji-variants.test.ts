@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { generateKanjiVariants } from './kanji-variants'
+import { generateKanjiVariants, isKanjiVariant } from './kanji-variants'
 
 describe('generateKanjiVariants', () => {
   it('returns just the input verbatim for a string with no variant kanji', () => {
@@ -76,5 +76,41 @@ describe('generateKanjiVariants', () => {
     // produce the same string as the input.
     expect(generateKanjiVariants('ABC')).toEqual(['ABC'])
     expect(generateKanjiVariants('ABC').length).toBe(1)
+  })
+})
+
+describe('isKanjiVariant', () => {
+  it('returns true for identical strings', () => {
+    expect(isKanjiVariant('蔵王', '蔵王')).toBe(true)
+  })
+
+  it('returns true for the 旧字体 / 新字体 pair of the same brand (Zao)', () => {
+    // The exact case from the matched_brand_only display issue:
+    // visitor scanned `蔵王` (new form), Sakenowa stores `藏王`
+    // (old form). The UI should prefer the visitor's form.
+    expect(isKanjiVariant('蔵王', '藏王')).toBe(true)
+    expect(isKanjiVariant('藏王', '蔵王')).toBe(true)
+  })
+
+  it('returns false for strings that are not variants of each other', () => {
+    expect(isKanjiVariant('蔵王', '高清水')).toBe(false)
+    expect(isKanjiVariant('斗', '高清水')).toBe(false)
+  })
+
+  it('returns false for strings that share a character but are otherwise different', () => {
+    // 蔵 is in 蔵王 and in 蔵元 but the strings aren't variants of
+    // each other — variant means "differ only in 旧/新 form".
+    expect(isKanjiVariant('蔵王', '蔵元')).toBe(false)
+  })
+
+  it('returns true for multi-char strings where every variant character is paired', () => {
+    // 國寶 / 国宝 — both characters have 旧/新 form pairs.
+    expect(isKanjiVariant('國寶', '国宝')).toBe(true)
+    expect(isKanjiVariant('國宝', '国寶')).toBe(true)
+  })
+
+  it('handles empty strings safely', () => {
+    expect(isKanjiVariant('', '')).toBe(true)
+    expect(isKanjiVariant('蔵王', '')).toBe(false)
   })
 })
