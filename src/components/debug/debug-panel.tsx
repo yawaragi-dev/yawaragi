@@ -171,7 +171,7 @@ export function DebugPanel({
       //     stays usable. The `md:flex md:flex-col` lets the header
       //     stay a natural-height child while the events list flexes
       //     to fill the remaining height.
-      className="fixed z-50 mx-auto max-w-2xl border-t border-zinc-300 bg-zinc-50/95 backdrop-blur inset-x-0 dark:border-zinc-700 dark:bg-zinc-950/95 md:inset-x-auto md:right-0 md:top-0 md:mx-0 md:w-96 md:max-w-none md:border-l md:border-t-0 md:flex md:flex-col"
+      className="fixed z-50 mx-auto max-w-2xl overflow-hidden border-t border-zinc-300 bg-zinc-50/95 backdrop-blur inset-x-0 dark:border-zinc-700 dark:bg-zinc-950/95 md:inset-x-auto md:right-0 md:top-0 md:mx-0 md:w-96 md:max-w-none md:border-l md:border-t-0 md:flex md:flex-col"
       // `bottom` is driven by a CSS custom property the cookie banner
       // publishes (see `cookie-banner.tsx`). When the banner is open,
       // the variable equals the banner's rendered height so the debug
@@ -185,15 +185,25 @@ export function DebugPanel({
       // gives screen readers a way to skip it.
       aria-label={title}
     >
-      <header className="flex items-center justify-between border-b border-zinc-200 px-3 py-2 text-xs font-semibold dark:border-zinc-800">
-        <span>{title}</span>
-        <div className="flex items-center gap-1">
+      <header className="flex items-center gap-2 border-b border-zinc-200 px-3 py-2 text-xs font-semibold dark:border-zinc-800">
+        {/*
+          Title is hidden on the narrowest viewports because every
+          pixel of horizontal real estate competes with the action
+          buttons. `aria-label` on the <aside> already names the
+          region for screen readers, so visually hiding it on
+          small screens is a pure layout win.
+          `min-w-0` + `truncate` lets the title shrink and ellipse
+          on wider mobile if needed instead of forcing the header to
+          overflow.
+        */}
+        <span className="hidden min-w-0 truncate sm:inline">{title}</span>
+        <div className="ml-auto flex items-center gap-1">
           <button
             type="button"
             onClick={onCopy}
             disabled={events.length === 0}
             aria-label={copyLabel}
-            className="inline-flex h-6 items-center justify-center rounded px-2 text-zinc-500 hover:bg-zinc-200 hover:text-zinc-900 disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+            className="inline-flex h-6 items-center justify-center rounded px-1.5 text-zinc-500 hover:bg-zinc-200 hover:text-zinc-900 disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
             data-testid="debug-panel-copy"
           >
             {justCopied ? copiedLabel : copyLabel}
@@ -202,7 +212,7 @@ export function DebugPanel({
             type="button"
             onClick={onClear}
             aria-label={clearLabel}
-            className="inline-flex h-6 items-center justify-center rounded px-2 text-zinc-500 hover:bg-zinc-200 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+            className="inline-flex h-6 items-center justify-center rounded px-1.5 text-zinc-500 hover:bg-zinc-200 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
             data-testid="debug-panel-clear"
           >
             {clearLabel}
@@ -234,16 +244,20 @@ export function DebugPanel({
         ) : (
           <ul className="flex flex-col gap-1.5">
             {events.map((event, i) => (
-              <li key={i} className="flex items-start gap-2">
-                <span className="min-w-[3.25rem] tabular-nums text-zinc-500">
+              // `min-w-0` on the flex parent lets the flex-1 message
+              // span actually shrink — without it, long unbroken
+              // JSON forces the row (and therefore the panel) wider
+              // than the viewport on narrow mobile.
+              <li key={i} className="flex min-w-0 items-start gap-2">
+                <span className="shrink-0 min-w-[3.25rem] tabular-nums text-zinc-500">
                   +{(event.tMs / 1000).toFixed(2)}s
                 </span>
                 <span
-                  className={`min-w-[5.25rem] rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide ${SOURCE_COLORS[event.source]}`}
+                  className={`shrink-0 min-w-[5.25rem] rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide ${SOURCE_COLORS[event.source]}`}
                 >
                   {event.source}
                 </span>
-                <span className="flex-1 break-words text-zinc-800 dark:text-zinc-200">
+                <span className="flex-1 min-w-0 break-words text-zinc-800 dark:text-zinc-200">
                   {LEVEL_PREFIX[event.level]}
                   {event.message}
                   {event.data && (
