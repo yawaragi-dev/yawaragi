@@ -237,7 +237,15 @@ export function DebugPanel({
         // screen. On desktop the rail fills its parent (`md:flex-1`)
         // and the cap is lifted so long traces are scrollable across
         // the full height.
-        className="max-h-[35vh] overflow-y-auto px-3 py-2 text-xs leading-relaxed md:max-h-none md:flex-1"
+        //
+        // `overflow-x-hidden` is load-bearing: without it the
+        // browser computes `overflow-x: auto` (per CSS spec, since
+        // `overflow-y` is non-visible). Long unwrapped JSON content
+        // (kanji-array variant lists) then expanded the container
+        // horizontally inside its own scroll context, which
+        // visually overshot the panel even with the parent's
+        // `overflow-hidden`.
+        className="max-h-[35vh] overflow-x-hidden overflow-y-auto px-3 py-2 text-xs leading-relaxed md:max-h-none md:flex-1"
       >
         {events.length === 0 ? (
           <p className="text-zinc-500 italic">{emptyHint}</p>
@@ -257,11 +265,18 @@ export function DebugPanel({
                 >
                   {event.source}
                 </span>
-                <span className="flex-1 min-w-0 break-words text-zinc-800 dark:text-zinc-200">
+                <span className="flex-1 min-w-0 overflow-hidden wrap-anywhere text-zinc-800 dark:text-zinc-200">
                   {LEVEL_PREFIX[event.level]}
                   {event.message}
                   {event.data && (
-                    <code className="mt-0.5 block whitespace-pre-wrap break-all rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] text-zinc-700 dark:bg-zinc-900 dark:text-zinc-300">
+                    // `wrap-anywhere` (Tailwind v4 → `overflow-wrap:
+                    // anywhere`) is the most aggressive line-break
+                    // policy: it accounts for breaking inside
+                    // unbreakable strings to prevent overflow. Pairs
+                    // with `break-all` for double-belt coverage on
+                    // long ASCII-only segments inside the JSON
+                    // (`breweryVariants`, `nameJa`, etc).
+                    <code className="mt-0.5 block max-w-full overflow-hidden whitespace-pre-wrap wrap-anywhere break-all rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] text-zinc-700 dark:bg-zinc-900 dark:text-zinc-300">
                       {JSON.stringify(event.data)}
                     </code>
                   )}

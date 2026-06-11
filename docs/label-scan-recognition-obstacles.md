@@ -292,6 +292,33 @@ Net: `no_match`. Pre-fix, post-fix, all-fix — same outcome. The lookup chain h
 
 ---
 
+## 19. Brand truncation where the truncated form doubles as a style marker
+
+**What it is.** A cousin of §18, with an added trap. The model reads a multi-part brand name (`<prefix> + <suffix>`) and returns only the suffix. Unlike §18 where the truncated piece is a unique product line, here the suffix is *also* a recognised style marker (cask type, brewing method, presentation form). Stripping it via prompt rules — the obvious instinct — would break the cases where the suffix is genuinely part of the brand.
+
+**Example.** 2026-06-12 live test on `22180.jpg`. Model returned `name_ja: '樽酒', brewery_ja: '宮野酒造', confidence: 0.85`.
+
+`樽酒` ("tarusake") simultaneously names:
+- A real Sakenowa brand `吉野杉の樽酒` (id 2120, by `長龍酒造` id 594, Nara) — Yoshino-cedar cask aged sake from Nara. Famous bottle.
+- A real Sakenowa brand `樽平` (id 142, by `樽平酒造` id 94, Yamagata) — though the model would have returned `樽平` for that, not `樽酒`.
+- A common style marker tacked onto unrelated brands — `富久長 樽酒`, `賀茂泉 樽酒`, etc. — where the brand is the *first* word and `樽酒` is a cask-aging modifier.
+
+The brewery `宮野酒造` is hallucinated (not in Sakenowa). Without the correct brewery anchor, the lookup chain has nothing to work with.
+
+**Why we can't fix this via prompt stripping.** Adding `樽酒` to the style-modifier strip list (§1) would correctly handle `富久長 樽酒` → strip to `富久長`. But it would WRONGLY strip `吉野杉の樽酒` → `吉野杉の` (a fragment that isn't a brand) or `空` (empty if it's the whole brand). The disambiguation requires knowing which case is which, which the model can't do without per-brand prior knowledge.
+
+**Distinct from §1.** §1 lists grade descriptors (`純米大吟醸`, `磨き45`) that are *unambiguous* stripable tokens — they never form part of a brand. Style markers like `樽酒`, `古酒`, `にごり` straddle that line — sometimes they ARE part of the brand. The current §1 strip list (`無濾過 / 生酒 / ひやおろし / 古酒 / 貴醸酒 / スパークリング / にごり / 原酒`) was chosen to be unambiguous; `樽酒` doesn't pass that bar.
+
+**Status.** Open. Same approach options as §18, refined for this class:
+
+- **Per-brand mapping** would catch this if `吉野杉の樽酒` is in the table. Higher value than §18 because the ambiguity makes prompt-tightening risky — the table is the only safe fix.
+- **Embedding similarity (§8 / [#124](https://github.com/yawaragi-dev/yawaragi/issues/124)) might help here** unlike §18: `樽酒` IS a substring of `吉野杉の樽酒`, so a substring-bigram or trailing-n-gram match could surface the candidate. Not just character-level cosine, but trailing-edit-distance over the brand corpus could promote `吉野杉の樽酒` as the top candidate. Worth weighing when #124 design lands.
+- **Honest UX retreat:** even when we *might* know the brand, we can't be confident enough to navigate. The current `no_match` outcome is technically correct — the visitor's input is genuinely ambiguous.
+
+**Tracking.** Documented here. Eval harness ([#110](https://github.com/yawaragi-dev/yawaragi/issues/110)) is the right place to quantify how often this shape comes up. Add `吉野杉の樽酒` to the canary set once we believe this brand is in production demand.
+
+---
+
 ## Capture-layer obstacles
 
 Upstream of recognition but shape its failure modes.
