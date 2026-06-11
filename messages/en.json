@@ -94,6 +94,10 @@
       "rateLimited": "You've reached today's scan limit. {hours, plural, =1 {Please try again in about an hour.} other {Please try again in about # hours.}}",
       "lowConfidence": "We couldn't read this label clearly. Try a closer shot in better light.",
       "retryRescan": "Scan again",
+      "consensusTitle": "Based on your recent scans, this looks like:",
+      "consensusVotes": "{votes} of your last {total} scans agreed",
+      "consensusAccept": "Yes, open this sake page",
+      "consensusRescan": "No, scan again",
       "extractionFailed": "We couldn't process this image. Try a clear photo of a sake bottle label."
     }
   },

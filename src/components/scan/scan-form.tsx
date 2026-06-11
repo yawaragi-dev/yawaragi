@@ -25,6 +25,8 @@ import {
   INITIAL_SCAN_ACTION_STATE,
   type ScanActionState,
 } from '@/lib/scan/scan-action-state'
+import { appendMatchToHistory } from '@/lib/scan/scan-history'
+import { useScanHistoryConsensus } from '@/lib/scan/use-scan-history-consensus'
 import type { Locale } from '@/i18n/routing'
 
 interface ScanFormProps {
@@ -122,6 +124,14 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
     ])
   }
 
+  // Reactive consensus over the per-tab scan history. When the
+  // visitor's most recent scan lands in retry / low-confidence and a
+  // strict majority of past successful scans in this tab agree on a
+  // brand, we surface a "looks like X based on your recent scans"
+  // card instead of the generic retry CTA — the visitor confirms
+  // with one tap rather than rescanning again.
+  const consensus = useScanHistoryConsensus()
+
   // Auto-navigate only when the matched extraction is in the `auto`
   // confidence tier (≥ 0.85 per PRD #105). Confirm tier (0.60–0.85)
   // renders the confirm card and waits for an explicit tap — see the
@@ -132,6 +142,25 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
     if (resolveConfidenceTier(state.extraction.confidence) !== 'auto') return
     router.push(state.sakeHref)
   }, [router, state])
+
+  // Mirror every successful match into the per-tab history so the
+  // consensus mechanism can vote across recent scans. Tracks
+  // `matched` (auto + confirm tier) and `matched_brand_only` (the
+  // brewery-divergence path from #127) — those are the two states
+  // that carry a real brandId + sakeHref. Idempotent against the
+  // same state being re-rendered: we don't track timestamps to
+  // dedupe because every action invocation produces a fresh state
+  // object with a fresh `tMs` upstream.
+  useEffect(() => {
+    if (state.status === 'matched' || state.status === 'matched_brand_only') {
+      appendMatchToHistory({
+        brandId: state.brandId,
+        sakeHref: state.sakeHref,
+        nameKanji: state.extraction.name_ja,
+        tMs: Date.now(),
+      })
+    }
+  }, [state])
 
   // Mirror the server-side trace from the latest action result into
   // the app-level debug store. Guarded against re-renders that carry
@@ -327,7 +356,61 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
           {t('extractionFailed')}
         </p>
       )}
-      {state.status === 'low_confidence' && (
+      {state.status === 'low_confidence' && consensus && (
+        // Retry / low_confidence tier AND the per-tab history has a
+        // strict-majority consensus on a brand from earlier successful
+        // scans. Surface the consensus as a soft-match: "based on
+        // your recent scans, this looks like X". Explicit tap to
+        // accept — consensus over noisy retry-mode inputs is still
+        // inference, not certainty. The vote count (3 of 5) is shown
+        // so the visitor understands what the system is leaning on.
+        <div
+          className="flex flex-col gap-3"
+          data-testid="scan-result-consensus"
+        >
+          <SakenowaAttributionView
+            placement="inline"
+            poweredBy={tAttribution('poweredBy')}
+            linkLabel={tAttribution('linkLabel')}
+          />
+          <p className="text-sm text-zinc-700 dark:text-zinc-300">
+            {t('consensusTitle')}
+          </p>
+          <div className="flex flex-col gap-1">
+            <span
+              className="text-base font-medium"
+              lang="ja"
+              data-testid="scan-result-consensus-kanji"
+            >
+              {consensus.nameKanji}
+            </span>
+            <span
+              className="text-xs text-zinc-500 dark:text-zinc-500"
+              data-testid="scan-result-consensus-votes"
+            >
+              {t('consensusVotes', { votes: consensus.votes, total: consensus.total })}
+            </span>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              onClick={() => router.push(consensus.sakeHref)}
+              data-testid="scan-result-consensus-accept"
+            >
+              {t('consensusAccept')}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onPickClick}
+              data-testid="scan-result-consensus-rescan"
+            >
+              {t('consensusRescan')}
+            </Button>
+          </div>
+        </div>
+      )}
+      {state.status === 'low_confidence' && !consensus && (
         // Retry tier (confidence < 0.60). No lookup attempted upstream
         // — the model isn't confident enough about the (name, brewery)
         // pair to be worth checking against Sakenowa. We surface a

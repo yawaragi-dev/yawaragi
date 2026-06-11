@@ -94,6 +94,10 @@
       "rateLimited": "Du hast das heutige Scan-Limit erreicht. {hours, plural, =1 {Versuche es in etwa einer Stunde noch einmal.} other {Versuche es in etwa # Stunden noch einmal.}}",
       "lowConfidence": "Das Etikett ließ sich nicht deutlich lesen. Versuche eine Nahaufnahme bei besserem Licht.",
       "retryRescan": "Erneut scannen",
+      "consensusTitle": "Anhand deiner letzten Scans sieht das hier so aus:",
+      "consensusVotes": "{votes} von deinen letzten {total} Scans stimmten überein",
+      "consensusAccept": "Ja, Sake-Seite öffnen",
+      "consensusRescan": "Nein, erneut scannen",
       "extractionFailed": "Dieses Bild konnte nicht verarbeitet werden. Versuche ein deutliches Foto eines Sake-Flaschenetiketts."
     }
   },
