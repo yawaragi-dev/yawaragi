@@ -354,6 +354,27 @@ Post-fix the Sawanotsuru bottle flips from `ambiguous` (with wrong candidates) t
 
 ---
 
+## 21. Total model surrender / same-string hallucination
+
+**What it is.** The model emits an identical plausible-looking kanji string in BOTH `name_ja` and `brewery_ja` with moderate-to-high confidence. This isn't a misread of the bottle — the model didn't read the label at all. It produced a confident-sounding guess where both fields happen to be byte-identical.
+
+Distinct from every other class catalogued here. §5, §15, §17, §19, §20 all have at least one field with useful signal — a rice variety, a real brand the model put in the wrong place, a sub-line of the right brand. Here both fields are fabrications with no relation to the label.
+
+**Example.** 2026-06-12 trace on `PXL_..._084646226.jpg`. Actual bottle: `谷川岳 超辛純米` by `永井酒造` (Brand 273, Brewery 191, Gunma — Tanigawadake by Nagai Shuzo). Model returned `name_ja: '玄白', brewery_ja: '玄白', confidence: 0.65`. The kanji `玄白` doesn't appear anywhere on the label. Confidence 0.65 still lands in the `confirm` tier (≥0.60), so the system attempted lookup. All four passes correctly missed.
+
+**Status.** Open — but with a small optimisation shipped in PR #128. When `name_ja === brewery_ja`, the 4th-pass field-swap (brand-only on `brewery_ja`) would be byte-identical to the step-2 brand-only call that already returned 0 rows. The lookup now short-circuits the redundant query in this case. Saves one DB round-trip and produces a clearer debug trace.
+
+The core failure shape itself has no code rescue. When both fields are simultaneously wrong AND identical, no fallback chain can reach the truth. The honest outcome is `no_match` → retry CTA, which is what the visitor sees today.
+
+**What might help long-term:**
+- **§16 consensus.** If the visitor scans the same bottle multiple times and even one attempt returns something close to the right brand+brewery, the history mechanism would surface it. Single-shot is unrecoverable.
+- **Eval harness ([#110](https://github.com/yawaragi-dev/yawaragi/issues/110)).** Quantify how often the model surrenders into this same-string shape. May correlate with photo quality, lighting, unfamiliar fonts, or specific calligraphy styles. The relative frequency is what would justify the failover decision in [#113](https://github.com/yawaragi-dev/yawaragi/issues/113).
+- **Better vision model.** Out-of-scope for this catalogue but the structural answer.
+
+**Tracking.** Documented here. Redundant-pass short-circuit shipped in PR #128 alongside this entry.
+
+---
+
 ## Capture-layer obstacles
 
 Upstream of recognition but shape its failure modes.

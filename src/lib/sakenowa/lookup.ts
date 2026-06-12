@@ -428,6 +428,18 @@ export async function findSakeByExtractionFromPool(
   // visitor's actual brewery_ja in the divergence, not the swapped
   // value (which happens to be identical here but the rewrite is
   // explicit for clarity).
+  //
+  // Short-circuit: when `name_ja === brewery_ja` (the model's "total
+  // surrender" shape from §21 — same string in both fields), the
+  // 4th-pass query is byte-identical to the step-2 brand-only call
+  // that already returned no rows. Save the round-trip.
+  if (query.nameJa === query.breweryJa) {
+    debugAdd(
+      'Sakenowa',
+      'skipping field-swap pass — name_ja === brewery_ja so the lookup would re-issue the brand-only query that already missed',
+    )
+    return { kind: 'no_match', query }
+  }
   debugAdd(
     'Sakenowa',
     `brewery-only missed; trying field-swap (brand-only on brewery_ja "${query.breweryJa}")`,
