@@ -460,16 +460,23 @@ describe('findSakeByExtractionFromPool', () => {
     )
 
     const result = await findSakeByExtractionFromPool(
-      // Model returns the Latin brand verbatim per the prompt update,
-      // plus a Japanese-script brewery (still required for that field).
-      { nameJa: 'SHANGRI-LA', breweryJa: 'テスト酒造' },
+      // Brewery_ja deliberately does NOT match the seeded brewery,
+      // so passes 1–4 (which all join through brewery) all miss and
+      // the chain falls through to the 5th-pass Latin lookup. That
+      // pass matches the seeded brand 9001 case-insensitively
+      // (SHANGRI-LA → Shangri-la).
+      { nameJa: 'SHANGRI-LA', breweryJa: '存在しない酒造' },
       pool,
     )
 
     expect(result.kind).toBe('matched_brand_only')
     if (result.kind !== 'matched_brand_only') throw new Error('unreachable; for narrowing only')
     expect(result.sake).toMatchObject({ brandId: 9001, name: 'Shangri-la' })
-    // case-insensitive: SHANGRI-LA in query matched Shangri-la in catalogue
+    // The divergence's `extracted` field carries the visitor's
+    // original (unmatched) brewery_ja so the divergence card
+    // surfaces the gap honestly.
+    expect(result.breweryDivergence.extracted).toBe('存在しない酒造')
+    expect(result.breweryDivergence.stored).toBe('テスト酒造')
   })
 
   it('matches across hiragana ↔ katakana for kana brands (2026-06-12 script-coverage)', async () => {
