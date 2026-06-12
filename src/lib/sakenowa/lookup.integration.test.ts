@@ -631,6 +631,85 @@ describe('findSakeByBreweryOnlyFromPool', () => {
     expect(result.candidates.map((c) => c.brandId).sort()).toEqual([9001, 9002])
   })
 
+  it('prefers the same-name brand under a mono-brand brewery (2026-06-12 Sawanotsuru shape)', async () => {
+    // Real 22177 trace: bottle is 沢の鶴 純米酒 by 沢の鶴 brewery
+    // (Nada, Kobe). Sakenowa Brewery 576 has multiple brands
+    // including Brand 2008 (same name `沢の鶴`) and others like
+    // 鶴の舞, 酒道粋人. The model returned the brewery correctly
+    // (`沢の鶴`) but invented a brand (`八仙`) — common mono-brand-
+    // brewery failure shape.
+    //
+    // Pre-fix: brewery-only finds 3 brands, routes to ambiguous,
+    // visitor sees confusing list. The LIMIT 2 + ORDER BY brand_id
+    // bug even meant Brand 2008 was off the end of the candidates.
+    // Post-fix: same-name preference picks the main brand.
+    await seedBrewery({
+      breweryId: 9501,
+      name: 'Sawanotsuru',
+      nameKanji: '沢の鶴',
+      areaId: 28,
+    })
+    await pool.query(
+      `INSERT INTO brands
+         (brand_id, name, name_kanji, brewery_id, source, confidence, content_hash)
+       VALUES
+         ($1, $2, $3, $4, $5, $6, $7),
+         ($8, $9, $10, $11, $12, $13, $14),
+         ($15, $16, $17, $18, $19, $20, $21)`,
+      [
+        9001, 'Tsurunomai', '鶴の舞', 9501, 'sakenowa', null, 'hash-monobrand-tsurunomai',
+        9002, 'Shudosuijin', '酒道粋人', 9501, 'sakenowa', null, 'hash-monobrand-shudosuijin',
+        // Same-name main brand seeded LAST so brand_id is the
+        // highest of the three — pre-fix it would have been dropped
+        // by the LIMIT 2 + ORDER BY brand_id.
+        9003, 'Sawanotsuru', '沢の鶴', 9501, 'sakenowa', null, 'hash-monobrand-sawanotsuru-main',
+      ],
+    )
+
+    const result = await findSakeByBreweryOnlyFromPool(
+      // Real model output: junk brand, correct brewery.
+      { nameJa: '八仙', breweryJa: '沢の鶴' },
+      pool,
+    )
+
+    expect(result.kind).toBe('matched_brewery_only')
+    if (result.kind !== 'matched_brewery_only') throw new Error('unreachable; for narrowing only')
+    expect(result.sake).toMatchObject({ brandId: 9003, nameKanji: '沢の鶴' })
+    expect(result.brewery).toMatchObject({ breweryId: 9501, nameKanji: '沢の鶴' })
+    expect(result.brandDivergence).toEqual({
+      extracted: '八仙',
+      stored: '沢の鶴',
+    })
+  })
+
+  it('falls through to ambiguous when 2+ brands share the brewery name across different breweries', async () => {
+    // Edge case: two breweries each named `白鹿` (one Ibaraki, one
+    // Hyogo) where each has a main brand also called `白鹿`. The
+    // same-name preference would have two candidates — we can't
+    // unambiguously pick, so we fall through to ambiguous and let
+    // the disambiguation UI handle it.
+    await seedBrewery({ breweryId: 9501, name: 'Brewery A', nameKanji: '白鹿', areaId: 8 })
+    await seedBrewery({ breweryId: 9502, name: 'Brewery B', nameKanji: '白鹿', areaId: 28 })
+    await pool.query(
+      `INSERT INTO brands
+         (brand_id, name, name_kanji, brewery_id, source, confidence, content_hash)
+       VALUES ($1, $2, $3, $4, $5, $6, $7), ($8, $9, $10, $11, $12, $13, $14)`,
+      [
+        9001, 'Hakushika', '白鹿', 9501, 'sakenowa', null, 'hash-same-name-collide-9001',
+        9002, 'Hakushika', '白鹿', 9502, 'sakenowa', null, 'hash-same-name-collide-9002',
+      ],
+    )
+
+    const result = await findSakeByBreweryOnlyFromPool(
+      { nameJa: '幻', breweryJa: '白鹿' },
+      pool,
+    )
+
+    expect(result.kind).toBe('ambiguous')
+    if (result.kind !== 'ambiguous') throw new Error('unreachable; for narrowing only')
+    expect(result.candidates.map((c) => c.brandId).sort()).toEqual([9001, 9002])
+  })
+
   it('returns {kind: "no_match"} when the brewery kanji is not in Sakenowa', async () => {
     // Don't seed anything — query against the brewery kanji of a
     // brewery that doesn't exist.

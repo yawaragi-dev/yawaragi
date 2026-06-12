@@ -276,8 +276,16 @@ const SELECT_BRANDS_AND_BREWERIES_BY_BRAND_KANJI = `
 // as `高清水酒造`. Brand-only fallback missed (no Sakenowa brand is
 // `寺田`); brewery-only fallback finds the Takashimizu line because
 // the brewery exists. Mono-brand breweries match cleanly here;
-// multi-brand breweries return 2+ rows and route to ambiguous
-// (which S4 PR B's disambiguation list will surface properly).
+// multi-brand breweries return 2+ rows and either route to the
+// same-name preference (mono-brand main line) or ambiguous.
+//
+// ORDER BY puts the brand-name-equals-brewery-name row first when
+// it exists. This is the "main brand" for mono-brand breweries
+// like 沢の鶴 (Sakenowa Brand 2008 under Brewery 576, same name) —
+// the visitor who scans a 沢の鶴 bottle expects to land on it, not
+// the brewery's sub-line catalogue. LIMIT 5 gives us enough rows
+// to detect "multiple same-name candidates" (would fall through to
+// ambiguous) while staying bounded.
 const SELECT_BRANDS_AND_BREWERIES_BY_BREWERY_KANJI = `
   SELECT
     br.brand_id          AS brand_brand_id,
@@ -297,8 +305,10 @@ const SELECT_BRANDS_AND_BREWERIES_BY_BREWERY_KANJI = `
   FROM brands br
   JOIN breweries b ON b.brewery_id = br.brewery_id
   WHERE b.name_kanji = ANY($1)
-  ORDER BY br.brand_id
-  LIMIT 2
+  ORDER BY
+    (CASE WHEN br.name_kanji = b.name_kanji THEN 0 ELSE 1 END),
+    br.brand_id
+  LIMIT 5
 `
 
 interface BrandWithBreweryRow {
@@ -562,6 +572,39 @@ export async function findSakeByBreweryOnlyFromPool(
       query,
     }
   }
+
+  // 2+ brands under this brewery. Prefer the row where the brand
+  // shares the brewery's kanji — the "main brand" for mono-brand
+  // breweries (沢の鶴, Brewery 576 / Brand 2008 in Sakenowa; same
+  // pattern for 賀茂泉, 大七, plenty of others). The SQL ORDER BY
+  // puts same-name rows first, so we check rows[0] and confirm
+  // it's *the only* same-name candidate before promoting. If two
+  // breweries with the same kanji each have a same-name main
+  // brand the lookup correctly falls through to ambiguous (the
+  // visitor needs to disambiguate which brewery).
+  const sameNameRows = breweryOnlyRows.filter(
+    (r) => r.brand_name_kanji === r.brewery_name_kanji,
+  )
+  if (sameNameRows.length === 1) {
+    const matched = sameNameRows[0]
+    const brand = brandFromJoinedRow(matched)
+    const brewery = breweryFromJoinedRow(matched)
+    debugAdd(
+      'Sakenowa',
+      `brewery-only found ${breweryOnlyRows.length} brands; promoting the same-name main "${brand.nameKanji}" (mono-brand preference)`,
+    )
+    return {
+      kind: 'matched_brewery_only',
+      sake: brand,
+      brewery,
+      brandDivergence: {
+        extracted: query.nameJa,
+        stored: brand.nameKanji,
+      },
+      query,
+    }
+  }
+
   return {
     kind: 'ambiguous',
     candidates: breweryOnlyRows.map(brandFromJoinedRow),

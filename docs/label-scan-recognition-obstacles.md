@@ -325,6 +325,35 @@ The brewery `宮野酒造` is hallucinated (not in Sakenowa). Without the correc
 
 ---
 
+## 20. Mono-brand brewery: brand and brewery share a name
+
+**What it is.** Many breweries have a single main brand whose kanji matches the brewery's own name. `沢の鶴` (brand) by `沢の鶴` (brewery). `大七` by `大七酒造`. `賀茂泉` by `賀茂泉酒造`. The vision model has a strong prior that "brand" and "brewery" are distinct labels, so when both fields would have the same kanji on the bottle, the model picks one and *invents* the other — almost always inventing the brand. The brewery field gets the correct kanji; the brand field gets a hallucination.
+
+This is a focused subclass of §15 (brand hallucination with correct brewery). The fix is also more focused — when the brewery matches and has multiple candidate brands, *one of which has the same kanji as the brewery*, that's almost certainly the main line the visitor scanned.
+
+**Example.** 2026-06-12 trace on a `沢の鶴 純米酒 山田錦` bottle from Nada (Hyogo). Model returned:
+
+```
+name_ja:    八仙     ← invented; not on the label at all
+brewery_ja: 沢の鶴   ← correct, the brewery + main brand share this kanji
+confidence: 0.92
+```
+
+Sakenowa Brewery 576 (`沢の鶴`) has multiple brands: Brand 775 (`鶴の舞`), Brand 776 (`酒道粋人`), Brand 2008 (`沢の鶴`), and others. Pre-fix the brewery-only pass returned `ambiguous` with candidates 775 + 776 — Brand 2008 (the actually-correct main line) was *off the end of the `LIMIT 2`* because the SQL ordered by `brand_id`. The visitor would have seen an ambiguous list of sub-lines that didn't include their bottle.
+
+**Status.** Implemented in PR #128. Two changes to `SELECT_BRANDS_AND_BREWERIES_BY_BREWERY_KANJI`:
+
+1. **`ORDER BY (CASE WHEN br.name_kanji = b.name_kanji THEN 0 ELSE 1 END), br.brand_id`** — promotes the same-name brand row to the top so it can't be `LIMIT`-truncated off the end.
+2. **`LIMIT 5`** (from 2) — gives `findSakeByBreweryOnlyFromPool` enough headroom to detect "multiple same-name candidates across different breweries" without being unbounded.
+
+`findSakeByBreweryOnlyFromPool` then promotes the same-name row to `matched_brewery_only` when EXACTLY ONE brand under the matched brewery has the same kanji as the brewery. If 2+ same-name candidates exist (rare: two different breweries with the same kanji each having a main brand) it falls through to `ambiguous` so the visitor disambiguates which brewery.
+
+Post-fix the Sawanotsuru bottle flips from `ambiguous` (with wrong candidates) to `matched_brewery_only` carrying `沢の鶴` (Brand 2008) with a brand-divergence card "Label: 八仙 · Catalogue: 沢の鶴".
+
+**Tracking.** Shipped in PR #128. Same-name preference is conservative — only fires when there's exactly one same-name candidate, otherwise the existing ambiguous behaviour kicks in.
+
+---
+
 ## Capture-layer obstacles
 
 Upstream of recognition but shape its failure modes.
