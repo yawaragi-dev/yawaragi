@@ -456,9 +456,12 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
         // Retry tier (confidence < 0.60). No lookup attempted upstream
         // — the model isn't confident enough about the (name, brewery)
         // pair to be worth checking against Sakenowa. We surface a
-        // discovery-framed hint ("try a closer shot") plus an explicit
-        // rescan button so the visitor doesn't have to scroll back up
-        // to the file picker.
+        // discovery-framed hint ("try a closer shot") plus a
+        // back-label hint (real-world bottles like 二世古 ship
+        // designer-driven front labels the model can't parse but
+        // legible regulatory back labels), plus an explicit rescan
+        // button so the visitor doesn't have to scroll back up to
+        // the file picker.
         <div
           className="flex flex-col gap-2"
           data-testid="scan-result-retry"
@@ -469,6 +472,12 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
             data-testid="scan-error-low-confidence"
           >
             {t('lowConfidence')}
+          </p>
+          <p
+            className="text-xs text-zinc-500 dark:text-zinc-500"
+            data-testid="scan-result-back-label-hint"
+          >
+            {t('backLabelHint')}
           </p>
           <div>
             <Button
@@ -483,12 +492,23 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
         </div>
       )}
       {state.status === 'no_match' && (
-        <p
-          className="text-sm text-zinc-700 dark:text-zinc-300"
+        // Bottle wasn't found in the catalogue. Sometimes this is
+        // genuine (limited edition, collaboration product — covered
+        // by §22/§23) and sometimes the model fabricated a
+        // confidently-shaped name unrelated to the bottle (§23).
+        // The back-label hint covers the latter case.
+        <div
+          className="flex flex-col gap-2"
           data-testid="scan-result-no-match"
         >
-          {t('noMatch')}
-        </p>
+          <p className="text-sm text-zinc-700 dark:text-zinc-300">{t('noMatch')}</p>
+          <p
+            className="text-xs text-zinc-500 dark:text-zinc-500"
+            data-testid="scan-result-no-match-back-label-hint"
+          >
+            {t('backLabelHint')}
+          </p>
+        </div>
       )}
       {state.status === 'ambiguous' && (() => {
         // Disambiguation list. Each candidate carries its brand

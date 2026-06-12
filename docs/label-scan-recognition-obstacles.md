@@ -422,6 +422,37 @@ What still doesn't help:
 
 ---
 
+## 23. Stylized-label failure: model fabricates a confidently-shaped mono-brand name
+
+**What it is.** The front label of the bottle is designer-driven and the model can't read it — the kanji is brushed, decorative, broken across multiple lines, or composited with non-kanji graphics. Rather than dropping confidence, the model **emits the mono-brand pattern (`X / X酒造`) with a confidently-named `X` that has zero relation to the bottle.** High confidence (often 0.85+), looks structurally valid, fabricated end-to-end.
+
+Distinct from:
+- §8 (character-shape substitution): swaps one character of a real brand for a visually-similar one. Embedding similarity (#124) would catch it.
+- §21 (model surrender → same string in both fields): model emits an identical hallucinated string in both fields. No code rescue possible.
+- This (§23): model emits the §20-shaped mono-brand pattern but the kanji has no relation to the bottle. The first three passes plus field-swap all miss because `X` doesn't exist in Sakenowa at all. No catalogue gap to blame — the brand and brewery DO exist under their real names; the model just gave up.
+
+**Examples.** Both from 2026-06-12 testing:
+
+- `17812830102893231674443333275496.jpg` — actual bottle is `二世古 純米大吟醸` by `二世古酒造` (Brand 1611, Brewery 923, Hokkaido — both in Sakenowa). Front label stylized to the point of being unreadable. Model returned `name_ja: '熱海', brewery_ja: '熱海酒造', confidence: 0.92`. Zero overlap with the real kanji (二世古 is 3 chars; 熱海 is 2 chars; no shared characters). Total fabrication.
+
+- `1781283053034529917091330569505.jpg` — likely `鍋島 (Nabeshima)` by `富久千代酒造` (Brand 975, Brewery 758, Saga — both in Sakenowa). Famous premium brand. Model returned `name_ja: '鹿島', brewery_ja: '鹿島酒造', confidence: 0.85`. This could be §8 (鍋 ↔ 鹿) OR §23 — without comparing labels side by side, ambiguous. If `鍋 → 鹿` is a real character substitution the model committed, §8 (and #124 would catch). If it's confident fabrication, §23.
+
+**Status.** Documented, no per-failure rescue possible. Two complementary mitigations shipped in PR #128:
+
+1. **`backLabelHint` UI string.** When the visitor lands on `low_confidence` (retry) OR `no_match`, the panel now includes a hint: *"Tip: if the front label is stylized, try the back — the brewery name and kanji are usually clearer there."* Real-world bottles like 二世古 ship readable regulatory information on the back label even when the front is undecipherable. Two i18n strings (EN + DE), rendered between the existing copy and the rescan button.
+
+2. **Conscious choice NOT to add fuzzy code rescue.** Adding character-level Levenshtein or any "find a brand within edit distance K" pass would have catastrophic false-positive rates on §23. The fabricated name `熱海` is 2-char away from `鳴海`, `愛海`, `滄海`, `熱錢`, etc — none of which are the visitor's bottle. Confidently navigating to a wrong sake based on a fabricated extraction is worse than `no_match` with a useful hint.
+
+**What would actually help long-term:**
+- **#110 eval harness** to measure §23's frequency. Could be 5 % of failures, could be 30 %; the answer informs whether to invest in stylized-label-specific tooling.
+- **Multi-shot capture** — the front-or-back decision could be visitor-driven (two photos) and the system could combine. Out of scope; a Phase 4 idea.
+- **#124 embedding similarity** does NOT help §23 — embeddings can't bridge "the model gave up" gap. Only catches §8 (real substitution).
+- **Better vision model.** The structural answer.
+
+**Tracking.** Documented here. UI hint shipped in PR #128. No issue filed — eval harness needs to weigh in before any specific intervention.
+
+---
+
 ## Capture-layer obstacles
 
 Upstream of recognition but shape its failure modes.

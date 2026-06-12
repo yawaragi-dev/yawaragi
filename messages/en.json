@@ -102,6 +102,7 @@
       "rateLimited": "You've reached today's scan limit. {hours, plural, =1 {Please try again in about an hour.} other {Please try again in about # hours.}}",
       "lowConfidence": "We couldn't read this label clearly. Try a closer shot in better light.",
       "retryRescan": "Scan again",
+      "backLabelHint": "Tip: if the front label is stylized, try the back — the brewery name and kanji are usually clearer there.",
       "consensusTitle": "Based on your recent scans, this looks like:",
       "consensusVotes": "{votes} of your last {total} scans agreed",
       "consensusAccept": "Yes, open this sake page",
