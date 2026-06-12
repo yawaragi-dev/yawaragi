@@ -198,6 +198,17 @@ export function DebugPanel({
         */}
         <span className="hidden min-w-0 truncate sm:inline">{title}</span>
         <div className="ml-auto flex items-center gap-1">
+          {/*
+            `disabled` and the inner label both depend on
+            client-only state — `events` comes from sessionStorage
+            via `useSyncExternalStore`, so the server snapshot
+            (always empty) and the first client render (sessionStorage
+            value) can legitimately differ. `suppressHydrationWarning`
+            tells React this attribute mismatch is intentional rather
+            than a bug. Applied to the inner span too so the "Copy"
+            ↔ "Copied" toggle doesn't trip the warning on the next
+            paint.
+          */}
           <button
             type="button"
             onClick={onCopy}
@@ -205,8 +216,9 @@ export function DebugPanel({
             aria-label={copyLabel}
             className="inline-flex h-6 items-center justify-center rounded px-1.5 text-zinc-500 hover:bg-zinc-200 hover:text-zinc-900 disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
             data-testid="debug-panel-copy"
+            suppressHydrationWarning
           >
-            {justCopied ? copiedLabel : copyLabel}
+            <span suppressHydrationWarning>{justCopied ? copiedLabel : copyLabel}</span>
           </button>
           <button
             type="button"
