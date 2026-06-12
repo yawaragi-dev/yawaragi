@@ -442,6 +442,31 @@ describe('findSakeByExtractionFromPool', () => {
     expect(result.query).toEqual({ nameJa: '菊姫', breweryJa: '存在しない酒造' })
   })
 
+  it('matches across hiragana ↔ katakana for kana brands (2026-06-12 script-coverage)', async () => {
+    // Sakenowa publishes 169 hiragana-only and 35 katakana-only
+    // brands. If the model returns one form and the catalogue
+    // stores the other (or vice versa), the kana-cross expansion
+    // bridges them.
+    await seedBrewery({ breweryId: 9501, name: 'Test', nameKanji: 'テスト酒造', areaId: 1 })
+    await pool.query(
+      `INSERT INTO brands
+         (brand_id, name, name_kanji, brewery_id, source, confidence, content_hash)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      // Sakenowa stores the brand in hiragana.
+      [9001, 'Umami', 'うまみ', 9501, 'sakenowa', null, 'hash-kana-cross-9001'],
+    )
+
+    const result = await findSakeByExtractionFromPool(
+      // Model returned the katakana form.
+      { nameJa: 'ウマミ', breweryJa: 'テスト酒造' },
+      pool,
+    )
+
+    expect(result.kind).toBe('exact')
+    if (result.kind !== 'exact') throw new Error('unreachable; for narrowing only')
+    expect(result.sake).toMatchObject({ brandId: 9001, nameKanji: 'うまみ' })
+  })
+
   it('returns {kind: "matched_brewery_only"} when first-pass + brand-only both miss but brewery-only finds a mono-brand brewery', async () => {
     // The motivating real-world case: Takashimizu bottle, model
     // returned brewery 高清水酒造 correctly but hallucinated brand

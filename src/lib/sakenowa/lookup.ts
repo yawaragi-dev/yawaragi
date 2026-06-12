@@ -15,8 +15,11 @@ import {
   rowToFlavorChart,
   rowToRanking,
 } from './db'
-import { expandBreweryVariants, expandPossibleBrandVariants } from './brewery-variants'
-import { generateKanjiVariants } from './kanji-variants'
+import {
+  expandBrandVariants,
+  expandBreweryVariants,
+  expandPossibleBrandVariants,
+} from './brewery-variants'
 import { publicQuery } from '../supabase/public-query'
 import { getServerDbPool } from '../supabase/server-client'
 
@@ -356,17 +359,15 @@ export async function findSakeByExtractionFromPool(
   query: SakeLookupQuery,
   pool: Pool,
 ): Promise<FindSakeByExtractionResult> {
-  // Expand each kanji input to its old-form / new-form siblings so a
-  // model output of 蔵王 (新字体) matches Sakenowa's 藏王 (旧字体).
-  // For strings without variant kanji, the arrays collapse to a
-  // single element and the query behaves identically to the previous
-  // exact-match shape.
-  //
-  // Brewery additionally expands to cover missing operational
-  // suffixes (`高清水` → `{高清水, 高清水酒造, …}`) — the SYSTEM_PROMPT
-  // tells the model to keep them but in production it drops them
-  // inconsistently. See `expandBreweryVariants`.
-  const nameVariants = generateKanjiVariants(query.nameJa)
+  // Brand and brewery variant expansion. Both passes compose:
+  //   - kana-cross siblings (hiragana ↔ katakana — ~10 % of
+  //     Sakenowa entries are kana-bearing)
+  //   - kanji 旧字体 ↔ 新字体 variants (蔵王 ↔ 藏王)
+  // Brewery additionally adds suffix expansion (`高清水` → `{高清水,
+  // 高清水酒造, …}`) because the model drops operational suffixes
+  // inconsistently. See `expandPossibleBrandVariants` and
+  // `expandBreweryVariants`.
+  const nameVariants = expandBrandVariants(query.nameJa)
   const breweryVariants = expandBreweryVariants(query.breweryJa)
   debugAdd(
     'Sakenowa',

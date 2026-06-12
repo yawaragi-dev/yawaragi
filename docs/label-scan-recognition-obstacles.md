@@ -375,6 +375,38 @@ The core failure shape itself has no code rescue. When both fields are simultane
 
 ---
 
+## 22. Script-coverage gaps — kana and Latin brand names
+
+**What it is.** Until 2026-06-12 the lookup chain joined exclusively on `name_kanji` with only 旧字体 ↔ 新字体 kanji-variant expansion. A direct audit of the Sakenowa upstream payload shows the catalogue is meaningfully broader than "kanji":
+
+| Script profile | Brands | Examples |
+|---|---|---|
+| Pure kanji        | 2 200 (69.5 %) | `獺祭`, `八海山`, `久保田` |
+| Mixed kanji + kana | 653 (20.6 %)   | `風のささやき`, `北の誉`, `えぞ乃熊` |
+| Pure hiragana     | 169 (5.3 %)    | `ゆめほなみ`, `あたごのまつ`, `まほろば` |
+| Pure Latin        | 110 (3.5 %)    | `Shangri-la`, `I LOVE SUSHI`, `Highland` |
+| Pure katakana     | 35 (1.1 %)     | `ラッキーキャッツ`, `タクシードライバー` |
+
+**~10 % of Sakenowa brands are stored in non-kanji scripts**, plus another 20 % include kana characters mixed with kanji. The old `name_kanji = ANY([kanji-variants])` lookup couldn't reach any of them when the model returned a script-cross form.
+
+**Example.** 2026-06-12 trace on a `UMAMI` collaboration bottle by 川鶴酒造 × 柴田屋酒店. The label shows the brand in katakana (`うまみ`) plus Latin (`UMAMI`). Model returned `name_ja: '梅実'` — a wrong-kanji transliteration of what's actually kana on the label. Even before considering the catalogue gap (UMAMI is a collaboration product not in Sakenowa), the lookup couldn't even *try* the kana form because the variant expansion was kanji-only.
+
+**Status.** Implemented (kana-cross only) in PR #128. New `kana-variants.ts` adds `expandKanaVariants(text)` which adds hiragana ↔ katakana siblings via the deterministic Unicode-offset 0x60 mapping (per-character, so mixed kanji+kana strings get the kana portion flipped while the kanji portion stays). Wired into both `expandBrandVariants` (used by first-pass and standalone brand-only) and `expandBreweryVariants` (used by third-pass brewery-only), via composition with the existing kanji-variant pass. Tests cover empty / pure kanji / hiragana → katakana / katakana → hiragana / mixed-script / long-vowel-mark (ー) edge case.
+
+What this fix DOES catch:
+- Model returns `うまみ`, Sakenowa stores `ウマミ` → matches via katakana variant.
+- Model returns `ラッキー`, Sakenowa stores `らっきー` → matches via hiragana variant.
+- Mixed-script `風のささやき` ↔ `風ノササヤキ`.
+
+What this fix does NOT catch:
+- **Latin ↔ Japanese** bridging (110 Latin-only brands like `Shangri-la`). Would need a separate join path against the Sakenowa-published `name` field (which often holds the canonical Latin form) or the LLM-derived `name_romaji`. Deferred.
+- **Wrong-kanji hallucination from kana** (the UMAMI / 梅実 trace). The model picked kanji that read "umemi" instead of returning the kana form — the bug is upstream of the lookup. Prompt tightening could help ("if the label is in katakana, return katakana; do not convert to kanji").
+- **Catalogue gap for collaboration / limited / special-edition products.** Sakenowa's brand model is main-line only. The UMAMI case fails for this reason regardless of script bridging.
+
+**Tracking.** Kana-cross shipped in PR #128. Latin ↔ Japanese bridging and the prompt-tightening for "don't convert kana to kanji" are deferred — file as a follow-up after PR B (#109) lands if eval data shows they're frequent.
+
+---
+
 ## Capture-layer obstacles
 
 Upstream of recognition but shape its failure modes.

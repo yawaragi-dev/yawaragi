@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  expandBrandVariants,
   expandBreweryVariants,
   expandPossibleBrandVariants,
   stripOperationalSuffix,
@@ -132,7 +133,48 @@ describe('expandPossibleBrandVariants', () => {
     expect(variants).toHaveLength(3)
   })
 
+  it('adds the hiragana ↔ katakana cross for kana brand inputs (2026-06-12 script-coverage fix)', () => {
+    // Sakenowa has 169 pure-hiragana brands and 35 pure-katakana
+    // brands. If the model returns one kana form and the catalogue
+    // stores the other, kana-cross expansion bridges the gap.
+    const variants = expandPossibleBrandVariants('うまみ')
+    expect(variants).toContain('うまみ')
+    expect(variants).toContain('ウマミ')
+  })
+
   it('handles empty input safely', () => {
     expect(expandPossibleBrandVariants('')).toEqual([''])
+  })
+})
+
+describe('expandBrandVariants', () => {
+  it('returns the verbatim form for a clean kanji brand', () => {
+    expect(expandBrandVariants('獺祭')).toEqual(['獺祭'])
+  })
+
+  it('does NOT strip operational suffix (that is `expandPossibleBrandVariants`)', () => {
+    // First-pass uses `expandBrandVariants` and shouldn't add a
+    // suffix-stripped sibling — the brand isn't supposed to carry
+    // operational suffixes there. Only the field-swap path
+    // (`expandPossibleBrandVariants`) does the strip.
+    expect(expandBrandVariants('高清水酒造')).toEqual(['高清水酒造'])
+  })
+
+  it('still composes kanji-variant expansion (旧字体 / 新字体)', () => {
+    // Variant kanji from generateKanjiVariants still applies — 蔵王
+    // gets paired with 藏王 for the variant-form match.
+    const variants = expandBrandVariants('蔵王')
+    expect(variants).toContain('蔵王')
+    expect(variants).toContain('藏王')
+  })
+
+  it('composes kana-cross expansion', () => {
+    const variants = expandBrandVariants('うまみ')
+    expect(variants).toContain('うまみ')
+    expect(variants).toContain('ウマミ')
+  })
+
+  it('handles empty input safely', () => {
+    expect(expandBrandVariants('')).toEqual([''])
   })
 })
