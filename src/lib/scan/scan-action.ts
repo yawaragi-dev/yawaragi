@@ -121,6 +121,36 @@ function bestRomaji(entity: Pick<Brand | Brewery, 'name' | 'nameRomaji'>): strin
 }
 
 /**
+ * Maps a lookup-side ambiguous candidate (full Brand + Brewery
+ * objects) onto the wire-shape carried by the action state's
+ * `ambiguous` variant — locale-aware `sakeHref`, romaji distilled
+ * via `bestRomaji`, brewery info denormalised onto each row.
+ */
+function ambiguousCandidateFromLookup(
+  c: { sake: Brand; brewery: Brewery },
+  locale: Locale,
+): {
+  brandId: number
+  sakeHref: string
+  nameKanji: string
+  nameRomaji: string | null
+  breweryKanji: string
+  breweryRomaji: string | null
+} {
+  return {
+    brandId: c.sake.brandId,
+    sakeHref: getPathname({
+      locale,
+      href: { pathname: '/sake/[brandId]', params: { brandId: String(c.sake.brandId) } },
+    }),
+    nameKanji: c.sake.nameKanji,
+    nameRomaji: bestRomaji(c.sake),
+    breweryKanji: c.brewery.nameKanji,
+    breweryRomaji: bestRomaji(c.brewery),
+  }
+}
+
+/**
  * Returns the brand kanji to display prominently on the
  * matched_brand_only divergence card. Prefers the visitor's
  * extracted form (`extracted`) when it's a kanji-variant of the
@@ -321,12 +351,12 @@ export async function scanAction(
         }
         if (breweryOnly.kind === 'ambiguous') {
           debugAdd('ScanAction', 'single-char guard + brewery-only fallback → ambiguous', {
-            candidates: breweryOnly.candidates.map((c) => c.brandId),
+            candidates: breweryOnly.candidates.map((c) => c.sake.brandId),
           })
           return {
             status: 'ambiguous',
             extraction,
-            brandIds: breweryOnly.candidates.map((c) => c.brandId),
+            candidates: breweryOnly.candidates.map((c) => ambiguousCandidateFromLookup(c, localeRaw)),
           }
         }
         // Brewery-only missed. One more rescue: the model may have
@@ -380,12 +410,12 @@ export async function scanAction(
         }
         if (swapAttempt.kind === 'ambiguous') {
           debugAdd('ScanAction', 'field-swap rescue → ambiguous', {
-            candidates: swapAttempt.candidates.map((c) => c.brandId),
+            candidates: swapAttempt.candidates.map((c) => c.sake.brandId),
           })
           return {
             status: 'ambiguous',
             extraction,
-            brandIds: swapAttempt.candidates.map((c) => c.brandId),
+            candidates: swapAttempt.candidates.map((c) => ambiguousCandidateFromLookup(c, localeRaw)),
           }
         }
         // Field-swap rescue also missed. Brand was probably
@@ -480,12 +510,12 @@ export async function scanAction(
       }
       if (lookup.kind === 'ambiguous') {
         debugAdd('ScanAction', 'returning ambiguous', {
-          candidates: lookup.candidates.map((c) => c.brandId),
+          candidates: lookup.candidates.map((c) => c.sake.brandId),
         })
         return {
           status: 'ambiguous',
           extraction,
-          brandIds: lookup.candidates.map((c) => c.brandId),
+          candidates: lookup.candidates.map((c) => ambiguousCandidateFromLookup(c, localeRaw)),
         }
       }
       debugAdd('ScanAction', 'returning no_match', {

@@ -438,7 +438,7 @@ describe('findSakeByExtractionFromPool', () => {
 
     expect(result.kind).toBe('ambiguous')
     if (result.kind !== 'ambiguous') throw new Error('unreachable; for narrowing only')
-    expect(result.candidates.map((c) => c.brandId).sort()).toEqual([9001, 9002])
+    expect(result.candidates.map((c) => c.sake.brandId).sort()).toEqual([9001, 9002])
     expect(result.query).toEqual({ nameJa: '菊姫', breweryJa: '存在しない酒造' })
   })
 
@@ -563,7 +563,7 @@ describe('findSakeByExtractionFromPool', () => {
 
     expect(result.kind).toBe('ambiguous')
     if (result.kind !== 'ambiguous') throw new Error('unreachable; for narrowing only')
-    expect(result.candidates.map((c) => c.brandId).sort()).toEqual([9001, 9002])
+    expect(result.candidates.map((c) => c.sake.brandId).sort()).toEqual([9001, 9002])
   })
 
   it('returns {kind: "matched_brand_only"} via 4th-pass field-swap (2026-06-12 Sugitama shape)', async () => {
@@ -629,7 +629,7 @@ describe('findSakeByExtractionFromPool', () => {
 
     expect(result.kind).toBe('ambiguous')
     if (result.kind !== 'ambiguous') throw new Error('unreachable; for narrowing only')
-    expect(result.candidates.map((c) => c.brandId).sort()).toEqual([9001, 9002])
+    expect(result.candidates.map((c) => c.sake.brandId).sort()).toEqual([9001, 9002])
     expect(result.query).toEqual({ nameJa: '山田錦', breweryJa: '白鹿' })
   })
 })
@@ -694,7 +694,7 @@ describe('findSakeByBreweryOnlyFromPool', () => {
 
     expect(result.kind).toBe('ambiguous')
     if (result.kind !== 'ambiguous') throw new Error('unreachable; for narrowing only')
-    expect(result.candidates.map((c) => c.brandId).sort()).toEqual([9001, 9002])
+    expect(result.candidates.map((c) => c.sake.brandId).sort()).toEqual([9001, 9002])
   })
 
   it('prefers the same-name brand under a mono-brand brewery (2026-06-12 Sawanotsuru shape)', async () => {
@@ -773,7 +773,7 @@ describe('findSakeByBreweryOnlyFromPool', () => {
 
     expect(result.kind).toBe('ambiguous')
     if (result.kind !== 'ambiguous') throw new Error('unreachable; for narrowing only')
-    expect(result.candidates.map((c) => c.brandId).sort()).toEqual([9001, 9002])
+    expect(result.candidates.map((c) => c.sake.brandId).sort()).toEqual([9001, 9002])
   })
 
   it('returns {kind: "no_match"} when the brewery kanji is not in Sakenowa', async () => {

@@ -216,15 +216,45 @@ export type FindSakeByExtractionResult =
       brandDivergence: { extracted: string; stored: string }
       query: SakeLookupQuery
     }
-  | { kind: 'ambiguous'; candidates: readonly Brand[]; query: SakeLookupQuery }
+  /**
+   * Multiple Sakenowa brands match the query. The UI shows a
+   * disambiguation list — one tappable row per candidate carrying
+   * the brand kanji + romaji and the brewery info so the visitor
+   * can pick which bottle they actually scanned. Each candidate
+   * carries its full Brand AND Brewery objects so the UI doesn't
+   * have to round-trip more lookups; the JOINed SQL queries
+   * already pull both sides.
+   */
+  | {
+      kind: 'ambiguous'
+      candidates: readonly { sake: Brand; brewery: Brewery }[]
+      query: SakeLookupQuery
+    }
   | { kind: 'no_match'; query: SakeLookupQuery }
 
 // First-pass: pulls brand rows whose `name_kanji` matches exactly AND
-// whose joined brewery's `name_kanji` matches exactly. LIMIT 2 — we
-// don't need every candidate; we only need to know whether the match
-// is unique (1 row) or ambiguous (2+).
+// whose joined brewery's `name_kanji` matches exactly. Also pulls
+// the JOINed brewery columns so the ambiguous arm can return full
+// brand+brewery pairs for the disambiguation list — the JOIN happens
+// for the WHERE either way, no extra cost. LIMIT 5 (was 2) so the
+// disambiguation list can render multiple candidates when same-name
+// collisions occur across breweries (Hakushika, etc).
 const SELECT_BRANDS_BY_KANJI_EXTRACTION = `
-  SELECT br.brand_id, br.name, br.name_kanji, br.name_romaji, br.brewery_id, br.source, br.confidence
+  SELECT
+    br.brand_id          AS brand_brand_id,
+    br.name              AS brand_name,
+    br.name_kanji        AS brand_name_kanji,
+    br.name_romaji       AS brand_name_romaji,
+    br.brewery_id        AS brand_brewery_id,
+    br.source            AS brand_source,
+    br.confidence        AS brand_confidence,
+    b.brewery_id         AS brewery_brewery_id,
+    b.name               AS brewery_name,
+    b.name_kanji         AS brewery_name_kanji,
+    b.name_romaji        AS brewery_name_romaji,
+    b.area_id            AS brewery_area_id,
+    b.source             AS brewery_source,
+    b.confidence         AS brewery_confidence
   FROM brands br
   JOIN breweries b ON b.brewery_id = br.brewery_id
   -- ANY($1) / ANY($2) match the kanji-variant-expanded arrays so a
@@ -235,7 +265,7 @@ const SELECT_BRANDS_BY_KANJI_EXTRACTION = `
   -- elements, well within ANY()s performance envelope.
   WHERE br.name_kanji = ANY($1) AND b.name_kanji = ANY($2)
   ORDER BY br.brand_id
-  LIMIT 2
+  LIMIT 5
 `
 
 // Second-pass (#123): brand kanji only — used when the first pass
@@ -411,7 +441,7 @@ export async function findSakeByExtractionFromPool(
       breweryVariants,
     },
   )
-  const { rows } = await publicQuery<BrandRow>(
+  const { rows } = await publicQuery<BrandWithBreweryRow>(
     'brands',
     SELECT_BRANDS_BY_KANJI_EXTRACTION,
     [nameVariants, breweryVariants],
@@ -419,12 +449,15 @@ export async function findSakeByExtractionFromPool(
   )
   debugAdd('Sakenowa', `first-pass returned ${rows.length} row(s)`)
   if (rows.length === 1) {
-    return { kind: 'exact', sake: rowToBrand(rows[0]) }
+    return { kind: 'exact', sake: brandFromJoinedRow(rows[0]) }
   }
   if (rows.length >= 2) {
     return {
       kind: 'ambiguous',
-      candidates: rows.map(rowToBrand),
+      candidates: rows.map((r) => ({
+        sake: brandFromJoinedRow(r),
+        brewery: breweryFromJoinedRow(r),
+      })),
       query,
     }
   }
@@ -577,7 +610,10 @@ export async function findSakeByBrandOnlyFromPool(
   }
   return {
     kind: 'ambiguous',
-    candidates: rows.map(brandFromJoinedRow),
+    candidates: rows.map((r) => ({
+      sake: brandFromJoinedRow(r),
+      brewery: breweryFromJoinedRow(r),
+    })),
     query,
   }
 }
@@ -639,7 +675,10 @@ export async function findSakeByLatinBrandFromPool(
   }
   return {
     kind: 'ambiguous',
-    candidates: rows.map(brandFromJoinedRow),
+    candidates: rows.map((r) => ({
+      sake: brandFromJoinedRow(r),
+      brewery: breweryFromJoinedRow(r),
+    })),
     query,
   }
 }
@@ -740,7 +779,10 @@ export async function findSakeByBreweryOnlyFromPool(
 
   return {
     kind: 'ambiguous',
-    candidates: breweryOnlyRows.map(brandFromJoinedRow),
+    candidates: breweryOnlyRows.map((r) => ({
+      sake: brandFromJoinedRow(r),
+      brewery: breweryFromJoinedRow(r),
+    })),
     query,
   }
 }

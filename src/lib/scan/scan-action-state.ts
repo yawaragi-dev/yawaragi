@@ -102,10 +102,31 @@ type ScanActionStateBase =
       status: 'no_match'
       extraction: LabelScanExtraction
     }
+  /**
+   * Disambiguation list state. Multiple Sakenowa brands match the
+   * extraction — the visitor reads their label, picks the right one
+   * by tapping. Each candidate carries enough information to render
+   * a row (kanji + romaji + locale-aware href) plus its brewery's
+   * kanji + romaji so a "We matched the brewery: X" header can be
+   * shown when all candidates share a brewery (the common shape
+   * coming from `findSakeByBreweryOnlyFromPool`'s ambiguous arm).
+   *
+   * Previous shape was `brandIds: readonly number[]` — replaced by
+   * the richer per-candidate data so the UI doesn't need extra
+   * lookups. The lookup chain already JOINs both sides for every
+   * ambiguous-producing pass.
+   */
   | {
       status: 'ambiguous'
       extraction: LabelScanExtraction
-      brandIds: readonly number[]
+      candidates: readonly {
+        brandId: number
+        sakeHref: string
+        nameKanji: string
+        nameRomaji: string | null
+        breweryKanji: string
+        breweryRomaji: string | null
+      }[]
     }
   /**
    * Phase 3 / S2 (#107): the per-visitor rate limit on the vision-scan
