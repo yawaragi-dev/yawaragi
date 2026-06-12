@@ -1,7 +1,21 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import type { DebugEvent, DebugEventSource } from '@/lib/debug/debug-log'
+
+/**
+ * Returns `false` during SSR + the first client render, `true` on
+ * every subsequent render. The standard React-blessed pattern for
+ * gating client-only state on the *server*'s initial paint so that
+ * server and client agree at hydration time.
+ */
+function useHasHydrated(): boolean {
+  return useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  )
+}
 
 /**
  * Per-request debug overlay. Renders the trace events collected by the
@@ -103,6 +117,9 @@ export function DebugPanel({
   // successful clipboard write so the operator gets feedback even on
   // mobile (no hover-state confirmation available).
   const [justCopied, setJustCopied] = useState(false)
+  // Hydration gate for the Copy button's `disabled` attribute —
+  // see the comment on the button below for why.
+  const hasHydrated = useHasHydrated()
 
   async function onCopy() {
     if (events.length === 0) return
@@ -199,26 +216,30 @@ export function DebugPanel({
         <span className="hidden min-w-0 truncate sm:inline">{title}</span>
         <div className="ml-auto flex items-center gap-1">
           {/*
-            `disabled` and the inner label both depend on
-            client-only state — `events` comes from sessionStorage
-            via `useSyncExternalStore`, so the server snapshot
-            (always empty) and the first client render (sessionStorage
-            value) can legitimately differ. `suppressHydrationWarning`
-            tells React this attribute mismatch is intentional rather
-            than a bug. Applied to the inner span too so the "Copy"
-            ↔ "Copied" toggle doesn't trip the warning on the next
-            paint.
+            `disabled` depends on `events.length`, which comes from
+            `useSyncExternalStore` reading sessionStorage on the
+            client — different from the server's empty snapshot.
+            Without gating, the server renders `disabled` based on
+            an empty array while the client computes it against
+            actual sessionStorage events, causing a real hydration
+            mismatch.
+            Gate via `hasHydrated`: it's false on first render
+            (matches server's `disabled={false}`) and flips true on
+            the very next effect. Both server and the first client
+            render agree, and the disabled state catches up
+            immediately after hydration completes. The onClick guard
+            still short-circuits empty events, so the brief
+            pre-effect enabled state is harmless.
           */}
           <button
             type="button"
             onClick={onCopy}
-            disabled={events.length === 0}
+            disabled={hasHydrated && events.length === 0}
             aria-label={copyLabel}
             className="inline-flex h-6 items-center justify-center rounded px-1.5 text-zinc-500 hover:bg-zinc-200 hover:text-zinc-900 disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
             data-testid="debug-panel-copy"
-            suppressHydrationWarning
           >
-            <span suppressHydrationWarning>{justCopied ? copiedLabel : copyLabel}</span>
+            {justCopied ? copiedLabel : copyLabel}
           </button>
           <button
             type="button"

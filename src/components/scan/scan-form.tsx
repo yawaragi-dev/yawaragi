@@ -545,6 +545,12 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
                 </li>
               ))}
             </ul>
+            <p
+              className="text-xs text-zinc-500 dark:text-zinc-500"
+              data-testid="scan-result-ambiguous-not-listed"
+            >
+              {t('ambiguousNotListed')}
+            </p>
             <Button
               type="button"
               variant="outline"
