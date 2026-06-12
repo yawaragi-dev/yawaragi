@@ -112,7 +112,14 @@ CRITICAL — script and field-identity rules:
 
 3. Do NOT confuse the brewery with sake-rice ratings or grade markers. 精米歩合 (polishing ratio percentages), 日本酒度 (SMV), 酸度 (acidity), 使用酵母 (yeast strain) are all data ABOUT the sake — never put them in name_ja or brewery_ja.
 
-4. Do NOT confuse the brewery with a RETAILER (酒店 / 酒販店 / リカーショップ). Some bottles — especially collaborations and limited editions — show both the brewery (e.g. 川鶴酒造) and a retailer/store (e.g. 柴田屋酒店) on the label. Only the BREWERY belongs in brewery_ja. The retailer / store name does NOT.
+4. Do NOT confuse the brewery with a RETAILER. Some bottles — especially collaborations and limited editions — show both the brewery (e.g. 川鶴酒造) and a retailer/store (e.g. 柴田屋酒店) on the label, and the RETAILER IS OFTEN PRINTED MORE PROMINENTLY than the actual brewery. The actual brewery is the company that brewed the sake — typically printed smaller, in regulatory text near the bottom or side of the label.
+
+   Preference order for picking brewery_ja:
+
+   - FIRST, look for a name ending in 酒造 (sake brewery), 醸造 (brewing), 酒造場, or 酒造店. These are unambiguous brewery suffixes. PREFER THESE EVEN WHEN PRINTED SMALLER than competing names — the prominent name may well be a retailer.
+   - A name ending in 酒店 BY ITSELF (note: distinct from the three-character 酒造店) is ambiguous. Most are urban retailers (柴田屋酒店, 山仁酒店); a small number are mini-breweries with attached retail. WHEN YOU SEE X酒店 ALONGSIDE Y酒造 / Y醸造 ON THE SAME LABEL, THE BREWERY IS Y, NOT X. Only fall back to X酒店 for brewery_ja if no 酒造 / 醸造 name is visible anywhere on the label.
+   - Names ending in 酒販店, 酒販, or リカーショップ are always retailers — exclude them outright. Never put them in brewery_ja.
+   - The two-character 酒店 (酒 immediately followed by 店) is the retailer pattern. The three-character 酒造店 is a brewery — treat it the same as 酒造.
 
 Return only what is visible on the label. Do not translate, do not romanise kanji into Latin, do not transliterate kana into kanji, do not invent any field. If the image is not a sake label at all, lower the confidence score significantly rather than producing a plausible-sounding guess.`
 
