@@ -399,11 +399,26 @@ What this fix DOES catch:
 - Mixed-script `風のささやき` ↔ `風ノササヤキ`.
 
 What this fix does NOT catch:
-- **Latin ↔ Japanese** bridging (110 Latin-only brands like `Shangri-la`). Would need a separate join path against the Sakenowa-published `name` field (which often holds the canonical Latin form) or the LLM-derived `name_romaji`. Deferred.
-- **Wrong-kanji hallucination from kana** (the UMAMI / 梅実 trace). The model picked kanji that read "umemi" instead of returning the kana form — the bug is upstream of the lookup. Prompt tightening could help ("if the label is in katakana, return katakana; do not convert to kanji").
 - **Catalogue gap for collaboration / limited / special-edition products.** Sakenowa's brand model is main-line only. The UMAMI case fails for this reason regardless of script bridging.
 
-**Tracking.** Kana-cross shipped in PR #128. Latin ↔ Japanese bridging and the prompt-tightening for "don't convert kana to kanji" are deferred — file as a follow-up after PR B (#109) lands if eval data shows they're frequent.
+**2026-06-12 follow-up (same PR #128): Latin support + prompt script-preservation.**
+
+Two more layers landed after a second UMAMI bottle trace where the model kept hallucinating wrong kanji (`梅実`, then `梅美` on a re-scan) from the katakana on the label:
+
+1. **Prompt script-preservation rule.** `anthropic-haiku-provider.ts` SYSTEM_PROMPT rule 1 rewritten from "always return Japanese script" to "preserve whatever script the brand is actually printed in" — kanji stays kanji, katakana stays katakana, hiragana stays hiragana, Latin stays Latin. With four worked examples per script and an explicit "do NOT convert katakana to kanji" instruction. The retailer-vs-brewery confusion (also visible on the UMAMI bottle: model picked the retailer 柴田屋酒店 over the actual brewery 川鶴酒造) gets its own new rule 4 — "do NOT confuse the brewery with a RETAILER (酒店 / 酒販店 / リカーショップ)".
+
+2. **Latin brand-name lookup.** A 5th pass in `findSakeByExtractionFromPool`: `WHERE LOWER(brands.name) = LOWER($1)` against the Sakenowa-published `name` column. Only fires when the four kanji+kana passes have all missed AND `name_ja` is Latin-shaped (`[A-Za-z]` present, no Japanese script). Case-insensitive so `UMAMI` / `umami` / `Umami` all match the same catalogue row. Outcome shape mirrors brand-only: 1 row → `matched_brand_only`, 2+ → `ambiguous`, 0 → `no_match`. The `scan-action.ts` Latin-only guard is relaxed to only apply when `brewery_ja` is Latin (brand-field Latin now flows through).
+
+After these layers, the bottle classes catalogued in §22 reach Sakenowa for the first time:
+- Pure Latin brands (110): direct match via the 5th pass.
+- Pure kana brands (204): kana cross-match in passes 1-4.
+- Mixed-script brands (653): kana cross applies to the kana portion.
+
+What still doesn't help:
+- **Wrong-kanji hallucination from kana** (the UMAMI / 梅実 trace itself). The prompt update targets exactly this — if the model follows the new rule and returns `うまみ` instead of `梅実`, the kana cross-match would resolve UMAMI bottles whose brand actually exists in Sakenowa. UMAMI specifically still fails for catalogue reasons (below).
+- **Catalogue gap for collaboration / limited / special-edition products.** Sakenowa's brand model is main-line only. UMAMI is a Kawatsuru × Shibataya collaboration product — not in Sakenowa under any spelling. No code-side fix bridges this.
+
+**Tracking.** Kana-cross + Latin pass + prompt script-preservation + retailer-not-brewery rule all shipped in PR #128. Catalogue-gap mitigation (collaboration / sub-line products) deferred to a separate workstream once eval-harness ([#110](https://github.com/yawaragi-dev/yawaragi/issues/110)) quantifies the frequency.
 
 ---
 

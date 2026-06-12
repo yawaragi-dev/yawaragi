@@ -237,26 +237,29 @@ export async function scanAction(
         return { status: 'low_confidence', extraction }
       }
 
-      // Defensive guard against the model returning Latin (romaji /
-      // English) where the contract demanded kanji. Real-world case:
-      // a 龍力 bottle returned `brewery_ja: "Sankei Nishiki"` — the
-      // model misread a rice-variety call-out (山田錦) as the brewery
-      // and converted it to romaji. The prompt is tightened to
-      // forbid this (`anthropic-haiku-provider.ts` SYSTEM_PROMPT),
-      // but the prompt isn't a hard contract — a Latin-only field
-      // here is a sign the model defaulted, the brewery (or brand)
-      // is misidentified, and the lookup will return no_match for
-      // confusing reasons. Surface as low_confidence with a specific
-      // debug-overlay event so the operator can see what happened.
-      if (containsNoJapaneseScript(extraction.name_ja) || containsNoJapaneseScript(extraction.brewery_ja)) {
+      // Defensive guard against the model returning Latin where it
+      // shouldn't. 2026-06-12 prompt update (§22 in the obstacles
+      // doc) explicitly allows Latin in `name_ja` for the 110
+      // Latin-only brands in Sakenowa (`Shangri-la`, `UMAMI`,
+      // `Highland`, etc) — `findSakeByExtractionFromPool` has a
+      // dedicated 5th-pass Latin lookup against `LOWER(brands.name)`.
+      // So Latin name_ja is now FINE and we let it through to the
+      // lookup chain.
+      //
+      // Brewery names, however, are essentially always in kanji in
+      // Sakenowa — there's no Latin-brewery brand corpus to match
+      // against, and Latin in brewery_ja is still a strong signal
+      // the model misread something (rice-variety call-out
+      // transliterated, retailer name romanised, etc). Keep the
+      // guard for brewery_ja only. The brand-field Latin case
+      // continues through.
+      if (containsNoJapaneseScript(extraction.brewery_ja)) {
         debugAdd(
           'ScanAction',
-          'extraction has Latin-only field(s) — routing to low_confidence (model ignored kanji-only contract)',
+          'extraction.brewery_ja is Latin-only — routing to low_confidence (brewery names should be Japanese script)',
           {
             name_ja: extraction.name_ja,
             brewery_ja: extraction.brewery_ja,
-            nameJaIsLatinOnly: containsNoJapaneseScript(extraction.name_ja),
-            breweryJaIsLatinOnly: containsNoJapaneseScript(extraction.brewery_ja),
           },
           'warn',
         )

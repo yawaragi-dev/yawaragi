@@ -99,16 +99,25 @@ Examples (label → output):
 
 CRITICAL — script and field-identity rules:
 
-1. ALWAYS return Japanese script (kanji + kana) in name_ja and brewery_ja. NEVER return romaji or English even if a Latin transliteration is printed on the label alongside the kanji. If you cannot read a field's kanji clearly, drop the confidence score sharply (below 0.5) rather than returning the romaji or English form.
+1. PRESERVE THE SCRIPT THE BRAND IS ACTUALLY PRINTED IN. Many sake brands are intentionally printed in non-kanji script. Return what you see:
+   - If the brand on the label is printed in **kanji** (e.g. 獺祭, 八海山) → return the kanji form.
+   - If the brand on the label is printed in **katakana** (e.g. ウマミ, ラッキーキャッツ) → return the katakana form VERBATIM. Do NOT convert katakana to kanji.
+   - If the brand on the label is printed in **hiragana** (e.g. うまみ, あたごのまつ) → return the hiragana form VERBATIM. Do NOT convert hiragana to kanji.
+   - If the brand on the label is printed in **Latin alphabet** (e.g. UMAMI, Shangri-la, Highland) → return the Latin form VERBATIM. Latin script IS allowed for name_ja in this case.
+   When a label shows BOTH a kana/Latin form AND a kanji form, prefer the kana/Latin form ONLY when the kanji is small/secondary and the kana/Latin is the visually dominant brand mark. If kanji and kana are equally prominent, prefer kanji. If you cannot determine the brand at all, drop confidence sharply (below 0.5) rather than guessing or fabricating.
 
-2. Do NOT confuse the brewery with RICE-VARIETY call-outs. Sake labels frequently advertise the rice cultivar — 山田錦 (Yamada Nishiki), 雄町 (Omachi), 五百万石 (Gohyakumangoku), 美山錦 (Miyama Nishiki), 出羽燦々 (Dewa Sansan), 秋田酒こまち (Akita Sake Komachi), 愛山 (Aiyama). These are RICE varieties, NOT breweries. Never put a rice-variety name in brewery_ja. The brewery is the company / 酒造 / 醸造, typically printed in a smaller block elsewhere on the label.
+   Brewery (brewery_ja) names should still be returned in their original Japanese script — brewery legal names are almost always in kanji.
+
+2. Do NOT confuse the brewery with RICE-VARIETY call-outs. Sake labels frequently advertise the rice cultivar — 山田錦 (Yamada Nishiki), 雄町 (Omachi), 五百万石 (Gohyakumangoku), 美山錦 (Miyama Nishiki), 出羽燦々 (Dewa Sansan), 秋田酒こまち (Akita Sake Komachi), 愛山 (Aiyama). These are RICE varieties, NOT breweries. Never put a rice-variety name in brewery_ja OR name_ja. The brewery is the company / 酒造 / 醸造, typically printed in a smaller block elsewhere on the label.
 
 3. Do NOT confuse the brewery with sake-rice ratings or grade markers. 精米歩合 (polishing ratio percentages), 日本酒度 (SMV), 酸度 (acidity), 使用酵母 (yeast strain) are all data ABOUT the sake — never put them in name_ja or brewery_ja.
 
-Return only what is visible on the label. Do not translate, invent any field, or fall back to romaji. If a value is genuinely not visible or readable as kanji, lower the confidence score rather than fabricating or romanising it. If the image is not a sake label at all, lower the confidence score significantly rather than producing a plausible-sounding guess.`
+4. Do NOT confuse the brewery with a RETAILER (酒店 / 酒販店 / リカーショップ). Some bottles — especially collaborations and limited editions — show both the brewery (e.g. 川鶴酒造) and a retailer/store (e.g. 柴田屋酒店) on the label. Only the BREWERY belongs in brewery_ja. The retailer / store name does NOT.
+
+Return only what is visible on the label. Do not translate, do not romanise kanji into Latin, do not transliterate kana into kanji, do not invent any field. If the image is not a sake label at all, lower the confidence score significantly rather than producing a plausible-sounding guess.`
 
 const USER_PROMPT =
-  'Read this sake bottle label and return the brand and brewery in their original Japanese script, plus a confidence score between 0 and 1. Follow the brand / SKU stripping rules in the system prompt.'
+  'Read this sake bottle label and return the brand and brewery, preserving the script each is actually printed in (kanji / katakana / hiragana / Latin), plus a confidence score between 0 and 1. Follow the brand / SKU stripping and script-preservation rules in the system prompt.'
 
 export function createAnthropicHaikuProvider(
   options: AnthropicHaikuProviderOptions = {},

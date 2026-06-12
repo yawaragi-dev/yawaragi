@@ -314,6 +314,38 @@ const SELECT_BRANDS_AND_BREWERIES_BY_BREWERY_KANJI = `
   LIMIT 5
 `
 
+// Latin brand lookup: matches against Sakenowa's published `name`
+// field (which holds the canonical romaji/Latin form for kanji
+// brands, and the verbatim Latin string for the ~110 Latin-only
+// brands like `Shangri-la`, `I LOVE SUSHI`, `Highland`). Used as a
+// fallback after kanji/kana passes miss when the model returns a
+// Latin-only brand string — bottles where the visitor's eye latched
+// onto the prominent Latin mark on the label. Case-insensitive
+// equality so `UMAMI` / `umami` / `Umami` all match the catalogue
+// row regardless of how the model normalised the case.
+const SELECT_BRANDS_AND_BREWERIES_BY_LATIN_NAME = `
+  SELECT
+    br.brand_id          AS brand_brand_id,
+    br.name              AS brand_name,
+    br.name_kanji        AS brand_name_kanji,
+    br.name_romaji       AS brand_name_romaji,
+    br.brewery_id        AS brand_brewery_id,
+    br.source            AS brand_source,
+    br.confidence        AS brand_confidence,
+    b.brewery_id         AS brewery_brewery_id,
+    b.name               AS brewery_name,
+    b.name_kanji         AS brewery_name_kanji,
+    b.name_romaji        AS brewery_name_romaji,
+    b.area_id            AS brewery_area_id,
+    b.source             AS brewery_source,
+    b.confidence         AS brewery_confidence
+  FROM brands br
+  JOIN breweries b ON b.brewery_id = br.brewery_id
+  WHERE LOWER(br.name) = LOWER($1)
+  ORDER BY br.brand_id
+  LIMIT 5
+`
+
 interface BrandWithBreweryRow {
   brand_brand_id: number
   brand_name: string
@@ -434,25 +466,51 @@ export async function findSakeByExtractionFromPool(
   // surrender" shape from §21 — same string in both fields), the
   // 4th-pass query is byte-identical to the step-2 brand-only call
   // that already returned no rows. Save the round-trip.
-  if (query.nameJa === query.breweryJa) {
+  if (query.nameJa !== query.breweryJa) {
+    debugAdd(
+      'Sakenowa',
+      `brewery-only missed; trying field-swap (brand-only on brewery_ja "${query.breweryJa}")`,
+    )
+    const fieldSwap = await findSakeByBrandOnlyFromPool(
+      { nameJa: query.breweryJa, breweryJa: query.breweryJa },
+      pool,
+    )
+    if (fieldSwap.kind === 'matched_brand_only' || fieldSwap.kind === 'ambiguous') {
+      return { ...fieldSwap, query }
+    }
+  } else {
     debugAdd(
       'Sakenowa',
       'skipping field-swap pass — name_ja === brewery_ja so the lookup would re-issue the brand-only query that already missed',
     )
-    return { kind: 'no_match', query }
   }
-  debugAdd(
-    'Sakenowa',
-    `brewery-only missed; trying field-swap (brand-only on brewery_ja "${query.breweryJa}")`,
-  )
-  const fieldSwap = await findSakeByBrandOnlyFromPool(
-    { nameJa: query.breweryJa, breweryJa: query.breweryJa },
-    pool,
-  )
-  if (fieldSwap.kind === 'matched_brand_only' || fieldSwap.kind === 'ambiguous') {
-    return { ...fieldSwap, query }
+
+  // Fifth pass: Latin-name brand lookup. The four kanji + kana
+  // passes have all missed; if `name_ja` is Latin-shaped (e.g.
+  // `UMAMI`, `Highland`, `Shangri-la`) the bottle may be one of
+  // Sakenowa's 110 Latin-only brands or a kanji brand whose model
+  // output landed in romaji. Case-insensitive match against
+  // `brands.name`.
+  if (containsLatinAlpha(query.nameJa) && !containsJapaneseScript(query.nameJa)) {
+    debugAdd('Sakenowa', `kanji + kana passes missed; trying Latin-name lookup on "${query.nameJa}"`)
+    const latinMatch = await findSakeByLatinBrandFromPool(query, pool)
+    if (latinMatch.kind === 'matched_brand_only' || latinMatch.kind === 'ambiguous') {
+      return latinMatch
+    }
   }
+
   return { kind: 'no_match', query }
+}
+
+const JAPANESE_SCRIPT_REGEX_LOOKUP = /[぀-ゟ゠-ヿ一-鿿]/
+const LATIN_ALPHA_REGEX = /[A-Za-z]/
+
+function containsJapaneseScript(value: string): boolean {
+  return JAPANESE_SCRIPT_REGEX_LOOKUP.test(value)
+}
+
+function containsLatinAlpha(value: string): boolean {
+  return LATIN_ALPHA_REGEX.test(value)
 }
 
 /**
@@ -528,6 +586,68 @@ export async function findSakeByBrandOnly(
   query: SakeLookupQuery,
 ): Promise<BrandOnlyLookupResult> {
   return findSakeByBrandOnlyFromPool(query, getServerDbPool())
+}
+
+/**
+ * Latin-name brand lookup. Matches the Sakenowa `brands.name` field
+ * case-insensitively against the input. Used as a fallback when
+ * the kanji + kana lookup chain misses and the visitor's bottle
+ * presents the brand in Latin script (`UMAMI`, `Shangri-la`, the
+ * 110 Latin-only brands in Sakenowa plus the romaji-canonical
+ * `name` for kanji brands when the model returns the romaji form).
+ *
+ * Returns the same `BrandOnlyLookupResult` shape as the kanji
+ * brand-only lookup so callers can chain them transparently. The
+ * divergence card pre-populates `breweryDivergence.extracted` with
+ * the *original* `query.breweryJa` so the visitor sees what the
+ * model put in the brewery field even when the brand was matched
+ * via the Latin column.
+ */
+export async function findSakeByLatinBrandFromPool(
+  query: SakeLookupQuery,
+  pool: Pool,
+): Promise<BrandOnlyLookupResult> {
+  if (query.nameJa.length === 0) return { kind: 'no_match', query }
+  debugAdd(
+    'Sakenowa',
+    `latin-name lookup on LOWER(brands.name) = LOWER("${query.nameJa}")`,
+    { nameJa: query.nameJa },
+  )
+  const { rows } = await publicQuery<BrandWithBreweryRow>(
+    'brands',
+    SELECT_BRANDS_AND_BREWERIES_BY_LATIN_NAME,
+    [query.nameJa],
+    pool,
+  )
+  debugAdd('Sakenowa', `latin-name lookup returned ${rows.length} row(s)`)
+
+  if (rows.length === 0) return { kind: 'no_match', query }
+  if (rows.length === 1) {
+    const matched = rows[0]
+    const brand = brandFromJoinedRow(matched)
+    const brewery = breweryFromJoinedRow(matched)
+    return {
+      kind: 'matched_brand_only',
+      sake: brand,
+      brewery,
+      breweryDivergence: {
+        extracted: query.breweryJa,
+        stored: brewery.nameKanji,
+      },
+      query,
+    }
+  }
+  return {
+    kind: 'ambiguous',
+    candidates: rows.map(brandFromJoinedRow),
+    query,
+  }
+}
+
+export async function findSakeByLatinBrand(
+  query: SakeLookupQuery,
+): Promise<BrandOnlyLookupResult> {
+  return findSakeByLatinBrandFromPool(query, getServerDbPool())
 }
 
 /**

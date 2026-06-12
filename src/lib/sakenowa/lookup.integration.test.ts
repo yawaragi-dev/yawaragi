@@ -442,6 +442,36 @@ describe('findSakeByExtractionFromPool', () => {
     expect(result.query).toEqual({ nameJa: '菊姫', breweryJa: '存在しない酒造' })
   })
 
+  it('falls through to Latin-name lookup when the model returns a Latin brand (2026-06-12 script-coverage)', async () => {
+    // 110 Sakenowa brands are Latin-only (`Shangri-la`, `UMAMI`,
+    // `Highland`, etc). When the model returns the Latin form
+    // (which the 2026-06-12 prompt update explicitly allows) the
+    // kanji + kana passes all miss, then the 5th-pass Latin lookup
+    // catches it via `LOWER(brands.name) = LOWER($1)`.
+    await seedBrewery({ breweryId: 9501, name: 'Test', nameKanji: 'テスト酒造', areaId: 1 })
+    await pool.query(
+      `INSERT INTO brands
+         (brand_id, name, name_kanji, brewery_id, source, confidence, content_hash)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      // Sakenowa publishes the Latin brand name in the `name` column.
+      // `name_kanji` defaults to the same value when there's no
+      // Japanese form.
+      [9001, 'Shangri-la', 'Shangri-la', 9501, 'sakenowa', null, 'hash-latin-brand-9001'],
+    )
+
+    const result = await findSakeByExtractionFromPool(
+      // Model returns the Latin brand verbatim per the prompt update,
+      // plus a Japanese-script brewery (still required for that field).
+      { nameJa: 'SHANGRI-LA', breweryJa: 'テスト酒造' },
+      pool,
+    )
+
+    expect(result.kind).toBe('matched_brand_only')
+    if (result.kind !== 'matched_brand_only') throw new Error('unreachable; for narrowing only')
+    expect(result.sake).toMatchObject({ brandId: 9001, name: 'Shangri-la' })
+    // case-insensitive: SHANGRI-LA in query matched Shangri-la in catalogue
+  })
+
   it('matches across hiragana ↔ katakana for kana brands (2026-06-12 script-coverage)', async () => {
     // Sakenowa publishes 169 hiragana-only and 35 katakana-only
     // brands. If the model returns one form and the catalogue
