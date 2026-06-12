@@ -32,7 +32,11 @@ if (!TEST_DATABASE_URL) {
 
 const pool = new Pool({ connectionString: TEST_DATABASE_URL })
 
-const FIXTURE_BRAND_IDS = [9001, 9002] as const
+// 9003 used by the 2026-06-12 mono-brand-preference test (Sawanotsuru
+// shape) — the brewery has 3 brands so we need a third fixture id in
+// the cleanup set; without it the FK from brands.brewery_id blocks
+// brewery deletion in subsequent tests.
+const FIXTURE_BRAND_IDS = [9001, 9002, 9003] as const
 const FIXTURE_BREWERY_IDS = [9501, 9502] as const
 
 async function cleanFixtures(): Promise<void> {
