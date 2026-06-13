@@ -11,6 +11,16 @@ import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { ProvenanceBadgeView } from '@/components/sake/provenance-badge'
+// Per ADR-0014, attribution should render conditionally on the
+// rendered-source-set. In scan-form we render brewery kanji from a
+// Sakenowa-sourced brewery row in every status that mounts
+// `SakenowaAttributionView` (matched / matched_brand_only /
+// matched_brewery_only / ambiguous / consensus / confirm), so
+// unconditional rendering matches the predicate today. When the
+// scan flow can land on a fully-manual (brand AND brewery both
+// `manual_curation`) record, thread sources through
+// `ScanActionState` and gate these renders with
+// `requiresSakenowaAttribution(sources)` from sakenowa-attribution.tsx.
 import { SakenowaAttributionView } from '@/components/sake/sakenowa-attribution'
 import type { DebugEvent } from '@/lib/debug/debug-log'
 import { appendDebugEvents } from '@/lib/debug/debug-store'

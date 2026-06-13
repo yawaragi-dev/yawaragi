@@ -12,7 +12,10 @@ import {
 import { getPrefectureNames } from '@/lib/sakenowa/prefecture'
 import { FlavorChartView } from '@/components/sake/flavor-chart'
 import { ProvenanceBadge } from '@/components/sake/provenance-badge'
-import { SakenowaAttribution } from '@/components/sake/sakenowa-attribution'
+import {
+  SakenowaAttribution,
+  requiresSakenowaAttribution,
+} from '@/components/sake/sakenowa-attribution'
 
 /**
  * Phase 2's smoke-test surface. Renders a single sake brand from the
@@ -91,12 +94,23 @@ export default async function SakeBrandPage({ params }: PageProps) {
   // "International" is more useful than a hidden field.
   const prefecture = showBrewery ? getPrefectureNames(brewery.areaId) : null
 
+  // ADR-0014: render Sakenowa attribution only when at least one
+  // rendered record on the page is Sakenowa-sourced. For manual_-
+  // curation brands (UMAMI, etc.) whose brewery FK points at a
+  // Sakenowa-sourced row, the brewery info IS Sakenowa data and
+  // attribution still renders. For a fully manual sake (manual
+  // brand + manual brewery — possible future case) it wouldn't.
+  const renderedSources = new Set<string>([brand.source])
+  if (showBrewery) renderedSources.add(brewery.source)
+  if (flavorChart) renderedSources.add(flavorChart.source)
+  const showSakenowaAttribution = requiresSakenowaAttribution(renderedSources)
+
   return (
     <main
       className="flex flex-1 w-full max-w-3xl mx-auto flex-col gap-6 py-16 px-8"
       data-testid="sake-brand-page"
     >
-      <SakenowaAttribution placement="above-fold" />
+      {showSakenowaAttribution && <SakenowaAttribution placement="above-fold" />}
       <div className="flex flex-wrap items-baseline gap-3">
         <h1
           className="text-4xl font-semibold leading-tight tracking-tight"
