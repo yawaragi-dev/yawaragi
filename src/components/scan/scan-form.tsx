@@ -526,9 +526,20 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
         // shares the same brewery (common shape from brewery-only
         // ambiguous), the UI surfaces that brewery in the header so
         // the visitor knows *which* brewery they matched.
-        const breweryKanjis = new Set(state.candidates.map((c) => c.breweryKanji))
-        const sharedBrewery =
-          breweryKanjis.size === 1 ? state.candidates[0] : null
+        //
+        // Defensive copy: the discriminated union types candidates
+        // as a non-optional array, but the 2026-06-13 dev log
+        // captured a render-time crash here with `candidates is
+        // undefined`. Hypothesis: a stale serialized state from
+        // before #109's wire-shape change (which renamed
+        // `brandIds` → `candidates`) survived a hot reload and the
+        // client saw `{status: 'ambiguous'}` with no candidates
+        // field. Treat missing/non-array as empty and fall through
+        // to the no-match copy rather than crashing the whole
+        // page into Next.js's "This page couldn't load" overlay.
+        const candidates = Array.isArray(state.candidates) ? state.candidates : []
+        const breweryKanjis = new Set(candidates.map((c) => c.breweryKanji))
+        const sharedBrewery = breweryKanjis.size === 1 ? candidates[0] : null
         return (
           <div
             className="flex flex-col gap-3"
@@ -548,7 +559,7 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
                 : t('ambiguous')}
             </p>
             <ul className="flex flex-col gap-1.5" data-testid="scan-result-ambiguous-list">
-              {state.candidates.map((c) => (
+              {candidates.map((c) => (
                 <li key={c.brandId}>
                   <a
                     href={c.sakeHref}
