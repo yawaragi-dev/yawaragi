@@ -65,7 +65,45 @@ export interface ConsensusMatch {
  * the freshest extraction (in case the kanji rendering drifted across
  * variants).
  */
+// Memoization for `getConsensusFromHistory`. `useScanHistoryConsensus`
+// passes this function as `useSyncExternalStore`'s `getSnapshot`, which
+// requires that the returned value be referentially stable until the
+// underlying data actually changes — otherwise React detects an
+// infinite render loop, throws "The result of getSnapshot should be
+// cached", and the whole page errors out (verified on 2026-06-13: a
+// second successful scan of UMAMI pushed history to 2 entries with a
+// strict majority, every render produced a fresh ConsensusMatch
+// object, and Next.js surfaced the throw as "This page couldn't
+// load").
+//
+// We key the cache on the raw sessionStorage string (the source of
+// truth that the snapshot is derived from). If the raw bytes are
+// unchanged, the cached result is returned by reference. When the raw
+// bytes change (history append, clear, cross-tab storage event), the
+// cache misses and we recompute once.
+let cachedRaw: string | null | undefined = undefined
+let cachedResult: ConsensusMatch | null = null
+
 export function getConsensusFromHistory(): ConsensusMatch | null {
+  // SSR + test env: no window means no history; the snapshot is
+  // always null. Use a distinct sentinel for the SSR cache key so a
+  // server snapshot can't satisfy a client cache check.
+  if (typeof window === 'undefined') return null
+
+  let raw: string | null
+  try {
+    raw = window.sessionStorage.getItem(STORAGE_KEY)
+  } catch {
+    raw = null
+  }
+  if (raw === cachedRaw) return cachedResult
+
+  cachedRaw = raw
+  cachedResult = computeConsensus()
+  return cachedResult
+}
+
+function computeConsensus(): ConsensusMatch | null {
   const entries = readHistory()
   if (entries.length < 2) return null
 

@@ -133,4 +133,46 @@ describe('scan-history', () => {
       expect(getConsensusFromHistory()).toBeNull()
     })
   })
+
+  describe('getConsensusFromHistory — useSyncExternalStore contract', () => {
+    // The hook `useScanHistoryConsensus` passes this function as
+    // `useSyncExternalStore`'s `getSnapshot`. React requires the
+    // snapshot be referentially stable across calls while the
+    // underlying data hasn't changed — otherwise it detects an
+    // infinite render loop, throws "The result of getSnapshot
+    // should be cached", and the whole page errors out.
+    //
+    // Verified on 2026-06-13: a second successful scan of UMAMI
+    // pushed history to 2 entries with a strict majority. Without
+    // caching, every render produced a fresh ConsensusMatch object
+    // and Next.js surfaced the throw as "This page couldn't load".
+
+    it('returns the same reference across calls when history is unchanged (majority case)', () => {
+      appendMatchToHistory(entry(1009))
+      appendMatchToHistory(entry(1009))
+      const a = getConsensusFromHistory()
+      const b = getConsensusFromHistory()
+      expect(a).not.toBeNull()
+      expect(a).toBe(b)
+    })
+
+    it('returns the same null across calls when history is empty', () => {
+      const a = getConsensusFromHistory()
+      const b = getConsensusFromHistory()
+      expect(a).toBeNull()
+      expect(a).toBe(b)
+    })
+
+    it('returns a different reference once history actually changes', () => {
+      appendMatchToHistory(entry(1009))
+      appendMatchToHistory(entry(1009))
+      const a = getConsensusFromHistory()
+      appendMatchToHistory(entry(1009))
+      const b = getConsensusFromHistory()
+      expect(a).not.toBeNull()
+      expect(b).not.toBeNull()
+      expect(a).not.toBe(b)
+      expect(b?.votes).toBe(3)
+    })
+  })
 })
