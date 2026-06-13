@@ -418,7 +418,9 @@ What still doesn't help:
 - **Wrong-kanji hallucination from kana** (the UMAMI / 梅実 trace itself). The prompt update targets exactly this — if the model follows the new rule and returns `うまみ` instead of `梅実`, the kana cross-match would resolve UMAMI bottles whose brand actually exists in Sakenowa. UMAMI specifically still fails for catalogue reasons (below).
 - **Catalogue gap for collaboration / limited / special-edition products.** Sakenowa's brand model is main-line only. UMAMI is a Kawatsuru × Shibataya collaboration product — not in Sakenowa under any spelling. No code-side fix bridges this.
 
-**Tracking.** Kana-cross + Latin pass + prompt script-preservation + retailer-not-brewery rule all shipped in PR #128. Catalogue-gap mitigation (collaboration / sub-line products) deferred to a separate workstream once eval-harness ([#110](https://github.com/yawaragi-dev/yawaragi/issues/110)) quantifies the frequency.
+**Tracking.** Kana-cross + Latin pass + prompt script-preservation + retailer-not-brewery rule all shipped in PR #128.
+
+**2026-06-13 correction on the "catalogue gap" framing.** Earlier passes of this entry attributed the UMAMI failure to "Sakenowa's brand model is main-line only — collaboration products aren't tracked." A direct check of Sakenowa's live site that day disproved this: UMAMI exists at `https://sakenowa.com/en/brand/4RhvfkA`. The real diagnosis is that **`muro.sakenowa.com/sakenowa-data/api/brands` (which we ingest) has not been re-generated since 2024-03-21** — every brand added by Sakenowa since then is invisible to our mirror, regardless of whether it's a collaboration, a limited edition, or just a brand registered after the freeze. Mitigation (manual-curation extension layer + α-policy refresh conflict handling) is captured in **ADR-0014** and migration `0011_manual_curation_layer.sql`. UMAMI is the case-zero hand-added row.
 
 ---
 

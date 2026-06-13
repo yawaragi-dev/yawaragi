@@ -23,10 +23,13 @@ import {
 import { publicQuery } from '../supabase/public-query'
 import { getServerDbPool } from '../supabase/server-client'
 
+// All read queries filter `superseded_at IS NULL` so manual_curation
+// rows superseded by a later Sakenowa publish disappear from the
+// public read path while remaining in the table for audit. ADR-0014.
 const SELECT_BRAND_BY_ID = `
   SELECT brand_id, name, name_kanji, name_romaji, brewery_id, source, confidence
   FROM brands
-  WHERE brand_id = $1
+  WHERE brand_id = $1 AND superseded_at IS NULL
 `
 
 export async function lookupBrandFromPool(brandId: number, pool: Pool): Promise<Brand | null> {
@@ -51,6 +54,8 @@ const SELECT_BREWERY_BY_BRAND_ID = `
   FROM breweries b
   JOIN brands br ON br.brewery_id = b.brewery_id
   WHERE br.brand_id = $1
+    AND b.superseded_at IS NULL
+    AND br.superseded_at IS NULL
 `
 
 export async function lookupBreweryByBrandFromPool(
@@ -264,6 +269,8 @@ const SELECT_BRANDS_BY_KANJI_EXTRACTION = `
   -- expand to 1 element (no variant kanji); worst case is 2-3
   -- elements, well within ANY()s performance envelope.
   WHERE br.name_kanji = ANY($1) AND b.name_kanji = ANY($2)
+    AND br.superseded_at IS NULL
+    AND b.superseded_at IS NULL
   ORDER BY br.brand_id
   LIMIT 5
 `
@@ -298,6 +305,8 @@ const SELECT_BRANDS_AND_BREWERIES_BY_BRAND_KANJI = `
   FROM brands br
   JOIN breweries b ON b.brewery_id = br.brewery_id
   WHERE br.name_kanji = ANY($1)
+    AND br.superseded_at IS NULL
+    AND b.superseded_at IS NULL
   ORDER BY br.brand_id
   LIMIT 2
 `
@@ -338,6 +347,8 @@ const SELECT_BRANDS_AND_BREWERIES_BY_BREWERY_KANJI = `
   FROM brands br
   JOIN breweries b ON b.brewery_id = br.brewery_id
   WHERE b.name_kanji = ANY($1)
+    AND br.superseded_at IS NULL
+    AND b.superseded_at IS NULL
   ORDER BY
     (CASE WHEN br.name_kanji = b.name_kanji THEN 0 ELSE 1 END),
     br.brand_id
@@ -372,6 +383,8 @@ const SELECT_BRANDS_AND_BREWERIES_BY_LATIN_NAME = `
   FROM brands br
   JOIN breweries b ON b.brewery_id = br.brewery_id
   WHERE LOWER(br.name) = LOWER($1)
+    AND br.superseded_at IS NULL
+    AND b.superseded_at IS NULL
   ORDER BY br.brand_id
   LIMIT 5
 `
