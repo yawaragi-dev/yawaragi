@@ -83,6 +83,20 @@ class FakeBrandsDB implements BrandsDB {
     onChunk?.(rows.length)
   }
 
+  // Stubs for the manual-curation hooks (ADR-0014). The unit tests
+  // here don't exercise conflict detection; the real tests for
+  // `getLiveManualBrandKeys` / `supersedeBrands` live in the
+  // integration suite against testcontainers.
+  async getLiveManualBrandKeys(): Promise<
+    Map<string, { brandId: number; nameKanji: string; breweryId: number }>
+  > {
+    return new Map()
+  }
+
+  async supersedeBrands(): Promise<void> {
+    // no-op in the fake
+  }
+
   async transaction<T>(fn: (tx: BrandsDB) => Promise<T>): Promise<T> {
     this.txOpened++
     const result = await fn(this)

@@ -36,9 +36,29 @@ export interface BrandUpsert {
  */
 export type BatchProgress = (rowsThisChunk: number) => void
 
+/**
+ * Manual-curation brand identity, used by the ingest conflict-
+ * detection pass (ADR-0014). Key shape `<name_kanji>::<brewery_id>`
+ * matches the semantic identity Sakenowa would use if it republished
+ * the brand.
+ */
+export interface ManualBrandKey {
+  brandId: number
+  nameKanji: string
+  breweryId: number
+}
+
 export interface BrandsDB {
   getExistingBrandHashes(): Promise<Map<number, string>>
   upsertBrandsBatch(rows: readonly BrandUpsert[], onChunk?: BatchProgress): Promise<void>
+  /**
+   * Returns the live (non-superseded) `manual_curation` brand rows,
+   * keyed by `<name_kanji>::<brewery_id>` for O(1) match lookup
+   * against an incoming Sakenowa batch.
+   */
+  getLiveManualBrandKeys(): Promise<Map<string, ManualBrandKey>>
+  /** Marks the given brand rows as superseded. No-op on empty input. */
+  supersedeBrands(brandIds: ReadonlyArray<number>, when: Date): Promise<void>
   transaction<T>(fn: (tx: BrandsDB) => Promise<T>): Promise<T>
 }
 
@@ -136,6 +156,36 @@ class PgBrandsDB implements BrandsDB {
       )
       onChunk?.(chunk.length)
     }
+  }
+
+  async getLiveManualBrandKeys(): Promise<Map<string, ManualBrandKey>> {
+    const { rows } = await this.executor.query<{
+      brand_id: number
+      name_kanji: string
+      brewery_id: number
+    }>(
+      `SELECT brand_id, name_kanji, brewery_id
+       FROM brands
+       WHERE source = 'manual_curation' AND superseded_at IS NULL`,
+    )
+    return new Map(
+      rows.map((r) => [
+        `${r.name_kanji}::${r.brewery_id}`,
+        { brandId: r.brand_id, nameKanji: r.name_kanji, breweryId: r.brewery_id },
+      ]),
+    )
+  }
+
+  async supersedeBrands(brandIds: ReadonlyArray<number>, when: Date): Promise<void> {
+    if (brandIds.length === 0) return
+    await this.executor.query(
+      `UPDATE brands
+       SET superseded_at = $1
+       WHERE brand_id = ANY($2::int[])
+         AND source = 'manual_curation'
+         AND superseded_at IS NULL`,
+      [when, [...brandIds]],
+    )
   }
 
   async transaction<T>(fn: (tx: BrandsDB) => Promise<T>): Promise<T> {
