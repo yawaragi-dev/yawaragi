@@ -283,22 +283,36 @@ export function DebugPanel({
         {events.length === 0 ? (
           <p className="text-zinc-500 italic">{emptyHint}</p>
         ) : (
-          <ul className="flex flex-col gap-1.5">
+          <ul className="flex flex-col gap-2.5">
             {events.map((event, i) => (
-              // `min-w-0` on the flex parent lets the flex-1 message
-              // span actually shrink — without it, long unbroken
-              // JSON forces the row (and therefore the panel) wider
-              // than the viewport on narrow mobile.
-              <li key={i} className="flex min-w-0 items-start gap-2">
-                <span className="shrink-0 min-w-[3.25rem] tabular-nums text-zinc-500">
-                  +{(event.tMs / 1000).toFixed(2)}s
-                </span>
-                <span
-                  className={`shrink-0 min-w-[5.25rem] rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide ${SOURCE_COLORS[event.source]}`}
-                >
-                  {event.source}
-                </span>
-                <span className="flex-1 min-w-0 overflow-hidden wrap-anywhere text-zinc-800 dark:text-zinc-200">
+              // Each event is a vertical card: a compact pill row
+              // (timestamp + source) on top, then the message + any
+              // JSON payload at full panel width below. Previously
+              // these three lived in a single horizontal flex row,
+              // which ate ~140px of the panel's width on the left
+              // and forced JSON to wrap into very tall, narrow
+              // columns — and on the narrowest viewports an
+              // unbreakable URL inside the JSON would still poke
+              // past the panel edge. Stacking gives the message its
+              // full width back so wraps are shallow and the panel
+              // never has to grow to accommodate a long token.
+              //
+              // `min-w-0` on the card itself lets it shrink inside
+              // the flex-col `<ul>`; without it Chrome occasionally
+              // uses an unbreakable child's intrinsic min-content
+              // width as the card's min-width.
+              <li key={i} className="flex min-w-0 flex-col gap-0.5">
+                <div className="flex items-center gap-2 text-[10px]">
+                  <span className="shrink-0 tabular-nums text-zinc-500">
+                    +{(event.tMs / 1000).toFixed(2)}s
+                  </span>
+                  <span
+                    className={`shrink-0 rounded px-1.5 py-0.5 font-medium uppercase tracking-wide ${SOURCE_COLORS[event.source]}`}
+                  >
+                    {event.source}
+                  </span>
+                </div>
+                <div className="min-w-0 overflow-hidden wrap-anywhere text-zinc-800 dark:text-zinc-200">
                   {LEVEL_PREFIX[event.level]}
                   {event.message}
                   {event.data && (
@@ -308,12 +322,12 @@ export function DebugPanel({
                     // unbreakable strings to prevent overflow. Pairs
                     // with `break-all` for double-belt coverage on
                     // long ASCII-only segments inside the JSON
-                    // (`breweryVariants`, `nameJa`, etc).
+                    // (`breweryVariants`, `cookieKey`, `nameJa`, etc).
                     <code className="mt-0.5 block max-w-full overflow-hidden whitespace-pre-wrap wrap-anywhere break-all rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] text-zinc-700 dark:bg-zinc-900 dark:text-zinc-300">
                       {JSON.stringify(event.data)}
                     </code>
                   )}
-                </span>
+                </div>
               </li>
             ))}
           </ul>
