@@ -442,6 +442,97 @@ describe('findSakeByExtractionFromPool', () => {
     expect(result.query).toEqual({ nameJa: '菊姫', breweryJa: '存在しない酒造' })
   })
 
+  it('Latin pass matches a kanji brand by its name_romaji (2026-06-13 Kizakura shape)', async () => {
+    // Sakenowa stores 黄桜 with name = '黄桜' (Japanese kanji). The
+    // LLM-ingest pipeline populates name_romaji = 'Kizakura'. When
+    // the model returns the Latin form `Kizakura`, the Latin pass
+    // matches via the `LOWER(name_romaji)` arm.
+    await seedBrewery({
+      breweryId: 9501,
+      name: 'Kizakura',
+      nameKanji: '黄桜',
+      areaId: 26,
+    })
+    await pool.query(
+      `INSERT INTO brands
+         (brand_id, name, name_kanji, name_romaji, brewery_id, source, confidence, content_hash)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [9001, '黄桜', '黄桜', 'Kizakura', 9501, 'sakenowa', null, 'hash-kizakura-name-romaji'],
+    )
+
+    const result = await findSakeByExtractionFromPool(
+      // Brewery_ja doesn't match the seed — forces fall-through to
+      // the Latin pass.
+      { nameJa: 'Kizakura', breweryJa: '存在しない酒造' },
+      pool,
+    )
+
+    expect(result.kind).toBe('matched_brand_only')
+    if (result.kind !== 'matched_brand_only') throw new Error('unreachable; for narrowing only')
+    expect(result.sake).toMatchObject({ brandId: 9001, nameKanji: '黄桜' })
+  })
+
+  it('Latin pass strips a sub-line modifier and finds the main brand (Kizakura Perle → Kizakura)', async () => {
+    // Real 2026-06-13 trace: model returned `name_ja: 'Kizakura
+    // Perle'` for a 黄桜 Perle bottle. The first-word stripping
+    // tries `Kizakura` alone, which matches via name_romaji.
+    await seedBrewery({ breweryId: 9501, name: 'Kizakura', nameKanji: '黄桜', areaId: 26 })
+    await pool.query(
+      `INSERT INTO brands
+         (brand_id, name, name_kanji, name_romaji, brewery_id, source, confidence, content_hash)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [9001, '黄桜', '黄桜', 'Kizakura', 9501, 'sakenowa', null, 'hash-kizakura-perle-strip'],
+    )
+
+    const result = await findSakeByExtractionFromPool(
+      { nameJa: 'Kizakura Perle', breweryJa: '存在しない酒造' },
+      pool,
+    )
+
+    expect(result.kind).toBe('matched_brand_only')
+    if (result.kind !== 'matched_brand_only') throw new Error('unreachable; for narrowing only')
+    expect(result.sake).toMatchObject({ brandId: 9001 })
+  })
+
+  it('prefers Latin match over brewery-only ambiguous when name_ja is Latin (Kizakura Perle full chain)', async () => {
+    // The full 2026-06-13 trace: model returned correct brand form
+    // but WRONG brewery — `木下酒造` (real brewery, multi-brand) instead
+    // of the real `黄桜` brewery. Pre-fix: brewery-only ambiguous
+    // showed 木下酒造's brands (all wrong). Post-fix: Latin pass on
+    // `Kizakura` finds the real brand and we prefer it over the
+    // ambiguous.
+    await seedBrewery({ breweryId: 9501, name: 'Kizakura', nameKanji: '黄桜', areaId: 26 })
+    await seedBrewery({ breweryId: 9502, name: 'Kinoshita', nameKanji: '木下酒造', areaId: 26 })
+    await pool.query(
+      `INSERT INTO brands
+         (brand_id, name, name_kanji, name_romaji, brewery_id, source, confidence, content_hash)
+       VALUES
+         ($1, $2, $3, $4, $5, $6, $7, $8),
+         ($9, $10, $11, $12, $13, $14, $15, $16),
+         ($17, $18, $19, $20, $21, $22, $23, $24)`,
+      [
+        // Real Kizakura brand on the brewery the model SHOULD have read.
+        9001, '黄桜', '黄桜', 'Kizakura', 9501, 'sakenowa', null, 'hash-kizakura-full-9001',
+        // Two random brands on the brewery the model DID read.
+        9002, 'Tamagawa', '玉川', 'Tamagawa', 9502, 'sakenowa', null, 'hash-kizakura-full-9002',
+        9003, 'Ice', 'Ice', 'Ice', 9502, 'sakenowa', null, 'hash-kizakura-full-9003',
+      ],
+    )
+
+    const result = await findSakeByExtractionFromPool(
+      { nameJa: 'Kizakura Perle', breweryJa: '木下酒造' },
+      pool,
+    )
+
+    // brewery-only would have returned ambiguous with [9002, 9003].
+    // Latin pass on `Kizakura Perle` (after first-word stripping) finds
+    // 9001 via name_romaji = 'Kizakura'. Preferred.
+    expect(result.kind).toBe('matched_brand_only')
+    if (result.kind !== 'matched_brand_only') throw new Error('unreachable; for narrowing only')
+    expect(result.sake).toMatchObject({ brandId: 9001 })
+    expect(result.brewery).toMatchObject({ breweryId: 9501 })
+  })
+
   it('falls through to Latin-name lookup when the model returns a Latin brand (2026-06-12 script-coverage)', async () => {
     // 110 Sakenowa brands are Latin-only (`Shangri-la`, `UMAMI`,
     // `Highland`, etc). When the model returns the Latin form

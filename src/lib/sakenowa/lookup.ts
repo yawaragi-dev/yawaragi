@@ -355,15 +355,25 @@ const SELECT_BRANDS_AND_BREWERIES_BY_BREWERY_KANJI = `
   LIMIT 5
 `
 
-// Latin brand lookup: matches against Sakenowa's published `name`
-// field (which holds the canonical romaji/Latin form for kanji
-// brands, and the verbatim Latin string for the ~110 Latin-only
-// brands like `Shangri-la`, `I LOVE SUSHI`, `Highland`). Used as a
-// fallback after kanji/kana passes miss when the model returns a
-// Latin-only brand string — bottles where the visitor's eye latched
-// onto the prominent Latin mark on the label. Case-insensitive
-// equality so `UMAMI` / `umami` / `Umami` all match the catalogue
-// row regardless of how the model normalised the case.
+// Latin brand lookup: matches against both Sakenowa's published `name`
+// field (canonical romaji/Latin form for kanji brands, verbatim Latin
+// for the ~110 Latin-only brands like `Shangri-la`, `I LOVE SUSHI`,
+// `Highland`) AND our LLM-derived `name_romaji` column (populated by
+// the #121 ingest pipeline for kanji brands like 黄桜 → "Kizakura").
+//
+// Used as a fallback after kanji/kana passes miss when the model
+// returns a Latin-only brand string. The `name_romaji` reach is
+// load-bearing for kanji brands the visitor scanned via the Latin
+// transliteration on the label (real case: `Kizakura Perle` on a
+// 黄桜 Perle bottle — Sakenowa stores `name = '黄桜'` but
+// `name_romaji = 'Kizakura'`).
+//
+// Case-insensitive on both sides (LOWER() each).
+//
+// $1 is the candidate-set array — `expandLatinBrandVariants` may
+// add the first-word stripping for multi-word inputs like
+// `Kizakura Perle` → also try `Kizakura`. All candidates are
+// pre-LOWER'd by the JS caller so the SQL only LOWERs the columns.
 const SELECT_BRANDS_AND_BREWERIES_BY_LATIN_NAME = `
   SELECT
     br.brand_id          AS brand_brand_id,
@@ -382,7 +392,7 @@ const SELECT_BRANDS_AND_BREWERIES_BY_LATIN_NAME = `
     b.confidence         AS brewery_confidence
   FROM brands br
   JOIN breweries b ON b.brewery_id = br.brewery_id
-  WHERE LOWER(br.name) = LOWER($1)
+  WHERE (LOWER(br.name) = ANY($1::text[]) OR LOWER(br.name_romaji) = ANY($1::text[]))
     AND br.superseded_at IS NULL
     AND b.superseded_at IS NULL
   ORDER BY br.brand_id
@@ -486,7 +496,42 @@ export async function findSakeByExtractionFromPool(
   // the single-character-hallucination guard fires (brand suspect,
   // brewery still worth a shot).
   const breweryOnly = await findSakeByBreweryOnlyFromPool(query, pool)
-  if (breweryOnly.kind !== 'no_match') return breweryOnly
+  if (breweryOnly.kind === 'matched_brewery_only') return breweryOnly
+
+  // brewery-only returned ambiguous OR no_match. If ambiguous AND
+  // `name_ja` is Latin-shaped, the model's brewery may have been
+  // misread (e.g. 2026-06-13 Kizakura Perle bottle: model returned
+  // brewery `木下酒造` which IS in Sakenowa with 5 brands, but the
+  // real brewery is `黄桜` and the real brand `黄桜` has
+  // name_romaji = 'Kizakura'). We try the 5th-pass Latin lookup
+  // BEFORE returning the brewery-only ambiguous, because a unique
+  // Latin match is almost certainly more accurate than a list of
+  // candidates from a brewery the model may not even have read
+  // correctly.
+  //
+  // Decision tree on brewery-only result × Latin pass eligibility:
+  //   - matched_brewery_only      → return (already short-circuited above)
+  //   - ambiguous + Latin runs + matched_brand_only result → prefer Latin
+  //   - ambiguous + Latin runs + non-match result → fall back to brewery-only ambiguous
+  //   - ambiguous + Latin doesn't run → return brewery-only ambiguous
+  //   - no_match → fall through to field-swap pass below
+  if (breweryOnly.kind === 'ambiguous') {
+    if (containsLatinAlpha(query.nameJa) && !containsJapaneseScript(query.nameJa)) {
+      debugAdd(
+        'Sakenowa',
+        `brewery-only returned ambiguous; name_ja is Latin-shaped → trying Latin pass before falling back`,
+      )
+      const latinFromAmbig = await findSakeByLatinBrandFromPool(query, pool)
+      if (latinFromAmbig.kind === 'matched_brand_only') {
+        debugAdd(
+          'Sakenowa',
+          `Latin pass found a unique match (${latinFromAmbig.sake.nameKanji}); preferring it over brewery-only ambiguous`,
+        )
+        return latinFromAmbig
+      }
+    }
+    return breweryOnly
+  }
 
   // Fourth pass: field-swap rescue at the general-lookup level.
   // 2026-06-12 trace on a `杉玉` (Sugitama) bottle: model returned
@@ -638,12 +683,41 @@ export async function findSakeByBrandOnly(
 }
 
 /**
- * Latin-name brand lookup. Matches the Sakenowa `brands.name` field
- * case-insensitively against the input. Used as a fallback when
- * the kanji + kana lookup chain misses and the visitor's bottle
- * presents the brand in Latin script (`UMAMI`, `Shangri-la`, the
- * 110 Latin-only brands in Sakenowa plus the romaji-canonical
- * `name` for kanji brands when the model returns the romaji form).
+ * Expands a Latin brand candidate into the set of lookup keys we
+ * actually query. Two transforms:
+ *   - Verbatim (lowercased)
+ *   - For multi-word inputs where the first word is substantial
+ *     (≥ 4 characters), also try the first word alone. Catches
+ *     `Kizakura Perle` → also try `Kizakura` (the main brand, with
+ *     Perle being a sub-line modifier the catalogue doesn't track).
+ *     The 4-char floor filters out false-positive splits like
+ *     `I LOVE SUSHI` → "I".
+ *
+ * Returns lowercased strings so the SQL only has to LOWER() each
+ * column on the right-hand side.
+ */
+function expandLatinBrandVariants(text: string): string[] {
+  const trimmed = text.trim()
+  if (trimmed.length === 0) return []
+  const variants = new Set<string>([trimmed.toLowerCase()])
+  const firstSpace = trimmed.indexOf(' ')
+  if (firstSpace >= 4) {
+    variants.add(trimmed.slice(0, firstSpace).toLowerCase())
+  }
+  return [...variants]
+}
+
+/**
+ * Latin-name brand lookup. Matches against BOTH the Sakenowa
+ * `brands.name` field (canonical Latin form, e.g. `Shangri-la`,
+ * `UMAMI`) AND the LLM-derived `brands.name_romaji` column
+ * (populated by the #121 ingest pipeline — kanji brands get a
+ * Latin transliteration there, so `黄桜` ↔ `Kizakura`).
+ *
+ * Used when the visitor's bottle presents the brand in Latin
+ * script — either a genuinely Latin-only brand (one of the ~110
+ * in Sakenowa) or a Latin transliteration of a kanji brand the
+ * visitor's eye latched onto.
  *
  * Returns the same `BrandOnlyLookupResult` shape as the kanji
  * brand-only lookup so callers can chain them transparently. The
@@ -656,16 +730,17 @@ export async function findSakeByLatinBrandFromPool(
   query: SakeLookupQuery,
   pool: Pool,
 ): Promise<BrandOnlyLookupResult> {
-  if (query.nameJa.length === 0) return { kind: 'no_match', query }
+  const candidates = expandLatinBrandVariants(query.nameJa)
+  if (candidates.length === 0) return { kind: 'no_match', query }
   debugAdd(
     'Sakenowa',
-    `latin-name lookup on LOWER(brands.name) = LOWER("${query.nameJa}")`,
-    { nameJa: query.nameJa },
+    `latin-name lookup on LOWER(name) OR LOWER(name_romaji) ∈ {${candidates.join('|')}}`,
+    { nameJa: query.nameJa, candidates },
   )
   const { rows } = await publicQuery<BrandWithBreweryRow>(
     'brands',
     SELECT_BRANDS_AND_BREWERIES_BY_LATIN_NAME,
-    [query.nameJa],
+    [candidates],
     pool,
   )
   debugAdd('Sakenowa', `latin-name lookup returned ${rows.length} row(s)`)
