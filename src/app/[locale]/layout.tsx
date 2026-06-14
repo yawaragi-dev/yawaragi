@@ -63,7 +63,22 @@ export default async function LocaleLayout({
         className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       >
         <body
-          className="min-h-full flex flex-col bg-zinc-50 font-sans dark:bg-black"
+          // `overflow-x-hidden` is a load-bearing defense against iOS
+          // Safari's well-known sr-only-vs-file-input bug. The scan
+          // form mounts two `<input type="file" class="sr-only">`
+          // elements (upload + camera, programmatically click()ed by
+          // the visible buttons). iOS Safari renders the file-input's
+          // "no file chosen" hint text at its intrinsic ~191px width
+          // despite sr-only's `width:1px; clip:rect(0,0,0,0)`, which
+          // pushes the document horizontally past the viewport. Once
+          // the document scrolls, the debug-panel and cookie-banner
+          // (both `fixed inset-x-0`) appear to "extend past the right
+          // edge" because the viewport itself is wider than the
+          // physical screen. `overflow-x: hidden` on body clamps the
+          // horizontal scroll regardless of any escapee. Chromium /
+          // Firefox clip these inputs correctly, so this is a no-op
+          // there. (Reported 2026-06-14 on mobile preview.)
+          className="min-h-full flex flex-col overflow-x-hidden bg-zinc-50 font-sans dark:bg-black"
           // Reserve bottom space for the mobile debug-panel strip so it
           // behaves like a sticky footer (content scrolls above it
           // instead of being overlaid). The variable is published by
