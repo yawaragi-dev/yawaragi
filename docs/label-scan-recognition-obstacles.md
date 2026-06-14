@@ -542,6 +542,36 @@ Upstream of recognition but shape its failure modes.
 
 ---
 
+## 26. Category gap: visitor scans a non-sake Japanese bottle (shochu, awamori, mirin, plum-wine)
+
+**What it is.** A visitor — typically a non-Japanese-reading tourist on the German shelf — picks up what they assume is a sake bottle but it's actually **shochu** (焼酎, distilled), **awamori** (泡盛, Okinawan distilled), **mirin** (味醂, sweet rice wine for cooking), **umeshu** (梅酒, plum liqueur), or **happoshu** / sake-adjacent beer. Visually these bottles often look identical to sake on the shelf — same shape, same paper wraps, same vertical kanji typography — and DACH shops frequently sit them side-by-side. The vision model reads the brand correctly, the action runs the full Sakenowa lookup chain, every pass misses because **Sakenowa is a sake-only catalogue**.
+
+**Example.** 2026-06-14 testing on `21882.jpg`:
+
+- Actual bottle: `赤兎馬 (Sekitoba)` by `濵田酒造 (Hamada Sangyo)` — a sweet-potato (`芋`) shochu, oak-barrel aged (`樫樽熟成`), from Kagoshima (`薩州`).
+- All three category markers (`本格焼酎`, `芋`, `樫樽熟成`) printed on the right-side regulatory text.
+- Sonnet (tier-2) read both fields correctly: `name_ja: "赤兎馬", brewery_ja: "濵田酒造", confidence: 0.82`. Vision pipeline did its job.
+- Sakenowa chain: 0 rows on every pass. Brand `赤兎馬` doesn't exist there (it's shochu); the brewery `濱田酒造` does exist (brewery 783, Kagoshima — they make sake too) but the kanji variant `濵` ↔ `濱` isn't in our variants expansion. Even if it were, surfacing the brewery's *sake* lineup to a visitor holding a shochu bottle would be worse UX than `no_match`.
+
+**Distinct from:** §22 (script-coverage gap — sake brand exists, kanji/Latin matching falls short) and §23 (stylized-label, model can't read). Here the model reads correctly and Sakenowa simply doesn't carry the product category.
+
+**Status.** Documented, no rescue path in PR #128. Current UX:
+
+- The action returns `no_match` with the `backLabelHint` UI string from PR #128: *"Tip: if the front label is stylized, try the back — the brewery name and kanji are usually clearer there."*
+- That hint is **misleading** for §26 — the model already read the bottle correctly; a closer shot won't change the category-coverage gap.
+
+**What would help long-term (separate issue):**
+
+Add an `is_sake` / `category` field to `LabelScanExtractionSchema` so the model can explicitly flag the bottle's category (sake / shochu / awamori / mirin / umeshu / other-alcohol / non-alcohol / unknown). When the model returns non-sake, the action routes to a new state (`not_sake`) and the UI shows locale-aware copy like *"This looks like a shochu bottle. Yawaragi is a sake-only catalogue right now."* The visitor learns the actual category and stops trying to scan it. Single-pass cost (no extra vision call); small schema change.
+
+Real product value beyond category-coverage: many DACH visitors genuinely can't tell sake from shochu at a glance — same wax-paper wrap, same vertical kanji, same shelf neighbour. Helping them identify the category IS a discovery feature, not a workaround.
+
+The category-expansion question (does Yawaragi eventually catalogue shochu / awamori too?) is Phase 4+. Sakenowa doesn't cover those — would need a different data source, separate ingest, separate flavour vocabulary. Worth flagging as a strategic direction; not in scope here.
+
+**Tracking.** Documented here. Follow-up feature issue: [#131](https://github.com/yawaragi-dev/yawaragi/issues/131) (`is_sake` schema field + `not_sake` state).
+
+---
+
 ## Cross-references
 
 - PRD [#105](https://github.com/yawaragi-dev/yawaragi/issues/105) — Phase 3 anonymous label scan, the umbrella for all of the above.
