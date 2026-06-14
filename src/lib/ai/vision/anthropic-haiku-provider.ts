@@ -175,6 +175,12 @@ export function createAnthropicHaikuProvider(
       }
 
       const resolvedModel = model ?? anthropic('claude-haiku-4-5')
+      const resolvedModelId =
+        typeof resolvedModel === 'object' &&
+        resolvedModel !== null &&
+        'modelId' in resolvedModel
+          ? String((resolvedModel as { modelId: unknown }).modelId)
+          : 'unknown'
 
       // Convert the JPEG blob to a Uint8Array. The AI SDK's `ImagePart`
       // with `image: Uint8Array` is serialised by `@ai-sdk/anthropic`
@@ -184,14 +190,9 @@ export function createAnthropicHaikuProvider(
       const arrayBuffer = await jpegBlob.arrayBuffer()
       const bytes = new Uint8Array(arrayBuffer)
 
-      debugAdd('Vision', `calling claude-haiku-4-5 with ${bytes.length} bytes of inline JPEG`, {
+      debugAdd('Vision', `calling ${resolvedModelId} with ${bytes.length} bytes of inline JPEG`, {
         mediaType: jpegBlob.type || 'image/jpeg',
-        modelId:
-          typeof resolvedModel === 'object' &&
-          resolvedModel !== null &&
-          'modelId' in resolvedModel
-            ? String((resolvedModel as { modelId: unknown }).modelId)
-            : 'unknown',
+        modelId: resolvedModelId,
       })
 
       const start = Date.now()

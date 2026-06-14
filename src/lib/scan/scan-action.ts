@@ -5,7 +5,11 @@ import { env } from '@/env'
 import { getPathname } from '@/i18n/navigation'
 import type { Locale } from '@/i18n/routing'
 import { routing } from '@/i18n/routing'
-import { getDefaultVisionProvider } from '@/lib/ai/vision/registry'
+import {
+  getVisionProvider,
+  TIER_2_VISION_PROVIDER_KEY,
+} from '@/lib/ai/vision/registry'
+import type { VisionProvider } from '@/lib/ai/vision/vision-provider'
 import { DebugLog, debugAdd, runWithDebugLog } from '@/lib/debug/debug-log'
 import { isDebugEnabledFromCookies } from '@/lib/debug/debug-mode'
 import {
@@ -268,23 +272,75 @@ export async function scanAction(
       return { status: 'rate_limited', retryAfterSec: rateLimit.retryAfterSec }
     }
 
-    // Real vision call (S3) + Sakenowa lookup, wrapped in a single
-    // try/catch so an Anthropic outage, a schema-validation retry
-    // exhaustion (random non-sake images regularly bottom out here —
-    // the model returns empty strings, the schema rejects, the AI SDK
-    // gives up), or a DB connectivity blip all surface as a tagged
-    // `extraction_failed` state instead of a 500 + Next.js error
-    // digest. Without this catch the server-side debug trace is lost
-    // when the throw bubbles up, because the response never lands on
-    // the client to carry it.
+    // Two-tier vision strategy. Tier 1 is Haiku 4.5 — cheap, fast,
+    // sufficient for clear bottles (UMAMI-style Latin, well-lit
+    // kanji on plain backgrounds). Tier 2 is Sonnet 4.6 — materially
+    // better at brush-style calligraphic kanji on busy backgrounds,
+    // ~5x cost per call. We only invoke Sonnet when Haiku has
+    // demonstrably failed to land on a Sakenowa entry (`no_match`,
+    // `low_confidence`, or `extraction_failed`), so the amortised
+    // cost stays close to Haiku on the happy path while hard
+    // bottles (Tanigawa-dake / 谷川岳 in brush-style, 2026-06-14)
+    // still get a real second look. Other tier-1 outcomes
+    // (matched* / ambiguous) are kept as-is — Sakenowa already
+    // resolved something for them, so paying for Sonnet would just
+    // burn money.
+    const tier1Result = await extractAndLookupWithProvider(
+      getVisionProvider('anthropic-haiku-4-5'),
+      image,
+      localeRaw,
+    )
+    if (
+      tier1Result.status === 'no_match' ||
+      tier1Result.status === 'low_confidence' ||
+      tier1Result.status === 'extraction_failed'
+    ) {
+      debugAdd(
+        'ScanAction',
+        `tier-1 (Haiku) returned ${tier1Result.status} — retrying with tier-2 (${TIER_2_VISION_PROVIDER_KEY})`,
+        { tier1Status: tier1Result.status },
+        'warn',
+      )
+      return extractAndLookupWithProvider(
+        getVisionProvider(TIER_2_VISION_PROVIDER_KEY),
+        image,
+        localeRaw,
+      )
+    }
+    return tier1Result
+  })
+
+  // Attach the accumulated trace to the response. Stripped when debug
+  // is off so non-debug visitors never see it.
+  return log ? { ...result, debugLog: log.toArray() } : result
+}
+
+/**
+ * Tier-agnostic extraction + Sakenowa-lookup pipeline. Takes a
+ * `VisionProvider` so `scanAction` can run it with Haiku first and
+ * Sonnet on retry (see the two-tier comment in `scanAction`).
+ *
+ * Wraps the vision call, all the script / placeholder / single-char
+ * hallucination guards, and the full 5-pass Sakenowa lookup chain in
+ * a single try/catch. Throws are caught and surfaced as
+ * `extraction_failed`, so an Anthropic outage / schema-validation
+ * retry exhaustion / DB blip lands as a tagged state with the debug
+ * trace intact rather than a 500 + Next.js error digest. The
+ * server-side debug trace would otherwise be lost because the
+ * response never lands on the client to carry it.
+ */
+async function extractAndLookupWithProvider(
+  provider: VisionProvider,
+  image: Blob,
+  localeRaw: Locale,
+): Promise<ScanActionState> {
     try {
-      // Provider resolution from the registry (`VISION_PROVIDER` env,
-      // default `anthropic-haiku-4-5`). The downscaled JPEG goes
-      // inline as base64 on /v1/messages; the Anthropic Files API is
-      // forbidden (`pnpm anthropic-files:audit`). The provider parses
-      // the model output through `LabelScanExtractionSchema`, pinning
-      // `source` to `'llm_extracted'`.
-      const extraction = await getDefaultVisionProvider().extractLabel(image)
+      // The downscaled JPEG goes inline as base64 on /v1/messages;
+      // the Anthropic Files API is forbidden (`pnpm
+      // anthropic-files:audit`). The provider parses the model output
+      // through `LabelScanExtractionSchema`, pinning `source` to
+      // `'llm_extracted'`.
+      const extraction = await provider.extractLabel(image)
       const tier = resolveConfidenceTier(extraction.confidence)
       debugAdd('ScanAction', `extraction confidence ${extraction.confidence.toFixed(2)} → tier "${tier}"`, {
         confidence: extraction.confidence,
@@ -601,11 +657,6 @@ export async function scanAction(
       )
       return { status: 'extraction_failed', reason: name }
     }
-  })
-
-  // Attach the accumulated trace to the response. Stripped when debug
-  // is off so non-debug visitors never see it.
-  return log ? { ...result, debugLog: log.toArray() } : result
 }
 
 interface RateLimitDecision {
