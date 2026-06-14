@@ -478,7 +478,8 @@ The instability itself is the signal: Haiku has no reliable visual anchor on thi
    - `low_confidence` (Haiku itself dropped confidence below the retry threshold, or an early guard caught a sentinel / Latin-only brewery / single-char hallucination)
    - `extraction_failed` (Haiku threw — `AI_NoObjectGeneratedError` etc.)
    - `matched_brand_only` / `matched_brewery_only` (Sakenowa resolved a partial match WITH a brewery / brand divergence — strong signal Haiku misread at least one field; see §25 for the canonical case)
-3. **`matched` (first-pass exact) and `ambiguous`** results from tier-1 are returned as-is. Sakenowa already resolved or narrowed; Sonnet would only re-read the same extraction.
+   - `ambiguous` (Sakenowa returned multiple candidates — the most common cause is a field-swap or under-specified extraction by Haiku, e.g. Kiku-Masamune taru-sake 2026-06-14 where Haiku field-swapped descriptor / brand and the brewery-only fallback found 4 real 菊正宗 candidates; Sonnet reads cleanly and lands on a first-pass exact match. Genuine catalogue-side ambiguity — `Kubota` with multiple sub-lines — also pays the retry cost without UX gain, but the field-swap case is more common for the DACH-focused launch corpus.)
+3. **`matched` (first-pass exact)** is the only tier-1 result returned as-is — Sakenowa already resolved unambiguously and Sonnet would only re-read the same extraction at higher cost.
 
 Verified on the Tanigawa-dake bottle: Haiku returned `天向 / 天向酒造` → all 5 Sakenowa passes missed → `no_match` → tier-2 retry → Sonnet returned `谷川岳 / 永井酒造` at confidence 0.88 → first-pass matched brand 273 in 100 ms. End-to-end ~5.4 s (vs. forever on Haiku alone).
 

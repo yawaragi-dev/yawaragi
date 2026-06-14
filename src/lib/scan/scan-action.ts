@@ -276,8 +276,8 @@ export async function scanAction(
     // sufficient for clear bottles (UMAMI-style Latin, well-lit
     // kanji on plain backgrounds). Tier 2 is Sonnet 4.6 — materially
     // better at brush-style calligraphic kanji on busy backgrounds,
-    // ~5x cost per call. Retry on every status where Haiku failed
-    // to land on the right Sakenowa entry:
+    // ~5x cost per call. Retry on every tier-1 status EXCEPT a
+    // clean `matched` (first-pass exact):
     //
     //   - `no_match` / `low_confidence` / `extraction_failed`:
     //     no result at all from tier-1.
@@ -291,13 +291,24 @@ export async function scanAction(
     //     diverged brewery, surfacing a confident-looking divergence
     //     card pointing at completely the wrong sake. Sonnet on the
     //     same image reads `菊正宗` cleanly.
+    //   - `ambiguous`: Sakenowa returned multiple candidates because
+    //     tier-1's extraction was field-swapped or otherwise
+    //     under-specified. Real-world bite (Kiku-Masamune
+    //     taru-sake, 2026-06-14): Haiku field-swapped (descriptor
+    //     "JUNMAI TARU SAKE" in name_ja, the actual brand "菊正宗"
+    //     in brewery_ja) and the brewery-only fallback found 4
+    //     real 菊正宗 candidates. Sonnet on the same image returns
+    //     a clean (name_ja: 菊正宗, brewery_ja: 菊正宗酒造) → first-
+    //     pass exact match. Genuine catalogue-side ambiguity
+    //     (e.g. `Kubota` with multiple sub-lines) still pays the
+    //     retry cost without UX improvement, but the field-swap
+    //     case is more common than catalogue-side ambiguity for
+    //     the DACH-focused launch corpus.
     //
-    // The only outcomes we KEEP from tier-1 are unambiguous wins:
-    // `matched` (first-pass exact) and `ambiguous` (Sakenowa already
-    // narrowed to a small candidate set — Sonnet retry wouldn't
-    // change the candidate list, just re-read the extraction). And
-    // of course `rate_limited` / `invalid_input` never reach this
-    // branch.
+    // The only outcome we KEEP from tier-1 is `matched` (first-pass
+    // exact). Sakenowa resolved unambiguously; Sonnet retry would
+    // just re-read the same extraction at higher cost. `rate_limited`
+    // and `invalid_input` never reach this branch.
     const tier1Result = await extractAndLookupWithProvider(
       getVisionProvider('anthropic-haiku-4-5'),
       image,
@@ -308,7 +319,8 @@ export async function scanAction(
       tier1Result.status === 'low_confidence' ||
       tier1Result.status === 'extraction_failed' ||
       tier1Result.status === 'matched_brand_only' ||
-      tier1Result.status === 'matched_brewery_only'
+      tier1Result.status === 'matched_brewery_only' ||
+      tier1Result.status === 'ambiguous'
     ) {
       debugAdd(
         'ScanAction',
