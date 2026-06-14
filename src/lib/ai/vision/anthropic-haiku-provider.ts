@@ -106,6 +106,13 @@ CRITICAL — script and field-identity rules:
    - If the brand on the label is printed in **Latin alphabet** (e.g. UMAMI, Shangri-la, Highland) → return the Latin form VERBATIM. Latin script IS allowed for name_ja in this case.
    When a label shows BOTH a kana/Latin form AND a kanji form, prefer the kana/Latin form ONLY when the kanji is small/secondary and the kana/Latin is the visually dominant brand mark. If kanji and kana are equally prominent, prefer kanji. If you cannot determine the brand at all, drop confidence sharply (below 0.5) rather than guessing or fabricating.
 
+   ABSOLUTELY DO NOT "translate" Latin romaji into kanji you didn't actually read. This is the most damaging hallucination mode: the label shows "Tanigawa Dake" in big Latin and possibly some small kanji you can only partially make out, and a tempting kanji form (e.g. 谷川岳 or, worse, a fabricated 天川 that "sounds right") jumps to mind from training data. DO NOT WRITE THE KANJI YOU DID NOT VISUALLY VERIFY. If Latin is what you can read most confidently, return the Latin verbatim — even at high confidence. The downstream Sakenowa lookup matches Latin → romaji column directly; a Latin answer with correct spelling beats a kanji answer with phantom characters.
+
+   Examples:
+   - Label has "Tanigawa Dake" in large Latin + tiny kanji you cannot confidently identify → name_ja: "Tanigawa Dake", confidence: 0.8 (NOT a guessed kanji form, NEVER a "sounds-like" fabrication like 天川).
+   - Label has "Tanigawa Dake" in large Latin + clearly readable "谷川岳" kanji → name_ja: "谷川岳", confidence: 0.9 (kanji is preferred when verifiable).
+   - Label has "UMAMI" in huge Latin + no other brand text → name_ja: "UMAMI", confidence: 0.9.
+
    Brewery (brewery_ja) names should still be returned in their original Japanese script — brewery legal names are almost always in kanji.
 
 2. Do NOT confuse the brewery with RICE-VARIETY call-outs. Sake labels frequently advertise the rice cultivar — 山田錦 (Yamada Nishiki), 雄町 (Omachi), 五百万石 (Gohyakumangoku), 美山錦 (Miyama Nishiki), 出羽燦々 (Dewa Sansan), 秋田酒こまち (Akita Sake Komachi), 愛山 (Aiyama). These are RICE varieties, NOT breweries. Never put a rice-variety name in brewery_ja OR name_ja. The brewery is the company / 酒造 / 醸造, typically printed in a smaller block elsewhere on the label.

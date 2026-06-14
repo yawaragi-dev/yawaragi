@@ -699,10 +699,23 @@ export async function findSakeByBrandOnly(
 function expandLatinBrandVariants(text: string): string[] {
   const trimmed = text.trim()
   if (trimmed.length === 0) return []
-  const variants = new Set<string>([trimmed.toLowerCase()])
+  const lower = trimmed.toLowerCase()
+  const variants = new Set<string>([lower])
+  // First-word strip: "Kizakura Perle" → also try "Kizakura". 4-char
+  // floor so we don't match noise like "Big River" → "Big".
   const firstSpace = trimmed.indexOf(' ')
   if (firstSpace >= 4) {
     variants.add(trimmed.slice(0, firstSpace).toLowerCase())
+  }
+  // Space-stripped form: the LLM-derived `name_romaji` column is
+  // populated by the #121 ingest pipeline using single-word camel-style
+  // Latin (e.g. `Tanigawadake`, `Kawatsuru Shuzo`'s brand `Kawatsuru`).
+  // A visitor / model who returns the natural space-separated form
+  // (`"Tanigawa Dake"`, `"Kawatsuru"`) should still match. Only adds
+  // a variant when the input actually contains a space (the
+  // already-spaceless case is covered by `lower`).
+  if (lower.includes(' ')) {
+    variants.add(lower.replace(/\s+/g, ''))
   }
   return [...variants]
 }
