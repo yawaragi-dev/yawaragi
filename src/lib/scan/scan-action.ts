@@ -276,15 +276,28 @@ export async function scanAction(
     // sufficient for clear bottles (UMAMI-style Latin, well-lit
     // kanji on plain backgrounds). Tier 2 is Sonnet 4.6 — materially
     // better at brush-style calligraphic kanji on busy backgrounds,
-    // ~5x cost per call. We only invoke Sonnet when Haiku has
-    // demonstrably failed to land on a Sakenowa entry (`no_match`,
-    // `low_confidence`, or `extraction_failed`), so the amortised
-    // cost stays close to Haiku on the happy path while hard
-    // bottles (Tanigawa-dake / 谷川岳 in brush-style, 2026-06-14)
-    // still get a real second look. Other tier-1 outcomes
-    // (matched* / ambiguous) are kept as-is — Sakenowa already
-    // resolved something for them, so paying for Sonnet would just
-    // burn money.
+    // ~5x cost per call. Retry on every status where Haiku failed
+    // to land on the right Sakenowa entry:
+    //
+    //   - `no_match` / `low_confidence` / `extraction_failed`:
+    //     no result at all from tier-1.
+    //   - `matched_brand_only` / `matched_brewery_only`: tier-1
+    //     resolved a brand+brewery PARTIALLY but the divergence is
+    //     a strong "the model misread at least one field" signal.
+    //     Real-world bite (Kiku-Masamune, 2026-06-14): Haiku read
+    //     the descriptor "JUNMAI TARU SAKE" as the brand and the
+    //     brewery as a fabricated `菊宮`; the Latin first-word-strip
+    //     variant matched a generic `junmai`-named brand 3506 with
+    //     diverged brewery, surfacing a confident-looking divergence
+    //     card pointing at completely the wrong sake. Sonnet on the
+    //     same image reads `菊正宗` cleanly.
+    //
+    // The only outcomes we KEEP from tier-1 are unambiguous wins:
+    // `matched` (first-pass exact) and `ambiguous` (Sakenowa already
+    // narrowed to a small candidate set — Sonnet retry wouldn't
+    // change the candidate list, just re-read the extraction). And
+    // of course `rate_limited` / `invalid_input` never reach this
+    // branch.
     const tier1Result = await extractAndLookupWithProvider(
       getVisionProvider('anthropic-haiku-4-5'),
       image,
@@ -293,7 +306,9 @@ export async function scanAction(
     if (
       tier1Result.status === 'no_match' ||
       tier1Result.status === 'low_confidence' ||
-      tier1Result.status === 'extraction_failed'
+      tier1Result.status === 'extraction_failed' ||
+      tier1Result.status === 'matched_brand_only' ||
+      tier1Result.status === 'matched_brewery_only'
     ) {
       debugAdd(
         'ScanAction',

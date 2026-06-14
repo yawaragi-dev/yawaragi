@@ -683,15 +683,56 @@ export async function findSakeByBrandOnly(
 }
 
 /**
+ * Sake grade / style descriptors that are NEVER brand names. When a
+ * Latin extraction begins with one of these, the first-word-strip
+ * variant is suppressed — leaving just the verbatim and space-stripped
+ * forms. Why: the model sometimes returns the descriptor text as the
+ * brand (Kiku-Masamune, 2026-06-14: bottle reads "JUNMAI TARU SAKE
+ * 菊正宗", model returned `name_ja: "JUNMAI TARU SAKE"`), and the
+ * first-word-strip then dropped `"junmai"` into the lookup candidates.
+ * Sakenowa has brands whose Latin name begins with `Junmai` (and
+ * `Daiginjo`, etc.), so the bare descriptor would match an unrelated
+ * brand and surface as `matched_brand_only` with a divergence card
+ * pointing at the WRONG sake.
+ *
+ * Includes grade designations, brewing methods, filtration / aging
+ * styles, and rice-state tokens. All lowercased; matched against the
+ * lowercased first word of the input.
+ */
+const SAKE_GRADE_TOKENS = new Set<string>([
+  'junmai',
+  'ginjo',
+  'daiginjo',
+  'honjozo',
+  'tokubetsu',
+  'futsushu',
+  'kimoto',
+  'yamahai',
+  'sokujo',
+  'nigori',
+  'namazake',
+  'nama',
+  'genshu',
+  'taru',
+  'taruzake',
+  'kijoshu',
+  'koshu',
+  'shiboritate',
+  'hiyaoroshi',
+  'sparkling',
+])
+
+/**
  * Expands a Latin brand candidate into the set of lookup keys we
- * actually query. Two transforms:
- *   - Verbatim (lowercased)
+ * actually query. Three transforms:
+ *   - Verbatim (lowercased).
  *   - For multi-word inputs where the first word is substantial
- *     (≥ 4 characters), also try the first word alone. Catches
- *     `Kizakura Perle` → also try `Kizakura` (the main brand, with
- *     Perle being a sub-line modifier the catalogue doesn't track).
- *     The 4-char floor filters out false-positive splits like
- *     `I LOVE SUSHI` → "I".
+ *     (≥ 4 characters) AND NOT in `SAKE_GRADE_TOKENS`, also try the
+ *     first word alone. Catches `Kizakura Perle` → also try
+ *     `Kizakura`. The grade-token guard prevents
+ *     `JUNMAI TARU SAKE` → `junmai` matching unrelated brands.
+ *   - Space-stripped form for `name_romaji` (which the #121 ingest
+ *     pipeline stores as single-word camel Latin like `Tanigawadake`).
  *
  * Returns lowercased strings so the SQL only has to LOWER() each
  * column on the right-hand side.
@@ -702,10 +743,16 @@ function expandLatinBrandVariants(text: string): string[] {
   const lower = trimmed.toLowerCase()
   const variants = new Set<string>([lower])
   // First-word strip: "Kizakura Perle" → also try "Kizakura". 4-char
-  // floor so we don't match noise like "Big River" → "Big".
+  // floor so we don't match noise like "Big River" → "Big". Skip the
+  // strip entirely if the first word is a sake grade / style token
+  // (`junmai`, `daiginjo`, `taru`, …) — those are descriptors, never
+  // brand names.
   const firstSpace = trimmed.indexOf(' ')
   if (firstSpace >= 4) {
-    variants.add(trimmed.slice(0, firstSpace).toLowerCase())
+    const firstWordLower = trimmed.slice(0, firstSpace).toLowerCase()
+    if (!SAKE_GRADE_TOKENS.has(firstWordLower)) {
+      variants.add(firstWordLower)
+    }
   }
   // Space-stripped form: the LLM-derived `name_romaji` column is
   // populated by the #121 ingest pipeline using single-word camel-style

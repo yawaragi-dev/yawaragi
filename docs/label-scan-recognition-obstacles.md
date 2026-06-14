@@ -449,9 +449,69 @@ Distinct from:
 - **#110 eval harness** to measure §23's frequency. Could be 5 % of failures, could be 30 %; the answer informs whether to invest in stylized-label-specific tooling.
 - **Multi-shot capture** — the front-or-back decision could be visitor-driven (two photos) and the system could combine. Out of scope; a Phase 4 idea.
 - **#124 embedding similarity** does NOT help §23 — embeddings can't bridge "the model gave up" gap. Only catches §8 (real substitution).
-- **Better vision model.** The structural answer.
+- **Better vision model.** Now realised as §24 (tier-2 Sonnet retry).
 
-**Tracking.** Documented here. UI hint shipped in PR #128. No issue filed — eval harness needs to weigh in before any specific intervention.
+**Tracking.** Documented here. UI hint shipped in PR #128. Per-failure rescue arrived via §24 (tier-2 retry on Sonnet 4.6).
+
+---
+
+## 24. Calligraphic / brush-style kanji misread by Haiku — tier-2 vision retry
+
+**What it is.** Haiku 4.5 vision is materially worse than Sonnet 4.6 at reading brush-style or calligraphic kanji, especially when set against a busy or low-contrast background. On clear bottles (clean sans-serif kanji, UMAMI-style Latin) Haiku is fine; on hard ones it produces high-confidence hallucinations — kanji that vaguely match the shape or sound of the actual brand. The model's *self-reported* confidence stays at the auto-tier threshold (0.85+), so the only signal that something went wrong is the downstream Sakenowa lookup miss.
+
+**Examples.** All 2026-06-14 testing on a single Tanigawa-dake bottle:
+
+- Actual brand: `谷川岳` by `永井酒造` (Brand 273, Brewery 191, Gunma — both in Sakenowa). Latin "TANIGAWA DAKE / CHOKARA JUNMAI" visible on the side label.
+- Haiku attempts on the same image:
+  - `name_ja: "不明", brewery_ja: "不明"` (placeholder give-up — fixed by §rule 5 in the system prompt + `isPlaceholderExtraction` server guard)
+  - `name_ja: "天川", brewery_ja: "天川酒造"` (hallucinated kanji that vaguely sounds like "tanigawa")
+  - `name_ja: "天向", brewery_ja: "天向酒造"` (different hallucination, same shape)
+  - `name_ja: "天向", brewery_ja: "佐藤酒造"` (yet another hallucination, brewery pulled from a generic prior)
+
+The instability itself is the signal: Haiku has no reliable visual anchor on this image and is sampling from its kanji prior each call. Prompt hardening (anti-`不明` rule, "preserve script" rule, "DO NOT translate Latin to kanji" rule with a Tanigawa example) did not change the behaviour — Haiku's vision capability is simply insufficient.
+
+**Status.** Solved via a two-tier vision strategy in `scanAction` (`src/lib/scan/scan-action.ts`):
+
+1. **Tier 1 = Haiku 4.5** runs every scan. Cheap (~$0.001/scan), fast (1–2 s). Handles the happy path.
+2. **Tier 2 = Sonnet 4.6** runs only when tier-1 produced a failure signal:
+   - `no_match` (Sakenowa lookup chain found nothing on what Haiku extracted)
+   - `low_confidence` (Haiku itself dropped confidence below the retry threshold, or an early guard caught a sentinel / Latin-only brewery / single-char hallucination)
+   - `extraction_failed` (Haiku threw — `AI_NoObjectGeneratedError` etc.)
+   - `matched_brand_only` / `matched_brewery_only` (Sakenowa resolved a partial match WITH a brewery / brand divergence — strong signal Haiku misread at least one field; see §25 for the canonical case)
+3. **`matched` (first-pass exact) and `ambiguous`** results from tier-1 are returned as-is. Sakenowa already resolved or narrowed; Sonnet would only re-read the same extraction.
+
+Verified on the Tanigawa-dake bottle: Haiku returned `天向 / 天向酒造` → all 5 Sakenowa passes missed → `no_match` → tier-2 retry → Sonnet returned `谷川岳 / 永井酒造` at confidence 0.88 → first-pass matched brand 273 in 100 ms. End-to-end ~5.4 s (vs. forever on Haiku alone).
+
+**Cost shape.** Most scans (clear bottles) stay single-tier on cheap Haiku. Hard bottles pay ~6× the per-scan cost (Haiku + Sonnet) but actually succeed. The amortised cost depends on how many real-world bottles are §24-shaped; eval harness #110 will measure.
+
+**Tracking.** Two-tier shipped in PR #128 (`feat(scan): two-tier vision — Haiku first, Sonnet on failure`). Provider registry key: `anthropic-sonnet-4-6`. The retry site references `TIER_2_VISION_PROVIDER_KEY` from the registry so the swap point is one named constant.
+
+---
+
+## 25. Latin first-word-strip false match on sake grade descriptors
+
+**What it is.** The Latin lookup expands a candidate like `Kizakura Perle` into both the verbatim form and a first-word-strip variant (`Kizakura`) so sub-line modifiers like "Perle" don't block the main-brand match. That heuristic backfires when the model returns a sake grade / style descriptor in `name_ja` instead of the actual brand. The first-word-strip then drops a bare descriptor (`junmai`, `daiginjo`, …) into the lookup candidates, where it can match an unrelated Sakenowa brand whose Latin name happens to start with that descriptor. The result surfaces as a confident-looking `matched_brand_only` divergence card pointing at completely the wrong sake.
+
+**Example.** 2026-06-14 testing on a Kiku-Masamune bottle:
+
+- Actual brand: `菊正宗 (Kiku-Masamune)` — big black calligraphic kanji centred on the label. Latin "JUNMAI TARU SAKE" on the side; 純米 + たるざけ as small descriptors.
+- Haiku returned: `name_ja: "JUNMAI TARU SAKE", brewery_ja: "菊宮"` (truncated `菊正宗` → `菊` + fabricated `宮`), confidence 0.75.
+- Sakenowa chain:
+  - First-pass on the descriptor-as-brand: 0 rows.
+  - Brand-only on `"JUNMAI TARU SAKE"`: 0 rows.
+  - Brewery-only on the fabricated `菊宮`: 0 rows.
+  - Field-swap: 0 rows.
+  - Latin pass on `expandLatinBrandVariants("JUNMAI TARU SAKE")` = `["junmai taru sake", "junmai", "junmaitarusake"]`. The bare `"junmai"` (first-word strip) matched brand 3506 by 金虎酒造 — a Sakenowa entry whose Latin name happens to start with "Junmai". Routed to `matched_brand_only` with a divergence card pointing at the wrong brewery (`extracted: 菊宮`, `stored: 金虎酒造`).
+- Real-world impact: visitor scans Kiku-Masamune, system surfaces a divergence card claiming a match for a completely unrelated 金虎酒造 sake.
+
+**Status.** Two complementary fixes:
+
+1. **Sake grade / style token blocklist** (`SAKE_GRADE_TOKENS` in `src/lib/sakenowa/lookup.ts`). When the first word of a Latin extraction is a known sake descriptor (`junmai`, `ginjo`, `daiginjo`, `honjozo`, `tokubetsu`, `kimoto`, `yamahai`, `nigori`, `taru`, `kijoshu`, `koshu`, …), the first-word-strip variant is suppressed. The verbatim and space-stripped forms still run — if a real brand IS literally called `"Junmai Taru Sake"` it'll still match, but the bare `"junmai"` no longer matches an unrelated brand.
+2. **§24 tier-2 retry** also catches this case independently: the misleading `matched_brand_only` routing triggers a Sonnet retry, which on this image returns `菊正宗` cleanly with no divergence.
+
+The two fixes layer: the blocklist prevents the wrong-brand divergence card on Haiku alone (when Sonnet retry is disabled or unavailable), and tier-2 covers the residual cases where Haiku's extraction is so wrong the descriptor lookup wouldn't have helped anyway.
+
+**Tracking.** Both shipped in PR #128.
 
 ---
 
