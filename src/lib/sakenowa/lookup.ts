@@ -737,7 +737,7 @@ const SAKE_GRADE_TOKENS = new Set<string>([
  * Returns lowercased strings so the SQL only has to LOWER() each
  * column on the right-hand side.
  */
-function expandLatinBrandVariants(text: string): string[] {
+export function expandLatinBrandVariants(text: string): string[] {
   const trimmed = text.trim()
   if (trimmed.length === 0) return []
   const lower = trimmed.toLowerCase()
