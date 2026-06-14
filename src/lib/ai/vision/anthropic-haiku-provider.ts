@@ -121,6 +121,17 @@ CRITICAL — script and field-identity rules:
    - Names ending in 酒販店, 酒販, or リカーショップ are always retailers — exclude them outright. Never put them in brewery_ja.
    - The two-character 酒店 (酒 immediately followed by 店) is the retailer pattern. The three-character 酒造店 is a brewery — treat it the same as 酒造.
 
+5. NEVER return a placeholder / sentinel value when you cannot read a field. The following are FORBIDDEN as field values:
+   - 不明 / 不明な / 不詳 (Japanese for "unknown")
+   - "unknown" / "n/a" / "N/A" / "未確認" / "—" / "?"
+   - Empty strings (the schema rejects them anyway).
+   If you genuinely cannot read the brand or brewery, return whatever IS legible — even a partial substring, even just Latin romaji, even a single character — and drop the confidence below 0.4. A partial-but-honest extraction is far more useful than "不明" because the downstream Sakenowa lookup can still try variants. A "不明" answer is identical to silence and dead-ends the visitor.
+
+   Examples of preferred low-confidence partial extractions:
+   - Label shows "Tanigawa Dake" Latin + small kanji you can't make out → name_ja: "Tanigawa Dake", brewery_ja: <whatever IS visible, even partial>, confidence: 0.4
+   - Label shows "獺" but the rest of the brand kanji is blurred → name_ja: "獺", brewery_ja: <…>, confidence: 0.3
+   - Label is a sake bottle but ALL text is unreadable → name_ja: <best Latin guess from shape or "?">, brewery_ja: <…>, confidence: 0.15
+
 Return only what is visible on the label. Do not translate, do not romanise kanji into Latin, do not transliterate kana into kanji, do not invent any field. If the image is not a sake label at all, lower the confidence score significantly rather than producing a plausible-sounding guess.`
 
 const USER_PROMPT =

@@ -193,6 +193,40 @@ function looksLikeSingleCharHallucination(name_ja: string): boolean {
 }
 
 /**
+ * Detect a model "I give up" extraction: the Latin or kanji
+ * sentinel values the prompt explicitly forbids (`不明`, `unknown`,
+ * etc.). Even though the system prompt now forbids these (see
+ * `anthropic-haiku-provider.ts` § rule 5), models occasionally still
+ * emit them. We treat them identically to schema-validation failure —
+ * route to retry tier and never feed `不明` to Sakenowa lookup (no
+ * brand will ever match it; the visitor sees a confusing "no match"
+ * instead of the honest "try a closer shot").
+ *
+ * Originally surfaced 2026-06-14 on a clear Tanigawa-dake bottle: model
+ * returned `{name_ja: "不明", brewery_ja: "不明", confidence: 0.45}`,
+ * which tier-resolved to "retry" by confidence-luck. Hard-coding the
+ * placeholder check ensures the routing doesn't depend on the model's
+ * self-reported confidence.
+ */
+const PLACEHOLDER_EXTRACTIONS = new Set([
+  '不明',
+  '不明な',
+  '不詳',
+  '未確認',
+  'unknown',
+  'Unknown',
+  'UNKNOWN',
+  'n/a',
+  'N/A',
+  '—',
+  '?',
+  '？',
+])
+function isPlaceholderExtraction(value: string): boolean {
+  return PLACEHOLDER_EXTRACTIONS.has(value.trim())
+}
+
+/**
  * Server Action invoked by `<ScanForm />`. `_prev` is the previous
  * `useActionState` value (ignored — every submission is fresh). The
  * `formData` carries the downscaled JPEG under `image` and the visitor's
@@ -264,6 +298,26 @@ export async function scanAction(
       // future iterations could surface "we read X but weren't sure"
       // even on retry; today the visitor just gets the localized hint.
       if (tier === 'retry') {
+        return { status: 'low_confidence', extraction }
+      }
+
+      // Placeholder-sentinel guard. The system prompt forbids `不明`,
+      // `unknown`, etc. as field values (see
+      // `anthropic-haiku-provider.ts` § rule 5), but models occasionally
+      // still emit them — and when they do, the model's self-reported
+      // confidence can be anywhere on the curve. Hard-coded routing to
+      // retry so a placeholder at 0.85 doesn't pass through as `auto`
+      // and feed the Sakenowa lookup a query that can never match.
+      if (
+        isPlaceholderExtraction(extraction.name_ja) ||
+        isPlaceholderExtraction(extraction.brewery_ja)
+      ) {
+        debugAdd(
+          'ScanAction',
+          `extraction is a placeholder sentinel ("${extraction.name_ja}" / "${extraction.brewery_ja}") — routing to low_confidence regardless of confidence ${extraction.confidence.toFixed(2)}`,
+          { name_ja: extraction.name_ja, brewery_ja: extraction.brewery_ja, confidence: extraction.confidence },
+          'warn',
+        )
         return { status: 'low_confidence', extraction }
       }
 
