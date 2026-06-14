@@ -312,7 +312,20 @@ export function DebugPanel({
                     {event.source}
                   </span>
                 </div>
-                <div className="min-w-0 overflow-hidden wrap-anywhere text-zinc-800 dark:text-zinc-200">
+                <div className="min-w-0 overflow-hidden wrap-anywhere break-all text-zinc-800 dark:text-zinc-200">
+                  {/*
+                    `break-all` (word-break: break-all) plus
+                    `wrap-anywhere` is the same belt-and-braces pair
+                    the code block below uses. `wrap-anywhere` alone
+                    only breaks when overflow is detected, and the
+                    Sakenowa first-pass log inlines pipe-separated
+                    kanji variant lists ("柴田屋酒店|柴田屋酒店酒造場|…")
+                    which some browsers treat as one unbreakable word
+                    — they overflow before the line-break algorithm
+                    decides to step in. `break-all` allows the break
+                    between any two characters and ends the panel-
+                    too-wide regressions on those messages.
+                  */}
                   {LEVEL_PREFIX[event.level]}
                   {event.message}
                   {event.data && (
