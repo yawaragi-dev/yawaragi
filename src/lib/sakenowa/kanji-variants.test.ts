@@ -30,6 +30,11 @@ describe('generateKanjiVariants', () => {
     ['萬寿', '万寿'], // 萬 ↔ 万 (Kubota Manju line)
     ['鐵舟', '鉄舟'], // 鐵 ↔ 鉄
     ['黒澤', '黒沢'], // 澤 ↔ 沢
+    ['灣鶴', '湾鶴'], // 灣 ↔ 湾 (bay / coastal naming)
+    ['出羽の譽', '出羽の誉'], // 譽 ↔ 誉
+    ['恋しぐれ', '戀しぐれ'], // 恋 ↔ 戀
+    ['觀音', '観音'], // 觀 ↔ 観
+    ['大應', '大応'], // 應 ↔ 応
   ])('produces variant pair for "%s" / "%s"', (a, b) => {
     const variantsOfA = generateKanjiVariants(a)
     const variantsOfB = generateKanjiVariants(b)
@@ -37,6 +42,35 @@ describe('generateKanjiVariants', () => {
     expect(variantsOfA).toContain(b)
     expect(variantsOfB).toContain(a)
     expect(variantsOfB).toContain(b)
+  })
+
+  it('expands the 濱 / 濵 / 浜 triplet (beach) in all three directions', () => {
+    // Motivating bug (2026-06-14 Sekitoba scan): the vision model
+    // returned `濵田酒造` for brewery 783 stored as `濱田酒造`. The
+    // intermediate itaiji 濵 (U+6FF5) sits between the orthodox
+    // kyūjitai 濱 (U+6FF1) and the post-1946 shinjitai 浜 (U+6D5C);
+    // any direction of the triplet must reach the others or the
+    // lookup misses.
+    const fromKyujitai = generateKanjiVariants('濱田')
+    expect(fromKyujitai).toEqual(expect.arrayContaining(['濱田', '濵田', '浜田']))
+    expect(fromKyujitai).toHaveLength(3)
+
+    const fromItaiji = generateKanjiVariants('濵田')
+    expect(fromItaiji).toEqual(expect.arrayContaining(['濱田', '濵田', '浜田']))
+    expect(fromItaiji).toHaveLength(3)
+
+    const fromShinjitai = generateKanjiVariants('浜田')
+    expect(fromShinjitai).toEqual(expect.arrayContaining(['濱田', '濵田', '浜田']))
+    expect(fromShinjitai).toHaveLength(3)
+  })
+
+  it('treats every pair of triplet members as variants of each other', () => {
+    // The exact case from the 濱田酒造 lookup miss: visitor's
+    // extraction `濵田酒造` must register as a variant of the
+    // catalogue's `濱田酒造`.
+    expect(isKanjiVariant('濵田酒造', '濱田酒造')).toBe(true)
+    expect(isKanjiVariant('濱田酒造', '浜田酒造')).toBe(true)
+    expect(isKanjiVariant('濵田酒造', '浜田酒造')).toBe(true)
   })
 
   it('produces every per-character permutation for multi-variant strings', () => {
