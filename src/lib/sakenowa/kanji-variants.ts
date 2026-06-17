@@ -212,17 +212,3 @@ export function isKanjiVariant(a: string, b: string): boolean {
   if (a === b) return true
   return generateKanjiVariants(a).includes(b)
 }
-
-/**
- * Predicate: are `a` and `b` kanji-variants of each other? True when
- * either is in the other's `generateKanjiVariants` expansion. Identical
- * strings are trivially variants. Used by the matched_brand_only UX:
- * when the visitor's extracted brand (`蔵王`) is a 旧/新 form sibling
- * of the catalogue's stored brand (`藏王`), display the visitor's form
- * so the card matches what they see on the bottle. The lookup still
- * resolved to the canonical row — only the displayed string changes.
- */
-export function isKanjiVariant(a: string, b: string): boolean {
-  if (a === b) return true
-  return generateKanjiVariants(a).includes(b)
-}
