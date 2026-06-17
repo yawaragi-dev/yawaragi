@@ -15,6 +15,18 @@ type ScanActionStateBase =
       extraction: LabelScanExtraction
       brandId: number
       sakeHref: string
+      /**
+       * Romaji / English transliteration of the matched brand and
+       * brewery, surfaced alongside the kanji on the confirm-tier
+       * card so non-Japanese-readers can still tell what they're
+       * about to open. `null` when neither `Brand.nameRomaji` nor
+       * Sakenowa's `Brand.name` is set (extremely rare — `name` is
+       * required in the Brand schema). The action computes the
+       * `nameRomaji ?? name` fallback once so the UI doesn't have
+       * to.
+       */
+      sakeRomaji: string | null
+      breweryRomaji: string | null
     }
   /**
    * Phase 3 / #123: the `(brand AND brewery)` exact-match join
@@ -34,16 +46,87 @@ type ScanActionStateBase =
       extraction: LabelScanExtraction
       brandId: number
       sakeHref: string
-      breweryDivergence: { extracted: string; stored: string }
+      /**
+       * `storedRomaji` is the catalogue brewery's romaji shown
+       * alongside the kanji in the divergence row. `null` if the
+       * Sakenowa brewery has neither a `nameRomaji` nor a `name`
+       * (rare). No romaji for `extracted` — it's the model's
+       * Japanese-only output.
+       */
+      breweryDivergence: { extracted: string; stored: string; storedRomaji: string | null }
+      /**
+       * Canonical brand kanji from Sakenowa. Displayed prominently in
+       * the divergence card. We prefer the catalogue form over
+       * `extraction.name_ja` because (a) it survives the kanji-variant
+       * mismatch (extracted `蔵王` matches stored `藏王` via variant
+       * expansion, but the visitor sees the canonical form), and (b)
+       * for the field-swap rescue path (single-char guard → brand-only
+       * on the *brewery* field) the extraction's `name_ja` is the
+       * model's hallucinated single character — we MUST display the
+       * canonical brand kanji here, not the junk.
+       */
+      sakeKanji: string
+      /**
+       * Romaji of the matched brand (the trusted side). Used next to
+       * the kanji on the divergence card.
+       */
+      sakeRomaji: string | null
+    }
+  /**
+   * Structural dual of `matched_brand_only`: the first-pass and the
+   * brand-only fallback both missed, but the brewery-only third pass
+   * found exactly one brand under that brewery. Brewery is
+   * unambiguously identified; the brand the model extracted does NOT
+   * match what Sakenowa stores for that brewery. Same divergence-
+   * surfacing UX — explicit-tap navigation, no auto-push. Real-world
+   * motivation: Takashimizu bottles where the model reads the
+   * brewery (高清水酒造) but hallucinates a wrong brand kanji.
+   */
+  | {
+      status: 'matched_brewery_only'
+      extraction: LabelScanExtraction
+      brandId: number
+      sakeHref: string
+      /**
+       * `storedRomaji` is the catalogue brand's romaji. Same
+       * structure as `matched_brand_only.breweryDivergence` but for
+       * the brand field.
+       */
+      brandDivergence: { extracted: string; stored: string; storedRomaji: string | null }
+      /**
+       * Romaji of the matched brewery (the trusted side here).
+       */
+      breweryRomaji: string | null
     }
   | {
       status: 'no_match'
       extraction: LabelScanExtraction
     }
+  /**
+   * Disambiguation list state. Multiple Sakenowa brands match the
+   * extraction — the visitor reads their label, picks the right one
+   * by tapping. Each candidate carries enough information to render
+   * a row (kanji + romaji + locale-aware href) plus its brewery's
+   * kanji + romaji so a "We matched the brewery: X" header can be
+   * shown when all candidates share a brewery (the common shape
+   * coming from `findSakeByBreweryOnlyFromPool`'s ambiguous arm).
+   *
+   * Previous shape was `brandIds: readonly number[]` — replaced by
+   * the richer per-candidate data so the UI doesn't need extra
+   * lookups. The lookup chain already JOINs both sides for every
+   * ambiguous-producing pass.
+   */
   | {
       status: 'ambiguous'
       extraction: LabelScanExtraction
-      brandIds: readonly number[]
+      candidates: readonly {
+        brandId: number
+        sakeHref: string
+        nameKanji: string
+        nameRomaji: string | null
+        breweryKanji: string
+        breweryRomaji: string | null
+      }[]
     }
   /**
    * Phase 3 / S2 (#107): the per-visitor rate limit on the vision-scan

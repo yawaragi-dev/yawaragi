@@ -15,6 +15,8 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { Pool } from 'pg'
 import {
+  findSakeByBrandOnlyFromPool,
+  findSakeByBreweryOnlyFromPool,
   findSakeByExtractionFromPool,
   listRankingFromPool,
   lookupBrandFromPool,
@@ -30,7 +32,11 @@ if (!TEST_DATABASE_URL) {
 
 const pool = new Pool({ connectionString: TEST_DATABASE_URL })
 
-const FIXTURE_BRAND_IDS = [9001, 9002] as const
+// 9003 used by the 2026-06-12 mono-brand-preference test (Sawanotsuru
+// shape) — the brewery has 3 brands so we need a third fixture id in
+// the cleanup set; without it the FK from brands.brewery_id blocks
+// brewery deletion in subsequent tests.
+const FIXTURE_BRAND_IDS = [9001, 9002, 9003] as const
 const FIXTURE_BREWERY_IDS = [9501, 9502] as const
 
 async function cleanFixtures(): Promise<void> {
@@ -432,7 +438,544 @@ describe('findSakeByExtractionFromPool', () => {
 
     expect(result.kind).toBe('ambiguous')
     if (result.kind !== 'ambiguous') throw new Error('unreachable; for narrowing only')
-    expect(result.candidates.map((c) => c.brandId).sort()).toEqual([9001, 9002])
+    expect(result.candidates.map((c) => c.sake.brandId).sort()).toEqual([9001, 9002])
     expect(result.query).toEqual({ nameJa: '菊姫', breweryJa: '存在しない酒造' })
+  })
+
+  it('Latin pass matches a kanji brand by its name_romaji (2026-06-13 Kizakura shape)', async () => {
+    // Sakenowa stores 黄桜 with name = '黄桜' (Japanese kanji). The
+    // LLM-ingest pipeline populates name_romaji = 'Kizakura'. When
+    // the model returns the Latin form `Kizakura`, the Latin pass
+    // matches via the `LOWER(name_romaji)` arm.
+    await seedBrewery({
+      breweryId: 9501,
+      name: 'Kizakura',
+      nameKanji: '黄桜',
+      areaId: 26,
+    })
+    await pool.query(
+      `INSERT INTO brands
+         (brand_id, name, name_kanji, name_romaji, brewery_id, source, confidence, content_hash)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [9001, '黄桜', '黄桜', 'Kizakura', 9501, 'sakenowa', null, 'hash-kizakura-name-romaji'],
+    )
+
+    const result = await findSakeByExtractionFromPool(
+      // Brewery_ja doesn't match the seed — forces fall-through to
+      // the Latin pass.
+      { nameJa: 'Kizakura', breweryJa: '存在しない酒造' },
+      pool,
+    )
+
+    expect(result.kind).toBe('matched_brand_only')
+    if (result.kind !== 'matched_brand_only') throw new Error('unreachable; for narrowing only')
+    expect(result.sake).toMatchObject({ brandId: 9001, nameKanji: '黄桜' })
+  })
+
+  it('Latin pass strips a sub-line modifier and finds the main brand (Kizakura Perle → Kizakura)', async () => {
+    // Real 2026-06-13 trace: model returned `name_ja: 'Kizakura
+    // Perle'` for a 黄桜 Perle bottle. The first-word stripping
+    // tries `Kizakura` alone, which matches via name_romaji.
+    await seedBrewery({ breweryId: 9501, name: 'Kizakura', nameKanji: '黄桜', areaId: 26 })
+    await pool.query(
+      `INSERT INTO brands
+         (brand_id, name, name_kanji, name_romaji, brewery_id, source, confidence, content_hash)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [9001, '黄桜', '黄桜', 'Kizakura', 9501, 'sakenowa', null, 'hash-kizakura-perle-strip'],
+    )
+
+    const result = await findSakeByExtractionFromPool(
+      { nameJa: 'Kizakura Perle', breweryJa: '存在しない酒造' },
+      pool,
+    )
+
+    expect(result.kind).toBe('matched_brand_only')
+    if (result.kind !== 'matched_brand_only') throw new Error('unreachable; for narrowing only')
+    expect(result.sake).toMatchObject({ brandId: 9001 })
+  })
+
+  it('prefers Latin match over brewery-only ambiguous when name_ja is Latin (Kizakura Perle full chain)', async () => {
+    // The full 2026-06-13 trace: model returned correct brand form
+    // but WRONG brewery — `木下酒造` (real brewery, multi-brand) instead
+    // of the real `黄桜` brewery. Pre-fix: brewery-only ambiguous
+    // showed 木下酒造's brands (all wrong). Post-fix: Latin pass on
+    // `Kizakura` finds the real brand and we prefer it over the
+    // ambiguous.
+    await seedBrewery({ breweryId: 9501, name: 'Kizakura', nameKanji: '黄桜', areaId: 26 })
+    await seedBrewery({ breweryId: 9502, name: 'Kinoshita', nameKanji: '木下酒造', areaId: 26 })
+    await pool.query(
+      `INSERT INTO brands
+         (brand_id, name, name_kanji, name_romaji, brewery_id, source, confidence, content_hash)
+       VALUES
+         ($1, $2, $3, $4, $5, $6, $7, $8),
+         ($9, $10, $11, $12, $13, $14, $15, $16),
+         ($17, $18, $19, $20, $21, $22, $23, $24)`,
+      [
+        // Real Kizakura brand on the brewery the model SHOULD have read.
+        9001, '黄桜', '黄桜', 'Kizakura', 9501, 'sakenowa', null, 'hash-kizakura-full-9001',
+        // Two random brands on the brewery the model DID read.
+        9002, 'Tamagawa', '玉川', 'Tamagawa', 9502, 'sakenowa', null, 'hash-kizakura-full-9002',
+        9003, 'Ice', 'Ice', 'Ice', 9502, 'sakenowa', null, 'hash-kizakura-full-9003',
+      ],
+    )
+
+    const result = await findSakeByExtractionFromPool(
+      { nameJa: 'Kizakura Perle', breweryJa: '木下酒造' },
+      pool,
+    )
+
+    // brewery-only would have returned ambiguous with [9002, 9003].
+    // Latin pass on `Kizakura Perle` (after first-word stripping) finds
+    // 9001 via name_romaji = 'Kizakura'. Preferred.
+    expect(result.kind).toBe('matched_brand_only')
+    if (result.kind !== 'matched_brand_only') throw new Error('unreachable; for narrowing only')
+    expect(result.sake).toMatchObject({ brandId: 9001 })
+    expect(result.brewery).toMatchObject({ breweryId: 9501 })
+  })
+
+  it('falls through to Latin-name lookup when the model returns a Latin brand (2026-06-12 script-coverage)', async () => {
+    // 110 Sakenowa brands are Latin-only (`Shangri-la`, `UMAMI`,
+    // `Highland`, etc). When the model returns the Latin form
+    // (which the 2026-06-12 prompt update explicitly allows) the
+    // kanji + kana passes all miss, then the 5th-pass Latin lookup
+    // catches it via `LOWER(brands.name) = LOWER($1)`.
+    await seedBrewery({ breweryId: 9501, name: 'Test', nameKanji: 'テスト酒造', areaId: 1 })
+    await pool.query(
+      `INSERT INTO brands
+         (brand_id, name, name_kanji, brewery_id, source, confidence, content_hash)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      // Sakenowa publishes the Latin brand name in the `name` column.
+      // `name_kanji` defaults to the same value when there's no
+      // Japanese form.
+      [9001, 'Shangri-la', 'Shangri-la', 9501, 'sakenowa', null, 'hash-latin-brand-9001'],
+    )
+
+    const result = await findSakeByExtractionFromPool(
+      // Brewery_ja deliberately does NOT match the seeded brewery,
+      // so passes 1–4 (which all join through brewery) all miss and
+      // the chain falls through to the 5th-pass Latin lookup. That
+      // pass matches the seeded brand 9001 case-insensitively
+      // (SHANGRI-LA → Shangri-la).
+      { nameJa: 'SHANGRI-LA', breweryJa: '存在しない酒造' },
+      pool,
+    )
+
+    expect(result.kind).toBe('matched_brand_only')
+    if (result.kind !== 'matched_brand_only') throw new Error('unreachable; for narrowing only')
+    expect(result.sake).toMatchObject({ brandId: 9001, name: 'Shangri-la' })
+    // The divergence's `extracted` field carries the visitor's
+    // original (unmatched) brewery_ja so the divergence card
+    // surfaces the gap honestly.
+    expect(result.breweryDivergence.extracted).toBe('存在しない酒造')
+    expect(result.breweryDivergence.stored).toBe('テスト酒造')
+  })
+
+  it('matches across hiragana ↔ katakana for kana brands (2026-06-12 script-coverage)', async () => {
+    // Sakenowa publishes 169 hiragana-only and 35 katakana-only
+    // brands. If the model returns one form and the catalogue
+    // stores the other (or vice versa), the kana-cross expansion
+    // bridges them.
+    await seedBrewery({ breweryId: 9501, name: 'Test', nameKanji: 'テスト酒造', areaId: 1 })
+    await pool.query(
+      `INSERT INTO brands
+         (brand_id, name, name_kanji, brewery_id, source, confidence, content_hash)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      // Sakenowa stores the brand in hiragana.
+      [9001, 'Umami', 'うまみ', 9501, 'sakenowa', null, 'hash-kana-cross-9001'],
+    )
+
+    const result = await findSakeByExtractionFromPool(
+      // Model returned the katakana form.
+      { nameJa: 'ウマミ', breweryJa: 'テスト酒造' },
+      pool,
+    )
+
+    expect(result.kind).toBe('exact')
+    if (result.kind !== 'exact') throw new Error('unreachable; for narrowing only')
+    expect(result.sake).toMatchObject({ brandId: 9001, nameKanji: 'うまみ' })
+  })
+
+  it('returns {kind: "matched_brewery_only"} when first-pass + brand-only both miss but brewery-only finds a mono-brand brewery', async () => {
+    // The motivating real-world case: Takashimizu bottle, model
+    // returned brewery 高清水酒造 correctly but hallucinated brand
+    // 寺田 (a real surname, not Takashimizu's brand line). Brand-only
+    // fallback misses (no Sakenowa brand is 寺田); brewery-only third
+    // pass finds the single Takashimizu brand line and surfaces the
+    // brand divergence.
+    await seedBrewery({
+      breweryId: 9501,
+      name: 'Takashimizu Shuzo',
+      nameKanji: '高清水酒造',
+      areaId: 5,
+    })
+    await pool.query(
+      `INSERT INTO brands
+         (brand_id, name, name_kanji, brewery_id, source, confidence, content_hash)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [9001, 'Takashimizu', '高清水', 9501, 'sakenowa', null, 'hash-takashimizu-9001'],
+    )
+
+    const result = await findSakeByExtractionFromPool(
+      { nameJa: '寺田', breweryJa: '高清水酒造' },
+      pool,
+    )
+
+    expect(result.kind).toBe('matched_brewery_only')
+    if (result.kind !== 'matched_brewery_only') throw new Error('unreachable; for narrowing only')
+    expect(result.sake).toMatchObject({ brandId: 9001, nameKanji: '高清水' })
+    expect(result.brewery).toMatchObject({ breweryId: 9501, nameKanji: '高清水酒造' })
+    expect(result.brandDivergence).toEqual({
+      extracted: '寺田',
+      stored: '高清水',
+    })
+    expect(result.query).toEqual({ nameJa: '寺田', breweryJa: '高清水酒造' })
+  })
+
+  it('returns {kind: "ambiguous"} when brewery-only finds multiple brands under a multi-brand brewery', async () => {
+    // 旭酒造 (Asahi Shuzo) makes more than one Sakenowa brand line.
+    // Model returned a hallucinated brand → brand-only fallback
+    // misses → brewery-only finds 2+ candidates → ambiguous (S4
+    // PR B's disambiguation list takes it from here).
+    await seedBrewery({ breweryId: 9501, name: 'Asahi Shuzo', nameKanji: '旭酒造', areaId: 35 })
+    await pool.query(
+      `INSERT INTO brands
+         (brand_id, name, name_kanji, brewery_id, source, confidence, content_hash)
+       VALUES ($1, $2, $3, $4, $5, $6, $7), ($8, $9, $10, $11, $12, $13, $14)`,
+      [
+        9001, 'Dassai', '獺祭', 9501, 'sakenowa', null, 'hash-dassai-multibrand-9001',
+        9002, 'Sakura', '桜', 9501, 'sakenowa', null, 'hash-sakura-multibrand-9002',
+      ],
+    )
+
+    const result = await findSakeByExtractionFromPool(
+      { nameJa: '架空の銘柄', breweryJa: '旭酒造' },
+      pool,
+    )
+
+    expect(result.kind).toBe('ambiguous')
+    if (result.kind !== 'ambiguous') throw new Error('unreachable; for narrowing only')
+    expect(result.candidates.map((c) => c.sake.brandId).sort()).toEqual([9001, 9002])
+  })
+
+  it('returns {kind: "matched_brand_only"} via 4th-pass field-swap (2026-06-12 Sugitama shape)', async () => {
+    // First three passes all miss; the brewery_ja field actually
+    // holds the brand name with `酒造` appended. 4th pass calls
+    // brand-only on `extraction.brewery_ja` (杉玉酒造) — suffix
+    // expansion adds `杉玉` as a candidate — matches the seeded
+    // brand. Result echoes back the original query so the
+    // divergence shows the visitor's original brewery_ja.
+    await seedBrewery({
+      breweryId: 9501,
+      name: 'Momokawa',
+      nameKanji: '桃川',
+      areaId: 2,
+    })
+    await pool.query(
+      `INSERT INTO brands
+         (brand_id, name, name_kanji, brewery_id, source, confidence, content_hash)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [9001, 'Sugitama', '杉玉', 9501, 'sakenowa', null, 'hash-sugitama-fieldswap-9001'],
+    )
+
+    const result = await findSakeByExtractionFromPool(
+      // Real model output for the 2026-06-12 22175.jpg trace:
+      // brand `崇麗` (junk) + brewery `杉玉酒造` (brand+酒造).
+      { nameJa: '崇麗', breweryJa: '杉玉酒造' },
+      pool,
+    )
+
+    expect(result.kind).toBe('matched_brand_only')
+    if (result.kind !== 'matched_brand_only') throw new Error('unreachable; for narrowing only')
+    expect(result.sake).toMatchObject({ brandId: 9001, nameKanji: '杉玉' })
+    expect(result.brewery).toMatchObject({ breweryId: 9501, nameKanji: '桃川' })
+    expect(result.breweryDivergence).toEqual({
+      extracted: '杉玉酒造',
+      stored: '桃川',
+    })
+    // Echo back the ORIGINAL query, not the field-swapped one.
+    expect(result.query).toEqual({ nameJa: '崇麗', breweryJa: '杉玉酒造' })
+  })
+
+  it('returns {kind: "ambiguous"} via 4th-pass when the field-swap brand has multiple breweries (Hakushika shape)', async () => {
+    // Real 2026-06-12 trace on `22176.jpg`: model returned
+    // `name_ja: '山田錦'` (rice variety!) and `brewery_ja: '白鹿'`
+    // (the actual brand). Sakenowa has two breweries that produce
+    // 白鹿. 4th pass → ambiguous, which is what we want.
+    await seedBrewery({ breweryId: 9501, name: 'Ishioka', nameKanji: '石岡酒造', areaId: 8 })
+    await seedBrewery({ breweryId: 9502, name: 'Tatsuuma', nameKanji: '辰馬本家酒造', areaId: 28 })
+    await pool.query(
+      `INSERT INTO brands
+         (brand_id, name, name_kanji, brewery_id, source, confidence, content_hash)
+       VALUES ($1, $2, $3, $4, $5, $6, $7), ($8, $9, $10, $11, $12, $13, $14)`,
+      [
+        9001, 'Hakushika', '白鹿', 9501, 'sakenowa', null, 'hash-hakushika-multi-9001',
+        9002, 'Hakushika', '白鹿', 9502, 'sakenowa', null, 'hash-hakushika-multi-9002',
+      ],
+    )
+
+    const result = await findSakeByExtractionFromPool(
+      { nameJa: '山田錦', breweryJa: '白鹿' },
+      pool,
+    )
+
+    expect(result.kind).toBe('ambiguous')
+    if (result.kind !== 'ambiguous') throw new Error('unreachable; for narrowing only')
+    expect(result.candidates.map((c) => c.sake.brandId).sort()).toEqual([9001, 9002])
+    expect(result.query).toEqual({ nameJa: '山田錦', breweryJa: '白鹿' })
+  })
+})
+
+describe('findSakeByBreweryOnlyFromPool', () => {
+  // Standalone brewery-only seam. Called directly by scan-action.ts
+  // when the single-character-hallucination guard fires — the brand
+  // is junk but the brewery may still resolve. Mirrors the third-pass
+  // arm of `findSakeByExtractionFromPool` but addressable on its
+  // own.
+
+  it('returns {kind: "matched_brewery_only"} for a mono-brand brewery', async () => {
+    // Same Takashimizu fixture as the brewery-only branch of
+    // `findSakeByExtractionFromPool` — exercised here through the
+    // standalone seam to lock in the contract scan-action depends on.
+    await seedBrewery({
+      breweryId: 9501,
+      name: 'Takashimizu Shuzo',
+      nameKanji: '高清水酒造',
+      areaId: 5,
+    })
+    await pool.query(
+      `INSERT INTO brands
+         (brand_id, name, name_kanji, brewery_id, source, confidence, content_hash)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [9001, 'Takashimizu', '高清水', 9501, 'sakenowa', null, 'hash-takashimizu-9001'],
+    )
+
+    const result = await findSakeByBreweryOnlyFromPool(
+      // Single-char garbage name_ja, real brewery kanji — the exact
+      // shape the single-char guard in scan-action surfaces.
+      { nameJa: '紀', breweryJa: '高清水酒造' },
+      pool,
+    )
+
+    expect(result.kind).toBe('matched_brewery_only')
+    if (result.kind !== 'matched_brewery_only') throw new Error('unreachable; for narrowing only')
+    expect(result.sake).toMatchObject({ brandId: 9001, nameKanji: '高清水' })
+    expect(result.brewery).toMatchObject({ breweryId: 9501, nameKanji: '高清水酒造' })
+    expect(result.brandDivergence).toEqual({
+      extracted: '紀',
+      stored: '高清水',
+    })
+  })
+
+  it('returns {kind: "ambiguous"} for a multi-brand brewery', async () => {
+    await seedBrewery({ breweryId: 9501, name: 'Asahi Shuzo', nameKanji: '旭酒造', areaId: 35 })
+    await pool.query(
+      `INSERT INTO brands
+         (brand_id, name, name_kanji, brewery_id, source, confidence, content_hash)
+       VALUES ($1, $2, $3, $4, $5, $6, $7), ($8, $9, $10, $11, $12, $13, $14)`,
+      [
+        9001, 'Dassai', '獺祭', 9501, 'sakenowa', null, 'hash-brewery-only-multi-9001',
+        9002, 'Sakura', '桜', 9501, 'sakenowa', null, 'hash-brewery-only-multi-9002',
+      ],
+    )
+
+    const result = await findSakeByBreweryOnlyFromPool(
+      { nameJa: '幻', breweryJa: '旭酒造' },
+      pool,
+    )
+
+    expect(result.kind).toBe('ambiguous')
+    if (result.kind !== 'ambiguous') throw new Error('unreachable; for narrowing only')
+    expect(result.candidates.map((c) => c.sake.brandId).sort()).toEqual([9001, 9002])
+  })
+
+  it('prefers the same-name brand under a mono-brand brewery (2026-06-12 Sawanotsuru shape)', async () => {
+    // Real 22177 trace: bottle is 沢の鶴 純米酒 by 沢の鶴 brewery
+    // (Nada, Kobe). Sakenowa Brewery 576 has multiple brands
+    // including Brand 2008 (same name `沢の鶴`) and others like
+    // 鶴の舞, 酒道粋人. The model returned the brewery correctly
+    // (`沢の鶴`) but invented a brand (`八仙`) — common mono-brand-
+    // brewery failure shape.
+    //
+    // Pre-fix: brewery-only finds 3 brands, routes to ambiguous,
+    // visitor sees confusing list. The LIMIT 2 + ORDER BY brand_id
+    // bug even meant Brand 2008 was off the end of the candidates.
+    // Post-fix: same-name preference picks the main brand.
+    await seedBrewery({
+      breweryId: 9501,
+      name: 'Sawanotsuru',
+      nameKanji: '沢の鶴',
+      areaId: 28,
+    })
+    await pool.query(
+      `INSERT INTO brands
+         (brand_id, name, name_kanji, brewery_id, source, confidence, content_hash)
+       VALUES
+         ($1, $2, $3, $4, $5, $6, $7),
+         ($8, $9, $10, $11, $12, $13, $14),
+         ($15, $16, $17, $18, $19, $20, $21)`,
+      [
+        9001, 'Tsurunomai', '鶴の舞', 9501, 'sakenowa', null, 'hash-monobrand-tsurunomai',
+        9002, 'Shudosuijin', '酒道粋人', 9501, 'sakenowa', null, 'hash-monobrand-shudosuijin',
+        // Same-name main brand seeded LAST so brand_id is the
+        // highest of the three — pre-fix it would have been dropped
+        // by the LIMIT 2 + ORDER BY brand_id.
+        9003, 'Sawanotsuru', '沢の鶴', 9501, 'sakenowa', null, 'hash-monobrand-sawanotsuru-main',
+      ],
+    )
+
+    const result = await findSakeByBreweryOnlyFromPool(
+      // Real model output: junk brand, correct brewery.
+      { nameJa: '八仙', breweryJa: '沢の鶴' },
+      pool,
+    )
+
+    expect(result.kind).toBe('matched_brewery_only')
+    if (result.kind !== 'matched_brewery_only') throw new Error('unreachable; for narrowing only')
+    expect(result.sake).toMatchObject({ brandId: 9003, nameKanji: '沢の鶴' })
+    expect(result.brewery).toMatchObject({ breweryId: 9501, nameKanji: '沢の鶴' })
+    expect(result.brandDivergence).toEqual({
+      extracted: '八仙',
+      stored: '沢の鶴',
+    })
+  })
+
+  it('falls through to ambiguous when 2+ brands share the brewery name across different breweries', async () => {
+    // Edge case: two breweries each named `白鹿` (one Ibaraki, one
+    // Hyogo) where each has a main brand also called `白鹿`. The
+    // same-name preference would have two candidates — we can't
+    // unambiguously pick, so we fall through to ambiguous and let
+    // the disambiguation UI handle it.
+    await seedBrewery({ breweryId: 9501, name: 'Brewery A', nameKanji: '白鹿', areaId: 8 })
+    await seedBrewery({ breweryId: 9502, name: 'Brewery B', nameKanji: '白鹿', areaId: 28 })
+    await pool.query(
+      `INSERT INTO brands
+         (brand_id, name, name_kanji, brewery_id, source, confidence, content_hash)
+       VALUES ($1, $2, $3, $4, $5, $6, $7), ($8, $9, $10, $11, $12, $13, $14)`,
+      [
+        9001, 'Hakushika', '白鹿', 9501, 'sakenowa', null, 'hash-same-name-collide-9001',
+        9002, 'Hakushika', '白鹿', 9502, 'sakenowa', null, 'hash-same-name-collide-9002',
+      ],
+    )
+
+    const result = await findSakeByBreweryOnlyFromPool(
+      { nameJa: '幻', breweryJa: '白鹿' },
+      pool,
+    )
+
+    expect(result.kind).toBe('ambiguous')
+    if (result.kind !== 'ambiguous') throw new Error('unreachable; for narrowing only')
+    expect(result.candidates.map((c) => c.sake.brandId).sort()).toEqual([9001, 9002])
+  })
+
+  it('returns {kind: "no_match"} when the brewery kanji is not in Sakenowa', async () => {
+    // Don't seed anything — query against the brewery kanji of a
+    // brewery that doesn't exist.
+    const result = await findSakeByBreweryOnlyFromPool(
+      { nameJa: '幻', breweryJa: '架空酒造' },
+      pool,
+    )
+    expect(result.kind).toBe('no_match')
+  })
+
+  it('strips the operational suffix when the input ends with 酒造 (2026-06-12 Takashimizu fix)', async () => {
+    // The 2026-06-11 fix shipped the field-swap rescue but the
+    // lookup queried `extraction.brewery_ja` verbatim — for a
+    // Takashimizu bottle that's `高清水酒造`. Sakenowa stores the
+    // brand as `高清水` (no suffix). expandPossibleBrandVariants
+    // now adds the stem so this lookup hits.
+    await seedBrewery({
+      breweryId: 9501,
+      name: 'Akita Shurui Seizo',
+      nameKanji: '秋田酒類製造',
+      areaId: 5,
+    })
+    await pool.query(
+      `INSERT INTO brands
+         (brand_id, name, name_kanji, brewery_id, source, confidence, content_hash)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [9001, 'Takashimizu', '高清水', 9501, 'sakenowa', null, 'hash-takashimizu-suffix-9001'],
+    )
+
+    const result = await findSakeByBrandOnlyFromPool(
+      // Query with the 酒造 suffix the model added — stem expansion
+      // strips it and the lookup finds 高清水.
+      { nameJa: '高清水酒造', breweryJa: '高清水酒造' },
+      pool,
+    )
+
+    expect(result.kind).toBe('matched_brand_only')
+    if (result.kind !== 'matched_brand_only') throw new Error('unreachable; for narrowing only')
+    expect(result.sake).toMatchObject({ brandId: 9001, nameKanji: '高清水' })
+  })
+
+  it('matches via brand-only when called with a field-swap query (2026-06-11 Takashimizu shape)', async () => {
+    // Field-swap: model returned a hallucinated `name_ja` but put
+    // the real brand `高清水` in `brewery_ja`. scan-action.ts calls
+    // `findSakeByBrandOnly({ nameJa: extraction.brewery_ja, … })`
+    // after the brewery-only fallback misses. If `高清水` exists as
+    // a brand in Sakenowa, this seam finds it under its actual
+    // brewery (`秋田酒類製造`) and surfaces matched_brand_only with
+    // brewery-divergence semantics: extracted = what the model put
+    // in the brewery field (the brand itself), stored = the
+    // catalogue brewery.
+    await seedBrewery({
+      breweryId: 9501,
+      name: 'Akita Shurui Seizo',
+      nameKanji: '秋田酒類製造',
+      areaId: 5,
+    })
+    await pool.query(
+      `INSERT INTO brands
+         (brand_id, name, name_kanji, brewery_id, source, confidence, content_hash)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [9001, 'Takashimizu', '高清水', 9501, 'sakenowa', null, 'hash-takashimizu-fieldswap-9001'],
+    )
+
+    const result = await findSakeByBrandOnlyFromPool(
+      // Field-swap shape: action calls with nameJa = extraction.brewery_ja
+      { nameJa: '高清水', breweryJa: '高清水' },
+      pool,
+    )
+
+    expect(result.kind).toBe('matched_brand_only')
+    if (result.kind !== 'matched_brand_only') throw new Error('unreachable; for narrowing only')
+    expect(result.sake).toMatchObject({ brandId: 9001, nameKanji: '高清水' })
+    expect(result.brewery).toMatchObject({ breweryId: 9501, nameKanji: '秋田酒類製造' })
+    expect(result.breweryDivergence).toEqual({
+      extracted: '高清水',
+      stored: '秋田酒類製造',
+    })
+  })
+
+  it('matches when the model dropped the 酒造 operational suffix (2026-06-11 Takashimizu shape)', async () => {
+    // Sakenowa stores `高清水酒造`. Model returned `高清水` (no
+    // suffix). `expandBreweryVariants` should add the 酒造 suffix
+    // candidate so the lookup still finds the canonical brewery.
+    await seedBrewery({
+      breweryId: 9501,
+      name: 'Takashimizu Shuzo',
+      nameKanji: '高清水酒造',
+      areaId: 5,
+    })
+    await pool.query(
+      `INSERT INTO brands
+         (brand_id, name, name_kanji, brewery_id, source, confidence, content_hash)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [9001, 'Takashimizu', '高清水', 9501, 'sakenowa', null, 'hash-takashimizu-no-suffix-9001'],
+    )
+
+    const result = await findSakeByBreweryOnlyFromPool(
+      { nameJa: '斗', breweryJa: '高清水' },
+      pool,
+    )
+
+    expect(result.kind).toBe('matched_brewery_only')
+    if (result.kind !== 'matched_brewery_only') throw new Error('unreachable; for narrowing only')
+    expect(result.sake).toMatchObject({ brandId: 9001, nameKanji: '高清水' })
+    expect(result.brewery).toMatchObject({ breweryId: 9501, nameKanji: '高清水酒造' })
+    expect(result.brandDivergence).toEqual({
+      extracted: '斗',
+      stored: '高清水',
+    })
   })
 })

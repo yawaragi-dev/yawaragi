@@ -66,7 +66,9 @@
       "title": "Debug",
       "emptyHint": "Waiting for the first event…",
       "closeLabel": "Close debug panel",
-      "clearLabel": "Clear"
+      "clearLabel": "Clear",
+      "copyLabel": "Copy",
+      "copiedLabel": "Copied"
     }
   },
   "scan": {
@@ -75,19 +77,36 @@
       "intro": "Point your camera at a sake bottle. We read the kanji and surface what's known about the brewery, the rice, and the style."
     },
     "form": {
-      "pickLabel": "Open camera or pick a photo",
+      "takePhoto": "Take photo",
+      "uploadPhoto": "Upload photo",
       "pending": "Reading the label…",
-      "inputAriaLabel": "Choose a label photo to scan",
+      "uploadAriaLabel": "Choose a label photo from your library",
+      "cameraAriaLabel": "Take a photo of the label with your camera",
       "matched": "Match found. Opening the sake page…",
       "matchedBrandOnly": "We matched the brand, but the brewery on the label didn't match our catalogue.",
       "matchedBrandOnlyDivergence": "Label: {extracted} · Catalogue: {stored}",
-      "matchedBrandOnlyOpen": "Open the sake page anyway",
+      "matchedBrandOnlyOpen": "Yes, open this sake page",
+      "matchedBreweryOnly": "We matched the brewery, but the brand on the label didn't match our catalogue.",
+      "matchedBreweryOnlyDivergence": "Label: {extracted} · Catalogue: {stored}",
+      "matchedBreweryOnlyOpen": "Yes, open this sake page",
+      "confirmTitle": "Is this the bottle?",
+      "confirmAccept": "Yes, open the sake page",
+      "confirmRescan": "No, scan again",
       "noMatch": "We read the label, but the sake isn't in our catalogue yet.",
-      "ambiguous": "Several sakes share this name and brewery. Pick one to continue.",
+      "ambiguous": "Several sakes match this name. Pick the one on your bottle:",
+      "ambiguousSharedBrewery": "We matched the brewery: {breweryKanji} ({breweryRomaji}). Here's what our catalogue has from them:",
+      "ambiguousNotListed": "Don't see your bottle? Limited editions and collaborations aren't always in our catalogue.",
+      "ambiguousRescan": "None of these — scan again",
       "errorInvalidInput": "We couldn't read that file. Try a clear photo of the bottle label.",
       "errorDownscale": "Your browser couldn't prepare this image. Try a different photo.",
       "rateLimited": "You've reached today's scan limit. {hours, plural, =1 {Please try again in about an hour.} other {Please try again in about # hours.}}",
       "lowConfidence": "We couldn't read this label clearly. Try a closer shot in better light.",
+      "retryRescan": "Scan again",
+      "backLabelHint": "Tip: if the front label is stylized, try the back — the brewery name and kanji are usually clearer there.",
+      "consensusTitle": "Based on your recent scans, this looks like:",
+      "consensusVotes": "{votes} of your last {total} scans agreed",
+      "consensusAccept": "Yes, open this sake page",
+      "consensusRescan": "No, scan again",
       "extractionFailed": "We couldn't process this image. Try a clear photo of a sake bottle label."
     }
   },

@@ -58,6 +58,7 @@ describe('database integration smoke', () => {
         'name_kanji',
         'name_romaji',
         'source',
+        'superseded_at',
         'updated_at',
       ].sort(),
     )
@@ -134,6 +135,7 @@ describe('database integration smoke', () => {
         'name_kanji',
         'name_romaji',
         'source',
+        'superseded_at',
         'updated_at',
       ].sort(),
     )

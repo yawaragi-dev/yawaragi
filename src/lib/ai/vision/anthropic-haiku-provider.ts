@@ -99,16 +99,50 @@ Examples (label → output):
 
 CRITICAL — script and field-identity rules:
 
-1. ALWAYS return Japanese script (kanji + kana) in name_ja and brewery_ja. NEVER return romaji or English even if a Latin transliteration is printed on the label alongside the kanji. If you cannot read a field's kanji clearly, drop the confidence score sharply (below 0.5) rather than returning the romaji or English form.
+1. PRESERVE THE SCRIPT THE BRAND IS ACTUALLY PRINTED IN. Many sake brands are intentionally printed in non-kanji script. Return what you see:
+   - If the brand on the label is printed in **kanji** (e.g. 獺祭, 八海山) → return the kanji form.
+   - If the brand on the label is printed in **katakana** (e.g. ウマミ, ラッキーキャッツ) → return the katakana form VERBATIM. Do NOT convert katakana to kanji.
+   - If the brand on the label is printed in **hiragana** (e.g. うまみ, あたごのまつ) → return the hiragana form VERBATIM. Do NOT convert hiragana to kanji.
+   - If the brand on the label is printed in **Latin alphabet** (e.g. UMAMI, Shangri-la, Highland) → return the Latin form VERBATIM. Latin script IS allowed for name_ja in this case.
+   When a label shows BOTH a kana/Latin form AND a kanji form, prefer the kana/Latin form ONLY when the kanji is small/secondary and the kana/Latin is the visually dominant brand mark. If kanji and kana are equally prominent, prefer kanji. If you cannot determine the brand at all, drop confidence sharply (below 0.5) rather than guessing or fabricating.
 
-2. Do NOT confuse the brewery with RICE-VARIETY call-outs. Sake labels frequently advertise the rice cultivar — 山田錦 (Yamada Nishiki), 雄町 (Omachi), 五百万石 (Gohyakumangoku), 美山錦 (Miyama Nishiki), 出羽燦々 (Dewa Sansan), 秋田酒こまち (Akita Sake Komachi), 愛山 (Aiyama). These are RICE varieties, NOT breweries. Never put a rice-variety name in brewery_ja. The brewery is the company / 酒造 / 醸造, typically printed in a smaller block elsewhere on the label.
+   ABSOLUTELY DO NOT "translate" Latin romaji into kanji you didn't actually read. This is the most damaging hallucination mode: the label shows "Tanigawa Dake" in big Latin and possibly some small kanji you can only partially make out, and a tempting kanji form (e.g. 谷川岳 or, worse, a fabricated 天川 that "sounds right") jumps to mind from training data. DO NOT WRITE THE KANJI YOU DID NOT VISUALLY VERIFY. If Latin is what you can read most confidently, return the Latin verbatim — even at high confidence. The downstream Sakenowa lookup matches Latin → romaji column directly; a Latin answer with correct spelling beats a kanji answer with phantom characters.
+
+   Examples:
+   - Label has "Tanigawa Dake" in large Latin + tiny kanji you cannot confidently identify → name_ja: "Tanigawa Dake", confidence: 0.8 (NOT a guessed kanji form, NEVER a "sounds-like" fabrication like 天川).
+   - Label has "Tanigawa Dake" in large Latin + clearly readable "谷川岳" kanji → name_ja: "谷川岳", confidence: 0.9 (kanji is preferred when verifiable).
+   - Label has "UMAMI" in huge Latin + no other brand text → name_ja: "UMAMI", confidence: 0.9.
+
+   Brewery (brewery_ja) names should still be returned in their original Japanese script — brewery legal names are almost always in kanji.
+
+2. Do NOT confuse the brewery with RICE-VARIETY call-outs. Sake labels frequently advertise the rice cultivar — 山田錦 (Yamada Nishiki), 雄町 (Omachi), 五百万石 (Gohyakumangoku), 美山錦 (Miyama Nishiki), 出羽燦々 (Dewa Sansan), 秋田酒こまち (Akita Sake Komachi), 愛山 (Aiyama). These are RICE varieties, NOT breweries. Never put a rice-variety name in brewery_ja OR name_ja. The brewery is the company / 酒造 / 醸造, typically printed in a smaller block elsewhere on the label.
 
 3. Do NOT confuse the brewery with sake-rice ratings or grade markers. 精米歩合 (polishing ratio percentages), 日本酒度 (SMV), 酸度 (acidity), 使用酵母 (yeast strain) are all data ABOUT the sake — never put them in name_ja or brewery_ja.
 
-Return only what is visible on the label. Do not translate, invent any field, or fall back to romaji. If a value is genuinely not visible or readable as kanji, lower the confidence score rather than fabricating or romanising it. If the image is not a sake label at all, lower the confidence score significantly rather than producing a plausible-sounding guess.`
+4. Do NOT confuse the brewery with a RETAILER. Some bottles — especially collaborations and limited editions — show both the brewery (e.g. 川鶴酒造) and a retailer/store (e.g. 柴田屋酒店) on the label, and the RETAILER IS OFTEN PRINTED MORE PROMINENTLY than the actual brewery. The actual brewery is the company that brewed the sake — typically printed smaller, in regulatory text near the bottom or side of the label.
+
+   Preference order for picking brewery_ja:
+
+   - FIRST, look for a name ending in 酒造 (sake brewery), 醸造 (brewing), 酒造場, or 酒造店. These are unambiguous brewery suffixes. PREFER THESE EVEN WHEN PRINTED SMALLER than competing names — the prominent name may well be a retailer.
+   - A name ending in 酒店 BY ITSELF (note: distinct from the three-character 酒造店) is ambiguous. Most are urban retailers (柴田屋酒店, 山仁酒店); a small number are mini-breweries with attached retail. WHEN YOU SEE X酒店 ALONGSIDE Y酒造 / Y醸造 ON THE SAME LABEL, THE BREWERY IS Y, NOT X. Only fall back to X酒店 for brewery_ja if no 酒造 / 醸造 name is visible anywhere on the label.
+   - Names ending in 酒販店, 酒販, or リカーショップ are always retailers — exclude them outright. Never put them in brewery_ja.
+   - The two-character 酒店 (酒 immediately followed by 店) is the retailer pattern. The three-character 酒造店 is a brewery — treat it the same as 酒造.
+
+5. NEVER return a placeholder / sentinel value when you cannot read a field. The following are FORBIDDEN as field values:
+   - 不明 / 不明な / 不詳 (Japanese for "unknown")
+   - "unknown" / "n/a" / "N/A" / "未確認" / "—" / "?"
+   - Empty strings (the schema rejects them anyway).
+   If you genuinely cannot read the brand or brewery, return whatever IS legible — even a partial substring, even just Latin romaji, even a single character — and drop the confidence below 0.4. A partial-but-honest extraction is far more useful than "不明" because the downstream Sakenowa lookup can still try variants. A "不明" answer is identical to silence and dead-ends the visitor.
+
+   Examples of preferred low-confidence partial extractions:
+   - Label shows "Tanigawa Dake" Latin + small kanji you can't make out → name_ja: "Tanigawa Dake", brewery_ja: <whatever IS visible, even partial>, confidence: 0.4
+   - Label shows "獺" but the rest of the brand kanji is blurred → name_ja: "獺", brewery_ja: <…>, confidence: 0.3
+   - Label is a sake bottle but ALL text is unreadable → name_ja: <best Latin guess from shape or "?">, brewery_ja: <…>, confidence: 0.15
+
+Return only what is visible on the label. Do not translate, do not romanise kanji into Latin, do not transliterate kana into kanji, do not invent any field. If the image is not a sake label at all, lower the confidence score significantly rather than producing a plausible-sounding guess.`
 
 const USER_PROMPT =
-  'Read this sake bottle label and return the brand and brewery in their original Japanese script, plus a confidence score between 0 and 1. Follow the brand / SKU stripping rules in the system prompt.'
+  'Read this sake bottle label and return the brand and brewery, preserving the script each is actually printed in (kanji / katakana / hiragana / Latin), plus a confidence score between 0 and 1. Follow the brand / SKU stripping and script-preservation rules in the system prompt.'
 
 export function createAnthropicHaikuProvider(
   options: AnthropicHaikuProviderOptions = {},
@@ -141,6 +175,12 @@ export function createAnthropicHaikuProvider(
       }
 
       const resolvedModel = model ?? anthropic('claude-haiku-4-5')
+      const resolvedModelId =
+        typeof resolvedModel === 'object' &&
+        resolvedModel !== null &&
+        'modelId' in resolvedModel
+          ? String((resolvedModel as { modelId: unknown }).modelId)
+          : 'unknown'
 
       // Convert the JPEG blob to a Uint8Array. The AI SDK's `ImagePart`
       // with `image: Uint8Array` is serialised by `@ai-sdk/anthropic`
@@ -150,14 +190,9 @@ export function createAnthropicHaikuProvider(
       const arrayBuffer = await jpegBlob.arrayBuffer()
       const bytes = new Uint8Array(arrayBuffer)
 
-      debugAdd('Vision', `calling claude-haiku-4-5 with ${bytes.length} bytes of inline JPEG`, {
+      debugAdd('Vision', `calling ${resolvedModelId} with ${bytes.length} bytes of inline JPEG`, {
         mediaType: jpegBlob.type || 'image/jpeg',
-        modelId:
-          typeof resolvedModel === 'object' &&
-          resolvedModel !== null &&
-          'modelId' in resolvedModel
-            ? String((resolvedModel as { modelId: unknown }).modelId)
-            : 'unknown',
+        modelId: resolvedModelId,
       })
 
       const start = Date.now()

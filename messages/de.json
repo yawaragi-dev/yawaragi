@@ -66,7 +66,9 @@
       "title": "Debug",
       "emptyHint": "Warte auf das erste Ereignis…",
       "closeLabel": "Debug-Panel schließen",
-      "clearLabel": "Leeren"
+      "clearLabel": "Leeren",
+      "copyLabel": "Kopieren",
+      "copiedLabel": "Kopiert"
     }
   },
   "scan": {
@@ -75,19 +77,36 @@
       "intro": "Richte deine Kamera auf eine Sake-Flasche. Wir lesen die Kanji und zeigen, was über die Brauerei, den Reis und den Stil bekannt ist."
     },
     "form": {
-      "pickLabel": "Kamera öffnen oder Foto wählen",
+      "takePhoto": "Foto aufnehmen",
+      "uploadPhoto": "Foto hochladen",
       "pending": "Etikett wird gelesen…",
-      "inputAriaLabel": "Foto eines Etiketts zum Scannen wählen",
+      "uploadAriaLabel": "Foto eines Etiketts aus der Galerie wählen",
+      "cameraAriaLabel": "Foto eines Etiketts mit der Kamera aufnehmen",
       "matched": "Treffer gefunden. Die Sake-Seite wird geöffnet…",
       "matchedBrandOnly": "Wir haben die Marke erkannt, aber die Brauerei auf dem Etikett passt nicht zu unserem Katalog.",
       "matchedBrandOnlyDivergence": "Etikett: {extracted} · Katalog: {stored}",
-      "matchedBrandOnlyOpen": "Sake-Seite trotzdem öffnen",
+      "matchedBrandOnlyOpen": "Ja, Sake-Seite öffnen",
+      "matchedBreweryOnly": "Wir haben die Brauerei erkannt, aber die Marke auf dem Etikett passt nicht zu unserem Katalog.",
+      "matchedBreweryOnlyDivergence": "Etikett: {extracted} · Katalog: {stored}",
+      "matchedBreweryOnlyOpen": "Ja, Sake-Seite öffnen",
+      "confirmTitle": "Ist das die Flasche?",
+      "confirmAccept": "Ja, Sake-Seite öffnen",
+      "confirmRescan": "Nein, erneut scannen",
       "noMatch": "Wir haben das Etikett gelesen, der Sake ist aber noch nicht im Katalog.",
-      "ambiguous": "Mehrere Sake teilen sich diesen Namen und diese Brauerei. Wähle einen aus, um fortzufahren.",
+      "ambiguous": "Mehrere Sake passen zu diesem Namen. Wähle den von deiner Flasche aus:",
+      "ambiguousSharedBrewery": "Wir haben die Brauerei erkannt: {breweryKanji} ({breweryRomaji}). Das hat unser Katalog von ihr:",
+      "ambiguousNotListed": "Deine Flasche nicht dabei? Limited Editions und Kollaborationen sind nicht immer im Katalog.",
+      "ambiguousRescan": "Keiner davon — erneut scannen",
       "errorInvalidInput": "Die Datei konnte nicht gelesen werden. Versuche ein deutliches Foto des Flaschenetiketts.",
       "errorDownscale": "Dein Browser konnte dieses Bild nicht vorbereiten. Versuche ein anderes Foto.",
       "rateLimited": "Du hast das heutige Scan-Limit erreicht. {hours, plural, =1 {Versuche es in etwa einer Stunde noch einmal.} other {Versuche es in etwa # Stunden noch einmal.}}",
       "lowConfidence": "Das Etikett ließ sich nicht deutlich lesen. Versuche eine Nahaufnahme bei besserem Licht.",
+      "retryRescan": "Erneut scannen",
+      "backLabelHint": "Tipp: Wenn das Frontetikett stilisiert ist, probiere das Rückenetikett — Brauereiname und Kanji sind dort meist klarer.",
+      "consensusTitle": "Anhand deiner letzten Scans sieht das hier so aus:",
+      "consensusVotes": "{votes} von deinen letzten {total} Scans stimmten überein",
+      "consensusAccept": "Ja, Sake-Seite öffnen",
+      "consensusRescan": "Nein, erneut scannen",
       "extractionFailed": "Dieses Bild konnte nicht verarbeitet werden. Versuche ein deutliches Foto eines Sake-Flaschenetiketts."
     }
   },

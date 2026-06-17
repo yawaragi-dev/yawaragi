@@ -1,0 +1,178 @@
+import { beforeEach, describe, expect, it } from 'vitest'
+import {
+  appendMatchToHistory,
+  clearScanHistory,
+  getConsensusFromHistory,
+  type ScanHistoryEntry,
+} from './scan-history'
+
+function entry(brandId: number, suffix = ''): ScanHistoryEntry {
+  return {
+    brandId,
+    sakeHref: `/en/sake/${brandId}${suffix}`,
+    nameKanji: `テスト${brandId}`,
+    nameRomaji: `Test${brandId}`,
+    tMs: Date.now(),
+  }
+}
+
+describe('scan-history', () => {
+  beforeEach(() => {
+    // sessionStorage persists across tests in the same jsdom/happy-dom
+    // instance — clear between cases so each starts from a known empty
+    // state.
+    window.sessionStorage.clear()
+  })
+
+  describe('getConsensusFromHistory', () => {
+    it('returns null when history is empty', () => {
+      expect(getConsensusFromHistory()).toBeNull()
+    })
+
+    it('returns null when history has only one entry (a single scan is not a consensus)', () => {
+      appendMatchToHistory(entry(1009))
+      expect(getConsensusFromHistory()).toBeNull()
+    })
+
+    it('returns null when two entries are tied (1 of 2 is not a majority)', () => {
+      appendMatchToHistory(entry(1009))
+      appendMatchToHistory(entry(2000))
+      expect(getConsensusFromHistory()).toBeNull()
+    })
+
+    it('returns the brand when 2 of 2 entries agree (unanimous)', () => {
+      appendMatchToHistory(entry(1009))
+      appendMatchToHistory(entry(1009))
+      const consensus = getConsensusFromHistory()
+      expect(consensus).not.toBeNull()
+      expect(consensus?.brandId).toBe(1009)
+      expect(consensus?.votes).toBe(2)
+      expect(consensus?.total).toBe(2)
+    })
+
+    it('returns the strict-majority brand from a mixed history (3 of 5)', () => {
+      appendMatchToHistory(entry(1009))
+      appendMatchToHistory(entry(2000))
+      appendMatchToHistory(entry(1009))
+      appendMatchToHistory(entry(3000))
+      appendMatchToHistory(entry(1009))
+      const consensus = getConsensusFromHistory()
+      expect(consensus?.brandId).toBe(1009)
+      expect(consensus?.votes).toBe(3)
+      expect(consensus?.total).toBe(5)
+    })
+
+    it('returns null when the leading brand has a plurality but not a majority (2 of 5)', () => {
+      // 2 × 1009, 2 × 2000, 1 × 3000 — leader has only 2/5 = 40%, no
+      // strict majority. We DON'T want to surface a "this looks like"
+      // card unless more than half of the recent scans agree.
+      appendMatchToHistory(entry(1009))
+      appendMatchToHistory(entry(2000))
+      appendMatchToHistory(entry(1009))
+      appendMatchToHistory(entry(2000))
+      appendMatchToHistory(entry(3000))
+      expect(getConsensusFromHistory()).toBeNull()
+    })
+
+    it('caps the history at 10 entries (oldest dropped)', () => {
+      // Push 12 entries, all brand 1009. The cap should clip to the
+      // last 10; consensus should still return 1009.
+      for (let i = 0; i < 12; i++) appendMatchToHistory(entry(1009))
+      const consensus = getConsensusFromHistory()
+      expect(consensus?.total).toBe(10)
+      expect(consensus?.votes).toBe(10)
+    })
+
+    it('the cap actually drops the oldest — early entries cannot win after eviction', () => {
+      // 5 × old brand 1009, then 6 × new brand 2000. After 11 total,
+      // the cap drops one 1009 entry, leaving 4 × 1009 + 6 × 2000.
+      // Consensus should be 2000 (6 of 10).
+      for (let i = 0; i < 5; i++) appendMatchToHistory(entry(1009))
+      for (let i = 0; i < 6; i++) appendMatchToHistory(entry(2000))
+      const consensus = getConsensusFromHistory()
+      expect(consensus?.brandId).toBe(2000)
+      expect(consensus?.votes).toBe(6)
+      expect(consensus?.total).toBe(10)
+    })
+
+    it('uses the latest entry for the winning brand to source nameKanji + nameRomaji + sakeHref', () => {
+      appendMatchToHistory({ ...entry(1009), nameKanji: '蔵玉', nameRomaji: 'Zougyoku', sakeHref: '/en/sake/1009' })
+      appendMatchToHistory(entry(2000))
+      appendMatchToHistory({ ...entry(1009), nameKanji: '蔵王', nameRomaji: 'Zao', sakeHref: '/en/sake/1009?refreshed=1' })
+      const consensus = getConsensusFromHistory()
+      // The latest 1009 entry had nameKanji '蔵王' and the refreshed
+      // href — those win, not the older '蔵玉' / vanilla href. The
+      // romaji refresh follows the same rule.
+      expect(consensus?.nameKanji).toBe('蔵王')
+      expect(consensus?.nameRomaji).toBe('Zao')
+      expect(consensus?.sakeHref).toBe('/en/sake/1009?refreshed=1')
+    })
+
+    it('back-fills nameRomaji to null when reading older history entries that lack the field', () => {
+      // Simulate an entry written before nameRomaji existed — the
+      // sessionStorage payload won't have the field. The validator
+      // should accept it (defensive back-fill) so existing visitors
+      // don't lose their history on the version bump.
+      const legacyEntries = [
+        { brandId: 1009, sakeHref: '/en/sake/1009', nameKanji: '獺祭', tMs: 1 },
+        { brandId: 1009, sakeHref: '/en/sake/1009', nameKanji: '獺祭', tMs: 2 },
+      ]
+      window.sessionStorage.setItem('yawaragi_scan_history', JSON.stringify(legacyEntries))
+      const consensus = getConsensusFromHistory()
+      expect(consensus?.brandId).toBe(1009)
+      expect(consensus?.nameRomaji).toBeNull()
+    })
+  })
+
+  describe('clearScanHistory', () => {
+    it('wipes the history', () => {
+      appendMatchToHistory(entry(1009))
+      appendMatchToHistory(entry(1009))
+      expect(getConsensusFromHistory()).not.toBeNull()
+      clearScanHistory()
+      expect(getConsensusFromHistory()).toBeNull()
+    })
+  })
+
+  describe('getConsensusFromHistory — useSyncExternalStore contract', () => {
+    // The hook `useScanHistoryConsensus` passes this function as
+    // `useSyncExternalStore`'s `getSnapshot`. React requires the
+    // snapshot be referentially stable across calls while the
+    // underlying data hasn't changed — otherwise it detects an
+    // infinite render loop, throws "The result of getSnapshot
+    // should be cached", and the whole page errors out.
+    //
+    // Verified on 2026-06-13: a second successful scan of UMAMI
+    // pushed history to 2 entries with a strict majority. Without
+    // caching, every render produced a fresh ConsensusMatch object
+    // and Next.js surfaced the throw as "This page couldn't load".
+
+    it('returns the same reference across calls when history is unchanged (majority case)', () => {
+      appendMatchToHistory(entry(1009))
+      appendMatchToHistory(entry(1009))
+      const a = getConsensusFromHistory()
+      const b = getConsensusFromHistory()
+      expect(a).not.toBeNull()
+      expect(a).toBe(b)
+    })
+
+    it('returns the same null across calls when history is empty', () => {
+      const a = getConsensusFromHistory()
+      const b = getConsensusFromHistory()
+      expect(a).toBeNull()
+      expect(a).toBe(b)
+    })
+
+    it('returns a different reference once history actually changes', () => {
+      appendMatchToHistory(entry(1009))
+      appendMatchToHistory(entry(1009))
+      const a = getConsensusFromHistory()
+      appendMatchToHistory(entry(1009))
+      const b = getConsensusFromHistory()
+      expect(a).not.toBeNull()
+      expect(b).not.toBeNull()
+      expect(a).not.toBe(b)
+      expect(b?.votes).toBe(3)
+    })
+  })
+})

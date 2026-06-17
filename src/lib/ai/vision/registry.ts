@@ -1,31 +1,37 @@
 import 'server-only'
 
+import { anthropic } from '@ai-sdk/anthropic'
 import { env } from '@/env'
 import { createAnthropicHaikuProvider } from './anthropic-haiku-provider'
 import { createE2eStubVisionProvider } from './e2e-stub-provider'
 import type { VisionProvider } from './vision-provider'
 
 /**
- * Named keys into the vision-provider registry. Production lands one
- * entry — Anthropic Haiku 4.5 — because the slice spec is "one provider
- * behind a seam," not "two providers and a switch." The Finetune &
- * failover follow-up task (#105 § "Provider strategy") will land the
- * second production key here when its eval bake-off picks a vendor.
+ * Named keys into the vision-provider registry.
  *
- * `e2e-stub` is a deterministic non-production key the Playwright spec
- * selects via `VISION_PROVIDER=e2e-stub` so the CI scan E2E does not
- * burn Anthropic credit. It is never the default, never resolvable
- * unless someone explicitly sets the env var, and its `nodeEnv === 'production'`
- * guard refuses to run if the env var leaks into prod (PRD #105
- * § "Out of scope: ... eval-harness CI integration").
- *
- * The string union (rather than an enum) keeps the registry's entries
- * the single source of truth: `keyof typeof visionProviderFactories` and
- * this union are kept in sync at the type level.
+ * - `anthropic-haiku-4-5`: tier-1 default. Cheap, fast, handles clear
+ *   bottles (UMAMI-style Latin, well-lit kanji on plain backgrounds).
+ * - `anthropic-sonnet-4-6`: tier-2 fallback. Materially better at
+ *   brush-style calligraphic kanji and busy backgrounds. ~5x cost vs
+ *   Haiku, but `scanAction`'s two-tier retry only invokes it on
+ *   no_match / low_confidence / extraction_failed from tier-1, so the
+ *   amortised cost stays close to Haiku on the happy path.
+ * - `e2e-stub`: deterministic non-production key the Playwright spec
+ *   selects via `VISION_PROVIDER=e2e-stub`. Never the default; its
+ *   `nodeEnv === 'production'` guard refuses to run in prod.
  */
-export type VisionProviderKey = 'anthropic-haiku-4-5' | 'e2e-stub'
+export type VisionProviderKey =
+  | 'anthropic-haiku-4-5'
+  | 'anthropic-sonnet-4-6'
+  | 'e2e-stub'
 
 export const DEFAULT_VISION_PROVIDER_KEY: VisionProviderKey = 'anthropic-haiku-4-5'
+
+// Tier-2 retry provider used by `scanAction` when tier-1 (Haiku) can't
+// resolve the bottle. Exported as a named constant so the retry site
+// and the registry are kept in sync (changing this string also changes
+// the registry entry both refer to).
+export const TIER_2_VISION_PROVIDER_KEY: VisionProviderKey = 'anthropic-sonnet-4-6'
 
 /**
  * Registry — string key to factory function. We register factories rather
@@ -33,9 +39,16 @@ export const DEFAULT_VISION_PROVIDER_KEY: VisionProviderKey = 'anthropic-haiku-4
  * mutable state) and so `ANTHROPIC_API_KEY` is read at first use rather
  * than at module load (matters for tests that import the registry but
  * never construct the Anthropic provider).
+ *
+ * The Sonnet factory reuses the Haiku provider's plumbing (prompt,
+ * schema, ZDR warning, debug log) and just swaps the model id —
+ * matching the "Haiku" file name is now historical; the provider is
+ * model-parameterised.
  */
 const visionProviderFactories: Record<VisionProviderKey, () => VisionProvider> = {
   'anthropic-haiku-4-5': () => createAnthropicHaikuProvider(),
+  'anthropic-sonnet-4-6': () =>
+    createAnthropicHaikuProvider({ model: anthropic('claude-sonnet-4-6') }),
   'e2e-stub': () => createE2eStubVisionProvider(),
 }
 

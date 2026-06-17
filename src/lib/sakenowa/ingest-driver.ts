@@ -90,6 +90,18 @@ export interface DriveIngestOptions {
    * startedAt / finishedAt to a deterministic value.
    */
   now?: () => Date
+  /**
+   * Manual-curation refresh-conflict policy α confirmation (ADR-0014).
+   * When `false` (default) and the incoming Sakenowa batch contains a
+   * row whose `(name_kanji, brewery_id)` matches a live
+   * `source = 'manual_curation'` row, the ingest aborts with a
+   * structured error listing every conflict — the operator reviews
+   * and reruns with `supersedeConfirmed: true` (or the CLI
+   * `--supersede-confirmed` flag). When `true`, the matching manual
+   * rows get `superseded_at = now()` and the Sakenowa upsert
+   * proceeds.
+   */
+  supersedeConfirmed?: boolean
 }
 
 export type TableLabel =
@@ -112,6 +124,63 @@ export type IngestDriverResult = IngestionRun
 
 function summaryCounts(s: RunSummary): PerTableCounts {
   return { added: s.added, updated: s.updated, unchanged: s.unchanged, total: s.total }
+}
+
+/**
+ * ADR-0014 policy α: a manual_curation brand row is considered
+ * superseded by an incoming Sakenowa row when their
+ * `(name_kanji, brewery_id)` pair matches. Returns the conflicts
+ * found — empty array means clean ingest.
+ *
+ * Sakenowa's `name` field IS the Japanese-script form (what we
+ * store as `name_kanji`), so the join key compares incoming `name`
+ * against our `name_kanji`.
+ */
+export interface ManualBrandConflict {
+  /** Existing manual_curation brand_id (>= 9_000_000 per ADR-0014). */
+  manualBrandId: number
+  /** Sakenowa brand_id that would supersede it. */
+  sakenowaBrandId: number
+  /** Identity tuple. */
+  nameKanji: string
+  breweryId: number
+}
+
+export async function detectManualBrandConflicts(
+  incoming: ReadonlyArray<SakenowaBrand>,
+  db: BrandsDB,
+): Promise<ManualBrandConflict[]> {
+  const keys = await db.getLiveManualBrandKeys()
+  if (keys.size === 0) return []
+  const conflicts: ManualBrandConflict[] = []
+  for (const s of incoming) {
+    const key = `${s.name}::${s.breweryId}`
+    const manual = keys.get(key)
+    if (manual) {
+      conflicts.push({
+        manualBrandId: manual.brandId,
+        sakenowaBrandId: s.id,
+        nameKanji: s.name,
+        breweryId: s.breweryId,
+      })
+    }
+  }
+  return conflicts
+}
+
+function formatConflictError(conflicts: ReadonlyArray<ManualBrandConflict>): string {
+  const lines = conflicts.map(
+    (c) =>
+      `  manual brand_id ${c.manualBrandId} (name_kanji=${c.nameKanji}, brewery_id=${c.breweryId}) ↔ Sakenowa brand_id ${c.sakenowaBrandId}`,
+  )
+  return (
+    `${conflicts.length} manual-curation row(s) match newly-published Sakenowa rows on (name_kanji, brewery_id):\n` +
+    lines.join('\n') +
+    `\n\nReview the conflicts above and rerun with \`--supersede-confirmed\` (CLI) ` +
+    `or \`{ supersedeConfirmed: true }\` (programmatic) to mark the manual rows ` +
+    `superseded and apply the Sakenowa upsert. Per ADR-0014 policy α, ingest will ` +
+    `not silently overwrite manual rows.`
+  )
 }
 
 function rankingCounts(s: RankingRunSummary): PerTableCounts {
@@ -156,10 +225,26 @@ export async function driveIngest(
     })
     perTable.breweries = summaryCounts(brewerySummary)
 
+    // Wrap the brand-fetch so the conflict-detection pass (ADR-0014
+    // policy α) runs BEFORE the upsert, sees the same payload that
+    // would be written, and can supersede or abort accordingly.
     const brandSummary = await ingestBrands({
       client: {
         getBrands: async () => {
           fetchedBrands = await deps.sakenowa.getBrands()
+          const conflicts = await detectManualBrandConflicts(
+            fetchedBrands,
+            deps.dbs.brands,
+          )
+          if (conflicts.length > 0) {
+            if (!options.supersedeConfirmed) {
+              throw new Error(formatConflictError(conflicts))
+            }
+            await deps.dbs.brands.supersedeBrands(
+              conflicts.map((c) => c.manualBrandId),
+              startedAt,
+            )
+          }
           return fetchedBrands
         },
       },

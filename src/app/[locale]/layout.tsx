@@ -60,10 +60,36 @@ export default async function LocaleLayout({
     <ClerkProvider>
       <html
         lang={locale}
-        className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+        // `overflow-x-clip` (not `-hidden`) is load-bearing on both
+        // html and body to defend against horizontal-scroll bugs from
+        // descendants. The sake page's `<ProvenanceBadge />` mounts an
+        // always-rendered tooltip (`<span absolute left-0 w-max
+        // max-w-xs>`) that's hidden via `opacity-0` but stays in the
+        // DOM layout, so when a badge sits near the right edge the
+        // tooltip's 20rem max-width extends past the viewport. The
+        // scan page's `<input type="file" class="sr-only">` has the
+        // same shape on iOS Safari (file-input button text leaks at
+        // its intrinsic ~191px width despite sr-only's clip:rect).
+        // Both push `document.scrollWidth` past viewport, and every
+        // `fixed inset-x-0` element (debug panel, cookie banner) then
+        // appears to "extend past the right edge".
+        //
+        // `clip` over `hidden`: `hidden` creates a scroll container
+        // and on iOS Safari that interacts badly with scroll-
+        // restoration on history-back. `clip` clips without
+        // establishing a scroll container — exactly what we want for
+        // an x-overflow defense. Setting it on BOTH html and body
+        // because iOS Safari has cases where body's overflow-x
+        // doesn't propagate up unless html agrees.
+        //
+        // (Reported 2026-06-14: "debug panel too wide" on mobile
+        // preview, triggered by navigating to /sake/[brandId]. The
+        // panel itself measured viewport-width on Chromium repros;
+        // the document was overflowing because of the tooltip.)
+        className={`${geistSans.variable} ${geistMono.variable} h-full overflow-x-clip antialiased`}
       >
         <body
-          className="min-h-full flex flex-col bg-zinc-50 font-sans dark:bg-black"
+          className="min-h-full flex flex-col overflow-x-clip bg-zinc-50 font-sans dark:bg-black"
           // Reserve bottom space for the mobile debug-panel strip so it
           // behaves like a sticky footer (content scrolls above it
           // instead of being overlaid). The variable is published by

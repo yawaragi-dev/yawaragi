@@ -95,6 +95,13 @@ async function main(): Promise<number> {
     return 1
   }
 
+  // ADR-0014 policy α: when ingest detects that a fresh Sakenowa
+  // row supersedes a manual_curation row (same name_kanji +
+  // brewery_id), it aborts unless the operator opts in via
+  // `--supersede-confirmed`. The flag flips manual rows to
+  // `superseded_at = NOW()` and proceeds with the Sakenowa upsert.
+  const supersedeConfirmed = process.argv.slice(2).includes('--supersede-confirmed')
+
   // Telemetry pool is separate so the `ingestion_runs` write survives any
   // rollback / errored pool state from the data pool.
   const pool = new Pool({ connectionString })
@@ -132,6 +139,7 @@ async function main(): Promise<number> {
           }
           r.render(current, total)
         },
+        supersedeConfirmed,
       },
     )
 
