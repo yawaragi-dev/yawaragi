@@ -42,14 +42,15 @@ flowchart TD
   LL --> Landing["[locale]/page<br/>(landing + age-gate)"]
   LL --> Under18["[locale]/under-18"]
   LL --> Sake["[locale]/sake/[brandId]"]
-  LL --> Scan["[locale]/scan<br/>(Phase 3, in flight)"]
+  LL --> Scan["[locale]/scan<br/>(Phase 3 / S4 PR A, live)"]
   Scan --> ScanAction["lib/scan/scan-action"]
-  ScanAction -.->|"S2"| RateLimit["lib/rate-limit<br/>yawaragi_session + Edge KV"]
-  ScanAction -.->|"S3"| Vision["lib/ai/vision<br/>(Anthropic Haiku 4.5)"]
+  ScanAction --> RateLimit["lib/rate-limit<br/>yawaragi_session + Upstash"]
+  ScanAction --> Vision["lib/ai/vision<br/>(Haiku 4.5 → Sonnet 4.6 retry)"]
   ScanAction --> Lookup
   Sake --> Lookup["lib/sakenowa/lookup"]
-  Lookup --> DB[("Supabase Postgres<br/>mirror")]
+  Lookup --> DB[("Supabase Postgres<br/>mirror + manual_curation<br/>ADR-0014")]
   Ingest["pnpm ingest"] --> DB
+  Manual["pnpm add-manual-brand<br/>(operator, ADR-0014)"] --> DB
   CronRoute["GET /api/cron/ingest<br/>Bearer CRON_SECRET<br/>Vercel Cron"] --> Ingest
   Sakenowa["Sakenowa Data API"] --> Ingest
   LL -.-> Suggest["[locale]/suggest<br/>(Phase 4, planned)"]
@@ -63,7 +64,7 @@ flowchart TD
   UC["lib/supabase/user-client<br/>(Phase 5, deferred with auth)"] -.->|"deferred"| LL
 ```
 
-Phase 0 (i18n + legal scaffolding + EN-first launch) and Phase 2 (data foundation, Sakenowa mirror, scheduled cron ingest, provenance schemas) are shipped. **Phase 3 (anonymous label scan)** is in flight — see the milestone bar above for the live status. The first slice (entry page + form + canvas downscale + Sakenowa lookup, with the vision call stubbed by a hardcoded extraction) is live; the next slices wire the anonymous-session rate limit (S2), the real Anthropic Haiku 4.5 vision provider (S3), the three-tier confidence UX (S4), and the eval harness (S5). **Phase 4 (single-shot suggestions over MCP + cross-beverage)** follows. **Phase 5 (taste profile, ratings)** is deferred along with auth resumption. Every Phase 3+ surface is designed to survive being wrapped in a native webview shell per [ADR-0012](./docs/adr/0012-webview-able-architecture.md).
+Phase 0 (i18n + legal scaffolding + EN-first launch) and Phase 2 (data foundation, Sakenowa mirror, scheduled cron ingest, provenance schemas) are shipped. **Phase 3 (anonymous label scan)** is in flight — see the milestone bar above for the live status. The entry page + canvas downscale + Sakenowa lookup chain (S1), the anonymous-session rate limit (S2), the Anthropic vision provider (S3), and the three-tier confidence UX + two-tier vision retry + manual-curation layer (S4 PR A) are all live. The remaining S4 work (PR B — enriched disambiguation list, no-match enrichment, "Not this one?" affordance, full Playwright matrix) and the eval harness (S5) are the open slices. Two-tier vision means Haiku 4.5 runs every scan; Sonnet 4.6 retries on any tier-1 result other than a clean first-pass match, recovering the calligraphic-kanji and field-swap cases at ~6× cost only on those bottles. The manual-curation layer (ADR-0014) lets the maintainer add brands missing from Sakenowa's frozen public dump (`pnpm add-manual-brand` — UMAMI is the seed). **Phase 4 (single-shot suggestions over MCP + cross-beverage)** follows. **Phase 5 (taste profile, ratings)** is deferred along with auth resumption. Every Phase 3+ surface is designed to survive being wrapped in a native webview shell per [ADR-0012](./docs/adr/0012-webview-able-architecture.md).
 
 ## Getting started
 

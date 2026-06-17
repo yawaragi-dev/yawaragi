@@ -414,6 +414,8 @@ Add the following tickets to your existing phase backlog.
 - `[P3-09] "Was this scan correct?" affordance — write to a corrections table`
 - `[P3-10] "AI-written tasting note" badge + "improve" / "report" affordances on the scan-result page`
 - `[P3-11] German translations for the scan flow`
+- `[P3-12] Operator has run `pnpm add-manual-brand` for the seed set of bottles missing from Sakenowa's frozen public dump (UMAMI confirmed, others as discovered during testing). Per ADR-0014, the manual-curation layer covers the gap until Sakenowa publishes a fresh dump (#129 follow-up).`
+- `[P3-13] Vision provider env covers both tiers: `ANTHROPIC_API_KEY` serves `claude-haiku-4-5` (tier 1, default) AND `claude-sonnet-4-6` (tier 2, retry-on-failure). No second env var needed; both models are resolved through `getVisionProvider(...)` in `src/lib/ai/vision/registry.ts`. Tier-2 fires on every tier-1 result except a clean first-pass match; budget impact is bounded to hard bottles (~6× per-scan cost on those, unchanged on the happy path).`
 
 ### Phase 4 — Chat + MCP
 
