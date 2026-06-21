@@ -71,13 +71,13 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^6.0.2",
-    "eslint": "^9",
+    "eslint": "^10",
     "eslint-config-next": "16.2.7",
-    "happy-dom": "^20.9.0",
+    "happy-dom": "^20.10.2",
     "pg": "~8.21.0",
     "tailwindcss": "^4",
-    "tsx": "^4.22.3",
-    "typescript": "^5",
-    "vitest": "^4.1.6"
+    "tsx": "^4.22.4",
+    "typescript": "^6",
+    "vitest": "^4.1.8"
   }
 }
