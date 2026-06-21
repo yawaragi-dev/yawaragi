@@ -1,14 +1,15 @@
 import 'server-only'
 
 import type { LanguageModel } from 'ai'
-import { generateObject } from 'ai'
 import { anthropic } from '@ai-sdk/anthropic'
+import type { AttributeValue } from '@opentelemetry/api'
 import {
   LabelScanExtractionSchema,
   type LabelScanExtraction,
 } from '@/lib/schemas/label-scan-extraction'
 import { ZDR_ACTIVE } from '@/lib/ai/zdr-status'
 import { debugAdd } from '@/lib/debug/debug-log'
+import { tracedGenerateObject } from '@/lib/ai/observability/langfuse-trace'
 import type { VisionProvider } from './vision-provider'
 
 /**
@@ -61,6 +62,15 @@ export interface AnthropicHaikuProviderOptions {
    * assert it doesn't.
    */
   nodeEnv?: string
+  /**
+   * Optional extra OpenTelemetry attributes attached to the Langfuse
+   * span emitted by `tracedGenerateObject`. Phase 4 / S4 (#141) — the
+   * provider always emits a trace; the caller (registry / scan-action)
+   * uses this to tag the call with provider key, tier, or other
+   * action-level context. Keys follow the `<area>.<key>` convention
+   * (`provider.key`, `scan.tier`, etc.).
+   */
+  telemetryMetadata?: Record<string, AttributeValue>
 }
 
 // The system prompt teaches the model the difference between the
@@ -152,6 +162,7 @@ export function createAnthropicHaikuProvider(
   // The model is resolved lazily so a missing `ANTHROPIC_API_KEY` only
   // throws when the provider is actually used (tests don't need it).
   const model = options.model
+  const telemetryMetadata = options.telemetryMetadata
   // Memoised so production cold start logs once, not on every scan.
   // Per-factory rather than module-level so vitest can assert "warn
   // fired" on a fresh provider per test without a beforeEach reset.
@@ -196,42 +207,53 @@ export function createAnthropicHaikuProvider(
       })
 
       const start = Date.now()
-      const { object } = await generateObject({
-        model: resolvedModel,
-        schema: LabelScanExtractionSchema,
-        schemaName: 'LabelScanExtraction',
-        schemaDescription:
-          'Sake label extraction: name and brewery in original Japanese script, plus confidence.',
-        system: SYSTEM_PROMPT,
-        messages: [
-          {
-            role: 'user',
-            content: [
-              { type: 'text', text: USER_PROMPT },
-              {
-                type: 'image',
-                image: bytes,
-                mediaType: jpegBlob.type || 'image/jpeg',
-              },
-            ],
+      const { object } = await tracedGenerateObject(
+        {
+          functionId: 'scan-extract-label',
+          metadata: {
+            'model.id': resolvedModelId,
+            ...telemetryMetadata,
           },
-        ],
-      })
+        },
+        {
+          model: resolvedModel,
+          schema: LabelScanExtractionSchema,
+          schemaName: 'LabelScanExtraction',
+          schemaDescription:
+            'Sake label extraction: name and brewery in original Japanese script, plus confidence.',
+          system: SYSTEM_PROMPT,
+          messages: [
+            {
+              role: 'user',
+              content: [
+                { type: 'text', text: USER_PROMPT },
+                {
+                  type: 'image',
+                  image: bytes,
+                  mediaType: jpegBlob.type || 'image/jpeg',
+                },
+              ],
+            },
+          ],
+        },
+      )
       const elapsedMs = Date.now() - start
 
+      // `generateObject` already runs the schema parse, so `object` is
+      // semantically `LabelScanExtraction`. The traced wrapper returns
+      // `unknown` (AI SDK 6's overload union loses precision when piped
+      // through `Parameters<>` / `ReturnType<>`), so we re-parse here to
+      // recover the type AND keep the documented contract of this method
+      // ("returns a value that has passed LabelScanExtractionSchema.parse").
+      const extraction = LabelScanExtractionSchema.parse(object)
+
       debugAdd('Vision', `model returned in ${elapsedMs}ms`, {
-        name_ja: object.name_ja,
-        brewery_ja: object.brewery_ja,
-        confidence: object.confidence,
+        name_ja: extraction.name_ja,
+        brewery_ja: extraction.brewery_ja,
+        confidence: extraction.confidence,
       })
 
-      // `generateObject` already runs the schema parse, so `object` is
-      // typed as `LabelScanExtraction`. We pass it back through the
-      // schema's `parse` once more as a belt-and-braces guard against an
-      // SDK version that ever stops enforcing the schema, and to keep the
-      // documented contract of this method ("returns a value that has
-      // passed LabelScanExtractionSchema.parse").
-      return LabelScanExtractionSchema.parse(object)
+      return extraction
     },
   }
 }

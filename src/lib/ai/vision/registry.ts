@@ -46,9 +46,20 @@ export const TIER_2_VISION_PROVIDER_KEY: VisionProviderKey = 'anthropic-sonnet-4
  * model-parameterised.
  */
 const visionProviderFactories: Record<VisionProviderKey, () => VisionProvider> = {
-  'anthropic-haiku-4-5': () => createAnthropicHaikuProvider(),
+  // Phase 4 / S4 (#141): factories tag each construction with its
+  // registry key as a telemetry attribute, so Langfuse traces (and
+  // any future OTel sink) can group calls by provider. Inline rather
+  // than computed so the key↔factory binding stays a static literal
+  // that a grep can find.
+  'anthropic-haiku-4-5': () =>
+    createAnthropicHaikuProvider({
+      telemetryMetadata: { 'provider.key': 'anthropic-haiku-4-5' },
+    }),
   'anthropic-sonnet-4-6': () =>
-    createAnthropicHaikuProvider({ model: anthropic('claude-sonnet-4-6') }),
+    createAnthropicHaikuProvider({
+      model: anthropic('claude-sonnet-4-6'),
+      telemetryMetadata: { 'provider.key': 'anthropic-sonnet-4-6' },
+    }),
   'e2e-stub': () => createE2eStubVisionProvider(),
 }
 
