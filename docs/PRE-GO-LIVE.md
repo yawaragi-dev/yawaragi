@@ -117,9 +117,9 @@ The cross-beverage map (whisky/wine/beer → 6-axis) is a hand-curated
 heuristic, not a scientific mapping.
 
 - Every cross-beverage recommendation MUST render with the
-  <HeuristicDisclaimer /> component (Phase 5), which shows:
-  "Cross-beverage mappings are approximations. Western descriptors like
-  'smoky' or 'tannic' have no direct sake equivalent."
+  <HeuristicDisclaimer /> component (Phase 4 / S3a, shipped #148; see
+  CLAUDE.md § "Cross-beverage disclaimers" for the canonical title +
+  body copy).
 - The chat tool `mapCrossBeverage` always returns the source field set to
   "cross_beverage_map" so the UI can detect and render the disclaimer.
 - Do not let the LLM invent new cross-beverage mappings beyond the
@@ -426,7 +426,7 @@ Add the following tickets to your existing phase backlog.
 
 ### Phase 5 — Taste profile + cross-beverage
 
-- `[P5-07] <HeuristicDisclaimer /> component mandatory on any cross-beverage result`
+- ~~`[P5-07] <HeuristicDisclaimer /> component mandatory on any cross-beverage result`~~ — moved to Phase 4 / S3a, shipped #148 (component lives at `src/components/legal/heuristic-disclaimer.tsx`)
 - `[P5-08] Corrections / brewery agency: a small "suggest a correction" UI on /sake/[brandId], routes to a corrections table reviewed in /dev`
 - `[P5-09] German translations for /profile + cross-beverage form`
 
@@ -589,8 +589,8 @@ A quick before-after for your reference.
 | Phase 0: Environment setup | + naming ADR + i18n setup + age gate + cookie banner + Impressum |
 | Phase 2: Data foundation | + Sakenowa attribution component + provenance schemas + flavor axis component |
 | Phase 3: Label scan | + corrections flow + AI-written badge + German translations |
-| Phase 4: Chat + MCP | + provenance badge in cards + glossary tooltips + romaji+kanji in prompts |
-| Phase 5: Taste profile | + heuristic disclaimer + brewery agency / corrections |
+| Phase 4: Chat + MCP | + provenance badge in cards + glossary tooltips + romaji+kanji in prompts + heuristic disclaimer component (S3a, #148) |
+| Phase 5: Taste profile | + brewery agency / corrections |
 | Phase 6: Evals + dev mode | + corrections review + provenance audit + competitor log |
 | Phase 7: Polish | + pre-go-live checklist run-through + human German review + Lighthouse in both locales |
 | (new) Phase 7.5: Community | community outreach before broadcast |

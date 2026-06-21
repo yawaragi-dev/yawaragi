@@ -214,5 +214,9 @@
       "reducedMotionNote": "Hier ist ein kleines Laufspiel versteckt — dein System bevorzugt aber reduzierte Bewegung. Das respektieren wir.",
       "showAnyway": "Spiel trotzdem anzeigen"
     }
+  },
+  "heuristicDisclaimer": {
+    "title": "Diese Ergebnisse sind Näherungen aus anderen Getränken",
+    "body": "Westliche Begriffe wie „rauchig\" oder „gerbstoffreich\" haben keine direkte Entsprechung im Sake. Wir übertragen sie mit einer handgepflegten Näherung, damit du von einem vertrauten Bezugspunkt aus starten kannst — die Ergebnisse sind ein Ausgangspunkt zum Entdecken, keine exakte Übereinstimmung."
   }
 }
