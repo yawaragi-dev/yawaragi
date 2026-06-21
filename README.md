@@ -60,7 +60,7 @@ flowchart TD
   SuggestAction -.-> Anthropic
   Vision -.-> Anthropic["Anthropic Claude"]
   MCP -.-> DB
-  Anthropic -.-> Trace["Langfuse traces<br/>(Phase 4+)"]
+  Vision --> Trace["Langfuse traces<br/>(scan live, suggest planned)"]
   UC["lib/supabase/user-client<br/>(Phase 5, deferred with auth)"] -.->|"deferred"| LL
 ```
 
