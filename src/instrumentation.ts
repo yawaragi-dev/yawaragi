@@ -1,23 +1,32 @@
 /**
  * Next.js 16 instrumentation hook — runs once per server cold start
  * (Node.js runtime only; Edge cold starts call `register()` from the
- * Edge runtime branch). We use it to fail-closed at deploy time when
- * the rate-limit env is misconfigured in production.
+ * Edge runtime branch). Two responsibilities:
  *
- * Why this matters: without the boot-time gate, a misconfigured
- * Production deploy would build successfully (the four rate-limit env
- * vars are `.optional()` in `src/env.ts`) and only fail at the first
- * scan request — which might be hours after deploy, surfacing as a
- * support ticket rather than a build alarm. The boot-time gate
- * converts a per-request failure into a cold-start failure, which
- * Vercel surfaces loudly in the deployment view.
+ * 1. Fail-closed at deploy time when the rate-limit env is misconfigured
+ *    in production. Without the boot-time gate, a misconfigured
+ *    Production deploy would build successfully (the four rate-limit env
+ *    vars are `.optional()` in `src/env.ts`) and only fail at the first
+ *    scan request — which might be hours after deploy, surfacing as a
+ *    support ticket rather than a build alarm. The gate converts a
+ *    per-request failure into a cold-start failure, which Vercel
+ *    surfaces loudly. Only fires when `NODE_ENV === 'production'`.
  *
- * Only fires when `NODE_ENV === 'production'`. Dev / test / preview-
- * with-missing-env all keep working without the rate-limit module
- * configured.
+ * 2. Register the OpenTelemetry SDK with the Langfuse span processor so
+ *    every AI SDK 6 call wrapped with `tracedGenerateObject` /
+ *    `tracedGenerateText` (see `src/lib/ai/observability/langfuse-trace.ts`)
+ *    emits a Langfuse trace. Runs in every environment that has the
+ *    `LANGFUSE_*` env vars set; no-ops otherwise so local dev works
+ *    without Langfuse credentials.
  */
 export async function register() {
   if (process.env.NEXT_RUNTIME !== 'nodejs') return
+
+  // OTel registration runs in all environments that have credentials.
+  // The setup module is a self-contained side-effect import — calling
+  // `registerOTel` once per process per Vercel's contract.
+  await import('@/lib/ai/observability/otel-setup')
+
   if (process.env.NODE_ENV !== 'production') return
 
   // Lazy-imported so the dev runtime doesn't pay the import cost when
