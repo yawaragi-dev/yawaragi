@@ -23,9 +23,15 @@ describe('CROSS_BEVERAGE_MAP', () => {
     }
   })
 
-  it('covers all three beverage kinds in the schema enum', () => {
+  it('covers every beverage kind the schema enum declares', () => {
+    // Schema-extension on 2026-06-21 added spirit / fortified / cider on
+    // top of the original whisky / wine / beer. Coverage assertion
+    // (every enum value has at least one row) catches the case where a
+    // future schema widening lands without companion data.
     const beverages = new Set(CROSS_BEVERAGE_MAP.map((row) => row.beverage))
-    expect(beverages).toEqual(new Set(['whisky', 'wine', 'beer']))
+    expect(beverages).toEqual(
+      new Set(['whisky', 'wine', 'beer', 'spirit', 'fortified', 'cider']),
+    )
   })
 
   it('uses lowercase, hyphen-or-letter-only descriptors', () => {

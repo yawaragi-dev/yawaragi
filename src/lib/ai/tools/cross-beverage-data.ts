@@ -41,19 +41,22 @@ import { parseCrossBeverageMap, type CrossBeverageMap } from '@/lib/schemas/cros
  * required to render every row of this table behind a `<HeuristicDisclaimer />`
  * (CLAUDE.md "Cross-beverage disclaimers"; ADR-0005).
  *
- * Out-of-scope categories (schema-extension follow-up: #142)
- * ----------------------------------------------------------
- * The schema's `beverage` enum is `'whisky' | 'wine' | 'beer'`. The research
- * doc additionally covers spirits (tequila, mezcal, gin, shochu, baijiu, soju),
- * fortified wines (port, madeira — sherry is captured here via wine
- * oxidative/dessert rows), and cider. Those rows are NOT encoded here —
- * adding them is a schema change, not a data change, and belongs to a separate
- * follow-up PR after #142.
- *
  * Coverage
  * --------
- * 42 rows: 11 whisky, 17 wine, 14 beer. Targets per issue #140 AC range
- * (8–12 / 12–18 / 8–12).
+ * 59 rows: 11 whisky, 17 wine, 14 beer, 11 spirit, 4 fortified, 2 cider.
+ * The original Phase 2 stub schema only declared `whisky | wine | beer`; the
+ * spirit / fortified / cider rows landed alongside the schema extension in
+ * this PR (#150). Per-distillate distinction (tequila vs mezcal vs gin) lives
+ * in the descriptor, not the beverage column — see `agave-smoky`,
+ * `juniper-botanical`, etc.
+ *
+ * Existing sherry / port / madeira rows under `beverage: 'wine'` (rows
+ * `oxidative`, `dessert`) are deliberately NOT re-tagged as `fortified`.
+ * The research doc encoded them under the wine table, the existing rows
+ * already cluster oxidative + ultra-sweet correctly, and re-tagging would
+ * give the LLM tool two routes to the same cluster. The new `fortified`
+ * rows cover Western descriptors the wine table did not (`saline-fortified`
+ * for Manzanilla, `port-tawny` / `port-ruby` as port-specific clusters).
  */
 
 const RAW_ROWS: ReadonlyArray<Omit<CrossBeverageMap, 'source'> & { source: 'cross_beverage_map' }> =
@@ -246,6 +249,94 @@ const RAW_ROWS: ReadonlyArray<Omit<CrossBeverageMap, 'source'> & { source: 'cros
     // porter — single research row (Porter). Honjozo Genshu warmed
     // cluster — softer than stout, more cocoa-malt-drinkable.
     { source: 'cross_beverage_map', descriptor: 'porter',           beverage: 'beer',   f1: 0.20, f2: 0.65, f3: 0.55, f4: 0.45, f5: 0.45, f6: 0.30 },
+
+    // ----- SPIRIT (11 descriptors) ------------------------------------------
+
+    // juniper-botanical — single research row (London Dry Gin / Tanqueray).
+    // Gin's juniper-botanical doesn't transfer to a sake axis; mapping rests
+    // ONLY on shared aromatic intensity (Daiginjo with peak f1). Carries the
+    // disclaimer per CrossBeverageMap §Limitations.
+    { source: 'cross_beverage_map', descriptor: 'juniper-botanical', beverage: 'spirit', f1: 0.85, f2: 0.30, f3: 0.20, f4: 0.30, f5: 0.80, f6: 0.80 },
+
+    // botanical-sweet — single research row (Old Tom Gin). Slightly sweetened
+    // gin → Junmai Daiginjo with rounded residual character.
+    { source: 'cross_beverage_map', descriptor: 'botanical-sweet',  beverage: 'spirit', f1: 0.75, f2: 0.45, f3: 0.30, f4: 0.30, f5: 0.55, f6: 0.55 },
+
+    // botanical-japanese — single research row (Japanese Gin / Roku / Ki No
+    // Bi). Yuzu-tea-sansho botanicals find a closer sake analogue than
+    // London Dry — yuzu-forward Junmai Ginjo (Kid) cluster.
+    { source: 'cross_beverage_map', descriptor: 'botanical-japanese', beverage: 'spirit', f1: 0.80, f2: 0.40, f3: 0.25, f4: 0.30, f5: 0.65, f6: 0.65 },
+
+    // earthy-shochu — single research row (Imo Shochu / sweet potato).
+    // Warmed earthy Junmai (Tedorigawa cluster). Roast-sweet-potato + earth +
+    // chestnut maps to f2/f3 with low f1/f6.
+    { source: 'cross_beverage_map', descriptor: 'earthy-shochu',    beverage: 'spirit', f1: 0.20, f2: 0.70, f3: 0.65, f4: 0.35, f5: 0.65, f6: 0.20 },
+
+    // clean-shochu — single research row (Mugi Shochu / barley). Clean light
+    // Honjozo cluster — accessible, mildly sweet, grassy.
+    { source: 'cross_beverage_map', descriptor: 'clean-shochu',     beverage: 'spirit', f1: 0.30, f2: 0.35, f3: 0.30, f4: 0.65, f5: 0.70, f6: 0.65 },
+
+    // neutral-soju — single research row (Korean Soju). Smooth-light-neutral
+    // with slight sweetness; low-ABV Junmai / light Honjozo cluster.
+    { source: 'cross_beverage_map', descriptor: 'neutral-soju',     beverage: 'spirit', f1: 0.30, f2: 0.30, f3: 0.25, f4: 0.60, f5: 0.55, f6: 0.65 },
+
+    // baijiu-funk — single research row (light-aroma baijiu / Erguotou). qu-
+    // derived funk + high ABV intensity has no real sake analogue; closest is
+    // kimoto Genshu — high amino-acid funk + 18%+ ABV. Match is intensity,
+    // not aroma. Carries the disclaimer.
+    { source: 'cross_beverage_map', descriptor: 'baijiu-funk',      beverage: 'spirit', f1: 0.20, f2: 0.75, f3: 0.80, f4: 0.20, f5: 0.75, f6: 0.10 },
+
+    // agave-bright — single research row (Tequila Blanco). Bright citrus-
+    // pepper-vegetal agave → crisp Junmai Ginjo with elevated aromatic.
+    // Agave doesn't transfer; bright-spicy-aromatic shape does.
+    { source: 'cross_beverage_map', descriptor: 'agave-bright',     beverage: 'spirit', f1: 0.65, f2: 0.40, f3: 0.30, f4: 0.30, f5: 0.75, f6: 0.70 },
+
+    // agave-oaked — single research row (Tequila Reposado). Brief-oak vanilla-
+    // cedar softening → cedar-aged taruzake cluster.
+    { source: 'cross_beverage_map', descriptor: 'agave-oaked',      beverage: 'spirit', f1: 0.40, f2: 0.55, f3: 0.50, f4: 0.40, f5: 0.65, f6: 0.40 },
+
+    // agave-aged — single research row (Tequila Añejo). Caramel-vanilla-
+    // dried-fruit oxidative → koshu lighter cluster.
+    { source: 'cross_beverage_map', descriptor: 'agave-aged',       beverage: 'spirit', f1: 0.35, f2: 0.75, f3: 0.65, f4: 0.30, f5: 0.50, f6: 0.10 },
+
+    // agave-smoky — single research row (Mezcal Joven). Agave-roasting smoke
+    // has no direct sake correlate; closest is warmed yamahai's oxidative-
+    // savory funk + taruzake's cedar-spice. "Rustic earthy umami", NOT
+    // literal smoke. Carries the disclaimer.
+    { source: 'cross_beverage_map', descriptor: 'agave-smoky',      beverage: 'spirit', f1: 0.20, f2: 0.75, f3: 0.65, f4: 0.30, f5: 0.65, f6: 0.15 },
+
+    // ----- FORTIFIED (4 descriptors) ----------------------------------------
+
+    // saline-fortified — single research row (Manzanilla Sherry). Coastal-
+    // saline character → kimoto Junmai's mineral-saline edge (Akishika
+    // cluster). Drier and saltier than Fino (already covered under wine
+    // `oxidative`).
+    { source: 'cross_beverage_map', descriptor: 'saline-fortified', beverage: 'fortified', f1: 0.20, f2: 0.75, f3: 0.55, f4: 0.40, f5: 0.85, f6: 0.25 },
+
+    // oxidative-intermediate — single research row (Amontillado Sherry).
+    // Transition oxidative between Fino freshness and Oloroso depth → mid-
+    // aged koshu (3-5y) cluster. Hazelnut + sea-air vector.
+    { source: 'cross_beverage_map', descriptor: 'oxidative-intermediate', beverage: 'fortified', f1: 0.25, f2: 0.85, f3: 0.75, f4: 0.25, f5: 0.65, f6: 0.10 },
+
+    // port-tawny — single research row (Tawny Port). Nutty-caramel-dried-fig
+    // oxidative sweetness → aged kijoshu cluster. Sake's sake-in-water trick
+    // parallels fortification's fermentation-stop.
+    { source: 'cross_beverage_map', descriptor: 'port-tawny',       beverage: 'fortified', f1: 0.35, f2: 0.85, f3: 0.75, f4: 0.20, f5: 0.20, f6: 0.05 },
+
+    // port-ruby — single research row (Ruby Port). Young-jammy-sweet → sweet
+    // nigori Genshu cluster. Both undiluted, sweet, lush.
+    { source: 'cross_beverage_map', descriptor: 'port-ruby',        beverage: 'fortified', f1: 0.45, f2: 0.70, f3: 0.65, f4: 0.25, f5: 0.10, f6: 0.15 },
+
+    // ----- CIDER (2 descriptors) --------------------------------------------
+
+    // apple-dry-cider — single research row (Dry English Cider). Apple-pear-
+    // mineral crisp → Junmai Ginjo apple-pear ester + crisp finish.
+    { source: 'cross_beverage_map', descriptor: 'apple-dry',        beverage: 'cider',  f1: 0.55, f2: 0.40, f3: 0.30, f4: 0.45, f5: 0.75, f6: 0.80 },
+
+    // apple-sweet-cider — single research row (Sweet / Pommeau Cider).
+    // Apple-brandy-and-juice sweetness → umeshu's plum-and-spirit sweetness.
+    // Both spirit+fruit+sugar liqueur-style.
+    { source: 'cross_beverage_map', descriptor: 'apple-sweet',      beverage: 'cider',  f1: 0.55, f2: 0.55, f3: 0.45, f4: 0.25, f5: 0.20, f6: 0.30 },
   ] as const
 
 /**

@@ -53,8 +53,24 @@ describe('CrossBeverageMap schema', () => {
   })
 
   it('rejects an unknown beverage kind', () => {
+    // Schema extended in #150 (2026-06-21) to add spirit / fortified /
+    // cider on top of whisky / wine / beer. We assert rejection on a
+    // value the enum legitimately does not cover (mead, kombucha).
     expect(() => parseCrossBeverageMap({ ...validEntry, beverage: 'sake' })).toThrow()
-    expect(() => parseCrossBeverageMap({ ...validEntry, beverage: 'cider' })).toThrow()
+    expect(() => parseCrossBeverageMap({ ...validEntry, beverage: 'mead' })).toThrow()
+    expect(() => parseCrossBeverageMap({ ...validEntry, beverage: 'kombucha' })).toThrow()
+  })
+
+  it('accepts the spirit / fortified / cider beverages added in #150', () => {
+    expect(parseCrossBeverageMap({ ...validEntry, beverage: 'spirit' })).toMatchObject({
+      beverage: 'spirit',
+    })
+    expect(parseCrossBeverageMap({ ...validEntry, beverage: 'fortified' })).toMatchObject({
+      beverage: 'fortified',
+    })
+    expect(parseCrossBeverageMap({ ...validEntry, beverage: 'cider' })).toMatchObject({
+      beverage: 'cider',
+    })
   })
 
   it('rejects flavor-axis values outside [0, 1]', () => {
