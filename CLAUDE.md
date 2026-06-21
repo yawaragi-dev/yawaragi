@@ -91,7 +91,7 @@ The f1–f6 → Japanese-label mapping above was verified on 2026-05-22 against 
 
 ## Cross-beverage disclaimers
 
-The cross-beverage map (whisky / wine / beer → 6 axes) is a hand-curated heuristic, not a scientific mapping.
+The cross-beverage map (Western beverages → 6 axes) is a hand-curated heuristic, not a scientific mapping. The schema's `beverage` enum is the source of truth for which categories are covered (currently whisky / wine / beer / spirit / fortified / cider, per `src/lib/schemas/cross-beverage-map.ts`); future widening lands by extending the enum + adding rows in a new PR.
 
 - Every cross-beverage recommendation MUST render with `<HeuristicDisclaimer />`. The canonical EN copy is title + body — title: `"These are cross-beverage approximations"`; body: `"Western descriptors like 'smoky' or 'tannic' don't have a direct sake equivalent. We map them with a hand-curated heuristic so you can start from a familiar reference — treat these results as a starting point for discovery, not a precise match."` The second body sentence carries the discovery framing mandated by `Age gate and JMStV compliance` below — keep both sentences in lockstep with the component's i18n keys (`messages/{en,de}.json` → `heuristicDisclaimer.{title,body}`).
 - The chat tool `mapCrossBeverage` always returns `source: "cross_beverage_map"` so the UI detects and renders the disclaimer.
