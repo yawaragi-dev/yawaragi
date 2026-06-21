@@ -30,7 +30,7 @@ jobs:
     name: Regenerate dashboard
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           # GITHUB_TOKEN already has contents:write via the permissions
           # block above. fetch-depth: 0 so the bot can push back without
