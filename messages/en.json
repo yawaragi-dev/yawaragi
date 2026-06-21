@@ -214,5 +214,9 @@
       "reducedMotionNote": "We hid a small running game here, but your system asks for reduced motion. We respect that.",
       "showAnyway": "Show the game anyway"
     }
+  },
+  "heuristicDisclaimer": {
+    "title": "These are cross-beverage approximations",
+    "body": "Western descriptors like “smoky” or “tannic” don’t have a direct sake equivalent. We map them with a hand-curated heuristic so you can start from a familiar reference — treat these results as a starting point for discovery, not a precise match."
   }
 }
