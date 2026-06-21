@@ -1,6 +1,6 @@
 # Milestone progress (detail)
 
-_Snapshot generated 2026-06-21T17:12:09.629Z (UTC). Regenerate with `pnpm progress`._
+_Snapshot generated 2026-06-21T17:14:47.947Z (UTC). Regenerate with `pnpm progress`._
 
 ## TL;DR
 
@@ -8,7 +8,7 @@ _Snapshot generated 2026-06-21T17:12:09.629Z (UTC). Regenerate with `pnpm progre
 | --- | --- | --- | --- | --- |
 | **M1** — Compliance & i18n foundation | Phase 0 | 5 / 5 | 3938 / 3938 (100%) | `████████████████████` |
 | **M2** — Data foundation | Phase 2 | 11 / 12 | 13118 / 13974 (94%) | `███████████████████░` |
-| **M3** — Flagship surfaces | Phases 3–5 | 3 / 9 | 2568 / 7704 (33%) | `███████░░░░░░░░░░░░░` |
+| **M3** — Flagship surfaces | Phases 3–5 | 3 / 12 | 2568 / 10272 (25%) | `█████░░░░░░░░░░░░░░░` |
 
 ## Per-milestone detail
 
@@ -42,32 +42,32 @@ Sakenowa Postgres mirror, Zod schemas with provenance, attribution UI, flavor ch
 - **Median:**     2026-06-22
 - **Pessimistic:** 2026-06-23
 
-_Based on 9 PR(s) merged over the last 14 days (~904 LoC/day)._
+_Based on 10 PR(s) merged over the last 14 days (~911 LoC/day)._
 
 ### M3 — Flagship surfaces (Phases 3–5)
 
 Label scan (vision LLM), chat recommender (AI SDK tools + MCP), taste profile + cross-beverage map.
 
-**Issues:** 3 closed / 9 total
+**Issues:** 3 closed / 12 total
 
-**Weight (LoC of merged PRs):** 2568 closed / 7704 total — 33% done
+**Weight (LoC of merged PRs):** 2568 closed / 10272 total — 25% done
 
-`█████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░`
+`██████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░`
 
 **ETA**
 
-- **Optimistic:** 2026-06-25
-- **Median:**     2026-06-27
-- **Pessimistic:** 2026-07-03
+- **Optimistic:** 2026-06-27
+- **Median:**     2026-06-30
+- **Pessimistic:** 2026-07-08
 
-_Based on 9 PR(s) merged over the last 14 days (~904 LoC/day)._
+_Based on 10 PR(s) merged over the last 14 days (~911 LoC/day)._
 
 ## Methodology
 
 - **Milestones** map to project phases: M1 = Phase 0, M2 = Phase 2, M3 = Phases 3–5. Phase 6+ (evals, polish, community, launch) is excluded — it gates the launch but isn't product surface.
 - **Weight per issue** is the sum of `additions + deletions` of the merged PR(s) that closed it (matched by `closes #N` in the PR title). LoC is a blunt instrument but it is measurable, reproducible, and immune to retroactive sizing.
 - **Open issues** inherit the median measured slice weight as a prior; the dashboard labels this fall-back so it isn't confused with measured data.
-- **Velocity** is total LoC merged in the trailing 14 days divided by the window length in days. Idle days count against velocity: `12658` LoC across `9` PR(s) ⇒ `904.1` LoC/day.
+- **Velocity** is total LoC merged in the trailing 14 days divided by the window length in days. Idle days count against velocity: `12747` LoC across `10` PR(s) ⇒ `910.5` LoC/day.
 - **ETA band** is `remaining_weight / velocity` scaled by 1.5x (optimistic), 1x (median), and 0.5x (pessimistic). The 0.5x/1.5x band is wide on purpose — it is not a binomial confidence interval (we lack the ≥8 sprints of history that would justify one), it is a sanity-check window.
 
 ## What is NOT measured
