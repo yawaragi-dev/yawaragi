@@ -43,7 +43,7 @@ The origin of any piece of information shown to a user. Every record carries a `
 _Avoid_: Origin, Trust, Confidence (confidence is a separate field, not a synonym for provenance)
 
 **CrossBeverageMap**:
-A hand-curated deterministic table that bridges Western beverage descriptors (whisky / wine / beer terms like "smoky", "tannic") to positions on the 6-axis FlavorProfile. Not a scientific mapping — a heuristic for cross-domain recommendations. Always rendered with `<HeuristicDisclaimer />`. The LLM may not invent new entries beyond the table.
+A hand-curated deterministic table that bridges Western beverage descriptors (e.g. "smoky", "tannic", "agave-smoky", "juniper-botanical") to positions on the 6-axis FlavorProfile. Not a scientific mapping — a heuristic for cross-domain recommendations. The schema's `beverage` enum (`src/lib/schemas/cross-beverage-map.ts`) is the source of truth for covered categories. Always rendered with `<HeuristicDisclaimer />`. The LLM may not invent new entries beyond the table.
 _Avoid_: BeverageBridge, CrossDomainMap, BeverageTranslation
 
 ## Relationships
