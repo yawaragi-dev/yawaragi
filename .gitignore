@@ -50,5 +50,9 @@ next-env.d.ts
 # the main worktree.
 .claude/worktrees/
 
+# Claude Code local-only state — scheduled-task lock file is per-machine
+# scratch used by ScheduleWakeup, not project content.
+.claude/scheduled_tasks.lock
+
 # clerk configuration (can include secrets)
 /.clerk/
