@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { CrossBeverageMapSchema } from '@/lib/schemas/cross-beverage-map'
-import { CROSS_BEVERAGE_MAP } from './cross-beverage-data'
+import {
+  CROSS_BEVERAGE_DESCRIPTOR_ALIASES,
+  CROSS_BEVERAGE_MAP,
+} from './cross-beverage-data'
 
 describe('CROSS_BEVERAGE_MAP', () => {
   it('parses every row against CrossBeverageMapSchema', () => {
@@ -43,6 +46,37 @@ describe('CROSS_BEVERAGE_MAP', () => {
     const valid = /^[a-z]+(-[a-z]+)*$/
     for (const row of CROSS_BEVERAGE_MAP) {
       expect(row.descriptor, `bad descriptor format: ${row.descriptor}`).toMatch(valid)
+    }
+  })
+})
+
+describe('CROSS_BEVERAGE_DESCRIPTOR_ALIASES', () => {
+  // Build the canonical-descriptor set once. Used by both invariants below.
+  const canonicalDescriptors = new Set(CROSS_BEVERAGE_MAP.map((row) => row.descriptor))
+
+  it('routes every alias to a real descriptor (no dangling targets)', () => {
+    // An alias whose target doesn't exist in the table is a bug — the LLM
+    // tool would resolve the alias and then fail the lookup. Catches the
+    // case where someone deletes a row but forgets to scrub its aliases.
+    for (const [alias, target] of Object.entries(CROSS_BEVERAGE_DESCRIPTOR_ALIASES)) {
+      expect(
+        canonicalDescriptors.has(target),
+        `alias "${alias}" → "${target}" — but "${target}" is not a descriptor in CROSS_BEVERAGE_MAP`,
+      ).toBe(true)
+    }
+  })
+
+  it('does not alias a descriptor that already exists in the map', () => {
+    // If an alias key is itself a real descriptor, the tool layer has two
+    // entry points to the same row — confusing and probably a bug. Catches
+    // the case where someone adds an alias for a term that's already a
+    // canonical descriptor (would have happened if `peated` itself were
+    // ever aliased, etc.).
+    for (const alias of Object.keys(CROSS_BEVERAGE_DESCRIPTOR_ALIASES)) {
+      expect(
+        canonicalDescriptors.has(alias),
+        `alias "${alias}" is already a canonical descriptor — would route to itself`,
+      ).toBe(false)
     }
   })
 })

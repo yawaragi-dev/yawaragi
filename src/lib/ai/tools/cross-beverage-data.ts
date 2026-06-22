@@ -43,20 +43,38 @@ import { parseCrossBeverageMap, type CrossBeverageMap } from '@/lib/schemas/cros
  *
  * Coverage
  * --------
- * 59 rows: 11 whisky, 17 wine, 14 beer, 11 spirit, 4 fortified, 2 cider.
+ * 62 rows: 14 whisky, 17 wine, 14 beer, 11 spirit, 4 fortified, 2 cider.
  * The original Phase 2 stub schema only declared `whisky | wine | beer`; the
  * spirit / fortified / cider rows landed alongside the schema extension in
- * this PR (#150). Per-distillate distinction (tequila vs mezcal vs gin) lives
- * in the descriptor, not the beverage column — see `agave-smoky`,
+ * PR #150. Per-distillate distinction (tequila vs mezcal vs gin) lives in
+ * the descriptor, not the beverage column — see `agave-smoky`,
  * `juniper-botanical`, etc.
  *
- * Existing sherry / port / madeira rows under `beverage: 'wine'` (rows
- * `oxidative`, `dessert`) are deliberately NOT re-tagged as `fortified`.
- * The research doc encoded them under the wine table, the existing rows
- * already cluster oxidative + ultra-sweet correctly, and re-tagging would
- * give the LLM tool two routes to the same cluster. The new `fortified`
- * rows cover Western descriptors the wine table did not (`saline-fortified`
- * for Manzanilla, `port-tawny` / `port-ruby` as port-specific clusters).
+ * Existing sherry / port / madeira rows under `beverage: 'wine'` (`oxidative`,
+ * `dessert`) are deliberately NOT re-tagged as `fortified`. The research doc
+ * encoded them under the wine table, the existing rows already cluster
+ * oxidative + ultra-sweet correctly, and re-tagging would give the LLM tool
+ * two routes to the same cluster. The new `fortified` rows cover Western
+ * descriptors the wine table did not (`saline-fortified` for Manzanilla,
+ * `port-tawny` / `port-ruby` as port-specific clusters).
+ *
+ * Audit-driven changes (2026-06-22)
+ * ---------------------------------
+ * Following the row-by-row HITL audit on PR #150, the following changes
+ * landed (see commit message and PR body for the full rationale):
+ *   - `sherry-cask` (averaged Macallan + GlenDronach) split into
+ *     `sherry-cask-floral` (Macallan anchor) and `sherry-cask-deep`
+ *     (GlenDronach anchor) — the mean matched neither pole.
+ *   - `japanese-mizunara` restricted to the Yamazaki anchor; Hibiki +
+ *     Hakushu siblings added as `japanese-floral-blend` and
+ *     `japanese-lightly-peated`. Net +2 whisky descriptors.
+ *   - `oaky` whisky f3 corrected from 0.58 to 0.53 (simple mean of the
+ *     four-row cluster).
+ *   - `tannic` skewed (f2 -0.04, f3 +0.03) so its vector is no longer
+ *     bit-identical to `full-bodied` — the disclaimer still carries the
+ *     "sake has no tannin" caveat, but the diff no longer reads like a typo.
+ *   - `dessert` re-anchored to PX + Madeira mean only (was averaged with
+ *     Sauternes + Ice Wine, but those are covered by `botrytised`).
  */
 
 const RAW_ROWS: ReadonlyArray<Omit<CrossBeverageMap, 'source'> & { source: 'cross_beverage_map' }> =
@@ -72,11 +90,15 @@ const RAW_ROWS: ReadonlyArray<Omit<CrossBeverageMap, 'source'> & { source: 'cros
     // higher f6 than `peated` to reflect Talisker's lifted maritime edge.
     { source: 'cross_beverage_map', descriptor: 'smoky',            beverage: 'whisky', f1: 0.14, f2: 0.75, f3: 0.72, f4: 0.25, f5: 0.70, f6: 0.18 },
 
-    // sherry-cask — averaged from Macallan 12 Sherry Oak and GlenDronach 18
-    // Allardice rows. The high-f1/low-f1 split between Macallan (floral
-    // sherry-cask Speyside) and GlenDronach (deep oxidative koshu analogue)
-    // is intentional: the descriptor covers both poles.
-    { source: 'cross_beverage_map', descriptor: 'sherry-cask',      beverage: 'whisky', f1: 0.52, f2: 0.75, f3: 0.60, f4: 0.22, f5: 0.47, f6: 0.24 },
+    // sherry-cask-floral — Macallan 12 Sherry Oak anchor (research row).
+    // The lighter, floral, sherry-cask Speyside pole. Audit on 2026-06-22
+    // showed the averaged `sherry-cask` row landed at a vector that matched
+    // neither Macallan nor GlenDronach; split into two anchored descriptors.
+    { source: 'cross_beverage_map', descriptor: 'sherry-cask-floral', beverage: 'whisky', f1: 0.75, f2: 0.65, f3: 0.35, f4: 0.25, f5: 0.55, f6: 0.40 },
+
+    // sherry-cask-deep — GlenDronach 18 Allardice anchor (research row).
+    // The deep, oxidative, koshu-analogue pole. Sister to `sherry-cask-floral`.
+    { source: 'cross_beverage_map', descriptor: 'sherry-cask-deep',  beverage: 'whisky', f1: 0.30, f2: 0.85, f3: 0.85, f4: 0.20, f5: 0.40, f6: 0.08 },
 
     // bourbon-cask — averaged from Buffalo Trace and Maker's Mark rows.
     // Sweet-edged Daiginjo + softer wheated-bourbon Junmai cluster.
@@ -84,9 +106,10 @@ const RAW_ROWS: ReadonlyArray<Omit<CrossBeverageMap, 'source'> & { source: 'cros
 
     // oaky — averaged from Macallan, Buffalo Trace, GlenDronach, Yamazaki 12
     // rows (each whisky example whose Reasoning column foregrounds wood).
-    // Pulled lower than sherry-cask alone because bourbon and mizunara
-    // contribute lighter f3 to the cluster.
-    { source: 'cross_beverage_map', descriptor: 'oaky',             beverage: 'whisky', f1: 0.50, f2: 0.66, f3: 0.58, f4: 0.30, f5: 0.51, f6: 0.31 },
+    // Lower than `sherry-cask-deep` alone because bourbon and mizunara
+    // contribute lighter f3 to the cluster. (f3 corrected from 0.58 to 0.53
+    // on 2026-06-22 audit: simple-mean of the four anchor rows is 0.525.)
+    { source: 'cross_beverage_map', descriptor: 'oaky',             beverage: 'whisky', f1: 0.50, f2: 0.66, f3: 0.53, f4: 0.30, f5: 0.51, f6: 0.31 },
 
     // honeyed — averaged from Highland Park 12, Hibiki Harmony, and
     // Glenmorangie Original rows. High f1 (floral) + mid f5 + mid f6.
@@ -104,9 +127,23 @@ const RAW_ROWS: ReadonlyArray<Omit<CrossBeverageMap, 'source'> & { source: 'cros
     // is a distinctive enough sensory family to keep as its own descriptor.
     { source: 'cross_beverage_map', descriptor: 'rye-spicy',        beverage: 'whisky', f1: 0.55, f2: 0.55, f3: 0.55, f4: 0.25, f5: 0.65, f6: 0.30 },
 
-    // japanese-mizunara — averaged from Yamazaki 12, Hibiki Harmony, Hakushu
-    // 12 rows (all three Japanese whisky exemplars in the research table).
-    { source: 'cross_beverage_map', descriptor: 'japanese-mizunara', beverage: 'whisky', f1: 0.55, f2: 0.43, f3: 0.32, f4: 0.43, f5: 0.65, f6: 0.62 },
+    // japanese-mizunara — Yamazaki 12 anchor only. The original cluster
+    // averaged Yamazaki + Hibiki + Hakushu, but Hibiki's f1=0.85 was pulling
+    // the descriptor toward "floral", which is the wrong family for mizunara
+    // (the unifying signal is cedar-spice, anchored on Yamazaki + its
+    // mizunara research notes). Audit 2026-06-22. The Hibiki and Hakushu
+    // exemplars live as their own descriptors below.
+    { source: 'cross_beverage_map', descriptor: 'japanese-mizunara', beverage: 'whisky', f1: 0.30, f2: 0.55, f3: 0.50, f4: 0.45, f5: 0.65, f6: 0.40 },
+
+    // japanese-floral-blend — Hibiki Harmony anchor (research row). Honeyed-
+    // tropical-floral Japanese blend; distinctly non-mizunara. Separated out
+    // of the previous japanese-mizunara cluster on 2026-06-22 audit.
+    { source: 'cross_beverage_map', descriptor: 'japanese-floral-blend', beverage: 'whisky', f1: 0.85, f2: 0.40, f3: 0.20, f4: 0.30, f5: 0.55, f6: 0.70 },
+
+    // japanese-lightly-peated — Hakushu 12 anchor (research row). Green,
+    // herbaceous, faint smoke; closer to a crisp Ginjo than to mizunara
+    // cedar. Separated out of the previous japanese-mizunara cluster.
+    { source: 'cross_beverage_map', descriptor: 'japanese-lightly-peated', beverage: 'whisky', f1: 0.50, f2: 0.35, f3: 0.25, f4: 0.55, f5: 0.75, f6: 0.75 },
 
     // irish-pot-still — single research row (Redbreast 12). Creamy spice +
     // muroka-roundness cluster. Distinct enough from the broader Irish blended
@@ -125,11 +162,13 @@ const RAW_ROWS: ReadonlyArray<Omit<CrossBeverageMap, 'source'> & { source: 'cros
     { source: 'cross_beverage_map', descriptor: 'full-bodied',      beverage: 'wine',   f1: 0.17, f2: 0.82, f3: 0.82, f4: 0.22, f5: 0.65, f6: 0.12 },
 
     // tannic — sake has no tannin (research §"Limitations"). The descriptor
-    // maps to the same body+umami+low-crispness vector as full-bodied; the
-    // HeuristicDisclaimer carries the explanation. Identical vector to
-    // `full-bodied` on purpose — both project the same Western dimension
-    // onto sake's available axes.
-    { source: 'cross_beverage_map', descriptor: 'tannic',           beverage: 'wine',   f1: 0.17, f2: 0.82, f3: 0.82, f4: 0.22, f5: 0.65, f6: 0.12 },
+    // projects onto sake's body+umami axes the same way `full-bodied` does,
+    // but with a slight skew (f2 -0.04, f3 +0.03) toward weight-over-richness
+    // so the two descriptors don't carry bit-identical vectors. The audit on
+    // 2026-06-22 flagged the identical-vector original as confusing for the
+    // next maintainer reading the diff. The HeuristicDisclaimer continues
+    // to carry the "sake has no tannin" caveat.
+    { source: 'cross_beverage_map', descriptor: 'tannic',           beverage: 'wine',   f1: 0.17, f2: 0.78, f3: 0.85, f4: 0.22, f5: 0.65, f6: 0.12 },
 
     // mineral — averaged from Chablis and Muscadet sur lie rows. The
     // chalk-driven white cluster: high f4 (restrained aroma), high f5/f6.
@@ -161,10 +200,14 @@ const RAW_ROWS: ReadonlyArray<Omit<CrossBeverageMap, 'source'> & { source: 'cros
     // rows. The flor / aged-amber cluster.
     { source: 'cross_beverage_map', descriptor: 'oxidative',        beverage: 'wine',   f1: 0.25, f2: 0.87, f3: 0.72, f4: 0.23, f5: 0.63, f6: 0.17 },
 
-    // dessert — averaged from Pedro Ximénez, Sauternes, Ice Wine, Madeira
-    // rows. Broader-than-botrytised: covers ultra-sweet fortified and
-    // late-harvest both.
-    { source: 'cross_beverage_map', descriptor: 'dessert',          beverage: 'wine',   f1: 0.39, f2: 0.81, f3: 0.75, f4: 0.18, f5: 0.15, f6: 0.09 },
+    // dessert — Pedro Ximénez + Madeira mean (the two ultra-sweet
+    // oxidative-fortified styles in the research doc). Original cluster
+    // also averaged Sauternes + Ice Wine, but those are honey-noble-rot
+    // / late-harvest (covered by `botrytised`), and port-specific styles
+    // are covered by `port-tawny` / `port-ruby`. Re-anchoring on PX +
+    // Madeira gives `dessert` a clear niche distinct from its neighbours.
+    // Audit 2026-06-22.
+    { source: 'cross_beverage_map', descriptor: 'dessert',          beverage: 'wine',   f1: 0.33, f2: 0.88, f3: 0.85, f4: 0.15, f5: 0.23, f6: 0.05 },
 
     // jammy — single research row (Zinfandel). Dark fruit + jam + warming.
     { source: 'cross_beverage_map', descriptor: 'jammy',            beverage: 'wine',   f1: 0.65, f2: 0.55, f3: 0.45, f4: 0.20, f5: 0.20, f6: 0.30 },
@@ -329,12 +372,13 @@ const RAW_ROWS: ReadonlyArray<Omit<CrossBeverageMap, 'source'> & { source: 'cros
 
     // ----- CIDER (2 descriptors) --------------------------------------------
 
-    // apple-dry-cider — single research row (Dry English Cider). Apple-pear-
-    // mineral crisp → Junmai Ginjo apple-pear ester + crisp finish.
+    // apple-dry — single research row (Dry English Cider). Apple-pear-
+    // mineral crisp → Junmai Ginjo apple-pear ester + crisp finish. The
+    // beverage column carries `cider`, so the descriptor doesn't repeat it.
     { source: 'cross_beverage_map', descriptor: 'apple-dry',        beverage: 'cider',  f1: 0.55, f2: 0.40, f3: 0.30, f4: 0.45, f5: 0.75, f6: 0.80 },
 
-    // apple-sweet-cider — single research row (Sweet / Pommeau Cider).
-    // Apple-brandy-and-juice sweetness → umeshu's plum-and-spirit sweetness.
+    // apple-sweet — single research row (Sweet / Pommeau Cider). Apple-
+    // brandy-and-juice sweetness → umeshu's plum-and-spirit sweetness.
     // Both spirit+fruit+sugar liqueur-style.
     { source: 'cross_beverage_map', descriptor: 'apple-sweet',      beverage: 'cider',  f1: 0.55, f2: 0.55, f3: 0.45, f4: 0.25, f5: 0.20, f6: 0.30 },
   ] as const
@@ -347,3 +391,31 @@ const RAW_ROWS: ReadonlyArray<Omit<CrossBeverageMap, 'source'> & { source: 'cros
 export const CROSS_BEVERAGE_MAP: readonly CrossBeverageMap[] = Object.freeze(
   RAW_ROWS.map((row) => parseCrossBeverageMap(row)),
 )
+
+/**
+ * Visitor-vocabulary aliases for common Western-beverage terms whose
+ * canonical descriptor was renamed during distillation. The LLM tool layer
+ * (`mapCrossBeverage`, #142 / S3b) should consult this map BEFORE attempting
+ * a strict descriptor match so a visitor typing the colloquial form gets
+ * routed to the canonical row.
+ *
+ * Examples:
+ *   - "peaty"   → `peated`        (Whisky Advocate's canonical term)
+ *   - "roasty"  → `dark-roasted`  (covers both Czech Dunkel and Schwarzbier)
+ *   - "mizunara" → `japanese-mizunara` (the obvious shorthand)
+ *
+ * Constraint enforced by the unit test in `cross-beverage-data.test.ts`:
+ *   - Every alias VALUE must be a real descriptor in `CROSS_BEVERAGE_MAP`.
+ *   - No alias KEY may itself be a real descriptor (no double-routing).
+ *
+ * Keep this map small. Aliases are escape valves, not a place to encode
+ * synonyms wholesale. New rows beat new aliases.
+ */
+export const CROSS_BEVERAGE_DESCRIPTOR_ALIASES: Readonly<Record<string, string>> =
+  Object.freeze({
+    peat: 'peated',
+    peaty: 'peated',
+    roasty: 'dark-roasted',
+    roasted: 'dark-roasted',
+    mizunara: 'japanese-mizunara',
+  })
