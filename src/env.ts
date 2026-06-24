@@ -84,8 +84,12 @@ const Env = z.object({
   VISION_PROVIDER: empty(z.string().min(1).optional()),
   // -------- Phase 4 / S1 — MCP client registry (#139) ----------------
   // URL of the deployed `@yawaragi/sakenowa-mcp` server, reached over
-  // streamable HTTP per ADR-0003 + PRD #138 (Vercel serverless can't
-  // run the stdio binary as a long-lived child). Stays `.optional()` in
+  // streamable HTTP per ADR-0003 + PRD #138. `@yawaragi/sakenowa-mcp`
+  // v0.1.0 ships both stdio and HTTP transports; production deploys
+  // run the server with `MCP_TRANSPORT=http` on the server side
+  // (Vercel serverless can't keep a stdio child process alive between
+  // requests, which is why HTTP is the production-shaped option).
+  // Stays `.optional()` in
   // the schema so the app boots without it on a fresh checkout; the
   // MCP-client factory throws at first use with a clear "set
   // MCP_SAKENOWA_URL" message — same runtime-first pattern as

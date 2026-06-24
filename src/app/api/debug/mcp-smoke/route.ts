@@ -5,10 +5,11 @@
  * server. Exists only to confirm Phase 4 / S1 (#139) infrastructure works
  * end-to-end against a real MCP server before the user-facing suggest
  * action (S4, #142) depends on it. The maintainer runs this once locally
- * (`pnpm link ../sakenowa-mcp` + HTTP gateway), once against a Vercel
- * preview deploy, then DELETE this file in the S2 PR (cross-beverage
- * tool — that slice doesn't need it) or at the latest in S5 (#143) when
- * the real suggest action takes over.
+ * (`pnpm link ../sakenowa-mcp` + sakenowa-mcp started with
+ * `MCP_TRANSPORT=http`), once against a Vercel preview deploy, then
+ * DELETE this file in the S2 PR (cross-beverage tool — that slice
+ * doesn't need it) or at the latest in S5 (#143) when the real suggest
+ * action takes over.
  *
  * Why it lives in `app/api/debug/` and not `app/api/cron/`: it's a
  * developer-tool route, not a scheduled task. Bearer-auth pattern is

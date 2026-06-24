@@ -39,10 +39,12 @@ export const DEFAULT_MCP_CLIENT_KEY: McpClientKey = 'yawaragi-sakenowa'
  * use. Same shape as `SESSION_COOKIE_SECRET`'s runtime-first throw.
  *
  * Transport is `'http'` (streamable HTTP, per ADR-0003 + PRD #138).
- * Stdio is rejected for production deploys — Vercel serverless doesn't
- * carry long-lived child processes cleanly. The maintainer wraps the
- * stdio server in an HTTP gateway on Vercel; this client talks to that
- * gateway.
+ * `@yawaragi/sakenowa-mcp` v0.1.0 ships both transports natively
+ * (stdio for Claude Desktop / IDE consumers, streamable HTTP selected
+ * via `MCP_TRANSPORT=http` on the server side). This client points at
+ * the HTTP endpoint directly — no intermediate gateway, no subprocess
+ * wrap. Vercel serverless can't keep stdio pipes alive between
+ * requests, which is why HTTP is the production-shaped option.
  */
 const mcpClientFactories: Record<McpClientKey, () => Promise<MCPClient>> = {
   'yawaragi-sakenowa': async () => {
