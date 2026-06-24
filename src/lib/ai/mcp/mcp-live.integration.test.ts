@@ -39,6 +39,28 @@ import type { MCPClient } from '@ai-sdk/mcp'
 
 import { getDefaultMcpClient } from './registry'
 
+/**
+ * AI SDK 6's MCP client doesn't reject the promise when an MCP tool
+ * returns a server-side error — it resolves with
+ * `{ content: [...], isError: true }`. This helper asserts the result
+ * has the success shape and returns its serialised content for
+ * downstream regex matching.
+ */
+function expectSuccessfulToolResult(result: unknown): string {
+  expect(result).toBeDefined()
+  // The shape is `{ content: ToolResultContent[], isError?: boolean }`.
+  // We assert the call did NOT error before any downstream matching —
+  // otherwise a tool that returns `{ isError: true, content: [...] }`
+  // would silently pass a `toBeDefined()` or a loose regex match.
+  const obj = result as { isError?: boolean; content?: unknown }
+  expect(
+    obj.isError,
+    `tool returned isError=true; result: ${JSON.stringify(result)}`,
+  ).not.toBe(true)
+  expect(obj.content).toBeDefined()
+  return JSON.stringify(result)
+}
+
 const CI_SENTINEL_URL = 'https://mcp.example.invalid'
 
 function liveServerConfigured(): boolean {
@@ -104,7 +126,7 @@ describe.skipIf(!SHOULD_RUN)('MCP integration — live @yawaragi/sakenowa-mcp', 
   // The next six it() blocks exercise each tool. They assert shape, not
   // value — the actual numbers depend on the maintainer's local mirror.
 
-  it('list_prefectures returns 47 prefectures with id/name_ja/name_romaji', async () => {
+  it('list_prefectures returns Japan\'s 47 prefectures', async () => {
     const tools = await client.tools()
     const tool = tools.list_prefectures
     expect(tool).toBeDefined()
@@ -112,33 +134,36 @@ describe.skipIf(!SHOULD_RUN)('MCP integration — live @yawaragi/sakenowa-mcp', 
       {},
       { toolCallId: 'integration-list_prefectures', messages: [] },
     )
-    // Tool results are AI SDK 6 `ToolResult` shape: an array of content
-    // parts. The server-side Zod parse already validates structure; we
-    // just confirm we got SOMETHING and that it mentions prefecture
-    // entries.
-    const serialised = JSON.stringify(result)
-    expect(serialised).toMatch(/北海道/) // Hokkaido is id 1
-    expect(serialised).toMatch(/沖縄/) // Okinawa is id 47
+    const serialised = expectSuccessfulToolResult(result)
+    expect(serialised).toMatch(/北海道/) // Hokkaido is area_id 1
+    expect(serialised).toMatch(/沖縄/) // Okinawa is area_id 47
   })
 
-  it('search_sakes_by_name resolves a known romaji query', async () => {
+  it('search_sakes_by_name resolves a known query (Dassai)', async () => {
     const tools = await client.tools()
     const tool = tools.search_sakes_by_name
     expect(tool).toBeDefined()
     // "Dassai" — one of the most-cited sakes in the research doc, very
-    // likely to be in any reasonable Sakenowa mirror.
+    // likely to be in any reasonable Sakenowa mirror. The server matches
+    // against `brands.name` (the Sakenowa-API-returned Japanese form,
+    // typically kanji for Dassai → 獺祭) AND `brands.name_romaji` (added
+    // by the consumer via an enrichment step; in yawaragi that's PR
+    // #121's romaji ingest). If the mirror has only `name` populated,
+    // a romaji query like "Dassai" won't match; in that case the test
+    // fails informatively and the maintainer knows the enrichment step
+    // hasn't run.
     const result = await tool!.execute(
       { query: 'Dassai' },
       { toolCallId: 'integration-search', messages: [] },
     )
-    const serialised = JSON.stringify(result)
-    // Either the romaji or the kanji form should appear — the mirror
-    // may have one or both. Allowing either keeps the test stable
-    // across schema variations.
-    expect(/Dassai|獺祭/.test(serialised)).toBe(true)
+    const serialised = expectSuccessfulToolResult(result)
+    expect(
+      /Dassai|獺祭/.test(serialised),
+      `search returned no match for "Dassai" — does the mirror have brands.name_romaji populated? Result: ${serialised}`,
+    ).toBe(true)
   })
 
-  it('find_similar_sakes accepts a brandId + topK and returns matches', async () => {
+  it('find_similar_sakes returns cosine matches for a known brandId', async () => {
     const tools = await client.tools()
     const tool = tools.find_similar_sakes
     expect(tool).toBeDefined()
@@ -149,11 +174,10 @@ describe.skipIf(!SHOULD_RUN)('MCP integration — live @yawaragi/sakenowa-mcp', 
       { brandId: 1, topK: 3 },
       { toolCallId: 'integration-similar', messages: [] },
     )
-    // Just confirm the call didn't error and produced SOMETHING.
-    expect(result).toBeDefined()
+    expectSuccessfulToolResult(result)
   })
 
-  it('get_sake_details returns a 6-axis flavor profile for a known brand', async () => {
+  it('get_sake_details returns a sake record with brewery + area + flavor-profile shape', async () => {
     const tools = await client.tools()
     const tool = tools.get_sake_details
     expect(tool).toBeDefined()
@@ -161,14 +185,20 @@ describe.skipIf(!SHOULD_RUN)('MCP integration — live @yawaragi/sakenowa-mcp', 
       { brandId: 1 },
       { toolCallId: 'integration-details', messages: [] },
     )
-    const serialised = JSON.stringify(result)
-    // f1..f6 are the canonical Sakenowa axis identifiers; any
-    // well-shaped response will mention them.
-    expect(serialised).toMatch(/f1|hanayaka/)
-    expect(serialised).toMatch(/f6|keikai/)
+    const serialised = expectSuccessfulToolResult(result)
+    // Assert the canonical response shape, not the specific content —
+    // a given brand may legitimately have no flavor chart in the
+    // mirror (the Sakenowa data set has many brands without per-axis
+    // ratings, and yawaragi's brand 1 / 新十津川 is one of them). The
+    // tool contract requires `flavorProfile` to be present as a key
+    // (null when no chart, object with f1..f6 when present).
+    expect(serialised).toMatch(/flavorProfile/)
+    expect(serialised).toMatch(/brewery/)
+    expect(serialised).toMatch(/area/)
+    expect(serialised).toMatch(/brandId/)
   })
 
-  it('find_sakes_by_flavor accepts axis ranges + tag filters', async () => {
+  it('find_sakes_by_flavor accepts axis-range filters', async () => {
     const tools = await client.tools()
     const tool = tools.find_sakes_by_flavor
     expect(tool).toBeDefined()
@@ -178,7 +208,7 @@ describe.skipIf(!SHOULD_RUN)('MCP integration — live @yawaragi/sakenowa-mcp', 
       { f1Min: 0.6, f1Max: 1.0, f5Min: 0.4, f5Max: 1.0, topK: 5 },
       { toolCallId: 'integration-flavor', messages: [] },
     )
-    expect(result).toBeDefined()
+    expectSuccessfulToolResult(result)
   })
 
   it('get_top_ranked returns the latest overall ranking', async () => {
@@ -189,27 +219,27 @@ describe.skipIf(!SHOULD_RUN)('MCP integration — live @yawaragi/sakenowa-mcp', 
       { scope: 'overall' },
       { toolCallId: 'integration-ranked', messages: [] },
     )
-    expect(result).toBeDefined()
+    expectSuccessfulToolResult(result)
   })
 
-  // Error-path coverage. We assert the AI SDK surfaces a clear error
-  // when the maintainer typos a tool name OR omits a required argument
-  // — both of which are easy real-world mistakes and the contract
-  // matters more than the exact error message.
+  // Error-path coverage. The MCP server surfaces tool errors as a
+  // resolved promise with `{ isError: true, content: [...] }` — NOT as
+  // a rejected promise (per AI SDK 6's MCP client contract). The test
+  // therefore asserts the success-vs-error sentinel on the resolved
+  // value rather than `.rejects`.
 
-  it('throws or returns a useful error when calling a tool with bad input', async () => {
+  it('returns isError:true when called with the wrong input shape', async () => {
     const tools = await client.tools()
     const tool = tools.find_similar_sakes
     expect(tool).toBeDefined()
     // brandId expects a number; passing a string should fail at the
-    // server-side Zod parse and propagate back. The AI SDK's execute
-    // signature is typed `(args: unknown, ...)` so no TS-side complaint
-    // — the wrongness is intentional at the runtime layer.
-    await expect(
-      tool!.execute(
-        { brandId: 'not-a-number', topK: 3 },
-        { toolCallId: 'integration-bad-input', messages: [] },
-      ),
-    ).rejects.toBeDefined()
+    // server-side Zod parse and propagate back as a structured error.
+    const result = await tool!.execute(
+      { brandId: 'not-a-number', topK: 3 },
+      { toolCallId: 'integration-bad-input', messages: [] },
+    )
+    const obj = result as { isError?: boolean; content?: unknown }
+    expect(obj.isError).toBe(true)
+    expect(obj.content).toBeDefined()
   })
 })
