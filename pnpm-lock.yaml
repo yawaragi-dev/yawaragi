@@ -38,6 +38,9 @@ importers:
       '@vercel/otel':
         specifier: 2.1.2
         version: 2.1.2(@opentelemetry/api-logs@0.218.0)(@opentelemetry/api@1.9.0)(@opentelemetry/instrumentation@0.218.0(@opentelemetry/api@1.9.0))(@opentelemetry/resources@2.7.1(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-logs@0.218.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-metrics@2.7.1(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.7.1(@opentelemetry/api@1.9.0))
+      '@yawaragi/sakenowa-mcp':
+        specifier: 0.1.0
+        version: 0.1.0
       ai:
         specifier: ^6.0.194
         version: 6.0.194(zod@4.4.3)
@@ -1862,6 +1865,10 @@ packages:
 
   '@vitest/utils@4.1.6':
     resolution: {integrity: sha512-FxIY+U81R3LGKCxaHHFRQ5+g6/iRgGLmeHWdp2Amj4ljQRrEIWHmZyDfDYBRZlpyqA7qKxtS9DD1dhk8RnRIVQ==}
+
+  '@yawaragi/sakenowa-mcp@0.1.0':
+    resolution: {integrity: sha512-m9jQ7Z4KfcMjqM9RqfgZzr5Ob2kwHWLrxlWpqyOLoZ6uLrDaEE4mgTXrsPhmbqo1TVnT0b2jwlZV11LvFrOHyA==}
+    hasBin: true
 
   abort-controller@3.0.0:
     resolution: {integrity: sha512-h8lQ8tacZYnR3vNQTgibj+tODHI5/+l06Au2Pcriv/Gmet0eaj4TwWH41sO9wnHDiQsEj19q0drzdWdeAHtweg==}
@@ -6227,6 +6234,17 @@ snapshots:
       '@vitest/pretty-format': 4.1.6
       convert-source-map: 2.0.0
       tinyrainbow: 3.1.0
+
+  '@yawaragi/sakenowa-mcp@0.1.0':
+    dependencies:
+      '@modelcontextprotocol/sdk': 1.29.0(zod@3.25.76)
+      pg: 8.21.0
+      zod: 3.25.76
+      zod-to-json-schema: 3.25.2(zod@3.25.76)
+    transitivePeerDependencies:
+      - '@cfworker/json-schema'
+      - pg-native
+      - supports-color
 
   abort-controller@3.0.0:
     dependencies:
