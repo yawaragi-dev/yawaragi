@@ -16,6 +16,7 @@ import { anonymousRateLimit } from '@/lib/rate-limit/anonymous-rate-limit'
 import { assertRateLimitConfig } from '@/lib/rate-limit/config-gate'
 import { extractIp, hashIp } from '@/lib/rate-limit/ip-hash'
 import { UpstashKVClient } from '@/lib/rate-limit/upstash-kv-client'
+import { hydrateFlavorProfiles } from './hydrate-flavor-profiles'
 import { parseSuggestionsFromText } from './parse-suggestions'
 import type { SuggestActionState, SuggestSeed } from './suggest-action-state'
 import { buildSuggestToolSet } from './tool-set'
@@ -147,6 +148,26 @@ export async function suggestAction(seed: SuggestSeed): Promise<SuggestActionSta
       const message = err instanceof Error ? err.message : String(err)
       console.warn('[suggest] parse failed:', message)
       return { status: 'error', reason: 'parse_failed' }
+    }
+
+    // 6. Fan-out `get_sake_details` in parallel to hydrate each card
+    //    with its canonical Sakenowa flavor_profile (six axes). The
+    //    LLM tool loop above cannot emit axis positions — the schema
+    //    pins the source literal to `sakenowa`, so any hallucinated
+    //    profile from the LLM would fail parse and get dropped. This
+    //    deterministic post-enrichment is the only path axis data
+    //    reaches the visible card. Failures are isolated per brand:
+    //    a rejected lookup or a null flavorProfile drops the field
+    //    from that card only; the rest of the list still renders.
+    try {
+      suggestions = await hydrateFlavorProfiles(suggestions, mcpTools)
+    } catch (err) {
+      // hydrateFlavorProfiles catches per-brand failures internally via
+      // Promise.allSettled; this outer catch is belt-and-suspenders
+      // against a future refactor that throws before the fan-out.
+      const message = err instanceof Error ? err.message : String(err)
+      console.warn('[suggest] flavor-profile fan-out failed:', message)
+      // Do NOT fail the action — the LLM's reasoning is still useful.
     }
 
     return { status: 'ok', suggestions }
@@ -302,9 +323,14 @@ async function readSuggestStubCookie(): Promise<string | null> {
  * credit on every CI run.
  *
  * Values:
- *   - `ok`               — a 3-card list with one cross-beverage descriptor,
- *                          so the disclaimer + attribution + provenance
- *                          badges all render.
+ *   - `ok`               — a 3-card list where two cards carry a
+ *                          `flavor_profile` (round-2 fan-out coverage —
+ *                          the third card is intentionally chart-less so
+ *                          the spec can also assert that the axis
+ *                          cluster is skipped, not "N/A"-placeholder'd,
+ *                          when MCP returns null). Also includes one
+ *                          cross-beverage descriptor so the disclaimer
+ *                          + attribution + provenance badges all render.
  *   - `no_match`         — an empty ok list, so the noMatch copy renders.
  *   - `rate_limited`     — the rate-limit envelope.
  *   - `service_unavailable` — the MCP-down envelope.
@@ -336,6 +362,19 @@ async function resolveSuggestStub(seed: SuggestSeed): Promise<SuggestActionState
             value:
               'Shares hanayaka (華やか, fragrant) character with a similarly polished rice profile.',
           },
+          // Fan-out result — a chart-bearing brand. Axes chosen to
+          // read as hanayaka/keikai forward (matches the reason copy)
+          // so a maintainer eyeballing the stub state sees an
+          // internally-consistent card.
+          flavor_profile: {
+            source: 'sakenowa',
+            f1: 0.72,
+            f2: 0.35,
+            f3: 0.25,
+            f4: 0.45,
+            f5: 0.55,
+            f6: 0.68,
+          },
         },
         {
           brandId: { source: 'sakenowa', value: seed.brandId + 2 },
@@ -344,6 +383,15 @@ async function resolveSuggestStub(seed: SuggestSeed): Promise<SuggestActionState
           reason: {
             source: 'llm_inferred',
             value: 'Explore a keikai (軽快, light/crisp) finish from a different prefecture.',
+          },
+          flavor_profile: {
+            source: 'sakenowa',
+            f1: 0.55,
+            f2: 0.4,
+            f3: 0.3,
+            f4: 0.5,
+            f5: 0.6,
+            f6: 0.75,
           },
         },
         {
@@ -354,6 +402,11 @@ async function resolveSuggestStub(seed: SuggestSeed): Promise<SuggestActionState
             source: 'llm_inferred',
             value: 'A comparable odayaka (穏やか, mild) profile with restrained aromatics.',
           },
+          // Intentionally NO flavor_profile — this card mirrors the
+          // "brand exists in mirror but has no flavor_charts row"
+          // case (brand 1 / 新十津川 is the canonical real-world
+          // example). The Playwright spec asserts the axis cluster is
+          // skipped on this card, not rendered as a placeholder.
           cross_beverage_descriptor: {
             source: 'cross_beverage_map',
             value: 'crisp-lager-like',

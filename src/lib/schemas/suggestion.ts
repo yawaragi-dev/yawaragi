@@ -80,12 +80,54 @@ const CrossBeverageDescriptorField = withProvenance(
   value: z.string().min(1),
 })
 
+/**
+ * FlavorProfile field — hydrated by `suggest-action.ts` calling the MCP
+ * `get_sake_details` tool per brandId AFTER the LLM tool loop returns
+ * (Phase 4 / S5 round-2 fan-out). Source is pinned to `sakenowa` because
+ * the six axis values come from Sakenowa's canonical `flavor_charts`
+ * mirror — the LLM is deliberately kept out of this data path so
+ * hallucinated axis positions are impossible by construction.
+ *
+ * Shape mirrors the MCP server's `FlavorProfileSchema` (six axes as
+ * floats in [0, 1], no `brandId` inside because the enclosing
+ * Suggestion already carries it). Distinct from `FlavorChartSchema` in
+ * `flavor-chart.ts`, which is the storage-and-lookup shape used by the
+ * sake detail page — that one carries `brandId` + a wider source union
+ * (`sakenowa | sakenowa_inferred | user_corrected`). The Suggestion's
+ * FlavorProfile is a wire-side subset: no `brandId` (redundant), source
+ * pinned to `sakenowa` only (the fan-out never touches user-corrected
+ * rows or the cosine-inferred derivatives).
+ *
+ * Optional at the schema level because MCP returns `flavorProfile:
+ * null` for brands with no row in `flavor_charts` (brand 1 / 新十津川 is
+ * one such case, per the S1 integration test). When absent the card
+ * renders without an axis cluster — no placeholder, no "N/A", just
+ * skip.
+ */
+const FlavorProfileField = withProvenance(z.literal('sakenowa')).extend({
+  f1: z.number().min(0).max(1),
+  f2: z.number().min(0).max(1),
+  f3: z.number().min(0).max(1),
+  f4: z.number().min(0).max(1),
+  f5: z.number().min(0).max(1),
+  f6: z.number().min(0).max(1),
+})
+
 export const SuggestionSchema = z.object({
   brandId: BrandIdField,
   name_ja: NameJaField,
   name_romaji: NameRomajiField,
   reason: ReasonField,
   cross_beverage_descriptor: CrossBeverageDescriptorField.optional(),
+  // `z.preprocess` normalises `null` (the MCP wire shape for "no flavor
+  // chart in the mirror") into `undefined` so the `.optional()` seam
+  // treats it identically to a missing key. The fan-out layer in
+  // `suggest-action.ts` already normalises upstream; this is defence-
+  // in-depth against a future refactor that forwards the raw MCP value.
+  flavor_profile: z.preprocess(
+    (v) => (v === null ? undefined : v),
+    FlavorProfileField.optional(),
+  ),
 })
 
 export type Suggestion = z.infer<typeof SuggestionSchema>
