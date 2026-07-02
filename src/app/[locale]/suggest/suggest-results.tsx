@@ -1,11 +1,13 @@
 import { getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
 import { HeuristicDisclaimer } from '@/components/legal/heuristic-disclaimer'
+import { FlavorAxisLabel } from '@/components/sake/flavor-axis-label'
 import { ProvenanceBadge } from '@/components/sake/provenance-badge'
 import {
   SakenowaAttribution,
   requiresSakenowaAttribution,
 } from '@/components/sake/sakenowa-attribution'
+import { FLAVOR_AXES } from '@/lib/schemas/flavor-chart'
 import type { Suggestion } from '@/lib/schemas/suggestion'
 
 /**
@@ -23,13 +25,15 @@ import type { Suggestion } from '@/lib/schemas/suggestion'
  *   - `cross_beverage_descriptor` — when present, the whole card list
  *     mounts `<HeuristicDisclaimer />` at the top (once, not per-card —
  *     the disclaimer is section-level context per its docstring).
- *
- * No 6-axis flavor cluster in S5. The MCP `find_similar_sakes` tool
- * returns brandId + name; the LLM's reason cites axes in prose (per the
- * system prompt) but the deterministic chart lives on the sake detail
- * page. A future slice can inline `<FlavorAxisLabel />` clusters per
- * card once the recommender routinely emits axis positions in the tool
- * chain.
+ *   - `flavor_profile` — when present, a six-axis cluster of
+ *     `<FlavorAxisLabel />` labels renders under the card. Populated
+ *     by the round-2 fan-out in `suggest-action.ts` calling MCP's
+ *     `get_sake_details` per brandId; source pinned to `sakenowa` at
+ *     the schema seam. Cards whose brand has no chart in the mirror
+ *     (MCP returned `flavorProfile: null`) skip the cluster
+ *     entirely — no placeholder, no "N/A", per CLAUDE.md § "6-axis
+ *     flavor vocabulary" (English-only-label is not the right
+ *     fallback for absence; absence is the fallback for absence).
  */
 
 interface SuggestResultsProps {
@@ -125,6 +129,61 @@ async function SuggestCard({ suggestion }: SuggestCardProps) {
           <ProvenanceBadge source={suggestion.cross_beverage_descriptor.source} />
         </p>
       )}
+      {suggestion.flavor_profile !== undefined && (
+        <FlavorAxisCluster profile={suggestion.flavor_profile} />
+      )}
     </li>
+  )
+}
+
+/**
+ * Compact six-axis cluster shown at the foot of a suggest card. Renders
+ * each of the six brewer's-term axes as a `<FlavorAxisLabel />` (romaji
+ * + kanji + tooltip approximation) and the underlying `[0,1]` axis value
+ * as a small numeric tag next to it.
+ *
+ * Not a bar chart / radar — the visual weight of six full-width bars
+ * would drown the card copy, and the sake detail page (linked by name
+ * at the top of the card) already carries the labelled `FlavorChartView`
+ * bars for a visitor who wants to compare axes numerically. The card
+ * cluster is a glance-scale summary of the axis names + values so a
+ * visitor learning the vocabulary sees the labels reinforced.
+ *
+ * Every visible number stays behind the axis label so the CLAUDE.md
+ * "never English-only" rule holds: romaji + kanji are primary, the
+ * numeric value is supporting context, the English approximation
+ * arrives via the label's tooltip on hover / focus.
+ */
+interface FlavorAxisClusterProps {
+  profile: NonNullable<Suggestion['flavor_profile']>
+}
+
+async function FlavorAxisCluster({ profile }: FlavorAxisClusterProps) {
+  const t = await getTranslations('sake.brand')
+  return (
+    <section
+      className="flex flex-wrap gap-3 pt-1"
+      data-testid="suggest-card-flavor-cluster"
+      aria-label={t('flavorChartLabel')}
+    >
+      {FLAVOR_AXES.map((axis) => {
+        const value = profile[axis]
+        return (
+          <div
+            key={axis}
+            className="flex items-center gap-2"
+            data-testid={`suggest-card-flavor-axis-${axis}`}
+          >
+            <FlavorAxisLabel axis={axis} />
+            <span
+              className="text-xs tabular-nums text-zinc-600 dark:text-zinc-400"
+              data-testid={`suggest-card-flavor-axis-${axis}-value`}
+            >
+              {value.toFixed(2)}
+            </span>
+          </div>
+        )
+      })}
+    </section>
   )
 }

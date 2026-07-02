@@ -104,6 +104,32 @@ test.describe('suggest page — seed + happy path (stubbed)', () => {
       page.getByTestId('sakenowa-attribution-inline').first(),
     ).toBeVisible()
 
+    // Round-2 fan-out coverage: the first two cards carry a
+    // Sakenowa-sourced `flavor_profile` (hydrated by
+    // `hydrateFlavorProfiles` in the real path, injected by the stub
+    // here). The third card is deliberately chart-less to prove that
+    // absence is skipped, not placeholder'd.
+    const flavorClusters = page.getByTestId('suggest-card-flavor-cluster')
+    await expect(flavorClusters).toHaveCount(2)
+    // The first cluster renders all six axes with romaji + kanji per
+    // CLAUDE.md § "6-axis flavor vocabulary" (never English-only).
+    const firstCluster = flavorClusters.first()
+    for (const axis of ['f1', 'f2', 'f3', 'f4', 'f5', 'f6']) {
+      await expect(firstCluster.getByTestId(`flavor-axis-${axis}`)).toBeVisible()
+      await expect(
+        firstCluster.getByTestId(`flavor-axis-${axis}-romaji`),
+      ).toBeVisible()
+      await expect(
+        firstCluster.getByTestId(`flavor-axis-${axis}-kanji`),
+      ).toHaveAttribute('lang', 'ja')
+    }
+    // The third card has NO cluster — the mirror-null case renders
+    // cleanly without any placeholder, not even an empty section.
+    const thirdCard = cards.nth(2)
+    await expect(
+      thirdCard.getByTestId('suggest-card-flavor-cluster'),
+    ).toHaveCount(0)
+
     // "Back to the seed" link points at the seed sake detail page.
     const backLink = page.getByTestId('suggest-back-to-seed')
     await expect(backLink).toBeVisible()
