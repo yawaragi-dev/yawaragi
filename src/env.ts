@@ -82,5 +82,22 @@ const Env = z.object({
   // registry's known keys at first use, not at env.parse time, so a
   // new vendor can be added without first updating this schema.
   VISION_PROVIDER: empty(z.string().min(1).optional()),
+  // -------- Phase 4 / S1 — MCP client registry (#139) ----------------
+  // URL of the deployed `@yawaragi/sakenowa-mcp` server, reached over
+  // streamable HTTP per ADR-0003 + PRD #138. `@yawaragi/sakenowa-mcp`
+  // v0.1.0 ships both stdio and HTTP transports; production deploys
+  // run the server with `MCP_TRANSPORT=http` on the server side
+  // (Vercel serverless can't keep a stdio child process alive between
+  // requests, which is why HTTP is the production-shaped option).
+  // Stays `.optional()` in
+  // the schema so the app boots without it on a fresh checkout; the
+  // MCP-client factory throws at first use with a clear "set
+  // MCP_SAKENOWA_URL" message — same runtime-first pattern as
+  // `SESSION_COOKIE_SECRET`, NOT the env.parse-time fail of
+  // `ANTHROPIC_API_KEY`. Required in Production + Preview on Vercel
+  // before the suggest action (Phase 4 / S4 #142) ships; CI carries a
+  // dummy value (see `.github/workflows/ci.yml` `env:` block) so the
+  // Playwright webserver still parses env without it.
+  MCP_SAKENOWA_URL: empty(z.string().url().optional()),
 })
 export const env = Env.parse(process.env)

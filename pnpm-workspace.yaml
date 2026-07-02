@@ -13,6 +13,15 @@
 #   (b) add the package to a `minimumReleaseAgeExclude` list here.
 minimumReleaseAge: 20160
 
+# Packages exempt from the 14-day quarantine above. The Shai-Hulud defence
+# protects against supply-chain compromise of third-party packages; for
+# packages we publish ourselves the threat model is different (we own the
+# npm credentials and the publish workflow). Adding a package here without
+# that justification weakens the quarantine and must be challenged in review.
+minimumReleaseAgeExclude:
+  # first-party package; Shai-Hulud anti-quarantine doesn't apply
+  - '@yawaragi/sakenowa-mcp'
+
 # Install-script approval. Each entry must be explicitly true or false; pnpm
 # refuses to run install scripts for unapproved packages. Another piece of the
 # supply-chain defense (prevents arbitrary code execution on `pnpm install`

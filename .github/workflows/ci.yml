@@ -45,6 +45,18 @@ env:
   # only satisfies the env schema. Production / Preview / Development on
   # Vercel carry real `sk-ant-…` values.
   ANTHROPIC_API_KEY: ci-only-dummy-anthropic-key
+  # src/env.ts added MCP_SAKENOWA_URL (Phase 4 / S1 #139) as optional, so
+  # absence does NOT crash env.parse. We still set a sentinel URL because
+  # (a) it documents that the var exists and is intentionally
+  # unresolvable in CI (mirrors the CRON_SECRET / ANTHROPIC_API_KEY
+  # documentation pattern above), and (b) `.url()` would reject a
+  # non-URL string if one ever crept in. `mcp.example.invalid` is under
+  # RFC 2606's `.invalid` TLD — it never resolves, which is what we want.
+  # The smoke route is bearer-gated, never hit from Playwright, and the
+  # registry unit tests stub `@ai-sdk/mcp` at the module boundary so no
+  # network call ever happens in CI. Production / Preview on Vercel
+  # carry the real deployed MCP URL.
+  MCP_SAKENOWA_URL: https://mcp.example.invalid
   # Langfuse OTel-exporter env (Phase 4 / S4 #141). The LangfuseSpanProcessor
   # in src/lib/ai/observability/otel-setup.ts only registers if BOTH the
   # public and secret keys are present, so leaving these unset in CI would
