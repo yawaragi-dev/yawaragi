@@ -110,6 +110,24 @@
       "extractionFailed": "Dieses Bild konnte nicht verarbeitet werden. Versuche ein deutliches Foto eines Sake-Flaschenetiketts."
     }
   },
+  "suggest": {
+    "entry": {
+      "title": "Ähnliche Sake entdecken",
+      "intro": "Wir nutzen die Braumeister-Sprache von Sakenowa und einen kleinen KI-Helfer, um zu erkunden, was einem Sake ähnelt, den du bereits kennst.",
+      "noSeedTitle": "Beschreibe, wonach dir gerade ist – bald verfügbar",
+      "noSeedBody": "Öffne bis dahin eine Sake-Seite und folge dem Link „Ähnliche finden“, um Ähnliches kennenzulernen. Eine Freitext-Eingabe folgt hier als nächstes."
+    },
+    "results": {
+      "heading": "Sake, der deinem Ausgangs-Sake ähnelt",
+      "reasonLabel": "Warum dieser",
+      "noMatch": "Wir haben in Sakenowa keine ähnlichen Sake zu diesem Ausgangs-Sake gefunden. Probiere eine andere Flasche – der Katalog wächst weiter.",
+      "rateLimited": "Du hast das heutige Vorschlags-Limit erreicht. {hours, plural, =1 {Bitte versuche es in etwa einer Stunde erneut.} other {Bitte versuche es in etwa # Stunden erneut.}}",
+      "serviceUnavailable": "Unsere Sake-Datenbank ist gerade nicht erreichbar. Bitte versuche es in ein paar Minuten erneut.",
+      "error": "Beim Vorbereiten deiner Vorschläge ist etwas schiefgelaufen. Bitte versuche es in ein paar Minuten erneut.",
+      "backToSeed": "Zurück zum Ausgangs-Sake",
+      "findSimilarCta": "Ähnliche finden"
+    }
+  },
   "sakenowaAttribution": {
     "poweredBy": "Bereitgestellt mit Daten von Sakenowa",
     "linkLabel": "Sakenowa besuchen"

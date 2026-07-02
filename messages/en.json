@@ -110,6 +110,24 @@
       "extractionFailed": "We couldn't process this image. Try a clear photo of a sake bottle label."
     }
   },
+  "suggest": {
+    "entry": {
+      "title": "Discover similar sake",
+      "intro": "We use Sakenowa's brewer vocabulary and a small AI helper to explore what tastes similar to a sake you already know.",
+      "noSeedTitle": "Type what you're in the mood for — coming soon",
+      "noSeedBody": "For now, open a sake page and follow the \"Find similar\" link to explore what tastes similar. A free-form input will land here next."
+    },
+    "results": {
+      "heading": "Sake similar to your seed",
+      "reasonLabel": "Why this",
+      "noMatch": "We couldn't find similar sake in Sakenowa for this seed. Try another bottle — the catalogue keeps growing.",
+      "rateLimited": "You've reached today's suggestion limit. {hours, plural, =1 {Please try again in about an hour.} other {Please try again in about # hours.}}",
+      "serviceUnavailable": "Our sake database is temporarily unreachable. Please try again in a few minutes.",
+      "error": "Something went wrong while preparing your suggestions. Please try again in a few minutes.",
+      "backToSeed": "Back to the seed sake",
+      "findSimilarCta": "Find similar"
+    }
+  },
   "sakenowaAttribution": {
     "poweredBy": "Powered by Sakenowa",
     "linkLabel": "Visit Sakenowa"

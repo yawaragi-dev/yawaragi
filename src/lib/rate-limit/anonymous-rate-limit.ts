@@ -6,13 +6,17 @@ import type { KVClient } from './kv-client'
 /**
  * Bucket type — closed union, widen by adding a member.
  *
- * Each bucket has its own cap + window. Today only `vision-scan` ships;
- * Phase 4's `suggestions` bucket will land next to it (issue #105 PRD
- * §"Rate-limit policy v1"). Bucket isolation is enforced by including
- * the bucket name in the KV key, so a cap exhausted on one bucket has
- * no effect on the other.
+ * Each bucket has its own cap + window. Bucket isolation is enforced by
+ * including the bucket name in the KV key, so a cap exhausted on one bucket
+ * has no effect on the other. Buckets shipped so far:
+ *
+ *   - `vision-scan` (Phase 3 / #107): 5 calls / 24h — label scan.
+ *   - `suggestions` (Phase 4 / #143): 3 calls / 24h — suggest tool loop.
+ *     Lower cap than vision-scan because a suggest call fans out to multiple
+ *     MCP tool invocations under the LLM's control, so per-call cost is
+ *     materially higher.
  */
-export type RateLimitBucket = 'vision-scan'
+export type RateLimitBucket = 'vision-scan' | 'suggestions'
 
 interface BucketConfig {
   /** Max allowed calls per identifier per window. */
@@ -23,7 +27,8 @@ interface BucketConfig {
 
 /**
  * v1 bucket configuration. Per issue #107: 5 calls per identifier per
- * 24h sliding window for the vision-scan surface.
+ * 24h sliding window for the vision-scan surface. Issue #143 adds the
+ * `suggestions` bucket at 3 calls / 24h.
  *
  * Future tuning lives here, not in env (the cap is a product decision,
  * not an ops one). Env-driven tuning was considered and rejected for
@@ -33,6 +38,10 @@ interface BucketConfig {
 const BUCKET_CONFIG: Readonly<Record<RateLimitBucket, BucketConfig>> = {
   'vision-scan': {
     cap: 5,
+    windowSeconds: 60 * 60 * 24,
+  },
+  suggestions: {
+    cap: 3,
     windowSeconds: 60 * 60 * 24,
   },
 }
