@@ -155,6 +155,7 @@ See `docs/adr/0007-i18n-en-de.md`.
 - Do NOT commit any file named `.env*` (except `.env.example`).
 - Do NOT delete or rename `CLAUDE.md`, `AGENTS.md`, `CONTEXT.md`, or files in `docs/adr/`.
 - Do NOT unit-test async React Server Components with Vitest — it doesn't support them. Write a Playwright E2E test instead. The public interface of an async RSC is the rendered page, so test it there.
+- Do NOT mutate cookies from a server action that can be called during an RSC render. Next.js 15+ forbids `cookies().set(...)` (and `.delete(...)`) outside a real Server Action (POST-triggered from a client form) or a Route Handler. `suggestAction` runs inline from `<SuggestPage>` (an RSC reached via GET) — earlier code that called `cookies().set(...)` there crashed with "Cookies can only be modified in a Server Action or Route Handler" (see PR #161). For the `yawaragi_session` cookie the proxy middleware (`src/proxy.ts` → `src/lib/session/middleware-issue.ts`) is the SOLE writer; actions and route handlers only READ. If you find yourself wanting an action to set a new request-scoped cookie, put the write in the middleware and give the action a read-only helper.
 - Do NOT display flavor or recommendation data before the 18+ gate has been accepted.
 - Do NOT show LLM-extracted data without a `<ProvenanceBadge />`.
 - Do NOT render English labels for the 6 flavor axes without romaji + kanji + tooltip.

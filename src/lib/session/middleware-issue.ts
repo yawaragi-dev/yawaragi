@@ -35,7 +35,21 @@ import {
  * Reuses `readAnonymousSessionCookie` and `anonymousSessionCookieAttrs`
  * from `@/lib/legal/anonymous-session-cookie` — no duplicated HMAC
  * logic. The cookie name / attrs / signing shape stay ADR-0009 RoPA-
- * compatible: 24h sliding TTL, HttpOnly, SameSite=Lax, Secure in prod.
+ * compatible: 24h TTL from issuance, HttpOnly, SameSite=Lax, Secure in
+ * prod.
+ *
+ * TTL SEMANTICS. The pre-refactor action-side code re-signed the cookie
+ * on EVERY paid-API call (`anonymousSessionCookieAttrs(secret, existing
+ * ?? undefined)`), sliding `ts` forward for active visitors. This
+ * middleware helper only stamps when no valid cookie is present — so
+ * an active visitor's cookie expires 24h from FIRST issuance, not 24h
+ * from last activity. The rate-limit budget in Upstash KV still TTLs
+ * at 24h from the last call on each identifier, so cost protection is
+ * unaffected; the practical difference is that a daily active visitor
+ * gets a fresh `sid` every 24h instead of the same sid indefinitely.
+ * The IP-hash identifier (unchanged) still holds the budget across sid
+ * churn, so no rate-limit bypass. ADR-0009's "24h sliding" wording is
+ * updated to "24h TTL from issuance" in the follow-up.
  */
 export interface EnsureAnonymousSessionEnv {
   /**

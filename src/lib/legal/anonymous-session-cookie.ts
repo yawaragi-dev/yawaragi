@@ -9,9 +9,18 @@ import {
 /**
  * `yawaragi_session` cookie helper.
  *
- * Per CONTEXT.md §"Anonymous session" and issue #107:
+ * Per CONTEXT.md §"Anonymous session" and issue #107 (with the #161
+ * middleware-write refactor applied):
  *  - Name: `yawaragi_session`
- *  - TTL: 24h sliding (re-issued on every authenticated rate-limited call).
+ *  - TTL: 24h from issuance. The proxy middleware
+ *    (`src/lib/session/middleware-issue.ts`) is the SOLE writer; it
+ *    stamps a fresh signed cookie on the first request to any gated
+ *    route and passes through when a valid cookie is already present.
+ *    Server actions and route handlers only READ this cookie. See
+ *    `middleware-issue.ts` § "TTL semantics" for why this is 24h from
+ *    issuance and not sliding — the pre-#161 code refreshed on every
+ *    action call, but that pattern crashed under Next.js 15's "no
+ *    cookie mutation during RSC render" rule.
  *  - Payload: signed `{v, ts, sid}` — the same shape as the age-gate cookie
  *    plus an opaque ~16-byte `sid` that the rate-limiter uses as one of
  *    its two keys.
@@ -32,9 +41,12 @@ import {
 
 export const ANONYMOUS_SESSION_COOKIE_NAME = 'yawaragi_session'
 /**
- * 24h sliding TTL — matches CONTEXT.md §"Anonymous session" and the
- * RoPA row in ADR-0009. The KV entries TTL at the same window, so
- * cookie + budget expire together.
+ * 24h TTL from issuance — matches CONTEXT.md §"Anonymous session"
+ * and the RoPA row in ADR-0009. The KV entries TTL at the same
+ * window, so cookie + budget expire together (though the KV entries
+ * slide with activity — see `anonymousRateLimit` — while the cookie
+ * TTL is anchored to first issuance since the #161 middleware-write
+ * refactor).
  */
 export const ANONYMOUS_SESSION_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24
 export const ANONYMOUS_SESSION_COOKIE_VERSION = 1
@@ -58,7 +70,7 @@ export interface AnonymousSessionCookieAttrs {
  *  - the value is well-formed (`payload.signature`),
  *  - the HMAC signature matches (constant-time compare),
  *  - the version is current,
- *  - the issue timestamp is within the sliding-TTL window.
+ *  - the issue timestamp is within the 24h TTL window.
  *
  * Returns `null` for any other case (no cookie, malformed value, bad
  * signature, wrong version, expired, future-dated). Callers treat

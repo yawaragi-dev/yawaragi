@@ -118,7 +118,7 @@ The GDPR consent surface (bottom-anchored, never modal). Three actions (Accept a
 _Avoid_: Cookie modal (it's a banner), Consent popup, GDPR popup
 
 **Anonymous session**:
-A signed opaque session identifier issued on a visitor's first call to any rate-limited paid-API surface (label scan, suggestions) and persisted in the `yawaragi_session` cookie (24h sliding TTL). Used together with a transient hashed-IP fallback as the rate-limit key — neither identifier is ever written to Postgres or logs; both live only in Edge KV. The same identifier serves multiple paid-API surfaces under one [lawful basis](#lawful-basis): legitimate interest in cost protection of the vision and LLM APIs. Distinct from the [Age gate](#age-gate) (JMStV; acceptance gate) and the [Cookie banner](#cookie-banner) (GDPR consent surface).
+A signed opaque session identifier issued by the proxy middleware (`src/proxy.ts` → `src/lib/session/middleware-issue.ts`) on a visitor's first request to any gated route, persisted in the `yawaragi_session` cookie (24h TTL from issuance). The middleware is the SOLE writer; server actions and route handlers only READ the cookie to derive the rate-limit key. Used together with a transient hashed-IP fallback as the rate-limit key — neither identifier is ever written to Postgres or logs; both live only in Edge KV. The same identifier serves multiple paid-API surfaces under one [lawful basis](#lawful-basis): legitimate interest in cost protection of the vision and LLM APIs. Distinct from the [Age gate](#age-gate) (JMStV; acceptance gate) and the [Cookie banner](#cookie-banner) (GDPR consent surface).
 _Avoid_: Scan cookie, Visitor id, Anonymous user (we do not have users without auth — there are visitors with anonymous sessions)
 
 **Lawful basis**:
