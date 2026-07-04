@@ -28,6 +28,20 @@ export type SuggestActionState =
       retryAfterSec: number
     }
   /**
+   * The anonymous-session cookie is missing on the request. Post-#161
+   * middleware refactor: the proxy (`src/proxy.ts`) is the sole writer
+   * of `yawaragi_session` — actions read only. This state is a "should
+   * not happen in practice" defensive branch: every visitor whose
+   * request passes through the middleware matcher gets the cookie
+   * stamped on the response before the RSC render. It exists so a
+   * hypothetical bypass (a matcher gap, a race between middleware
+   * runs, a direct action invocation from a test) surfaces as a typed
+   * state instead of a thrown exception.
+   */
+  | {
+      status: 'session_missing'
+    }
+  /**
    * MCP transport / handshake / tool-call failure. The registry factory
    * throws with a "set MCP_SAKENOWA_URL" style message when the env is
    * missing, and the transport itself throws on a network / auth failure

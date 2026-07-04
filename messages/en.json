@@ -107,7 +107,8 @@
       "consensusVotes": "{votes} of your last {total} scans agreed",
       "consensusAccept": "Yes, open this sake page",
       "consensusRescan": "No, scan again",
-      "extractionFailed": "We couldn't process this image. Try a clear photo of a sake bottle label."
+      "extractionFailed": "We couldn't process this image. Try a clear photo of a sake bottle label.",
+      "sessionMissing": "Your browser session couldn't be prepared. Please refresh the page and try again."
     }
   },
   "suggest": {
@@ -124,6 +125,7 @@
       "rateLimited": "You've reached today's suggestion limit. {hours, plural, =1 {Please try again in about an hour.} other {Please try again in about # hours.}}",
       "serviceUnavailable": "Our sake database is temporarily unreachable. Please try again in a few minutes.",
       "error": "Something went wrong while preparing your suggestions. Please try again in a few minutes.",
+      "sessionMissing": "Your browser session couldn't be prepared. Please refresh the page and try again.",
       "backToSeed": "Back to the seed sake",
       "findSimilarCta": "Find similar"
     }

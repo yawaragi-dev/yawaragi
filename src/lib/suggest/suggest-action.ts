@@ -8,10 +8,7 @@ import { stepCountIs } from 'ai'
 import { env } from '@/env'
 import { getDefaultMcpClient } from '@/lib/ai/mcp/registry'
 import { tracedGenerateText } from '@/lib/ai/observability/langfuse-trace'
-import {
-  anonymousSessionCookieAttrs,
-  readAnonymousSessionCookie,
-} from '@/lib/legal/anonymous-session-cookie'
+import { readAnonymousSessionCookie } from '@/lib/legal/anonymous-session-cookie'
 import { anonymousRateLimit } from '@/lib/rate-limit/anonymous-rate-limit'
 import { assertRateLimitConfig } from '@/lib/rate-limit/config-gate'
 import { extractIp, hashIp } from '@/lib/rate-limit/ip-hash'
@@ -67,10 +64,17 @@ export async function suggestAction(seed: SuggestSeed): Promise<SuggestActionSta
   const stubbed = await resolveSuggestStub(seed)
   if (stubbed !== null) return stubbed
 
-  // 2. Rate-limit gate. Same anonymous-session cookie the scan action
-  //    uses; distinct bucket. Non-prod without env skips (see scan-action
-  //    for the same posture).
+  // 2. Rate-limit gate. Post-#161 middleware refactor: reads the
+  //    `yawaragi_session` cookie the proxy stamped and consults the
+  //    `suggestions` bucket. Never mutates the cookie — the proxy is
+  //    the sole writer, so this action can safely run mid-render from
+  //    the RSC page without hitting Next.js 15's "cookies can only be
+  //    modified in a Server Action or Route Handler" guard. Non-prod
+  //    without env skips (see scan-action for the same posture).
   const rateLimit = await enforceRateLimit()
+  if (rateLimit.kind === 'session_missing') {
+    return { status: 'session_missing' }
+  }
   if (!rateLimit.allowed) {
     return { status: 'rate_limited', retryAfterSec: rateLimit.retryAfterSec }
   }
@@ -242,16 +246,18 @@ function buildSeedPrompt(seed: SuggestSeed): string {
 
 // -------------------- rate-limit helper --------------------
 
-interface RateLimitDecision {
-  allowed: boolean
-  retryAfterSec: number
-}
+type RateLimitDecision =
+  | { kind: 'allowed'; allowed: true; retryAfterSec: number }
+  | { kind: 'denied'; allowed: false; retryAfterSec: number }
+  | { kind: 'session_missing' }
 
 /**
- * Issues / refreshes the `yawaragi_session` cookie and consults the
- * `suggestions` bucket. Structurally identical to `scan-action`'s
- * `enforceRateLimit` — the two share the same session cookie and the
- * same env-triplet fail-closed posture; only the bucket name differs.
+ * Read-only rate-limit gate. Post-#161 middleware refactor: the proxy
+ * (`src/proxy.ts`) is the sole writer of `yawaragi_session`; this
+ * function only READS the cookie and consults the `suggestions`
+ * bucket. Structurally identical to `scan-action`'s `enforceRateLimit`
+ * — the two share the same session cookie and the same env-triplet
+ * fail-closed posture; only the bucket name differs.
  *
  * Extracting a shared helper was considered and rejected for this slice:
  * the two actions have different failure envelopes and different
@@ -274,22 +280,23 @@ async function enforceRateLimit(): Promise<RateLimitDecision> {
     console.warn(
       '[suggest] rate-limit env not set; skipping enforcement (non-production only).',
     )
-    return { allowed: true, retryAfterSec: 0 }
+    return { kind: 'allowed', allowed: true, retryAfterSec: 0 }
   }
   const { secret, salt, kvUrl, kvToken } = config
 
   const cookieJar = await cookies()
   const requestHeaders = await headers()
 
-  const existing = readAnonymousSessionCookie(cookieJar, secret)
-  const attrs = anonymousSessionCookieAttrs(secret, existing ?? undefined)
-  cookieJar.set(attrs)
-  const session = readAnonymousSessionCookie(
-    { get: () => ({ value: attrs.value }) },
-    secret,
-  )
+  const session = readAnonymousSessionCookie(cookieJar, secret)
   if (!session) {
-    throw new Error('Failed to verify a freshly-issued session cookie')
+    // Middleware is the sole writer post-#161. If we're here without a
+    // cookie, the middleware didn't run for this request (matcher gap,
+    // direct action invocation from a test, etc.). Surface as a typed
+    // state — never throw, never bypass the limiter.
+    console.warn(
+      '[suggest] session cookie missing — middleware did not stamp it.',
+    )
+    return { kind: 'session_missing' }
   }
 
   const ipHashed = hashIp(extractIp(requestHeaders), salt)
@@ -299,7 +306,9 @@ async function enforceRateLimit(): Promise<RateLimitDecision> {
     { kv },
   )
 
-  return { allowed: result.allowed, retryAfterSec: result.retryAfterSec }
+  return result.allowed
+    ? { kind: 'allowed', allowed: true, retryAfterSec: result.retryAfterSec }
+    : { kind: 'denied', allowed: false, retryAfterSec: result.retryAfterSec }
 }
 
 /**

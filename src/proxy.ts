@@ -1,6 +1,7 @@
 import createMiddleware from 'next-intl/middleware'
 import { NextResponse, type NextRequest } from 'next/server'
 import { clerkMiddleware } from '@clerk/nextjs/server'
+import { env } from '@/env'
 import { routing } from '@/i18n/routing'
 import { isLaunched } from '@/i18n/launch-state'
 import {
@@ -11,8 +12,32 @@ import {
 } from '@/lib/debug/debug-mode'
 import { isGatedPath } from '@/lib/legal/age-gate-cookie'
 import { getComplianceState } from '@/lib/legal/compliance-state'
+import { ensureAnonymousSessionCookie } from '@/lib/session/middleware-issue'
 
 const handleI18n = createMiddleware(routing)
+
+/**
+ * Wrap any response leaving this middleware with the anonymous-session
+ * cookie issuance step. Introduced 2026-07-04 in response to a Vercel
+ * Preview 500 on `/en/suggest?seed=<n>` — the suggest server action ran
+ * inline from an RSC render and tried to mutate cookies via
+ * `cookies().set(...)`, which Next.js 15+ forbids outside a real Server
+ * Action or Route Handler. Moving cookie issuance into the middleware
+ * makes it the ONLY writer; every downstream reader (rate-limit,
+ * server-actions) is strictly read-only.
+ *
+ * The helper is a no-op when a valid signed cookie is already present
+ * OR when `SESSION_COOKIE_SECRET` is unset (non-production fallback —
+ * see `middleware-issue.ts`).
+ */
+function withSessionCookie(
+  request: NextRequest,
+  response: NextResponse,
+): NextResponse {
+  return ensureAnonymousSessionCookie(request, response, {
+    SESSION_COOKIE_SECRET: env.SESSION_COOKIE_SECRET,
+  })
+}
 
 /**
  * Handle `?debug=...` activation / deactivation at the edge:
@@ -56,17 +81,17 @@ function runIntlAndAgeGate(request: NextRequest) {
   // get a chance to rewrite. The intl + age-gate logic re-runs on the
   // redirected request just like any other navigation.
   const debugResponse = handleDebugActivation(request)
-  if (debugResponse !== null) return debugResponse
+  if (debugResponse !== null) return withSessionCookie(request, debugResponse)
 
   const intlResponse = handleI18n(request)
 
   if (intlResponse.headers.has('location')) {
-    return intlResponse
+    return withSessionCookie(request, intlResponse)
   }
 
   const { pathname } = request.nextUrl
   if (!isGatedPath(pathname)) {
-    return intlResponse
+    return withSessionCookie(request, intlResponse)
   }
 
   const localeMatch = pathname.match(/^\/(en|de)(?=\/|$)/)
@@ -80,7 +105,7 @@ function runIntlAndAgeGate(request: NextRequest) {
   // ADR-0009), shared read.
   const { ageGate } = getComplianceState(request.cookies)
   if (isLaunched(locale) && ageGate) {
-    return intlResponse
+    return withSessionCookie(request, intlResponse)
   }
 
   const gateUrl = request.nextUrl.clone()
@@ -91,7 +116,7 @@ function runIntlAndAgeGate(request: NextRequest) {
   for (const cookie of intlResponse.cookies.getAll()) {
     rewrite.cookies.set(cookie)
   }
-  return rewrite
+  return withSessionCookie(request, rewrite)
 }
 
 export const proxy = clerkMiddleware((_auth, request) => runIntlAndAgeGate(request))

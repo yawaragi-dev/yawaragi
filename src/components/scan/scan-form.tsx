@@ -355,6 +355,21 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
           {t('errorInvalidInput')}
         </p>
       )}
+      {state.status === 'session_missing' && (
+        // Post-#161 defensive state: the middleware (src/proxy.ts) is
+        // the sole writer of `yawaragi_session`, and the /scan route is
+        // in the middleware matcher, so this branch should not surface
+        // in practice. Kept as a typed variant so a matcher gap /
+        // direct action invocation lands as a polite UI message
+        // instead of a thrown exception.
+        <p
+          role="alert"
+          className="text-sm text-amber-700 dark:text-amber-300"
+          data-testid="scan-error-session-missing"
+        >
+          {t('sessionMissing')}
+        </p>
+      )}
       {state.status === 'rate_limited' && (
         // PRD #105 §"Rate-limit policy v1" + issue #107: discovery /
         // learning copy with the human-friendly retry time. The

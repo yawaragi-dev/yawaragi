@@ -140,6 +140,18 @@ type ScanActionStateBase =
       retryAfterSec: number
     }
   /**
+   * The anonymous-session cookie is missing on the request. Post-#161
+   * middleware refactor: the proxy (`src/proxy.ts`) is the sole writer
+   * of `yawaragi_session` — actions read only. This state is a
+   * defensive branch and should not surface in practice: every gated
+   * page path passes through the middleware, which stamps the cookie
+   * before render. Kept as an explicit variant so a hypothetical bypass
+   * lands as a tagged UI state instead of a thrown exception.
+   */
+  | {
+      status: 'session_missing'
+    }
+  /**
    * Phase 3 / S3 (#108) PLACEHOLDER: the vision provider produced an
    * extraction whose confidence is below the auto/confirm threshold.
    * S3 has no UI for medium / low confidence yet — S4 (#109) lands the

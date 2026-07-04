@@ -107,7 +107,8 @@
       "consensusVotes": "{votes} von deinen letzten {total} Scans stimmten überein",
       "consensusAccept": "Ja, Sake-Seite öffnen",
       "consensusRescan": "Nein, erneut scannen",
-      "extractionFailed": "Dieses Bild konnte nicht verarbeitet werden. Versuche ein deutliches Foto eines Sake-Flaschenetiketts."
+      "extractionFailed": "Dieses Bild konnte nicht verarbeitet werden. Versuche ein deutliches Foto eines Sake-Flaschenetiketts.",
+      "sessionMissing": "Deine Browser-Sitzung konnte nicht vorbereitet werden. Bitte lade die Seite neu und versuche es erneut."
     }
   },
   "suggest": {
@@ -124,6 +125,7 @@
       "rateLimited": "Du hast das heutige Vorschlags-Limit erreicht. {hours, plural, =1 {Bitte versuche es in etwa einer Stunde erneut.} other {Bitte versuche es in etwa # Stunden erneut.}}",
       "serviceUnavailable": "Unsere Sake-Datenbank ist gerade nicht erreichbar. Bitte versuche es in ein paar Minuten erneut.",
       "error": "Beim Vorbereiten deiner Vorschläge ist etwas schiefgelaufen. Bitte versuche es in ein paar Minuten erneut.",
+      "sessionMissing": "Deine Browser-Sitzung konnte nicht vorbereitet werden. Bitte lade die Seite neu und versuche es erneut.",
       "backToSeed": "Zurück zum Ausgangs-Sake",
       "findSimilarCta": "Ähnliche finden"
     }

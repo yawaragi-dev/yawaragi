@@ -220,6 +220,23 @@ async function SuggestStateView({ state, locale }: SuggestStateViewProps) {
     )
   }
 
+  if (state.status === 'session_missing') {
+    // Post-#161 defensive state: the middleware (src/proxy.ts) is the
+    // sole writer of `yawaragi_session`, and the /suggest route is in
+    // the middleware matcher, so this branch should not surface in
+    // practice. Kept as a typed variant so a matcher gap / direct
+    // action invocation lands as a polite UI message instead of a
+    // thrown exception.
+    return (
+      <p
+        className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-base text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100"
+        data-testid="suggest-error-session-missing"
+      >
+        {tResults('sessionMissing')}
+      </p>
+    )
+  }
+
   // `invalid_input` + `error` both fall through to the generic error copy.
   // `invalid_input` is unreachable from the page in practice (parseSeed
   // already narrows and the page routes to no-seed), but the type

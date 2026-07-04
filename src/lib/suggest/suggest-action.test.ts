@@ -38,11 +38,13 @@ vi.mock('@/lib/rate-limit/config-gate', () => ({
 
 import { cookies, headers } from 'next/headers'
 import { getDefaultMcpClient } from '@/lib/ai/mcp/registry'
+import { assertRateLimitConfig } from '@/lib/rate-limit/config-gate'
 import { suggestAction } from './suggest-action'
 
 const cookiesMock = vi.mocked(cookies)
 const headersMock = vi.mocked(headers)
 const getDefaultMcpClientMock = vi.mocked(getDefaultMcpClient)
+const assertRateLimitConfigMock = vi.mocked(assertRateLimitConfig)
 
 describe('suggestAction — input validation', () => {
   it('rejects a negative brandId before hitting any downstream I/O', async () => {
@@ -67,6 +69,33 @@ describe('suggestAction — input validation', () => {
   it('rejects a non-integer brandId', async () => {
     const state = await suggestAction({ kind: 'brand', brandId: 1.5 })
     expect(state).toEqual({ status: 'invalid_input', reason: 'malformed_seed' })
+  })
+})
+
+describe('suggestAction — session_missing (post-#161 middleware refactor)', () => {
+  it('returns session_missing when the anonymous-session cookie is absent and rate-limit env is fully configured', async () => {
+    // Simulate a fully-configured rate-limit env — the config-gate returns
+    // a real config bundle. The action then tries to read the cookie and
+    // hits the empty jar; the read-only refactor surfaces that as a
+    // typed state instead of throwing or writing a fresh cookie.
+    assertRateLimitConfigMock.mockReturnValueOnce({
+      secret: 'test-secret-32-characters-minimum',
+      salt: 'test-salt-16chars',
+      kvUrl: 'https://kv.example.test',
+      kvToken: 'test-token',
+    })
+    cookiesMock.mockResolvedValue({
+      get: () => undefined,
+    } as unknown as Awaited<ReturnType<typeof cookies>>)
+    headersMock.mockResolvedValue({
+      get: () => null,
+    } as unknown as Awaited<ReturnType<typeof headers>>)
+
+    const state = await suggestAction({ kind: 'brand', brandId: 42 })
+    expect(state).toEqual({ status: 'session_missing' })
+    // The MCP client factory is never reached — session_missing
+    // short-circuits before the tool loop.
+    expect(getDefaultMcpClientMock).not.toHaveBeenCalled()
   })
 })
 
