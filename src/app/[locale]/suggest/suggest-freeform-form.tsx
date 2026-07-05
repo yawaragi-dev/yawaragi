@@ -7,7 +7,7 @@
 // rule. The RSC result view stays server-side — this component only
 // hands the query off to the URL.
 
-import { type FormEvent, useState } from 'react'
+import { type FormEvent, useState, useTransition } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from '@/i18n/navigation'
 import { Button } from '@/components/ui/button'
@@ -43,6 +43,14 @@ export function SuggestFreeformForm({ initialQuery = '' }: SuggestFreeformFormPr
   const t = useTranslations('suggest.freeform')
   const router = useRouter()
   const [value, setValue] = useState(initialQuery)
+  // `useTransition` marks the router.push as a transition so React
+  // exposes an `isPending` flag that stays true while Next.js streams
+  // the new RSC segment. Combined with `loading.tsx` this covers both
+  // the "button still visible during navigation" span (isPending →
+  // button label swap) and the "page-level render" span (loading.tsx).
+  // Without the transition, the button reads as clicked-and-frozen for
+  // the several seconds the LLM tool loop takes.
+  const [isPending, startTransition] = useTransition()
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -51,12 +59,16 @@ export function SuggestFreeformForm({ initialQuery = '' }: SuggestFreeformFormPr
     // typed and then cleared. Route them back to the discovery-starter
     // view (`/suggest` with no query params).
     if (trimmed.length === 0) {
-      router.push('/suggest')
+      startTransition(() => {
+        router.push('/suggest')
+      })
       return
     }
-    router.push({
-      pathname: '/suggest',
-      query: { q: trimmed },
+    startTransition(() => {
+      router.push({
+        pathname: '/suggest',
+        query: { q: trimmed },
+      })
     })
   }
 
@@ -65,6 +77,7 @@ export function SuggestFreeformForm({ initialQuery = '' }: SuggestFreeformFormPr
       onSubmit={handleSubmit}
       className="flex w-full flex-col gap-3"
       data-testid="suggest-freeform-form"
+      aria-busy={isPending}
     >
       <label className="flex flex-col gap-2" htmlFor="suggest-freeform-input">
         <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
@@ -79,12 +92,17 @@ export function SuggestFreeformForm({ initialQuery = '' }: SuggestFreeformFormPr
           maxLength={MAX_FREEFORM_QUERY_LEN}
           autoComplete="off"
           spellCheck
-          className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-base text-zinc-900 outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:focus-visible:ring-zinc-100"
+          disabled={isPending}
+          className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-base text-zinc-900 outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:focus-visible:ring-zinc-100"
           data-testid="suggest-freeform-input"
         />
       </label>
-      <Button type="submit" data-testid="suggest-freeform-submit">
-        {t('submit')}
+      <Button
+        type="submit"
+        disabled={isPending}
+        data-testid="suggest-freeform-submit"
+      >
+        {isPending ? t('submitPending') : t('submit')}
       </Button>
     </form>
   )

@@ -119,7 +119,8 @@
     "freeform": {
       "label": "Type a flavor you're after",
       "placeholder": "e.g. light and floral, smoky whisky, something like Yamazaki 12",
-      "submit": "Explore"
+      "submit": "Explore",
+      "submitPending": "Exploring…"
     },
     "starter": {
       "heading": "Or start from one of these",
@@ -130,15 +131,19 @@
       "prompt5": "hoppy west-coast beer",
       "prompt6": "tannic red wine"
     },
+    "loading": {
+      "title": "Exploring similar sake…",
+      "body": "We're consulting Sakenowa and the flavor map — this usually takes a few seconds."
+    },
     "results": {
-      "heading": "Sake similar to your seed",
+      "heading": "Similar sake",
       "reasonLabel": "Why this",
-      "noMatch": "We couldn't find similar sake in Sakenowa for this seed. Try another bottle — the catalogue keeps growing.",
+      "noMatch": "We couldn't find matching sake in Sakenowa. Try a different phrase or bottle — the catalogue keeps growing.",
       "rateLimited": "You've reached today's suggestion limit. {hours, plural, =1 {Please try again in about an hour.} other {Please try again in about # hours.}}",
       "serviceUnavailable": "Our sake database is temporarily unreachable. Please try again in a few minutes.",
       "error": "Something went wrong while preparing your suggestions. Please try again in a few minutes.",
       "sessionMissing": "Your browser session couldn't be prepared. Please refresh the page and try again.",
-      "backToSeed": "Back to the seed sake",
+      "backToSeed": "Back to the sake you started from",
       "findSimilarCta": "Find similar"
     }
   },
