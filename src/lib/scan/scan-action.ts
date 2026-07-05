@@ -717,6 +717,15 @@ type RateLimitDecision =
  * keep working on machines without Upstash credentials.
  */
 async function enforceRateLimit(): Promise<RateLimitDecision> {
+  // Dev/preview escape hatch (see env.ts `RATE_LIMIT_BYPASS`): skip
+  // the KV round-trip and cookie / IP-hash read entirely. Absence of
+  // the var is the safe default. Never set on Production Vercel.
+  if (env.RATE_LIMIT_BYPASS === '1') {
+    console.warn(
+      '[scan] RATE_LIMIT_BYPASS=1 — rate limit skipped. Do NOT ship this in Production.',
+    )
+    return { kind: 'allowed', allowed: true, retryAfterSec: 0 }
+  }
   // Production fail-closed: any missing key throws (with the specific
   // key name) before we touch the cookie or KV. Non-production returns
   // null and we skip enforcement with a warning. The check is extracted

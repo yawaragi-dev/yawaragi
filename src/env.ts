@@ -99,5 +99,19 @@ const Env = z.object({
   // dummy value (see `.github/workflows/ci.yml` `env:` block) so the
   // Playwright webserver still parses env without it.
   MCP_SAKENOWA_URL: empty(z.string().url().optional()),
+  // Dev/preview-only escape hatch: when set to `'1'`, the anonymous
+  // rate-limit gate in scan-action + suggest-action short-circuits to
+  // "allowed" without touching Upstash. Purpose: iterate on rate-
+  // limited surfaces (suggest is 3/24h, scan is 5/24h) during dev
+  // review without either waiting 24h, rotating IP_HASH_SALT, or
+  // hand-clearing KV keys. Absence of this var is the safe default
+  // (rate limit enforced). Never set on Production Vercel; safe to
+  // set on Preview when you want a preview to be unmetered. The
+  // production instrumentation gate does NOT check this var — it
+  // still enforces the four core rate-limit env vars (`SESSION_COOKIE_SECRET`,
+  // `IP_HASH_SALT`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`) —
+  // so setting `RATE_LIMIT_BYPASS=1` on Production would still boot
+  // and would silently unmeter the surface. Don't do that.
+  RATE_LIMIT_BYPASS: empty(z.string().optional()),
 })
 export const env = Env.parse(process.env)

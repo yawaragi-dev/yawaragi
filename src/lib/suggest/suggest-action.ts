@@ -267,6 +267,15 @@ type RateLimitDecision =
  * third rate-limited action lands.
  */
 async function enforceRateLimit(): Promise<RateLimitDecision> {
+  // Dev/preview escape hatch (see env.ts `RATE_LIMIT_BYPASS`): skip
+  // the KV round-trip and cookie / IP-hash read entirely. Absence of
+  // the var is the safe default. Never set on Production Vercel.
+  if (env.RATE_LIMIT_BYPASS === '1') {
+    console.warn(
+      '[suggest] RATE_LIMIT_BYPASS=1 — rate limit skipped. Do NOT ship this in Production.',
+    )
+    return { kind: 'allowed', allowed: true, retryAfterSec: 0 }
+  }
   const config = assertRateLimitConfig(
     {
       secret: env.SESSION_COOKIE_SECRET,
