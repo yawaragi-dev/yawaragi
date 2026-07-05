@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 // The Playwright specs against a stubbed dev server (see
 // `e2e/suggest-page.spec.ts`) exercise the RSC render path for each
@@ -215,5 +215,90 @@ describe('suggestAction — debug log', () => {
 
     expect(state.status).toBe('invalid_input')
     expect(state.debugLog).toBeUndefined()
+  })
+})
+
+describe('suggestAction — RATE_LIMIT_BYPASS escape hatch', () => {
+  // The bypass is a top-of-function short-circuit inside `enforceRateLimit`
+  // (see suggest-action.ts § "Dev/preview escape hatch"). It's exercised
+  // by env.ts + config-gate.ts unit tests at the parse and prod-guard
+  // layers, but the action-boundary behaviour — that the bypass fires
+  // BEFORE assertRateLimitConfig / the cookie read / the KV round-trip
+  // — is only observable here. Regression insurance for the "someone
+  // refactors enforceRateLimit and moves the guard below the config
+  // gate" future.
+  afterEach(() => {
+    vi.unstubAllEnvs()
+    vi.resetModules()
+  })
+
+  it('short-circuits enforceRateLimit before touching config-gate when RATE_LIMIT_BYPASS=1', async () => {
+    // Env has to be set BEFORE we resetModules + dynamic-import, because
+    // `env` is parsed at module load in src/env.ts (Zod .parse on
+    // process.env). Same shape as registry.test.ts's stubEnv + reset
+    // + dynamic import pattern.
+    vi.stubEnv('RATE_LIMIT_BYPASS', '1')
+    vi.resetModules()
+
+    // Re-import the module graph AFTER reset so the fresh `env` binding
+    // carries RATE_LIMIT_BYPASS='1'. The captured `getDefaultMcpClient`
+    // / `assertRateLimitConfig` / `cookies` handles at the top of this
+    // file point at the pre-reset module instances; we need the fresh
+    // ones to attach per-test behaviour that the freshly-imported
+    // suggest-action will actually see.
+    const { suggestAction: freshSuggestAction } = await import('./suggest-action')
+    const { getDefaultMcpClient: freshGetMcp } = await import('@/lib/ai/mcp/registry')
+    const { assertRateLimitConfig: freshAssertConfig } = await import(
+      '@/lib/rate-limit/config-gate'
+    )
+    const { cookies: freshCookies } = await import('next/headers')
+
+    const freshGetMcpMock = vi.mocked(freshGetMcp)
+    const freshAssertConfigMock = vi.mocked(freshAssertConfig)
+    const freshCookiesMock = vi.mocked(freshCookies)
+
+    // Prior tests in this file already exercised assertRateLimitConfig
+    // through the same file-top vi.mock factory (5 calls at time of
+    // writing). Reset the call history so `not.toHaveBeenCalled()`
+    // asserts THIS test's behaviour, not cumulative history.
+    freshAssertConfigMock.mockClear()
+
+    // Cookie jar reachable for the up-front debug-cookie read (line ~74
+    // of suggest-action.ts). No debug cookie set, so the DebugLog stays
+    // undefined and every downstream `debugAdd` is a no-op.
+    freshCookiesMock.mockResolvedValue({
+      get: () => undefined,
+    } as unknown as Awaited<ReturnType<typeof cookies>>)
+
+    // Reach through the bypass to MCP → fail there. This is the PROOF
+    // that the bypass fired: if the bypass had NOT fired, the action
+    // would return `session_missing` (since assertRateLimitConfig
+    // returns null by default and the cookie is empty), never touching
+    // getDefaultMcpClient.
+    freshGetMcpMock.mockRejectedValueOnce(
+      new Error('MCP_SAKENOWA_URL is not set …'),
+    )
+
+    // Swallow the warn while asserting it fired — the guard emits a
+    // console.warn on every bypass firing so an operator tailing logs
+    // sees a clear "you have an escape hatch active" line.
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+
+    const state = await freshSuggestAction({ kind: 'brand', brandId: 42 })
+
+    // service_unavailable proves the code reached MCP (past the rate-
+    // limit gate). rate_limited or session_missing would prove the
+    // bypass DIDN'T fire.
+    expect(state.status).toBe('service_unavailable')
+    // The bypass short-circuits BEFORE assertRateLimitConfig is called
+    // — the whole point of the escape hatch is to skip the config
+    // check entirely so dev iteration works without KV credentials.
+    expect(freshAssertConfigMock).not.toHaveBeenCalled()
+    // The warn line makes the escape hatch observable in local /
+    // preview logs — an operator scanning output should see it and
+    // remember to unset the var before shipping.
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/RATE_LIMIT_BYPASS/))
+
+    warnSpy.mockRestore()
   })
 })
