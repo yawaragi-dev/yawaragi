@@ -53,7 +53,7 @@ flowchart TD
   Manual["pnpm add-manual-brand<br/>(operator, ADR-0014)"] --> DB
   CronRoute["GET /api/cron/ingest<br/>Bearer CRON_SECRET<br/>Vercel Cron"] --> Ingest
   Sakenowa["Sakenowa Data API"] --> Ingest
-  LL --> Suggest["[locale]/suggest<br/>(Phase 4 / S6, live)"]
+  LL --> Suggest["[locale]/suggest<br/>(Phase 4, live)"]
   Suggest --> SuggestAction["lib/suggest/suggest-action"]
   SuggestAction --> MCP["@yawaragi/sakenowa-mcp<br/>(v0.1.0, live)"]
   SuggestAction --> CrossBev["lib/ai/tools/<br/>map-cross-beverage"]
@@ -65,7 +65,7 @@ flowchart TD
   UC["lib/supabase/user-client<br/>(Phase 5, deferred with auth)"] -.->|"deferred"| LL
 ```
 
-Phase 0 (i18n + legal scaffolding + EN-first launch) and Phase 2 (data foundation, Sakenowa mirror, scheduled cron ingest, provenance schemas) are shipped. **Phase 3 (anonymous label scan)** is in flight — see the milestone bar above for the live status. The entry page + canvas downscale + Sakenowa lookup chain (S1), the anonymous-session rate limit (S2), the Anthropic vision provider (S3), and the three-tier confidence UX + two-tier vision retry + manual-curation layer (S4 PR A) are all live. The remaining S4 work (PR B — enriched disambiguation list, no-match enrichment, "Not this one?" affordance, full Playwright matrix) and the eval harness (S5) are the open slices. Two-tier vision means Haiku 4.5 runs every scan; Sonnet 4.6 retries on any tier-1 result other than a clean first-pass match, recovering the calligraphic-kanji and field-swap cases at ~6× cost only on those bottles. The manual-curation layer (ADR-0014) lets the maintainer add brands missing from Sakenowa's frozen public dump (`pnpm add-manual-brand` — UMAMI is the seed). **Phase 4 (single-shot suggestions over MCP + cross-beverage)** follows. **Phase 5 (taste profile, ratings)** is deferred along with auth resumption. Every Phase 3+ surface is designed to survive being wrapped in a native webview shell per [ADR-0012](./docs/adr/0012-webview-able-architecture.md).
+Phase 0 (i18n + legal scaffolding + EN-first launch) and Phase 2 (data foundation, Sakenowa mirror, scheduled cron ingest, provenance schemas) are shipped. **Phase 3 (anonymous label scan)** is in flight — see the milestone bar above for the live status. The entry page + canvas downscale + Sakenowa lookup chain (S1), the anonymous-session rate limit (S2), the Anthropic vision provider (S3), and the three-tier confidence UX + two-tier vision retry + manual-curation layer (S4 PR A) are all live. The remaining S4 work (PR B — enriched disambiguation list, no-match enrichment, "Not this one?" affordance, full Playwright matrix) and the eval harness (S5) are the open slices. Two-tier vision means Haiku 4.5 runs every scan; Sonnet 4.6 retries on any tier-1 result other than a clean first-pass match, recovering the calligraphic-kanji and field-swap cases at ~6× cost only on those bottles. The manual-curation layer (ADR-0014) lets the maintainer add brands missing from Sakenowa's frozen public dump (`pnpm add-manual-brand` — UMAMI is the seed). **Phase 4 (single-shot suggestions over MCP + cross-beverage)** is shipped: the `/[locale]/suggest` surface takes a `?seed=<brandId>` from the sake detail page's "Find similar" link OR a freeform text query, runs a single AI SDK tool loop with the Sakenowa MCP tools + the deterministic `mapCrossBeverage` cross-beverage bridge, and returns a per-field-provenance card list with inline `<HeuristicDisclaimer />` on cross-beverage results. Every call is Langfuse-traced; the `evals/suggest-jp/` harness (`pnpm eval suggest-jp`) runs 15 seed queries with ground-truth recall@k. See PRD [#138](https://github.com/yawaragi-dev/yawaragi/issues/138). **Phase 5 (taste profile, ratings)** is deferred along with auth resumption. Every Phase 3+ surface is designed to survive being wrapped in a native webview shell per [ADR-0012](./docs/adr/0012-webview-able-architecture.md).
 
 ## Getting started
 
@@ -99,7 +99,7 @@ pnpm dev
 | `pnpm rate-limit:reset`   | Wipe `rl:*` keys in Upstash so the next scan starts at 5/5 (maintainer testing) |
 | `pnpm db:resync`          | One-shot: `db:reset --yes && migrate && ingest`          |
 | `pnpm verify`             | Full chain (lint + typecheck + test + integration + e2e + audits) — **needs Docker** |
-| `pnpm eval`               | Run eval golden sets                                     |
+| `pnpm eval <suite>`       | Run an eval suite (`suggest-jp` today). Informational — needs a dev server up. See `evals/<suite>/README.md`. |
 | `pnpm progress`           | Refresh the milestone-progress dashboard (README block + `docs/PROGRESS.md`) |
 
 ## Project documentation
