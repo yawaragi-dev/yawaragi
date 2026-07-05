@@ -1,3 +1,4 @@
+import type { DebugEvent } from '@/lib/debug/debug-log'
 import type { Suggestion } from '@/lib/schemas/suggestion'
 
 /**
@@ -14,7 +15,18 @@ import type { Suggestion } from '@/lib/schemas/suggestion'
  * only / brewery-only divergences don't exist here — a suggest tool loop
  * is either productive or it isn't.
  */
-export type SuggestActionState =
+/**
+ * Debug event trail from the action's execution. Populated only when
+ * the visitor has debug mode on (`yawaragi_debug=1` cookie, per
+ * `isDebugEnabledFromCookies`); absent otherwise so the client-side
+ * `<DebugLogPusher />` island short-circuits without a store push. The
+ * client bridge lives at `src/components/debug/debug-log-pusher.tsx`
+ * — pattern mirrors `scan-form.tsx`'s `useEffect(() => appendDebugEvents(...))`.
+ * See `src/lib/debug/debug-log.ts` for the collection mechanism.
+ */
+type WithDebugLog<T> = T & { debugLog?: ReadonlyArray<DebugEvent> }
+
+export type SuggestActionState = WithDebugLog<
   | {
       status: 'ok'
       suggestions: Suggestion[]
@@ -64,6 +76,7 @@ export type SuggestActionState =
       status: 'error'
       reason: string
     }
+>
 
 /**
  * The seed carries a bit of contextual detail the LLM needs to write

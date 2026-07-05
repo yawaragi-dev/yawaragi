@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  RateLimitBypassInProductionError,
   RateLimitConfigError,
   assertRateLimitConfig,
   type PartialRateLimitConfig,
@@ -118,5 +119,67 @@ describe('assertRateLimitConfig', () => {
     } catch (err) {
       expect(err).toBeInstanceOf(RateLimitConfigError)
     }
+  })
+
+  it('throws RateLimitBypassInProductionError when bypassEnabled + isProd', () => {
+    // Boot-time safety net for a stray `RATE_LIMIT_BYPASS=1` on
+    // Production Vercel. Wired via `src/instrumentation.ts`.
+    expect(() =>
+      assertRateLimitConfig(FULL, true, { bypassEnabled: true }),
+    ).toThrowError(RateLimitBypassInProductionError)
+  })
+
+  it('checks bypass BEFORE missing-keys — the bypass surfaces first when both problems coexist', () => {
+    // If a Production deploy is misconfigured both ways (bypass ON and
+    // core rate-limit vars missing), the bypass is the more serious
+    // problem: missing vars fail-close (surface returns errors) while
+    // bypass fail-opens (surface silently unmetered). Surfacing bypass
+    // first prevents an operator from patching only the missing vars,
+    // successfully redeploying, and shipping unmetered.
+    const partial: PartialRateLimitConfig = {
+      secret: undefined,
+      salt: undefined,
+      kvUrl: undefined,
+      kvToken: undefined,
+    }
+    expect(() =>
+      assertRateLimitConfig(partial, true, { bypassEnabled: true }),
+    ).toThrowError(RateLimitBypassInProductionError)
+  })
+
+  it('does not throw the bypass error when bypassEnabled is false or unset', () => {
+    // Sanity: the guard only fires when the operator has actually set
+    // `RATE_LIMIT_BYPASS=1`. Absence (undefined) or explicit `false` is
+    // the safe default and the config returns cleanly.
+    expect(assertRateLimitConfig(FULL, true, { bypassEnabled: false })).toEqual({
+      secret: FULL.secret,
+      salt: FULL.salt,
+      kvUrl: FULL.kvUrl,
+      kvToken: FULL.kvToken,
+    })
+    expect(assertRateLimitConfig(FULL, true, {})).toEqual({
+      secret: FULL.secret,
+      salt: FULL.salt,
+      kvUrl: FULL.kvUrl,
+      kvToken: FULL.kvToken,
+    })
+    expect(assertRateLimitConfig(FULL, true)).toEqual({
+      secret: FULL.secret,
+      salt: FULL.salt,
+      kvUrl: FULL.kvUrl,
+      kvToken: FULL.kvToken,
+    })
+  })
+
+  it('permits bypassEnabled in non-production without throwing', () => {
+    // Dev + preview are where the escape hatch is designed to live.
+    expect(
+      assertRateLimitConfig(FULL, false, { bypassEnabled: true }),
+    ).toEqual({
+      secret: FULL.secret,
+      salt: FULL.salt,
+      kvUrl: FULL.kvUrl,
+      kvToken: FULL.kvToken,
+    })
   })
 })

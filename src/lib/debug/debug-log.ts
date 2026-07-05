@@ -34,6 +34,9 @@ export type DebugEventSource =
   | 'Vision'
   | 'Sakenowa'
   | 'ScanAction'
+  | 'SuggestAction'
+  | 'MCP'
+  | 'Hydrate'
 
 export type DebugEventLevel = 'info' | 'warn' | 'error'
 

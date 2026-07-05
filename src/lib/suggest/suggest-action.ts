@@ -8,6 +8,8 @@ import { stepCountIs } from 'ai'
 import { env } from '@/env'
 import { getDefaultMcpClient } from '@/lib/ai/mcp/registry'
 import { tracedGenerateText } from '@/lib/ai/observability/langfuse-trace'
+import { DebugLog, debugAdd, runWithDebugLog } from '@/lib/debug/debug-log'
+import { isDebugEnabledFromCookies } from '@/lib/debug/debug-mode'
 import { readAnonymousSessionCookie } from '@/lib/legal/anonymous-session-cookie'
 import { anonymousRateLimit } from '@/lib/rate-limit/anonymous-rate-limit'
 import { assertRateLimitConfig } from '@/lib/rate-limit/config-gate'
@@ -44,9 +46,14 @@ import { buildSuggestToolSet } from './tool-set'
  * KV query key with a 24h TTL and never enters Postgres or a log.
  */
 export async function suggestAction(seed: SuggestSeed): Promise<SuggestActionState> {
-  // 1. Validate the seed. `brandId` must be a positive integer; the page
-  //    already narrows this on the query-string parse but the action is a
-  //    public server surface so it re-validates.
+  // 1. Validate the seed FIRST — before any I/O. `brandId` must be a
+  //    positive integer; the page already narrows this on the query-
+  //    string parse but the action is a public server surface so it
+  //    re-validates. Malformed input never reaches cookies()/headers()/
+  //    debug-log setup — a fast-fail invariant asserted by the input
+  //    validation tests. (The trade-off: `invalid_input` responses
+  //    carry no debug log, but the caller passed bad input so the
+  //    debug value is thin.)
   if (
     seed.kind !== 'brand' ||
     !Number.isInteger(seed.brandId) ||
@@ -55,135 +62,198 @@ export async function suggestAction(seed: SuggestSeed): Promise<SuggestActionSta
     return { status: 'invalid_input', reason: 'malformed_seed' }
   }
 
-  // E2E-stub short-circuit. Non-production only (guard below). Mirrors
-  // `VISION_PROVIDER=e2e-stub` for the scan surface: the Playwright spec
-  // sets a `yawaragi_suggest_stub` cookie (or the SUGGEST_STUB env var
-  // for whole-server override) to exercise the full RSC render path
-  // without burning Anthropic credit or requiring a live MCP server.
-  // Production fails closed via the guard inside `resolveSuggestStub`.
-  const stubbed = await resolveSuggestStub(seed)
-  if (stubbed !== null) return stubbed
+  // Read the debug cookie up-front for the RSC-invoked action. When
+  // set, every downstream module in the same request participates in
+  // the same log via `getCurrentDebugLog()` / `debugAdd(...)` — no
+  // parameter threading through helpers, no plumbing changes for
+  // future refactors. The response returns the log under `debugLog`
+  // so the client `<DebugLogPusher />` island can render it in the
+  // panel. When the cookie is absent the log is `undefined` and every
+  // `debugAdd(...)` is a cheap no-op — no per-request accumulator
+  // overhead.
+  const cookieJar = await cookies()
+  const log = isDebugEnabledFromCookies(cookieJar) ? new DebugLog() : undefined
 
-  // 2. Rate-limit gate. Post-#161 middleware refactor: reads the
-  //    `yawaragi_session` cookie the proxy stamped and consults the
-  //    `suggestions` bucket. Never mutates the cookie — the proxy is
-  //    the sole writer, so this action can safely run mid-render from
-  //    the RSC page without hitting Next.js 15's "cookies can only be
-  //    modified in a Server Action or Route Handler" guard. Non-prod
-  //    without env skips (see scan-action for the same posture).
-  const rateLimit = await enforceRateLimit()
-  if (rateLimit.kind === 'session_missing') {
-    return { status: 'session_missing' }
-  }
-  if (!rateLimit.allowed) {
-    return { status: 'rate_limited', retryAfterSec: rateLimit.retryAfterSec }
-  }
+  const result = await runWithDebugLog(log, async (): Promise<SuggestActionState> => {
+    debugAdd('SuggestAction', 'entered', {
+      seedKind: seed.kind,
+      seedBrandId: seed.brandId,
+    })
 
-  // 3. Open the MCP client. Both the env-missing case (registry factory
-  //    throws with a clear "set MCP_SAKENOWA_URL" message) and the
-  //    transport-failure case (network / auth against the sakenowa-mcp
-  //    HTTP endpoint) surface as `service_unavailable` so the page can
-  //    render a specific "temporarily unreachable" copy rather than a
-  //    Next error page. Always close in `finally`.
-  let client: MCPClient | undefined
-  try {
-    try {
-      client = await getDefaultMcpClient()
-    } catch (err) {
-      // The registry-thrown message includes "MCP_SAKENOWA_URL" for the
-      // unset case; other failures (bad URL, DNS, TLS) also land here.
-      // All of them are "service unavailable" from the visitor's POV.
-      console.warn('[suggest] MCP client open failed:', err)
-      return { status: 'service_unavailable' }
+    // E2E-stub short-circuit. Non-production only (guard below). Mirrors
+    // `VISION_PROVIDER=e2e-stub` for the scan surface: the Playwright spec
+    // sets a `yawaragi_suggest_stub` cookie (or the SUGGEST_STUB env var
+    // for whole-server override) to exercise the full RSC render path
+    // without burning Anthropic credit or requiring a live MCP server.
+    // Production fails closed via the guard inside `resolveSuggestStub`.
+    const stubbed = await resolveSuggestStub(seed)
+    if (stubbed !== null) {
+      debugAdd('SuggestAction', 'stub short-circuit fired', {
+        status: stubbed.status,
+      })
+      return stubbed
     }
 
-    let mcpTools
-    try {
-      mcpTools = await client.tools()
-    } catch (err) {
-      console.warn('[suggest] MCP tools() failed:', err)
-      return { status: 'service_unavailable' }
+    // 2. Rate-limit gate. Post-#161 middleware refactor: reads the
+    //    `yawaragi_session` cookie the proxy stamped and consults the
+    //    `suggestions` bucket. Never mutates the cookie — the proxy is
+    //    the sole writer, so this action can safely run mid-render from
+    //    the RSC page without hitting Next.js 15's "cookies can only be
+    //    modified in a Server Action or Route Handler" guard. Non-prod
+    //    without env skips (see scan-action for the same posture).
+    const rateLimit = await enforceRateLimit()
+    if (rateLimit.kind === 'session_missing') {
+      debugAdd('SuggestAction', 'session_missing — cookie absent', undefined, 'warn')
+      return { status: 'session_missing' }
     }
-
-    const tools = buildSuggestToolSet(mcpTools)
-
-    // 4. One tool loop. The system prompt tells the model to (a) use the
-    //    MCP tools for seed-mode discovery, (b) never invent cross-
-    //    beverage mappings beyond what `mapCrossBeverage` returns, and
-    //    (c) emit the final answer as a JSON array of Suggestion
-    //    records. `stepCountIs(6)` bounds the runaway case (a model
-    //    stuck in a tool-call loop) — five tool calls plus one final
-    //    text emit is more than a well-formed suggest tool loop should
-    //    ever need.
-    let result
-    try {
-      result = await tracedGenerateText(
-        {
-          functionId: 'suggest-tool-loop',
-          metadata: {
-            'seed.kind': seed.kind,
-            'seed.brandId': seed.brandId,
-          },
-        },
-        {
-          model: anthropic('claude-haiku-4-5'),
-          tools,
-          stopWhen: stepCountIs(6),
-          system: SUGGEST_SYSTEM_PROMPT,
-          prompt: buildSeedPrompt(seed),
-        },
+    if (!rateLimit.allowed) {
+      debugAdd(
+        'RateLimit',
+        `denied — retry after ${rateLimit.retryAfterSec}s`,
+        { retryAfterSec: rateLimit.retryAfterSec },
+        'warn',
       )
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err)
-      console.warn('[suggest] tool loop failed:', message)
-      return { status: 'error', reason: 'tool_loop_failed' }
+      return { status: 'rate_limited', retryAfterSec: rateLimit.retryAfterSec }
     }
+    debugAdd('RateLimit', 'allowed', { retryAfterSec: rateLimit.retryAfterSec })
 
-    // 5. Parse the model's final text into a Suggestion[] via the
-    //    field-level provenance-pinned schema. An empty list is the
-    //    honest no-match outcome — the page renders the noMatch copy
-    //    instead of a card list. NEVER fabricate a card.
-    let suggestions
+    // 3. Open the MCP client. Both the env-missing case (registry factory
+    //    throws with a clear "set MCP_SAKENOWA_URL" message) and the
+    //    transport-failure case (network / auth against the sakenowa-mcp
+    //    HTTP endpoint) surface as `service_unavailable` so the page can
+    //    render a specific "temporarily unreachable" copy rather than a
+    //    Next error page. Always close in `finally`.
+    let client: MCPClient | undefined
     try {
-      suggestions = parseSuggestionsFromText(result.text ?? '')
-    } catch (err) {
-      // parseSuggestionsFromText itself doesn't throw (parses defensively);
-      // catch is a belt-and-suspenders against a future refactor.
-      const message = err instanceof Error ? err.message : String(err)
-      console.warn('[suggest] parse failed:', message)
-      return { status: 'error', reason: 'parse_failed' }
-    }
-
-    // 6. Fan-out `get_sake_details` in parallel to hydrate each card
-    //    with its canonical Sakenowa flavor_profile (six axes). The
-    //    LLM tool loop above cannot emit axis positions — the schema
-    //    pins the source literal to `sakenowa`, so any hallucinated
-    //    profile from the LLM would fail parse and get dropped. This
-    //    deterministic post-enrichment is the only path axis data
-    //    reaches the visible card. Failures are isolated per brand:
-    //    a rejected lookup or a null flavorProfile drops the field
-    //    from that card only; the rest of the list still renders.
-    try {
-      suggestions = await hydrateFlavorProfiles(suggestions, mcpTools)
-    } catch (err) {
-      // hydrateFlavorProfiles catches per-brand failures internally via
-      // Promise.allSettled; this outer catch is belt-and-suspenders
-      // against a future refactor that throws before the fan-out.
-      const message = err instanceof Error ? err.message : String(err)
-      console.warn('[suggest] flavor-profile fan-out failed:', message)
-      // Do NOT fail the action — the LLM's reasoning is still useful.
-    }
-
-    return { status: 'ok', suggestions }
-  } finally {
-    if (client != null) {
+      debugAdd('MCP', 'opening client')
       try {
-        await client.close()
-      } catch {
-        // Best-effort close — same pattern as the smoke route.
+        client = await getDefaultMcpClient()
+      } catch (err) {
+        // The registry-thrown message includes "MCP_SAKENOWA_URL" for the
+        // unset case; other failures (bad URL, DNS, TLS) also land here.
+        // All of them are "service unavailable" from the visitor's POV.
+        const message = err instanceof Error ? err.message : String(err)
+        console.warn('[suggest] MCP client open failed:', err)
+        debugAdd('MCP', 'client open failed', { error: message }, 'error')
+        return { status: 'service_unavailable' }
+      }
+      debugAdd('MCP', `client open — ${client.serverInfo.name}@${client.serverInfo.version}`)
+
+      let mcpTools
+      try {
+        mcpTools = await client.tools()
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err)
+        console.warn('[suggest] MCP tools() failed:', err)
+        debugAdd('MCP', 'tools() failed', { error: message }, 'error')
+        return { status: 'service_unavailable' }
+      }
+      const mcpToolNames = Object.keys(mcpTools)
+      debugAdd('MCP', `${mcpToolNames.length} tools advertised`, {
+        tools: mcpToolNames,
+      })
+
+      const tools = buildSuggestToolSet(mcpTools)
+      debugAdd('SuggestAction', `built tool set (${Object.keys(tools).length} tools)`, {
+        tools: Object.keys(tools),
+      })
+
+      // 4. One tool loop. The system prompt tells the model to (a) use the
+      //    MCP tools for seed-mode discovery, (b) never invent cross-
+      //    beverage mappings beyond what `mapCrossBeverage` returns, and
+      //    (c) emit the final answer as a JSON array of Suggestion
+      //    records. `stepCountIs(6)` bounds the runaway case (a model
+      //    stuck in a tool-call loop) — five tool calls plus one final
+      //    text emit is more than a well-formed suggest tool loop should
+      //    ever need.
+      let llmResult
+      try {
+        debugAdd('SuggestAction', 'starting tool loop', {
+          model: 'claude-haiku-4-5',
+          seedBrandId: seed.brandId,
+        })
+        llmResult = await tracedGenerateText(
+          {
+            functionId: 'suggest-tool-loop',
+            metadata: {
+              'seed.kind': seed.kind,
+              'seed.brandId': seed.brandId,
+            },
+          },
+          {
+            model: anthropic('claude-haiku-4-5'),
+            tools,
+            stopWhen: stepCountIs(6),
+            system: SUGGEST_SYSTEM_PROMPT,
+            prompt: buildSeedPrompt(seed),
+          },
+        )
+        debugAdd('SuggestAction', `tool loop returned (${llmResult.text?.length ?? 0} chars of final text)`)
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err)
+        console.warn('[suggest] tool loop failed:', message)
+        debugAdd('SuggestAction', 'tool loop failed', { error: message }, 'error')
+        return { status: 'error', reason: 'tool_loop_failed' }
+      }
+
+      // 5. Parse the model's final text into a Suggestion[] via the
+      //    field-level provenance-pinned schema. An empty list is the
+      //    honest no-match outcome — the page renders the noMatch copy
+      //    instead of a card list. NEVER fabricate a card.
+      let suggestions
+      try {
+        suggestions = parseSuggestionsFromText(llmResult.text ?? '')
+        debugAdd('SuggestAction', `parsed ${suggestions.length} suggestions`, {
+          brandIds: suggestions.map((s) => s.brandId.value),
+        })
+      } catch (err) {
+        // parseSuggestionsFromText itself doesn't throw (parses defensively);
+        // catch is a belt-and-suspenders against a future refactor.
+        const message = err instanceof Error ? err.message : String(err)
+        console.warn('[suggest] parse failed:', message)
+        debugAdd('SuggestAction', 'parse failed', { error: message }, 'error')
+        return { status: 'error', reason: 'parse_failed' }
+      }
+
+      // 6. Fan-out `get_sake_details` in parallel to hydrate each card
+      //    with its canonical Sakenowa flavor_profile (six axes). The
+      //    LLM tool loop above cannot emit axis positions — the schema
+      //    pins the source literal to `sakenowa`, so any hallucinated
+      //    profile from the LLM would fail parse and get dropped. This
+      //    deterministic post-enrichment is the only path axis data
+      //    reaches the visible card. Failures are isolated per brand:
+      //    a rejected lookup or a null flavorProfile drops the field
+      //    from that card only; the rest of the list still renders.
+      try {
+        debugAdd('Hydrate', `fan-out starting (${suggestions.length} brandIds)`)
+        const beforeHydration = suggestions.length
+        suggestions = await hydrateFlavorProfiles(suggestions, mcpTools)
+        const hydrated = suggestions.filter((s) => s.flavor_profile != null).length
+        debugAdd('Hydrate', `fan-out complete — ${hydrated}/${beforeHydration} cards have a flavor profile`)
+      } catch (err) {
+        // hydrateFlavorProfiles catches per-brand failures internally via
+        // Promise.allSettled; this outer catch is belt-and-suspenders
+        // against a future refactor that throws before the fan-out.
+        const message = err instanceof Error ? err.message : String(err)
+        console.warn('[suggest] flavor-profile fan-out failed:', message)
+        debugAdd('Hydrate', 'fan-out failed (whole)', { error: message }, 'error')
+        // Do NOT fail the action — the LLM's reasoning is still useful.
+      }
+
+      debugAdd('SuggestAction', `returning ok with ${suggestions.length} suggestions`)
+      return { status: 'ok', suggestions }
+    } finally {
+      if (client != null) {
+        try {
+          await client.close()
+        } catch {
+          // Best-effort close — same pattern as the smoke route.
+        }
       }
     }
-  }
+  })
+
+  return log ? { ...result, debugLog: log.toArray() } : result
 }
 
 // -------------------- prompt --------------------

@@ -48,5 +48,10 @@ export async function register() {
       kvToken: env.UPSTASH_REDIS_REST_TOKEN,
     },
     true,
+    // A stray `RATE_LIMIT_BYPASS=1` on Production silently unmeters
+    // paid-API cost protection — throw at boot so the deploy fails
+    // loudly before any request is served. Dev/preview escape hatch;
+    // see env.ts.
+    { bypassEnabled: env.RATE_LIMIT_BYPASS === '1' },
   )
 }

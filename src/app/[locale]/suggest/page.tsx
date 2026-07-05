@@ -7,6 +7,7 @@ import { Link } from '@/i18n/navigation'
 import { routing } from '@/i18n/routing'
 import { isLaunched } from '@/i18n/launch-state'
 import { AgeGate } from '@/components/legal/age-gate'
+import { DebugLogPusher } from '@/components/debug/debug-log-pusher'
 import { hasAcceptedAgeGate } from '@/lib/legal/age-gate-cookie'
 import { suggestAction } from '@/lib/suggest/suggest-action'
 import type { SuggestActionState } from '@/lib/suggest/suggest-action-state'
@@ -152,6 +153,7 @@ export default async function SuggestPage({ params, searchParams }: PageProps) {
         </Link>
       </main>
       {!gateAccepted && <AgeGate />}
+      <DebugLogPusher events={state.debugLog} />
     </>
   )
 }

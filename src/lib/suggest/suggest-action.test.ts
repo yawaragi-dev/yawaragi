@@ -142,3 +142,78 @@ describe('suggestAction — MCP service unavailable', () => {
     expect(close).toHaveBeenCalled()
   })
 })
+
+describe('suggestAction — debug log', () => {
+  it('attaches a debugLog with entered / MCP failure events when debug cookie is set', async () => {
+    // Debug is opt-in per visitor via the `yawaragi_debug=1` cookie. When
+    // set, the action creates a `DebugLog` and every `debugAdd(...)` call
+    // in the request appends to it. The log is serialised onto the
+    // action's state so the `<DebugLogPusher />` client island can push
+    // it into the panel store.
+    cookiesMock.mockResolvedValue({
+      get: (name: string) =>
+        name === 'yawaragi_debug' ? { name, value: '1' } : undefined,
+      set: () => undefined,
+    } as unknown as Awaited<ReturnType<typeof cookies>>)
+    headersMock.mockResolvedValue({
+      get: () => null,
+    } as unknown as Awaited<ReturnType<typeof headers>>)
+    // Force the MCP path to fail so we exercise a full run through
+    // several debugAdd points (entered → MCP opening → MCP client open
+    // failed → service_unavailable).
+    getDefaultMcpClientMock.mockRejectedValueOnce(
+      new Error('MCP_SAKENOWA_URL is not set …'),
+    )
+
+    const state = await suggestAction({ kind: 'brand', brandId: 42 })
+
+    expect(state.status).toBe('service_unavailable')
+    expect(state.debugLog).toBeDefined()
+    const events = state.debugLog ?? []
+    // Sanity: the log covers the critical entry-through-failure path.
+    // We don't pin the exact copy, just the source + a substring, so
+    // future wording tweaks don't churn the test.
+    expect(events.some((e) => e.source === 'SuggestAction' && e.message.includes('entered'))).toBe(true)
+    expect(events.some((e) => e.source === 'MCP' && e.message.includes('opening'))).toBe(true)
+    expect(events.some((e) => e.source === 'MCP' && e.level === 'error')).toBe(true)
+  })
+
+  it('omits debugLog entirely when the debug cookie is absent', async () => {
+    // The absence-of-cookie path is the 99.99% case and MUST NOT allocate
+    // an accumulator. Absence of the debugLog field (not `[]`) is the
+    // signal to the client bridge to skip its store push entirely.
+    cookiesMock.mockResolvedValue({
+      get: () => undefined,
+      set: () => undefined,
+    } as unknown as Awaited<ReturnType<typeof cookies>>)
+    headersMock.mockResolvedValue({
+      get: () => null,
+    } as unknown as Awaited<ReturnType<typeof headers>>)
+    getDefaultMcpClientMock.mockRejectedValueOnce(
+      new Error('MCP_SAKENOWA_URL is not set …'),
+    )
+
+    const state = await suggestAction({ kind: 'brand', brandId: 42 })
+
+    expect(state.status).toBe('service_unavailable')
+    expect(state.debugLog).toBeUndefined()
+  })
+
+  it('does not attach a debugLog to an invalid_input fast-fail response', async () => {
+    // The input-validation branch runs BEFORE cookies() is read (fast-
+    // fail invariant asserted by the input-validation tests above). So
+    // even if a debug cookie is set, malformed input responses carry no
+    // debugLog. The trade-off is intentional — debug value on a
+    // syntactically-invalid input is thin.
+    cookiesMock.mockResolvedValue({
+      get: (name: string) =>
+        name === 'yawaragi_debug' ? { name, value: '1' } : undefined,
+      set: () => undefined,
+    } as unknown as Awaited<ReturnType<typeof cookies>>)
+
+    const state = await suggestAction({ kind: 'brand', brandId: -1 })
+
+    expect(state.status).toBe('invalid_input')
+    expect(state.debugLog).toBeUndefined()
+  })
+})

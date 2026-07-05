@@ -60,6 +60,9 @@ export interface DebugPanelProps {
 const SOURCE_COLORS: Record<DebugEventSource, string> = {
   ScanForm: 'bg-blue-100 text-blue-900 dark:bg-blue-900 dark:text-blue-100',
   ScanAction: 'bg-indigo-100 text-indigo-900 dark:bg-indigo-900 dark:text-indigo-100',
+  SuggestAction: 'bg-violet-100 text-violet-900 dark:bg-violet-900 dark:text-violet-100',
+  MCP: 'bg-cyan-100 text-cyan-900 dark:bg-cyan-900 dark:text-cyan-100',
+  Hydrate: 'bg-teal-100 text-teal-900 dark:bg-teal-900 dark:text-teal-100',
   RateLimit: 'bg-amber-100 text-amber-900 dark:bg-amber-900 dark:text-amber-100',
   Vision: 'bg-emerald-100 text-emerald-900 dark:bg-emerald-900 dark:text-emerald-100',
   Sakenowa: 'bg-rose-100 text-rose-900 dark:bg-rose-900 dark:text-rose-100',

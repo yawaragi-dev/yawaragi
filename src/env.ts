@@ -105,13 +105,13 @@ const Env = z.object({
   // limited surfaces (suggest is 3/24h, scan is 5/24h) during dev
   // review without either waiting 24h, rotating IP_HASH_SALT, or
   // hand-clearing KV keys. Absence of this var is the safe default
-  // (rate limit enforced). Never set on Production Vercel; safe to
-  // set on Preview when you want a preview to be unmetered. The
-  // production instrumentation gate does NOT check this var — it
-  // still enforces the four core rate-limit env vars (`SESSION_COOKIE_SECRET`,
-  // `IP_HASH_SALT`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`) —
-  // so setting `RATE_LIMIT_BYPASS=1` on Production would still boot
-  // and would silently unmeter the surface. Don't do that.
+  // (rate limit enforced). Safe to set on Preview when you want an
+  // unmetered preview deploy; **NEVER set on Production Vercel** —
+  // `assertRateLimitConfig` (called at boot from `src/instrumentation.ts`)
+  // throws `RateLimitBypassInProductionError` when it detects
+  // `RATE_LIMIT_BYPASS=1` on a Production deploy, so a stray value
+  // fails cold-start loudly rather than silently unmetering the paid-
+  // API cost protection.
   RATE_LIMIT_BYPASS: empty(z.string().optional()),
 })
 export const env = Env.parse(process.env)
