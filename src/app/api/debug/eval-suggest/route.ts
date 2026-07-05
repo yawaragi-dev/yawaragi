@@ -23,9 +23,10 @@
  * `/api/debug/mcp-smoke`) so no new secret needs to be provisioned in
  * Vercel for a route only the maintainer's local eval hits. The route
  * is guarded twice: (a) authorise or 401, (b) refuse to run when
- * `NODE_ENV === 'production'` — even a valid bearer can't reach the
- * suggest action in production through this route. The maintainer
- * eval always runs against the local dev server.
+ * `NODE_ENV === 'production'` — which Vercel sets on BOTH production
+ * AND preview builds, so even a valid bearer + a leaked preview URL
+ * can't reach `suggestAction` through this route. The eval is a
+ * local-dev tool by design.
  *
  * Rate limit: the eval sets `RATE_LIMIT_BYPASS=1` before the runner
  * imports env.ts, so the dev server picks that up from `.env.local`

@@ -5,20 +5,24 @@
  * `/api/debug/eval-suggest` bearer-authed HTTP endpoint against a
  * locally running dev server. Serial loop, one query at a time.
  *
- * # Env required
+ * # Env
  *
- * - `CRON_SECRET` — bearer for the debug endpoint. Same secret the
- *   cron routes use; no new provisioning.
- * - `EVAL_BASE_URL` (optional, default `http://localhost:3000`) —
- *   where the dev server is listening. Override to `http://localhost:3001`
- *   if the maintainer runs on a non-default port.
- * - The dev server itself needs `ANTHROPIC_API_KEY`,
- *   `MCP_SAKENOWA_URL`, `LANGFUSE_*`, KV bindings, etc. Since we're
- *   hitting it via HTTP, its env, not the runner's, is what matters.
- * - The dev server SHOULD have `RATE_LIMIT_BYPASS=1` in its
- *   `.env.local` — without it, the eval caps at query 4 (3/24h
- *   anonymous limit). The runner surfaces a rate-limited response as
- *   a `rate_limited` status per query so the failure is legible.
+ * Runner reads:
+ *   - `CRON_SECRET` — bearer for the debug endpoint. Same secret
+ *     the cron routes use; no new provisioning.
+ *   - `EVAL_BASE_URL` (optional, default `http://localhost:3000`)
+ *     — where the dev server is listening. Override to
+ *     `http://localhost:3001` if the maintainer runs on a non-
+ *     default port.
+ *
+ * Dev server needs (enforced there, not here):
+ *   - `ANTHROPIC_API_KEY`, `MCP_SAKENOWA_URL`, `LANGFUSE_*`,
+ *     `SESSION_COOKIE_SECRET`, `IP_HASH_SALT`, KV bindings — the
+ *     same env `suggestAction` reads in production.
+ *   - `RATE_LIMIT_BYPASS=1` — without it, the eval caps at query 4
+ *     (3/24h anonymous limit). The runner surfaces a rate-limited
+ *     response as a `rate_limited` status per query so the failure
+ *     is legible.
  *
  * # Metric
  *
@@ -223,9 +227,16 @@ async function callSuggestEndpoint(seed: {
 function recall(returned: number[], expected: readonly number[]): number {
   if (expected.length === 0) return 0
   const expectedSet = new Set(expected)
-  let hit = 0
-  for (const id of returned) if (expectedSet.has(id)) hit++
-  return hit / expected.length
+  // Dedup on the returned side. If the LLM emits the same brandId
+  // twice inside the topK (unlikely — the Suggestion schema doesn't
+  // enforce uniqueness — but possible for a runaway tool loop),
+  // a naive count would double-hit. Recall is defined over the
+  // SET intersection, not the multiset, so seenHits gates.
+  const seenHits = new Set<number>()
+  for (const id of returned) {
+    if (expectedSet.has(id)) seenHits.add(id)
+  }
+  return seenHits.size / expected.length
 }
 
 function median(values: number[]): number {
