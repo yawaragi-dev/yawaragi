@@ -53,14 +53,15 @@ flowchart TD
   Manual["pnpm add-manual-brand<br/>(operator, ADR-0014)"] --> DB
   CronRoute["GET /api/cron/ingest<br/>Bearer CRON_SECRET<br/>Vercel Cron"] --> Ingest
   Sakenowa["Sakenowa Data API"] --> Ingest
-  LL -.-> Suggest["[locale]/suggest<br/>(Phase 4, planned)"]
-  Suggest -.-> SuggestAction["lib/suggest/suggest-action"]
-  SuggestAction -.-> MCP["@yawaragi/sakenowa-mcp<br/>(v0.1.0 in flight)"]
+  LL --> Suggest["[locale]/suggest<br/>(Phase 4 / S5, live)"]
+  Suggest --> SuggestAction["lib/suggest/suggest-action"]
+  SuggestAction --> MCP["@yawaragi/sakenowa-mcp<br/>(v0.1.0, live)"]
   SuggestAction -.-> CrossBev["lib/ai/tools/<br/>map-cross-beverage"]
-  SuggestAction -.-> Anthropic
-  Vision -.-> Anthropic["Anthropic Claude"]
-  MCP -.-> DB
-  Vision --> Trace["Langfuse traces<br/>(scan live, suggest planned)"]
+  SuggestAction --> Anthropic
+  Vision --> Anthropic["Anthropic Claude"]
+  MCP --> DB
+  Vision --> Trace["Langfuse traces<br/>(scan + suggest live)"]
+  Suggest --> Trace
   UC["lib/supabase/user-client<br/>(Phase 5, deferred with auth)"] -.->|"deferred"| LL
 ```
 
