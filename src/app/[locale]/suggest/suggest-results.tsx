@@ -11,7 +11,7 @@ import { FLAVOR_AXES } from '@/lib/schemas/flavor-chart'
 import type { Suggestion } from '@/lib/schemas/suggestion'
 
 /**
- * Phase 4 / S5 (#143) — RSC card list for the suggest results page.
+ * Phase 4 / S5–S6 (#143, #144) — RSC card list for the suggest results page.
  *
  * Every card renders per-field provenance:
  *
@@ -22,9 +22,13 @@ import type { Suggestion } from '@/lib/schemas/suggestion'
  *   - `reason` — LLM-inferred prose, gets `<ProvenanceBadge
  *     source="llm_inferred" />`. Load-bearing per CLAUDE.md's
  *     "Do NOT show LLM-extracted data without a ProvenanceBadge" rule.
- *   - `cross_beverage_descriptor` — when present, the whole card list
- *     mounts `<HeuristicDisclaimer />` at the top (once, not per-card —
- *     the disclaimer is section-level context per its docstring).
+ *   - `cross_beverage_descriptor` — when present, the card renders
+ *     `<HeuristicDisclaimer />` inline next to the cited descriptor
+ *     value. Per-card placement (rather than section-level) is required
+ *     by S6 (#144) so the caveat sits adjacent to the specific data it
+ *     qualifies — a visitor scanning a mixed list can tell which row
+ *     was mapped from a Western descriptor and which was pure MCP
+ *     match, without cross-referencing a header block.
  *   - `flavor_profile` — when present, a six-axis cluster of
  *     `<FlavorAxisLabel />` labels renders under the card. Populated
  *     by the round-2 fan-out in `suggest-action.ts` calling MCP's
@@ -62,7 +66,6 @@ export async function SuggestResults({ suggestions }: SuggestResultsProps) {
     >
       <h2 className="text-2xl font-semibold">{t('heading')}</h2>
       {showSakenowaAttribution && <SakenowaAttribution placement="above-fold" />}
-      {anyCrossBeverage && <HeuristicDisclaimer />}
       <ul className="flex flex-col gap-3" data-testid="suggest-results-list">
         {suggestions.map((s) => (
           <SuggestCard key={s.brandId.value} suggestion={s} />
@@ -119,15 +122,18 @@ async function SuggestCard({ suggestion }: SuggestCardProps) {
         </p>
       </div>
       {suggestion.cross_beverage_descriptor !== undefined && (
-        <p
-          className="flex items-baseline gap-2 text-xs text-zinc-700 dark:text-zinc-300"
-          data-testid="suggest-card-cross-beverage"
-        >
-          <span lang="en">
-            {suggestion.cross_beverage_descriptor.value}
-          </span>
-          <ProvenanceBadge source={suggestion.cross_beverage_descriptor.source} />
-        </p>
+        <div className="flex flex-col gap-2">
+          <p
+            className="flex items-baseline gap-2 text-xs text-zinc-700 dark:text-zinc-300"
+            data-testid="suggest-card-cross-beverage"
+          >
+            <span lang="en">
+              {suggestion.cross_beverage_descriptor.value}
+            </span>
+            <ProvenanceBadge source={suggestion.cross_beverage_descriptor.source} />
+          </p>
+          <HeuristicDisclaimer />
+        </div>
       )}
       {suggestion.flavor_profile !== undefined && (
         <FlavorAxisCluster profile={suggestion.flavor_profile} />

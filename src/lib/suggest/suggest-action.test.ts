@@ -40,6 +40,7 @@ import { cookies, headers } from 'next/headers'
 import { getDefaultMcpClient } from '@/lib/ai/mcp/registry'
 import { assertRateLimitConfig } from '@/lib/rate-limit/config-gate'
 import { suggestAction } from './suggest-action'
+import { MAX_FREEFORM_QUERY_LEN } from './suggest-action-state'
 
 const cookiesMock = vi.mocked(cookies)
 const headersMock = vi.mocked(headers)
@@ -68,6 +69,52 @@ describe('suggestAction — input validation', () => {
 
   it('rejects a non-integer brandId', async () => {
     const state = await suggestAction({ kind: 'brand', brandId: 1.5 })
+    expect(state).toEqual({ status: 'invalid_input', reason: 'malformed_seed' })
+  })
+
+  // Freeform (S6, #144) validation — the same fast-fail invariant as
+  // brand-mode. Malformed freeform input never reaches cookies() /
+  // headers() / the MCP client.
+  it('rejects an empty freeform query before hitting any downstream I/O', async () => {
+    cookiesMock.mockRejectedValue(
+      new Error('cookies() called — the invalid_input branch should return before this'),
+    )
+    headersMock.mockRejectedValue(
+      new Error('headers() called — the invalid_input branch should return before this'),
+    )
+    const state = await suggestAction({ kind: 'freeform', query: '' })
+    expect(state).toEqual({ status: 'invalid_input', reason: 'empty_query' })
+  })
+
+  it('rejects a whitespace-only freeform query as empty', async () => {
+    // The action trims before checking length so `   \t  \n  ` reads as
+    // empty. Client-side normalisation should have matched but the action
+    // is the authoritative boundary.
+    const state = await suggestAction({ kind: 'freeform', query: '   \t\n  ' })
+    expect(state).toEqual({ status: 'invalid_input', reason: 'empty_query' })
+  })
+
+  it('rejects an over-length freeform query', async () => {
+    // MAX_FREEFORM_QUERY_LEN caps the tokens the LLM ever sees. A visitor
+    // pasting a paragraph gets a fast rejection, not a burned Anthropic
+    // credit. Length is measured after trim so trailing whitespace can't
+    // be gamed to push under the cap.
+    const longQuery = 'x'.repeat(MAX_FREEFORM_QUERY_LEN + 1)
+    const state = await suggestAction({ kind: 'freeform', query: longQuery })
+    expect(state).toEqual({ status: 'invalid_input', reason: 'query_too_long' })
+  })
+
+  it('rejects an unknown seed kind (defensive against future widening)', async () => {
+    // The public server surface catches an untyped caller passing e.g.
+    // `{ kind: 'text' }` from a stale client build after the schema
+    // rolls. Same posture as the exhaustiveness check in
+    // `buildSeedPrompt` — belt-and-suspenders defence.
+    const state = await suggestAction({
+      // Bypass TS to simulate the runtime-only case.
+      kind: 'unknown-future-kind',
+      brandId: 42,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any)
     expect(state).toEqual({ status: 'invalid_input', reason: 'malformed_seed' })
   })
 })

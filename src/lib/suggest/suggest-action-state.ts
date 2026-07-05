@@ -33,7 +33,12 @@ export type SuggestActionState = WithDebugLog<
     }
   | {
       status: 'invalid_input'
-      reason: 'missing_seed' | 'malformed_seed' | 'unsupported_locale'
+      reason:
+        | 'missing_seed'
+        | 'malformed_seed'
+        | 'empty_query'
+        | 'query_too_long'
+        | 'unsupported_locale'
     }
   | {
       status: 'rate_limited'
@@ -81,12 +86,29 @@ export type SuggestActionState = WithDebugLog<
 /**
  * The seed carries a bit of contextual detail the LLM needs to write
  * good `reason` prose (`the seed is aromatic and fruit-forward, so we're
- * looking for parallels`). Today the only supported seed is a brandId,
- * which the tool loop resolves against MCP; S6 (#144) will add a freeform
- * text seed. Keeping this as a discriminated union now so the action's
- * public surface doesn't churn when S6 lands.
+ * looking for parallels`). Two shapes supported:
+ *
+ *   - `brand` — a Sakenowa brandId the tool loop resolves against MCP.
+ *     Entered by clicking "Find similar" on a sake detail page.
+ *   - `freeform` — a short visitor-typed phrase (`light and floral`,
+ *     `smoky whisky`, `something like Yamazaki 12`). The LLM tool loop
+ *     uses the MCP tools + optionally `mapCrossBeverage` to translate it
+ *     into a candidate list. Cap on `MAX_FREEFORM_QUERY_LEN` at the
+ *     schema seam so a runaway paste can't burn through Anthropic tokens.
+ *
+ * Both variants run through the same server action and share the same
+ * `suggestions` rate-limit bucket (3/24h/visitor).
  */
-export type SuggestSeed = {
-  kind: 'brand'
-  brandId: number
-}
+export type SuggestSeed =
+  | { kind: 'brand'; brandId: number }
+  | { kind: 'freeform'; query: string }
+
+/**
+ * Upper bound on a freeform query, enforced at the action's input-
+ * validation seam. 200 chars is a generous ceiling — real visitor
+ * queries land in the 15-80 char range (`smoky whisky`, `light and
+ * floral, low ABV`, `something like Yamazaki 12`). Above 200 chars the
+ * visitor is either pasting a paragraph (send them to a chat surface,
+ * not a suggest tool loop) or trying to burn tokens.
+ */
+export const MAX_FREEFORM_QUERY_LEN = 200

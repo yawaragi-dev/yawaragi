@@ -38,8 +38,8 @@ function stubCookie(mode: string) {
 // stub, not real data, is under test.
 const SEED_BRAND_ID = 999999
 
-test.describe('suggest page — no seed', () => {
-  test('/en/suggest with no seed shows the coming-soon-input placeholder', async ({
+test.describe('suggest page — no seed (S6 landing view)', () => {
+  test('/en/suggest with no query renders freeform form + starter prompts', async ({
     browser,
   }) => {
     const context = await browser.newContext({ locale: 'en-US' })
@@ -49,10 +49,119 @@ test.describe('suggest page — no seed', () => {
     await page.goto('/en/suggest')
 
     await expect(page.getByTestId('suggest-no-seed')).toBeVisible()
-    await expect(page.getByTestId('suggest-no-seed-placeholder')).toBeVisible()
-    await expect(page.getByTestId('suggest-no-seed-placeholder')).toContainText(
-      /Type what you're in the mood for/i,
+    // The freeform form is the primary entry point.
+    await expect(page.getByTestId('suggest-freeform-form')).toBeVisible()
+    await expect(page.getByTestId('suggest-freeform-input')).toBeVisible()
+    await expect(page.getByTestId('suggest-freeform-submit')).toBeVisible()
+    // Placeholder carries discovery framing (CLAUDE.md § "Age gate and
+    // JMStV compliance") — no promotional copy.
+    await expect(page.getByTestId('suggest-freeform-input')).toHaveAttribute(
+      'placeholder',
+      /light and floral|smoky whisky|Yamazaki/i,
     )
+
+    // Starter prompts sit beneath the form, teaching phrasing without
+    // hard-coding brand ids into the surface.
+    await expect(page.getByTestId('suggest-starter')).toBeVisible()
+    await expect(page.getByTestId('suggest-starter-prompt')).toHaveCount(6)
+    // At least one prompt links a Western-descriptor path so the visitor
+    // can discover the cross-beverage tool from the landing view.
+    await expect(page.getByTestId('suggest-starter').getByText(/smoky whisky/i)).toBeVisible()
+
+    await context.close()
+  })
+
+  test('/en/suggest typing a query and submitting navigates to ?q=', async ({
+    browser,
+  }) => {
+    // Client-side form submit path. The freeform form's onSubmit calls
+    // router.push({ pathname: '/suggest', query: { q } }); we assert the
+    // URL round-trips and the result view renders. The stub cookie makes
+    // the action return a deterministic ok list so the test doesn't
+    // depend on MCP.
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([AGE_GATE_COOKIE, stubCookie('ok')])
+    const page = await context.newPage()
+
+    await page.goto('/en/suggest')
+    await page.getByTestId('suggest-freeform-input').fill('smoky whisky')
+    await page.getByTestId('suggest-freeform-submit').click()
+
+    await expect(page).toHaveURL(/\/en\/suggest\?q=smoky\+whisky|%20whisky/)
+    await expect(page.getByTestId('suggest-page')).toBeVisible()
+    await expect(page.getByTestId('suggest-results')).toBeVisible()
+    // The result view keeps the freeform form mounted with the query
+    // pre-filled so the visitor can refine without navigating home.
+    await expect(page.getByTestId('suggest-freeform-input')).toHaveValue(
+      'smoky whisky',
+    )
+
+    await context.close()
+  })
+
+  test('/en/suggest a starter-prompt chip navigates to ?q=<prompt>', async ({
+    browser,
+  }) => {
+    // The "I don't know what I want" path: chip click submits a canned
+    // freeform query, which triggers the full result render.
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([AGE_GATE_COOKIE, stubCookie('ok')])
+    const page = await context.newPage()
+
+    await page.goto('/en/suggest')
+    await page.getByTestId('suggest-starter').getByText(/smoky whisky/i).click()
+
+    await expect(page).toHaveURL(/\/en\/suggest\?q=/)
+    await expect(page.getByTestId('suggest-results')).toBeVisible()
+
+    await context.close()
+  })
+})
+
+test.describe('suggest page — freeform query (stubbed)', () => {
+  test('/en/suggest?q=smoky returns cards with inline HeuristicDisclaimer next to descriptor', async ({
+    browser,
+  }) => {
+    // S6 requirement: the HeuristicDisclaimer renders inline near the
+    // cited descriptor value, NOT only at the top of the result list.
+    // The stub `ok` mode places `cross_beverage_descriptor` on the third
+    // card; we assert the disclaimer lives inside that same card's DOM
+    // subtree.
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([AGE_GATE_COOKIE, stubCookie('ok')])
+    const page = await context.newPage()
+
+    await page.goto('/en/suggest?q=smoky+whisky')
+
+    await expect(page.getByTestId('suggest-page')).toBeVisible()
+    await expect(page.getByTestId('suggest-results')).toBeVisible()
+
+    const cards = page.getByTestId('suggest-card')
+    await expect(cards).toHaveCount(3)
+
+    // Card 3 (0-indexed 2) is the one with cross_beverage_descriptor in
+    // the stub. The disclaimer must live INSIDE that card — that's
+    // "inline near the cited descriptor" per S6's AC.
+    const cardWithDescriptor = cards.nth(2)
+    await expect(
+      cardWithDescriptor.getByTestId('suggest-card-cross-beverage'),
+    ).toBeVisible()
+    await expect(
+      cardWithDescriptor.getByTestId('heuristic-disclaimer'),
+    ).toBeVisible()
+
+    // Cards WITHOUT a descriptor should NOT carry a disclaimer — proves
+    // the placement is per-card, not section-level.
+    await expect(
+      cards.nth(0).getByTestId('heuristic-disclaimer'),
+    ).toHaveCount(0)
+    await expect(
+      cards.nth(1).getByTestId('heuristic-disclaimer'),
+    ).toHaveCount(0)
+
+    // The seed sake "Back to seed" link is absent — freeform mode has
+    // no seed brand to return to.
+    await expect(page.getByTestId('suggest-back-to-seed')).toHaveCount(0)
 
     await context.close()
   })
@@ -249,6 +358,26 @@ test.describe('suggest page — DE locale (ADR-0008 pre-launch)', () => {
     await page.goto(`/de/suggest?seed=${SEED_BRAND_ID}`)
 
     await expect(page.getByTestId('coming-soon')).toBeVisible()
+    await expect(page.getByTestId('suggest-card')).toHaveCount(0)
+
+    await context.close()
+  })
+
+  test('/de/suggest?q=smoky (freeform path) also rewrites to coming-soon', async ({
+    browser,
+  }) => {
+    // Freeform mode was added by S6 (#144). The pre-launch gate must
+    // block it too — a stale link or shared URL should never leak the
+    // suggest surface into DE ahead of the Impressum + Datenschutz
+    // review. Same posture as the seed-mode gate above.
+    const context = await browser.newContext({ locale: 'de-DE' })
+    await context.addCookies([AGE_GATE_COOKIE, stubCookie('ok')])
+    const page = await context.newPage()
+
+    await page.goto('/de/suggest?q=smoky+whisky')
+
+    await expect(page.getByTestId('coming-soon')).toBeVisible()
+    await expect(page.getByTestId('suggest-freeform-form')).toHaveCount(0)
     await expect(page.getByTestId('suggest-card')).toHaveCount(0)
 
     await context.close()
