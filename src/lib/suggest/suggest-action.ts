@@ -17,16 +17,24 @@ import { extractIp, hashIp } from '@/lib/rate-limit/ip-hash'
 import { UpstashKVClient } from '@/lib/rate-limit/upstash-kv-client'
 import { hydrateFlavorProfiles } from './hydrate-flavor-profiles'
 import { parseSuggestionsFromText } from './parse-suggestions'
-import type { SuggestActionState, SuggestSeed } from './suggest-action-state'
+import {
+  MAX_FREEFORM_QUERY_LEN,
+  type SuggestActionState,
+  type SuggestSeed,
+} from './suggest-action-state'
 import { buildSuggestToolSet } from './tool-set'
 
 /**
- * Phase 4 / S5 (#143) — `suggestAction`.
+ * Phase 4 / S5–S6 (#143, #144) — `suggestAction`.
  *
- * The first end-to-end AI-driven vertical of Phase 4: given a seed
- * (currently only a `brandId`), run a single AI SDK tool loop with the
+ * The end-to-end AI-driven vertical of Phase 4: given a seed (a
+ * `brandId` from the seed-based path, or a short visitor-typed `query`
+ * from the freeform path), run a single AI SDK tool loop with the
  * Sakenowa MCP tools + the deterministic `mapCrossBeverage` tool and
- * return a list of 3–6 recommended similar sakes.
+ * return a list of 3–6 recommended similar sakes. Both seed shapes
+ * share this one action + one `suggestions` rate-limit bucket — a
+ * freeform call and a seed call from the same anonymous session are
+ * NOT independent budgets.
  *
  * Contrasts with `scan-action.ts`:
  *
@@ -46,19 +54,33 @@ import { buildSuggestToolSet } from './tool-set'
  * KV query key with a 24h TTL and never enters Postgres or a log.
  */
 export async function suggestAction(seed: SuggestSeed): Promise<SuggestActionState> {
-  // 1. Validate the seed FIRST — before any I/O. `brandId` must be a
-  //    positive integer; the page already narrows this on the query-
-  //    string parse but the action is a public server surface so it
-  //    re-validates. Malformed input never reaches cookies()/headers()/
-  //    debug-log setup — a fast-fail invariant asserted by the input
-  //    validation tests. (The trade-off: `invalid_input` responses
-  //    carry no debug log, but the caller passed bad input so the
-  //    debug value is thin.)
-  if (
-    seed.kind !== 'brand' ||
-    !Number.isInteger(seed.brandId) ||
-    seed.brandId <= 0
-  ) {
+  // 1. Validate the seed FIRST — before any I/O. Both variants are re-
+  //    validated here even though the page's query-string parse already
+  //    narrows them, because the action is a public server surface and
+  //    must not trust its caller. Malformed input never reaches
+  //    cookies()/headers()/debug-log setup — a fast-fail invariant
+  //    asserted by the input-validation tests. (The trade-off:
+  //    `invalid_input` responses carry no debug log, but the caller
+  //    passed bad input so the debug value is thin.)
+  if (seed.kind === 'brand') {
+    if (!Number.isInteger(seed.brandId) || seed.brandId <= 0) {
+      return { status: 'invalid_input', reason: 'malformed_seed' }
+    }
+  } else if (seed.kind === 'freeform') {
+    // `.trim()` mirrors the client-side form's normalisation; empty-
+    // after-trim is treated as "no seed" (the page should not have
+    // dispatched us) rather than a malformed query.
+    const trimmed = seed.query.trim()
+    if (trimmed.length === 0) {
+      return { status: 'invalid_input', reason: 'empty_query' }
+    }
+    if (trimmed.length > MAX_FREEFORM_QUERY_LEN) {
+      return { status: 'invalid_input', reason: 'query_too_long' }
+    }
+    // Re-write the query with the trimmed form so downstream prompt
+    // building doesn't have to re-normalise.
+    seed = { kind: 'freeform', query: trimmed }
+  } else {
     return { status: 'invalid_input', reason: 'malformed_seed' }
   }
 
@@ -77,7 +99,9 @@ export async function suggestAction(seed: SuggestSeed): Promise<SuggestActionSta
   const result = await runWithDebugLog(log, async (): Promise<SuggestActionState> => {
     debugAdd('SuggestAction', 'entered', {
       seedKind: seed.kind,
-      seedBrandId: seed.brandId,
+      ...(seed.kind === 'brand'
+        ? { seedBrandId: seed.brandId }
+        : { seedQuery: seed.query }),
     })
 
     // E2E-stub short-circuit. Non-production only (guard below). Mirrors
@@ -170,14 +194,18 @@ export async function suggestAction(seed: SuggestSeed): Promise<SuggestActionSta
       try {
         debugAdd('SuggestAction', 'starting tool loop', {
           model: 'claude-haiku-4-5',
-          seedBrandId: seed.brandId,
+          ...(seed.kind === 'brand'
+            ? { seedBrandId: seed.brandId }
+            : { seedQuery: seed.query }),
         })
         llmResult = await tracedGenerateText(
           {
             functionId: 'suggest-tool-loop',
             metadata: {
               'seed.kind': seed.kind,
-              'seed.brandId': seed.brandId,
+              ...(seed.kind === 'brand'
+                ? { 'seed.brandId': seed.brandId }
+                : { 'seed.query': seed.query }),
             },
           },
           {
@@ -320,11 +348,13 @@ export async function suggestAction(seed: SuggestSeed): Promise<SuggestActionSta
  *     vocabulary" — the FE component renders the label itself, but if the
  *     reason cites an axis it should use the same convention).
  */
-const SUGGEST_SYSTEM_PROMPT = `You are Yawaragi's sake discovery assistant. A visitor is looking at a specific sake (the "seed") and wants to discover similar sakes to learn about.
+const SUGGEST_SYSTEM_PROMPT = `You are Yawaragi's sake discovery assistant. A visitor either points at a specific sake (the "seed" brand) or types a short freeform phrase describing what they're in the mood for. Your job is to help them explore adjacent sakes to learn about.
 
 TOOLS
-- Use the Sakenowa MCP tools (find_similar_sakes, get_sake_details, search_sakes_by_name, get_top_ranked, find_sakes_by_flavor, list_prefectures) to look up canonical sake data. For a seed brandId, start with find_similar_sakes to get candidates.
-- Use mapCrossBeverage ONLY if the visitor's phrasing describes a Western-beverage descriptor (smoky, tannic, hoppy, etc.). NEVER invent a cross-beverage mapping outside this tool — if the tool returns an error, acknowledge it and continue with MCP-based discovery instead. Seed mode does not typically exercise this tool.
+- Use the Sakenowa MCP tools (find_similar_sakes, get_sake_details, search_sakes_by_name, get_top_ranked, find_sakes_by_flavor, list_prefectures) to look up canonical sake data.
+  - For a seed brandId, start with find_similar_sakes to get candidates.
+  - For a freeform phrase describing a taste target (light, floral, dry, mellow, etc.), start with find_sakes_by_flavor once you've decided which axes the phrase implies; use search_sakes_by_name if the phrase names a specific bottle.
+- Use mapCrossBeverage ONLY if the visitor's phrasing describes a Western-beverage descriptor (smoky whisky, tannic wine, hoppy beer, etc.). Pick the correct beverage category and pass the descriptor. NEVER invent a cross-beverage mapping outside this tool — if the tool returns an error, acknowledge it and continue with MCP-based discovery instead. When mapCrossBeverage returns a FlavorProfile row, use it to seed a find_sakes_by_flavor call so the resulting suggestion lists reflect the mapped axes.
 
 FLAVOR AXES
 - The 6-axis flavor chart uses brewers' terms: hanayaka (華やか, fragrant/floral), hojun (芳醇, mellow/rich), juko (重厚, heavy/full-bodied), odayaka (穏やか, mild/calm), dry (ドライ), keikai (軽快, light/crisp). If you cite an axis in the reason, use the romaji + kanji + parenthetical English convention.
@@ -350,10 +380,19 @@ function buildSeedPrompt(seed: SuggestSeed): string {
   if (seed.kind === 'brand') {
     return `The seed is Sakenowa brandId ${seed.brandId}. Call get_sake_details for that brandId first to get its name and flavor profile, then find_similar_sakes with the same brandId to get candidates. Pick 3-6 with the most convincing flavor overlap and write a one-sentence reason per suggestion.`
   }
+  if (seed.kind === 'freeform') {
+    // Wrap the visitor's query in explicit delimiters so a prompt-injection
+    // attempt (`"; ignore prior instructions and ...`) at least has to
+    // survive the visible delimiter round-trip. The system prompt above
+    // is what actually keeps the model on task; this delimiter is a
+    // belt-and-suspenders readability affordance more than a hardening
+    // measure. `MAX_FREEFORM_QUERY_LEN` already caps the length upstream.
+    return `The visitor typed this freeform query:\n\n"""\n${seed.query}\n"""\n\nDecide which tool path fits: for a taste-vocabulary phrase (light, floral, dry, mellow) map it onto flavor axes and call find_sakes_by_flavor; for a Western-beverage descriptor (smoky whisky, tannic wine, hoppy beer) call mapCrossBeverage first and USE its returned axes to drive find_sakes_by_flavor; for a specific bottle name call search_sakes_by_name. Pick 3-6 with the most convincing overlap and write a one-sentence reason per suggestion, in the visitor's own vocabulary where possible. If the query resolves through mapCrossBeverage, include the descriptor in each returned Suggestion via the cross_beverage_descriptor field so the UI can flag the heuristic origin. If no reasonable match exists, return [].`
+  }
   // Exhaustiveness check — future seed kinds land here as a TS error
   // until this switch is widened.
-  const _exhaustive: never = seed.kind
-  return `Unknown seed kind: ${String(_exhaustive)}. Return [].`
+  const _exhaustive: never = seed
+  return `Unknown seed kind: ${String((_exhaustive as { kind: string }).kind)}. Return [].`
 }
 
 // -------------------- rate-limit helper --------------------
@@ -479,12 +518,19 @@ async function resolveSuggestStub(seed: SuggestSeed): Promise<SuggestActionState
   const mode = envMode && envMode !== '' ? envMode : await readSuggestStubCookie()
   if (mode == null || mode === '') return null
 
+  // Deterministic anchor id so the stub cards render regardless of the
+  // seed shape. For a brand seed we still bias the ids off the seed so
+  // the cards feel connected to the requested seed; for a freeform seed
+  // (which carries no numeric anchor) a fixed base keeps the stub
+  // stable across queries.
+  const anchorId = seed.kind === 'brand' ? seed.brandId : 900000
+
   if (mode === 'ok') {
     return {
       status: 'ok',
       suggestions: [
         {
-          brandId: { source: 'sakenowa', value: seed.brandId + 1 },
+          brandId: { source: 'sakenowa', value: anchorId + 1 },
           name_ja: { source: 'sakenowa', value: '獺祭' },
           name_romaji: { source: 'sakenowa', value: 'Dassai' },
           reason: {
@@ -507,7 +553,7 @@ async function resolveSuggestStub(seed: SuggestSeed): Promise<SuggestActionState
           },
         },
         {
-          brandId: { source: 'sakenowa', value: seed.brandId + 2 },
+          brandId: { source: 'sakenowa', value: anchorId + 2 },
           name_ja: { source: 'sakenowa', value: '久保田' },
           name_romaji: { source: 'sakenowa', value: 'Kubota' },
           reason: {
@@ -525,7 +571,7 @@ async function resolveSuggestStub(seed: SuggestSeed): Promise<SuggestActionState
           },
         },
         {
-          brandId: { source: 'sakenowa', value: seed.brandId + 3 },
+          brandId: { source: 'sakenowa', value: anchorId + 3 },
           name_ja: { source: 'sakenowa', value: '八海山' },
           name_romaji: { source: 'sakenowa', value: 'Hakkaisan' },
           reason: {

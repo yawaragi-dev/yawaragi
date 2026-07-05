@@ -10,18 +10,32 @@ import { AgeGate } from '@/components/legal/age-gate'
 import { DebugLogPusher } from '@/components/debug/debug-log-pusher'
 import { hasAcceptedAgeGate } from '@/lib/legal/age-gate-cookie'
 import { suggestAction } from '@/lib/suggest/suggest-action'
-import type { SuggestActionState } from '@/lib/suggest/suggest-action-state'
+import {
+  MAX_FREEFORM_QUERY_LEN,
+  type SuggestActionState,
+  type SuggestSeed,
+} from '@/lib/suggest/suggest-action-state'
+import { SuggestFreeformForm } from './suggest-freeform-form'
 import { SuggestResults } from './suggest-results'
+import { SuggestStarterPrompts } from './suggest-starter-prompts'
 
 /**
- * Phase 4 / S5 (#143) — `/[locale]/suggest`.
+ * Phase 4 / S5–S6 (#143, #144) — `/[locale]/suggest`.
  *
- * Entry route for the seed-based sake discovery surface. Reads
- * `?seed=<brandId>` from the query string; when absent, renders a
- * placeholder that S6 (#144, freeform text input) will replace. When
- * present, delegates to the server action and renders one of
- * `<SuggestResults>` (ok / no-match), a rate-limit copy block, a service-
- * unavailable copy block, or a generic error copy block.
+ * Entry route for the sake discovery surface. Two input modes:
+ *
+ *   - `?seed=<brandId>` — the seed-based path from #143, dispatched by the
+ *     "Find similar" link on `/sake/[brandId]`.
+ *   - `?q=<string>` — the freeform-text path from #144, dispatched by
+ *     `<SuggestFreeformForm />`'s submit and by the starter-prompt chips.
+ *
+ * When neither param is set, the page renders the freeform form + the
+ * discovery starter prompts (the "I don't know what I want" landing).
+ * When either is set, the page delegates to `suggestAction` and renders
+ * one of `<SuggestResults>` (ok / no-match), a rate-limit copy block, a
+ * service-unavailable copy block, or a generic error copy block. Freeform
+ * mode wins when both params are present — a typed query is a stronger
+ * signal than a URL-carried seed.
  *
  * Age-gate + non-launched-locale posture mirrors `scan/page.tsx`:
  *
@@ -38,7 +52,7 @@ import { SuggestResults } from './suggest-results'
 
 interface PageProps {
   params: Promise<{ locale: string }>
-  searchParams: Promise<{ seed?: string | string[] }>
+  searchParams: Promise<{ seed?: string | string[]; q?: string | string[] }>
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -88,17 +102,19 @@ export default async function SuggestPage({ params, searchParams }: PageProps) {
   const cookieJar = await cookies()
   const gateAccepted = hasAcceptedAgeGate(cookieJar)
 
-  const { seed: seedRaw } = await searchParams
+  const { seed: seedRaw, q: qRaw } = await searchParams
   const seedString = Array.isArray(seedRaw) ? seedRaw[0] : seedRaw
   const seedBrandId = parseSeed(seedString)
+  const qString = Array.isArray(qRaw) ? qRaw[0] : qRaw
+  const freeformQuery = parseFreeform(qString)
 
   const tEntry = await getTranslations({ locale, namespace: 'suggest.entry' })
   const tResults = await getTranslations({ locale, namespace: 'suggest.results' })
 
-  // No-seed branch: render the discovery-framed placeholder that S6 will
-  // replace with the freeform-text input. The page still gates on age-gate
-  // acceptance below, so no seed-derived data leaks either.
-  if (seedBrandId === null) {
+  // Empty-input landing: no seed brand, no freeform query. Render the
+  // freeform-text form + discovery starter prompts. The page still
+  // gates on age-gate acceptance below, so no seed-derived data leaks.
+  if (seedBrandId === null && freeformQuery === null) {
     return (
       <>
         <main
@@ -111,25 +127,23 @@ export default async function SuggestPage({ params, searchParams }: PageProps) {
           <p className="text-base text-zinc-700 dark:text-zinc-300 max-w-prose">
             {tEntry('intro')}
           </p>
-          <section
-            className="rounded-md border border-zinc-200 bg-zinc-50 px-4 py-4 dark:border-zinc-800 dark:bg-zinc-900"
-            data-testid="suggest-no-seed-placeholder"
-          >
-            <p className="font-medium">{tEntry('noSeedTitle')}</p>
-            <p className="mt-2 text-sm text-zinc-700 dark:text-zinc-300">
-              {tEntry('noSeedBody')}
-            </p>
-          </section>
+          <SuggestFreeformForm />
+          <SuggestStarterPrompts />
         </main>
         {!gateAccepted && <AgeGate />}
       </>
     )
   }
 
-  // Seed branch: call the server action and render the discriminated union.
-  // The action itself runs the rate-limit gate, opens the MCP client, does
-  // the tool loop, and validates. The page is a thin renderer.
-  const state = await suggestAction({ kind: 'brand', brandId: seedBrandId })
+  // Freeform branch takes precedence over seed when both are present — a
+  // typed query is a stronger signal than a seed carried over in the URL
+  // from a prior navigation.
+  const actionSeed: SuggestSeed =
+    freeformQuery !== null
+      ? { kind: 'freeform', query: freeformQuery }
+      : { kind: 'brand', brandId: seedBrandId! }
+
+  const state = await suggestAction(actionSeed)
 
   return (
     <>
@@ -143,14 +157,26 @@ export default async function SuggestPage({ params, searchParams }: PageProps) {
         <p className="text-base text-zinc-700 dark:text-zinc-300 max-w-prose">
           {tEntry('intro')}
         </p>
-        <SuggestStateView state={state} seedBrandId={seedBrandId} locale={locale} />
-        <Link
-          href={{ pathname: '/sake/[brandId]', params: { brandId: String(seedBrandId) } }}
-          className="text-base font-medium underline underline-offset-4"
-          data-testid="suggest-back-to-seed"
-        >
-          {tResults('backToSeed')}
-        </Link>
+        {/* The freeform form always renders in the result view so a
+         * visitor can refine their query without navigating home. When
+         * the current view was seeded from a `?q=...`, the form starts
+         * pre-filled with that query for easy editing. */}
+        {actionSeed.kind === 'freeform' && (
+          <SuggestFreeformForm initialQuery={actionSeed.query} />
+        )}
+        <SuggestStateView state={state} locale={locale} />
+        {actionSeed.kind === 'brand' && (
+          <Link
+            href={{
+              pathname: '/sake/[brandId]',
+              params: { brandId: String(actionSeed.brandId) },
+            }}
+            className="text-base font-medium underline underline-offset-4"
+            data-testid="suggest-back-to-seed"
+          >
+            {tResults('backToSeed')}
+          </Link>
+        )}
       </main>
       {!gateAccepted && <AgeGate />}
       <DebugLogPusher events={state.debugLog} />
@@ -172,9 +198,25 @@ function parseSeed(value: string | undefined): number | null {
   return Number.isInteger(n) && n > 0 ? n : null
 }
 
+/**
+ * Parses the `?q=<string>` freeform query. Rejects empty / whitespace-
+ * only strings so the empty-input branch above still fires for a
+ * `?q=` URL that a visitor might land on via a stale link. Rejects
+ * over-length strings for the same reason the action does — a URL-
+ * pasted 5000-char blob shouldn't trigger a tool loop. The action
+ * re-validates on its side, so this is a UX affordance, not a
+ * security seam.
+ */
+function parseFreeform(value: string | undefined): string | null {
+  if (value === undefined) return null
+  const trimmed = value.trim()
+  if (trimmed.length === 0) return null
+  if (trimmed.length > MAX_FREEFORM_QUERY_LEN) return null
+  return trimmed
+}
+
 interface SuggestStateViewProps {
   state: SuggestActionState
-  seedBrandId: number
   locale: string
 }
 

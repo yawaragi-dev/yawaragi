@@ -403,6 +403,11 @@ export const CROSS_BEVERAGE_MAP: readonly CrossBeverageMap[] = Object.freeze(
  *   - "peaty"   → `peated`        (Whisky Advocate's canonical term)
  *   - "roasty"  → `dark-roasted`  (covers both Czech Dunkel and Schwarzbier)
  *   - "mizunara" → `japanese-mizunara` (the obvious shorthand)
+ *   - "ipa" / "hoppy" → `hoppy-west-coast` — the West-Coast IPA row IS
+ *     the hoppy-IPA archetype; a separate row would be duplicate data.
+ *     Added when a visitor typed "IPA" as their freeform query and got
+ *     no results because the LLM couldn't map the term (S6, #144
+ *     post-merge fix).
  *
  * Constraint enforced by the unit test in `cross-beverage-data.test.ts`:
  *   - Every alias VALUE must be a real descriptor in `CROSS_BEVERAGE_MAP`.
@@ -418,4 +423,6 @@ export const CROSS_BEVERAGE_DESCRIPTOR_ALIASES: Readonly<Record<string, string>>
     roasty: 'dark-roasted',
     roasted: 'dark-roasted',
     mizunara: 'japanese-mizunara',
+    ipa: 'hoppy-west-coast',
+    hoppy: 'hoppy-west-coast',
   })
