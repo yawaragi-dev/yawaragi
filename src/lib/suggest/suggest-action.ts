@@ -186,6 +186,48 @@ export async function suggestAction(seed: SuggestSeed): Promise<SuggestActionSta
             stopWhen: stepCountIs(6),
             system: SUGGEST_SYSTEM_PROMPT,
             prompt: buildSeedPrompt(seed),
+            // Per-step debug affordance (round 6b). Round 5 shipped the
+            // milestone-level entries (entered / rate-limit / MCP client
+            // open / tool loop start / tool loop returned / hydrate);
+            // this callback fills the gap inside the loop by emitting
+            // one line per tool call, one per tool result, and one
+            // per-step summary. `debugAdd(...)` is a no-op when
+            // `getCurrentDebugLog()` is undefined, so this fires on every
+            // request but short-circuits for non-debug visitors — the
+            // debug-mode branch stays at the log layer, not the LLM-call
+            // config shape.
+            //
+            // No automated test: `MockLanguageModelV3` scripting for a
+            // multi-tool sequence would be disproportionate for the
+            // signal here (existing suggest-action tests cover the
+            // surrounding decision branches). Verified manually via
+            // `/en/suggest?seed=<N>` with the `yawaragi_debug=1` cookie
+            // and `RATE_LIMIT_BYPASS=1` env — the debug panel shows
+            // `tool-call:`, `tool-result:`, and `step complete` lines
+            // for each MCP call inside the loop.
+            onStepFinish: (step) => {
+              for (const call of step.toolCalls) {
+                const argsPreview = JSON.stringify(call.input).slice(0, 200)
+                debugAdd('SuggestAction', `tool-call: ${call.toolName}(${argsPreview})`)
+              }
+              for (const result of step.toolResults) {
+                const outputPreview = JSON.stringify(result.output).slice(0, 150)
+                debugAdd(
+                  'SuggestAction',
+                  `tool-result: ${result.toolName} → ${outputPreview}`,
+                )
+              }
+              if (step.text && step.text.length > 0) {
+                debugAdd(
+                  'SuggestAction',
+                  `text-generation step (${step.text.length} chars)`,
+                )
+              }
+              debugAdd('SuggestAction', 'step complete', {
+                finishReason: step.finishReason,
+                usage: step.usage,
+              })
+            },
           },
         )
         debugAdd('SuggestAction', `tool loop returned (${llmResult.text?.length ?? 0} chars of final text)`)
