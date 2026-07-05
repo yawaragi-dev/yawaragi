@@ -11,10 +11,14 @@ import { z } from 'zod'
  * Fields:
  *  - `v`   — version. Bump when the payload shape changes so old
  *            cookies are rejected on read and re-issued on the next call.
- *  - `ts`  — issue timestamp (ms epoch). Used to enforce the 24h sliding
- *            TTL even when the browser holds the cookie longer than the
- *            `maxAge` attribute (defence-in-depth — a forged cookie that
- *            sneaks past the HMAC check would still fail the TTL check).
+ *  - `ts`  — issue timestamp (ms epoch). Used to enforce the 24h TTL
+ *            from issuance even when the browser holds the cookie longer
+ *            than the `maxAge` attribute (defence-in-depth — a forged
+ *            cookie that sneaks past the HMAC check would still fail the
+ *            TTL check). Post-#161 the middleware is the sole writer, so
+ *            an active visitor's `ts` is anchored to first issuance
+ *            (not sliding on activity) — see `middleware-issue.ts`
+ *            § "TTL semantics".
  *  - `sid` — opaque 128-bit random id, base64url-encoded. Never derived
  *            from the IP, the user agent, or anything else identifying.
  *            This is the value the rate-limiter uses as one of its two

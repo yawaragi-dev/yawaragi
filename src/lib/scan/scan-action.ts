@@ -12,10 +12,7 @@ import {
 import type { VisionProvider } from '@/lib/ai/vision/vision-provider'
 import { DebugLog, debugAdd, runWithDebugLog } from '@/lib/debug/debug-log'
 import { isDebugEnabledFromCookies } from '@/lib/debug/debug-mode'
-import {
-  anonymousSessionCookieAttrs,
-  readAnonymousSessionCookie,
-} from '@/lib/legal/anonymous-session-cookie'
+import { readAnonymousSessionCookie } from '@/lib/legal/anonymous-session-cookie'
 import { anonymousRateLimit } from '@/lib/rate-limit/anonymous-rate-limit'
 import { assertRateLimitConfig } from '@/lib/rate-limit/config-gate'
 import { extractIp, hashIp } from '@/lib/rate-limit/ip-hash'
@@ -264,10 +261,18 @@ export async function scanAction(
       return { status: 'invalid_input', reason: 'unsupported_locale' }
     }
 
-    // Rate-limit gate. Issues / refreshes `yawaragi_session` and consults
-    // the vision-scan bucket. On exhaustion the action returns the tagged
-    // `rate_limited` state and never reaches the vision provider.
+    // Rate-limit gate. Post-#161 middleware refactor: reads the
+    // `yawaragi_session` cookie the proxy stamped before render and
+    // consults the vision-scan bucket. Never mutates the cookie —
+    // `src/proxy.ts` is the sole writer, so calling `cookies().set(...)`
+    // from an action invoked mid-render (like the suggest surface) no
+    // longer crashes with `Cookies can only be modified in a Server
+    // Action or Route Handler`. On exhaustion the action returns the
+    // tagged `rate_limited` state and never reaches the vision provider.
     const rateLimit = await enforceRateLimit()
+    if (rateLimit.kind === 'session_missing') {
+      return { status: 'session_missing' }
+    }
     if (!rateLimit.allowed) {
       return { status: 'rate_limited', retryAfterSec: rateLimit.retryAfterSec }
     }
@@ -686,16 +691,24 @@ async function extractAndLookupWithProvider(
     }
 }
 
-interface RateLimitDecision {
-  allowed: boolean
-  retryAfterSec: number
-}
+type RateLimitDecision =
+  | { kind: 'allowed'; allowed: true; retryAfterSec: number }
+  | { kind: 'denied'; allowed: false; retryAfterSec: number }
+  | { kind: 'session_missing' }
 
 /**
- * Issues / refreshes the `yawaragi_session` cookie and consults the
- * `vision-scan` bucket. Returns `{allowed: false, retryAfterSec}` when
- * either of the two identifiers (signed cookie sid, hashed IP) has
- * exhausted its 24h budget.
+ * Read-only rate-limit gate. Post-#161 middleware refactor: the proxy
+ * (`src/proxy.ts`) issues / refreshes the `yawaragi_session` cookie
+ * before the RSC render. This function only READS the cookie and
+ * consults the `vision-scan` bucket — no `cookies().set(...)` on the
+ * hot path, so calling the action mid-render (which forbids cookie
+ * mutation in Next.js 15+) no longer crashes.
+ *
+ * Returns:
+ *   - `session_missing` — cookie absent (should not happen post-
+ *     middleware; kept as a defensive branch).
+ *   - `denied` — either identifier has exhausted its 24h budget.
+ *   - `allowed` — call may proceed.
  *
  * Production demands the full env triplet — failing closed is the only
  * safe mode for a rate-limiter, since silently bypassing defeats the
@@ -704,6 +717,15 @@ interface RateLimitDecision {
  * keep working on machines without Upstash credentials.
  */
 async function enforceRateLimit(): Promise<RateLimitDecision> {
+  // Dev/preview escape hatch (see env.ts `RATE_LIMIT_BYPASS`): skip
+  // the KV round-trip and cookie / IP-hash read entirely. Absence of
+  // the var is the safe default. Never set on Production Vercel.
+  if (env.RATE_LIMIT_BYPASS === '1') {
+    console.warn(
+      '[scan] RATE_LIMIT_BYPASS=1 — rate limit skipped. Do NOT ship this in Production.',
+    )
+    return { kind: 'allowed', allowed: true, retryAfterSec: 0 }
+  }
   // Production fail-closed: any missing key throws (with the specific
   // key name) before we touch the cookie or KV. Non-production returns
   // null and we skip enforcement with a warning. The check is extracted
@@ -725,29 +747,26 @@ async function enforceRateLimit(): Promise<RateLimitDecision> {
       '[scan] rate-limit env not set; skipping enforcement (non-production only).',
     )
     debugAdd('RateLimit', 'env unset → skipping enforcement (non-production)', undefined, 'warn')
-    return { allowed: true, retryAfterSec: 0 }
+    return { kind: 'allowed', allowed: true, retryAfterSec: 0 }
   }
   const { secret, salt, kvUrl, kvToken } = config
 
   const cookieJar = await cookies()
   const requestHeaders = await headers()
 
-  const existing = readAnonymousSessionCookie(cookieJar, secret)
-  const attrs = anonymousSessionCookieAttrs(secret, existing ?? undefined)
-  // Write the cookie back unconditionally — fresh issuance mints a new
-  // sid, refresh slides the ts forward (24h sliding TTL).
-  cookieJar.set(attrs)
-  // Re-parse from the freshly-minted value so we have the canonical sid
-  // for the rate-limit key (rather than reaching into the helper's
-  // internals to extract it). A miss here would be a bug in the cookie
-  // helper itself — we surface it as a hard error rather than continuing
-  // without an identifier.
-  const session = readAnonymousSessionCookie(
-    { get: () => ({ value: attrs.value }) },
-    secret,
-  )
+  const session = readAnonymousSessionCookie(cookieJar, secret)
   if (!session) {
-    throw new Error('Failed to verify a freshly-issued session cookie')
+    // The middleware is the sole writer of `yawaragi_session`; if the
+    // action reached this branch, the middleware didn't run against
+    // this request (matcher gap, direct action invocation, etc.).
+    // Surface as a typed state — never throw, never bypass the limiter.
+    debugAdd(
+      'RateLimit',
+      'session cookie missing — middleware did not stamp it (matcher gap? direct invocation?)',
+      undefined,
+      'warn',
+    )
+    return { kind: 'session_missing' }
   }
 
   const ipHashed = hashIp(extractIp(requestHeaders), salt)
@@ -770,5 +789,7 @@ async function enforceRateLimit(): Promise<RateLimitDecision> {
     result.allowed ? 'info' : 'warn',
   )
 
-  return { allowed: result.allowed, retryAfterSec: result.retryAfterSec }
+  return result.allowed
+    ? { kind: 'allowed', allowed: true, retryAfterSec: result.retryAfterSec }
+    : { kind: 'denied', allowed: false, retryAfterSec: result.retryAfterSec }
 }

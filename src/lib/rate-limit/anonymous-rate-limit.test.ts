@@ -135,13 +135,13 @@ describe('anonymousRateLimit — dual-identifier behavior', () => {
 })
 
 describe('anonymousRateLimit — bucket isolation', () => {
-  // A hypothetical second bucket. The Phase-3 union has only
-  // 'vision-scan'; this test casts past the type to assert the budget
-  // separation invariant the limiter promises (issue #107 AC: "bucket
-  // isolation"). When Phase 4 widens the union, the cast goes away.
+  // Cast past the type to smuggle in a bucket name that isn't a member of
+  // the registered union — asserts the "no config = throw" invariant so a
+  // typo'd bucket name at a future call site fails loud rather than
+  // silently sharing a budget with an unrelated surface.
   type AnyBucket = string
 
-  it('does not let a vision-scan budget leak across to a different bucket', async () => {
+  it('vision-scan exhaustion does not leak into the suggestions bucket (issue #143 co-existence)', async () => {
     const start = 1_700_000_000_000
     const { deps } = makeDeps(start)
 
@@ -161,17 +161,27 @@ describe('anonymousRateLimit — bucket isolation', () => {
       ).allowed,
     ).toBe(false)
 
-    // 'suggestions' isn't a real registered bucket yet — the limiter
-    // throws because the cap lookup misses. THAT is the right failure
-    // mode for a leaking budget: there is no config, so no shared
-    // budget can leak. The Phase-4 slice will add 'suggestions' to
-    // BUCKET_CONFIG and the cast below will drop.
+    // Suggestions bucket still has the full 3-call budget for the same
+    // identifier — issue #143 co-locates the two surfaces and their
+    // isolation is the invariant that lets a visitor whose scan quota is
+    // exhausted still exercise suggest (and vice versa).
+    const suggestFirst = await anonymousRateLimit(
+      { cookieId: 'cookie-E', ipHashed: 'ip-E', bucket: 'suggestions' },
+      deps,
+    )
+    expect(suggestFirst.allowed).toBe(true)
+  })
+
+  it('throws on an unknown / typo bucket name — no config = no silent budget share', async () => {
+    const start = 1_700_000_000_000
+    const { deps } = makeDeps(start)
+
     await expect(
       anonymousRateLimit(
         {
-          cookieId: 'cookie-E',
-          ipHashed: 'ip-E',
-          bucket: 'suggestions' as unknown as AnyBucket as 'vision-scan',
+          cookieId: 'cookie-typo',
+          ipHashed: 'ip-typo',
+          bucket: 'sugestions' as unknown as AnyBucket as 'vision-scan',
         },
         deps,
       ),

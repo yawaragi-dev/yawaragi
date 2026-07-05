@@ -58,6 +58,23 @@ export class RateLimitConfigError extends Error {
 }
 
 /**
+ * Thrown at boot when `RATE_LIMIT_BYPASS=1` is set on a Production
+ * deploy. The env var is a dev/preview escape hatch (see env.ts) — its
+ * only production behaviour must be "fail the deploy loudly," never
+ * "silently unmeter the paid-API cost protection." Wired via
+ * `src/instrumentation.ts` so a misconfigured Production deploy fails
+ * at cold start rather than at first scan / suggest request.
+ */
+export class RateLimitBypassInProductionError extends Error {
+  constructor() {
+    super(
+      'RATE_LIMIT_BYPASS=1 is set on a Production deploy. This env var is a dev/preview escape hatch and MUST NOT be set on Production Vercel — unset it in Project → Settings → Environment Variables and redeploy.',
+    )
+    this.name = 'RateLimitBypassInProductionError'
+  }
+}
+
+/**
  * @param partial — the four env values (each possibly undefined)
  * @param isProd — whether to throw on missing keys (true) or return null (false)
  * @returns the typed `RateLimitConfig` when all four are present;
@@ -68,7 +85,14 @@ export class RateLimitConfigError extends Error {
 export function assertRateLimitConfig(
   partial: PartialRateLimitConfig,
   isProd: boolean,
+  opts: { bypassEnabled?: boolean } = {},
 ): RateLimitConfig | null {
+  // Bypass-in-production is checked before the missing-keys walk so a
+  // Production deploy with BOTH `RATE_LIMIT_BYPASS=1` AND missing rate-
+  // limit env vars surfaces the more serious problem (bypass) first.
+  if (isProd && opts.bypassEnabled === true) {
+    throw new RateLimitBypassInProductionError()
+  }
   const missing: string[] = []
   for (const [field, envName] of REQUIRED_KEYS) {
     if (!partial[field]) missing.push(envName)

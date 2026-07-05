@@ -200,6 +200,15 @@ export default async function SakeBrandPage({ params }: PageProps) {
         </section>
       )}
       {flavorChart && <FlavorChartView chart={flavorChart} />}
+      {/*
+        Phase 4 / S5 (#143): "Find similar" affordance. Routes to
+        /[locale]/suggest?seed=<brandId>, which runs the AI SDK tool
+        loop and renders LLM-generated similar-sake cards. Uses the
+        next-intl `Link` from `@/i18n/navigation` so locale is
+        preserved automatically. The `?seed=` search param is passed
+        via the `query` field of next-intl's typed href.
+      */}
+      <SuggestCta brandId={brand.brandId} />
       <Link
         href="/"
         className="text-base font-medium underline underline-offset-4"
@@ -207,5 +216,18 @@ export default async function SakeBrandPage({ params }: PageProps) {
         {t('backToHome')}
       </Link>
     </main>
+  )
+}
+
+async function SuggestCta({ brandId }: { brandId: number }) {
+  const tResults = await getTranslations('suggest.results')
+  return (
+    <Link
+      href={{ pathname: '/suggest', query: { seed: String(brandId) } }}
+      className="text-base font-medium underline underline-offset-4"
+      data-testid="find-similar-link"
+    >
+      {tResults('findSimilarCta')}
+    </Link>
   )
 }
