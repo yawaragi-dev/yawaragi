@@ -43,8 +43,12 @@ The origin of any piece of information shown to a user. Every record carries a `
 _Avoid_: Origin, Trust, Confidence (confidence is a separate field, not a synonym for provenance)
 
 **CrossBeverageMap**:
-A hand-curated deterministic table that bridges Western beverage descriptors (e.g. "smoky", "tannic", "agave-smoky", "juniper-botanical") to positions on the 6-axis FlavorProfile. Not a scientific mapping — a heuristic for cross-domain recommendations. The schema's `beverage` enum (`src/lib/schemas/cross-beverage-map.ts`) is the source of truth for covered categories. Always rendered with `<HeuristicDisclaimer />`. The LLM may not invent new entries beyond the table.
+A hand-curated deterministic table that bridges Western beverage descriptors (e.g. "smoky", "tannic", "agave-smoky", "juniper-botanical") to positions on the 6-axis FlavorProfile. Not a scientific mapping — a heuristic for cross-domain recommendations. The schema's `beverage` enum (`src/lib/schemas/cross-beverage-map.ts`) is the source of truth for covered categories. Always rendered with `<HeuristicDisclaimer />`. The LLM may not invent new entries beyond the table. The map is bidirectional: the *forward* direction resolves a descriptor a visitor types into a FlavorProfile position (which Sakes match it); the *reverse* direction takes a Sake's FlavorProfile and names the nearest Western **Exemplar** ("interesting for those who like Riesling"). Both directions carry `source: cross_beverage_map` and the heuristic disclaimer; reverse may legitimately return *no* Exemplar when a Sake sits far from every descriptor (a distinctly Japanese profile with no close Western analog).
 _Avoid_: BeverageBridge, CrossDomainMap, BeverageTranslation
+
+**Exemplar**:
+A recognisable, named Western drink (e.g. "Riesling Kabinett", "Lagavulin 16", "Sancerre") curated onto a CrossBeverageMap descriptor so the reverse direction can speak in familiar terms instead of abstract descriptor names. Editorially resurrected from the cross-beverage research artifact (`docs/research/cross-beverage-map.md`) where these named anchors originally lived before being averaged into descriptor clusters. Source `manual_curation`. A descriptor has one or more Exemplars; the reverse suggestion surfaces the one or two nearest.
+_Avoid_: Anchor (overloaded — the research doc's raw exemplars are also "anchors"), Reference drink, Analog
 
 ## Relationships
 
