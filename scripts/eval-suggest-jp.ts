@@ -52,6 +52,16 @@ interface QueryResult {
   recallAt5: number
   status: 'ok' | 'no_match' | 'rate_limited' | 'error'
   detail?: string
+  // Populated when the endpoint returns a `debugLog` with a
+  // `SuggestAction / usage totals` entry (i.e. the `yawaragi_debug=1`
+  // cookie was set on the request, which the runner always does).
+  // Undefined means the debug capture failed for some reason — the
+  // per-query recall still works.
+  inputTokens?: number
+  outputTokens?: number
+  cacheReadTokens?: number
+  cacheWriteTokens?: number
+  cacheHitRatio?: number
 }
 
 const BASE_URL = process.env.EVAL_BASE_URL ?? 'http://localhost:3000'
@@ -121,6 +131,7 @@ async function main() {
 
       const recallAt3 = recall(returnedBrandIds.slice(0, 3), gt.expectedBrandIds)
       const recallAt5 = recall(returnedBrandIds.slice(0, 5), gt.expectedBrandIds)
+      const usage = extractUsage(state.debugLog)
 
       results.push({
         queryId: query.id,
@@ -131,6 +142,7 @@ async function main() {
         recallAt5,
         status,
         detail,
+        ...usage,
       })
 
       const marker =
@@ -141,8 +153,12 @@ async function main() {
             : status === 'rate_limited'
               ? 'RL '
               : 'ERR'
+      const usageSuffix =
+        usage.inputTokens != null
+          ? `  in=${usage.inputTokens}(read=${usage.cacheReadTokens ?? 0} write=${usage.cacheWriteTokens ?? 0}) out=${usage.outputTokens}`
+          : ''
       console.log(
-        `${marker} r@3=${recallAt3.toFixed(2)}  r@5=${recallAt5.toFixed(2)}  ${Math.round(latency)}ms${detail ? `  (${detail})` : ''}`,
+        `${marker} r@3=${recallAt3.toFixed(2)}  r@5=${recallAt5.toFixed(2)}  ${Math.round(latency)}ms${detail ? `  (${detail})` : ''}${usageSuffix}`,
       )
     } catch (err) {
       const latency = performance.now() - t0
@@ -191,15 +207,60 @@ async function main() {
     `| claude-haiku-4-5 | sakenowa-mcp+mapCrossBeverage | ${queries.length} | ${ok.length} | ${noMatch} | ${rateLimited} | ${errored} | ${meanRecall3} | ${meanRecall5} | ${medianLatency} |`,
   )
 
+  const usageResults = results.filter((r) => r.inputTokens != null)
+  if (usageResults.length > 0) {
+    const totalInput = usageResults.reduce((s, r) => s + (r.inputTokens ?? 0), 0)
+    const totalOutput = usageResults.reduce((s, r) => s + (r.outputTokens ?? 0), 0)
+    const totalCacheRead = usageResults.reduce((s, r) => s + (r.cacheReadTokens ?? 0), 0)
+    const totalCacheWrite = usageResults.reduce((s, r) => s + (r.cacheWriteTokens ?? 0), 0)
+    const totalNoCache = totalInput - totalCacheRead - totalCacheWrite
+    const overallHitRatio = totalInput > 0 ? totalCacheRead / totalInput : 0
+
+    // Anthropic Claude Haiku 4.5 pricing (2026-01 cutoff — verify at
+    // https://www.anthropic.com/pricing before quoting):
+    //   input          $1.00 / MTok
+    //   output         $5.00 / MTok
+    //   cache write    $1.25 / MTok  (125% of input)
+    //   cache read     $0.10 / MTok  (10% of input)
+    // The rough-USD column below assumes these; adjust the constants
+    // if Anthropic changes the sheet.
+    const RATE_INPUT = 1.0
+    const RATE_OUTPUT = 5.0
+    const RATE_CACHE_WRITE = 1.25
+    const RATE_CACHE_READ = 0.1
+    const costUsd =
+      (totalNoCache * RATE_INPUT +
+        totalCacheWrite * RATE_CACHE_WRITE +
+        totalCacheRead * RATE_CACHE_READ +
+        totalOutput * RATE_OUTPUT) /
+      1_000_000
+
+    console.log(``)
+    console.log(`## Token usage + cost`)
+    console.log(``)
+    console.log(
+      `| queries | input | output | cache read | cache write | no-cache input | cache hit ratio | est. USD (Haiku 4.5) |`,
+    )
+    console.log(
+      `|---------|-------|--------|------------|-------------|----------------|-----------------|-----------------------|`,
+    )
+    console.log(
+      `| ${usageResults.length} | ${totalInput} | ${totalOutput} | ${totalCacheRead} | ${totalCacheWrite} | ${totalNoCache} | ${overallHitRatio.toFixed(3)} | $${costUsd.toFixed(4)} |`,
+    )
+  }
+
   console.log(``)
   console.log(`## Per-query detail`)
   console.log(``)
-  console.log(`| query id | status | returned brandIds (top-5) | expected size | r@3 | r@5 | ms |`)
-  console.log(`|----------|--------|---------------------------|---------------|-----|-----|-----|`)
+  console.log(`| query id | status | returned brandIds (top-5) | expected size | r@3 | r@5 | ms | in | out | cache read |`)
+  console.log(`|----------|--------|---------------------------|---------------|-----|-----|-----|-----|-----|------------|`)
   for (const r of results) {
     const returned = r.returnedBrandIds.slice(0, 5).join(', ')
+    const inTok = r.inputTokens != null ? String(r.inputTokens) : '—'
+    const outTok = r.outputTokens != null ? String(r.outputTokens) : '—'
+    const cacheRead = r.cacheReadTokens != null ? String(r.cacheReadTokens) : '—'
     console.log(
-      `| ${r.queryId} | ${r.status}${r.detail ? ` (${r.detail})` : ''} | ${returned || '—'} | ${r.expectedBrandIds.length} | ${r.recallAt3.toFixed(2)} | ${r.recallAt5.toFixed(2)} | ${r.latencyMs} |`,
+      `| ${r.queryId} | ${r.status}${r.detail ? ` (${r.detail})` : ''} | ${returned || '—'} | ${r.expectedBrandIds.length} | ${r.recallAt3.toFixed(2)} | ${r.recallAt5.toFixed(2)} | ${r.latencyMs} | ${inTok} | ${outTok} | ${cacheRead} |`,
     )
   }
 }
@@ -214,6 +275,12 @@ async function callSuggestEndpoint(seed: {
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${CRON_SECRET}`,
+      // `yawaragi_debug=1` opts the request into the DebugLog capture
+      // path (see `isDebugEnabledFromCookies`). The runner needs this
+      // to extract per-query token usage + cache-hit stats from the
+      // `debugLog` array on the response. Zero effect for a non-eval
+      // visitor (this endpoint is dev-only anyway).
+      Cookie: 'yawaragi_debug=1',
     },
     body: JSON.stringify(seed),
   })
@@ -222,6 +289,35 @@ async function callSuggestEndpoint(seed: {
     throw new Error(`endpoint ${res.status}: ${text}`)
   }
   return (await res.json()) as SuggestActionState
+}
+
+/**
+ * Pull the aggregate `usage totals` entry out of a `debugLog` array.
+ * Returns undefined if the debug capture didn't happen (missing cookie,
+ * `debugLog` field absent, no matching entry). The eval treats undefined
+ * as "no usage data for this query" — recall / latency still work.
+ */
+function extractUsage(
+  debugLog: SuggestActionState['debugLog'],
+):
+  | Pick<
+      QueryResult,
+      'inputTokens' | 'outputTokens' | 'cacheReadTokens' | 'cacheWriteTokens' | 'cacheHitRatio'
+    >
+  | Record<string, never> {
+  if (!debugLog) return {}
+  const entry = debugLog.find(
+    (e) => e.source === 'SuggestAction' && e.message === 'usage totals',
+  )
+  if (!entry || !entry.data) return {}
+  const d = entry.data as Record<string, unknown>
+  return {
+    inputTokens: typeof d.input === 'number' ? d.input : undefined,
+    outputTokens: typeof d.output === 'number' ? d.output : undefined,
+    cacheReadTokens: typeof d.cacheRead === 'number' ? d.cacheRead : undefined,
+    cacheWriteTokens: typeof d.cacheWrite === 'number' ? d.cacheWrite : undefined,
+    cacheHitRatio: typeof d.cacheHitRatio === 'number' ? d.cacheHitRatio : undefined,
+  }
 }
 
 function recall(returned: number[], expected: readonly number[]): number {

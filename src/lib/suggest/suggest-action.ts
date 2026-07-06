@@ -212,8 +212,32 @@ export async function suggestAction(seed: SuggestSeed): Promise<SuggestActionSta
             model: anthropic('claude-haiku-4-5'),
             tools,
             stopWhen: stepCountIs(6),
-            system: SUGGEST_SYSTEM_PROMPT,
-            prompt: buildSeedPrompt(seed),
+            // Messages-array form (instead of `system:` + `prompt:`
+            // shorthand) so we can attach `providerOptions.anthropic.
+            // cacheControl` to the system message. Combined with the
+            // cacheControl on `mapCrossBeverage` (the last tool in the
+            // bundle — see `src/lib/ai/tools/map-cross-beverage.ts`),
+            // this gives Anthropic two prompt-cache breakpoints: one
+            // after the tools block, one after the system block. Both
+            // read hot on step 2+ of the tool loop AND across serial
+            // eval queries within the 5-minute TTL window. Saves ~40-
+            // 60% on input tokens per query on the accumulated re-
+            // sends the tool loop does each step.
+            messages: [
+              {
+                role: 'system',
+                content: SUGGEST_SYSTEM_PROMPT,
+                providerOptions: {
+                  anthropic: {
+                    cacheControl: { type: 'ephemeral' as const },
+                  },
+                },
+              },
+              {
+                role: 'user',
+                content: buildSeedPrompt(seed),
+              },
+            ],
             // Per-step debug affordance (round 6b). Round 5 shipped the
             // milestone-level entries (entered / rate-limit / MCP client
             // open / tool loop start / tool loop returned / hydrate);
@@ -259,6 +283,30 @@ export async function suggestAction(seed: SuggestSeed): Promise<SuggestActionSta
           },
         )
         debugAdd('SuggestAction', `tool loop returned (${llmResult.text?.length ?? 0} chars of final text)`)
+        // Aggregate token usage across all tool-loop steps. Emit
+        // cache-hit ratio so a maintainer running the eval or
+        // debugging a slow visitor request can spot a caching
+        // regression at a glance (ratio > 0.5 means the prompt-
+        // cache breakpoints on system + tools are working; ratio
+        // near 0 means the 5-minute TTL expired between steps or
+        // the breakpoints were bypassed). Suggest-action.ts is
+        // the only current consumer of prompt caching; when scan-
+        // action migrates, extract this into a shared helper.
+        const usage = llmResult.totalUsage
+        const cacheRead = usage.inputTokenDetails?.cacheReadTokens ?? 0
+        const cacheWrite = usage.inputTokenDetails?.cacheWriteTokens ?? 0
+        const noCache = usage.inputTokenDetails?.noCacheTokens ?? 0
+        const totalInput = cacheRead + cacheWrite + noCache
+        const cacheHitRatio = totalInput > 0 ? cacheRead / totalInput : 0
+        debugAdd('SuggestAction', 'usage totals', {
+          input: usage.inputTokens,
+          output: usage.outputTokens,
+          total: usage.totalTokens,
+          cacheRead,
+          cacheWrite,
+          noCache,
+          cacheHitRatio: Number(cacheHitRatio.toFixed(3)),
+        })
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err)
         console.warn('[suggest] tool loop failed:', message)

@@ -7,7 +7,7 @@
 // rule. The RSC result view stays server-side — this component only
 // hands the query off to the URL.
 
-import { type FormEvent, useEffect, useState, useTransition } from 'react'
+import { type FormEvent, useState, useTransition } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from '@/i18n/navigation'
 import { Button } from '@/components/ui/button'
@@ -43,21 +43,18 @@ export function SuggestFreeformForm({ initialQuery = '' }: SuggestFreeformFormPr
   const t = useTranslations('suggest.freeform')
   const router = useRouter()
   const [value, setValue] = useState(initialQuery)
-  // Sync internal state when the URL-derived initialQuery changes. React
-  // reconciles this component across navigation because the parent
-  // `<SuggestPage>` renders `<SuggestFreeformForm />` at the same tree
-  // position on both the empty-landing view and the freeform-result
-  // view. Without this effect, `useState(initialQuery)` only reads the
-  // prop on the FIRST mount — so a starter-chip click (which navigates
-  // to `/suggest?q=<prompt>` without ever touching the input) or a
-  // direct URL load (bookmark, shared link) left the input EMPTY
-  // instead of pre-filled with the query the visitor is looking at.
-  //
-  // Effect only fires when initialQuery ACTUALLY changes, so live
-  // typing (which mutates `value` but not `initialQuery`) is untouched.
-  useEffect(() => {
-    setValue(initialQuery)
-  }, [initialQuery])
+  // Note on `initialQuery` sync: `useState(initialQuery)` only reads
+  // the prop on the FIRST mount. Because React reconciles this
+  // component across the empty-landing → freeform-result navigation
+  // (same tree position in `page.tsx`), a naive setup would ignore
+  // subsequent prop changes and leave the input empty on chip-click
+  // or direct-URL loads. The fix is a `key` prop on the parent side
+  // (`<SuggestFreeformForm key={initialQuery || 'empty'} />`) so
+  // React unmounts + remounts the form whenever the URL-derived
+  // query changes. Handling it there — not with a `useEffect` that
+  // calls `setValue` — avoids the React 19 `set-state-in-effect`
+  // lint rule and matches the framework's recommended pattern for
+  // "reset state when a prop changes".
   // `useTransition` marks the router.push as a transition so React
   // exposes an `isPending` flag that stays true while Next.js streams
   // the new RSC segment. Combined with `loading.tsx` this covers both

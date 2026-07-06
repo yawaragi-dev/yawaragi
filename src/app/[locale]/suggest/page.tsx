@@ -127,7 +127,7 @@ export default async function SuggestPage({ params, searchParams }: PageProps) {
           <p className="text-base text-zinc-700 dark:text-zinc-300 max-w-prose">
             {tEntry('intro')}
           </p>
-          <SuggestFreeformForm />
+          <SuggestFreeformForm key="empty" />
           <SuggestStarterPrompts />
         </main>
         {!gateAccepted && <AgeGate />}
@@ -162,7 +162,16 @@ export default async function SuggestPage({ params, searchParams }: PageProps) {
          * the current view was seeded from a `?q=...`, the form starts
          * pre-filled with that query for easy editing. */}
         {actionSeed.kind === 'freeform' && (
-          <SuggestFreeformForm initialQuery={actionSeed.query} />
+          // `key` forces remount whenever the URL-derived query
+          // changes, so `useState(initialQuery)` picks up the new
+          // value on mount. Without it, React reuses the form across
+          // navigation (same tree position) and the input would
+          // ignore chip-click / direct-URL loads. See
+          // `suggest-freeform-form.tsx` for the fuller note.
+          <SuggestFreeformForm
+            key={actionSeed.query}
+            initialQuery={actionSeed.query}
+          />
         )}
         <SuggestStateView state={state} locale={locale} />
         {actionSeed.kind === 'brand' && (
