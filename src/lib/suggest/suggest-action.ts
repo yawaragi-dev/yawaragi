@@ -217,23 +217,25 @@ export async function suggestAction(seed: SuggestSeed): Promise<SuggestActionSta
             // cacheControl` to the system message. Combined with the
             // cacheControl on `mapCrossBeverage` (the last tool in the
             // bundle — see `src/lib/ai/tools/map-cross-beverage.ts`),
-            // this SHOULD give Anthropic two prompt-cache breakpoints:
-            // one after the tools block, one after the system block.
+            // this gives Anthropic two prompt-cache breakpoints: one
+            // after the tools block, one after the system block.
             //
-            // KNOWN LIMITATION (2026-07-06): Claude Haiku 4.5 silently
-            // ignores cache_control on our account. Verified via a
-            // direct API probe with a ~2000-token system prompt +
-            // cache_control marker: Haiku returned
-            // `cache_creation_input_tokens: 0`, Sonnet 4.5 returned
-            // `2007` on the same request. Wiring is correct; the model
-            // just doesn't cache. Options if cost becomes an issue:
-            //   1. Escalate to Sonnet (its cached-input effective rate
-            //      $0.84/MTok undercuts Haiku's $1/MTok flat when
-            //      hit-rate > ~80%).
-            //   2. Wait for Anthropic to enable caching on Haiku 4.5.
-            //   3. Compress the tools schemas + system prompt.
-            // Keeping the cacheControl markers in place so the code
-            // path is right the day Haiku 4.5 flips.
+            // Haiku 4.5 minimum cacheable prefix (per Anthropic docs):
+            // 4096 tokens. Verified by direct-API probe 2026-07-06 —
+            // sub-4096 requests are silently dropped (no error, no
+            // warning). SUGGEST_SYSTEM_PROMPT is deliberately sized so
+            // the system + tools bundle exceeds 4096 tokens; measured
+            // ~4338 for the current version. **If you edit
+            // SUGGEST_SYSTEM_PROMPT and shrink it, caching may silently
+            // stop working.** The eval will show cacheReadTokens=0 in
+            // its output when this happens. Re-verify with a manual
+            // probe against `/api/debug/eval-suggest` and inspect the
+            // `usage totals` debug entry.
+            //
+            // Post-activation results (S7, 2026-07-06):
+            //   - 77% cache hit ratio across a 15-query eval run
+            //   - 41% cost reduction vs pre-caching baseline
+            //   - $0.16/run vs $0.27/run at Haiku 4.5 pricing
             messages: [
               {
                 role: 'system',

@@ -54,6 +54,28 @@ An LLM that returns 5 brands where 2 are in the ground truth set of
 8 gets 2/8 = 0.25 — a fair reflection that some brands were on-point
 and others were divergent-but-not-wrong.
 
+## Prompt-cache signal (Haiku 4.5)
+
+The eval output reports `cache read`, `cache write`, and a
+`cache hit ratio` per query and in the summary. These are load-
+bearing signals if you touch the suggest surface:
+
+- **Haiku 4.5's minimum cacheable prefix is 4096 tokens** (per
+  Anthropic docs). Below that, `cache_control` markers are silently
+  dropped — no error, no warning.
+- The current `SUGGEST_SYSTEM_PROMPT` + tools bundle in
+  `src/lib/suggest/suggest-action.ts` is sized to exceed 4096
+  tokens (measured ~4338).
+- **If you edit the system prompt and shrink it below the
+  threshold, caching silently stops working.** The eval will show
+  `cache read=0 write=0` across every query and a ~40% cost
+  regression.
+
+Post-activation baseline (S7, 2026-07-06):
+- 77% cache hit ratio across the 15-query run
+- $0.16/run (vs $0.27 pre-caching baseline)
+- Mean recall@3 = 0.39, mean recall@5 = 0.46
+
 ## How ground truth was built
 
 See the header of `ground-truth.ts` for the per-mode methodology.

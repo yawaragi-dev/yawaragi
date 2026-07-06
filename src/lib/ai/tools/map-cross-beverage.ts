@@ -134,14 +134,15 @@ export const mapCrossBeverage = tool({
   inputSchema: InputSchema,
   // Anthropic prompt-cache breakpoint at the end of the tools bundle.
   // `buildSuggestToolSet` spreads MCP tools first and adds this tool
-  // LAST, so a marker here caches the whole tools block. Verified
-  // 2026-07-06: correctly reaches the request via AI SDK 6 ↔ Anthropic
-  // provider. **However**, Claude Haiku 4.5 silently ignores the
-  // marker (returns `cache_creation_input_tokens: 0` — Sonnet 4.5
-  // caches the same request as `2007`). Keeping the wiring so the
-  // day Anthropic enables Haiku caching, we get it for free. See
-  // the corresponding docstring in `src/lib/suggest/suggest-action.ts`
-  // for the strategic write-up.
+  // LAST, so a marker here caches the whole tools block (MCP tools +
+  // this local tool) as one unit. Verified working with Haiku 4.5
+  // (S7, 2026-07-06) — 77% cache hit ratio across the eval run.
+  //
+  // Haiku 4.5 requires the cached prefix to exceed 4096 tokens
+  // (Anthropic minimum), so this marker is only useful when combined
+  // with a system-prompt-side marker that pushes the total over the
+  // threshold. See `src/lib/suggest/suggest-action.ts` for the
+  // paired cache marker and the token-count budget.
   providerOptions: {
     anthropic: {
       cacheControl: { type: 'ephemeral' as const },
