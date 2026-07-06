@@ -1,12 +1,15 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { FlavorAxisLabelView } from '@/components/sake/flavor-axis-label'
+import {
+  FlavorChartInlineView,
+  type FlavorAxisStrings,
+} from '@/components/sake/flavor-chart'
 import { ProvenanceBadgeView } from '@/components/sake/provenance-badge'
 import { SakenowaAttributionView } from '@/components/sake/sakenowa-attribution'
 import {
   FLAVOR_AXES,
-  FLAVOR_AXIS_ROMAJI,
+  type FlavorAxis,
   type FlavorChart,
 } from '@/lib/schemas/flavor-chart'
 
@@ -172,69 +175,36 @@ export function ScanResultCard({
         </div>
       </div>
 
-      {flavorChart && <FlavorChartInline chart={flavorChart} />}
+      {flavorChart && <FlavorChartForCard chart={flavorChart} />}
     </article>
   )
 }
 
 /**
- * Client twin of `<FlavorChartView />` — same six labelled bars, same
- * axis-label semantics (romaji + kanji + tooltip caveat), but reads
- * strings via `useTranslations` so it composes with the client
- * `<ScanResultCard />`. The parent RSC-side `<FlavorChartView />`
- * still exists for the sake detail page.
+ * Thin client wrapper: reads the same i18n namespaces the async
+ * `<FlavorChartView />` reads via `getTranslations`, hands the resolved
+ * strings to the shared `<FlavorChartInlineView />`. Same bar rendering
+ * as the sake detail page — the sync view is the single source of truth
+ * (see ADR-0015 refactor).
  */
-function FlavorChartInline({ chart }: { chart: FlavorChart }) {
+function FlavorChartForCard({ chart }: { chart: FlavorChart }) {
   const t = useTranslations('sake.brand')
   const tAxis = useTranslations('flavorAxis')
 
+  const axisStrings = {} as Record<FlavorAxis, FlavorAxisStrings>
+  for (const axis of FLAVOR_AXES) {
+    axisStrings[axis] = {
+      kanji: tAxis(`${axis}.kanji`),
+      approximation: tAxis(`${axis}.label`),
+      caveat: tAxis(`${axis}.caveat`),
+    }
+  }
+
   return (
-    <section
-      className="flex flex-col gap-3"
-      data-testid="scan-result-flavor-chart"
-      aria-label={t('flavorChartLabel')}
-    >
-      <p className="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-        {t('flavorChartLabel')}
-      </p>
-      <ul className="flex flex-col gap-3" role="list">
-        {FLAVOR_AXES.map((axis) => {
-          const value = chart[axis]
-          return (
-            <li key={axis} className="flex items-center gap-4">
-              <div className="w-28 shrink-0">
-                <FlavorAxisLabelView
-                  axis={axis}
-                  romaji={FLAVOR_AXIS_ROMAJI[axis]}
-                  kanji={tAxis(`${axis}.kanji`)}
-                  approximation={tAxis(`${axis}.label`)}
-                  caveat={tAxis(`${axis}.caveat`)}
-                />
-              </div>
-              <div
-                role="progressbar"
-                aria-valuemin={0}
-                aria-valuemax={1}
-                aria-valuenow={value}
-                aria-labelledby={`flavor-axis-${axis}-romaji`}
-                className="relative h-2 flex-1 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800"
-                data-testid={`scan-result-flavor-axis-${axis}-bar`}
-              >
-                <span
-                  className="absolute left-0 top-0 block h-full rounded-full bg-zinc-700 dark:bg-zinc-200"
-                  style={{ width: `${(value * 100).toFixed(1)}%` }}
-                />
-              </div>
-              <span
-                className="w-12 shrink-0 text-right text-xs tabular-nums text-zinc-600 dark:text-zinc-400"
-                data-testid={`scan-result-flavor-axis-${axis}-value`}
-              >
-                {value.toFixed(2)}
-              </span>
-            </li>
-          )
-        })}
-      </ul>
-    </section>
+    <FlavorChartInlineView
+      chart={chart}
+      flavorChartLabel={t('flavorChartLabel')}
+      axisStrings={axisStrings}
+    />
   )
 }
