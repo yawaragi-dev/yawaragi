@@ -65,16 +65,20 @@ bearing signals if you touch the suggest surface:
   dropped — no error, no warning.
 - The current `SUGGEST_SYSTEM_PROMPT` + tools bundle in
   `src/lib/suggest/suggest-action.ts` is sized to exceed 4096
-  tokens (measured ~4338).
+  tokens (measured ~5087 after the #175/#176 recipe expansion).
 - **If you edit the system prompt and shrink it below the
   threshold, caching silently stops working.** The eval will show
   `cache read=0 write=0` across every query and a ~40% cost
   regression.
 
-Post-activation baseline (S7, 2026-07-06):
-- 77% cache hit ratio across the 15-query run
-- $0.16/run (vs $0.27 pre-caching baseline)
-- Mean recall@3 = 0.39, mean recall@5 = 0.46
+Post-recipe-refresh baseline (#175/#176 fix, 2026-07-06):
+- 72-76% cache hit ratio across the 15-query run (down slightly
+  from S7's 77% — topK=30 responses are larger)
+- $0.17-0.20/run (vs S7's $0.16, up ~20% for the recall gain)
+- Mean recall@3 = 0.42, mean recall@5 = 0.52-0.54
+
+Prior S7 baseline (for reference): mean r@3=0.39, r@5=0.46,
+$0.16/run, 77% cache hit ratio.
 
 ## How ground truth was built
 

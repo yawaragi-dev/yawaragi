@@ -225,17 +225,19 @@ export async function suggestAction(seed: SuggestSeed): Promise<SuggestActionSta
             // sub-4096 requests are silently dropped (no error, no
             // warning). SUGGEST_SYSTEM_PROMPT is deliberately sized so
             // the system + tools bundle exceeds 4096 tokens; measured
-            // ~4338 for the current version. **If you edit
+            // ~5087 after the #175/#176 recipe expansion. **If you edit
             // SUGGEST_SYSTEM_PROMPT and shrink it, caching may silently
             // stop working.** The eval will show cacheReadTokens=0 in
             // its output when this happens. Re-verify with a manual
             // probe against `/api/debug/eval-suggest` and inspect the
             // `usage totals` debug entry.
             //
-            // Post-activation results (S7, 2026-07-06):
-            //   - 77% cache hit ratio across a 15-query eval run
-            //   - 41% cost reduction vs pre-caching baseline
-            //   - $0.16/run vs $0.27/run at Haiku 4.5 pricing
+            // Post-recipe-refresh results (#175/#176 fix, 2026-07-06):
+            //   - 72-76% cache hit ratio across a 15-query eval run
+            //     (down slightly from S7's 77% because topK=30 responses
+            //     are larger and per-request output variance grew)
+            //   - $0.17-0.20/run at Haiku 4.5 pricing (up ~20% from S7)
+            //   - mean recall@3 0.42, recall@5 0.52-0.54 (up from 0.36/0.42)
             messages: [
               {
                 role: 'system',
@@ -428,14 +430,20 @@ Yawaragi-local tool:
 
 PHRASE-TO-AXIS RECIPES
 
-When the visitor's phrase describes a taste target, translate to axis-range arguments for find_sakes_by_flavor. These are heuristics — pass them as ranges, not points, and let topK sort:
+When the visitor's phrase describes a taste target, translate to axis-range arguments for find_sakes_by_flavor. Two IMPORTANT rules first, then the recipes:
 
-- "light and floral" / "aromatic" / "fragrant" → high f1 (>0.5, hanayaka), high f6 (>0.4, keikai), low f3 (<0.35, juko).
-- "mellow and rich" / "umami-forward" → high f2 (>0.5, hojun), mid f3 (>0.3, juko), low f5 (<0.4, dry).
-- "dry and crisp" / "clean" / "tanrei-karakuchi" → high f5 (>0.5, dry), high f6 (>0.4, keikai), low f2 (<0.4, hojun).
-- "heavy" / "bold" / "full-bodied" → high f3 (>0.5, juko), high f2 (>0.5, hojun), low f6 (<0.35, keikai).
-- "mild" / "calm" / "restrained" → high f4 (>0.5, odayaka), moderate everything else.
-- If the phrase is genuinely axis-agnostic ("something interesting"), fall back to get_top_ranked and pick a diverse set across axes.
+- Constrain only the 2-3 "anchor" axes the phrase most defines. Do NOT pass bounds for the other axes — leave them unbounded. Constraining all six over-filters to zero matches.
+- find_sakes_by_flavor returns brands in brandId ascending order, NOT sorted by axis fit. Two consequences: (a) use aggressive thresholds — loose bounds surface low-brandId moderate matches instead of the cluster the phrase implies; (b) pass topK=30 so late-brandId extremes are included in the response, then YOU pick the 3-6 whose flavorProfile scores highest on the anchor axes (not just the first ones returned).
+- If the first call returns []: RELAX each bound by 0.05 toward 0.5 and retry once. Do NOT add more axis constraints; do NOT narrow.
+
+Recipes (only pass the axes listed — leave the rest unbounded; topK=30 unless noted):
+
+- "light and floral" / "aromatic" / "fragrant" → f1Min=0.55 (hanayaka), f6Min=0.4 (keikai).
+- "mellow and rich" / "umami-forward" → f3Min=0.6 (juko), f5Max=0.15 (dry). The primary anchor is juko (heavy), NOT hojun — the koshu/aged cluster this phrase points to is defined by low dryness + high body, and their f2 is often only moderate (~0.5). Do NOT add f2Min.
+- "dry and crisp" / "clean" / "tanrei-karakuchi" → f5Min=0.55 (dry), f6Min=0.45 (keikai).
+- "heavy" / "bold" / "full-bodied" → f3Min=0.55 (juko), f2Min=0.55 (hojun).
+- "mild" / "calm" / "restrained" → f4Min=0.55 (odayaka).
+- Axis-agnostic ("something interesting") → fall back to get_top_ranked and pick a diverse set across axes.
 
 BOTTLE-NAME QUERIES
 
@@ -451,10 +459,20 @@ CROSS-BEVERAGE FLOW
 
 For a Western-descriptor phrase ("smoky whisky", "hoppy IPA", "tannic red wine"):
 
-1. Call mapCrossBeverage(descriptor, beverage) — pick the beverage category carefully.
-2. If it succeeds, feed the returned f1..f6 axes into find_sakes_by_flavor with generous ±0.15 ranges.
-3. Return 3-6 matches. Every returned Suggestion MUST carry the descriptor in the cross_beverage_descriptor field so the UI renders the HeuristicDisclaimer.
-4. If mapCrossBeverage errors (descriptor not in table), pick the closest known descriptor from the error hint, or fall back to a plain flavor phrase — do NOT invent axes.
+1. Call mapCrossBeverage(descriptor, beverage) — pick the beverage category carefully. This returns f1..f6 axis targets on the Sakenowa scale (0..1).
+2. Call find_sakes_by_flavor ONCE with topK=30 and 2-3 loose bounds on the descriptor's SIGNATURE axes. Use the concrete recipes below for the three canonical descriptors; for other descriptors, follow the general rule.
+3. The tool returns up to 30 brands in brandId ASCENDING order (NOT axis-fit order). You MUST rank the returned list yourself before picking your 3-6 answers: score each candidate by (sum of anchor-high values + sum of (1 - anchor-low values)) and return the top-scoring. Do not just take the first N.
+4. If the first call returns []: RELAX each bound by 0.05 toward 0.5 and retry once. Never add axis constraints; only widen or drop.
+5. Every returned Suggestion MUST carry the descriptor in the cross_beverage_descriptor field so the UI renders the HeuristicDisclaimer.
+6. If mapCrossBeverage errors (descriptor not in table), pick the closest known descriptor from the error hint, or fall back to a plain flavor phrase — do NOT invent axes.
+
+Concrete recipes (calibrated against the mirror):
+
+- "smoky whisky" (mapCrossBeverage returns f2≈0.75, f3≈0.72, f5≈0.70, f6≈0.18) → find_sakes_by_flavor(f3Min=0.5, f5Min=0.35, f6Max=0.35, topK=30). Rank by (f3 + f5 - f6) desc.
+- "hoppy IPA" / "hoppy west coast" (returns f1≈0.85, f5≈0.70, f6≈0.65) → find_sakes_by_flavor(f1Min=0.4, f5Min=0.4, f6Min=0.4, topK=30). Rank by (f1 + f5 + f6) desc.
+- "tannic red wine" (returns f2≈0.78, f3≈0.85, f6≈0.12) → find_sakes_by_flavor(f3Min=0.55, f6Max=0.2, topK=30). Rank by (f3 - f6) desc.
+
+For OTHER cross-beverage descriptors: pick the 2-3 axes farthest from 0.5 in the mapCrossBeverage output. For each extreme HIGH (value >= 0.6), pass Min = 0.4. For each extreme LOW (value <= 0.4), pass Max = 0.35. Skip near-middle axes. topK=30. Rank the returned list by anchor-axis fit before picking the 3-6 answers.
 
 FLAVOR AXES VOCABULARY
 
