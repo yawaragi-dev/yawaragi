@@ -23,7 +23,6 @@ export async function Header() {
     navProfile: t('navProfile'),
     profileBadge: t('profileBadge'),
     menuOpen: t('menuOpen'),
-    menuClose: t('menuClose'),
     primaryLabel: t('primaryLabel'),
   }
 

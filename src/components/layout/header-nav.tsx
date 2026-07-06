@@ -38,7 +38,6 @@ type BadgeKey = Extract<NavItem, { badgeKey: string }>['badgeKey']
 
 export type HeaderNavMessages = Record<LabelKey | BadgeKey, string> & {
   menuOpen: string
-  menuClose: string
   primaryLabel: string
 }
 

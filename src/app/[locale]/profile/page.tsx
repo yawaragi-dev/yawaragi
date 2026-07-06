@@ -46,13 +46,33 @@ export default async function ProfilePage({
   const { locale } = await params
   setRequestLocale(locale)
 
-  // Belt on top of the proxy's suspenders: even if a future proxy-matcher
-  // change let a non-launched locale reach this route, refuse to render
-  // the mock. Consistent with the landing page pattern.
+  // Belt on top of the proxy's suspenders: the proxy rewrites gated
+  // paths on non-launched locales to the coming-soon landing before we
+  // get here, but if a future proxy-matcher change lets DE reach this
+  // route, render the same coming-soon block `/scan` and `/suggest`
+  // render (ADR-0008). Blank page would be a worse fallback.
   if (!isLaunched(locale)) {
-    // The proxy rewrites non-launched gated paths to the coming-soon
-    // landing before we get here; returning null keeps this belt cheap.
-    return null
+    const tComingSoon = await getTranslations({ locale, namespace: 'comingSoon' })
+    return (
+      <main
+        className="flex flex-1 w-full max-w-3xl mx-auto flex-col gap-6 py-16 px-8"
+        data-testid="coming-soon"
+      >
+        <h1 className="text-4xl font-semibold leading-tight tracking-tight">
+          {tComingSoon('title')}
+        </h1>
+        <p className="text-base text-zinc-700 dark:text-zinc-300 max-w-prose">
+          {tComingSoon('body')}
+        </p>
+        <Link
+          href="/"
+          locale="en"
+          className="text-base font-medium underline underline-offset-4"
+        >
+          {tComingSoon('switchToEn')}
+        </Link>
+      </main>
+    )
   }
 
   const cookieJar = await cookies()
