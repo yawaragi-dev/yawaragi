@@ -7,7 +7,7 @@
 // rule. The RSC result view stays server-side — this component only
 // hands the query off to the URL.
 
-import { type FormEvent, useState, useTransition } from 'react'
+import { type FormEvent, useEffect, useState, useTransition } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from '@/i18n/navigation'
 import { Button } from '@/components/ui/button'
@@ -43,6 +43,21 @@ export function SuggestFreeformForm({ initialQuery = '' }: SuggestFreeformFormPr
   const t = useTranslations('suggest.freeform')
   const router = useRouter()
   const [value, setValue] = useState(initialQuery)
+  // Sync internal state when the URL-derived initialQuery changes. React
+  // reconciles this component across navigation because the parent
+  // `<SuggestPage>` renders `<SuggestFreeformForm />` at the same tree
+  // position on both the empty-landing view and the freeform-result
+  // view. Without this effect, `useState(initialQuery)` only reads the
+  // prop on the FIRST mount — so a starter-chip click (which navigates
+  // to `/suggest?q=<prompt>` without ever touching the input) or a
+  // direct URL load (bookmark, shared link) left the input EMPTY
+  // instead of pre-filled with the query the visitor is looking at.
+  //
+  // Effect only fires when initialQuery ACTUALLY changes, so live
+  // typing (which mutates `value` but not `initialQuery`) is untouched.
+  useEffect(() => {
+    setValue(initialQuery)
+  }, [initialQuery])
   // `useTransition` marks the router.push as a transition so React
   // exposes an `isPending` flag that stays true while Next.js streams
   // the new RSC segment. Combined with `loading.tsx` this covers both
