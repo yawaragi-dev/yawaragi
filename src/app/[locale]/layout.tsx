@@ -7,7 +7,7 @@ import type { Metadata } from 'next'
 import { ClerkProvider } from '@clerk/nextjs'
 import { routing } from '@/i18n/routing'
 import { Link } from '@/i18n/navigation'
-import { LocaleSwitcher } from '@/components/layout/locale-switcher'
+import { Header } from '@/components/layout/header'
 import { DebugPanelMount } from '@/components/debug/debug-panel-mount'
 import { CookieBanner } from '@/components/legal/cookie-banner'
 import { CookieSettingsLink } from '@/components/legal/cookie-settings-link'
@@ -100,9 +100,7 @@ export default async function LocaleLayout({
           style={{ paddingBottom: 'var(--debug-panel-h, 0px)' }}
         >
           <NextIntlClientProvider>
-            <header className="flex justify-end px-6 py-4">
-              <LocaleSwitcher />
-            </header>
+            <Header />
             {children}
             <footer
               className="flex flex-wrap items-center justify-end gap-4 px-6 py-3"

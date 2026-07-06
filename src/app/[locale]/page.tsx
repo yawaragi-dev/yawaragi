@@ -37,48 +37,63 @@ export default async function LandingPage({
 
         <section className="grid gap-8 sm:grid-cols-3">
           {/*
-            Scan-section card is the live CTA — Phase 3 is shipped so
-            this links straight to /scan. Subtle hover/active states
-            so the affordance is discoverable without competing with
-            the static Chat / Profile cards next to it. The arrow
-            indicator nudges right on hover; the focus ring satisfies
-            keyboard a11y. Wrapped in next-intl `<Link>` so the locale
-            prefix is preserved.
+            All three cards resolve to a live route. Chat → `/suggest`
+            (Phase 4 shipped); Profile → `/profile` (Phase 5 coming-soon
+            mock, UX-D #165). Shared `<LandingCard />` shape so the
+            hover / focus / arrow affordances stay in lockstep — a dead
+            card here would collide with UX-A's header-nav promise that
+            every advertised surface has a real destination (#162 AC).
           */}
-          <Link
+          <LandingCard
             href="/scan"
-            className="group flex flex-col gap-2 -m-3 p-3 rounded-lg transition-colors hover:bg-zinc-100/70 dark:hover:bg-zinc-800/60 active:bg-zinc-200/70 dark:active:bg-zinc-700/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900 dark:focus-visible:outline-zinc-100"
-            data-testid="landing-scan-cta"
-          >
-            <h2 className="text-lg font-medium inline-flex items-center gap-1.5">
-              {t('sectionScanTitle')}
-              <span
-                aria-hidden
-                className="inline-block transition-transform duration-200 group-hover:translate-x-0.5"
-              >
-                →
-              </span>
-            </h2>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">
-              {t('sectionScanBody')}
-            </p>
-          </Link>
-          <article className="flex flex-col gap-2">
-            <h2 className="text-lg font-medium">{t('sectionChatTitle')}</h2>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">
-              {t('sectionChatBody')}
-            </p>
-          </article>
-          <article className="flex flex-col gap-2">
-            <h2 className="text-lg font-medium">{t('sectionProfileTitle')}</h2>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">
-              {t('sectionProfileBody')}
-            </p>
-          </article>
+            title={t('sectionScanTitle')}
+            body={t('sectionScanBody')}
+            testId="landing-scan-cta"
+          />
+          <LandingCard
+            href="/suggest"
+            title={t('sectionChatTitle')}
+            body={t('sectionChatBody')}
+            testId="landing-chat-cta"
+          />
+          <LandingCard
+            href="/profile"
+            title={t('sectionProfileTitle')}
+            body={t('sectionProfileBody')}
+            testId="landing-profile-cta"
+          />
         </section>
       </main>
       {!gateAccepted && <AgeGate />}
     </>
+  )
+}
+
+interface LandingCardProps {
+  href: '/scan' | '/suggest' | '/profile'
+  title: string
+  body: string
+  testId: string
+}
+
+function LandingCard({ href, title, body, testId }: LandingCardProps) {
+  return (
+    <Link
+      href={href}
+      className="group flex flex-col gap-2 -m-3 p-3 rounded-lg transition-colors hover:bg-zinc-100/70 dark:hover:bg-zinc-800/60 active:bg-zinc-200/70 dark:active:bg-zinc-700/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900 dark:focus-visible:outline-zinc-100"
+      data-testid={testId}
+    >
+      <h2 className="text-lg font-medium inline-flex items-center gap-1.5">
+        {title}
+        <span
+          aria-hidden
+          className="inline-block transition-transform duration-200 group-hover:translate-x-0.5"
+        >
+          →
+        </span>
+      </h2>
+      <p className="text-sm text-zinc-600 dark:text-zinc-400">{body}</p>
+    </Link>
   )
 }
 

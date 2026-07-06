@@ -7,6 +7,25 @@
     "imprintLink": "Impressum",
     "privacyLink": "Datenschutz"
   },
+  "header": {
+    "wordmarkLabel": "Yawaragi Startseite",
+    "navScan": "Scannen",
+    "navChat": "Chat",
+    "navProfile": "Geschmacksprofil",
+    "profileBadge": "Bald",
+    "menuOpen": "Menü öffnen",
+    "primaryLabel": "Hauptnavigation"
+  },
+  "profile": {
+    "title": "Dein Geschmacksprofil",
+    "comingSoonBadge": "Bald verfügbar",
+    "intro": "Eines Tages merkt sich Yawaragi die Sakes, die du kennengelernt hast, und formt daraus eine persönliche Aromakarte. Diese Fläche ist noch nicht fertig — diese Seite zeigt die Form.",
+    "sampleHeading": "Beispielprofil",
+    "sampleCaption": "Beispielhafte Werte über die sechs Sakenowa-Aromaachsen. Heute werden keine persönlichen Daten erfasst; sobald das echte Profil kommt, entsteht es aus deinen Bewertungen.",
+    "suggestBridgeHeading": "Wohin es weitergeht",
+    "suggestBridgeBody": "Bis das Geschmacksprofil kommt, ist der Chat am nächsten dran — beschreib, was dir schmeckt, und er übersetzt es in die Sprache japanischer Brauer.",
+    "suggestBridgeCta": "Zum Chat"
+  },
   "landing": {
     "title": "Yawaragi",
     "tagline": "Ein Begleiter, um Sake kennenzulernen.",

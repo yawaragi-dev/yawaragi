@@ -31,6 +31,7 @@ export const routing = defineRouting({
     '/sake/[brandId]': '/sake/[brandId]',
     '/scan': '/scan',
     '/suggest': '/suggest',
+    '/profile': '/profile',
   },
 })
 
