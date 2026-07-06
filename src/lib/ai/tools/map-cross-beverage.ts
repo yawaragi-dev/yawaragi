@@ -132,6 +132,22 @@ export const mapCrossBeverage = tool({
   description:
     'Look up a cross-beverage descriptor + beverage pair in the deterministic Yawaragi CrossBeverageMap and return the matching 6-axis FlavorProfile position. Use this whenever the user asks for sake that is like a Western beverage descriptor (smoky whisky, tannic wine, hoppy beer, etc.). Do NOT invent mappings beyond what this tool returns — if the tool responds with an `error` field, surface it to the user rather than guessing.',
   inputSchema: InputSchema,
+  // Anthropic prompt-cache breakpoint at the end of the tools bundle.
+  // `buildSuggestToolSet` spreads MCP tools first and adds this tool
+  // LAST, so a marker here caches the whole tools block (MCP tools +
+  // this local tool) as one unit. Verified working with Haiku 4.5
+  // (S7, 2026-07-06) — 77% cache hit ratio across the eval run.
+  //
+  // Haiku 4.5 requires the cached prefix to exceed 4096 tokens
+  // (Anthropic minimum), so this marker is only useful when combined
+  // with a system-prompt-side marker that pushes the total over the
+  // threshold. See `src/lib/suggest/suggest-action.ts` for the
+  // paired cache marker and the token-count budget.
+  providerOptions: {
+    anthropic: {
+      cacheControl: { type: 'ephemeral' as const },
+    },
+  },
   execute: async ({
     descriptor,
     beverage,

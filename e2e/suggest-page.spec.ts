@@ -99,11 +99,19 @@ test.describe('suggest page — no seed (S6 landing view)', () => {
     await context.close()
   })
 
-  test('/en/suggest a starter-prompt chip navigates to ?q=<prompt>', async ({
+  test('/en/suggest a starter-prompt chip navigates to ?q=<prompt> AND pre-fills the input', async ({
     browser,
   }) => {
     // The "I don't know what I want" path: chip click submits a canned
     // freeform query, which triggers the full result render.
+    //
+    // Regression guard: the S6 form used `useState(initialQuery)` which
+    // only read the prop on mount. React reuses the form across the
+    // empty→result navigation (same tree position), so a chip click
+    // updated the URL but LEFT THE INPUT EMPTY on the result page.
+    // The visitor couldn't see or edit the query that was actually run.
+    // Post-fix, the form syncs `value` to `initialQuery` via useEffect
+    // whenever the URL-derived prop changes.
     const context = await browser.newContext({ locale: 'en-US' })
     await context.addCookies([AGE_GATE_COOKIE, stubCookie('ok')])
     const page = await context.newPage()
@@ -113,6 +121,33 @@ test.describe('suggest page — no seed (S6 landing view)', () => {
 
     await expect(page).toHaveURL(/\/en\/suggest\?q=/)
     await expect(page.getByTestId('suggest-results')).toBeVisible()
+    // Load-bearing: the input reflects the chip prompt so the visitor
+    // can refine ("smoky whisky, low ABV") without retyping.
+    await expect(page.getByTestId('suggest-freeform-input')).toHaveValue(
+      'smoky whisky',
+    )
+
+    await context.close()
+  })
+
+  test('/en/suggest?q=X loaded directly pre-fills the input from the URL', async ({
+    browser,
+  }) => {
+    // Direct URL load — a bookmark, a shared link, or a browser
+    // history entry the visitor navigated back to. Independent of the
+    // chip-click test above because it exercises the OTHER path the
+    // input-population bug could manifest through: the form's very
+    // first render sees the URL-derived initialQuery, not the empty
+    // default.
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([AGE_GATE_COOKIE, stubCookie('ok')])
+    const page = await context.newPage()
+
+    await page.goto('/en/suggest?q=mellow%20and%20rich')
+
+    await expect(page.getByTestId('suggest-freeform-input')).toHaveValue(
+      'mellow and rich',
+    )
 
     await context.close()
   })

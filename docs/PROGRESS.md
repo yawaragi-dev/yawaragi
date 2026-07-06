@@ -1,6 +1,6 @@
 # Milestone progress (detail)
 
-_Snapshot generated 2026-07-05T21:13:16.774Z (UTC). Regenerate with `pnpm progress`._
+_Snapshot generated 2026-07-06T15:36:43.443Z (UTC). Regenerate with `pnpm progress`._
 
 ## TL;DR
 
@@ -38,11 +38,11 @@ Sakenowa Postgres mirror, Zod schemas with provenance, attribution UI, flavor ch
 
 **ETA**
 
-- **Optimistic:** 2026-07-07
-- **Median:**     2026-07-07
-- **Pessimistic:** 2026-07-09
+- **Optimistic:** 2026-07-08
+- **Median:**     2026-07-09
+- **Pessimistic:** 2026-07-11
 
-_Based on 8 PR(s) merged over the last 14 days (~544 LoC/day)._
+_Based on 5 PR(s) merged over the last 14 days (~397 LoC/day)._
 
 ### M3 — Flagship surfaces (Phases 3–5)
 
@@ -56,18 +56,18 @@ Label scan (vision LLM), chat recommender (AI SDK tools + MCP), taste profile + 
 
 **ETA**
 
-- **Optimistic:** 2026-07-09
-- **Median:**     2026-07-10
-- **Pessimistic:** 2026-07-15
+- **Optimistic:** 2026-07-11
+- **Median:**     2026-07-13
+- **Pessimistic:** 2026-07-19
 
-_Based on 8 PR(s) merged over the last 14 days (~544 LoC/day)._
+_Based on 5 PR(s) merged over the last 14 days (~397 LoC/day)._
 
 ## Methodology
 
 - **Milestones** map to project phases: M1 = Phase 0, M2 = Phase 2, M3 = Phases 3–5. Phase 6+ (evals, polish, community, launch) is excluded — it gates the launch but isn't product surface.
 - **Weight per issue** is the sum of `additions + deletions` of the merged PR(s) that closed it (matched by `closes #N` in the PR title). LoC is a blunt instrument but it is measurable, reproducible, and immune to retroactive sizing.
 - **Open issues** inherit the median measured slice weight as a prior; the dashboard labels this fall-back so it isn't confused with measured data.
-- **Velocity** is total LoC merged in the trailing 14 days divided by the window length in days. Idle days count against velocity: `7611` LoC across `8` PR(s) ⇒ `543.6` LoC/day.
+- **Velocity** is total LoC merged in the trailing 14 days divided by the window length in days. Idle days count against velocity: `5562` LoC across `5` PR(s) ⇒ `397.3` LoC/day.
 - **ETA band** is `remaining_weight / velocity` scaled by 1.5x (optimistic), 1x (median), and 0.5x (pessimistic). The 0.5x/1.5x band is wide on purpose — it is not a binomial confidence interval (we lack the ≥8 sprints of history that would justify one), it is a sanity-check window.
 
 ## What is NOT measured

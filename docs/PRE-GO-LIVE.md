@@ -419,10 +419,10 @@ Add the following tickets to your existing phase backlog.
 
 ### Phase 4 — Chat + MCP
 
-- `[P4-12] Tool result cards display a <ProvenanceBadge />`
+- ~~`[P4-12] Tool result cards display a <ProvenanceBadge />`~~ — shipped Phase 4 / S5 (#161). `<SuggestResults />` renders per-field ProvenanceBadge on `reason` (llm_inferred) and `cross_beverage_descriptor` (cross_beverage_map).
 - `[P4-13] Glossary tooltip overlays in chat (hover any term defined in lookupTerm to see definition inline)`
-- `[P4-14] System prompt instructs the model to use romaji + kanji for flavor axes, English/German parenthetical`
-- `[P4-15] German translations for the chat flow + a "switch to English" inline link for kanji discussion`
+- ~~`[P4-14] System prompt instructs the model to use romaji + kanji for flavor axes, English/German parenthetical`~~ — shipped Phase 4 / S5 (#161). See `SUGGEST_SYSTEM_PROMPT` § "FLAVOR AXES".
+- `[P4-15] German translations for the chat flow + a "switch to English" inline link for kanji discussion` — suggest DE translations shipped Phase 4 / S6 (#173); the inline "switch to English" for kanji discussion is a Phase 4-later polish slice.
 
 ### Phase 5 — Taste profile + cross-beverage
 

@@ -43,6 +43,18 @@ export function SuggestFreeformForm({ initialQuery = '' }: SuggestFreeformFormPr
   const t = useTranslations('suggest.freeform')
   const router = useRouter()
   const [value, setValue] = useState(initialQuery)
+  // Note on `initialQuery` sync: `useState(initialQuery)` only reads
+  // the prop on the FIRST mount. Because React reconciles this
+  // component across the empty-landing → freeform-result navigation
+  // (same tree position in `page.tsx`), a naive setup would ignore
+  // subsequent prop changes and leave the input empty on chip-click
+  // or direct-URL loads. The fix is a `key` prop on the parent side
+  // (`<SuggestFreeformForm key={initialQuery || 'empty'} />`) so
+  // React unmounts + remounts the form whenever the URL-derived
+  // query changes. Handling it there — not with a `useEffect` that
+  // calls `setValue` — avoids the React 19 `set-state-in-effect`
+  // lint rule and matches the framework's recommended pattern for
+  // "reset state when a prop changes".
   // `useTransition` marks the router.push as a transition so React
   // exposes an `isPending` flag that stays true while Next.js streams
   // the new RSC segment. Combined with `loading.tsx` this covers both
