@@ -2,9 +2,7 @@ import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { ScanForm } from '@/components/scan/scan-form'
-import { AgeGate } from '@/components/legal/age-gate'
 import { isDebugEnabledFromCookies } from '@/lib/debug/debug-mode'
-import { hasAcceptedAgeGate } from '@/lib/legal/age-gate-cookie'
 // `DebugPanelMount` lives at the layout level (renders persistently
 // across navigations). This page only sources the boolean prop the
 // form uses to gate its per-step pushes into the app-level store.
@@ -17,11 +15,13 @@ import { Link } from '@/i18n/navigation'
 /**
  * Scan entry route — `/[locale]/scan`.
  *
- * Issue #106 / PRD #105 §"Age-gate interaction": the entry CTA is a
- * discovery affordance and IS allowed pre-age-gate. The result (which
- * `<ScanForm />` produces on a `matched` state) navigates to
- * `/[locale]/sake/[brandId]`, which IS gated by the proxy — so flavor
- * and brand data still never leaks before the gate is accepted.
+ * ADR-0015 (supersedes PRD #105 §"Age-gate interaction"): the route is
+ * fully age-gated. The result renders IN PLACE on `/scan` (not
+ * `/sake/[brandId]` any more), so a modal overlay would be too weak a
+ * seam — the JMStV "no flavor data pre-acceptance" invariant is
+ * enforced by the proxy allowing only accepted visitors through to this
+ * page. No `<AgeGate />` overlay is rendered here; if the visitor
+ * reaches this component, the cookie is set.
  *
  * RSC by default: this page is async server, the only `'use client'`
  * descendant is `<ScanForm />` (which legitimately needs state +
@@ -81,34 +81,23 @@ export default async function ScanEntryPage({ params }: PageProps) {
 
   const t = await getTranslations({ locale, namespace: 'scan.entry' })
   const cookieJar = await cookies()
-  const gateAccepted = hasAcceptedAgeGate(cookieJar)
   // Server-rendered: the debug cookie is HttpOnly, so the form can't
   // read it from client JS. We pass the boolean down as a prop and the
   // form skips the panel + per-step accumulation when it's false.
   const debugMode = isDebugEnabledFromCookies(cookieJar)
 
   return (
-    <>
-      <main
-        className="flex flex-1 w-full max-w-3xl mx-auto flex-col gap-6 py-16 px-8"
-        data-testid="scan-entry-page"
-      >
-        <h1 className="text-4xl font-semibold leading-tight tracking-tight">
-          {t('title')}
-        </h1>
-        <p className="text-base text-zinc-700 dark:text-zinc-300 max-w-prose">
-          {t('intro')}
-        </p>
-        <ScanForm locale={locale} debugMode={debugMode} />
-      </main>
-      {/* The age gate keeps the RESULT off-screen: when ScanForm matches,
-          it router.push()es to /sake/[brandId] — that path IS gated, so
-          an un-accepted visitor lands on the gate landing instead of the
-          brand page. We additionally render the gate on the entry route
-          itself so the moment the visitor taps the scan button without
-          having accepted, the gate is already present and immediately
-          interruptible. */}
-      {!gateAccepted && <AgeGate />}
-    </>
+    <main
+      className="flex flex-1 w-full max-w-3xl mx-auto flex-col gap-6 py-16 px-8"
+      data-testid="scan-entry-page"
+    >
+      <h1 className="text-4xl font-semibold leading-tight tracking-tight">
+        {t('title')}
+      </h1>
+      <p className="text-base text-zinc-700 dark:text-zinc-300 max-w-prose">
+        {t('intro')}
+      </p>
+      <ScanForm locale={locale} debugMode={debugMode} />
+    </main>
   )
 }
