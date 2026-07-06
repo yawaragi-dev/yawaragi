@@ -7,6 +7,26 @@
     "imprintLink": "Imprint",
     "privacyLink": "Privacy"
   },
+  "header": {
+    "wordmarkLabel": "Yawaragi home",
+    "navScan": "Scan",
+    "navChat": "Chat",
+    "navProfile": "Taste profile",
+    "profileBadge": "Soon",
+    "menuOpen": "Open menu",
+    "menuClose": "Close menu",
+    "primaryLabel": "Primary"
+  },
+  "profile": {
+    "title": "Your taste profile",
+    "comingSoonBadge": "Coming soon",
+    "intro": "One day, Yawaragi will remember the sakes you have explored and shape a personal flavor map. That surface is not ready yet — this page previews the shape.",
+    "sampleHeading": "Example profile",
+    "sampleCaption": "Illustrative values across the six Sakenowa flavor axes. No personal data is collected today; when the real profile ships, it will be built from what you rate.",
+    "suggestBridgeHeading": "Where to explore next",
+    "suggestBridgeBody": "Until the taste profile arrives, the chat surface is the closest thing — describe what you like and it will translate to Japanese brewer vocabulary.",
+    "suggestBridgeCta": "Open the chat"
+  },
   "landing": {
     "title": "Yawaragi",
     "tagline": "A companion for discovering sake.",
