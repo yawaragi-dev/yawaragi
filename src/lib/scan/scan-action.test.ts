@@ -19,18 +19,14 @@ vi.mock('next/headers', () => ({
   headers: vi.fn(),
 }))
 
-// `@/i18n/navigation` sits on top of `next-intl/navigation`, which
-// resolves `next/navigation` internally. Under vitest 4 + next 16 the
-// bare-specifier resolution from next-intl's own node_modules fails
-// with "Cannot find module '.../node_modules/next/navigation'" —
-// vitest.setup.ts's top-level `next/navigation` stub doesn't reach
-// through the transitive resolution. Stubbing `@/i18n/navigation`
-// directly keeps this file self-contained. The scan action only calls
-// `getPathname` on lookup success — the RATE_LIMIT_BYPASS test throws
-// before that call, so an empty stub is sufficient.
-vi.mock('@/i18n/navigation', () => ({
-  getPathname: vi.fn(() => '/'),
-}))
+// This subject transitively imports `@/i18n/navigation → next-intl/navigation
+// → next/navigation`. The top-level `next/navigation` stub in `vitest.setup.ts`
+// only reaches through that chain because `next-intl` is listed in
+// `vitest.config.mts` under `test.server.deps.inline` — without inlining,
+// next-intl loads its own copy of `next/navigation` from its own
+// `node_modules` and Vite's transformer never sees `vi.mock('next/navigation')`.
+// See `docs/agents/vitest-mocks.md` for the full rationale and the
+// symbols we must keep on the stub.
 
 vi.mock('@/lib/ai/vision/registry', async () => {
   const actual = await vi.importActual<
