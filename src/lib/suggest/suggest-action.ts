@@ -217,12 +217,23 @@ export async function suggestAction(seed: SuggestSeed): Promise<SuggestActionSta
             // cacheControl` to the system message. Combined with the
             // cacheControl on `mapCrossBeverage` (the last tool in the
             // bundle — see `src/lib/ai/tools/map-cross-beverage.ts`),
-            // this gives Anthropic two prompt-cache breakpoints: one
-            // after the tools block, one after the system block. Both
-            // read hot on step 2+ of the tool loop AND across serial
-            // eval queries within the 5-minute TTL window. Saves ~40-
-            // 60% on input tokens per query on the accumulated re-
-            // sends the tool loop does each step.
+            // this SHOULD give Anthropic two prompt-cache breakpoints:
+            // one after the tools block, one after the system block.
+            //
+            // KNOWN LIMITATION (2026-07-06): Claude Haiku 4.5 silently
+            // ignores cache_control on our account. Verified via a
+            // direct API probe with a ~2000-token system prompt +
+            // cache_control marker: Haiku returned
+            // `cache_creation_input_tokens: 0`, Sonnet 4.5 returned
+            // `2007` on the same request. Wiring is correct; the model
+            // just doesn't cache. Options if cost becomes an issue:
+            //   1. Escalate to Sonnet (its cached-input effective rate
+            //      $0.84/MTok undercuts Haiku's $1/MTok flat when
+            //      hit-rate > ~80%).
+            //   2. Wait for Anthropic to enable caching on Haiku 4.5.
+            //   3. Compress the tools schemas + system prompt.
+            // Keeping the cacheControl markers in place so the code
+            // path is right the day Haiku 4.5 flips.
             messages: [
               {
                 role: 'system',

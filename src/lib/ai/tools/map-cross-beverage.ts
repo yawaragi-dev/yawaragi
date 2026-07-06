@@ -134,13 +134,14 @@ export const mapCrossBeverage = tool({
   inputSchema: InputSchema,
   // Anthropic prompt-cache breakpoint at the end of the tools bundle.
   // `buildSuggestToolSet` spreads MCP tools first and adds this tool
-  // LAST (`src/lib/suggest/tool-set.ts`), so a breakpoint here caches
-  // every tool definition (MCP + local) as one unit. Break-even is 2
-  // reads (cache writes cost 125% of input, reads cost 10%). A serial
-  // eval or a normal visitor's tool loop with 3-5 steps saves ~40-60%
-  // on the tools-input portion after the first miss. 5-minute TTL is
-  // the Anthropic default; sufficient for a single visitor's session
-  // and for the whole eval run.
+  // LAST, so a marker here caches the whole tools block. Verified
+  // 2026-07-06: correctly reaches the request via AI SDK 6 ↔ Anthropic
+  // provider. **However**, Claude Haiku 4.5 silently ignores the
+  // marker (returns `cache_creation_input_tokens: 0` — Sonnet 4.5
+  // caches the same request as `2007`). Keeping the wiring so the
+  // day Anthropic enables Haiku caching, we get it for free. See
+  // the corresponding docstring in `src/lib/suggest/suggest-action.ts`
+  // for the strategic write-up.
   providerOptions: {
     anthropic: {
       cacheControl: { type: 'ephemeral' as const },
