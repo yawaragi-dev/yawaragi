@@ -254,10 +254,18 @@ is written, not a fix applied at the end:
 - **`role="alert"` is for actual alerts.** After #163, `low_confidence` on
   `/scan` no longer uses `role="alert"` — it is a soft state, not an
   interruption. Only genuine, blocking error copy takes `role="alert"`.
-- **Focus survives portal open / close.** base-ui's Dialog handles this;
-  do NOT `preventDefault` on its focus-management events. The scan
-  Sheet-flakiness fix (see PR history around #179) traced back to fighting
-  the primitive's focus lifecycle.
+- **Focus survives portal open / close.** base-ui's Dialog handles focus
+  lifecycle (open → move focus in; close → return focus to the trigger)
+  automatically; do NOT layer custom focus handlers on top or
+  `preventDefault` on its focus events. Reference: base-ui Dialog docs.
+- **Portal + animation timing bites Playwright, not the component.** The
+  Sheet's fade-in (~200 ms via `data-starting-style:opacity-0`) means a
+  Playwright test that asserts on an element INSIDE the portal
+  immediately after the trigger click can race the animation. Sequence
+  the assertion: wait for `page.getByRole('dialog')` to be visible first,
+  then scope inner testid checks under it. See `e2e/header.spec.ts:112`
+  after commit `685e9b9` (`test(e2e): stabilise mobile-sheet header
+  test`) for the pattern.
 
 ## i18n + locale parity
 
