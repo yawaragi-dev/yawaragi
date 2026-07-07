@@ -40,6 +40,8 @@ Naming history: previously "Kanpai"; renamed to avoid collision with KANPAI Lond
 - `pnpm ingest` — refresh Sakenowa data into Supabase
 - `pnpm eval` — run eval golden sets
 
+To drive any scan/suggest UI state in dev without a bottle photo or paid API calls, see `docs/manual-testing.md` (stub env vars + cookie recipes).
+
 ## Source provenance
 
 Every piece of information shown to a user must carry an explicit `source` field. The taxonomy:
