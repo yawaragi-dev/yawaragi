@@ -71,8 +71,10 @@ Requires the **#109 / PR #194** cookie-driven stub (`yawaragi_e2e_vision`). On `
 | Matched-brand, brewery divergence | `setScan('獺祭','旭酒造')` | "We matched the brand, but the brewery… didn't match" card |
 | Matched-brewery, brand divergence | `setScan('架空純米','松緑酒造')` | Brewery matched, brand differs card |
 | No match (enriched) | `setScan('架空純米','架空酒造銘柄')` | What the AI "read" (with AI-extracted badge) + "not in catalogue yet" |
-| Low confidence → confirm | `setScan('獺祭','獺祭',0.5)` | Confirm-before-proceed card |
-| Retry (too low to trust) | `setScan('獺祭','獺祭',0.3)` | Retry / scan-again prompt |
+| Confirm tier (0.60 ≤ conf < 0.85) | `setScan('獺祭','獺祭',0.72)` | Matched sake shown on a confirm-before-proceed card |
+| Retry tier (conf < 0.60) | `setScan('獺祭','獺祭',0.5)` | No lookup — "we couldn't read this label clearly" retry prompt |
+
+Confidence tiers (`src/lib/scan/confidence-tier.ts`, half-open): **auto ≥ 0.85** (auto-navigate) · **confirm 0.60–0.84** (matched sake behind a confirm step) · **retry < 0.60** (no lookup at all — just the "try a closer shot" prompt). Pick the `confidence` arg to land in the tier you want to see.
 
 Verified against the live catalogue on 2026-07-07: `高砂` = 4 breweries, `せんきん` = 6 brands, `松緑酒造` = single-brand brewery, `架空純米` / `架空酒造銘柄` = absent. If Sakenowa data shifts, re-check counts with a query on `brands` / `breweries`.
 
