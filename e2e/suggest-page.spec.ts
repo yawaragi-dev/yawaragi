@@ -130,6 +130,97 @@ test.describe('suggest page — no seed (S6 landing view)', () => {
     await context.close()
   })
 
+  test('/en/suggest chip click populates the input BEFORE the results render (#184)', async ({
+    browser,
+  }) => {
+    // #184 AC: the input must reflect the picked prompt within one
+    // frame of the click, not after the LLM tool loop finishes.
+    // Regression guard: pre-#184 the chip was a raw <Link> — the
+    // input stayed empty until the result-view mounted the freeform
+    // form with `initialQuery`, which was several seconds later.
+    //
+    // We assert the input value BEFORE `suggest-results` is visible,
+    // which forces the check to run during the transition — the same
+    // window the visitor is staring at.
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([AGE_GATE_COOKIE, stubCookie('ok')])
+    const page = await context.newPage()
+
+    await page.goto('/en/suggest')
+    // No `await` on the click promise — we want to assert while the
+    // transition is in flight.
+    const clickPromise = page
+      .getByTestId('suggest-starter')
+      .getByText(/smoky whisky/i)
+      .click()
+
+    // The input reflects the picked prompt in the SAME frame — before
+    // navigation completes. `suggest-results` is not yet visible.
+    await expect(page.getByTestId('suggest-freeform-input')).toHaveValue(
+      'smoky whisky',
+    )
+
+    // Let the navigation settle so context.close() doesn't tear down
+    // an in-flight request.
+    await clickPromise
+    await expect(page.getByTestId('suggest-results')).toBeVisible()
+
+    await context.close()
+  })
+
+  test('/en/suggest chip click flips the freeform submit button to Exploring… (#184)', async ({
+    browser,
+  }) => {
+    // #184 AC: the shared `useTransition` fires on chip click, so the
+    // freeform button's `Exploring…` label lights up in the same
+    // frame — same visible feedback as a direct form submit. Before
+    // the fix, the chip bypassed the form entirely; the button
+    // stayed on "Explore" for the several seconds the tool loop
+    // took to reach the next page.
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([AGE_GATE_COOKIE, stubCookie('ok')])
+    const page = await context.newPage()
+
+    // Throttle the RSC segment fetch so the pending window stays
+    // observable — otherwise `expect().toHaveText('Exploring…')`
+    // could race the transition and see the settled `Explore` state
+    // from the freeform form re-mounted on the result page. 400 ms
+    // is a comfortable window for Playwright's default polling; the
+    // stub cookie means we're not spending Anthropic credit.
+    await page.route(/\/en\/suggest\?q=/, async (route) => {
+      await new Promise((r) => setTimeout(r, 400))
+      await route.continue()
+    })
+
+    await page.goto('/en/suggest')
+
+    const submitBtn = page.getByTestId('suggest-freeform-submit')
+    // Sanity: idle state.
+    await expect(submitBtn).toHaveText('Explore')
+
+    const clickPromise = page
+      .getByTestId('suggest-starter')
+      .getByText(/smoky whisky/i)
+      .click()
+
+    // The button flips to `Exploring…` while navigation is in flight —
+    // BEFORE the results section renders. That's the 100 ms feedback
+    // rule from `docs/agents/ux-design-playbook.md`.
+    await expect(submitBtn).toHaveText('Exploring…')
+    // And the clicked chip announces `aria-busy` so AT users hear the
+    // acknowledgement.
+    await expect(
+      page.getByTestId('suggest-starter').getByRole('button', {
+        name: /smoky whisky/i,
+      }),
+    ).toHaveAttribute('aria-busy', 'true')
+
+    await clickPromise
+    await expect(page.getByTestId('suggest-results')).toBeVisible()
+
+    await context.close()
+  })
+
   test('/en/suggest?q=X loaded directly pre-fills the input from the URL', async ({
     browser,
   }) => {

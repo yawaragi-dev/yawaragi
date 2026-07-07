@@ -1,11 +1,12 @@
 'use client'
 
 // `'use client'` is load-bearing here: this component owns the input
-// state, an `onSubmit` handler, and the router push that navigates
-// the page to `?q=<encoded>`. All three are concrete client-only
-// needs per CLAUDE.md's "no `use client` without a concrete reason"
-// rule. The RSC result view stays server-side — this component only
-// hands the query off to the URL.
+// state, an `onSubmit` handler, and (in the uncontrolled result-view
+// path) the router push that navigates the page to `?q=<encoded>`.
+// All three are concrete client-only needs per CLAUDE.md's
+// "no `use client` without a concrete reason" rule. The RSC result
+// view stays server-side — this component only hands the query off
+// to the URL.
 
 import { type FormEvent, useState, useTransition } from 'react'
 import { useTranslations } from 'next-intl'
@@ -13,7 +14,7 @@ import { useRouter } from '@/i18n/navigation'
 import { Button } from '@/components/ui/button'
 import { MAX_FREEFORM_QUERY_LEN } from '@/lib/suggest/suggest-action-state'
 
-interface SuggestFreeformFormProps {
+interface UncontrolledFreeformFormProps {
   /**
    * The seed query the URL landed with, if any. Reused as the initial
    * input value so the form is round-trippable: a visitor who submits
@@ -22,16 +23,48 @@ interface SuggestFreeformFormProps {
    * Optional because the no-query landing has nothing to prefill.
    */
   initialQuery?: string
+  value?: undefined
+  onValueChange?: undefined
+  isPending?: undefined
+  onSubmitQuery?: undefined
 }
+
+interface ControlledFreeformFormProps {
+  initialQuery?: undefined
+  /** Controlled input value; owned by a client parent wrapper. */
+  value: string
+  onValueChange: (next: string) => void
+  /** Shared pending flag (parent's `useTransition` state). */
+  isPending: boolean
+  /**
+   * Shared submit callback. When set, this component defers navigation
+   * to the parent — the parent decides whether to `router.push` (for
+   * both form-submit AND chip-click paths, so both surfaces share one
+   * pending state; see #184).
+   */
+  onSubmitQuery: (query: string) => void
+}
+
+type SuggestFreeformFormProps =
+  | UncontrolledFreeformFormProps
+  | ControlledFreeformFormProps
 
 /**
  * Phase 4 / S6 (#144) — `<SuggestFreeformForm />`.
  *
- * The freeform-text input surface on `/[locale]/suggest`. The RSC page
- * routes on `?q=<string>` and calls `suggestAction` with a `{ kind:
- * 'freeform' }` seed; this form only wires the input state and the
- * navigation. All rendering of the result list stays in the RSC
- * layer — this component never touches the AI SDK or the MCP client.
+ * The freeform-text input surface on `/[locale]/suggest`. Two modes:
+ *
+ *   - **Uncontrolled** (result-view usage): the form owns its own
+ *     `useState` + `useTransition` and calls `router.push` directly.
+ *     Used on `/suggest?q=…` where the freeform form re-renders inside
+ *     the result view for query refinement.
+ *   - **Controlled** (empty-input landing, per #184): a parent wrapper
+ *     owns `value`, `isPending`, and a shared `submit()` callback. The
+ *     form only renders the input + button; both this form's submit AND
+ *     the sibling `<SuggestStarterPrompts />` chips flow through the
+ *     parent's shared submit. That way a chip click flips the button's
+ *     `Exploring…` label in the same frame — no more "chip clicked and
+ *     nothing happens" gap the old anchor-link chips shipped with.
  *
  * Voice: discovery framing per CLAUDE.md § "Age gate and JMStV
  * compliance". The placeholder and submit copy come from next-intl;
@@ -39,8 +72,39 @@ interface SuggestFreeformFormProps {
  * cap is shared with the server action's validation seam so a
  * client-side overrun matches the server-side rejection.
  */
-export function SuggestFreeformForm({ initialQuery = '' }: SuggestFreeformFormProps) {
+export function SuggestFreeformForm(props: SuggestFreeformFormProps) {
   const t = useTranslations('suggest.freeform')
+
+  if (isControlled(props)) {
+    return (
+      <FreeformFormInner
+        value={props.value}
+        onValueChange={props.onValueChange}
+        isPending={props.isPending}
+        onSubmitQuery={props.onSubmitQuery}
+        t={t}
+      />
+    )
+  }
+
+  return <UncontrolledFreeformForm initialQuery={props.initialQuery} t={t} />
+}
+
+function isControlled(
+  props: SuggestFreeformFormProps,
+): props is ControlledFreeformFormProps {
+  return typeof props.onSubmitQuery === 'function'
+}
+
+interface UncontrolledInnerProps {
+  initialQuery?: string
+  t: ReturnType<typeof useTranslations<'suggest.freeform'>>
+}
+
+function UncontrolledFreeformForm({
+  initialQuery = '',
+  t,
+}: UncontrolledInnerProps) {
   const router = useRouter()
   const [value, setValue] = useState(initialQuery)
   // Note on `initialQuery` sync: `useState(initialQuery)` only reads
@@ -64,9 +128,8 @@ export function SuggestFreeformForm({ initialQuery = '' }: SuggestFreeformFormPr
   // the several seconds the LLM tool loop takes.
   const [isPending, startTransition] = useTransition()
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const trimmed = value.trim()
+  const submitQuery = (query: string) => {
+    const trimmed = query.trim()
     // Empty submit is not a form-level error — the visitor might have
     // typed and then cleared. Route them back to the discovery-starter
     // view (`/suggest` with no query params).
@@ -85,6 +148,37 @@ export function SuggestFreeformForm({ initialQuery = '' }: SuggestFreeformFormPr
   }
 
   return (
+    <FreeformFormInner
+      value={value}
+      onValueChange={setValue}
+      isPending={isPending}
+      onSubmitQuery={submitQuery}
+      t={t}
+    />
+  )
+}
+
+interface FreeformFormInnerProps {
+  value: string
+  onValueChange: (next: string) => void
+  isPending: boolean
+  onSubmitQuery: (query: string) => void
+  t: ReturnType<typeof useTranslations<'suggest.freeform'>>
+}
+
+function FreeformFormInner({
+  value,
+  onValueChange,
+  isPending,
+  onSubmitQuery,
+  t,
+}: FreeformFormInnerProps) {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    onSubmitQuery(value)
+  }
+
+  return (
     <form
       onSubmit={handleSubmit}
       className="flex w-full flex-col gap-3"
@@ -99,7 +193,7 @@ export function SuggestFreeformForm({ initialQuery = '' }: SuggestFreeformFormPr
           id="suggest-freeform-input"
           type="text"
           value={value}
-          onChange={(e) => setValue(e.target.value)}
+          onChange={(e) => onValueChange(e.target.value)}
           placeholder={t('placeholder')}
           maxLength={MAX_FREEFORM_QUERY_LEN}
           autoComplete="off"
