@@ -16,7 +16,7 @@ _Snapshot generated 2026-07-07 from GitHub Issues + merged PRs. Regenerate with 
 | --- | --- | --- | --- |
 | **M1 (Phase 0) — Compliance & i18n foundation** | `████████████████████` 100% | 5 / 5 | done |
 | **M2 (Phase 2) — Data foundation** | `███████████████████░` 94% | 11 / 12 | 2026-07-08 |
-| **M3 (Phases 3–5) — Flagship surfaces** | `████████████████░░░░` 82% | 9 / 11 | 2026-07-09 |
+| **M3 (Phases 3–5) — Flagship surfaces** | `██████████████████░░` 91% | 10 / 11 | 2026-07-08 |
 
 <!-- progress:end -->
 
