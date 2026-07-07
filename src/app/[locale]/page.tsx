@@ -3,7 +3,9 @@ import { getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
 import { isLaunched } from '@/i18n/launch-state'
 import { AgeGate } from '@/components/legal/age-gate'
+import { LandingHero } from '@/components/landing/landing-hero'
 import { hasAcceptedAgeGate } from '@/lib/legal/age-gate-cookie'
+import { getLandingSampleScan } from '@/lib/landing/sample-scan'
 
 export default async function LandingPage({
   params,
@@ -20,20 +22,31 @@ export default async function LandingPage({
   const cookieJar = await cookies()
   const gateAccepted = hasAcceptedAgeGate(cookieJar)
 
+  // UX-E (#166): lead with a real example scan result — but ONLY after the
+  // 18+ gate is accepted, because the hero renders Sakenowa flavor data
+  // (JMStV: no flavor data before acceptance). We fetch the sample lazily
+  // for the same reason — no flavor data touches the DOM pre-acceptance —
+  // and fall back to the text intro when the mirror has no sample row.
+  const sample = gateAccepted ? await getLandingSampleScan() : null
+
   return (
     <>
       <main className="flex flex-1 w-full max-w-3xl mx-auto flex-col gap-12 py-16 px-8">
-        <section className="flex flex-col gap-4">
-          <h1 className="text-4xl font-semibold leading-tight tracking-tight">
-            {t('title')}
-          </h1>
-          <p className="text-xl text-zinc-700 dark:text-zinc-300">
-            {t('tagline')}
-          </p>
-          <p className="text-base text-zinc-600 dark:text-zinc-400 max-w-prose">
-            {t('intro')}
-          </p>
-        </section>
+        {sample ? (
+          <LandingHero sample={sample} locale={locale} />
+        ) : (
+          <section className="flex flex-col gap-4">
+            <h1 className="text-4xl font-semibold leading-tight tracking-tight">
+              {t('title')}
+            </h1>
+            <p className="text-xl text-zinc-700 dark:text-zinc-300">
+              {t('tagline')}
+            </p>
+            <p className="text-base text-zinc-600 dark:text-zinc-400 max-w-prose">
+              {t('intro')}
+            </p>
+          </section>
+        )}
 
         <section className="grid gap-8 sm:grid-cols-3">
           {/*

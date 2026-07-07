@@ -52,6 +52,23 @@ export async function findBrandWithFlavorChartId(): Promise<number | null> {
   return row?.brand_id ?? null
 }
 
+// UX-E (#166): the landing hero renders a fixed curated sample sake
+// (SAMPLE_SCAN_BRAND_ID = 310, 木戸泉). The hero only shows when that
+// brand AND its flavor_charts row are in the mirror; otherwise the landing
+// degrades to its text intro. The spec skips its DB-bound assertions when
+// this returns null so CI (no DATABASE_URL) and any data shift that drops
+// the row stay green rather than failing.
+export async function findLandingSampleBrandId(): Promise<number | null> {
+  const row = await queryOne<{ brand_id: number }>(`
+    SELECT b.brand_id
+    FROM brands b
+    JOIN flavor_charts fc ON fc.brand_id = b.brand_id
+    WHERE b.brand_id = 310
+    LIMIT 1
+  `)
+  return row?.brand_id ?? null
+}
+
 // The brand_id Phase 3 / S1's hardcoded extraction resolves to: a sake
 // row whose `name_kanji = '獺祭'` joined to a brewery whose
 // `name_kanji = '旭酒造'`. The scan flow always returns Dassai by Asahi
