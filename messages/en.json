@@ -132,7 +132,11 @@
     },
     "resultCard": {
       "openDetail": "See full details",
-      "exploreAnotherWay": "Explore sake another way"
+      "exploreAnotherWay": "Explore sake another way",
+      "reverseExemplarHeading": "A familiar reference point",
+      "reverseExemplarSingle": "Interesting for those who like {name}",
+      "reverseExemplarPair": "Interesting for those who like {first} or {second}",
+      "reverseNoAnalog": "This is a distinctly Japanese profile — no close Western analog."
     }
   },
   "suggest": {

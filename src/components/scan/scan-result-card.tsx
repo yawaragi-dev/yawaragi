@@ -5,8 +5,13 @@ import {
   FlavorChartInlineView,
   type FlavorAxisStrings,
 } from '@/components/sake/flavor-chart'
+import { HeuristicDisclaimerView } from '@/components/legal/heuristic-disclaimer'
 import { ProvenanceBadgeView } from '@/components/sake/provenance-badge'
 import { SakenowaAttributionView } from '@/components/sake/sakenowa-attribution'
+import {
+  findNearestExemplars,
+  type ReverseExemplarResult,
+} from '@/lib/cross-beverage/reverse-lookup'
 import {
   FLAVOR_AXES,
   type FlavorAxis,
@@ -85,8 +90,22 @@ export function ScanResultCard({
 }: ScanResultCardProps) {
   const t = useTranslations('scan.resultCard')
   const tBadge = useTranslations('provenance.badge.llmExtracted')
+  const tCrossBevBadge = useTranslations('provenance.badge.crossBeverageMap')
+  const tDisclaimer = useTranslations('heuristicDisclaimer')
   const tAttribution = useTranslations('sakenowaAttribution')
   const tSake = useTranslations('sake.brand')
+
+  // UX-C reverse cross-beverage hook (issue #164): if the matched sake has
+  // a Sakenowa flavor chart, look up the nearest curated Western exemplar
+  // and name it below the chart. Pure, deterministic — no LLM. Rendered
+  // only when the chart exists (Sakenowa's `flavor_charts` misses on a
+  // fraction of brands; without a vector there's nothing to match against).
+  // The result is either 1–2 exemplars within threshold OR the graceful
+  // "distinctly Japanese profile" fallback. Both branches carry the
+  // <HeuristicDisclaimer /> + <ProvenanceBadge /> per CLAUDE.md.
+  const reverseResult: ReverseExemplarResult | null = flavorChart
+    ? findNearestExemplars(flavorChart)
+    : null
 
   return (
     <article
@@ -176,6 +195,71 @@ export function ScanResultCard({
       </div>
 
       {flavorChart && <FlavorChartForCard chart={flavorChart} />}
+
+      {reverseResult && (
+        // UX-C reverse cross-beverage hook (#164). Two branches:
+        //   - 'match' — surface 1–2 Western exemplars whose 6-axis
+        //     vector sits within the honesty threshold of this sake's
+        //     flavor chart. "Interesting for those who like Lagavulin
+        //     16."
+        //   - 'no-close-analog' — the profile is far from every anchor
+        //     in `CROSS_BEVERAGE_MAP`. Renders the discovery-framed
+        //     "distinctly Japanese profile" line instead of forcing a
+        //     bad match.
+        //
+        // BOTH branches render `<HeuristicDisclaimerView />` and a
+        // `<ProvenanceBadgeView kind="crossBeverageMap" />` per CLAUDE.md
+        // — even the "no analog" line is a claim from the cross-beverage
+        // table (specifically: "the table has no close match"), and
+        // omitting the disclaimer would blur the provenance boundary.
+        // Exemplar names stay identical across locales — Lagavulin 16
+        // is a proper noun, not translatable copy.
+        <section
+          className="flex flex-col gap-3"
+          data-testid="scan-result-reverse-exemplar"
+          aria-labelledby="scan-result-reverse-exemplar-heading"
+        >
+          <div className="flex flex-wrap items-center gap-2">
+            <h3
+              id="scan-result-reverse-exemplar-heading"
+              className="text-sm font-medium text-zinc-800 dark:text-zinc-200"
+            >
+              {t('reverseExemplarHeading')}
+            </h3>
+            <ProvenanceBadgeView
+              kind="crossBeverageMap"
+              label={tCrossBevBadge('label')}
+              tooltip={tCrossBevBadge('tooltip')}
+            />
+          </div>
+          {reverseResult.kind === 'match' ? (
+            <p
+              className="text-sm text-zinc-700 dark:text-zinc-300"
+              data-testid="scan-result-reverse-exemplar-match"
+            >
+              {reverseResult.hits.length === 1
+                ? t('reverseExemplarSingle', {
+                    name: reverseResult.hits[0]!.exemplar.name,
+                  })
+                : t('reverseExemplarPair', {
+                    first: reverseResult.hits[0]!.exemplar.name,
+                    second: reverseResult.hits[1]!.exemplar.name,
+                  })}
+            </p>
+          ) : (
+            <p
+              className="text-sm text-zinc-700 dark:text-zinc-300"
+              data-testid="scan-result-reverse-exemplar-no-analog"
+            >
+              {t('reverseNoAnalog')}
+            </p>
+          )}
+          <HeuristicDisclaimerView
+            title={tDisclaimer('title')}
+            body={tDisclaimer('body')}
+          />
+        </section>
+      )}
     </article>
   )
 }
