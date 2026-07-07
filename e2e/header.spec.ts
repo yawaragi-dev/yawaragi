@@ -128,7 +128,19 @@ test.describe('site header — nav backbone', () => {
     await expect(trigger).toBeVisible()
     await trigger.click()
 
-    const mobileNav = page.getByTestId('header-nav-mobile')
+    // Sheet primitive (`@base-ui/react/dialog`) portals to `<body>` and
+    // animates open over ~200ms with `data-starting-style:opacity-0`.
+    // Assert the dialog role is present + visible first so the follow-
+    // ing nav-item checks run AFTER the portal has mounted and the
+    // fade-in has landed — otherwise a slow CI runner can miss the
+    // 5s `toBeVisible` window on the nav element while the animation
+    // is still transitioning opacity. Scoping the nav lookup to
+    // `dialog` also protects against any accidental collision with a
+    // desktop-nav testid that shares a prefix.
+    const dialog = page.getByRole('dialog')
+    await expect(dialog).toBeVisible()
+
+    const mobileNav = dialog.getByTestId('header-nav-mobile')
     await expect(mobileNav).toBeVisible()
     await expect(mobileNav.getByTestId('header-nav-scan-mobile')).toBeVisible()
     await expect(mobileNav.getByTestId('header-nav-chat-mobile')).toBeVisible()
