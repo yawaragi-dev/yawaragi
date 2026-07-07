@@ -22,5 +22,21 @@ export default defineConfig({
     globals: true,
     setupFiles: ['./vitest.setup.ts'],
     exclude: ['e2e/**', 'node_modules/**', '.next/**', '.claude/**', '**/*.integration.test.ts'],
+    server: {
+      deps: {
+        // Inline `next-intl` so Vite (and therefore vitest's mock
+        // hoister) transforms its ESM instead of letting Node load it
+        // from `node_modules` as an externalised dependency. Without
+        // this, `next-intl/navigation` imports `next/navigation` from
+        // its own `node_modules` copy — Vite's import graph never sees
+        // the resolution, and the top-level `vi.mock('next/navigation',
+        // …)` in `vitest.setup.ts` has no effect on the transitive
+        // path. Test subjects that reach `@/i18n/navigation` would
+        // then have to redeclare a local `vi.mock('@/i18n/navigation',
+        // …)` each time. See `docs/agents/vitest-mocks.md` for the
+        // full write-up (issue #171).
+        inline: ['next-intl'],
+      },
+    },
   },
 })

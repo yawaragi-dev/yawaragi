@@ -202,3 +202,7 @@ Default label vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `read
 ### Domain docs
 
 Single-context repo — one `CONTEXT.md` + `docs/adr/` at the root. See `docs/agents/domain.md`.
+
+### Vitest mocks
+
+Test subjects that transitively import from `next-intl/navigation` or from any other package that internally imports `next/navigation` do **NOT** need a per-file `vi.mock('@/i18n/navigation', …)`. `next-intl` is listed in `vitest.config.mts` under `test.server.deps.inline` so Vite processes its source and the top-level `vi.mock('next/navigation', …)` in `vitest.setup.ts` reaches through the transitive chain. If a future version of `next-intl` starts calling a new symbol on `next/navigation`, add it to the setup file's stub — do not work around it with a per-file mock. See `docs/agents/vitest-mocks.md`.

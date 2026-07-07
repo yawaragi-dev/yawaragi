@@ -40,7 +40,22 @@ if (!process.env.ANTHROPIC_API_KEY) {
 // resolve the package.
 vi.mock('server-only', () => ({}))
 
-// next/navigation — components that call useRouter/usePathname won't error in tests
+// next/navigation — components that call useRouter/usePathname won't error in tests.
+//
+// This stub is ALSO reached through the transitive path
+// `@/i18n/navigation → next-intl/navigation → next/navigation` because
+// `next-intl` is listed in `vitest.config.mts` under
+// `test.server.deps.inline`. Without inlining, next-intl loads its
+// own copy of `next/navigation` from its own `node_modules` and this
+// mock has no effect — a test subject that transitively imports
+// `next-intl/navigation` would then need its own local
+// `vi.mock('@/i18n/navigation', …)` per file. See
+// `docs/agents/vitest-mocks.md` (§ "next-intl transitive gotcha").
+//
+// Keep this export list in sync with every symbol next-intl calls on
+// `next/navigation`. Currently: redirect, permanentRedirect (both
+// consumed by `createSharedNavigationFns` in
+// `next-intl/dist/.../navigation/shared/createSharedNavigationFns.js`).
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
     push: vi.fn(),
@@ -54,5 +69,6 @@ vi.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(),
   useParams: () => ({}),
   redirect: vi.fn(),
+  permanentRedirect: vi.fn(),
   notFound: vi.fn(),
 }))
