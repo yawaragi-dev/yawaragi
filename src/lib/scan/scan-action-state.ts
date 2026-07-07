@@ -1,4 +1,5 @@
 import type { DebugEvent } from '@/lib/debug/debug-log'
+import type { FlavorChart } from '@/lib/schemas/flavor-chart'
 import type { LabelScanExtraction } from '@/lib/schemas/label-scan-extraction'
 
 /**
@@ -27,6 +28,15 @@ type ScanActionStateBase =
        */
       sakeRomaji: string | null
       breweryRomaji: string | null
+      /**
+       * ADR-0015: the result card renders the six-axis flavor chart in
+       * place on `/scan` (no more auto-navigate to `/sake/[brandId]`).
+       * Populated by `lookupFlavorChart(brandId)` in the matched branch
+       * of `scan-action`. `null` when the brand exists in the mirror but
+       * has no `flavor_charts` row — rare enough to render the card
+       * without the chart rather than fail the whole match.
+       */
+      flavorChart: FlavorChart | null
     }
   /**
    * Phase 3 / #123: the `(brand AND brewery)` exact-match join

@@ -101,6 +101,7 @@
       "pending": "Etikett wird gelesen…",
       "uploadAriaLabel": "Foto eines Etiketts aus der Galerie wählen",
       "cameraAriaLabel": "Foto eines Etiketts mit der Kamera aufnehmen",
+      "photoAlt": "Das Etikettenfoto, das du gerade gescannt hast",
       "matched": "Treffer gefunden. Die Sake-Seite wird geöffnet…",
       "matchedBrandOnly": "Wir haben die Marke erkannt, aber die Brauerei auf dem Etikett passt nicht zu unserem Katalog.",
       "matchedBrandOnlyDivergence": "Etikett: {extracted} · Katalog: {stored}",
@@ -128,6 +129,10 @@
       "consensusRescan": "Nein, erneut scannen",
       "extractionFailed": "Dieses Bild konnte nicht verarbeitet werden. Versuche ein deutliches Foto eines Sake-Flaschenetiketts.",
       "sessionMissing": "Deine Browser-Sitzung konnte nicht vorbereitet werden. Bitte lade die Seite neu und versuche es erneut."
+    },
+    "resultCard": {
+      "openDetail": "Alle Details ansehen",
+      "exploreAnotherWay": "Sake auf andere Weise entdecken"
     }
   },
   "suggest": {

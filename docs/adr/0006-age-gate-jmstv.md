@@ -10,3 +10,4 @@ We chose self-declaration rather than a KJM-approved Altersverifikationssystem (
 - The product must never depict drinking, never imply social/sexual/professional success from consumption, never imply medicinal benefit (JMStV §6(5), Deutscher Werberat guidelines).
 - An Impressum page (§5 TMG) is required and lives at `/imprint`.
 - The AVS escalation is triggered if Yawaragi later adds: direct purchase (DTC), affiliate checkout that completes inside the Yawaragi UI, or user-generated content that could be classified as advertising. None of these are in v1 scope.
+- The scan entry route `/scan` is now gated (was previously ungated as a "discovery affordance" per PRD #105) — see [ADR-0015](./0015-scan-result-in-place-and-scan-route-gated.md). The in-place result card renders flavor data on `/scan` itself, so the whole route sits behind the gate. The allowlist canonical source of truth remains `src/lib/legal/age-gate-cookie.ts#UNGATED_LOCALE_PATHS`.

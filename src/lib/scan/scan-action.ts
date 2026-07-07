@@ -23,6 +23,7 @@ import {
   findSakeByBreweryOnly,
   findSakeByExtraction,
   lookupBreweryByBrand,
+  lookupFlavorChart,
 } from '@/lib/sakenowa/lookup'
 import type { Brand } from '@/lib/schemas/brand'
 import type { Brewery } from '@/lib/schemas/brewery'
@@ -577,17 +578,23 @@ async function extractAndLookupWithProvider(
           locale: localeRaw,
           href: { pathname: '/sake/[brandId]', params: { brandId: String(lookup.sake.brandId) } },
         })
-        // Fetch the brewery for its romaji — the first-pass SQL
+        // Fetch the brewery for its romaji and the flavor chart for
+        // the in-place result card (ADR-0015). The first-pass SQL
         // joins through brewery for the WHERE but doesn't select
-        // brewery columns. Cheap extra round-trip on the happy path
-        // is the simplest path to a non-null `breweryRomaji` on the
-        // confirm card. `lookupBreweryByBrand` may return null if a
-        // race deleted the brewery between the two queries — UI
-        // tolerates a null romaji.
-        const brewery = await lookupBreweryByBrand(lookup.sake.brandId)
+        // brewery columns, and `flavor_charts` is a separate table
+        // keyed on brand_id. Two parallel round-trips add ~one DB
+        // hop to the happy path. `lookupBreweryByBrand` may return
+        // null if a race deleted the brewery between queries; the
+        // chart may be null for the small tail of brands the
+        // Sakenowa `/flavor-charts` list omits. UI tolerates both.
+        const [brewery, flavorChart] = await Promise.all([
+          lookupBreweryByBrand(lookup.sake.brandId),
+          lookupFlavorChart(lookup.sake.brandId),
+        ])
         debugAdd('ScanAction', 'returning matched', {
           brandId: lookup.sake.brandId,
           sakeHref,
+          hasFlavorChart: flavorChart !== null,
         })
         return {
           status: 'matched',
@@ -596,6 +603,7 @@ async function extractAndLookupWithProvider(
           sakeHref,
           sakeRomaji: bestRomaji(lookup.sake),
           breweryRomaji: brewery ? bestRomaji(brewery) : null,
+          flavorChart,
         }
       }
       if (lookup.kind === 'matched_brand_only') {

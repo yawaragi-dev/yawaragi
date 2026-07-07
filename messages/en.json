@@ -101,6 +101,7 @@
       "pending": "Reading the label…",
       "uploadAriaLabel": "Choose a label photo from your library",
       "cameraAriaLabel": "Take a photo of the label with your camera",
+      "photoAlt": "The label photo you just scanned",
       "matched": "Match found. Opening the sake page…",
       "matchedBrandOnly": "We matched the brand, but the brewery on the label didn't match our catalogue.",
       "matchedBrandOnlyDivergence": "Label: {extracted} · Catalogue: {stored}",
@@ -128,6 +129,10 @@
       "consensusRescan": "No, scan again",
       "extractionFailed": "We couldn't process this image. Try a clear photo of a sake bottle label.",
       "sessionMissing": "Your browser session couldn't be prepared. Please refresh the page and try again."
+    },
+    "resultCard": {
+      "openDetail": "See full details",
+      "exploreAnotherWay": "Explore sake another way"
     }
   },
   "suggest": {

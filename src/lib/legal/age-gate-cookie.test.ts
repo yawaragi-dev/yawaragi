@@ -102,12 +102,6 @@ describe('isGatedPath', () => {
     '/de/privacy',
     '/en/under-18',
     '/de/under-18',
-    // PRD #105 §"Age-gate interaction" / issue #106: scan ENTRY CTA
-    // (discovery affordance) renders pre-gate. The scan result auto-navigates
-    // to `/sake/[brandId]`, which is gated below, so flavor / brand data is
-    // still kept behind the gate.
-    '/en/scan',
-    '/de/scan',
     '/_next/static/chunks/main.js',
     '/_vercel/insights',
     '/favicon.ico',
@@ -129,6 +123,11 @@ describe('isGatedPath', () => {
     '/de/me',
     '/en/imprint-fake',
     '/de/privacy-fake',
+    // ADR-0015: /scan is now fully gated (was ungated pre-#163). The
+    // in-place result card renders flavor data on /scan, so the whole
+    // route sits behind the age gate.
+    '/en/scan',
+    '/de/scan',
   ])('treats %s as gated', (path) => {
     expect(isGatedPath(path)).toBe(true)
   })

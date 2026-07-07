@@ -1,18 +1,18 @@
 // E2E coverage for /[locale]/scan.
 //
-// Three scenarios:
+// Post-ADR-0015 / #163:
 //
-// 1. /en/scan renders the entry CTA. Always runs — no DB dependency.
+// 1. /en/scan is FULLY age-gated (was ungated pre-#163 as a discovery
+//    affordance). Without the gate cookie, the proxy rewrites to the
+//    landing gate.
 // 2. /de/scan renders the coming-soon page (ADR-0008 keeps the German
 //    locale gated until the Impressum is in place). Always runs.
-// 3. /en/scan → upload → matched Sake page. Requires DATABASE_URL in the
-//    dev-server's environment AND a Sakenowa-published Dassai row whose
-//    `name_kanji = '獺祭'` and brewery `name_kanji = '旭酒造'`. The S1
-//    hardcoded extraction always resolves to that pair (see
-//    src/lib/scan/scan-action.ts). CI runs without DATABASE_URL; the
-//    Vitest+testcontainers integration test in
-//    src/lib/sakenowa/lookup.integration.test.ts covers the read-side
-//    contract.
+// 3. /en/scan → upload → matched result renders IN PLACE (no more auto-
+//    navigate to /sake/[brandId]). The rich result card shows the
+//    visitor's photo, the sake kanji + romaji, the flavor chart, and a
+//    "See full details →" link back to the deep-dive page. Requires
+//    DATABASE_URL + a Sakenowa-published Dassai row; the vision provider
+//    is `e2e-stub` under Playwright.
 import { expect, test } from '@playwright/test'
 import { BASE_URL } from './_base-url'
 import { findScanS1FixtureBrandId } from './_db-fixtures'
@@ -32,21 +32,39 @@ test.beforeAll(async () => {
 })
 
 test.describe('scan entry route', () => {
-  test('/en/scan renders the entry CTA pre-age-gate (discovery affordance)', async ({
+  test('/en/scan is gated — no cookie → landing gate rewrite (ADR-0015)', async ({
     browser,
   }) => {
     const context = await browser.newContext({ locale: 'en-US' })
-    // Deliberately no age-gate cookie — the entry CTA is allowed pre-gate.
+    // Deliberately no age-gate cookie. Post-ADR-0015 the whole /scan
+    // route is gated, so the proxy rewrites to the landing gate — the
+    // scan form (and its localized entry copy) must not render.
+    const page = await context.newPage()
+
+    await page.goto('/en/scan')
+
+    // The rewrite lands us on the landing page rendered under the /scan
+    // URL. The gate dialog is present; the scan form is not.
+    await expect(page.getByTestId('age-gate')).toBeVisible()
+    await expect(page.getByTestId('scan-entry-page')).toHaveCount(0)
+    await expect(page.getByTestId('scan-pick-button')).toHaveCount(0)
+
+    await context.close()
+  })
+
+  test('/en/scan renders the entry CTA when the gate cookie is set', async ({
+    browser,
+  }) => {
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([AGE_GATE_COOKIE])
     const page = await context.newPage()
 
     await page.goto('/en/scan')
 
     await expect(page.getByTestId('scan-entry-page')).toBeVisible()
     await expect(page.getByTestId('scan-pick-button')).toBeVisible()
-    // The gate dialog overlays the page because the cookie is unset; the
-    // CTA itself still renders behind it (no rewrite happened, which is
-    // the point of the ungated entry route).
-    await expect(page.getByTestId('age-gate')).toBeVisible()
+    // The gate dialog does NOT render — we already accepted.
+    await expect(page.getByTestId('age-gate')).toHaveCount(0)
 
     await context.close()
   })
@@ -66,7 +84,7 @@ test.describe('scan entry route', () => {
     await context.close()
   })
 
-  test('/en/scan upload → matched → auto-navigates to /en/sake/<brandId>', async ({
+  test('/en/scan upload → matched → renders result card in place (ADR-0015)', async ({
     browser,
   }, testInfo) => {
     testInfo.skip(
@@ -86,9 +104,39 @@ test.describe('scan entry route', () => {
     // open here). Picking a file fires the change handler the same way.
     await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
 
-    // Wait for the route push to land us on the matched sake page.
-    await page.waitForURL(new RegExp(`/en/sake/${dassaiBrandId}$`))
-    await expect(page.getByTestId('sake-brand-page')).toBeVisible()
+    // Post-ADR-0015: the result renders IN PLACE. We stay on /en/scan.
+    await expect(page.getByTestId('scan-result-card')).toBeVisible()
+    expect(page.url()).toMatch(/\/en\/scan$/)
+
+    // The card carries the visitor's own photo preview (blob: URL —
+    // client-only object URL, never uploaded/persisted).
+    const photoSrc = await page.getByTestId('scan-result-photo').getAttribute('src')
+    expect(photoSrc).toMatch(/^blob:/)
+
+    // The kanji renders adjacent to the LLM-extracted provenance badge.
+    await expect(page.getByTestId('scan-result-name-kanji')).toContainText('獺祭')
+
+    // Flavor chart is present when the brand has a Sakenowa flavor_charts
+    // row. Dassai (獺祭) always does in a mirrored corpus, but the
+    // assertion is scoped to "if the section rendered, all six axes are
+    // there" so a legitimate null-chart brand doesn't wedge this spec.
+    // Testids come from the shared `FlavorChartInlineView` (same ones
+    // the sake detail page uses).
+    if (await page.getByTestId('brand-flavor-chart').isVisible()) {
+      for (const axis of ['f1', 'f2', 'f3', 'f4', 'f5', 'f6']) {
+        await expect(
+          page.getByTestId(`flavor-axis-${axis}-bar`),
+        ).toBeVisible()
+      }
+    }
+
+    // The "See full details →" link points at the deep-dive page but is
+    // NOT auto-followed — it's an explicit affordance.
+    const openLink = page.getByTestId('scan-result-open-detail')
+    await expect(openLink).toHaveAttribute(
+      'href',
+      new RegExp(`/en/sake/${dassaiBrandId}$`),
+    )
 
     await context.close()
   })
@@ -133,17 +181,18 @@ test.describe('scan entry route', () => {
     await context.addCookies([AGE_GATE_COOKIE])
     const page = await context.newPage()
 
-    // First 5 scans land on the matched sake page; reset between
-    // submissions so each one starts at /en/scan.
+    // First 5 scans render the in-place result card (ADR-0015 — no more
+    // auto-navigate). Reset each time so the file input can accept a
+    // fresh pick.
     for (let i = 0; i < 5; i++) {
       await page.goto('/en/scan')
       await expect(page.getByTestId('scan-entry-page')).toBeVisible()
       await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
-      await page.waitForURL(new RegExp(`/en/sake/${dassaiBrandId}$`))
+      await expect(page.getByTestId('scan-result-card')).toBeVisible()
     }
 
     // Sixth scan in the same 24h window — the rate-limited copy renders
-    // in place of the matched navigation.
+    // in place of the matched result card.
     await page.goto('/en/scan')
     await expect(page.getByTestId('scan-entry-page')).toBeVisible()
     await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)

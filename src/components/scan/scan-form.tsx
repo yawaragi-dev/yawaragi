@@ -1,14 +1,16 @@
 'use client'
 
 // `'use client'` is load-bearing here: this component owns a file input
-// with a change handler, runs the canvas downscale in the browser, calls
-// `useActionState`, and conditionally `router.push`es on the matched
-// state. Every one of those is a concrete client-only need per CLAUDE.md.
+// with a change handler, runs the canvas downscale in the browser, holds
+// the `URL.createObjectURL` for the visitor's photo preview, and calls
+// `useActionState`. Every one of those is a concrete client-only need
+// per CLAUDE.md.
 
 import { startTransition, useActionState, useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
+import { Link } from '@/i18n/navigation'
 import { Button } from '@/components/ui/button'
 import { ProvenanceBadgeView } from '@/components/sake/provenance-badge'
 // Per ADR-0014, attribution should render conditionally on the
@@ -22,6 +24,7 @@ import { ProvenanceBadgeView } from '@/components/sake/provenance-badge'
 // `ScanActionState` and gate these renders with
 // `requiresSakenowaAttribution(sources)` from sakenowa-attribution.tsx.
 import { SakenowaAttributionView } from '@/components/sake/sakenowa-attribution'
+import { ScanResultCard } from '@/components/scan/scan-result-card'
 import type { DebugEvent } from '@/lib/debug/debug-log'
 import { appendDebugEvents } from '@/lib/debug/debug-store'
 import {
@@ -29,7 +32,6 @@ import {
   browserCanvasFactory,
   downscaleImage,
 } from '@/lib/scan/downscale'
-import { resolveConfidenceTier } from '@/lib/scan/confidence-tier'
 import { scanAction } from '@/lib/scan/scan-action'
 import {
   INITIAL_SCAN_ACTION_STATE,
@@ -54,34 +56,34 @@ interface ScanFormProps {
 }
 
 /**
- * `<ScanForm />` — the client-side capture surface for Phase 3 / S1.
+ * `<ScanForm />` — the client-side capture surface.
  *
- * Flow (PRD #105 §"Wire shape"):
+ * Flow (post-ADR-0015 / #163):
  *   1. Visitor sees two buttons: "Take photo" (mobile / touchscreen
  *      only — `(any-pointer: coarse)`) and "Upload photo" (always
  *      visible). Each is wired to its own hidden `<input type="file">`:
  *      the camera input pins `capture="environment"` and always opens
  *      the back camera; the upload input has no `capture` and always
- *      opens the photo-library / file picker. The two-input pattern
- *      gives the visitor a deterministic choice rather than relying on
- *      the OS to show its (browser- and version-dependent)
- *      "Photo Library / Take Photo / Choose File" sheet — many
- *      Android Chrome builds and older iOS versions skip the sheet
- *      and jump straight to one path, hiding the other.
- *   2. On change, we downscale the captured file in the browser via
- *      `<canvas>.toBlob` and `createImageBitmap({ imageOrientation:
- *      'from-image' })`.
+ *      opens the photo-library / file picker.
+ *   2. On change, we hold onto the raw file (for a client-only
+ *      `URL.createObjectURL` preview that never leaves the browser)
+ *      AND downscale it via `<canvas>.toBlob` +
+ *      `createImageBitmap({ imageOrientation: 'from-image' })`.
  *   3. We submit a `FormData` carrying the downscaled JPEG to the
  *      `scanAction` Server Action via `useActionState`.
- *   4. On a `matched` result we `router.push` to the matched sake page —
- *      `<ProvenanceBadge />` + `<SakenowaAttribution />` already live
- *      there.
+ *   4. On a `matched` result we render `<ScanResultCard />` IN PLACE —
+ *      photo + name + flavor chart + "See full details →" link. The
+ *      previous S1/S3 behaviour of `router.push`ing to `/sake/[brandId]`
+ *      is gone (see ADR-0015).
  *
- * Out of scope for S1: medium/low confidence UX, disambiguation list,
- * no-match copy with a "submit to Sakenowa" affordance.
+ * Every non-match state (`low_confidence`, `no_match`, `ambiguous`,
+ * divergence variants) also stays on `/scan` and renders discovery-
+ * framed copy — never "error" tone. The route as a whole is age-gated
+ * upstream by the proxy so no flavor data reaches an unaccepted visitor.
  */
 export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
   const t = useTranslations('scan.form')
+  const tCard = useTranslations('scan.resultCard')
   // ProvenanceBadgeView + SakenowaAttributionView are the sync presentational
   // halves; we resolve their strings via the client-side translator since this
   // module is `'use client'`. The badge's policy (don't render canonical
@@ -111,6 +113,14 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
   // discovery-framed i18n string ('errorDownscale'), not the raw browser
   // exception, to keep DACH copy on-brand.
   const [downscaleFailed, setDownscaleFailed] = useState(false)
+  // ADR-0015 / #163: the in-place result card shows the visitor's own
+  // label photo. The URL is created from the ORIGINAL File the visitor
+  // picked (pre-downscale — displays the friendliest quality). It never
+  // leaves the browser: it's a `blob:` URL owned by this document and
+  // is revoked as soon as we don't need it (new pick, form unmount).
+  // Storing it in state (not a ref) so re-renders after `useActionState`
+  // returns the matched result pick up the URL.
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null)
   // Per-scan timing origin. Initialized to 0 so the ref initializer
   // stays pure for React 19's render-purity rules. `onFileChange`
   // writes the real epoch ms before the first event is pushed, so the
@@ -142,16 +152,25 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
   // with one tap rather than rescanning again.
   const consensus = useScanHistoryConsensus()
 
-  // Auto-navigate only when the matched extraction is in the `auto`
-  // confidence tier (≥ 0.85 per PRD #105). Confirm tier (0.60–0.85)
-  // renders the confirm card and waits for an explicit tap — see the
-  // `matched` JSX branch below. Without this gate the visitor would
-  // be silently routed to a sake they're not sure matches.
+  // ADR-0015 / #163: the auto-navigate `router.push('/sake/[brandId]')`
+  // on a confident match has been removed. Every `matched` state now
+  // renders `<ScanResultCard />` in place — the visitor's photo, the
+  // brand kanji + romaji, the flavor chart, and an explicit "See full
+  // details →" link back to `/sake/[brandId]` (still the deep-dive
+  // permalink). The `matched_brand_only` / `matched_brewery_only`
+  // divergence variants continue to render their divergence card in
+  // place as they always have.
+  //
+  // Revoke the client-only object URL for the label photo when the
+  // dependent value changes (React runs this cleanup with the previous
+  // `photoUrl` closed over before running the next effect) OR when the
+  // form unmounts. This is the single point of `revokeObjectURL` — a
+  // second call from inside `onFileChange` would double-revoke.
   useEffect(() => {
-    if (state.status !== 'matched') return
-    if (resolveConfidenceTier(state.extraction.confidence) !== 'auto') return
-    router.push(state.sakeHref)
-  }, [router, state])
+    return () => {
+      if (photoUrl) URL.revokeObjectURL(photoUrl)
+    }
+  }, [photoUrl])
 
   // Mirror every successful match into the per-tab history so the
   // consensus mechanism can vote across recent scans. Tracks
@@ -244,6 +263,10 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
     // back across multiple attempts.
     scanStartedAtRef.current = Date.now()
     pushClientEvent(`picked file "${file.name}" (${file.size} bytes, ${file.type || 'no MIME'})`)
+    // Set up the client-only photo preview URL BEFORE the async
+    // downscale kicks off. The effect below revokes the previous URL
+    // when this state change lands.
+    setPhotoUrl(URL.createObjectURL(file))
     try {
       const downscaleStart = Date.now()
       const downscaled = await downscaleImage(file, {
@@ -480,21 +503,21 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
       {state.status === 'low_confidence' && !consensus && (
         // Retry tier (confidence < 0.60). No lookup attempted upstream
         // — the model isn't confident enough about the (name, brewery)
-        // pair to be worth checking against Sakenowa. We surface a
-        // discovery-framed hint ("try a closer shot") plus a
-        // back-label hint (real-world bottles like 二世古 ship
-        // designer-driven front labels the model can't parse but
-        // legible regulatory back labels), plus an explicit rescan
-        // button so the visitor doesn't have to scroll back up to
-        // the file picker.
+        // pair to be worth checking against Sakenowa. Per #163 this
+        // is framed as discovery, not error: neutral zinc colours (no
+        // amber alert), no `role="alert"`. The back-label hint stays
+        // (real-world bottles like 二世古 ship designer-driven front
+        // labels the model can't parse but legible regulatory back
+        // labels), plus an explicit rescan button and a bridge to the
+        // sibling suggest surface so a curious tester who scanned a
+        // coffee mug still has a way to keep exploring.
         <div
           className="flex flex-col gap-2"
           data-testid="scan-result-retry"
         >
           <p
-            role="alert"
-            className="text-sm text-amber-700 dark:text-amber-300"
-            data-testid="scan-error-low-confidence"
+            className="text-sm text-zinc-700 dark:text-zinc-300"
+            data-testid="scan-result-low-confidence"
           >
             {t('lowConfidence')}
           </p>
@@ -504,7 +527,7 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
           >
             {t('backLabelHint')}
           </p>
-          <div>
+          <div className="mt-1 flex flex-wrap items-center gap-3">
             <Button
               type="button"
               variant="outline"
@@ -513,6 +536,13 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
             >
               {t('retryRescan')}
             </Button>
+            <Link
+              href="/suggest"
+              className="text-sm font-medium underline underline-offset-4"
+              data-testid="scan-result-explore-sample"
+            >
+              {tCard('exploreAnotherWay')}
+            </Link>
           </div>
         </div>
       )}
@@ -521,7 +551,11 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
         // genuine (limited edition, collaboration product — covered
         // by §22/§23) and sometimes the model fabricated a
         // confidently-shaped name unrelated to the bottle (§23).
-        // The back-label hint covers the latter case.
+        // The back-label hint covers the latter case. Per #163 the
+        // copy is discovery-framed, not error-framed, and we surface
+        // both a "scan again" affordance and a bridge to /suggest —
+        // a visitor who tried scanning a coffee mug still has an
+        // inviting next step, not a dead end.
         <div
           className="flex flex-col gap-2"
           data-testid="scan-result-no-match"
@@ -533,6 +567,23 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
           >
             {t('backLabelHint')}
           </p>
+          <div className="mt-1 flex flex-wrap items-center gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onPickClick}
+              data-testid="scan-result-no-match-rescan"
+            >
+              {t('retryRescan')}
+            </Button>
+            <Link
+              href="/suggest"
+              className="text-sm font-medium underline underline-offset-4"
+              data-testid="scan-result-no-match-explore"
+            >
+              {tCard('exploreAnotherWay')}
+            </Link>
+          </div>
         </div>
       )}
       {state.status === 'ambiguous' && (() => {
@@ -607,123 +658,48 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
             >
               {t('ambiguousNotListed')}
             </p>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onPickClick}
-              data-testid="scan-result-ambiguous-rescan"
-            >
-              {t('ambiguousRescan')}
-            </Button>
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onPickClick}
+                data-testid="scan-result-ambiguous-rescan"
+              >
+                {t('ambiguousRescan')}
+              </Button>
+              <Link
+                href="/suggest"
+                className="text-sm font-medium underline underline-offset-4"
+                data-testid="scan-result-ambiguous-explore"
+              >
+                {tCard('exploreAnotherWay')}
+              </Link>
+            </div>
           </div>
         )
       })()}
-      {state.status === 'matched' && resolveConfidenceTier(state.extraction.confidence) === 'auto' && (
-        // Auto tier (confidence ≥ 0.85). The useEffect above auto-navigates
-        // to `state.sakeHref`; this block is the brief flash before the
-        // route change resolves. CLAUDE.md "Do NOT show LLM-extracted data
-        // without a ProvenanceBadge" — every LLM-extracted value here is
-        // rendered adjacent to its badge. The Sakenowa attribution
-        // renders too, since the result includes the matched brand id.
-        <div
-          className="flex flex-col gap-3"
-          data-testid="scan-result-matched"
-        >
-          <SakenowaAttributionView
-            placement="inline"
-            poweredBy={tAttribution('poweredBy')}
-            linkLabel={tAttribution('linkLabel')}
-          />
-          <div className="flex items-center gap-2">
-            <span
-              className="text-base font-medium"
-              lang="ja"
-              data-testid="scan-result-name-ja"
-            >
-              {state.extraction.name_ja}
-            </span>
-            <ProvenanceBadgeView
-              kind="llmExtracted"
-              label={tBadge('label')}
-              tooltip={tBadge('tooltip')}
-              confidence={state.extraction.confidence}
-            />
-          </div>
-          <p className="text-sm text-zinc-700 dark:text-zinc-300">{t('matched')}</p>
-        </div>
-      )}
-      {state.status === 'matched' && resolveConfidenceTier(state.extraction.confidence) === 'confirm' && (
-        // Confirm tier (0.60 ≤ confidence < 0.85). Renders a confirm
-        // card: the extracted brand kanji with provenance, a "is this
-        // the bottle?" prompt, and explicit Confirm / Rescan
-        // actions. NO auto-navigate — the visitor decides. The
-        // brewery from the extraction is shown alongside the brand
-        // so a misread brewery (caught by brewery-fallback at
-        // `matched_brand_only` for divergence) doesn't slip past.
-        <div
-          className="flex flex-col gap-3"
-          data-testid="scan-result-confirm"
-        >
-          <SakenowaAttributionView
-            placement="inline"
-            poweredBy={tAttribution('poweredBy')}
-            linkLabel={tAttribution('linkLabel')}
-          />
-          <p className="text-sm text-zinc-700 dark:text-zinc-300">{t('confirmTitle')}</p>
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span
-                className="text-base font-medium"
-                lang="ja"
-                data-testid="scan-result-name-ja"
-              >
-                {state.extraction.name_ja}
-              </span>
-              {state.sakeRomaji && (
-                <span
-                  className="text-sm text-zinc-600 dark:text-zinc-400"
-                  data-testid="scan-result-confirm-sake-romaji"
-                >
-                  ({state.sakeRomaji})
-                </span>
-              )}
-              <ProvenanceBadgeView
-                kind="llmExtracted"
-                label={tBadge('label')}
-                tooltip={tBadge('tooltip')}
-                confidence={state.extraction.confidence}
-              />
-            </div>
-            <span
-              className="text-sm text-zinc-600 dark:text-zinc-400 flex items-baseline gap-2 flex-wrap"
-              data-testid="scan-result-confirm-brewery"
-            >
-              <span lang="ja">{state.extraction.brewery_ja}</span>
-              {state.breweryRomaji && (
-                <span data-testid="scan-result-confirm-brewery-romaji">
-                  ({state.breweryRomaji})
-                </span>
-              )}
-            </span>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              onClick={() => router.push(state.sakeHref)}
-              data-testid="scan-result-confirm-accept"
-            >
-              {t('confirmAccept')}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onPickClick}
-              data-testid="scan-result-confirm-rescan"
-            >
-              {t('confirmRescan')}
-            </Button>
-          </div>
-        </div>
+      {state.status === 'matched' && (
+        // ADR-0015 / #163: the matched result renders IN PLACE on /scan
+        // (previously auto-navigated to /sake/[brandId] on the auto tier
+        // and rendered a text-only confirm card on the confirm tier).
+        // Both confidence tiers now share the same rich `<ScanResultCard />`
+        // — photo + kanji + romaji + provenance badge + flavor chart +
+        // an explicit "See full details →" link. The tier information
+        // survives inside `state.extraction.confidence`, which the
+        // provenance badge renders as its confidence sub-label — that's
+        // where a curious visitor can see how sure the system is about
+        // its read.
+        <ScanResultCard
+          photoUrl={photoUrl}
+          photoAlt={t('photoAlt')}
+          sakeKanji={state.extraction.name_ja}
+          sakeRomaji={state.sakeRomaji}
+          breweryKanji={state.extraction.brewery_ja}
+          breweryRomaji={state.breweryRomaji}
+          sakeHref={state.sakeHref}
+          flavorChart={state.flavorChart}
+          extractionConfidence={state.extraction.confidence}
+        />
       )}
       {state.status === 'matched_brand_only' && (
         // Phase 3 / #123: brand-only fallback succeeded but the
