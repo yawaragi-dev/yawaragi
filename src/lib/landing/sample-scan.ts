@@ -47,20 +47,32 @@ export interface LandingSampleScan {
  */
 export const getLandingSampleScan = cache(
   async (): Promise<LandingSampleScan | null> => {
-    const [brand, brewery, flavorChart] = await Promise.all([
-      lookupBrand(SAMPLE_SCAN_BRAND_ID),
-      lookupBreweryByBrand(SAMPLE_SCAN_BRAND_ID),
-      lookupFlavorChart(SAMPLE_SCAN_BRAND_ID),
-    ])
-    if (!brand) return null
+    // The landing is the entry point + age gate; it must ALWAYS render.
+    // Any failure to reach the mirror — DATABASE_URL unset (CI's Playwright
+    // webServer), a transient outage, a dropped row — degrades to the text
+    // hero rather than 500ing the page. `lookupBrand` THROWS when
+    // DATABASE_URL is unset, so this catch is load-bearing: without it every
+    // e2e spec that loads `/` with the gate accepted fails and the suite
+    // slows to a crawl on retries (that regression is exactly what this
+    // guard prevents).
+    try {
+      const [brand, brewery, flavorChart] = await Promise.all([
+        lookupBrand(SAMPLE_SCAN_BRAND_ID),
+        lookupBreweryByBrand(SAMPLE_SCAN_BRAND_ID),
+        lookupFlavorChart(SAMPLE_SCAN_BRAND_ID),
+      ])
+      if (!brand) return null
 
-    return {
-      brandId: brand.brandId,
-      sakeKanji: brand.nameKanji,
-      sakeRomaji: brand.nameRomaji,
-      breweryKanji: brewery?.nameKanji ?? '',
-      breweryRomaji: brewery?.nameRomaji ?? null,
-      flavorChart,
+      return {
+        brandId: brand.brandId,
+        sakeKanji: brand.nameKanji,
+        sakeRomaji: brand.nameRomaji,
+        breweryKanji: brewery?.nameKanji ?? '',
+        breweryRomaji: brewery?.nameRomaji ?? null,
+        flavorChart,
+      }
+    } catch {
+      return null
     }
   },
 )
