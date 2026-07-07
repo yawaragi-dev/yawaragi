@@ -208,7 +208,21 @@ function FreeformFormInner({
         disabled={isPending}
         data-testid="suggest-freeform-submit"
       >
-        {isPending ? t('submitPending') : t('submit')}
+        {isPending ? (
+          // Strip trailing whitespace + ellipsis characters (Unicode
+          // `…` or ASCII `...`) from the localized pending copy, then
+          // let the CSS `.pending-ellipsis` animation supply an
+          // animated `.` → `..` → `...` cycle. The animated span is
+          // `aria-hidden` because screen readers already announce
+          // the button label and the form-level `aria-busy` — the
+          // dot ticks are decorative.
+          <>
+            {t('submitPending').replace(/[\s…]+$|\.\.\.$/u, '')}
+            <span aria-hidden className="pending-ellipsis" />
+          </>
+        ) : (
+          t('submit')
+        )}
       </Button>
     </form>
   )

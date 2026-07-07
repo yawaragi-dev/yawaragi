@@ -80,3 +80,43 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/*
+ * Animated trailing ellipsis for pending-state labels (e.g. the
+ * "Exploring" button on `/suggest`). Renders `.` → `..` → `...` on a
+ * 1.2s loop, purely via `content:` cycling on the `::after`
+ * pseudo-element. The min-width + left-align stop the parent from
+ * jiggling as the dot count changes. Reduced-motion users see a
+ * static `...`; screen readers are protected because the callsite
+ * wraps this span in `aria-hidden` — the labelled action is already
+ * announced by the button text and the form's `aria-busy`.
+ */
+@keyframes ellipsis-dots {
+  0%,
+  33% {
+    content: ".";
+  }
+  34%,
+  66% {
+    content: "..";
+  }
+  67%,
+  100% {
+    content: "...";
+  }
+}
+
+.pending-ellipsis::after {
+  content: ".";
+  display: inline-block;
+  min-width: 1.5ch;
+  text-align: left;
+  animation: ellipsis-dots 1.2s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pending-ellipsis::after {
+    animation: none;
+    content: "...";
+  }
+}
