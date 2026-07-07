@@ -232,6 +232,66 @@ describe('findNearestExemplars', () => {
     expect(names).toEqual(['Lagavulin 16'])
   })
 
+  // A single-row fixture anchored at the origin of the 6-axis cube. A
+  // profile that differs from it on ONLY f1 has L2 distance == |f1|, so we
+  // can place a profile at an exactly-controlled distance from the anchor
+  // and probe the threshold gate to the ULP. `Math.sqrt(0.55 * 0.55)`
+  // rounds to exactly 0.55 in IEEE-754 doubles, so a profile at f1 = 0.55
+  // sits precisely ON the shipped threshold.
+  const ORIGIN_ROW: readonly CrossBeverageMap[] = [
+    {
+      source: 'cross_beverage_map',
+      descriptor: 'peated',
+      beverage: 'whisky',
+      f1: 0,
+      f2: 0,
+      f3: 0,
+      f4: 0,
+      f5: 0,
+      f6: 0,
+      exemplars: [
+        { source: 'manual_curation', name: 'Lagavulin 16', region: 'Islay peated single-malt' },
+      ],
+    },
+  ]
+
+  it('treats a distance exactly equal to the shipped threshold as a match (gate is inclusive <=)', () => {
+    // Regression guard: fails if someone flips the `<=` distance gate in
+    // findNearestExemplars to `<`. The profile sits at L2 distance
+    // 0.55 == REVERSE_MATCH_THRESHOLD from the anchor; an inclusive gate
+    // must surface the exemplar, an exclusive one would drop it to
+    // 'no-close-analog'. Uses the DEFAULT (shipped) threshold on purpose,
+    // so this ALSO fails if the shipped 0.55 is LOWERED: at threshold 0.5
+    // the exactly-0.55 distance falls out of the gate.
+    const onThreshold = { f1: 0.55, f2: 0, f3: 0, f4: 0, f5: 0, f6: 0 }
+    expect(flavorDistance(onThreshold, ORIGIN_ROW[0]!)).toBe(REVERSE_MATCH_THRESHOLD)
+    const result = findNearestExemplars(onThreshold, { rows: ORIGIN_ROW })
+    expect(result.kind).toBe('match')
+    if (result.kind !== 'match') return
+    expect(result.hits[0]?.exemplar.name).toBe('Lagavulin 16')
+  })
+
+  it('drops a distance just over the shipped threshold to no-close-analog', () => {
+    // Regression guard: fails if someone RAISES the shipped 0.55 (e.g. to
+    // 0.6), which would pull this just-over profile back into a match. The
+    // distance is one nudge above the shipped threshold, so with the
+    // correct 0.55 it must land in the honesty ('no-close-analog') branch.
+    const justOver = { f1: 0.55 + 1e-9, f2: 0, f3: 0, f4: 0, f5: 0, f6: 0 }
+    expect(flavorDistance(justOver, ORIGIN_ROW[0]!)).toBeGreaterThan(REVERSE_MATCH_THRESHOLD)
+    const result = findNearestExemplars(justOver, { rows: ORIGIN_ROW })
+    expect(result.kind).toBe('no-close-analog')
+  })
+
+  it('keeps a distance just under the shipped threshold as a match', () => {
+    // Completes the boundary triple (on / just-over / just-under) so the
+    // gate direction is fully pinned: a hair below the shipped 0.55 must
+    // still match.
+    const justUnder = { f1: 0.55 - 1e-9, f2: 0, f3: 0, f4: 0, f5: 0, f6: 0 }
+    expect(flavorDistance(justUnder, ORIGIN_ROW[0]!)).toBeLessThan(REVERSE_MATCH_THRESHOLD)
+    const result = findNearestExemplars(justUnder, { rows: ORIGIN_ROW })
+    expect(result.kind).toBe('match')
+  })
+
   it('threshold constant sits between adjacent-cluster and different-family distances', () => {
     // Regression guard against a maintainer nudging the threshold above
     // the "different family" band (ADR would be needed) or below the
