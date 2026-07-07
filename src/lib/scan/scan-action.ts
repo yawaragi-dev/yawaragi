@@ -25,6 +25,7 @@ import {
   lookupBreweryByBrand,
   lookupFlavorChart,
 } from '@/lib/sakenowa/lookup'
+import { getPrefectureNames } from '@/lib/sakenowa/prefecture'
 import type { Brand } from '@/lib/schemas/brand'
 import type { Brewery } from '@/lib/schemas/brewery'
 import { resolveConfidenceTier } from './confidence-tier'
@@ -138,6 +139,7 @@ function ambiguousCandidateFromLookup(
   nameRomaji: string | null
   breweryKanji: string
   breweryRomaji: string | null
+  prefectureName: string | null
 } {
   return {
     brandId: c.sake.brandId,
@@ -149,6 +151,13 @@ function ambiguousCandidateFromLookup(
     nameRomaji: bestRomaji(c.sake),
     breweryKanji: c.brewery.nameKanji,
     breweryRomaji: bestRomaji(c.brewery),
+    // Prefecture name from the static editorial area map
+    // (manual_curation). Deterministic, no DB round-trip — the
+    // brewery row the lookup already JOINed carries `areaId`, and
+    // `getPrefectureNames` resolves it against the fixed 47-entry
+    // table (+ the "International" sentinel for areaId 0). `nameEn`
+    // is a proper noun and reads identically in EN and DE.
+    prefectureName: getPrefectureNames(c.brewery.areaId)?.nameEn ?? null,
   }
 }
 

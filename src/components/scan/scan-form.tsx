@@ -37,6 +37,7 @@ import {
   INITIAL_SCAN_ACTION_STATE,
   type ScanActionState,
 } from '@/lib/scan/scan-action-state'
+import { markArrivedViaScan } from '@/lib/scan/arrived-via-scan'
 import { appendMatchToHistory } from '@/lib/scan/scan-history'
 import { useScanHistoryConsensus } from '@/lib/scan/use-scan-history-consensus'
 import type { Locale } from '@/i18n/routing'
@@ -91,6 +92,9 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
   // the extraction came back with source: 'llm_extracted'.
   const tBadge = useTranslations('provenance.badge.llmExtracted')
   const tAttribution = useTranslations('sakenowaAttribution')
+  // Reused for the brewery label on the enriched no_match state (the
+  // same label the sake detail page and result card render).
+  const tSake = useTranslations('sake.brand')
   const router = useRouter()
   // Two distinct file inputs so the visitor gets a deterministic
   // choice between the camera and the photo library on mobile —
@@ -484,7 +488,10 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
           <div className="flex gap-2">
             <Button
               type="button"
-              onClick={() => router.push(consensus.sakeHref)}
+              onClick={() => {
+                markArrivedViaScan()
+                router.push(consensus.sakeHref)
+              }}
               data-testid="scan-result-consensus-accept"
             >
               {t('consensusAccept')}
@@ -557,9 +564,50 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
         // a visitor who tried scanning a coffee mug still has an
         // inviting next step, not a dead end.
         <div
-          className="flex flex-col gap-2"
+          className="flex flex-col gap-3"
           data-testid="scan-result-no-match"
         >
+          {/*
+            No-match enrichment (#109 PR B). Show the visitor WHAT we
+            read from the label so they can judge whether the model
+            misread it or the bottle is genuinely absent. The extracted
+            name + brewery are LLM-derived, so the name renders next to
+            a <ProvenanceBadge kind="llmExtracted" /> on the same
+            baseline (CLAUDE.md provenance rule). Kanji renders verbatim
+            (lang="ja"), never translated.
+          */}
+          <p
+            className="text-sm text-zinc-700 dark:text-zinc-300"
+            data-testid="scan-result-no-match-read-label"
+          >
+            {t('noMatchReadLabel')}
+          </p>
+          <div className="flex flex-col gap-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <span
+                className="text-base font-medium"
+                lang="ja"
+                data-testid="scan-result-no-match-name-ja"
+              >
+                {state.extraction.name_ja}
+              </span>
+              <ProvenanceBadgeView
+                kind="llmExtracted"
+                label={tBadge('label')}
+                tooltip={tBadge('tooltip')}
+                confidence={state.extraction.confidence}
+              />
+            </div>
+            <div
+              className="flex flex-wrap items-baseline gap-1.5 text-sm text-zinc-600 dark:text-zinc-400"
+              data-testid="scan-result-no-match-brewery-ja"
+            >
+              <span className="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
+                {tSake('breweryLabel')}
+              </span>
+              <span lang="ja">{state.extraction.brewery_ja}</span>
+            </div>
+          </div>
           <p className="text-sm text-zinc-700 dark:text-zinc-300">{t('noMatch')}</p>
           <p
             className="text-xs text-zinc-500 dark:text-zinc-500"
@@ -606,6 +654,30 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
         const candidates = Array.isArray(state.candidates) ? state.candidates : []
         const breweryKanjis = new Set(candidates.map((c) => c.breweryKanji))
         const sharedBrewery = breweryKanjis.size === 1 ? candidates[0] : null
+        // Compose the "romaji, prefecture" parenthetical shown next to
+        // a brewery's kanji. Both are optional (romaji may be null for
+        // an un-transliterated row; prefecture null for an unknown
+        // areaId), so we drop empties and only render parens when at
+        // least one part survives. The kanji itself is always shown by
+        // the caller. Prefecture is the discriminator for same-brand-
+        // across-breweries collisions (Hakushika: Ibaraki vs Hyogo).
+        const breweryParens = (
+          romaji: string | null,
+          prefecture: string | null,
+        ): string | null => {
+          const parts = [romaji, prefecture].filter(
+            (p): p is string => Boolean(p),
+          )
+          return parts.length > 0 ? parts.join(', ') : null
+        }
+        const sharedBreweryParens = sharedBrewery
+          ? breweryParens(sharedBrewery.breweryRomaji, sharedBrewery.prefectureName)
+          : null
+        const sharedBreweryDescriptor = sharedBrewery
+          ? sharedBreweryParens
+            ? `${sharedBrewery.breweryKanji} (${sharedBreweryParens})`
+            : sharedBrewery.breweryKanji
+          : ''
         return (
           <div
             className="flex flex-col gap-3"
@@ -618,10 +690,7 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
             />
             <p className="text-sm text-zinc-700 dark:text-zinc-300">
               {sharedBrewery
-                ? t('ambiguousSharedBrewery', {
-                    breweryKanji: sharedBrewery.breweryKanji,
-                    breweryRomaji: sharedBrewery.breweryRomaji ?? '',
-                  })
+                ? t('ambiguousSharedBrewery', { brewery: sharedBreweryDescriptor })
                 : t('ambiguous')}
             </p>
             <ul className="flex flex-col gap-1.5" data-testid="scan-result-ambiguous-list">
@@ -629,7 +698,8 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
                 <li key={c.brandId}>
                   <a
                     href={c.sakeHref}
-                    className="flex flex-col gap-0.5 rounded border border-zinc-200 px-3 py-2 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900"
+                    onClick={markArrivedViaScan}
+                    className="flex flex-col gap-0.5 rounded border border-zinc-200 px-3 py-2 transition-colors hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 dark:border-zinc-800 dark:hover:bg-zinc-900"
                     data-testid={`scan-result-ambiguous-candidate-${c.brandId}`}
                   >
                     <span className="flex items-baseline gap-2 flex-wrap">
@@ -642,12 +712,19 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
                         </span>
                       )}
                     </span>
-                    {!sharedBrewery && (
-                      <span className="text-xs text-zinc-500 dark:text-zinc-500 flex items-baseline gap-1 flex-wrap">
-                        <span lang="ja">{c.breweryKanji}</span>
-                        {c.breweryRomaji && <span>({c.breweryRomaji})</span>}
-                      </span>
-                    )}
+                    {!sharedBrewery && (() => {
+                      // Cross-brewery candidates: show the brewery kanji
+                      // plus a "(romaji, prefecture)" parenthetical so a
+                      // same-brand-across-breweries collision is
+                      // resolvable by region (the Hakushika shape).
+                      const parens = breweryParens(c.breweryRomaji, c.prefectureName)
+                      return (
+                        <span className="text-xs text-zinc-500 dark:text-zinc-500 flex items-baseline gap-1 flex-wrap">
+                          <span lang="ja">{c.breweryKanji}</span>
+                          {parens && <span>({parens})</span>}
+                        </span>
+                      )
+                    })()}
                   </a>
                 </li>
               ))}
@@ -771,6 +848,7 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
           </p>
           <a
             href={state.sakeHref}
+            onClick={markArrivedViaScan}
             className="text-sm font-medium text-blue-700 underline-offset-2 hover:underline dark:text-blue-300"
             data-testid="scan-result-matched-brand-only-link"
           >
@@ -853,6 +931,7 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
           </p>
           <a
             href={state.sakeHref}
+            onClick={markArrivedViaScan}
             className="text-sm font-medium text-blue-700 underline-offset-2 hover:underline dark:text-blue-300"
             data-testid="scan-result-matched-brewery-only-link"
           >

@@ -113,8 +113,9 @@
       "confirmAccept": "Yes, open the sake page",
       "confirmRescan": "No, scan again",
       "noMatch": "We read the label, but the sake isn't in our catalogue yet.",
+      "noMatchReadLabel": "Here's what we read from the label:",
       "ambiguous": "Several sakes match this name. Pick the one on your bottle:",
-      "ambiguousSharedBrewery": "We matched the brewery: {breweryKanji} ({breweryRomaji}). Here's what our catalogue has from them:",
+      "ambiguousSharedBrewery": "We matched the brewery: {brewery}. Here's what our catalogue has from them:",
       "ambiguousNotListed": "Don't see your bottle? Limited editions and collaborations aren't always in our catalogue.",
       "ambiguousRescan": "None of these — scan again",
       "errorInvalidInput": "We couldn't read that file. Try a clear photo of the bottle label.",
@@ -137,6 +138,10 @@
       "reverseExemplarSingle": "Interesting for those who like {name}",
       "reverseExemplarPair": "Interesting for those who like {first} or {second}",
       "reverseNoAnalog": "This is a distinctly Japanese profile — no close Western analog."
+    },
+    "returnHint": {
+      "notThisOne": "Not the bottle you scanned?",
+      "scanAgain": "Scan again"
     }
   },
   "suggest": {

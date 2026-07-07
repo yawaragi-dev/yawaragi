@@ -646,6 +646,14 @@ describe('scanAction — Sakenowa lookup states', () => {
       expect(state.candidates[1].sakeHref).toBe(`/de/sake/${KIKU_BRAND.brandId}`)
       expect(state.candidates[0].nameKanji).toBe('獺祭')
       expect(state.candidates[1].breweryKanji).toBe('菊正宗酒造')
+      // #109 PR B: each candidate carries its brewery's prefecture name
+      // (editorial Hepburn form from the static area map) so the
+      // disambiguation list can show "永井酒造 (Nagai Shuzo, Gunma)".
+      // Asahi Shuzo → areaId 35 → Yamaguchi; Kiku-Masamune → areaId 27
+      // → Osaka. Derived from `getPrefectureNames(brewery.areaId)`; no
+      // new query.
+      expect(state.candidates[0].prefectureName).toBe('Yamaguchi')
+      expect(state.candidates[1].prefectureName).toBe('Osaka')
     }
   })
 })
