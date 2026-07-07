@@ -68,6 +68,16 @@ vi.mock('@/lib/sakenowa/lookup', () => ({
   findSakeByBrandOnly: vi.fn(),
   findSakeByBreweryOnly: vi.fn(),
   lookupBreweryByBrand: vi.fn(),
+  // #183 added `lookupFlavorChart` to the matched branch (ADR-0015 —
+  // in-place result card fetches the chart alongside the brewery
+  // romaji). Without this export in the mock factory the import
+  // resolves to undefined and the matched branch throws
+  // `TypeError: lookupFlavorChart is not a function`, which
+  // scan-action's try/catch surfaces as `extraction_failed`. Bare
+  // `vi.fn()` returns undefined; `Promise.all` treats non-thenables
+  // as immediately fulfilled so matched tests pass without asserting
+  // on the (null) chart value.
+  lookupFlavorChart: vi.fn(),
 }))
 
 vi.mock('@/lib/rate-limit/config-gate', () => ({
