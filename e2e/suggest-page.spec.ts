@@ -182,11 +182,11 @@ test.describe('suggest page — no seed (S6 landing view)', () => {
     const page = await context.newPage()
 
     // Throttle the RSC segment fetch so the pending window stays
-    // observable — otherwise `expect().toHaveText('Exploring…')`
-    // could race the transition and see the settled `Explore` state
-    // from the freeform form re-mounted on the result page. 400 ms
-    // is a comfortable window for Playwright's default polling; the
-    // stub cookie means we're not spending Anthropic credit.
+    // observable — otherwise `expect().toHaveText('Exploring')` could
+    // race the transition and see the settled `Explore` state from
+    // the freeform form re-mounted on the result page. 400 ms is a
+    // comfortable window for Playwright's default polling; the stub
+    // cookie means we're not spending Anthropic credit.
     await page.route(/\/en\/suggest\?q=/, async (route) => {
       await new Promise((r) => setTimeout(r, 400))
       await route.continue()
@@ -203,10 +203,13 @@ test.describe('suggest page — no seed (S6 landing view)', () => {
       .getByText(/smoky whisky/i)
       .click()
 
-    // The button flips to `Exploring…` while navigation is in flight —
+    // The button flips to `Exploring` while navigation is in flight —
     // BEFORE the results section renders. That's the 100 ms feedback
-    // rule from `docs/agents/ux-design-playbook.md`.
-    await expect(submitBtn).toHaveText('Exploring…')
+    // rule from `docs/agents/ux-design-playbook.md`. The animated
+    // trailing dots live in a `.pending-ellipsis::after` pseudo-
+    // element (see `globals.css`), which is not part of `.textContent`
+    // — so this assertion matches the base word only.
+    await expect(submitBtn).toHaveText('Exploring')
     // And the clicked chip announces `aria-busy` so AT users hear the
     // acknowledgement.
     await expect(
