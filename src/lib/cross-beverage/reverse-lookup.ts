@@ -140,7 +140,6 @@ export const REVERSE_MATCH_THRESHOLD = 0.55
 export interface ReverseExemplarHit {
   readonly exemplar: Exemplar
   readonly descriptor: string
-  readonly beverage: CrossBeverageMap['beverage']
   readonly distance: number
 }
 
@@ -217,7 +216,6 @@ export function findNearestExemplars(
     // the non-null assertion is documenting that invariant.
     exemplar: row.exemplars[0]!,
     descriptor: row.descriptor,
-    beverage: row.beverage,
     distance,
   }))
 
