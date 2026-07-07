@@ -76,7 +76,7 @@ jobs:
     name: Verify (typecheck, lint, unit, audit, e2e)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       # Version is pinned via package.json `packageManager` field for
       # local/CI parity. pnpm 11.2+ added per-command lockfile audits that
