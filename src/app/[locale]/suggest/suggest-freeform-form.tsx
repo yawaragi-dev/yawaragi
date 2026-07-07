@@ -212,14 +212,16 @@ function FreeformFormInner({
           // Strip trailing whitespace + ellipsis characters (Unicode
           // `…` or ASCII `...`) from the localized pending copy, then
           // let the CSS `.pending-ellipsis` animation supply an
-          // animated `.` → `..` → `...` cycle. The animated span is
-          // `aria-hidden` because screen readers already announce
-          // the button label and the form-level `aria-busy` — the
-          // dot ticks are decorative.
-          <>
+          // animated `.` → `..` → `...` cycle. Text + dots are wrapped
+          // in ONE span so the Button primitive's inline-flex `gap-*`
+          // doesn't put visible space between "Exploring" and the
+          // animated dots. The whole label is aria-hidden'd for the
+          // dots only — the button text is announced normally; the
+          // form's `aria-busy` supplies the pending contract.
+          <span>
             {t('submitPending').replace(/[\s…]+$|\.\.\.$/u, '')}
             <span aria-hidden className="pending-ellipsis" />
-          </>
+          </span>
         ) : (
           t('submit')
         )}
