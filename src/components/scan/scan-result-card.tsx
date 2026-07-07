@@ -17,6 +17,7 @@ import {
   type FlavorAxis,
   type FlavorChart,
 } from '@/lib/schemas/flavor-chart'
+import { cn } from '@/lib/utils'
 
 /**
  * ADR-0015 / issue #163 (UX-B). The rich, in-place result card shown after
@@ -75,6 +76,18 @@ export interface ScanResultCardProps {
    * surface, so it omits this prop.
    */
   extractionConfidence?: number
+  /**
+   * True while a rescan is in flight — the visitor picked a new photo
+   * on top of a previously-matched result. The photo (already swapped
+   * to the new blob URL) stays at full opacity so the visitor sees
+   * their new bottle. Everything else — attribution, name, brewery,
+   * link, flavor chart — fades to `opacity-40` and the card region
+   * announces `aria-busy` so screen readers say "the previous match
+   * is being replaced". A cheaper alternative to a skeleton that
+   * preserves the ADR-0015 reward pattern (keep the visitor's photo
+   * visible across the transition).
+   */
+  isStale?: boolean
 }
 
 export function ScanResultCard({
@@ -87,6 +100,7 @@ export function ScanResultCard({
   sakeHref,
   flavorChart,
   extractionConfidence,
+  isStale = false,
 }: ScanResultCardProps) {
   const t = useTranslations('scan.resultCard')
   const tBadge = useTranslations('provenance.badge.llmExtracted')
@@ -107,15 +121,27 @@ export function ScanResultCard({
     ? findNearestExemplars(flavorChart)
     : null
 
+  // Opacity is not inherit-cancellable from a child, so we can't fade
+  // the whole article and then rescue the photo — every region that
+  // should fade has to carry the class explicitly. Kept as a single
+  // constant so the fade duration + level stay in lockstep across the
+  // regions (a maintainer nudging one will notice they're touching a
+  // shared knob). Duration is 200 ms — long enough to read as
+  // intentional, short enough that `prefers-reduced-motion` renders it
+  // as an unnoticeable snap without a `motion-safe:` gate.
+  const staleClass = isStale ? 'opacity-40 transition-opacity duration-200' : ''
+
   return (
     <article
       className="flex flex-col gap-6 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950"
       data-testid="scan-result-card"
+      aria-busy={isStale || undefined}
     >
       <SakenowaAttributionView
         placement="inline"
         poweredBy={tAttribution('poweredBy')}
         linkLabel={tAttribution('linkLabel')}
+        className={staleClass}
       />
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
@@ -129,6 +155,9 @@ export function ScanResultCard({
               a blob: URL from the browser (client-only object URL,
               ADR-0015). next/image expects same-origin or configured
               remotes and would throw at build time on a blob: source.
+
+              Photo stays at full opacity across rescans — the visitor's
+              new pick is the acknowledgement that the click landed.
             */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -139,7 +168,7 @@ export function ScanResultCard({
             />
           </div>
         )}
-        <div className="flex flex-col gap-2">
+        <div className={cn('flex flex-col gap-2', staleClass)}>
           <div className="flex flex-wrap items-center gap-2">
             <span
               className="text-2xl font-semibold"
@@ -194,7 +223,11 @@ export function ScanResultCard({
         </div>
       </div>
 
-      {flavorChart && <FlavorChartForCard chart={flavorChart} />}
+      {flavorChart && (
+        <div className={staleClass}>
+          <FlavorChartForCard chart={flavorChart} />
+        </div>
+      )}
 
       {reverseResult && (
         // UX-C reverse cross-beverage hook (#164). Two branches:
@@ -214,8 +247,13 @@ export function ScanResultCard({
         // omitting the disclaimer would blur the provenance boundary.
         // Exemplar names stay identical across locales — Lagavulin 16
         // is a proper noun, not translatable copy.
+        //
+        // The `staleClass` bundles the fade + `transition-opacity` from
+        // #190 so this section joins the rest of the details region in
+        // going to 40% while a rescan is in flight. The photo stays
+        // full-opacity above.
         <section
-          className="flex flex-col gap-3"
+          className={cn('flex flex-col gap-3', staleClass)}
           data-testid="scan-result-reverse-exemplar"
           aria-labelledby="scan-result-reverse-exemplar-heading"
         >

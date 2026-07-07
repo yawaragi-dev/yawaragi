@@ -699,6 +699,13 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
           sakeHref={state.sakeHref}
           flavorChart={state.flavorChart}
           extractionConfidence={state.extraction.confidence}
+          // Rescan-in-flight fade: `isPending` covers both the browser-
+          // side downscale AND the server round-trip. While either is
+          // running, the visitor's fresh photo is already displayed
+          // (set in `onFileChange`) but every other field is stale —
+          // fading them tells the visitor "the previous match is
+          // being replaced" without hiding their new bottle.
+          isStale={isPending}
         />
       )}
       {state.status === 'matched_brand_only' && (
