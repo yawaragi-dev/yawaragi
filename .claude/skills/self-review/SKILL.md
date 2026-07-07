@@ -63,6 +63,7 @@ Note rules that _could_ apply but don't seem to — that's where the easy misses
 - **Is anything missing that should be there?** Cross-reference the ACs from Phase 1.
 - **Is anything extra that shouldn't be there?** Speculative abstractions, dead helpers, commented-out code, "in case we need it later" fields.
 - **Conventions:** does this file follow the patterns of its neighbours (naming, file layout, error handling, schema location)? If it deviates, is the deviation justified?
+- **UI slice?** If the diff touches an interactive surface (a component with state, a click handler, a form, a new route, new visitor-facing copy), run the pre-flight checklist at the bottom of [`docs/agents/ux-design-playbook.md`](../../../docs/agents/ux-design-playbook.md). It exists because the ACs on a UI issue almost never encode 100 ms feedback, dead-end affordances, or discovery framing — see #163 (auto-navigate lost the label photo) and #184 (starter chip had no visible click acknowledgement). Any "no" answer is a BLOCKER-tier finding.
 
 ### Phase 4 — Doc-update audit
 
