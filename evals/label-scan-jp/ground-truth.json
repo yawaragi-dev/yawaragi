@@ -1,0 +1,32 @@
+{
+  "synthetic-smoke-label.jpg": {
+    "name_ja": "獺祭",
+    "brewery_ja": "旭酒造",
+    "provenance": {
+      "source": "synthetic_smoke_fixture",
+      "rightsCleared": true,
+      "notes": "PIPELINE SMOKE FIXTURE — NOT a real eval photo. A deterministic 1x1 JPEG in fixtures/ used only to prove `pnpm eval label-scan-jp` runs end-to-end. Its ground truth matches what the `e2e-stub` provider returns verbatim (獺祭 / 旭酒造), so the smoke run reports a 1.00 exact-match and demonstrates the metric wiring. Real vision providers must NOT be judged on this image — run them against photos/ only. Does not count toward the 20-photo corpus target."
+    }
+  },
+
+  "PLACEHOLDER-01-dassai.jpg": {
+    "name_ja": "獺祭",
+    "brewery_ja": "旭酒造",
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": false,
+      "notes": "PLACEHOLDER — copy-paste template, NOT a real entry. There is no PLACEHOLDER-01-dassai.jpg on disk and rightsCleared is false, so the runner skips it. To make it real: (1) add photos/dassai.jpg (a photo you took of a bottle you own), (2) rename this key to `dassai.jpg`, (3) set rightsCleared: true, (4) replace this note with a one-line description of the bottle/photo."
+    }
+  },
+
+  "PLACEHOLDER-02-hakkaisan.jpg": {
+    "name_ja": "八海山",
+    "brewery_ja": "八海醸造",
+    "provenance": {
+      "source": "public_domain",
+      "rightsCleared": false,
+      "attribution": "PLACEHOLDER — e.g. https://commons.wikimedia.org/wiki/File:... (record the exact source URL + licence here)",
+      "notes": "PLACEHOLDER — copy-paste template, NOT a real entry. Same rules as PLACEHOLDER-01. For public-domain / CC sources, fill `attribution` with the exact source URL and licence and confirm the licence actually permits this use before setting rightsCleared: true."
+    }
+  }
+}
