@@ -108,7 +108,21 @@ export function getDefaultVisionProvider(): VisionProvider {
  * Returns the provider for a specific registry key. Tests use this
  * indirection to assert that switching the env var swaps the resolved
  * provider without touching call sites.
+ *
+ * One env-driven override: when `VISION_PROVIDER=e2e-stub` is set, EVERY
+ * requested key resolves to the stub. `scanAction` requests the tier-1
+ * (`anthropic-haiku-4-5`) and tier-2 (`anthropic-sonnet-4-6`) keys as
+ * hardcoded literals, so without this override the Playwright spec's
+ * `VISION_PROVIDER=e2e-stub` would be ignored and the tool loop would
+ * hit the real Anthropic API (burning credit + non-determinism). The
+ * override only engages for the `e2e-stub` value, which the
+ * production guard in `createE2eStubVisionProvider` refuses to run
+ * outside non-production; in every other environment the env is unset
+ * (or a real key) and the requested key is honored verbatim.
  */
 export function getVisionProvider(key: VisionProviderKey): VisionProvider {
+  if (key !== 'e2e-stub' && resolveVisionProviderKey() === 'e2e-stub') {
+    return visionProviderFactories['e2e-stub']()
+  }
   return visionProviderFactories[key]()
 }

@@ -12,6 +12,7 @@ import {
 import { getPrefectureNames } from '@/lib/sakenowa/prefecture'
 import { FlavorChartView } from '@/components/sake/flavor-chart'
 import { ProvenanceBadge } from '@/components/sake/provenance-badge'
+import { ScanReturnHint } from '@/components/scan/scan-return-hint'
 import {
   SakenowaAttribution,
   requiresSakenowaAttribution,
@@ -111,6 +112,13 @@ export default async function SakeBrandPage({ params }: PageProps) {
       data-testid="sake-brand-page"
     >
       {showSakenowaAttribution && <SakenowaAttribution placement="above-fold" />}
+      {/*
+        "Not the bottle you scanned? Scan again" — shown only when the
+        visitor reached this page from a scan result (issue #109 PR B).
+        Client component: reads a per-tab sessionStorage marker, renders
+        nothing for direct navigators.
+      */}
+      <ScanReturnHint />
       <div className="flex flex-wrap items-baseline gap-3">
         <h1
           className="text-4xl font-semibold leading-tight tracking-tight"

@@ -136,6 +136,18 @@ type ScanActionStateBase =
         nameRomaji: string | null
         breweryKanji: string
         breweryRomaji: string | null
+        /**
+         * Editorial Hepburn prefecture name for the candidate's
+         * brewery (e.g. "Gunma"), derived from
+         * `getPrefectureNames(brewery.areaId)` — the static
+         * `manual_curation` area map, NOT a new query. `null` when
+         * the areaId is unknown to the map. Shown in the
+         * disambiguation row / shared-brewery header so a visitor
+         * facing same-brand-across-breweries collisions (Hakushika:
+         * Ibaraki vs Hyogo) can pick by region. A proper noun, so it
+         * reads identically across locales.
+         */
+        prefectureName: string | null
       }[]
     }
   /**

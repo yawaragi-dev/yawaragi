@@ -7,6 +7,7 @@ import {
 } from '@/components/sake/flavor-chart'
 import { HeuristicDisclaimerView } from '@/components/legal/heuristic-disclaimer'
 import { ProvenanceBadgeView } from '@/components/sake/provenance-badge'
+import { markArrivedViaScan } from '@/lib/scan/arrived-via-scan'
 import { SakenowaAttributionView } from '@/components/sake/sakenowa-attribution'
 import {
   findNearestExemplars,
@@ -214,6 +215,7 @@ export function ScanResultCard({
           */}
           <a
             href={sakeHref}
+            onClick={markArrivedViaScan}
             className="mt-1 inline-flex w-fit items-center gap-1 text-sm font-medium text-blue-700 underline-offset-2 hover:underline dark:text-blue-300"
             data-testid="scan-result-open-detail"
           >
