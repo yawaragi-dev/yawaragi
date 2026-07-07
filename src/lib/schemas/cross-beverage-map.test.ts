@@ -11,6 +11,13 @@ const validEntry = {
   f4: 0.3,
   f5: 0.6,
   f6: 0.2,
+  exemplars: [
+    {
+      source: 'manual_curation',
+      name: 'Lagavulin 16',
+      region: 'Islay peated single-malt',
+    },
+  ],
 } as const
 
 describe('CrossBeverageMap schema', () => {
@@ -44,6 +51,7 @@ describe('CrossBeverageMap schema', () => {
         f4: 0.3,
         f5: 0.6,
         f6: 0.2,
+        exemplars: [{ source: 'manual_curation', name: 'Lagavulin 16' }],
       }),
     ).toThrow()
   })
@@ -81,5 +89,51 @@ describe('CrossBeverageMap schema', () => {
 
   it('exposes CrossBeverageMapSchema for composition', () => {
     expect(CrossBeverageMapSchema.parse(validEntry)).toEqual(validEntry)
+  })
+
+  // ---- Exemplar layer (UX-C, #164) ----------------------------------------
+  //
+  // Every row carries `exemplars: readonly Exemplar[]` with `source:
+  // 'manual_curation'`. The reverse-lookup surfaces one of these exemplar
+  // names on the scan result card ("Interesting for those who like
+  // Lagavulin 16"). The schema tests below guard the shape at the parse
+  // seam so a data-file typo never reaches the UI.
+
+  it('rejects an entry with no exemplars', () => {
+    expect(() => parseCrossBeverageMap({ ...validEntry, exemplars: [] })).toThrow()
+  })
+
+  it('rejects an exemplar whose source is not manual_curation', () => {
+    expect(() =>
+      parseCrossBeverageMap({
+        ...validEntry,
+        exemplars: [{ source: 'llm_extracted', name: 'Lagavulin 16' }],
+      }),
+    ).toThrow()
+    expect(() =>
+      parseCrossBeverageMap({
+        ...validEntry,
+        exemplars: [{ source: 'cross_beverage_map', name: 'Lagavulin 16' }],
+      }),
+    ).toThrow()
+  })
+
+  it('rejects an exemplar with an empty name', () => {
+    expect(() =>
+      parseCrossBeverageMap({
+        ...validEntry,
+        exemplars: [{ source: 'manual_curation', name: '' }],
+      }),
+    ).toThrow()
+  })
+
+  it('accepts an exemplar with just a name (region is optional)', () => {
+    const parsed = parseCrossBeverageMap({
+      ...validEntry,
+      exemplars: [{ source: 'manual_curation', name: 'Sancerre' }],
+    })
+    expect(parsed.exemplars).toEqual([
+      { source: 'manual_curation', name: 'Sancerre' },
+    ])
   })
 })

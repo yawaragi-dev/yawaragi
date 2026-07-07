@@ -132,7 +132,11 @@
     },
     "resultCard": {
       "openDetail": "Alle Details ansehen",
-      "exploreAnotherWay": "Sake auf andere Weise entdecken"
+      "exploreAnotherWay": "Sake auf andere Weise entdecken",
+      "reverseExemplarHeading": "Ein vertrauter Bezugspunkt",
+      "reverseExemplarSingle": "Interessant für alle, die {name} kennen",
+      "reverseExemplarPair": "Interessant für alle, die {first} oder {second} kennen",
+      "reverseNoAnalog": "Dieses Profil ist ausgesprochen japanisch — es gibt keine nahe westliche Entsprechung."
     }
   },
   "suggest": {
