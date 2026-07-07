@@ -15,9 +15,9 @@ import {
   type SuggestActionState,
   type SuggestSeed,
 } from '@/lib/suggest/suggest-action-state'
+import { SuggestEmptyInput } from './suggest-empty-input'
 import { SuggestFreeformForm } from './suggest-freeform-form'
 import { SuggestResults } from './suggest-results'
-import { SuggestStarterPrompts } from './suggest-starter-prompts'
 
 /**
  * Phase 4 / S5–S6 (#143, #144) — `/[locale]/suggest`.
@@ -110,11 +110,25 @@ export default async function SuggestPage({ params, searchParams }: PageProps) {
 
   const tEntry = await getTranslations({ locale, namespace: 'suggest.entry' })
   const tResults = await getTranslations({ locale, namespace: 'suggest.results' })
+  const tStarter = await getTranslations({ locale, namespace: 'suggest.starter' })
 
   // Empty-input landing: no seed brand, no freeform query. Render the
-  // freeform-text form + discovery starter prompts. The page still
-  // gates on age-gate acceptance below, so no seed-derived data leaks.
+  // freeform-text form + discovery starter prompts inside a shared
+  // client wrapper (#184) so a chip click populates the input, flips
+  // the freeform button's `Exploring…` label, and marks the chip
+  // `aria-busy` — all inside the same `useTransition`. The strings
+  // themselves are resolved server-side and threaded through as props.
+  // The page still gates on age-gate acceptance below, so no seed-
+  // derived data leaks.
   if (seedBrandId === null && freeformQuery === null) {
+    const starterPrompts = [
+      tStarter('prompt1'),
+      tStarter('prompt2'),
+      tStarter('prompt3'),
+      tStarter('prompt4'),
+      tStarter('prompt5'),
+      tStarter('prompt6'),
+    ] as const
     return (
       <>
         <main
@@ -127,8 +141,7 @@ export default async function SuggestPage({ params, searchParams }: PageProps) {
           <p className="text-base text-zinc-700 dark:text-zinc-300 max-w-prose">
             {tEntry('intro')}
           </p>
-          <SuggestFreeformForm key="empty" />
-          <SuggestStarterPrompts />
+          <SuggestEmptyInput starterPrompts={starterPrompts} />
         </main>
         {!gateAccepted && <AgeGate />}
       </>

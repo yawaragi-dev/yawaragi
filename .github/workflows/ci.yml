@@ -102,7 +102,10 @@ jobs:
       # rewritten each run) — see
       # https://nextjs.org/docs/app/guides/ci-build-caching
       - name: Cache Next build (.next/cache)
-        uses: actions/cache@v4
+        # v6 targets Node 24 natively; v4 was pinned to Node 20 and got
+        # force-upgraded on the runner with a deprecation warning
+        # (github.blog/changelog/2025-09-19).
+        uses: actions/cache@v6
         with:
           path: .next/cache
           key: nextjs-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('src/**/*.[jt]s', 'src/**/*.[jt]sx', 'next.config.ts') }}
