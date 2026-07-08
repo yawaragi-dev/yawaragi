@@ -89,6 +89,45 @@ export async function findScanS1FixtureBrandId(): Promise<number | null> {
   return row?.brand_id ?? null
 }
 
+// ADR-0016 / #202 recognised-but-no-chart fixture. A brand whose kanji is
+// catalogue-unique (so the lookup resolves to a single row) joined to its
+// brewery, where NO `flavor_charts` row exists. Injecting `name_ja` = the
+// brand kanji + `brewery_ja` = the brewery kanji drives a clean first-pass
+// `matched` whose `flavorChart` is null — the branch that renders the
+// "flavor profile coming soon" affordance. Returns null when every unique
+// brand happens to have a chart (so the spec skips rather than fails).
+export async function findMatchedNoChartFixture(): Promise<
+  { nameJa: string; breweryJa: string; brandId: number } | null
+> {
+  const row = await queryOne<{
+    brand_id: number
+    name_kanji: string
+    brewery_kanji: string
+  }>(`
+    SELECT br.brand_id, br.name_kanji, b.name_kanji AS brewery_kanji
+    FROM brands br
+    JOIN breweries b ON b.brewery_id = br.brewery_id
+    LEFT JOIN flavor_charts fc ON fc.brand_id = br.brand_id
+    WHERE br.superseded_at IS NULL
+      AND b.superseded_at IS NULL
+      AND fc.brand_id IS NULL
+      AND br.${CJK_MULTI}
+      AND b.name_kanji ~ '^[ぁ-ゟ゠-ヿ一-鿿]{2,}$'
+      AND (
+        SELECT COUNT(*) FROM brands x
+        WHERE x.name_kanji = br.name_kanji AND x.superseded_at IS NULL
+      ) = 1
+    ORDER BY br.brand_id
+    LIMIT 1
+  `)
+  if (!row) return null
+  return {
+    nameJa: row.name_kanji,
+    breweryJa: row.brewery_kanji,
+    brandId: row.brand_id,
+  }
+}
+
 async function queryRows<T extends QueryResultRow>(sql: string): Promise<T[]> {
   if (!process.env.DATABASE_URL) return []
   const client = new Client({ connectionString: process.env.DATABASE_URL })

@@ -6,6 +6,7 @@ import { ProvenanceBadgeView } from '@/components/sake/provenance-badge'
 import { FlavorAxisLabelView } from '@/components/sake/flavor-axis-label'
 import { markArrivedViaScan } from '@/lib/scan/arrived-via-scan'
 import { SakenowaAttributionView } from '@/components/sake/sakenowa-attribution'
+import { Link } from '@/i18n/navigation'
 import {
   findNearestExemplars,
   type ReverseExemplarResult,
@@ -235,7 +236,45 @@ export function ScanResultCard({
             </div>
           </div>
 
-          {flavorChart && <FlavorGridForCard chart={flavorChart} />}
+          {flavorChart ? (
+            <FlavorGridForCard chart={flavorChart} />
+          ) : (
+            // ADR-0016 / #202: the brand is confidently recognised but
+            // Sakenowa has no `flavor_charts` row for it (~half the
+            // catalogue). Rather than silently dropping the chart region
+            // (which read as a lesser / broken match), the empty branch is
+            // a calm, discovery-framed "profile coming soon" panel. It
+            // echoes the reverse-exemplar section's amber/stone bone-card
+            // vocabulary so it feels intentional in BOTH the scan flow and
+            // the UX-E landing hero. No Sakenowa attribution here — this
+            // copy is our own UI chrome, not Sakenowa data (the card's
+            // brand/brewery facts keep their inline attribution above).
+            // Keeps an onward path (the /suggest bridge) so the no-chart
+            // state is never a dead end; "See full details →" stays below.
+            <section
+              className="flex flex-col gap-2 rounded-2xl bg-amber-50 p-4 dark:bg-amber-950/20"
+              data-testid="flavor-coming-soon"
+              aria-labelledby="flavor-coming-soon-heading"
+            >
+              <h3
+                id="flavor-coming-soon-heading"
+                className="text-sm font-medium text-stone-800 dark:text-zinc-200"
+              >
+                {t('flavorComingSoonHeading')}
+              </h3>
+              <p className="text-sm text-stone-700 dark:text-zinc-300">
+                {t('flavorComingSoonBody')}
+              </p>
+              <Link
+                href="/suggest"
+                className="inline-flex w-fit items-center gap-1.5 text-sm font-medium text-amber-800 underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 dark:text-amber-300"
+                data-testid="flavor-coming-soon-explore"
+              >
+                {t('exploreAnotherWay')}
+                <span aria-hidden>→</span>
+              </Link>
+            </section>
+          )}
 
           {reverseResult && (
             // UX-C reverse hook (#164). 'match' → 1–2 Western exemplars
