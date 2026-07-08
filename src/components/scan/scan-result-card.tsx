@@ -149,9 +149,12 @@ export function ScanResultCard({
         )}
       >
         {photoUrl && (
-          <div className="p-4 sm:p-5">
+          // The photo keeps its true 3:4 aspect (matches the asset, so no
+          // crop); on desktop it's vertically centered in the column so a
+          // taller content side doesn't leave the photo stranded at the top.
+          <div className="p-4 sm:flex sm:items-center sm:p-5">
             <div
-              className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl bg-zinc-100 shadow-lg ring-1 ring-black/5 sm:aspect-auto sm:h-full sm:min-h-[22rem] dark:bg-zinc-900"
+              className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl bg-zinc-100 shadow-lg ring-1 ring-black/5 dark:bg-zinc-900"
               data-testid="scan-result-photo-frame"
             >
               {/*

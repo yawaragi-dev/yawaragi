@@ -113,6 +113,10 @@ test.describe('scan entry route', () => {
     const photoSrc = await page.getByTestId('scan-result-photo').getAttribute('src')
     expect(photoSrc).toMatch(/^blob:/)
 
+    // A real scan result carries NO "Example" chip — that flag is only on
+    // the landing hero's curated sample (UX-F #167).
+    await expect(page.getByTestId('scan-result-example-badge')).toHaveCount(0)
+
     // The kanji renders adjacent to the LLM-extracted provenance badge.
     await expect(page.getByTestId('scan-result-name-kanji')).toContainText('獺祭')
 

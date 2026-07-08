@@ -80,6 +80,10 @@ test.describe('landing hero (UX-E)', () => {
     // The sample's kanji is shown verbatim.
     await expect(card.getByTestId('scan-result-name-kanji')).toHaveText('木戸泉')
 
+    // UX-F (#167): the hero card is flagged as an example so a visitor
+    // can't mistake the curated sample for their own scan.
+    await expect(card.getByTestId('scan-result-example-badge')).toBeVisible()
+
     await context.close()
   })
 
