@@ -37,9 +37,9 @@
     "verify": "npm run lint && npm run typecheck && npm run test && npm run test:integration && npm run test:e2e && npm run i18n:audit && npm run anthropic-files:audit"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^3.0.81",
-    "@ai-sdk/mcp": "^1.0.45",
-    "@ai-sdk/react": "^3.0.196",
+    "@ai-sdk/anthropic": "^3.0.86",
+    "@ai-sdk/mcp": "^1.0.52",
+    "@ai-sdk/react": "^3.0.211",
     "@base-ui/react": "^1.4.1",
     "@clerk/nextjs": "^7.3.4",
     "@langfuse/otel": "5.4.1",
@@ -48,7 +48,7 @@
     "@supabase/supabase-js": "^2.108.2",
     "@vercel/otel": "2.1.2",
     "@yawaragi/sakenowa-mcp": "0.1.0",
-    "ai": "^6.0.194",
+    "ai": "^6.0.209",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.16.0",
