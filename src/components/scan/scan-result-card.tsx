@@ -1,12 +1,9 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import {
-  FlavorChartInlineView,
-  type FlavorAxisStrings,
-} from '@/components/sake/flavor-chart'
 import { HeuristicDisclaimerView } from '@/components/legal/heuristic-disclaimer'
 import { ProvenanceBadgeView } from '@/components/sake/provenance-badge'
+import { FlavorAxisLabelView } from '@/components/sake/flavor-axis-label'
 import { markArrivedViaScan } from '@/lib/scan/arrived-via-scan'
 import { SakenowaAttributionView } from '@/components/sake/sakenowa-attribution'
 import {
@@ -15,37 +12,34 @@ import {
 } from '@/lib/cross-beverage/reverse-lookup'
 import {
   FLAVOR_AXES,
-  type FlavorAxis,
+  FLAVOR_AXIS_ROMAJI,
   type FlavorChart,
 } from '@/lib/schemas/flavor-chart'
 import { cn } from '@/lib/utils'
 
 /**
- * ADR-0015 / issue #163 (UX-B). The rich, in-place result card shown after
- * a confident scan on `/scan` — replaces the S3 auto-navigate to
- * `/sake/[brandId]`. Reusable by design so UX-E's landing hero can render
- * the same shape over a curated sample sake without needing its own layout
- * (issue #163 AC: "The result card is a reusable component consumable by
- * UX-E").
+ * ADR-0015 / issue #163 (UX-B), redesigned in UX-F (#167) as the "elevated
+ * bone card": the rich, in-place result shown after a confident scan on
+ * `/scan`. Shared by design — UX-E's landing hero (#166) renders the same
+ * card over a curated sample sake, and passes `exampleLabel` so the sample
+ * is unmistakably flagged as an example rather than the visitor's own scan.
  *
  * Client component because:
- * - Its sole caller today (`<ScanForm />`) is client and needs to pass the
- *   visitor's own label-photo object URL (produced from a browser Blob)
- *   inline. Threading that through a server boundary would force a base64
- *   round-trip.
+ * - Its scan-flow caller (`<ScanForm />`) is client and passes the
+ *   visitor's own label-photo object URL (a browser Blob) inline.
  * - `next-intl/server`'s `getTranslations` doesn't exist on the client;
  *   `useTranslations` is the equivalent hook.
  *
- * "See full details →" points at `sakeHref` (locale-aware). That target is
- * the deep-dive permalink and stays the source of truth for provenance,
- * brewery info, and cross-brand navigation.
+ * "See full details →" points at `sakeHref` (locale-aware) — the deep-dive
+ * permalink and the source of truth for provenance, brewery info, and
+ * cross-brand navigation.
  */
 export interface ScanResultCardProps {
   /**
    * Client-only object URL created via `URL.createObjectURL(blob)` on the
-   * caller side. Never uploaded, never persisted. `null` when the caller
-   * has no photo (e.g. the UX-E sample-hero use case). The parent is
-   * responsible for `URL.revokeObjectURL` on unmount / new pick.
+   * caller side (scan flow), or a static `public/` path (UX-E hero).
+   * `null` when the caller has no photo. The parent is responsible for
+   * `URL.revokeObjectURL` on unmount / new pick.
    */
   photoUrl: string | null
   /**
@@ -78,15 +72,20 @@ export interface ScanResultCardProps {
    */
   extractionConfidence?: number
   /**
+   * When set, renders a small "Example" chip on the card (UX-F #167).
+   * The landing hero (#166) passes it so a visitor / recruiter can't
+   * mistake the curated sample for their own scan; the real scan flow
+   * omits it. The string is the localised chip label ("Example" /
+   * "Beispiel").
+   */
+  exampleLabel?: string
+  /**
    * True while a rescan is in flight — the visitor picked a new photo
    * on top of a previously-matched result. The photo (already swapped
    * to the new blob URL) stays at full opacity so the visitor sees
-   * their new bottle. Everything else — attribution, name, brewery,
-   * link, flavor chart — fades to `opacity-40` and the card region
-   * announces `aria-busy` so screen readers say "the previous match
-   * is being replaced". A cheaper alternative to a skeleton that
-   * preserves the ADR-0015 reward pattern (keep the visitor's photo
-   * visible across the transition).
+   * their new bottle; everything else fades to `opacity-40` and the
+   * card announces `aria-busy`. Preserves the ADR-0015 reward pattern
+   * (keep the visitor's photo visible across the transition).
    */
   isStale?: boolean
 }
@@ -101,6 +100,7 @@ export function ScanResultCard({
   sakeHref,
   flavorChart,
   extractionConfidence,
+  exampleLabel,
   isStale = false,
 }: ScanResultCardProps) {
   const t = useTranslations('scan.resultCard')
@@ -110,113 +110,190 @@ export function ScanResultCard({
   const tAttribution = useTranslations('sakenowaAttribution')
   const tSake = useTranslations('sake.brand')
 
-  // UX-C reverse cross-beverage hook (issue #164): if the matched sake has
-  // a Sakenowa flavor chart, look up the nearest curated Western exemplar
-  // and name it below the chart. Pure, deterministic — no LLM. Rendered
-  // only when the chart exists (Sakenowa's `flavor_charts` misses on a
-  // fraction of brands; without a vector there's nothing to match against).
-  // The result is either 1–2 exemplars within threshold OR the graceful
-  // "distinctly Japanese profile" fallback. Both branches carry the
-  // <HeuristicDisclaimer /> + <ProvenanceBadge /> per CLAUDE.md.
+  // UX-C reverse cross-beverage hook (#164): if the matched sake has a
+  // Sakenowa flavor chart, name the nearest curated Western exemplar below
+  // it. Pure, deterministic — no LLM. Either 1–2 exemplars within threshold
+  // OR the graceful "distinctly Japanese profile" fallback; both branches
+  // carry <HeuristicDisclaimer /> + <ProvenanceBadge /> per CLAUDE.md.
   const reverseResult: ReverseExemplarResult | null = flavorChart
     ? findNearestExemplars(flavorChart)
     : null
 
-  // Opacity is not inherit-cancellable from a child, so we can't fade
-  // the whole article and then rescue the photo — every region that
-  // should fade has to carry the class explicitly. Kept as a single
-  // constant so the fade duration + level stay in lockstep across the
-  // regions (a maintainer nudging one will notice they're touching a
-  // shared knob). Duration is 200 ms — long enough to read as
-  // intentional, short enough that `prefers-reduced-motion` renders it
-  // as an unnoticeable snap without a `motion-safe:` gate.
+  // #190 stale-fade: the photo stays full-opacity (the visitor's new pick
+  // is the acknowledgement the click landed); the whole content column
+  // fades to 40%. Opacity doesn't inherit-cancel, so the fade lives on the
+  // content wrapper as one knob — the photo column sits outside it. 200 ms
+  // reads as intentional and degrades to an unnoticeable snap under
+  // `prefers-reduced-motion` without a `motion-safe:` gate.
   const staleClass = isStale ? 'opacity-40 transition-opacity duration-200' : ''
 
   return (
     <article
-      className="flex flex-col gap-6 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950"
+      className="relative flex flex-col overflow-hidden rounded-3xl bg-stone-50 shadow-[0_24px_70px_-32px_rgba(0,0,0,0.4)] ring-1 ring-black/5 dark:bg-zinc-950 dark:ring-white/10"
       data-testid="scan-result-card"
       aria-busy={isStale || undefined}
     >
-      <SakenowaAttributionView
-        placement="inline"
-        poweredBy={tAttribution('poweredBy')}
-        linkLabel={tAttribution('linkLabel')}
-        className={staleClass}
-      />
+      {exampleLabel && (
+        <span
+          className="absolute left-5 top-5 z-10 rounded-full bg-stone-900/85 px-3 py-1 text-xs font-medium uppercase tracking-wide text-stone-50 shadow-sm backdrop-blur dark:bg-zinc-100/90 dark:text-zinc-900"
+          data-testid="scan-result-example-badge"
+        >
+          {exampleLabel}
+        </span>
+      )}
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+      <div
+        className={cn(
+          'grid gap-0',
+          photoUrl && 'sm:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]',
+        )}
+      >
         {photoUrl && (
-          <div
-            className="relative aspect-[3/4] w-32 shrink-0 overflow-hidden rounded-md border border-zinc-200 bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900"
-            data-testid="scan-result-photo-frame"
-          >
-            {/*
-              Native <img> rather than next/image on purpose: the src is
-              a blob: URL from the browser (client-only object URL,
-              ADR-0015). next/image expects same-origin or configured
-              remotes and would throw at build time on a blob: source.
-
-              Photo stays at full opacity across rescans — the visitor's
-              new pick is the acknowledgement that the click landed.
-            */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={photoUrl}
-              alt={photoAlt}
-              className="h-full w-full object-cover"
-              data-testid="scan-result-photo"
-            />
+          <div className="p-4 sm:p-5">
+            <div
+              className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl bg-zinc-100 shadow-lg ring-1 ring-black/5 sm:aspect-auto sm:h-full sm:min-h-[22rem] dark:bg-zinc-900"
+              data-testid="scan-result-photo-frame"
+            >
+              {/*
+                Native <img> rather than next/image: in the scan flow the
+                src is a blob: URL (client-only object URL, ADR-0015) which
+                next/image can't accept; the hero passes a static path.
+                Kept as one <img> path so both callers share it. The photo
+                stays at full opacity across rescans (#190).
+              */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={photoUrl}
+                alt={photoAlt}
+                className="h-full w-full object-cover"
+                data-testid="scan-result-photo"
+              />
+            </div>
           </div>
         )}
-        <div className={cn('flex flex-col gap-2', staleClass)}>
-          <div className="flex flex-wrap items-center gap-2">
-            <span
-              className="text-2xl font-semibold"
-              lang="ja"
-              data-testid="scan-result-name-kanji"
-            >
-              {sakeKanji}
-            </span>
-            {sakeRomaji && (
+
+        <div
+          className={cn(
+            'flex flex-col gap-5 p-6 sm:py-8 sm:pr-8',
+            photoUrl && 'sm:pl-2',
+            staleClass,
+          )}
+        >
+          <div className="flex items-center justify-end">
+            <SakenowaAttributionView
+              placement="inline"
+              poweredBy={tAttribution('poweredBy')}
+              linkLabel={tAttribution('linkLabel')}
+            />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
               <span
-                className="text-base text-zinc-600 dark:text-zinc-400"
-                data-testid="scan-result-name-romaji"
+                className="text-3xl font-semibold tracking-tight text-stone-900 dark:text-zinc-50"
+                lang="ja"
+                data-testid="scan-result-name-kanji"
               >
-                ({sakeRomaji})
+                {sakeKanji}
               </span>
-            )}
-            {typeof extractionConfidence === 'number' && (
-              <ProvenanceBadgeView
-                kind="llmExtracted"
-                label={tBadge('label')}
-                tooltip={tBadge('tooltip')}
-                confidence={extractionConfidence}
+              {sakeRomaji && (
+                <span
+                  className="text-lg text-stone-400 dark:text-zinc-500"
+                  data-testid="scan-result-name-romaji"
+                >
+                  {sakeRomaji}
+                </span>
+              )}
+              {typeof extractionConfidence === 'number' && (
+                <ProvenanceBadgeView
+                  kind="llmExtracted"
+                  label={tBadge('label')}
+                  tooltip={tBadge('tooltip')}
+                  confidence={extractionConfidence}
+                />
+              )}
+            </div>
+            <div
+              className="flex flex-wrap items-baseline gap-1.5 text-sm text-stone-500 dark:text-zinc-400"
+              data-testid="scan-result-brewery"
+            >
+              <span className="text-xs uppercase tracking-wide text-stone-400 dark:text-zinc-500">
+                {tSake('breweryLabel')}
+              </span>
+              <span lang="ja">{breweryKanji}</span>
+              {breweryRomaji && <span>({breweryRomaji})</span>}
+            </div>
+          </div>
+
+          {flavorChart && <FlavorGridForCard chart={flavorChart} />}
+
+          {reverseResult && (
+            // UX-C reverse hook (#164). 'match' → 1–2 Western exemplars
+            // within the honesty threshold; 'no-close-analog' → the
+            // discovery-framed "distinctly Japanese profile" line. BOTH
+            // carry the disclaimer + crossBeverageMap badge (CLAUDE.md):
+            // even "no analog" is a claim from the cross-beverage table.
+            // The panel inherits the content column's stale fade, so no
+            // per-section opacity knob is needed here.
+            <section
+              className="flex flex-col gap-2 rounded-2xl bg-amber-50 p-4 dark:bg-amber-950/20"
+              data-testid="scan-result-reverse-exemplar"
+              aria-labelledby="scan-result-reverse-exemplar-heading"
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                <h3
+                  id="scan-result-reverse-exemplar-heading"
+                  className="text-sm font-medium text-stone-800 dark:text-zinc-200"
+                >
+                  {t('reverseExemplarHeading')}
+                </h3>
+                <ProvenanceBadgeView
+                  kind="crossBeverageMap"
+                  label={tCrossBevBadge('label')}
+                  tooltip={tCrossBevBadge('tooltip')}
+                />
+              </div>
+              {reverseResult.kind === 'match' ? (
+                <p
+                  className="text-sm text-stone-700 dark:text-zinc-300"
+                  data-testid="scan-result-reverse-exemplar-match"
+                >
+                  {reverseResult.hits.length === 1
+                    ? t('reverseExemplarSingle', {
+                        name: reverseResult.hits[0]!.exemplar.name,
+                      })
+                    : t('reverseExemplarPair', {
+                        first: reverseResult.hits[0]!.exemplar.name,
+                        second: reverseResult.hits[1]!.exemplar.name,
+                      })}
+                </p>
+              ) : (
+                <p
+                  className="text-sm text-stone-700 dark:text-zinc-300"
+                  data-testid="scan-result-reverse-exemplar-no-analog"
+                >
+                  {t('reverseNoAnalog')}
+                </p>
+              )}
+              <HeuristicDisclaimerView
+                title={tDisclaimer('title')}
+                body={tDisclaimer('body')}
               />
-            )}
-          </div>
-          <div
-            className="flex flex-wrap items-baseline gap-1.5 text-sm text-zinc-600 dark:text-zinc-400"
-            data-testid="scan-result-brewery"
-          >
-            <span className="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
-              {tSake('breweryLabel')}
-            </span>
-            <span lang="ja">{breweryKanji}</span>
-            {breweryRomaji && <span>({breweryRomaji})</span>}
-          </div>
+            </section>
+          )}
+
           {/*
-            Native `<a>` rather than `next-intl`'s typed `<Link>` — the
-            `sakeHref` is a pre-resolved locale-aware path emitted by
-            `scan-action` (`getPathname({ href: { pathname: '/sake/[brandId]',
-            params }})`), so the string is already correctly locale-
-            prefixed and dynamic-segment-substituted. Threading it
-            through `<Link>` would fight the typed-route union.
+            Native `<a>` rather than next-intl's typed `<Link>` — `sakeHref`
+            is a pre-resolved locale-aware path from scan-action, already
+            locale-prefixed and segment-substituted; `<Link>` would fight
+            the typed-route union. `markArrivedViaScan` sets the per-tab
+            marker that lights the "Not this one?" affordance on the target
+            (#109).
           */}
           <a
             href={sakeHref}
             onClick={markArrivedViaScan}
-            className="mt-1 inline-flex w-fit items-center gap-1 text-sm font-medium text-blue-700 underline-offset-2 hover:underline dark:text-blue-300"
+            className="inline-flex w-fit items-center gap-1.5 text-sm font-medium text-amber-800 underline-offset-2 hover:underline dark:text-amber-300"
             data-testid="scan-result-open-detail"
           >
             {t('openDetail')}
@@ -224,111 +301,71 @@ export function ScanResultCard({
           </a>
         </div>
       </div>
-
-      {flavorChart && (
-        <div className={staleClass}>
-          <FlavorChartForCard chart={flavorChart} />
-        </div>
-      )}
-
-      {reverseResult && (
-        // UX-C reverse cross-beverage hook (#164). Two branches:
-        //   - 'match' — surface 1–2 Western exemplars whose 6-axis
-        //     vector sits within the honesty threshold of this sake's
-        //     flavor chart. "Interesting for those who like Lagavulin
-        //     16."
-        //   - 'no-close-analog' — the profile is far from every anchor
-        //     in `CROSS_BEVERAGE_MAP`. Renders the discovery-framed
-        //     "distinctly Japanese profile" line instead of forcing a
-        //     bad match.
-        //
-        // BOTH branches render `<HeuristicDisclaimerView />` and a
-        // `<ProvenanceBadgeView kind="crossBeverageMap" />` per CLAUDE.md
-        // — even the "no analog" line is a claim from the cross-beverage
-        // table (specifically: "the table has no close match"), and
-        // omitting the disclaimer would blur the provenance boundary.
-        // Exemplar names stay identical across locales — Lagavulin 16
-        // is a proper noun, not translatable copy.
-        //
-        // The `staleClass` bundles the fade + `transition-opacity` from
-        // #190 so this section joins the rest of the details region in
-        // going to 40% while a rescan is in flight. The photo stays
-        // full-opacity above.
-        <section
-          className={cn('flex flex-col gap-3', staleClass)}
-          data-testid="scan-result-reverse-exemplar"
-          aria-labelledby="scan-result-reverse-exemplar-heading"
-        >
-          <div className="flex flex-wrap items-center gap-2">
-            <h3
-              id="scan-result-reverse-exemplar-heading"
-              className="text-sm font-medium text-zinc-800 dark:text-zinc-200"
-            >
-              {t('reverseExemplarHeading')}
-            </h3>
-            <ProvenanceBadgeView
-              kind="crossBeverageMap"
-              label={tCrossBevBadge('label')}
-              tooltip={tCrossBevBadge('tooltip')}
-            />
-          </div>
-          {reverseResult.kind === 'match' ? (
-            <p
-              className="text-sm text-zinc-700 dark:text-zinc-300"
-              data-testid="scan-result-reverse-exemplar-match"
-            >
-              {reverseResult.hits.length === 1
-                ? t('reverseExemplarSingle', {
-                    name: reverseResult.hits[0]!.exemplar.name,
-                  })
-                : t('reverseExemplarPair', {
-                    first: reverseResult.hits[0]!.exemplar.name,
-                    second: reverseResult.hits[1]!.exemplar.name,
-                  })}
-            </p>
-          ) : (
-            <p
-              className="text-sm text-zinc-700 dark:text-zinc-300"
-              data-testid="scan-result-reverse-exemplar-no-analog"
-            >
-              {t('reverseNoAnalog')}
-            </p>
-          )}
-          <HeuristicDisclaimerView
-            title={tDisclaimer('title')}
-            body={tDisclaimer('body')}
-          />
-        </section>
-      )}
     </article>
   )
 }
 
 /**
- * Thin client wrapper: reads the same i18n namespaces the async
- * `<FlavorChartView />` reads via `getTranslations`, hands the resolved
- * strings to the shared `<FlavorChartInlineView />`. Same bar rendering
- * as the sake detail page — the sync view is the single source of truth
- * (see ADR-0015 refactor).
+ * Bone-card flavor grid (UX-F #167): the six axes in a compact 2-column
+ * grid with amber bars. Reuses `<FlavorAxisLabelView />` per axis so the
+ * romaji + kanji + tooltip "never English-only" compliance (CLAUDE.md) is
+ * unchanged, and keeps the `brand-flavor-chart` / `flavor-axis-*` testids
+ * and `role="progressbar"` a11y contract of the shared bar view. The sake
+ * detail page keeps the sibling `<FlavorChartInlineView />` (row layout);
+ * this is a card-local presentation, deliberately not shared, so the
+ * detail page is untouched by the scan-card redesign.
  */
-function FlavorChartForCard({ chart }: { chart: FlavorChart }) {
+function FlavorGridForCard({ chart }: { chart: FlavorChart }) {
   const t = useTranslations('sake.brand')
   const tAxis = useTranslations('flavorAxis')
 
-  const axisStrings = {} as Record<FlavorAxis, FlavorAxisStrings>
-  for (const axis of FLAVOR_AXES) {
-    axisStrings[axis] = {
-      kanji: tAxis(`${axis}.kanji`),
-      approximation: tAxis(`${axis}.label`),
-      caveat: tAxis(`${axis}.caveat`),
-    }
-  }
-
   return (
-    <FlavorChartInlineView
-      chart={chart}
-      flavorChartLabel={t('flavorChartLabel')}
-      axisStrings={axisStrings}
-    />
+    <section
+      className="flex flex-col gap-3"
+      data-testid="brand-flavor-chart"
+      aria-label={t('flavorChartLabel')}
+    >
+      <p className="text-xs uppercase tracking-wide text-stone-400 dark:text-zinc-500">
+        {t('flavorChartLabel')}
+      </p>
+      <ul className="grid grid-cols-2 gap-x-6 gap-y-3" role="list">
+        {FLAVOR_AXES.map((axis) => {
+          const value = chart[axis]
+          return (
+            <li key={axis} className="flex flex-col gap-1.5">
+              <div className="flex items-start justify-between gap-2">
+                <FlavorAxisLabelView
+                  axis={axis}
+                  romaji={FLAVOR_AXIS_ROMAJI[axis]}
+                  kanji={tAxis(`${axis}.kanji`)}
+                  approximation={tAxis(`${axis}.label`)}
+                  caveat={tAxis(`${axis}.caveat`)}
+                />
+                <span
+                  className="shrink-0 text-xs tabular-nums text-stone-400 dark:text-zinc-500"
+                  data-testid={`flavor-axis-${axis}-value`}
+                >
+                  {value.toFixed(2)}
+                </span>
+              </div>
+              <div
+                role="progressbar"
+                aria-valuemin={0}
+                aria-valuemax={1}
+                aria-valuenow={value}
+                aria-labelledby={`flavor-axis-${axis}-romaji`}
+                className="h-1.5 w-full overflow-hidden rounded-full bg-stone-200 dark:bg-zinc-800"
+                data-testid={`flavor-axis-${axis}-bar`}
+              >
+                <span
+                  className="block h-full rounded-full bg-amber-500/90"
+                  style={{ width: `${(value * 100).toFixed(1)}%` }}
+                />
+              </div>
+            </li>
+          )
+        })}
+      </ul>
+    </section>
   )
 }
