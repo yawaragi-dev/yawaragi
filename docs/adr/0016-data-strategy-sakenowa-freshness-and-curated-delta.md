@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted (2026-07-08). Supersedes the "Sakenowa dump is frozen at 2024" framing carried by ADR-0014, `CLAUDE.md`, and issue #129.
+Accepted (2026-07-08). Supersedes the "Sakenowa dump is frozen at 2024" framing in ADR-0014 and issue #129.
 
 Driven by the research artifact [`docs/research/sakenowa-data-strategy.md`](../research/sakenowa-data-strategy.md) ("Shipping Yawaragi: Is the Sakenowa Data Limitation Real, and What Should You Do?").
 
@@ -11,6 +11,7 @@ Driven by the research artifact [`docs/research/sakenowa-data-strategy.md`](../r
 We had been operating on the belief that the Sakenowa Data API was frozen at 2024-03-21, which implied a possible data-source pivot before launch. The research disproves the premise:
 
 - **Sakenowa is live and maintained into mid-2026.** `/rankings` returns `yearMonth: 202606`; `/brands` IDs climb to ~121,331; the operator (Aiiro Systems Inc.) shipped a feature update on 2026-06-28. Terms are permissive (free, commercial use allowed, attribution-only — already implemented). No API key, no paid data tier published.
+- **Reconciling ADR-0014's evidence (this matters — don't hand-wave it).** ADR-0014 (2026-06-13) recorded `Last-Modified: 2024-03-21` on the exact dump we ingest (`muro.sakenowa.com/sakenowa-data/api`), plus UMAMI absent — real observations then. **Re-verified 2026-07-08:** the same endpoint now returns `Last-Modified: Wed, 08 Jul 2026 18:33:18 GMT`, 3,253 brands, maxId 121,331. So the dump *is* being regenerated again (Sakenowa resumed it, or the 2026-06-13 read hit a stale CDN cache) — the "frozen" premise no longer holds. Practical consequence: our staleness was a one-time 2024 pull that was never refreshed, so the re-sync slice must actually re-pull the live dump on a schedule (see #201), not trust a snapshot. The dump still carries only ~3,253 brands with charts sparser still (~1,500) — that coverage gap is the real problem, addressed below.
 - **The real gap is flavor-chart coverage, not staleness.** Sakenowa's 6-axis FlavorProfile is NLP-derived from thousands of Japanese user check-ins per brand, so it only exists for brands with enough check-ins (~1,500–1,600 of an estimated ~3,500–4,000). The base `/brands` + `/breweries` tables are current; the *flavor asset* is sparse for new/newly-imported bottles. Our symptom — "recognised but no flavour chart / no match" — is (a) a stale one-time 2024 cache and (b) matching against the sparse `/flavor-charts`.
 - **No authoritative product-level API replaces Sakenowa.** JSS/NRIB publish brewery/award/process data (not a product API); Sakenote's API is closed; Sakenomy has no public API (and is a competitor). The realistic *supplements* are live Sakenowa re-sync, importer/retailer catalogs (Tengu Sake UK, Tippsy/Palate Project US), and Rakuten's Ichiba Item Search API for current listings.
 - **The import-relevant universe is small.** Of ~20,000 Japanese sake products, the set actually on EU/US shelves is a low-hundreds-of-SKUs/year target — maintainable by one person.
@@ -35,7 +36,7 @@ The 6-axis FlavorProfile is the one asset we cannot fully reproduce. It can be *
 
 ## Consequences
 
-- **Corrects the record:** the "frozen dump" language in ADR-0014 / `CLAUDE.md` / #129 is retired. #129 is closed as a disproven premise, folded here.
+- **Corrects the record:** the "frozen dump" language in ADR-0014 / README / #129 is retired (ADR-0014 gets a superseded-observation note pointing here). #129 is closed as a disproven premise, folded here.
 - **New provenance source** `spec_estimated` will be added to the taxonomy (CONTEXT.md + CLAUDE.md + Zod) **with** the estimated-vector slice, not before.
 - **New curated-delta table** must be classified in `src/lib/supabase/db-tables.ts` (public, non-user-scoped) when it lands (ADR-0010).
 - **Rakuten** becomes a new external data source (attribution + ToS; non-personal).
