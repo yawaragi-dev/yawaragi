@@ -6,6 +6,8 @@ date: 2026-06-13
 
 # ADR-0014: Manual-curation layer and multi-source data strategy
 
+> **Update (2026-07-08 — see [ADR-0016](./0016-data-strategy-sakenowa-freshness-and-curated-delta.md)):** the "not re-generated since 2024-03-21" observation below is **superseded**. Re-verified 2026-07-08 that the same dump (`muro.sakenowa.com/sakenowa-data/api`) returns `Last-Modified: 2026-07-08`, 3,253 brands, maxId 121,331 — it is being regenerated again; the earlier reading was a stale cache or a since-resumed pipeline. The real gap is sparse 6-axis flavor-chart coverage, not a frozen dump. The manual-curation layer this ADR introduced remains valid and is retained.
+
 ## Context
 
 `muro.sakenowa.com/sakenowa-data/api/brands` is our primary catalogue source — the only free, openly-licensed, structured 6-axis perceptual flavor vector at scale (per ADR-0005 the canonical `source: 'sakenowa'`). However, on 2026-06-13 we confirmed via the `Last-Modified` header that the public Data API dump **has not been re-generated since 2024-03-21** (~26 months stale at the time of writing). Every brand / brewery added to Sakenowa's live system since that date is invisible to our scan flow.
