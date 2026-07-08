@@ -440,6 +440,23 @@ describe('findSakeByExtractionFromPool', () => {
     if (result.kind !== 'ambiguous') throw new Error('unreachable; for narrowing only')
     expect(result.candidates.map((c) => c.sake.brandId).sort()).toEqual([9001, 9002])
     expect(result.query).toEqual({ nameJa: '菊姫', breweryJa: '存在しない酒造' })
+
+    // #109 PR B enriched candidate shape: each candidate carries its
+    // FULL joined Brewery — kanji, romaji, and the `areaId` the action
+    // layer resolves into a prefecture name for the disambiguation row
+    // ("菊姫 · Ishikawa"). Locks that the JOINed SELECT populates both
+    // sides so the UI never needs a follow-up query.
+    const byBrand = new Map(result.candidates.map((c) => [c.sake.brandId, c]))
+    expect(byBrand.get(9001)?.brewery).toMatchObject({
+      breweryId: 9501,
+      nameKanji: '旭酒造',
+      areaId: 35,
+    })
+    expect(byBrand.get(9002)?.brewery).toMatchObject({
+      breweryId: 9502,
+      nameKanji: '菊姫合資会社',
+      areaId: 17,
+    })
   })
 
   it('Latin pass matches a kanji brand by its name_romaji (2026-06-13 Kizakura shape)', async () => {

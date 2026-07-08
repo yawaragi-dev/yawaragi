@@ -36,7 +36,15 @@
     "sectionChatTitle": "Chat your way in",
     "sectionChatBody": "Tell us what you usually drink. We translate it into Japanese brewer vocabulary and suggest sake that fits.",
     "sectionProfileTitle": "Build a taste profile",
-    "sectionProfileBody": "Over time, your reactions shape a personal flavor map you can compare with others."
+    "sectionProfileBody": "Over time, your reactions shape a personal flavor map you can compare with others.",
+    "hero": {
+      "kicker": "A real example scan",
+      "heading": "Discover a sake from its label",
+      "subhead": "Here's what Yawaragi shows after reading a real bottle — its flavor profile and a familiar reference point to start from. Scan your own to explore more.",
+      "scanYourOwn": "Scan your own",
+      "photoAlt": "A chilled bottle of 木戸泉 (Kidoizumi) sake",
+      "exampleChip": "Example"
+    }
   },
   "localeSwitcher": {
     "label": "Language",
@@ -113,8 +121,9 @@
       "confirmAccept": "Yes, open the sake page",
       "confirmRescan": "No, scan again",
       "noMatch": "We read the label, but the sake isn't in our catalogue yet.",
+      "noMatchReadLabel": "Here's what we read from the label:",
       "ambiguous": "Several sakes match this name. Pick the one on your bottle:",
-      "ambiguousSharedBrewery": "We matched the brewery: {breweryKanji} ({breweryRomaji}). Here's what our catalogue has from them:",
+      "ambiguousSharedBrewery": "We matched the brewery: {brewery}. Here's what our catalogue has from them:",
       "ambiguousNotListed": "Don't see your bottle? Limited editions and collaborations aren't always in our catalogue.",
       "ambiguousRescan": "None of these — scan again",
       "errorInvalidInput": "We couldn't read that file. Try a clear photo of the bottle label.",
@@ -132,7 +141,15 @@
     },
     "resultCard": {
       "openDetail": "See full details",
-      "exploreAnotherWay": "Explore sake another way"
+      "exploreAnotherWay": "Explore sake another way",
+      "reverseExemplarHeading": "A familiar reference point",
+      "reverseExemplarSingle": "Interesting for those who like {name}",
+      "reverseExemplarPair": "Interesting for those who like {first} or {second}",
+      "reverseNoAnalog": "This is a distinctly Japanese profile — no close Western analog."
+    },
+    "returnHint": {
+      "notThisOne": "Not the bottle you scanned?",
+      "scanAgain": "Scan again"
     }
   },
   "suggest": {

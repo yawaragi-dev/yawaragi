@@ -36,7 +36,15 @@
     "sectionChatTitle": "Chatten und kennenlernen",
     "sectionChatBody": "Erzähl uns, was du sonst trinkst. Wir übersetzen das in die Sprache japanischer Brauer und schlagen Sake vor, der dazu passt.",
     "sectionProfileTitle": "Geschmacksprofil aufbauen",
-    "sectionProfileBody": "Mit der Zeit formen deine Reaktionen eine persönliche Aromakarte, die du mit anderen vergleichen kannst."
+    "sectionProfileBody": "Mit der Zeit formen deine Reaktionen eine persönliche Aromakarte, die du mit anderen vergleichen kannst.",
+    "hero": {
+      "kicker": "Ein echtes Beispiel",
+      "heading": "Entdecke einen Sake anhand seines Etiketts",
+      "subhead": "So sieht es aus, wenn Yawaragi ein echtes Etikett liest — sein Aromaprofil und ein vertrauter Bezugspunkt zum Einstieg. Scanne dein eigenes, um mehr zu entdecken.",
+      "scanYourOwn": "Eigenes scannen",
+      "photoAlt": "Eine gekühlte Flasche 木戸泉 (Kidoizumi) Sake",
+      "exampleChip": "Beispiel"
+    }
   },
   "localeSwitcher": {
     "label": "Sprache",
@@ -113,8 +121,9 @@
       "confirmAccept": "Ja, Sake-Seite öffnen",
       "confirmRescan": "Nein, erneut scannen",
       "noMatch": "Wir haben das Etikett gelesen, der Sake ist aber noch nicht im Katalog.",
+      "noMatchReadLabel": "Das haben wir vom Etikett gelesen:",
       "ambiguous": "Mehrere Sake passen zu diesem Namen. Wähle den von deiner Flasche aus:",
-      "ambiguousSharedBrewery": "Wir haben die Brauerei erkannt: {breweryKanji} ({breweryRomaji}). Das hat unser Katalog von ihr:",
+      "ambiguousSharedBrewery": "Wir haben die Brauerei erkannt: {brewery}. Das hat unser Katalog von ihr:",
       "ambiguousNotListed": "Deine Flasche nicht dabei? Limited Editions und Kollaborationen sind nicht immer im Katalog.",
       "ambiguousRescan": "Keiner davon — erneut scannen",
       "errorInvalidInput": "Die Datei konnte nicht gelesen werden. Versuche ein deutliches Foto des Flaschenetiketts.",
@@ -132,7 +141,15 @@
     },
     "resultCard": {
       "openDetail": "Alle Details ansehen",
-      "exploreAnotherWay": "Sake auf andere Weise entdecken"
+      "exploreAnotherWay": "Sake auf andere Weise entdecken",
+      "reverseExemplarHeading": "Ein vertrauter Bezugspunkt",
+      "reverseExemplarSingle": "Interessant für alle, die {name} kennen",
+      "reverseExemplarPair": "Interessant für alle, die {first} oder {second} kennen",
+      "reverseNoAnalog": "Dieses Profil ist ausgesprochen japanisch — es gibt keine nahe westliche Entsprechung."
+    },
+    "returnHint": {
+      "notThisOne": "Nicht die Flasche, die du gescannt hast?",
+      "scanAgain": "Erneut scannen"
     }
   },
   "suggest": {

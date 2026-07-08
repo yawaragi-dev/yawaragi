@@ -126,9 +126,24 @@ test.describe('site header — nav backbone', () => {
 
     const trigger = header.getByTestId('header-menu-trigger')
     await expect(trigger).toBeVisible()
-    await trigger.click()
+    // The header is a client component (`useState` + controlled
+    // `<Sheet open>`). On a cold/slow CI runner — Clerk's JS is still
+    // loading in this exact spec — the menu button can paint before React
+    // attaches its `onClick`, so the first click is swallowed, `open` never
+    // flips, and the sheet never mounts. Retry the OPEN idempotently: click
+    // only while the dialog is still closed, so a swallowed click is
+    // recovered without double-toggling it back shut. (Playwright's
+    // visibility check ignores `opacity`, so the ~200ms fade-in is NOT the
+    // cause of the historical flake — an unmounted dialog is.)
+    const dialog = page.getByRole('dialog')
+    await expect(async () => {
+      if (!(await dialog.isVisible())) {
+        await trigger.click()
+      }
+      await expect(dialog).toBeVisible({ timeout: 2000 })
+    }).toPass({ timeout: 15000 })
 
-    const mobileNav = page.getByTestId('header-nav-mobile')
+    const mobileNav = dialog.getByTestId('header-nav-mobile')
     await expect(mobileNav).toBeVisible()
     await expect(mobileNav.getByTestId('header-nav-scan-mobile')).toBeVisible()
     await expect(mobileNav.getByTestId('header-nav-chat-mobile')).toBeVisible()

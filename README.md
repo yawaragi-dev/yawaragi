@@ -10,13 +10,13 @@ A sake companion. Three flagship surfaces: **label scan**, **chat recommender**,
 
 ## Milestone progress
 
-_Snapshot generated 2026-07-07 from GitHub Issues + merged PRs. Regenerate with `pnpm progress`. Detail: [docs/PROGRESS.md](./docs/PROGRESS.md)._
+_Snapshot generated 2026-07-08 from GitHub Issues + merged PRs. Regenerate with `pnpm progress`. Detail: [docs/PROGRESS.md](./docs/PROGRESS.md)._
 
 | Milestone | Progress | Issues | ETA (median) |
 | --- | --- | --- | --- |
 | **M1 (Phase 0) — Compliance & i18n foundation** | `████████████████████` 100% | 5 / 5 | done |
 | **M2 (Phase 2) — Data foundation** | `███████████████████░` 94% | 11 / 12 | 2026-07-09 |
-| **M3 (Phases 3–5) — Flagship surfaces** | `████████████████░░░░` 82% | 9 / 11 | 2026-07-10 |
+| **M3 (Phases 3–5) — Flagship surfaces** | `██████████████████░░` 91% | 10 / 11 | 2026-07-09 |
 
 <!-- progress:end -->
 
@@ -47,6 +47,7 @@ flowchart TD
   ScanAction --> RateLimit["lib/rate-limit<br/>yawaragi_session + Upstash"]
   ScanAction --> Vision["lib/ai/vision<br/>(Haiku 4.5 → Sonnet 4.6 retry)"]
   ScanAction --> Lookup
+  ScanAction --> ReverseLookup["lib/cross-beverage/<br/>reverse-lookup<br/>(UX-C, live)"]
   Sake --> Lookup["lib/sakenowa/lookup"]
   Lookup --> DB[("Supabase Postgres<br/>mirror + manual_curation<br/>ADR-0014")]
   Ingest["pnpm ingest"] --> DB
@@ -65,7 +66,7 @@ flowchart TD
   UC["lib/supabase/user-client<br/>(Phase 5, deferred with auth)"] -.->|"deferred"| LL
 ```
 
-Phase 0 (i18n + legal scaffolding + EN-first launch) and Phase 2 (data foundation, Sakenowa mirror, scheduled cron ingest, provenance schemas) are shipped. **Phase 3 (anonymous label scan)** is in flight — see the milestone bar above for the live status. The entry page + canvas downscale + Sakenowa lookup chain (S1), the anonymous-session rate limit (S2), the Anthropic vision provider (S3), and the three-tier confidence UX + two-tier vision retry + manual-curation layer (S4 PR A) are all live. The remaining S4 work (PR B — enriched disambiguation list, no-match enrichment, "Not this one?" affordance, full Playwright matrix) and the eval harness (S5) are the open slices. Two-tier vision means Haiku 4.5 runs every scan; Sonnet 4.6 retries on any tier-1 result other than a clean first-pass match, recovering the calligraphic-kanji and field-swap cases at ~6× cost only on those bottles. The manual-curation layer (ADR-0014) lets the maintainer add brands missing from Sakenowa's frozen public dump (`pnpm add-manual-brand` — UMAMI is the seed). **Phase 4 (single-shot suggestions over MCP + cross-beverage)** is shipped: the `/[locale]/suggest` surface takes a `?seed=<brandId>` from the sake detail page's "Find similar" link OR a freeform text query, runs a single AI SDK tool loop with the Sakenowa MCP tools + the deterministic `mapCrossBeverage` cross-beverage bridge, and returns a per-field-provenance card list with inline `<HeuristicDisclaimer />` on cross-beverage results. Every call is Langfuse-traced; the `evals/suggest-jp/` harness (`pnpm eval suggest-jp`) runs 15 seed queries with ground-truth recall@k. See PRD [#138](https://github.com/yawaragi-dev/yawaragi/issues/138). **Phase 5 (taste profile, ratings)** is deferred along with auth resumption. Every Phase 3+ surface is designed to survive being wrapped in a native webview shell per [ADR-0012](./docs/adr/0012-webview-able-architecture.md).
+Phase 0 (i18n + legal scaffolding + EN-first launch) and Phase 2 (data foundation, Sakenowa mirror, scheduled cron ingest, provenance schemas) are shipped. **Phase 3 (anonymous label scan)** is in flight — see the milestone bar above for the live status. The entry page + canvas downscale + Sakenowa lookup chain (S1), the anonymous-session rate limit (S2), the Anthropic vision provider (S3), the three-tier confidence UX + two-tier vision retry + manual-curation layer (S4 PR A), the in-place result card on `/scan` (UX-B, ADR-0015 — a confident match renders photo + kanji + flavor chart + deep-link in place, replacing the earlier auto-redirect), and the reverse cross-beverage exemplar layer on the scan card (UX-C — "interesting for those who like Lagavulin 16" via a 62-row hand-curated exemplar table + deterministic L2 lookup, with a `no-close-analog` sentinel for sakes that legitimately have no Western analog) are all live. S4 PR B (enriched disambiguation list, no-match enrichment, the "Not this one?" affordance, full Playwright matrix) is live; the label-scan eval harness (S5, `pnpm eval label-scan-jp`) is built and awaits its rights-cleared photo corpus. The UX redesign (#168) landed on top: a **landing hero that leads with a real example scan result** (UX-E — the maintainer's own 木戸泉 bottle + its real Sakenowa flavor chart + the reverse cross-beverage hook, shown only after the 18+ gate), and the **shared scan result card restyled as an elevated "bone" card** (UX-F) used by both the scan flow and that hero. Two-tier vision means Haiku 4.5 runs every scan; Sonnet 4.6 retries on any tier-1 result other than a clean first-pass match, recovering the calligraphic-kanji and field-swap cases at ~6× cost only on those bottles. The manual-curation layer (ADR-0014) lets the maintainer add brands missing from Sakenowa's frozen public dump (`pnpm add-manual-brand` — UMAMI is the seed). **Phase 4 (single-shot suggestions over MCP + cross-beverage)** is shipped: the `/[locale]/suggest` surface takes a `?seed=<brandId>` from the sake detail page's "Find similar" link OR a freeform text query, runs a single AI SDK tool loop with the Sakenowa MCP tools + the deterministic `mapCrossBeverage` cross-beverage bridge, and returns a per-field-provenance card list with inline `<HeuristicDisclaimer />` on cross-beverage results. Every call is Langfuse-traced; the `evals/suggest-jp/` harness (`pnpm eval suggest-jp`) runs 15 seed queries with ground-truth recall@k. See PRD [#138](https://github.com/yawaragi-dev/yawaragi/issues/138). **Phase 5 (taste profile, ratings)** is deferred along with auth resumption. Every Phase 3+ surface is designed to survive being wrapped in a native webview shell per [ADR-0012](./docs/adr/0012-webview-able-architecture.md).
 
 ## Getting started
 

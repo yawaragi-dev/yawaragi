@@ -43,7 +43,12 @@ describe('mapCrossBeverage — happy path', () => {
     // the resolution logic would fail this test.
     const result = await executeTool({ descriptor: 'smoky', beverage: 'whisky' })
 
-    expect(result).toEqual({
+    // The `smoky` row was extended with an `exemplars` list under UX-C
+    // (#164) — the assertion below matches on the 6-axis vector and the
+    // provenance envelope. The full exemplar list is checked by the
+    // dedicated schema and reverse-lookup tests; here we only prove the
+    // tool returns the pinned row shape.
+    expect(result).toMatchObject({
       source: 'cross_beverage_map',
       descriptor: 'smoky',
       beverage: 'whisky',

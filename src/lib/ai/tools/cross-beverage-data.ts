@@ -1,3 +1,4 @@
+import type { Exemplar } from '@/lib/schemas/cross-beverage-map'
 import { parseCrossBeverageMap, type CrossBeverageMap } from '@/lib/schemas/cross-beverage-map'
 
 /**
@@ -75,10 +76,323 @@ import { parseCrossBeverageMap, type CrossBeverageMap } from '@/lib/schemas/cros
  *     "sake has no tannin" caveat, but the diff no longer reads like a typo.
  *   - `dessert` re-anchored to PX + Madeira mean only (was averaged with
  *     Sauternes + Ice Wine, but those are covered by `botrytised`).
+ *
+ * UX-C exemplar layer (2026-07-07, #164)
+ * --------------------------------------
+ * Each descriptor gets an `exemplars` list — the named Western bottles /
+ * styles it was distilled from, sourced from `docs/research/cross-beverage-
+ * map.md`. The reverse-lookup (`src/lib/cross-beverage/reverse-lookup.ts`)
+ * uses these to name a familiar reference on the scan result card
+ * ("Interesting for those who like Lagavulin 16"). The lists are stored
+ * separately in `EXEMPLARS_BY_DESCRIPTOR` below rather than inline on
+ * every row — this keeps the 6-axis vectors readable in a single-screen
+ * scan and gives the maintainer one place to audit the named references
+ * against the research doc. Every exemplar name is a proper noun that
+ * stays identical across locales (Riesling Kabinett is not translated).
+ * The schema requires at least one exemplar per row; the merge below
+ * throws at import time if any descriptor is missing from the map.
  */
 
-const RAW_ROWS: ReadonlyArray<Omit<CrossBeverageMap, 'source'> & { source: 'cross_beverage_map' }> =
-  [
+/**
+ * Named Western references per descriptor, keyed by the descriptor's
+ * `(beverage, descriptor)` pair. Every name is taken from `docs/research/
+ * cross-beverage-map.md` — the source column of the research table cites
+ * the pairing. Regions are the research's own category framing so a
+ * visitor unfamiliar with the exemplar still gets a pointer at the style
+ * family.
+ *
+ * Coverage: 62 descriptors → ≥1 exemplar each. Where the research row
+ * lists multiple canonical anchors (e.g. `peated` averages Lagavulin +
+ * Ardbeg), both are preserved so the reverse-lookup can surface the top
+ * 1–2 for that descriptor. Where the descriptor was a single-anchor row
+ * in the research (`rye-spicy` = Rittenhouse Rye, `jammy` = Zinfandel),
+ * exactly one exemplar is listed.
+ *
+ * Keyed on the composite string `beverage::descriptor` so the merge at
+ * module load is a simple lookup regardless of whether a descriptor
+ * shares a name across beverage categories (none do today; the composite
+ * key stays future-proof against a wine-`dry` vs beer-`dry` split).
+ */
+const EXEMPLARS_BY_DESCRIPTOR: Readonly<Record<string, readonly Exemplar[]>> = Object.freeze({
+  // ---- WHISKY ------------------------------------------------------------
+  'whisky::peated': [
+    { source: 'manual_curation', name: 'Lagavulin 16', region: 'Islay peated single-malt' },
+    { source: 'manual_curation', name: 'Ardbeg 10', region: 'Islay peated single-malt' },
+  ],
+  'whisky::smoky': [
+    { source: 'manual_curation', name: 'Talisker 10', region: 'Island peated, peppery' },
+    { source: 'manual_curation', name: 'Lagavulin 16', region: 'Islay peated single-malt' },
+  ],
+  'whisky::sherry-cask-floral': [
+    {
+      source: 'manual_curation',
+      name: 'Macallan 12 Sherry Oak',
+      region: 'Speyside sherry-cask single-malt',
+    },
+  ],
+  'whisky::sherry-cask-deep': [
+    {
+      source: 'manual_curation',
+      name: 'GlenDronach 18 Allardice',
+      region: 'Highland sherry-cask single-malt',
+    },
+  ],
+  'whisky::bourbon-cask': [
+    { source: 'manual_curation', name: 'Buffalo Trace', region: 'Kentucky bourbon' },
+    { source: 'manual_curation', name: "Maker's Mark", region: 'Wheated bourbon' },
+  ],
+  'whisky::oaky': [
+    {
+      source: 'manual_curation',
+      name: 'Macallan 12 Sherry Oak',
+      region: 'Speyside sherry-cask single-malt',
+    },
+    { source: 'manual_curation', name: 'Yamazaki 12', region: 'Japanese mizunara-and-sherry blend' },
+  ],
+  'whisky::honeyed': [
+    { source: 'manual_curation', name: 'Highland Park 12', region: 'Highland honeyed single-malt' },
+    {
+      source: 'manual_curation',
+      name: 'Glenmorangie Original',
+      region: 'Highland light single-malt',
+    },
+  ],
+  'whisky::light-grain': [
+    { source: 'manual_curation', name: 'Jameson Standard', region: 'Irish blended' },
+    {
+      source: 'manual_curation',
+      name: 'Auchentoshan 12',
+      region: 'Lowland triple-distilled single-malt',
+    },
+  ],
+  'whisky::speyside-light': [
+    { source: 'manual_curation', name: 'Glenfiddich 12', region: 'Speyside light single-malt' },
+    {
+      source: 'manual_curation',
+      name: 'Glenmorangie Original',
+      region: 'Highland light single-malt',
+    },
+  ],
+  'whisky::rye-spicy': [
+    { source: 'manual_curation', name: 'Rittenhouse Rye', region: 'American rye whiskey' },
+  ],
+  'whisky::japanese-mizunara': [
+    { source: 'manual_curation', name: 'Yamazaki 12', region: 'Japanese mizunara-and-sherry blend' },
+  ],
+  'whisky::japanese-floral-blend': [
+    { source: 'manual_curation', name: 'Hibiki Harmony', region: 'Japanese blended, floral' },
+  ],
+  'whisky::japanese-lightly-peated': [
+    { source: 'manual_curation', name: 'Hakushu 12', region: 'Japanese lightly peated single-malt' },
+  ],
+  'whisky::irish-pot-still': [
+    { source: 'manual_curation', name: 'Redbreast 12', region: 'Irish single pot still' },
+  ],
+  // ---- WINE --------------------------------------------------------------
+  'wine::light-bodied': [
+    { source: 'manual_curation', name: 'Sancerre', region: 'Loire dry Sauvignon Blanc' },
+    { source: 'manual_curation', name: 'Muscadet sur lie', region: 'Loire lean-mineral white' },
+  ],
+  'wine::full-bodied': [
+    { source: 'manual_curation', name: 'Napa Cabernet Sauvignon', region: 'California full-bodied red' },
+    { source: 'manual_curation', name: 'Bordeaux Left Bank', region: 'Bordeaux Cabernet blend' },
+  ],
+  'wine::tannic': [
+    { source: 'manual_curation', name: 'Bordeaux Left Bank', region: 'Bordeaux Cabernet blend' },
+    { source: 'manual_curation', name: 'Napa Cabernet Sauvignon', region: 'California full-bodied red' },
+  ],
+  'wine::mineral': [
+    { source: 'manual_curation', name: 'Chablis', region: 'Burgundy mineral Chardonnay' },
+    { source: 'manual_curation', name: 'Muscadet sur lie', region: 'Loire lean-mineral white' },
+  ],
+  'wine::oaked': [
+    { source: 'manual_curation', name: 'Meursault', region: 'White Burgundy, oaked Chardonnay' },
+    {
+      source: 'manual_curation',
+      name: 'California oaked Chardonnay',
+      region: 'Buttery oaked Chardonnay',
+    },
+  ],
+  'wine::unoaked': [
+    { source: 'manual_curation', name: 'Chablis', region: 'Burgundy mineral Chardonnay' },
+  ],
+  'wine::aromatic-dry': [
+    { source: 'manual_curation', name: 'Dry Mosel Riesling', region: 'German aromatic dry white' },
+    { source: 'manual_curation', name: 'Sancerre', region: 'Loire dry Sauvignon Blanc' },
+  ],
+  'wine::off-dry': [
+    {
+      source: 'manual_curation',
+      name: 'Riesling Spätlese',
+      region: 'German aromatic off-dry white',
+    },
+    { source: 'manual_curation', name: 'Vouvray Demi-sec', region: 'Loire off-dry Chenin Blanc' },
+  ],
+  'wine::botrytised': [
+    { source: 'manual_curation', name: 'Sauternes', region: 'Bordeaux botrytised dessert wine' },
+    { source: 'manual_curation', name: 'Eiswein', region: 'German ice wine' },
+  ],
+  'wine::oxidative': [
+    { source: 'manual_curation', name: 'Oloroso Sherry', region: 'Fortified oxidative aged' },
+    { source: 'manual_curation', name: 'Fino Sherry', region: 'Fortified dry oxidative' },
+  ],
+  'wine::dessert': [
+    { source: 'manual_curation', name: 'Pedro Ximénez Sherry', region: 'Ultra-sweet oxidative fortified' },
+    { source: 'manual_curation', name: 'Madeira Bual', region: 'Oxidative sweet fortified' },
+  ],
+  'wine::jammy': [
+    { source: 'manual_curation', name: 'Zinfandel', region: 'California jammy red' },
+  ],
+  'wine::sparkling-brut': [
+    { source: 'manual_curation', name: 'Brut Champagne', region: 'Méthode traditionnelle sparkling' },
+  ],
+  'wine::sparkling-natural': [
+    {
+      source: 'manual_curation',
+      name: 'Pét-Nat',
+      region: 'Brut Nature / ancestral-method sparkling',
+    },
+  ],
+  'wine::rose': [
+    { source: 'manual_curation', name: 'Provençal Rosé', region: 'Dry Provence rosé' },
+  ],
+  'wine::terroir-earthy': [
+    {
+      source: 'manual_curation',
+      name: 'Burgundy Pinot Noir',
+      region: 'Burgundy terroir-driven red',
+    },
+    { source: 'manual_curation', name: 'Northern Rhône Syrah', region: 'Peppery-meaty Rhône red' },
+  ],
+  'wine::funky-natural': [
+    { source: 'manual_curation', name: 'Orange wine', region: 'Skin-contact white' },
+    {
+      source: 'manual_curation',
+      name: 'Natural red wine',
+      region: 'Low-intervention, low-sulfur red',
+    },
+  ],
+  // ---- BEER --------------------------------------------------------------
+  'beer::pilsner-clean': [
+    { source: 'manual_curation', name: 'German Pilsner', region: 'Hoppy-dry lager' },
+  ],
+  'beer::malty': [
+    { source: 'manual_curation', name: 'Munich Helles', region: 'Malty-soft lager' },
+  ],
+  'beer::dark-roasted': [
+    { source: 'manual_curation', name: 'Czech Dunkel', region: 'Dark lager, lightly roasted' },
+    { source: 'manual_curation', name: 'Bavarian Schwarzbier', region: 'Dark lager, restrained roast' },
+  ],
+  'beer::hoppy-west-coast': [
+    { source: 'manual_curation', name: 'West Coast IPA', region: 'Hoppy citrus-pine IPA' },
+  ],
+  'beer::hazy-citrus': [
+    { source: 'manual_curation', name: 'NEIPA', region: 'Hazy IPA, juicy hop, low bitterness' },
+  ],
+  'beer::hefeweizen-ester': [
+    { source: 'manual_curation', name: 'Hefeweizen', region: 'German wheat, banana-clove yeast' },
+  ],
+  'beer::witbier-spiced': [
+    { source: 'manual_curation', name: 'Belgian Witbier', region: 'Belgian wheat, coriander-orange' },
+  ],
+  'beer::belgian-tripel': [
+    { source: 'manual_curation', name: 'Belgian Tripel', region: 'Strong-pale ale, fruity-spicy' },
+  ],
+  'beer::belgian-dark': [
+    { source: 'manual_curation', name: 'Belgian Quadrupel', region: 'Strong-dark ale, dried-fruit-caramel' },
+  ],
+  'beer::sour': [
+    { source: 'manual_curation', name: 'Gueuze', region: 'Spontaneous-fermentation Belgian sour' },
+    {
+      source: 'manual_curation',
+      name: 'Berliner Weisse',
+      region: 'Kettle-sour German wheat',
+    },
+  ],
+  'beer::wild-brett': [
+    {
+      source: 'manual_curation',
+      name: 'American Wild Ale',
+      region: 'Brettanomyces-driven wild ale',
+    },
+  ],
+  'beer::stout-dry': [
+    { source: 'manual_curation', name: 'Guinness', region: 'Dry Irish stout' },
+  ],
+  'beer::imperial-stout': [
+    {
+      source: 'manual_curation',
+      name: 'Imperial Stout',
+      region: 'High-ABV dark ale, chocolate-coffee',
+    },
+  ],
+  'beer::porter': [
+    { source: 'manual_curation', name: 'Porter', region: 'Dark ale, chocolate-coffee-lighter-than-stout' },
+  ],
+  // ---- SPIRIT ------------------------------------------------------------
+  'spirit::juniper-botanical': [
+    { source: 'manual_curation', name: 'Tanqueray', region: 'London Dry Gin' },
+  ],
+  'spirit::botanical-sweet': [
+    { source: 'manual_curation', name: 'Old Tom Gin', region: 'Lightly sweetened gin' },
+  ],
+  'spirit::botanical-japanese': [
+    { source: 'manual_curation', name: 'Roku Gin', region: 'Japanese gin, yuzu-sansho-sencha' },
+    { source: 'manual_curation', name: 'Ki No Bi', region: 'Japanese Kyoto gin' },
+  ],
+  'spirit::earthy-shochu': [
+    { source: 'manual_curation', name: 'Imo Shochu', region: 'Sweet-potato shochu' },
+  ],
+  'spirit::clean-shochu': [
+    { source: 'manual_curation', name: 'Mugi Shochu', region: 'Barley shochu' },
+  ],
+  'spirit::neutral-soju': [
+    { source: 'manual_curation', name: 'Korean Soju', region: 'Rice / neutral spirit' },
+  ],
+  'spirit::baijiu-funk': [
+    { source: 'manual_curation', name: 'Erguotou', region: 'Light-aroma sorghum baijiu' },
+  ],
+  'spirit::agave-bright': [
+    { source: 'manual_curation', name: 'Tequila Blanco', region: 'Unaged agave spirit' },
+  ],
+  'spirit::agave-oaked': [
+    { source: 'manual_curation', name: 'Tequila Reposado', region: 'Oak-rested agave spirit' },
+  ],
+  'spirit::agave-aged': [
+    { source: 'manual_curation', name: 'Tequila Añejo', region: 'Oak-aged agave spirit' },
+  ],
+  'spirit::agave-smoky': [
+    { source: 'manual_curation', name: 'Mezcal Joven', region: 'Smoked agave spirit' },
+  ],
+  // ---- FORTIFIED ---------------------------------------------------------
+  'fortified::saline-fortified': [
+    { source: 'manual_curation', name: 'Manzanilla Sherry', region: 'Coastal-saline dry sherry' },
+  ],
+  'fortified::oxidative-intermediate': [
+    {
+      source: 'manual_curation',
+      name: 'Amontillado Sherry',
+      region: 'Transition oxidative sherry',
+    },
+  ],
+  'fortified::port-tawny': [
+    { source: 'manual_curation', name: 'Tawny Port', region: 'Aged oxidative sweet port' },
+  ],
+  'fortified::port-ruby': [
+    { source: 'manual_curation', name: 'Ruby Port', region: 'Young-jammy-sweet port' },
+  ],
+  // ---- CIDER -------------------------------------------------------------
+  'cider::apple-dry': [
+    { source: 'manual_curation', name: 'Dry English Cider', region: 'Apple-pear crisp cider' },
+  ],
+  'cider::apple-sweet': [
+    { source: 'manual_curation', name: 'Pommeau', region: 'Apple-brandy-sweetened cider' },
+  ],
+})
+
+const RAW_ROWS: ReadonlyArray<
+  Omit<CrossBeverageMap, 'source' | 'exemplars'> & { source: 'cross_beverage_map' }
+> = [
     // ----- WHISKY (11 descriptors) ------------------------------------------
 
     // peated — averaged from Lagavulin 16 (research "Lagavulin 16" row) and
@@ -386,10 +700,27 @@ const RAW_ROWS: ReadonlyArray<Omit<CrossBeverageMap, 'source'> & { source: 'cros
 /**
  * The cross-beverage map data, with every row parsed at module load through
  * `CrossBeverageMapSchema`. A bad row (out-of-range f-axis, wrong source,
- * unknown beverage, empty descriptor) throws at import time, not at first use.
+ * unknown beverage, empty descriptor, missing exemplars) throws at import
+ * time, not at first use.
+ *
+ * The 6-axis rows and the exemplars are kept separate above (RAW_ROWS +
+ * EXEMPLARS_BY_DESCRIPTOR) so the vectors stay readable in a single-column
+ * scan; the merge here joins them by the composite `beverage::descriptor`
+ * key. A missing exemplar list for any row throws at import time — the
+ * schema's `exemplars.min(1)` guards the seam; this look-up throws a
+ * clearer error before the schema even sees the row.
  */
 export const CROSS_BEVERAGE_MAP: readonly CrossBeverageMap[] = Object.freeze(
-  RAW_ROWS.map((row) => parseCrossBeverageMap(row)),
+  RAW_ROWS.map((row) => {
+    const key = `${row.beverage}::${row.descriptor}`
+    const exemplars = EXEMPLARS_BY_DESCRIPTOR[key]
+    if (exemplars === undefined) {
+      throw new Error(
+        `CROSS_BEVERAGE_MAP: no exemplars for descriptor "${row.descriptor}" (beverage "${row.beverage}"). Every row must be named in EXEMPLARS_BY_DESCRIPTOR — see docs/research/cross-beverage-map.md for the canonical anchors.`,
+      )
+    }
+    return parseCrossBeverageMap({ ...row, exemplars })
+  }),
 )
 
 /**

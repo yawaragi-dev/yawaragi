@@ -40,6 +40,8 @@ Naming history: previously "Kanpai"; renamed to avoid collision with KANPAI Lond
 - `pnpm ingest` — refresh Sakenowa data into Supabase
 - `pnpm eval` — run eval golden sets
 
+To drive any scan/suggest UI state in dev without a bottle photo or paid API calls, see `docs/manual-testing.md` (stub env vars + cookie recipes).
+
 ## Source provenance
 
 Every piece of information shown to a user must carry an explicit `source` field. The taxonomy:
@@ -93,7 +95,7 @@ The f1–f6 → Japanese-label mapping above was verified on 2026-05-22 against 
 
 The cross-beverage map (Western beverages → 6 axes) is a hand-curated heuristic, not a scientific mapping. The schema's `beverage` enum is the source of truth for which categories are covered (currently whisky / wine / beer / spirit / fortified / cider, per `src/lib/schemas/cross-beverage-map.ts`); future widening lands by extending the enum + adding rows in a new PR.
 
-- Every cross-beverage recommendation MUST render with `<HeuristicDisclaimer />`. The canonical EN copy is title + body — title: `"These are cross-beverage approximations"`; body: `"Western descriptors like 'smoky' or 'tannic' don't have a direct sake equivalent. We map them with a hand-curated heuristic so you can start from a familiar reference — treat these results as a starting point for discovery, not a precise match."` The second body sentence carries the discovery framing mandated by `Age gate and JMStV compliance` below — keep both sentences in lockstep with the component's i18n keys (`messages/{en,de}.json` → `heuristicDisclaimer.{title,body}`).
+- Every cross-beverage recommendation MUST render with `<HeuristicDisclaimer />`. The canonical EN copy is title + body — title: `"These are cross-beverage approximations"`; body: `"Western descriptors like 'smoky' or 'tannic' don't have a direct sake equivalent. We map them with a hand-curated heuristic so you can start from a familiar reference — treat these results as a starting point for discovery, not a precise match."` The second body sentence carries the discovery framing mandated by `Age gate and JMStV compliance` below — keep both sentences in lockstep with the component's i18n keys (`messages/{en,de}.json` → `heuristicDisclaimer.{title,body}`). Presentation (UX-F #167 density pass): the **title stays visible** as the caveat cue next to every cross-beverage result; the **body tucks into an info-button tooltip** revealed on hover/focus/tap. This is compliant BECAUSE the body stays in the DOM and is wired to the info button via `aria-describedby` — screen readers reach the full caveat (incl. the discovery-framing sentence) without interaction. Do NOT "fix" this back to an always-visible block, and do NOT hide the title too (that would drop the visible caveat) — a test in `heuristic-disclaimer.test.tsx` pins both.
 - The chat tool `mapCrossBeverage` always returns `source: "cross_beverage_map"` so the UI detects and renders the disclaimer.
 - The LLM is forbidden from inventing new cross-beverage mappings beyond the deterministic table.
 
@@ -179,6 +181,7 @@ See `docs/adr/0007-i18n-en-de.md`.
 - Do NOT use deep relative imports (`../../*`, `../../../*`, etc.). Use the `@/` path alias for anything under `src/`, or `~/` for repo-root paths (`~/scripts/`, `~/messages/`). Single-level `../sibling` stays allowed for closely-coupled neighbour files in the same module. Enforced by `no-restricted-imports` in `eslint.config.mjs`.
 - Do NOT read or write user-scoped tables (anything keyed on `user_id` or another Clerk-linked identifier) via pg-direct from app code. Per [ADR-0010](./docs/adr/0010-pg-direct-vs-supabase-js-for-user-data.md), user-scoped reads go through `getUserScopedClient()` / `userQuery()` (supabase-js + Clerk JWT) so RLS is enforced by Postgres, not by TypeScript. pg-direct stays for Sakenowa public data, ingest, and migrations. The split is compile-checked: `publicQuery()` and `userQuery()` accept disjoint table-name unions from `src/lib/supabase/db-tables.ts`, so picking the wrong adapter for a user-scoped table is a type error (see `src/lib/supabase/public-query.test-d.ts`). When you add a migration that creates a new table, classify it in `db-tables.ts` first.
 - Do NOT merge a Phase 2.5+ slice that adds or modifies a table containing `user_id` (or any per-user identifier) while `Production` and `Preview` still share one Supabase project. Per [ADR-0011](./docs/adr/0011-per-env-data-isolation.md), the Supabase Pro upgrade + Branches enablement PR must merge first (or in the same train).
+- Do NOT declare an interactive-UI slice done without running the pre-flight checklist in [`docs/agents/ux-design-playbook.md`](./docs/agents/ux-design-playbook.md). Every recent UX miss (#163 auto-navigate, #184 click-no-feedback) violated one of its rules; the ACs on the issue did not catch them, so the human maintainer did.
 
 ## Test review checklist
 Before merging any test Claude wrote, ask:

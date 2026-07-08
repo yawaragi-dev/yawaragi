@@ -113,6 +113,10 @@ test.describe('scan entry route', () => {
     const photoSrc = await page.getByTestId('scan-result-photo').getAttribute('src')
     expect(photoSrc).toMatch(/^blob:/)
 
+    // A real scan result carries NO "Example" chip — that flag is only on
+    // the landing hero's curated sample (UX-F #167).
+    await expect(page.getByTestId('scan-result-example-badge')).toHaveCount(0)
+
     // The kanji renders adjacent to the LLM-extracted provenance badge.
     await expect(page.getByTestId('scan-result-name-kanji')).toContainText('獺祭')
 
@@ -137,6 +141,37 @@ test.describe('scan entry route', () => {
       'href',
       new RegExp(`/en/sake/${dassaiBrandId}$`),
     )
+
+    // UX-C reverse cross-beverage hook (#164). When the brand has a
+    // flavor chart, the card renders either a "match" branch (naming
+    // 1–2 Western exemplars) or a "no-close-analog" branch (the
+    // discovery-framed "distinctly Japanese profile" line). In either
+    // case, the block is visible, the amber HeuristicDisclaimer is
+    // rendered, and the cross-beverage ProvenanceBadge sits on the
+    // heading baseline. If the brand happens to have no flavor chart
+    // (rare in the mirrored corpus), the reverse block is absent —
+    // gated on the same predicate as the chart above.
+    if (await page.getByTestId('brand-flavor-chart').isVisible()) {
+      await expect(page.getByTestId('scan-result-reverse-exemplar')).toBeVisible()
+      await expect(page.getByTestId('heuristic-disclaimer')).toBeVisible()
+      // ProvenanceBadge with kind=crossBeverageMap is on the reverse
+      // block heading — pinned via data-kind, so a future style rework
+      // doesn't accidentally strip the semantic label.
+      await expect(
+        page
+          .getByTestId('scan-result-reverse-exemplar')
+          .locator('[data-testid="provenance-badge"][data-kind="crossBeverageMap"]'),
+      ).toBeVisible()
+      // Exactly one of the two branches renders — either the match
+      // template (naming a Western exemplar) or the honest "no analog"
+      // line. Whichever branch fires, the block is not empty.
+      const matchLine = page.getByTestId('scan-result-reverse-exemplar-match')
+      const noAnalogLine = page.getByTestId('scan-result-reverse-exemplar-no-analog')
+      const matchVisible = await matchLine.isVisible()
+      const noAnalogVisible = await noAnalogLine.isVisible()
+      expect(matchVisible || noAnalogVisible).toBe(true)
+      expect(matchVisible && noAnalogVisible).toBe(false)
+    }
 
     await context.close()
   })
