@@ -84,6 +84,19 @@ test.describe('landing hero (UX-E)', () => {
     // can't mistake the curated sample for their own scan.
     await expect(card.getByTestId('scan-result-example-badge')).toBeVisible()
 
+    // UX-F (#167): the cross-beverage disclaimer body lives in a tooltip on
+    // an info button — hovering reveals it (opacity 0 → 1), AND the card must
+    // not clip it. Regression guard for the specific bug where the card's
+    // `overflow-hidden` cut off the bottom of the tooltip: pin that the card
+    // does not establish an overflow clip, so a bottom-edge tooltip escapes.
+    const disclaimer = card.getByTestId('heuristic-disclaimer')
+    const disclaimerBody = disclaimer.getByTestId('heuristic-disclaimer-body')
+    await expect(disclaimerBody).toHaveCSS('opacity', '0')
+    await disclaimer.getByRole('button').hover()
+    await expect(disclaimerBody).toHaveCSS('opacity', '1')
+    await expect(card).not.toHaveCSS('overflow-y', 'hidden')
+    await expect(card).not.toHaveCSS('overflow-x', 'hidden')
+
     await context.close()
   })
 
