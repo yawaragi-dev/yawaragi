@@ -43,3 +43,12 @@ The 6-axis FlavorProfile is the one asset we cannot fully reproduce. It can be *
 - **Thresholds to revisit this ADR:** Sakenowa terms change / API withdrawn → accelerate the delta + partnerships; curated delta > ~1,000 active SKUs or curation > ~1 day/month → pursue a paid importer/Sakenomy deal; telemetry shows users scan mostly *new* bottles (not classics) → prioritise the Rakuten-fed delta + estimated vectors over the historical base.
 
 Implementation is spun out into slices (see #197 for the tracking list).
+
+## Implementation notes (#201 — live re-sync + schedule)
+
+Verified 2026-07-08 while implementing decision item 1:
+
+- **The mirror is already current — the "frozen 2024" premise is empirically dead.** `pnpm sakenowa:freshness` shows the mirror's `source='sakenowa'` rows reach `max(brand_id)=121331` — the exact upstream frontier (a 2024 freeze would cap near ~79k). Brand/brewery counts match upstream within noise. So AC1 ("mirror reflects 2025–2026 brands") was already satisfied by the running cron; no manual production ingest was required.
+- **The re-sync is already scheduled — daily, not monthly.** The `/api/cron/ingest` route (`vercel.json` → `0 4 * * *`) pre-dates this ADR and runs a **full ingest daily**. Daily is a strict superset of the ADR's "monthly" minimum. We keep daily deliberately: the pull is free (attribution-only, ~50 KB), idempotent (upsert-only), and strictly fresher than monthly. Downgrading to monthly would be a freshness *regression* for no benefit, so decision item 1's "monthly" reads as a floor, not a target.
+- **The freshness check was hardened, not the data.** `scripts/sakenowa-freshness-check.ts` previously flagged `mirror > upstream` as "stale or partial" — a false positive, because the mirror is upsert-only (never tombstones brands Sakenowa later drops) *and* carries the ADR-0014 manual-curation layer, so it legitimately exceeds upstream. The check now compares only `source='sakenowa'` rows and uses the **ID frontier** (`mirror max(brand_id) < upstream`) as the real "is the mirror behind?" signal. The decision logic is extracted to a pure `assessFreshness()` with unit coverage.
+- **No provenance/attribution changes** (AC4): attribution is licence-driven and already implemented; this slice touched only the maintainer health check + docs.
