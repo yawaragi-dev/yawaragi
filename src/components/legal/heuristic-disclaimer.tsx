@@ -6,20 +6,24 @@ import { cn } from '@/lib/utils'
  * mandated by CLAUDE.md § "Cross-beverage disclaimers" for any UI
  * surface that renders `cross_beverage_map`-sourced output.
  *
- * Distinction from `<ProvenanceBadge source="cross_beverage_map" />`:
+ * Presentation (UX-F #167 density pass): a compact affordance, not a
+ * full block — the earlier always-visible box dominated the scan card and
+ * repeated down the `/suggest` list. The **title** ("These are cross-
+ * beverage approximations") stays visible as the caveat cue next to every
+ * cross-beverage result; the longer **body** ("Western descriptors…")
+ * tucks into a tooltip on an info button, revealed on hover / keyboard
+ * focus / tap. The body is ALWAYS in the DOM and wired via
+ * `aria-describedby`, so screen readers reach the full caveat — including
+ * the JMStV discovery-framing sentence — without any interaction. This
+ * keeps the CLAUDE.md mandate ("every cross-beverage recommendation MUST
+ * render with `<HeuristicDisclaimer />`", caveat carried next to the
+ * result) while shrinking the footprint. Pure CSS (no `use client`) — the
+ * native `<button>` + `group-*` reveal work in both the server-rendered
+ * `/suggest` surface and the client scan card.
  *
- *   - The badge is a small per-value chip with a hover/focus tooltip.
- *     It tells the visitor that a *specific* value came from the
- *     cross-beverage map.
- *   - This component is an always-visible *block* placed near
- *     cross-beverage results — typically once per card list or section.
- *     The disclaimer is readable without hover, satisfying the CLAUDE.md
- *     rule that "every cross-beverage recommendation MUST render with
- *     `<HeuristicDisclaimer />`".
- *
- * Both surfaces render the same caveat ("Western descriptors do not
- * translate exactly to sake") but at different granularities:
- * per-value affordance vs. section-level transparency.
+ * Distinct from `<ProvenanceBadge source="cross_beverage_map" />`: the
+ * badge marks a *specific value* as cross-beverage-sourced; this marks the
+ * *recommendation* with the honesty caveat.
  *
  * Split into a sync presentational view + async i18n wrapper because
  * Vitest can't render async RSCs (CLAUDE.md). The view takes resolved
@@ -52,30 +56,49 @@ export function HeuristicDisclaimerView({
   body,
   className,
 }: HeuristicDisclaimerViewProps) {
-  // `role="note"` is the WAI-ARIA pattern for a parenthetical block
-  // that supplements the surrounding content without being part of
-  // the main reading flow. Screen-reader users get an explicit cue
-  // that this is a side-comment about the cross-beverage results, not
-  // a result itself.
+  const tooltipId = 'heuristic-disclaimer-tooltip'
+  // `role="note"` is the WAI-ARIA pattern for a parenthetical that
+  // supplements the surrounding content without being part of the main
+  // reading flow. The visible title is the caveat cue; the info button
+  // carries `aria-describedby` → the body, so a screen reader announces
+  // the full caveat when the button is reached. The body sits in a
+  // `role="tooltip"` that's always in the DOM (opacity-toggled, not
+  // conditionally rendered) and revealed on hover / focus / tap.
   return (
-    <aside
+    <span
       role="note"
       className={cn(
-        'flex w-full items-start gap-3 rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100',
+        'group relative inline-flex w-fit items-center gap-1.5 text-xs text-amber-800 dark:text-amber-300',
         className,
       )}
       data-testid="heuristic-disclaimer"
     >
-      <InfoIcon />
-      <div className="flex flex-col gap-1">
-        <p className="font-medium" data-testid="heuristic-disclaimer-title">
-          {title}
-        </p>
-        <p className="text-amber-800 dark:text-amber-200" data-testid="heuristic-disclaimer-body">
-          {body}
-        </p>
-      </div>
-    </aside>
+      <span className="font-medium" data-testid="heuristic-disclaimer-title">
+        {title}
+      </span>
+      <button
+        type="button"
+        aria-label={title}
+        aria-describedby={tooltipId}
+        className="inline-flex items-center justify-center rounded-full text-amber-700 hover:text-amber-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-600 dark:text-amber-400 dark:hover:text-amber-200"
+      >
+        <InfoIcon />
+      </button>
+      <span
+        id={tooltipId}
+        role="tooltip"
+        className={cn(
+          'pointer-events-none absolute left-0 top-full z-10 mt-1 w-max max-w-xs',
+          'rounded-md border border-amber-200 bg-white px-3 py-2 leading-snug text-amber-900 shadow-md',
+          'opacity-0 transition-opacity duration-150',
+          'group-hover:opacity-100 group-focus-within:opacity-100',
+          'dark:border-amber-800 dark:bg-zinc-900 dark:text-amber-100',
+        )}
+        data-testid="heuristic-disclaimer-body"
+      >
+        {body}
+      </span>
+    </span>
   )
 }
 
@@ -90,7 +113,7 @@ function InfoIcon() {
     <svg
       aria-hidden="true"
       viewBox="0 0 16 16"
-      className="mt-0.5 size-4 flex-shrink-0"
+      className="size-3.5 flex-shrink-0"
       fill="none"
       stroke="currentColor"
       strokeWidth="1.5"

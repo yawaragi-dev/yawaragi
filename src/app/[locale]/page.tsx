@@ -31,7 +31,7 @@ export default async function LandingPage({
 
   return (
     <>
-      <main className="flex flex-1 w-full max-w-3xl mx-auto flex-col gap-12 py-16 px-8">
+      <main className="flex flex-1 w-full max-w-4xl mx-auto flex-col gap-12 py-16 px-8">
         {sample ? (
           <LandingHero sample={sample} locale={locale} />
         ) : (

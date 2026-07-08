@@ -126,19 +126,22 @@ test.describe('site header — nav backbone', () => {
 
     const trigger = header.getByTestId('header-menu-trigger')
     await expect(trigger).toBeVisible()
-    await trigger.click()
-
-    // Sheet primitive (`@base-ui/react/dialog`) portals to `<body>` and
-    // animates open over ~200ms with `data-starting-style:opacity-0`.
-    // Assert the dialog role is present + visible first so the follow-
-    // ing nav-item checks run AFTER the portal has mounted and the
-    // fade-in has landed — otherwise a slow CI runner can miss the
-    // 5s `toBeVisible` window on the nav element while the animation
-    // is still transitioning opacity. Scoping the nav lookup to
-    // `dialog` also protects against any accidental collision with a
-    // desktop-nav testid that shares a prefix.
+    // The header is a client component (`useState` + controlled
+    // `<Sheet open>`). On a cold/slow CI runner — Clerk's JS is still
+    // loading in this exact spec — the menu button can paint before React
+    // attaches its `onClick`, so the first click is swallowed, `open` never
+    // flips, and the sheet never mounts. Retry the OPEN idempotently: click
+    // only while the dialog is still closed, so a swallowed click is
+    // recovered without double-toggling it back shut. (Playwright's
+    // visibility check ignores `opacity`, so the ~200ms fade-in is NOT the
+    // cause of the historical flake — an unmounted dialog is.)
     const dialog = page.getByRole('dialog')
-    await expect(dialog).toBeVisible()
+    await expect(async () => {
+      if (!(await dialog.isVisible())) {
+        await trigger.click()
+      }
+      await expect(dialog).toBeVisible({ timeout: 2000 })
+    }).toPass({ timeout: 15000 })
 
     const mobileNav = dialog.getByTestId('header-nav-mobile')
     await expect(mobileNav).toBeVisible()

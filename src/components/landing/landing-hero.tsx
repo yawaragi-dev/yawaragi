@@ -66,6 +66,7 @@ export async function LandingHero({
         breweryRomaji={sample.breweryRomaji}
         sakeHref={sakeHref}
         flavorChart={sample.flavorChart}
+        exampleLabel={t('exampleChip')}
       />
 
       <Link
