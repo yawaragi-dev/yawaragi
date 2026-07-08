@@ -129,7 +129,14 @@ export function ScanResultCard({
 
   return (
     <article
-      className="relative flex flex-col overflow-hidden rounded-3xl bg-stone-50 shadow-[0_24px_70px_-32px_rgba(0,0,0,0.4)] ring-1 ring-black/5 dark:bg-zinc-950 dark:ring-white/10"
+      // No `overflow-hidden`: the rounded corners come from `rounded-3xl`
+      // (border-radius) and every child (photo, chip) is inset with its own
+      // rounding, so nothing needs clipping here — and clipping WOULD cut
+      // off the disclaimer / flavor-axis tooltips, which must escape the
+      // card. The article stays a plain `relative` box (no stacking
+      // context), so a tooltip's `z-10` still floats above whatever sits
+      // below the card (the CTA, the surface legend).
+      className="relative flex flex-col rounded-3xl bg-stone-50 shadow-[0_24px_70px_-32px_rgba(0,0,0,0.4)] ring-1 ring-black/5 dark:bg-zinc-950 dark:ring-white/10"
       data-testid="scan-result-card"
       aria-busy={isStale || undefined}
     >
