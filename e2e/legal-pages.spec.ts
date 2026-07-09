@@ -198,11 +198,12 @@ test.describe('locale switcher resolves localised legal paths', () => {
 // routing refactor can't silently turn the redirect into a 404 (or
 // into a duplicate-content 200 on the English-form URL).
 //
-// Note: lowercase German variants like /de/impressum are NOT in the
-// pathnames manifest and currently fall through to the locale-segment
-// fallback (rewrites to /de homepage). That's a SEO duplicate-content
-// risk worth fixing before public launch; tracked separately, out of
-// scope here.
+// Lowercase German variants like /de/impressum are NOT pathnames-manifest
+// keys, so without an explicit rule they fall through the locale-segment
+// fallback and get rewritten to the /de homepage (a silent 200 that reads
+// as "page not found" + SEO duplicate content). The proxy now permanently
+// (308) redirects them to the capitalised canonical form — covered below so
+// a routing refactor can't silently regress it.
 test.describe('English-form legal URLs in German locale redirect to canonical', () => {
   for (const { wrong, canonical } of [
     { wrong: '/de/imprint', canonical: LEGAL_PATHS.imprint.de },
@@ -214,6 +215,36 @@ test.describe('English-form legal URLs in German locale redirect to canonical', 
       const response = await page.goto(wrong)
       expect(response?.status()).toBe(200)
       expect(page.url()).toMatch(new RegExp(`/de${canonical}$`))
+      await context.close()
+    })
+  }
+
+  // Lowercase German variants: a user typing /de/impressum (the way most
+  // people type URLs) must land on the canonical /de/Impressum via a
+  // permanent 308, not the /de homepage.
+  for (const { lowercase, canonical } of [
+    { lowercase: '/de/impressum', canonical: LEGAL_PATHS.imprint.de },
+    { lowercase: '/de/datenschutz', canonical: LEGAL_PATHS.privacy.de },
+  ] as const) {
+    test(`${lowercase} → 308 → /de${canonical}`, async ({ browser }) => {
+      const context = await browser.newContext({ locale: 'de-DE' })
+      const page = await context.newPage()
+
+      // Assert the permanent-redirect status on the first hop before the
+      // browser follows it — a 307 or a rewrite-to-200 would fail here.
+      const redirect = await page.request.get(lowercase, {
+        maxRedirects: 0,
+      })
+      expect(redirect.status()).toBe(308)
+      expect(redirect.headers()['location']).toMatch(
+        new RegExp(`/de${canonical}$`),
+      )
+
+      // And the followed navigation lands on the canonical page.
+      const response = await page.goto(lowercase)
+      expect(response?.status()).toBe(200)
+      expect(page.url()).toMatch(new RegExp(`/de${canonical}$`))
+
       await context.close()
     })
   }

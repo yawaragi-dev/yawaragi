@@ -11,6 +11,7 @@ import {
   setDebugCookie,
 } from '@/lib/debug/debug-mode'
 import { isGatedPath } from '@/lib/legal/age-gate-cookie'
+import { canonicalGermanLegalRedirect } from '@/lib/legal/canonical-german-legal-paths'
 import { getComplianceState } from '@/lib/legal/compliance-state'
 import { ensureAnonymousSessionCookie } from '@/lib/session/middleware-issue'
 
@@ -82,6 +83,20 @@ function runIntlAndAgeGate(request: NextRequest) {
   // redirected request just like any other navigation.
   const debugResponse = handleDebugActivation(request)
   if (debugResponse !== null) return withSessionCookie(request, debugResponse)
+
+  // Canonicalise lowercase German legal URLs (e.g. `/de/impressum`) to their
+  // capitalised form (`/de/Impressum`) with a permanent 308. This MUST run
+  // before next-intl, otherwise the lowercase variant — not a pathnames key —
+  // falls through the locale-segment fallback and gets rewritten to the `/de`
+  // homepage (a silent 200 that reads as "page not found" + SEO duplicate).
+  const canonicalGermanLegalPath = canonicalGermanLegalRedirect(
+    request.nextUrl.pathname,
+  )
+  if (canonicalGermanLegalPath !== null) {
+    const target = request.nextUrl.clone()
+    target.pathname = canonicalGermanLegalPath
+    return withSessionCookie(request, NextResponse.redirect(target, 308))
+  }
 
   const intlResponse = handleI18n(request)
 
