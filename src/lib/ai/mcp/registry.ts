@@ -54,6 +54,13 @@ const mcpClientFactories: Record<McpClientKey, () => Promise<MCPClient>> = {
         "MCP_SAKENOWA_URL is not set. Set it to the deployed @yawaragi/sakenowa-mcp HTTP endpoint (Vercel project URL) — see docs/development/local-mcp.md §3.3.",
       )
     }
+    // NB: the deployed MCP server this points at MUST connect to Postgres
+    // with `search_path=mcp_read,public` (set on its own DATABASE_URL) so
+    // its bare-name `FROM brands` resolves to the superseded-filtered
+    // `mcp_read.brands` view (migration 0012). That is what upholds
+    // ADR-0014's "all public reads filter superseded_at IS NULL" on this
+    // path — the app can't enforce it from here. See docs/development/
+    // local-mcp.md §3.3.
     return createMCPClient({
       clientName: 'yawaragi',
       transport: { type: 'http', url },
