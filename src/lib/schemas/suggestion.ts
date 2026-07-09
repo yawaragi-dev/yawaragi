@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { withProvenance } from './with-provenance'
+import { flavorProfileFields } from './flavor-profile'
 
 /**
  * Suggestion — the wire shape emitted by the Phase 4 / S5 suggest server
@@ -104,14 +105,12 @@ const CrossBeverageDescriptorField = withProvenance(
  * renders without an axis cluster — no placeholder, no "N/A", just
  * skip.
  */
-const FlavorProfileField = withProvenance(z.literal('sakenowa')).extend({
-  f1: z.number().min(0).max(1),
-  f2: z.number().min(0).max(1),
-  f3: z.number().min(0).max(1),
-  f4: z.number().min(0).max(1),
-  f5: z.number().min(0).max(1),
-  f6: z.number().min(0).max(1),
-})
+const FlavorProfileField = withProvenance(z.literal('sakenowa')).extend(
+  // The hydrated six-axis profile — same 6-tuple + [0, 1] range as every
+  // other axis-carrying record, composed from `flavor-profile.ts`. No
+  // brandId here (the enclosing Suggestion already carries it).
+  flavorProfileFields,
+)
 
 export const SuggestionSchema = z.object({
   brandId: BrandIdField,
