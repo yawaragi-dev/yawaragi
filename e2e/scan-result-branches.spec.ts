@@ -187,10 +187,10 @@ test.describe('scan result branches (#109 PR B)', () => {
     await expect(page.getByTestId('brand-flavor-chart')).toHaveCount(0)
     // …and the reassuring coming-soon panel takes its place.
     await expect(page.getByTestId('flavor-coming-soon')).toBeVisible()
-    // Onward paths remain reachable: the /suggest bridge inside the panel
-    // AND the "See full details →" deep-dive link.
-    const explore = page.getByTestId('flavor-coming-soon-explore')
-    await expect(explore).toHaveAttribute('href', /\/en\/suggest$/)
+    // The panel is not a dead end: the on-topic "See full details →"
+    // deep-dive link for THIS sake stays reachable. (We deliberately do NOT
+    // bridge to /suggest here — a cold general recommender would divert the
+    // visitor away from the sake they just scanned.)
     await expect(page.getByTestId('scan-result-open-detail')).toHaveAttribute(
       'href',
       new RegExp(`/en/sake/${fixture.brandId}$`),

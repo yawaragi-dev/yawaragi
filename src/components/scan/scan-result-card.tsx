@@ -6,7 +6,6 @@ import { ProvenanceBadgeView } from '@/components/sake/provenance-badge'
 import { FlavorAxisLabelView } from '@/components/sake/flavor-axis-label'
 import { markArrivedViaScan } from '@/lib/scan/arrived-via-scan'
 import { SakenowaAttributionView } from '@/components/sake/sakenowa-attribution'
-import { Link } from '@/i18n/navigation'
 import {
   findNearestExemplars,
   type ReverseExemplarResult,
@@ -249,8 +248,13 @@ export function ScanResultCard({
             // the UX-E landing hero. No Sakenowa attribution here — this
             // copy is our own UI chrome, not Sakenowa data (the card's
             // brand/brewery facts keep their inline attribution above).
-            // Keeps an onward path (the /suggest bridge) so the no-chart
-            // state is never a dead end; "See full details →" stays below.
+            // Onward paths stay ON-TOPIC for this sake: "See full details →"
+            // (the card's deep-dive link below) + rescan (the persistent
+            // scan form), so the state is not a dead end. We deliberately do
+            // NOT bridge to /suggest here — it's a cold, general recommender
+            // that doesn't take the scanned sake as input, so it would
+            // divert the visitor away from the bottle they just scanned
+            // rather than continue exploring it.
             <section
               className="flex flex-col gap-2 rounded-2xl bg-amber-50 p-4 dark:bg-amber-950/20"
               data-testid="flavor-coming-soon"
@@ -265,14 +269,6 @@ export function ScanResultCard({
               <p className="text-sm text-stone-700 dark:text-zinc-300">
                 {t('flavorComingSoonBody')}
               </p>
-              <Link
-                href="/suggest"
-                className="inline-flex w-fit items-center gap-1.5 text-sm font-medium text-amber-800 underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 dark:text-amber-300"
-                data-testid="flavor-coming-soon-explore"
-              >
-                {t('exploreAnotherWay')}
-                <span aria-hidden>→</span>
-              </Link>
             </section>
           )}
 
