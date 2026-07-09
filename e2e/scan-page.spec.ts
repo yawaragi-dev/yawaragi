@@ -124,8 +124,8 @@ test.describe('scan entry route', () => {
     // row. Dassai (獺祭) always does in a mirrored corpus, but the
     // assertion is scoped to "if the section rendered, all six axes are
     // there" so a legitimate null-chart brand doesn't wedge this spec.
-    // Testids come from the shared `FlavorChartInlineView` (same ones
-    // the sake detail page uses).
+    // Testids come from the shared `FlavorProfileView` (same ones the sake
+    // detail page and suggest cluster use).
     if (await page.getByTestId('brand-flavor-chart').isVisible()) {
       for (const axis of ['f1', 'f2', 'f3', 'f4', 'f5', 'f6']) {
         await expect(
