@@ -1,17 +1,21 @@
 import { z } from 'zod'
 import { withProvenance } from './with-provenance'
+import { flavorProfileFields } from './flavor-profile'
 
-// FlavorChart mirrors Sakenowa's /flavor-charts: a 6-tuple per brand,
-// each axis a float in [0, 1]. The axes are brewers' terms — see the
-// 6-axis vocabulary table in CONTEXT.md and the <FlavorAxisLabel />
-// component. Storage keeps the f1..f6 names verbatim; UI translates to
-// romaji + kanji.
+// FlavorChart mirrors Sakenowa's /flavor-charts: the FlavorProfile 6-tuple
+// (`flavor-profile.ts`) attached to a specific brand, plus provenance. The
+// axes are brewers' terms — see the 6-axis vocabulary table in CONTEXT.md
+// and the <FlavorAxisLabel /> component. Storage keeps the f1..f6 names
+// verbatim; UI translates to romaji + kanji.
+//
+// FlavorChart is the *stored mirror record* (named after Sakenowa's
+// endpoint, carries brandId); the bare 6-tuple concept CONTEXT.md calls
+// FlavorProfile lives in `flavor-profile.ts` and is composed in below via
+// `flavorProfileFields` so the [0, 1] range invariant is declared once.
 //
 // ADR-0005 binds source to record kind. FlavorChart originates from
 // Sakenowa (raw or derived via cosine-similarity inference) or a user
 // override — never from an LLM, never from the cross-beverage map.
-const Axis = z.number().min(0).max(1)
-
 export const FlavorChartSource = z.enum([
   'sakenowa',
   'sakenowa_inferred',
@@ -21,12 +25,7 @@ export type FlavorChartSource = z.infer<typeof FlavorChartSource>
 
 export const FlavorChartSchema = withProvenance(FlavorChartSource).extend({
   brandId: z.number().int().positive(),
-  f1: Axis,
-  f2: Axis,
-  f3: Axis,
-  f4: Axis,
-  f5: Axis,
-  f6: Axis,
+  ...flavorProfileFields,
 })
 export type FlavorChart = z.infer<typeof FlavorChartSchema>
 

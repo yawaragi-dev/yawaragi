@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { withProvenance } from './with-provenance'
+import { flavorProfileFields } from './flavor-profile'
 
 // Schema for the hand-curated CrossBeverageMap table: a Western beverage
 // descriptor (e.g. "smoky", "tannic", "hoppy", "agave-smoky") + the beverage
@@ -51,12 +52,9 @@ export type Exemplar = z.infer<typeof ExemplarSchema>
 export const CrossBeverageMapSchema = withProvenance(z.literal('cross_beverage_map')).extend({
   descriptor: z.string().min(1),
   beverage: z.enum(['whisky', 'wine', 'beer', 'spirit', 'fortified', 'cider']),
-  f1: z.number().min(0).max(1),
-  f2: z.number().min(0).max(1),
-  f3: z.number().min(0).max(1),
-  f4: z.number().min(0).max(1),
-  f5: z.number().min(0).max(1),
-  f6: z.number().min(0).max(1),
+  // The FlavorProfile target position — the same 6-tuple + [0, 1] range as
+  // every other axis-carrying record, composed from `flavor-profile.ts`.
+  ...flavorProfileFields,
   // At least one exemplar per descriptor is the UX-C acceptance-criterion
   // (issue #164). Enforced at the parse seam so the data file cannot ship
   // a row with an empty list — the reverse-lookup counts on every match
