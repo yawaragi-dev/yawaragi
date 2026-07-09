@@ -422,6 +422,8 @@ What still doesn't help:
 
 **2026-06-13 correction on the "catalogue gap" framing.** Earlier passes of this entry attributed the UMAMI failure to "Sakenowa's brand model is main-line only — collaboration products aren't tracked." A direct check of Sakenowa's live site that day disproved this: UMAMI exists at `https://sakenowa.com/en/brand/4RhvfkA`. The real diagnosis is that **`muro.sakenowa.com/sakenowa-data/api/brands` (which we ingest) has not been re-generated since 2024-03-21** — every brand added by Sakenowa since then is invisible to our mirror, regardless of whether it's a collaboration, a limited edition, or just a brand registered after the freeze. Mitigation (manual-curation extension layer + α-policy refresh conflict handling) is captured in **ADR-0014** and migration `0011_manual_curation_layer.sql`. UMAMI is the case-zero hand-added row.
 
+**2026-07-08 update — the "not re-generated since 2024-03-21" reading is superseded (ADR-0016, #201).** A re-check of the same endpoint found it *is* being regenerated: the mirror now reaches `max(brand_id)=121331` (the live upstream frontier; a 2024 freeze caps near ~79k) and `pnpm sakenowa:freshness` reports it up to date. The 2026-06-13 observation was a one-time stale pull / CDN cache, not a frozen dump. The real, remaining gap is **flavor-chart coverage** (Sakenowa's 6-axis profile exists for only ~1,500 of ~3,253 brands), not base catalogue staleness — see **ADR-0016**. The manual-curation layer still stands, repurposed for the curated EU/US import delta.
+
 ---
 
 ## 23. Stylized-label failure: model fabricates a confidently-shaped mono-brand name
