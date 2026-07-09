@@ -75,7 +75,7 @@ interface FlavorRadarViewProps {
   profile: FlavorProfile
 }
 
-export async function FlavorRadarView({ profile }: FlavorRadarViewProps) {
+export function FlavorRadarView({ profile }: FlavorRadarViewProps) {
   return (
     <div
       className="relative aspect-square w-full max-w-md"
