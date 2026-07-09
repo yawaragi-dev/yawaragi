@@ -1,13 +1,15 @@
 import { getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
 import { HeuristicDisclaimer } from '@/components/legal/heuristic-disclaimer'
-import { FlavorAxisLabel } from '@/components/sake/flavor-axis-label'
 import { ProvenanceBadge } from '@/components/sake/provenance-badge'
+import {
+  FlavorProfileView,
+  buildFlavorAxisStrings,
+} from '@/components/sake/flavor-profile-view'
 import {
   SakenowaAttribution,
   requiresSakenowaAttribution,
 } from '@/components/sake/sakenowa-attribution'
-import { FLAVOR_AXES } from '@/lib/schemas/flavor-chart'
 import type { Suggestion } from '@/lib/schemas/suggestion'
 
 /**
@@ -166,30 +168,13 @@ interface FlavorAxisClusterProps {
 
 async function FlavorAxisCluster({ profile }: FlavorAxisClusterProps) {
   const t = await getTranslations('sake.brand')
+  const tAxis = await getTranslations('flavorAxis')
   return (
-    <section
-      className="flex flex-wrap gap-3 pt-1"
-      data-testid="suggest-card-flavor-cluster"
-      aria-label={t('flavorChartLabel')}
-    >
-      {FLAVOR_AXES.map((axis) => {
-        const value = profile[axis]
-        return (
-          <div
-            key={axis}
-            className="flex items-center gap-2"
-            data-testid={`suggest-card-flavor-axis-${axis}`}
-          >
-            <FlavorAxisLabel axis={axis} />
-            <span
-              className="text-xs tabular-nums text-zinc-600 dark:text-zinc-400"
-              data-testid={`suggest-card-flavor-axis-${axis}-value`}
-            >
-              {value.toFixed(2)}
-            </span>
-          </div>
-        )
-      })}
-    </section>
+    <FlavorProfileView
+      profile={profile}
+      variant="cluster"
+      chartLabel={t('flavorChartLabel')}
+      axisStrings={buildFlavorAxisStrings((axis, field) => tAxis(`${axis}.${field}`))}
+    />
   )
 }
