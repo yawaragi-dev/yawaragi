@@ -235,7 +235,42 @@ export function ScanResultCard({
             </div>
           </div>
 
-          {flavorChart && <FlavorGridForCard chart={flavorChart} />}
+          {flavorChart ? (
+            <FlavorGridForCard chart={flavorChart} />
+          ) : (
+            // ADR-0016 / #202: the brand is confidently recognised but
+            // Sakenowa has no `flavor_charts` row for it (~half the
+            // catalogue). Rather than silently dropping the chart region
+            // (which read as a lesser / broken match), the empty branch is
+            // a calm, discovery-framed "profile coming soon" panel. It
+            // echoes the reverse-exemplar section's amber/stone bone-card
+            // vocabulary so it feels intentional in BOTH the scan flow and
+            // the UX-E landing hero. No Sakenowa attribution here — this
+            // copy is our own UI chrome, not Sakenowa data (the card's
+            // brand/brewery facts keep their inline attribution above).
+            // Onward paths stay ON-TOPIC for this sake: "See full details →"
+            // (the card's deep-dive link below) + rescan (the persistent
+            // scan form), so the state is not a dead end. We deliberately do
+            // NOT bridge to /suggest here — it's a cold, general recommender
+            // that doesn't take the scanned sake as input, so it would
+            // divert the visitor away from the bottle they just scanned
+            // rather than continue exploring it.
+            <section
+              className="flex flex-col gap-2 rounded-2xl bg-amber-50 p-4 dark:bg-amber-950/20"
+              data-testid="flavor-coming-soon"
+              aria-labelledby="flavor-coming-soon-heading"
+            >
+              <h3
+                id="flavor-coming-soon-heading"
+                className="text-sm font-medium text-stone-800 dark:text-zinc-200"
+              >
+                {t('flavorComingSoonHeading')}
+              </h3>
+              <p className="text-sm text-stone-700 dark:text-zinc-300">
+                {t('flavorComingSoonBody')}
+              </p>
+            </section>
+          )}
 
           {reverseResult && (
             // UX-C reverse hook (#164). 'match' → 1–2 Western exemplars

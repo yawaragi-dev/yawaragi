@@ -22,6 +22,7 @@ import { BASE_URL } from './_base-url'
 import {
   findAmbiguousBreweryFixture,
   findAnyBrandId,
+  findMatchedNoChartFixture,
   findMonoBrandBreweryFixture,
   findScanS1FixtureBrandId,
   findUniqueBrandFixture,
@@ -154,6 +155,46 @@ test.describe('scan result branches (#109 PR B)', () => {
     // Dead-end recovery: rescan + explore bridge both present.
     await expect(page.getByTestId('scan-result-no-match-rescan')).toBeVisible()
     await expect(page.getByTestId('scan-result-no-match-explore')).toBeVisible()
+    await context.close()
+  })
+
+  test('recognised-but-no-chart shows the "flavor profile coming soon" affordance with onward paths', async ({
+    browser,
+  }, testInfo) => {
+    const fixture = await findMatchedNoChartFixture()
+    testInfo.skip(
+      fixture === null,
+      'No catalogue-unique brand without a flavor chart in the mirror — DB-bound spec',
+    )
+    if (!fixture) return
+    // ADR-0016 / #202: the brand resolves to a clean `matched` but Sakenowa
+    // has no flavor_charts row, so the card renders the coming-soon panel
+    // instead of the flavor grid — and must NOT read as a dead end.
+    const { context, page } = await scanPageWith(browser, [
+      injectionCookie({
+        name_ja: fixture.nameJa,
+        brewery_ja: fixture.breweryJa,
+        confidence: 0.95,
+      }),
+    ])
+    await page.goto('/en/scan')
+    await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
+
+    await expect(page.getByTestId('scan-result-card')).toBeVisible()
+    // The recognised brand is shown…
+    await expect(page.getByTestId('scan-result-name-kanji')).toContainText(fixture.nameJa)
+    // …the flavor grid is absent…
+    await expect(page.getByTestId('brand-flavor-chart')).toHaveCount(0)
+    // …and the reassuring coming-soon panel takes its place.
+    await expect(page.getByTestId('flavor-coming-soon')).toBeVisible()
+    // The panel is not a dead end: the on-topic "See full details →"
+    // deep-dive link for THIS sake stays reachable. (We deliberately do NOT
+    // bridge to /suggest here — a cold general recommender would divert the
+    // visitor away from the sake they just scanned.)
+    await expect(page.getByTestId('scan-result-open-detail')).toHaveAttribute(
+      'href',
+      new RegExp(`/en/sake/${fixture.brandId}$`),
+    )
     await context.close()
   })
 
