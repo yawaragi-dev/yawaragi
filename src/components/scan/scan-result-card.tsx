@@ -3,18 +3,17 @@
 import { useTranslations } from 'next-intl'
 import { HeuristicDisclaimerView } from '@/components/legal/heuristic-disclaimer'
 import { ProvenanceBadgeView } from '@/components/sake/provenance-badge'
-import { FlavorAxisLabelView } from '@/components/sake/flavor-axis-label'
+import {
+  FlavorProfileView,
+  buildFlavorAxisStrings,
+} from '@/components/sake/flavor-profile-view'
 import { markArrivedViaScan } from '@/lib/scan/arrived-via-scan'
 import { SakenowaAttributionView } from '@/components/sake/sakenowa-attribution'
 import {
   findNearestExemplars,
   type ReverseExemplarResult,
 } from '@/lib/cross-beverage/reverse-lookup'
-import {
-  FLAVOR_AXES,
-  FLAVOR_AXIS_ROMAJI,
-  type FlavorChart,
-} from '@/lib/schemas/flavor-chart'
+import { type FlavorChart } from '@/lib/schemas/flavor-chart'
 import { cn } from '@/lib/utils'
 
 /**
@@ -352,65 +351,22 @@ export function ScanResultCard({
 
 /**
  * Bone-card flavor grid (UX-F #167): the six axes in a compact 2-column
- * grid with amber bars. Reuses `<FlavorAxisLabelView />` per axis so the
- * romaji + kanji + tooltip "never English-only" compliance (CLAUDE.md) is
- * unchanged, and keeps the `brand-flavor-chart` / `flavor-axis-*` testids
- * and `role="progressbar"` a11y contract of the shared bar view. The sake
- * detail page keeps the sibling `<FlavorChartInlineView />` (row layout);
- * this is a card-local presentation, deliberately not shared, so the
- * detail page is untouched by the scan-card redesign.
+ * grid with amber bars. Thin client wrapper over the shared
+ * `<FlavorProfileView variant="grid" />` — it resolves the i18n strings via
+ * `useTranslations` (this card is a client component, ADR-0015) and hands
+ * them to the same sync view the sake-detail page and suggest cluster use.
+ * The `brand-flavor-chart` / `flavor-axis-*` testids and `role="progressbar"`
+ * a11y contract now live once in that view (#198).
  */
 function FlavorGridForCard({ chart }: { chart: FlavorChart }) {
   const t = useTranslations('sake.brand')
   const tAxis = useTranslations('flavorAxis')
-
   return (
-    <section
-      className="flex flex-col gap-3"
-      data-testid="brand-flavor-chart"
-      aria-label={t('flavorChartLabel')}
-    >
-      <p className="text-xs uppercase tracking-wide text-stone-400 dark:text-zinc-500">
-        {t('flavorChartLabel')}
-      </p>
-      <ul className="grid grid-cols-2 gap-x-6 gap-y-3" role="list">
-        {FLAVOR_AXES.map((axis) => {
-          const value = chart[axis]
-          return (
-            <li key={axis} className="flex flex-col gap-1.5">
-              <div className="flex items-start justify-between gap-2">
-                <FlavorAxisLabelView
-                  axis={axis}
-                  romaji={FLAVOR_AXIS_ROMAJI[axis]}
-                  kanji={tAxis(`${axis}.kanji`)}
-                  approximation={tAxis(`${axis}.label`)}
-                  caveat={tAxis(`${axis}.caveat`)}
-                />
-                <span
-                  className="shrink-0 text-xs tabular-nums text-stone-400 dark:text-zinc-500"
-                  data-testid={`flavor-axis-${axis}-value`}
-                >
-                  {value.toFixed(2)}
-                </span>
-              </div>
-              <div
-                role="progressbar"
-                aria-valuemin={0}
-                aria-valuemax={1}
-                aria-valuenow={value}
-                aria-labelledby={`flavor-axis-${axis}-romaji`}
-                className="h-1.5 w-full overflow-hidden rounded-full bg-stone-200 dark:bg-zinc-800"
-                data-testid={`flavor-axis-${axis}-bar`}
-              >
-                <span
-                  className="block h-full rounded-full bg-amber-500/90"
-                  style={{ width: `${(value * 100).toFixed(1)}%` }}
-                />
-              </div>
-            </li>
-          )
-        })}
-      </ul>
-    </section>
+    <FlavorProfileView
+      profile={chart}
+      variant="grid"
+      chartLabel={t('flavorChartLabel')}
+      axisStrings={buildFlavorAxisStrings((axis, field) => tAxis(`${axis}.${field}`))}
+    />
   )
 }
