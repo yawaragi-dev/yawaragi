@@ -42,7 +42,12 @@ When Sakenowa eventually publishes a brand we hand-added, ingest detects the con
 - **Without `--supersede-confirmed`**: ingest prints a structured diff of every manual row that would be superseded, exits non-zero, refuses to apply the Sakenowa upsert. Operator reviews.
 - **With `--supersede-confirmed`**: ingest UPDATEs the matching manual rows to `superseded_at = NOW()` and proceeds with the Sakenowa upsert. The manual row stays in the table for audit but disappears from the public read path.
 
-All public read queries filter `superseded_at IS NULL`.
+All public read queries filter `superseded_at IS NULL`. This invariant is **cross-repo** and enforced in two independent places:
+
+- **The pg-direct scan path** (`src/lib/sakenowa/lookup.ts`) writes the predicate on every query.
+- **The MCP suggest path** reads the same mirror over the network from the deployed `@yawaragi/sakenowa-mcp` server (ADR-0003 — a generic OSS asset that must NOT know about `superseded_at`, a Yawaragi-only column). It is filtered without any MCP code change: migration `0012` creates an `mcp_read` schema of filtered passthrough views (`mcp_read.brands`, `mcp_read.breweries` — `SELECT * … WHERE superseded_at IS NULL`), and the Yawaragi-deployed MCP instance sets `DATABASE_URL=…?options=-c search_path=mcp_read,public`, so its bare-name `FROM brands` resolves to the filtered view while unshadowed tables fall through to `public`. See migration `0012_mcp_read_views.sql` and `docs/development/local-mcp.md` §3.3; the DB-side guarantee is pinned by `src/lib/ai/mcp/mcp-read-views.integration.test.ts`.
+
+Before migration `0012` (2026-07-09) the MCP path did **not** filter superseded rows — a manual_curation row Sakenowa later superseded stayed hidden on the sake page but could still surface in a chat answer. That gap is now closed.
 
 ### 4. Per-record source tracking (not per-field)
 
