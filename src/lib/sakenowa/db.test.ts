@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
-import type { Pool } from 'pg'
+import type { Pool, PoolClient } from 'pg'
+import type { Brand } from '../schemas/brand'
 import { makePgBrandsDB, makePgBreweriesDB } from './db'
 
 /**
@@ -82,5 +83,118 @@ describe('getExistingBreweryHashes — romaji backfill sentinel', () => {
     expect(calls[0]).toMatch(/name_romaji\s+IS\s+NULL/i)
     expect(calls[0]).toMatch(/length\(name_kanji\)\s*>\s*0/i)
     expect(calls[0]).toMatch(/__needs_romaji_backfill__/)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// The single generic upsert driver that replaced the five hand-rolled
+// Pg*DB classes. These pin the behaviour that used to be copy-pasted
+// per class: the shared `transaction()` ACID unit (nested-tx reuse +
+// rollback-swallow) and the COALESCE-romaji preservation rule in the
+// chunked ON CONFLICT upsert. We exercise it once, through the brands
+// factory, rather than re-asserting it for all five tables.
+// ---------------------------------------------------------------------------
+
+const aBrand: Brand = {
+  brandId: 1,
+  name: '麗人',
+  nameKanji: '麗人',
+  nameRomaji: null,
+  breweryId: 49,
+  source: 'sakenowa',
+}
+
+describe('PgUpsertDriver — upsert SQL', () => {
+  it('preserves an existing name_romaji via COALESCE when the incoming row is NULL', async () => {
+    const { pool, calls } = mockPool({})
+    const db = makePgBrandsDB(pool)
+    await db.upsertBrandsBatch([{ brand: aBrand, contentHash: 'h1' }])
+    const insert = calls.find((c) => c.includes('INSERT INTO brands'))
+    expect(insert).toBeDefined()
+    // Non-key columns refresh from EXCLUDED; name_romaji uses COALESCE so
+    // an ingest that skipped transliteration can't clobber a stored value.
+    expect(insert).toMatch(/name_romaji\s*=\s*COALESCE\(EXCLUDED\.name_romaji,\s*brands\.name_romaji\)/i)
+    expect(insert).toMatch(/ON CONFLICT \(brand_id\) DO UPDATE SET/i)
+    expect(insert).toMatch(/updated_at\s*=\s*NOW\(\)/i)
+  })
+
+  it('is a no-op on empty input (issues no query)', async () => {
+    const { pool, calls } = mockPool({})
+    const db = makePgBrandsDB(pool)
+    await db.upsertBrandsBatch([])
+    expect(calls).toHaveLength(0)
+  })
+})
+
+describe('PgUpsertDriver — transaction()', () => {
+  it('reuses an in-flight PoolClient without opening a nested BEGIN', async () => {
+    const calls: string[] = []
+    // A PoolClient is detected by the presence of `release`. When the
+    // factory is handed one, transaction() must run inline (one logical
+    // unit) — no connect(), no BEGIN.
+    const client = {
+      query: vi.fn(async (sql: string) => {
+        calls.push(sql)
+        return { rows: [] }
+      }),
+      release: vi.fn(),
+    } as unknown as PoolClient
+    const db = makePgBrandsDB(client)
+
+    const result = await db.transaction(async (tx) => {
+      expect(tx).toBe(db)
+      return 'ok'
+    })
+
+    expect(result).toBe('ok')
+    expect(calls).not.toContain('BEGIN')
+  })
+
+  it('rolls back on a thrown callback and surfaces the original error, swallowing a rollback failure', async () => {
+    const clientCalls: string[] = []
+    const release = vi.fn()
+    const client = {
+      query: vi.fn(async (sql: string) => {
+        clientCalls.push(sql)
+        // The ROLLBACK itself fails — the original error must still win.
+        if (sql === 'ROLLBACK') throw new Error('rollback exploded')
+        return { rows: [] }
+      }),
+      release,
+    } as unknown as PoolClient
+    const pool = {
+      connect: vi.fn(async () => client),
+    } as unknown as Pool
+    const db = makePgBrandsDB(pool)
+
+    await expect(
+      db.transaction(async () => {
+        throw new Error('boom in callback')
+      }),
+    ).rejects.toThrow('boom in callback')
+
+    expect(clientCalls).toEqual(['BEGIN', 'ROLLBACK'])
+    expect(release).toHaveBeenCalledTimes(1)
+  })
+
+  it('commits and releases the client on success', async () => {
+    const clientCalls: string[] = []
+    const release = vi.fn()
+    const client = {
+      query: vi.fn(async (sql: string) => {
+        clientCalls.push(sql)
+        return { rows: [] }
+      }),
+      release,
+    } as unknown as PoolClient
+    const pool = {
+      connect: vi.fn(async () => client),
+    } as unknown as Pool
+    const db = makePgBrandsDB(pool)
+
+    await db.transaction(async () => 'done')
+
+    expect(clientCalls).toEqual(['BEGIN', 'COMMIT'])
+    expect(release).toHaveBeenCalledTimes(1)
   })
 })
