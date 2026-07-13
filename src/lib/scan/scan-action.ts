@@ -18,17 +18,15 @@ import { assertRateLimitConfig } from '@/lib/rate-limit/config-gate'
 import { extractIp, hashIp } from '@/lib/rate-limit/ip-hash'
 import { UpstashKVClient } from '@/lib/rate-limit/upstash-kv-client'
 import { isKanjiVariant } from '@/lib/sakenowa/kanji-variants'
+import { lookupBreweryByBrand, lookupFlavorChart } from '@/lib/sakenowa/lookup'
 import {
-  findSakeByBrandOnly,
-  findSakeByBreweryOnly,
-  findSakeByExtraction,
-  lookupBreweryByBrand,
-  lookupFlavorChart,
-} from '@/lib/sakenowa/lookup'
+  resolveScannedLabel,
+  type ResolveScannedLabelResult,
+} from '@/lib/sakenowa/resolve-scanned-label'
 import { getPrefectureNames } from '@/lib/sakenowa/prefecture'
 import type { Brand } from '@/lib/schemas/brand'
 import type { Brewery } from '@/lib/schemas/brewery'
-import { resolveConfidenceTier } from './confidence-tier'
+import type { LabelScanExtraction } from '@/lib/schemas/label-scan-extraction'
 import type { ScanActionState } from './scan-action-state'
 
 /**
@@ -91,19 +89,6 @@ import type { ScanActionState } from './scan-action-state'
 
 function isLocale(value: string): value is Locale {
   return (routing.locales as readonly string[]).includes(value)
-}
-
-/**
- * Hiragana (U+3040–309F) + Katakana (U+30A0–30FF) + CJK Unified
- * Ideographs (U+4E00–9FFF). The three blocks cover every script the
- * label-scan extraction should produce for `name_ja` / `brewery_ja`.
- * Latin-only output is the failure mode this catches — see the
- * `containsNoJapaneseScript` call site for the operational context.
- */
-const JAPANESE_SCRIPT_REGEX = /[぀-ゟ゠-ヿ一-鿿]/
-
-function containsNoJapaneseScript(value: string): boolean {
-  return !JAPANESE_SCRIPT_REGEX.test(value)
 }
 
 /**
@@ -176,65 +161,6 @@ function ambiguousCandidateFromLookup(
  */
 function preferExtractedWhenVariant(extracted: string, canonical: string): string {
   return isKanjiVariant(extracted, canonical) ? extracted : canonical
-}
-
-/**
- * Real-world sake brand names in Sakenowa are essentially never a
- * single character — the shortest brand kanji we've observed is two
- * characters (e.g. `磯自慢`, `黒龍`, `酔鯨`). A one-character `name_ja`
- * is a strong signal that the model produced "high-confidence
- * coherent garbage" — it returned a single kanji that *looks*
- * plausible (`梗` "stem", `斗` "dipper") at a confidence that
- * normally implies a clean read, but it's a hallucinated fragment,
- * not a real brand. Caught in 2026-06-11 mobile testing on a
- * `jin_junmai_manzairaku.jpg` photo: model returned `name_ja: '梗'`
- * at confidence 0.72 (tier 'confirm') — Sakenowa lookup correctly
- * returned no_match, but the visitor never gets to see *why* the
- * scan failed unless we surface the heuristic in the debug overlay.
- *
- * Routing to `low_confidence` is the right outcome: the visitor sees
- * a "couldn't read clearly" CTA and re-scans, instead of a confusing
- * "not in our catalogue" message that suggests the bottle isn't in
- * Sakenowa when really the model just hallucinated.
- */
-function looksLikeSingleCharHallucination(name_ja: string): boolean {
-  // `Array.from` counts code points, not UTF-16 units, so a surrogate-
-  // pair kanji (rare in sake names, but possible) reads as 1 not 2.
-  return Array.from(name_ja).length === 1
-}
-
-/**
- * Detect a model "I give up" extraction: the Latin or kanji
- * sentinel values the prompt explicitly forbids (`不明`, `unknown`,
- * etc.). Even though the system prompt now forbids these (see
- * `anthropic-haiku-provider.ts` § rule 5), models occasionally still
- * emit them. We treat them identically to schema-validation failure —
- * route to retry tier and never feed `不明` to Sakenowa lookup (no
- * brand will ever match it; the visitor sees a confusing "no match"
- * instead of the honest "try a closer shot").
- *
- * Originally surfaced 2026-06-14 on a clear Tanigawa-dake bottle: model
- * returned `{name_ja: "不明", brewery_ja: "不明", confidence: 0.45}`,
- * which tier-resolved to "retry" by confidence-luck. Hard-coding the
- * placeholder check ensures the routing doesn't depend on the model's
- * self-reported confidence.
- */
-const PLACEHOLDER_EXTRACTIONS = new Set([
-  '不明',
-  '不明な',
-  '不詳',
-  '未確認',
-  'unknown',
-  'Unknown',
-  'UNKNOWN',
-  'n/a',
-  'N/A',
-  '—',
-  '?',
-  '？',
-])
-function isPlaceholderExtraction(value: string): boolean {
-  return PLACEHOLDER_EXTRACTIONS.has(value.trim())
 }
 
 /**
@@ -358,18 +284,18 @@ export async function scanAction(
 }
 
 /**
- * Tier-agnostic extraction + Sakenowa-lookup pipeline. Takes a
+ * Tier-agnostic extraction + label-resolution pipeline. Takes a
  * `VisionProvider` so `scanAction` can run it with Haiku first and
  * Sonnet on retry (see the two-tier comment in `scanAction`).
  *
- * Wraps the vision call, all the script / placeholder / single-char
- * hallucination guards, and the full 5-pass Sakenowa lookup chain in
- * a single try/catch. Throws are caught and surfaced as
- * `extraction_failed`, so an Anthropic outage / schema-validation
- * retry exhaustion / DB blip lands as a tagged state with the debug
- * trace intact rather than a 500 + Next.js error digest. The
- * server-side debug trace would otherwise be lost because the
- * response never lands on the client to carry it.
+ * The matching itself — every pre-lookup guard AND the 5-pass Sakenowa
+ * cascade — lives behind `resolveScannedLabel` (#198); this function is
+ * now just vision → resolve → map-to-render-state, wrapped in a single
+ * try/catch. Throws are caught and surfaced as `extraction_failed`, so
+ * an Anthropic outage / schema-validation retry exhaustion / DB blip
+ * lands as a tagged state with the debug trace intact rather than a 500
+ * + Next.js error digest. The server-side debug trace would otherwise
+ * be lost because the response never lands on the client to carry it.
  */
 async function extractAndLookupWithProvider(
   provider: VisionProvider,
@@ -383,304 +309,8 @@ async function extractAndLookupWithProvider(
       // through `LabelScanExtractionSchema`, pinning `source` to
       // `'llm_extracted'`.
       const extraction = await provider.extractLabel(image)
-      const tier = resolveConfidenceTier(extraction.confidence)
-      debugAdd('ScanAction', `extraction confidence ${extraction.confidence.toFixed(2)} → tier "${tier}"`, {
-        confidence: extraction.confidence,
-        tier,
-      })
-
-      // Retry tier short-circuits before the lookup — there's no point
-      // pinging Sakenowa when the model itself isn't confident enough
-      // to want to commit to a (name, brewery) pair. The UI renders the
-      // "try a closer shot" CTA. The extraction is still carried so
-      // future iterations could surface "we read X but weren't sure"
-      // even on retry; today the visitor just gets the localized hint.
-      if (tier === 'retry') {
-        return { status: 'low_confidence', extraction }
-      }
-
-      // Placeholder-sentinel guard. The system prompt forbids `不明`,
-      // `unknown`, etc. as field values (see
-      // `anthropic-haiku-provider.ts` § rule 5), but models occasionally
-      // still emit them — and when they do, the model's self-reported
-      // confidence can be anywhere on the curve. Hard-coded routing to
-      // retry so a placeholder at 0.85 doesn't pass through as `auto`
-      // and feed the Sakenowa lookup a query that can never match.
-      if (
-        isPlaceholderExtraction(extraction.name_ja) ||
-        isPlaceholderExtraction(extraction.brewery_ja)
-      ) {
-        debugAdd(
-          'ScanAction',
-          `extraction is a placeholder sentinel ("${extraction.name_ja}" / "${extraction.brewery_ja}") — routing to low_confidence regardless of confidence ${extraction.confidence.toFixed(2)}`,
-          { name_ja: extraction.name_ja, brewery_ja: extraction.brewery_ja, confidence: extraction.confidence },
-          'warn',
-        )
-        return { status: 'low_confidence', extraction }
-      }
-
-      // Defensive guard against the model returning Latin where it
-      // shouldn't. 2026-06-12 prompt update (§22 in the obstacles
-      // doc) explicitly allows Latin in `name_ja` for the 110
-      // Latin-only brands in Sakenowa (`Shangri-la`, `UMAMI`,
-      // `Highland`, etc) — `findSakeByExtractionFromPool` has a
-      // dedicated 5th-pass Latin lookup against `LOWER(brands.name)`.
-      // So Latin name_ja is now FINE and we let it through to the
-      // lookup chain.
-      //
-      // Brewery names, however, are essentially always in kanji in
-      // Sakenowa — there's no Latin-brewery brand corpus to match
-      // against, and Latin in brewery_ja is still a strong signal
-      // the model misread something (rice-variety call-out
-      // transliterated, retailer name romanised, etc). Keep the
-      // guard for brewery_ja only. The brand-field Latin case
-      // continues through.
-      if (containsNoJapaneseScript(extraction.brewery_ja)) {
-        debugAdd(
-          'ScanAction',
-          'extraction.brewery_ja is Latin-only — routing to low_confidence (brewery names should be Japanese script)',
-          {
-            name_ja: extraction.name_ja,
-            brewery_ja: extraction.brewery_ja,
-          },
-          'warn',
-        )
-        return { status: 'low_confidence', extraction }
-      }
-
-      // Single-character brand hallucination guard. See the
-      // `looksLikeSingleCharHallucination` doc comment for context —
-      // a 1-character name_ja is a near-certain "high-confidence
-      // coherent garbage" signal.
-      //
-      // Before retreating to `low_confidence`, try the brewery-only
-      // fallback. Real-world motivation (2026-06-11 testing on a
-      // Takashimizu bottle): across 5 attempts on the same image the
-      // model returned 5 different 1-char brands (`紀, 斗, 幻, 寺田, 昇`)
-      // but the brewery `高清水酒造` every time. The single-char
-      // guard correctly identifies the brand as junk; routing to
-      // low_confidence ignores a perfectly good brewery signal. If
-      // the brewery resolves to a mono-brand brewery, we still get a
-      // `matched_brewery_only` with the brand-divergence card —
-      // exactly the right UX for this shape.
-      if (looksLikeSingleCharHallucination(extraction.name_ja)) {
-        debugAdd(
-          'ScanAction',
-          `extraction name_ja is a single character ("${extraction.name_ja}") — likely high-confidence hallucination, trying brewery-only fallback before low_confidence`,
-          {
-            name_ja: extraction.name_ja,
-            brewery_ja: extraction.brewery_ja,
-            confidence: extraction.confidence,
-          },
-          'warn',
-        )
-        const breweryOnly = await findSakeByBreweryOnly({
-          nameJa: extraction.name_ja,
-          breweryJa: extraction.brewery_ja,
-        })
-        if (breweryOnly.kind === 'matched_brewery_only') {
-          const sakeHref = getPathname({
-            locale: localeRaw,
-            href: { pathname: '/sake/[brandId]', params: { brandId: String(breweryOnly.sake.brandId) } },
-          })
-          debugAdd('ScanAction', 'single-char guard rescued by brewery-only fallback — matched_brewery_only', {
-            brandId: breweryOnly.sake.brandId,
-            sakeHref,
-            extractedBrand: breweryOnly.brandDivergence.extracted,
-            storedBrand: breweryOnly.brandDivergence.stored,
-          })
-          return {
-            status: 'matched_brewery_only',
-            extraction,
-            brandId: breweryOnly.sake.brandId,
-            sakeHref,
-            brandDivergence: {
-              ...breweryOnly.brandDivergence,
-              storedRomaji: bestRomaji(breweryOnly.sake),
-            },
-            breweryRomaji: bestRomaji(breweryOnly.brewery),
-          }
-        }
-        if (breweryOnly.kind === 'ambiguous') {
-          debugAdd('ScanAction', 'single-char guard + brewery-only fallback → ambiguous', {
-            candidates: breweryOnly.candidates.map((c) => c.sake.brandId),
-          })
-          return {
-            status: 'ambiguous',
-            extraction,
-            candidates: breweryOnly.candidates.map((c) => ambiguousCandidateFromLookup(c, localeRaw)),
-          }
-        }
-        // Brewery-only missed. One more rescue: the model may have
-        // committed a FIELD SWAP — putting the brand kanji in the
-        // brewery_ja field because the brand is the prominent kanji
-        // on the bottle and the real brewery (e.g. `秋田酒類製造`
-        // for Takashimizu) is small / in the corner. Try a brand-only
-        // lookup on the brewery_ja value. If exactly one brand
-        // matches, we know what the bottle is — surface as
-        // matched_brand_only with the divergence semantics "what
-        // the label labelled the brewery vs the catalogue brewery
-        // for the matched brand".
-        debugAdd(
-          'ScanAction',
-          `brewery-only missed; trying brand-only on brewery_ja "${extraction.brewery_ja}" — checking for field-swap (model put brand in brewery field)`,
-        )
-        const swapAttempt = await findSakeByBrandOnly({
-          nameJa: extraction.brewery_ja,
-          breweryJa: extraction.brewery_ja,
-        })
-        if (swapAttempt.kind === 'matched_brand_only') {
-          const sakeHref = getPathname({
-            locale: localeRaw,
-            href: { pathname: '/sake/[brandId]', params: { brandId: String(swapAttempt.sake.brandId) } },
-          })
-          debugAdd('ScanAction', 'field-swap rescue succeeded — matched_brand_only via brewery_ja', {
-            brandId: swapAttempt.sake.brandId,
-            sakeHref,
-            extractedBrandKanji: swapAttempt.sake.nameKanji,
-            extractedBrewery: extraction.brewery_ja,
-            storedBrewery: swapAttempt.brewery.nameKanji,
-          })
-          return {
-            status: 'matched_brand_only',
-            extraction,
-            brandId: swapAttempt.sake.brandId,
-            sakeHref,
-            breweryDivergence: {
-              ...swapAttempt.breweryDivergence,
-              storedRomaji: bestRomaji(swapAttempt.brewery),
-            },
-            // Field-swap path: extraction.name_ja is a single-char
-            // hallucination, never a variant of the catalogue brand.
-            // `preferExtractedWhenVariant` correctly returns the
-            // canonical form here. We could pass `extraction.name_ja`
-            // directly to be explicit; using the helper keeps the
-            // two return sites symmetrical.
-            sakeKanji: preferExtractedWhenVariant(extraction.name_ja, swapAttempt.sake.nameKanji),
-            sakeRomaji: bestRomaji(swapAttempt.sake),
-          }
-        }
-        if (swapAttempt.kind === 'ambiguous') {
-          debugAdd('ScanAction', 'field-swap rescue → ambiguous', {
-            candidates: swapAttempt.candidates.map((c) => c.sake.brandId),
-          })
-          return {
-            status: 'ambiguous',
-            extraction,
-            candidates: swapAttempt.candidates.map((c) => ambiguousCandidateFromLookup(c, localeRaw)),
-          }
-        }
-        // Field-swap rescue also missed. Brand was probably
-        // hallucinated AND the brewery field doesn't correspond to
-        // any known brand or brewery. Fall through to low_confidence.
-        debugAdd('ScanAction', 'single-char guard + brewery-only + field-swap rescue all missed — routing to low_confidence')
-        return { status: 'low_confidence', extraction }
-      }
-
-      const lookup = await findSakeByExtraction({
-        nameJa: extraction.name_ja,
-        breweryJa: extraction.brewery_ja,
-      })
-
-      if (lookup.kind === 'exact') {
-        const sakeHref = getPathname({
-          locale: localeRaw,
-          href: { pathname: '/sake/[brandId]', params: { brandId: String(lookup.sake.brandId) } },
-        })
-        // Fetch the brewery for its romaji and the flavor chart for
-        // the in-place result card (ADR-0015). The first-pass SQL
-        // joins through brewery for the WHERE but doesn't select
-        // brewery columns, and `flavor_charts` is a separate table
-        // keyed on brand_id. Two parallel round-trips add ~one DB
-        // hop to the happy path. `lookupBreweryByBrand` may return
-        // null if a race deleted the brewery between queries; the
-        // chart may be null for the small tail of brands the
-        // Sakenowa `/flavor-charts` list omits. UI tolerates both.
-        const [brewery, flavorChart] = await Promise.all([
-          lookupBreweryByBrand(lookup.sake.brandId),
-          lookupFlavorChart(lookup.sake.brandId),
-        ])
-        debugAdd('ScanAction', 'returning matched', {
-          brandId: lookup.sake.brandId,
-          sakeHref,
-          hasFlavorChart: flavorChart !== null,
-        })
-        return {
-          status: 'matched',
-          extraction,
-          brandId: lookup.sake.brandId,
-          sakeHref,
-          sakeRomaji: bestRomaji(lookup.sake),
-          breweryRomaji: brewery ? bestRomaji(brewery) : null,
-          flavorChart,
-        }
-      }
-      if (lookup.kind === 'matched_brand_only') {
-        const sakeHref = getPathname({
-          locale: localeRaw,
-          href: { pathname: '/sake/[brandId]', params: { brandId: String(lookup.sake.brandId) } },
-        })
-        debugAdd('ScanAction', 'returning matched_brand_only — brewery divergence surfaced', {
-          brandId: lookup.sake.brandId,
-          sakeHref,
-          extractedBrewery: lookup.breweryDivergence.extracted,
-          storedBrewery: lookup.breweryDivergence.stored,
-        })
-        return {
-          status: 'matched_brand_only',
-          extraction,
-          brandId: lookup.sake.brandId,
-          sakeHref,
-          breweryDivergence: {
-            ...lookup.breweryDivergence,
-            storedRomaji: bestRomaji(lookup.brewery),
-          },
-          // Standard brand-only fallback path: if the visitor's
-          // extracted kanji is a 旧/新 variant of the canonical
-          // catalogue form, show the visitor's form so the card
-          // matches the bottle in hand. Otherwise fall back to the
-          // catalogue form.
-          sakeKanji: preferExtractedWhenVariant(extraction.name_ja, lookup.sake.nameKanji),
-          sakeRomaji: bestRomaji(lookup.sake),
-        }
-      }
-      if (lookup.kind === 'matched_brewery_only') {
-        const sakeHref = getPathname({
-          locale: localeRaw,
-          href: { pathname: '/sake/[brandId]', params: { brandId: String(lookup.sake.brandId) } },
-        })
-        debugAdd('ScanAction', 'returning matched_brewery_only — brand divergence surfaced', {
-          brandId: lookup.sake.brandId,
-          sakeHref,
-          extractedBrand: lookup.brandDivergence.extracted,
-          storedBrand: lookup.brandDivergence.stored,
-        })
-        return {
-          status: 'matched_brewery_only',
-          extraction,
-          brandId: lookup.sake.brandId,
-          sakeHref,
-          brandDivergence: {
-            ...lookup.brandDivergence,
-            storedRomaji: bestRomaji(lookup.sake),
-          },
-          breweryRomaji: bestRomaji(lookup.brewery),
-        }
-      }
-      if (lookup.kind === 'ambiguous') {
-        debugAdd('ScanAction', 'returning ambiguous', {
-          candidates: lookup.candidates.map((c) => c.sake.brandId),
-        })
-        return {
-          status: 'ambiguous',
-          extraction,
-          candidates: lookup.candidates.map((c) => ambiguousCandidateFromLookup(c, localeRaw)),
-        }
-      }
-      debugAdd('ScanAction', 'returning no_match', {
-        attempted: { name_ja: extraction.name_ja, brewery_ja: extraction.brewery_ja },
-      })
-      return { status: 'no_match', extraction }
+      const resolved = await resolveScannedLabel(extraction)
+      return mapResolvedToState(resolved, extraction, localeRaw)
     } catch (err) {
       const name = err instanceof Error ? err.name : 'UnknownError'
       const message = err instanceof Error ? err.message : String(err)
@@ -706,6 +336,135 @@ async function extractAndLookupWithProvider(
       )
       return { status: 'extraction_failed', reason: name }
     }
+}
+
+/**
+ * Locale-aware `/sake/[brandId]` pathname. Every matched arm links to
+ * the same detail route; centralising the `getPathname` call keeps the
+ * render-mapping arms uniform.
+ */
+function sakeHrefFor(brandId: number, locale: Locale): string {
+  return getPathname({
+    locale,
+    href: { pathname: '/sake/[brandId]', params: { brandId: String(brandId) } },
+  })
+}
+
+/**
+ * Maps a `resolveScannedLabel` result onto the wire-shape the client
+ * `useActionState` renders. The matching decisions are already made
+ * upstream (#198); this is pure presentation shaping — locale-aware
+ * hrefs, romaji distillation, the flavor-chart + brewery round-trips
+ * on the exact-match happy path, and the kanji-variant display
+ * preference. `low_confidence` (the guards' "couldn't read clearly"
+ * signal) and `no_match` (the catalogue genuinely lacks the brand) are
+ * distinct UI states and stay distinct here.
+ */
+async function mapResolvedToState(
+  resolved: ResolveScannedLabelResult,
+  extraction: LabelScanExtraction,
+  localeRaw: Locale,
+): Promise<ScanActionState> {
+  switch (resolved.kind) {
+    case 'low_confidence':
+      return { status: 'low_confidence', extraction }
+
+    case 'exact': {
+      const sakeHref = sakeHrefFor(resolved.sake.brandId, localeRaw)
+      // Fetch the brewery for its romaji and the flavor chart for the
+      // in-place result card (ADR-0015). The first-pass SQL joins
+      // through brewery for the WHERE but doesn't select brewery
+      // columns, and `flavor_charts` is a separate table keyed on
+      // brand_id. Two parallel round-trips add ~one DB hop to the happy
+      // path. `lookupBreweryByBrand` may return null if a race deleted
+      // the brewery between queries; the chart may be null for the
+      // small tail of brands the Sakenowa `/flavor-charts` list omits.
+      // UI tolerates both.
+      const [brewery, flavorChart] = await Promise.all([
+        lookupBreweryByBrand(resolved.sake.brandId),
+        lookupFlavorChart(resolved.sake.brandId),
+      ])
+      debugAdd('ScanAction', 'returning matched', {
+        brandId: resolved.sake.brandId,
+        sakeHref,
+        hasFlavorChart: flavorChart !== null,
+      })
+      return {
+        status: 'matched',
+        extraction,
+        brandId: resolved.sake.brandId,
+        sakeHref,
+        sakeRomaji: bestRomaji(resolved.sake),
+        breweryRomaji: brewery ? bestRomaji(brewery) : null,
+        flavorChart,
+      }
+    }
+
+    case 'matched_brand_only': {
+      const sakeHref = sakeHrefFor(resolved.sake.brandId, localeRaw)
+      debugAdd('ScanAction', 'returning matched_brand_only — brewery divergence surfaced', {
+        brandId: resolved.sake.brandId,
+        sakeHref,
+        extractedBrewery: resolved.breweryDivergence.extracted,
+        storedBrewery: resolved.breweryDivergence.stored,
+      })
+      return {
+        status: 'matched_brand_only',
+        extraction,
+        brandId: resolved.sake.brandId,
+        sakeHref,
+        breweryDivergence: {
+          ...resolved.breweryDivergence,
+          storedRomaji: bestRomaji(resolved.brewery),
+        },
+        // If the visitor's extracted kanji is a 旧/新 variant of the
+        // canonical catalogue form, show the visitor's form so the card
+        // matches the bottle in hand. For the field-swap rescue path
+        // `extraction.name_ja` is the model's single-char hallucination
+        // — `preferExtractedWhenVariant` returns false there and falls
+        // back to the canonical form. One branch, both cases correct.
+        sakeKanji: preferExtractedWhenVariant(extraction.name_ja, resolved.sake.nameKanji),
+        sakeRomaji: bestRomaji(resolved.sake),
+      }
+    }
+
+    case 'matched_brewery_only': {
+      const sakeHref = sakeHrefFor(resolved.sake.brandId, localeRaw)
+      debugAdd('ScanAction', 'returning matched_brewery_only — brand divergence surfaced', {
+        brandId: resolved.sake.brandId,
+        sakeHref,
+        extractedBrand: resolved.brandDivergence.extracted,
+        storedBrand: resolved.brandDivergence.stored,
+      })
+      return {
+        status: 'matched_brewery_only',
+        extraction,
+        brandId: resolved.sake.brandId,
+        sakeHref,
+        brandDivergence: {
+          ...resolved.brandDivergence,
+          storedRomaji: bestRomaji(resolved.sake),
+        },
+        breweryRomaji: bestRomaji(resolved.brewery),
+      }
+    }
+
+    case 'ambiguous':
+      debugAdd('ScanAction', 'returning ambiguous', {
+        candidates: resolved.candidates.map((c) => c.sake.brandId),
+      })
+      return {
+        status: 'ambiguous',
+        extraction,
+        candidates: resolved.candidates.map((c) => ambiguousCandidateFromLookup(c, localeRaw)),
+      }
+
+    case 'no_match':
+      debugAdd('ScanAction', 'returning no_match', {
+        attempted: { name_ja: extraction.name_ja, brewery_ja: extraction.brewery_ja },
+      })
+      return { status: 'no_match', extraction }
+  }
 }
 
 type RateLimitDecision =
