@@ -31,6 +31,15 @@ describe('flavorDistance', () => {
     const ones = { f1: 1, f2: 1, f3: 1, f4: 1, f5: 1, f6: 1 }
     expect(flavorDistance(zeros, ones)).toBeCloseTo(Math.sqrt(6), 10)
   })
+
+  it('gives sqrt(2) for two orthogonal unit vectors', () => {
+    // Peaks on different single axes and zero elsewhere → the two "1"s each
+    // contribute, L2 = sqrt(1 + 1). Confirms cross-axis differences add in
+    // quadrature rather than being ignored (as a cosine metric would here).
+    const onF1 = { f1: 1, f2: 0, f3: 0, f4: 0, f5: 0, f6: 0 }
+    const onF2 = { f1: 0, f2: 1, f3: 0, f4: 0, f5: 0, f6: 0 }
+    expect(flavorDistance(onF1, onF2)).toBeCloseTo(Math.sqrt(2), 10)
+  })
 })
 
 describe('findSimilarByFlavor', () => {
@@ -93,5 +102,16 @@ describe('findSimilarByFlavor', () => {
 
   it('returns an empty array for no candidates', () => {
     expect(findSimilarByFlavor(target, [])).toEqual([])
+  })
+
+  it('drops candidates with a NaN axis instead of poisoning the ranking', () => {
+    // A sake with no flavor chart (sparse coverage, ADR-0016) arrives with a
+    // NaN axis → NaN distance. It must be dropped, and — critically — with NO
+    // maxDistance set, so this pins the explicit NaN guard, not the range
+    // filter. The valid candidates still rank normally.
+    const noChart = { id: 'noChart', f1: Number.NaN, f2: 0, f3: 0, f4: 0, f5: 0, f6: 0 }
+    const matches = findSimilarByFlavor(target, [noChart, far, near])
+    expect(matches.map((m) => m.candidate.id)).toEqual(['near', 'far'])
+    expect(matches.every((m) => !Number.isNaN(m.distance))).toBe(true)
   })
 })

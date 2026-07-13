@@ -93,6 +93,13 @@ export interface FindSimilarOptions {
  * Deterministic: ties (equal distance) break by original input order, so the
  * same inputs always yield the same ordering — a unit test can pin the result.
  * Pure — no IO, no module state, no randomness.
+ *
+ * Candidates whose distance is `NaN` are dropped, not ranked. That happens
+ * when a candidate carries a missing/`NaN` axis — a real case under the sparse
+ * flavor-chart coverage of ADR-0016 (a sake without a chart isn't rankable by
+ * flavor). Without this, a `NaN` distance would sort non-deterministically and
+ * poison the whole ordering. This module is not the place to *report* the gap;
+ * the recommender layer that assembles the candidate pool owns that.
  */
 export function findSimilarByFlavor<T extends FlavorAxes>(
   target: FlavorAxes,
@@ -103,7 +110,10 @@ export function findSimilarByFlavor<T extends FlavorAxes>(
 
   const ranked = candidates
     .map((candidate, index) => ({ candidate, index, distance: flavorDistance(target, candidate) }))
-    .filter(({ distance }) => maxDistance === undefined || distance <= maxDistance)
+    .filter(
+      ({ distance }) =>
+        !Number.isNaN(distance) && (maxDistance === undefined || distance <= maxDistance),
+    )
     // Distance ascending; stable tie-break on input index so equidistant
     // candidates keep their original relative order deterministically.
     .sort((a, b) => a.distance - b.distance || a.index - b.index)
