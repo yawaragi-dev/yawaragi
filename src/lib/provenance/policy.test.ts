@@ -4,7 +4,9 @@ import {
   isBlendedRecord,
   isCanonical,
   isLLMSourced,
+  resolveBadgeKind,
   shouldRenderBadge,
+  shouldRenderHeuristicDisclaimer,
 } from './policy'
 
 // Enumerating every source explicitly (not deriving from the Zod enum)
@@ -41,6 +43,65 @@ describe('shouldRenderBadge', () => {
     // compile time, this catches a regression at runtime too.
     for (const s of ALL_SOURCES) {
       expect(typeof shouldRenderBadge(s)).toBe('boolean')
+    }
+  })
+})
+
+describe('shouldRenderHeuristicDisclaimer', () => {
+  it('flags only cross_beverage_map, the one source that owes the heuristic caveat', () => {
+    // ADR-0005: the cross-beverage map is the only deterministic-but-
+    // heuristic source, so it's the only one whose failure mode ("the
+    // mapping is wrong") needs the honesty disclaimer next to the badge.
+    expect(shouldRenderHeuristicDisclaimer('cross_beverage_map')).toBe(true)
+  })
+
+  it('does not flag any other source, LLM-sourced or canonical', () => {
+    expect(shouldRenderHeuristicDisclaimer('sakenowa')).toBe(false)
+    expect(shouldRenderHeuristicDisclaimer('sakenowa_inferred')).toBe(false)
+    expect(shouldRenderHeuristicDisclaimer('llm_extracted')).toBe(false)
+    expect(shouldRenderHeuristicDisclaimer('llm_inferred')).toBe(false)
+    expect(shouldRenderHeuristicDisclaimer('user_corrected')).toBe(false)
+    expect(shouldRenderHeuristicDisclaimer('manual_curation')).toBe(false)
+  })
+
+  it('returns a boolean for every source in the taxonomy', () => {
+    for (const s of ALL_SOURCES) {
+      expect(typeof shouldRenderHeuristicDisclaimer(s)).toBe('boolean')
+    }
+  })
+
+  it('only ever fires for a source that also gets a badge', () => {
+    // A disclaimer without a badge would be an ADR-0005 contradiction:
+    // the caveat marks a value the user is already told is non-canonical.
+    for (const s of ALL_SOURCES) {
+      if (shouldRenderHeuristicDisclaimer(s)) {
+        expect(shouldRenderBadge(s)).toBe(true)
+      }
+    }
+  })
+})
+
+describe('resolveBadgeKind', () => {
+  it('maps each badged source to its distinct presentation kind', () => {
+    expect(resolveBadgeKind('llm_extracted')).toBe('llmExtracted')
+    expect(resolveBadgeKind('llm_inferred')).toBe('llmInferred')
+    expect(resolveBadgeKind('cross_beverage_map')).toBe('crossBeverageMap')
+  })
+
+  it('returns null for every canonical source so callers render no badge', () => {
+    expect(resolveBadgeKind('sakenowa')).toBeNull()
+    expect(resolveBadgeKind('sakenowa_inferred')).toBeNull()
+    expect(resolveBadgeKind('user_corrected')).toBeNull()
+    expect(resolveBadgeKind('manual_curation')).toBeNull()
+  })
+
+  it('is non-null exactly when shouldRenderBadge is true, across the taxonomy', () => {
+    // The two tables must never drift: a badged source must resolve to a
+    // kind, and a canonical source must resolve to null. This is the seam
+    // the scan client callers and the async server wrapper both route
+    // through — if someone flips one table without the other, this fails.
+    for (const s of ALL_SOURCES) {
+      expect(resolveBadgeKind(s) !== null).toBe(shouldRenderBadge(s))
     }
   })
 })
