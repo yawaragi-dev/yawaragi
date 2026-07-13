@@ -1,11 +1,21 @@
 /**
  * Database-shaped contract the ingestion pipeline depends on.
  *
- * The pipeline never imports pg directly. `PgBrandsDB` wraps a real pg.Pool
- * for production; tests pass an in-memory fake. `transaction()` lets the
- * pipeline scope all writes to a single ACID unit — failure-aborts (no
- * partial writes) follow from a real Postgres ROLLBACK in production and
- * from an explicit no-commit semantic in the fake.
+ * The pipeline never imports pg directly. `makePgBrandsDB` wraps a real
+ * pg.Pool for production; tests pass an in-memory fake. `transaction()`
+ * lets the pipeline scope all writes to a single ACID unit — failure-
+ * aborts (no partial writes) follow from a real Postgres ROLLBACK in
+ * production and from an explicit no-commit semantic in the fake.
+ *
+ * The five reference tables (brands, breweries, flavor_charts, areas,
+ * flavor_tags) share one chunked `INSERT … ON CONFLICT DO UPDATE`
+ * upsert shape. Rather than five byte-identical classes, a single
+ * generic `PgUpsertDriver` reads a per-table `UpsertTableSpec` and
+ * builds the transaction / chunked-INSERT / existing-hash machinery
+ * once. Each `makePg*DB` factory adapts that driver to the per-table
+ * interface's method names (`getExistingBrandHashes`, …). Rankings is
+ * deliberately NOT part of this driver — it wholesale-replaces via
+ * TRUNCATE (ADR-0002), which the upsert shape doesn't fit.
  *
  * NOTE: deliberately no `import 'server-only'` here. `db.ts` is imported by
  * the CLI scripts (`scripts/ingest-sakenowa.ts` via tsx, which has no
@@ -78,142 +88,219 @@ const BATCH_SIZE = 500
  */
 const ROMAJI_BACKFILL_SENTINEL = '__needs_romaji_backfill__'
 
-class PgBrandsDB implements BrandsDB {
-  constructor(private readonly executor: Pool | PoolClient) {}
+// ---------- Generic upsert driver ----------
 
-  async getExistingBrandHashes(): Promise<Map<number, string>> {
+/**
+ * Per-table configuration for the chunked upsert. The five hand-rolled
+ * Pg*DB classes differed only in these fields; `PgUpsertDriver` reads
+ * them and concentrates the shared machinery.
+ */
+interface UpsertTableSpec<TUpsertRow> {
+  /** Target table, e.g. `"brands"`. Also the ON CONFLICT set's qualifier. */
+  table: string
+  /** Primary-key column, e.g. `"brand_id"`. Also the ON CONFLICT target. */
+  keyColumn: string
+  /**
+   * SQL expression aliased as `content_hash` in `getExistingHashes`.
+   * Plain `"content_hash"` for most tables; a CASE expression for
+   * brands / breweries where a NULL `name_romaji` yields the romaji-
+   * backfill sentinel (see `ROMAJI_BACKFILL_SENTINEL`).
+   */
+  hashExpression: string
+  /** Insert columns in positional order; `updated_at` is appended as NOW(). */
+  insertColumns: readonly string[]
+  /**
+   * Columns whose ON CONFLICT update uses
+   * `COALESCE(EXCLUDED.col, table.col)` instead of `EXCLUDED.col` — i.e.
+   * don't clobber an existing value with an incoming NULL. Today only
+   * `name_romaji` on brands + breweries.
+   */
+  coalesceColumns?: readonly string[]
+  /** Positional values for one row, matching `insertColumns` order. */
+  valuesOf: (row: TUpsertRow) => readonly unknown[]
+}
+
+/**
+ * The single BEGIN/COMMIT/ROLLBACK helper. Nested transactions: if the
+ * executor is already a PoolClient inside a BEGIN (detected via the
+ * presence of `release`), reuse it as one logical unit and call `fn`
+ * with the current adapter. Otherwise connect, BEGIN, run, COMMIT — and
+ * on any throw ROLLBACK (swallowing a rollback failure so the original
+ * error surfaces), always releasing the client.
+ */
+async function withTransaction<TDB, T>(
+  executor: Pool | PoolClient,
+  self: TDB,
+  makeChild: (client: PoolClient) => TDB,
+  fn: (tx: TDB) => Promise<T>,
+): Promise<T> {
+  if ('release' in executor) {
+    return fn(self)
+  }
+  const client = await (executor as Pool).connect()
+  try {
+    await client.query('BEGIN')
+    const result = await fn(makeChild(client))
+    await client.query('COMMIT')
+    return result
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {
+      /* swallow rollback failure; surface the original */
+    })
+    throw err
+  } finally {
+    client.release()
+  }
+}
+
+/**
+ * Config-driven upsert for one Sakenowa reference table. Replaces the
+ * five near-identical `Pg*DB` classes: the chunked `INSERT … ON CONFLICT
+ * DO UPDATE` placeholder loop and the `SELECT key, content_hash` read
+ * live here once, parameterised by an `UpsertTableSpec`.
+ */
+class PgUpsertDriver<TUpsertRow> {
+  constructor(
+    private readonly executor: Pool | PoolClient,
+    private readonly spec: UpsertTableSpec<TUpsertRow>,
+  ) {}
+
+  async getExistingHashes(): Promise<Map<number, string>> {
     // Rows whose `name_romaji` hasn't been populated yet need the
-    // enrichment pass to run — even if their kanji haven't changed.
-    // We return a sentinel "hash" that can't collide with any real
-    // SHA-256 hex value, so the pipeline classifies them as
-    // "updated" and routes them through enrichBeforeUpsert.
-    //
-    // This handles the pre-migration backfill cleanly: rows created
-    // before migration 0010 have `name_romaji IS NULL`; their first
-    // post-migration `pnpm ingest` reclassifies them as updated,
-    // fills the romaji, recomputes the hash, and writes back. A
-    // second ingest with no Sakenowa changes is a true no-op.
-    const { rows } = await this.executor.query<{
-      brand_id: number
-      content_hash: string
-    }>(
-      `SELECT brand_id,
-              CASE WHEN name_romaji IS NULL THEN '${ROMAJI_BACKFILL_SENTINEL}'
-                   ELSE content_hash
-              END AS content_hash
-       FROM brands`,
+    // enrichment pass to run even if their kanji haven't changed — the
+    // per-table `hashExpression` returns a sentinel "hash" that can't
+    // collide with any real SHA-256 hex value, so the pipeline
+    // classifies them as "updated" and routes them through
+    // enrichBeforeUpsert. Tables without a romaji column select
+    // `content_hash` verbatim.
+    const { keyColumn, hashExpression, table } = this.spec
+    const { rows } = await this.executor.query<Record<string, string | number>>(
+      `SELECT ${keyColumn},
+              ${hashExpression} AS content_hash
+       FROM ${table}`,
     )
-    return new Map(rows.map((r) => [r.brand_id, r.content_hash]))
+    return new Map(rows.map((r) => [r[keyColumn] as number, r.content_hash as string]))
   }
 
-  async upsertBrandsBatch(
-    rows: readonly BrandUpsert[],
-    onChunk?: BatchProgress,
-  ): Promise<void> {
+  async upsertBatch(rows: readonly TUpsertRow[], onChunk?: BatchProgress): Promise<void> {
     if (rows.length === 0) return
+    const { table, keyColumn, insertColumns, coalesceColumns = [], valuesOf } = this.spec
+    const columnList = insertColumns.join(', ')
+    // Every non-key column is refreshed from EXCLUDED, except the
+    // COALESCE columns which preserve the existing value when the
+    // incoming row supplies NULL. `updated_at` is always stamped NOW().
+    const updateSet = insertColumns
+      .filter((c) => c !== keyColumn)
+      .map((c) =>
+        coalesceColumns.includes(c)
+          ? `${c} = COALESCE(EXCLUDED.${c}, ${table}.${c})`
+          : `${c} = EXCLUDED.${c}`,
+      )
+      .concat('updated_at = NOW()')
+      .join(',\n           ')
+
     for (let start = 0; start < rows.length; start += BATCH_SIZE) {
       const chunk = rows.slice(start, start + BATCH_SIZE)
       const placeholders: string[] = []
       const values: unknown[] = []
-      for (const { brand, contentHash } of chunk) {
+      for (const row of chunk) {
         const i = values.length
-        // 8 placeholders + literal NOW() for updated_at. The new
-        // `name_romaji` slot is nullable; if the transliteration step
-        // hasn't run (offline ingest, eval harness, …) the column
-        // stays NULL until the next ingest fills it.
-        placeholders.push(
-          `($${i + 1}, $${i + 2}, $${i + 3}, $${i + 4}, $${i + 5}, $${i + 6}, $${i + 7}, $${i + 8}, NOW())`,
-        )
-        values.push(
-          brand.brandId,
-          brand.name,
-          brand.nameKanji,
-          brand.nameRomaji,
-          brand.breweryId,
-          brand.source,
-          brand.confidence ?? null,
-          contentHash,
-        )
+        // N positional placeholders + literal NOW() for updated_at.
+        const slots = insertColumns.map((_, j) => `$${i + j + 1}`)
+        placeholders.push(`(${slots.join(', ')}, NOW())`)
+        values.push(...valuesOf(row))
       }
       await this.executor.query(
-        `INSERT INTO brands
-           (brand_id, name, name_kanji, name_romaji, brewery_id, source, confidence, content_hash, updated_at)
+        `INSERT INTO ${table}
+           (${columnList}, updated_at)
          VALUES ${placeholders.join(', ')}
-         ON CONFLICT (brand_id) DO UPDATE SET
-           name         = EXCLUDED.name,
-           name_kanji   = EXCLUDED.name_kanji,
-           -- Preserve the existing romaji when the incoming row
-           -- didn't supply one (e.g. an ingest that skipped the
-           -- transliteration step). Only overwrite when there's a
-           -- non-NULL value to overwrite with.
-           name_romaji  = COALESCE(EXCLUDED.name_romaji, brands.name_romaji),
-           brewery_id   = EXCLUDED.brewery_id,
-           source       = EXCLUDED.source,
-           confidence   = EXCLUDED.confidence,
-           content_hash = EXCLUDED.content_hash,
-           updated_at   = NOW()`,
+         ON CONFLICT (${keyColumn}) DO UPDATE SET
+           ${updateSet}`,
         values,
       )
       onChunk?.(chunk.length)
     }
   }
-
-  async getLiveManualBrandKeys(): Promise<Map<string, ManualBrandKey>> {
-    const { rows } = await this.executor.query<{
-      brand_id: number
-      name_kanji: string
-      brewery_id: number
-    }>(
-      `SELECT brand_id, name_kanji, brewery_id
-       FROM brands
-       WHERE source = 'manual_curation' AND superseded_at IS NULL`,
-    )
-    return new Map(
-      rows.map((r) => [
-        `${r.name_kanji}::${r.brewery_id}`,
-        { brandId: r.brand_id, nameKanji: r.name_kanji, breweryId: r.brewery_id },
-      ]),
-    )
-  }
-
-  async supersedeBrands(brandIds: ReadonlyArray<number>, when: Date): Promise<void> {
-    if (brandIds.length === 0) return
-    await this.executor.query(
-      `UPDATE brands
-       SET superseded_at = $1
-       WHERE brand_id = ANY($2::int[])
-         AND source = 'manual_curation'
-         AND superseded_at IS NULL`,
-      [when, [...brandIds]],
-    )
-  }
-
-  async transaction<T>(fn: (tx: BrandsDB) => Promise<T>): Promise<T> {
-    // Nested transactions: if we were handed a PoolClient already inside a
-    // BEGIN, reuse it (one logical unit). Detect via the presence of `release`.
-    if ('release' in this.executor) {
-      return fn(this)
-    }
-    const client = await (this.executor as Pool).connect()
-    try {
-      await client.query('BEGIN')
-      const result = await fn(new PgBrandsDB(client))
-      await client.query('COMMIT')
-      return result
-    } catch (err) {
-      await client.query('ROLLBACK').catch(() => {
-        /* swallow rollback failure; surface the original */
-      })
-      throw err
-    } finally {
-      client.release()
-    }
-  }
 }
 
-export function makePgBrandsDB(pool: Pool): BrandsDB {
-  return new PgBrandsDB(pool)
+// ---------- Brands ----------
+
+const brandsUpsertSpec: UpsertTableSpec<BrandUpsert> = {
+  table: 'brands',
+  keyColumn: 'brand_id',
+  // Rows created before migration 0010 have `name_romaji IS NULL`; the
+  // sentinel reclassifies them as "updated" so their first post-
+  // migration ingest fills the romaji and recomputes the hash. A second
+  // ingest with no Sakenowa changes is then a true no-op.
+  hashExpression: `CASE WHEN name_romaji IS NULL THEN '${ROMAJI_BACKFILL_SENTINEL}'
+                   ELSE content_hash
+              END`,
+  insertColumns: [
+    'brand_id',
+    'name',
+    'name_kanji',
+    'name_romaji',
+    'brewery_id',
+    'source',
+    'confidence',
+    'content_hash',
+  ],
+  // Preserve the existing romaji when the incoming row didn't supply one
+  // (e.g. an ingest that skipped the transliteration step).
+  coalesceColumns: ['name_romaji'],
+  valuesOf: ({ brand, contentHash }) => [
+    brand.brandId,
+    brand.name,
+    brand.nameKanji,
+    brand.nameRomaji,
+    brand.breweryId,
+    brand.source,
+    brand.confidence ?? null,
+    contentHash,
+  ],
 }
+
+export function makePgBrandsDB(executor: Pool | PoolClient): BrandsDB {
+  const driver = new PgUpsertDriver<BrandUpsert>(executor, brandsUpsertSpec)
+  const self: BrandsDB = {
+    getExistingBrandHashes: () => driver.getExistingHashes(),
+    upsertBrandsBatch: (rows, onChunk) => driver.upsertBatch(rows, onChunk),
+    async getLiveManualBrandKeys(): Promise<Map<string, ManualBrandKey>> {
+      const { rows } = await executor.query<{
+        brand_id: number
+        name_kanji: string
+        brewery_id: number
+      }>(
+        `SELECT brand_id, name_kanji, brewery_id
+         FROM brands
+         WHERE source = 'manual_curation' AND superseded_at IS NULL`,
+      )
+      return new Map(
+        rows.map((r) => [
+          `${r.name_kanji}::${r.brewery_id}`,
+          { brandId: r.brand_id, nameKanji: r.name_kanji, breweryId: r.brewery_id },
+        ]),
+      )
+    },
+    async supersedeBrands(brandIds: ReadonlyArray<number>, when: Date): Promise<void> {
+      if (brandIds.length === 0) return
+      await executor.query(
+        `UPDATE brands
+         SET superseded_at = $1
+         WHERE brand_id = ANY($2::int[])
+           AND source = 'manual_curation'
+           AND superseded_at IS NULL`,
+        [when, [...brandIds]],
+      )
+    },
+    transaction<T>(fn: (tx: BrandsDB) => Promise<T>): Promise<T> {
+      return withTransaction(executor, self, makePgBrandsDB, fn)
+    },
+  }
+  return self
+}
+
+// ---------- Breweries ----------
 
 export interface BreweryUpsert {
   brewery: Brewery
@@ -226,102 +313,53 @@ export interface BreweriesDB {
   transaction<T>(fn: (tx: BreweriesDB) => Promise<T>): Promise<T>
 }
 
-class PgBreweriesDB implements BreweriesDB {
-  constructor(private readonly executor: Pool | PoolClient) {}
-
-  async getExistingBreweryHashes(): Promise<Map<number, string>> {
-    // Same sentinel trick as `getExistingBrandHashes`. Extra clause
-    // here for brewery rows: the ~48 Sakenowa placeholder rows have
-    // empty `name_kanji`, so their `name_romaji` is genuinely
-    // permanent-NULL — we don't want to mark them as needing
-    // backfill because the transliteration call would just no-op
-    // anyway and the row would round-trip with no real change.
-    const { rows } = await this.executor.query<{
-      brewery_id: number
-      content_hash: string
-    }>(
-      `SELECT brewery_id,
-              CASE WHEN name_romaji IS NULL AND length(name_kanji) > 0
+const breweriesUpsertSpec: UpsertTableSpec<BreweryUpsert> = {
+  table: 'breweries',
+  keyColumn: 'brewery_id',
+  // Same sentinel trick as brands, plus `length(name_kanji) > 0`: the
+  // ~48 Sakenowa placeholder breweries have empty `name_kanji`, so their
+  // `name_romaji` is genuinely permanent-NULL — don't mark them for
+  // backfill, the transliteration call would just no-op.
+  hashExpression: `CASE WHEN name_romaji IS NULL AND length(name_kanji) > 0
                    THEN '${ROMAJI_BACKFILL_SENTINEL}'
                    ELSE content_hash
-              END AS content_hash
-       FROM breweries`,
-    )
-    return new Map(rows.map((r) => [r.brewery_id, r.content_hash]))
-  }
-
-  async upsertBreweriesBatch(
-    rows: readonly BreweryUpsert[],
-    onChunk?: BatchProgress,
-  ): Promise<void> {
-    if (rows.length === 0) return
-    for (let start = 0; start < rows.length; start += BATCH_SIZE) {
-      const chunk = rows.slice(start, start + BATCH_SIZE)
-      const placeholders: string[] = []
-      const values: unknown[] = []
-      for (const { brewery, contentHash } of chunk) {
-        const i = values.length
-        // 8 placeholders + NOW() — new `name_romaji` slot.
-        placeholders.push(
-          `($${i + 1}, $${i + 2}, $${i + 3}, $${i + 4}, $${i + 5}, $${i + 6}, $${i + 7}, $${i + 8}, NOW())`,
-        )
-        values.push(
-          brewery.breweryId,
-          brewery.name,
-          brewery.nameKanji,
-          brewery.nameRomaji,
-          brewery.areaId,
-          brewery.source,
-          brewery.confidence ?? null,
-          contentHash,
-        )
-      }
-      await this.executor.query(
-        `INSERT INTO breweries
-           (brewery_id, name, name_kanji, name_romaji, area_id, source, confidence, content_hash, updated_at)
-         VALUES ${placeholders.join(', ')}
-         ON CONFLICT (brewery_id) DO UPDATE SET
-           name         = EXCLUDED.name,
-           name_kanji   = EXCLUDED.name_kanji,
-           -- Same COALESCE rule as brands.upsertBrandsBatch: don't
-           -- clobber an existing romaji with a NULL just because the
-           -- incoming ingest skipped transliteration.
-           name_romaji  = COALESCE(EXCLUDED.name_romaji, breweries.name_romaji),
-           area_id      = EXCLUDED.area_id,
-           source       = EXCLUDED.source,
-           confidence   = EXCLUDED.confidence,
-           content_hash = EXCLUDED.content_hash,
-           updated_at   = NOW()`,
-        values,
-      )
-      onChunk?.(chunk.length)
-    }
-  }
-
-  async transaction<T>(fn: (tx: BreweriesDB) => Promise<T>): Promise<T> {
-    if ('release' in this.executor) {
-      return fn(this)
-    }
-    const client = await (this.executor as Pool).connect()
-    try {
-      await client.query('BEGIN')
-      const result = await fn(new PgBreweriesDB(client))
-      await client.query('COMMIT')
-      return result
-    } catch (err) {
-      await client.query('ROLLBACK').catch(() => {
-        /* swallow rollback failure; surface the original */
-      })
-      throw err
-    } finally {
-      client.release()
-    }
-  }
+              END`,
+  insertColumns: [
+    'brewery_id',
+    'name',
+    'name_kanji',
+    'name_romaji',
+    'area_id',
+    'source',
+    'confidence',
+    'content_hash',
+  ],
+  coalesceColumns: ['name_romaji'],
+  valuesOf: ({ brewery, contentHash }) => [
+    brewery.breweryId,
+    brewery.name,
+    brewery.nameKanji,
+    brewery.nameRomaji,
+    brewery.areaId,
+    brewery.source,
+    brewery.confidence ?? null,
+    contentHash,
+  ],
 }
 
-export function makePgBreweriesDB(pool: Pool): BreweriesDB {
-  return new PgBreweriesDB(pool)
+export function makePgBreweriesDB(executor: Pool | PoolClient): BreweriesDB {
+  const driver = new PgUpsertDriver<BreweryUpsert>(executor, breweriesUpsertSpec)
+  const self: BreweriesDB = {
+    getExistingBreweryHashes: () => driver.getExistingHashes(),
+    upsertBreweriesBatch: (rows, onChunk) => driver.upsertBatch(rows, onChunk),
+    transaction<T>(fn: (tx: BreweriesDB) => Promise<T>): Promise<T> {
+      return withTransaction(executor, self, makePgBreweriesDB, fn)
+    },
+  }
+  return self
 }
+
+// ---------- FlavorCharts ----------
 
 export interface FlavorChartUpsert {
   flavorChart: FlavorChart
@@ -337,89 +375,46 @@ export interface FlavorChartsDB {
   transaction<T>(fn: (tx: FlavorChartsDB) => Promise<T>): Promise<T>
 }
 
-class PgFlavorChartsDB implements FlavorChartsDB {
-  constructor(private readonly executor: Pool | PoolClient) {}
-
-  async getExistingFlavorChartHashes(): Promise<Map<number, string>> {
-    const { rows } = await this.executor.query<{
-      brand_id: number
-      content_hash: string
-    }>('SELECT brand_id, content_hash FROM flavor_charts')
-    return new Map(rows.map((r) => [r.brand_id, r.content_hash]))
-  }
-
-  async upsertFlavorChartsBatch(
-    rows: readonly FlavorChartUpsert[],
-    onChunk?: BatchProgress,
-  ): Promise<void> {
-    if (rows.length === 0) return
-    for (let start = 0; start < rows.length; start += BATCH_SIZE) {
-      const chunk = rows.slice(start, start + BATCH_SIZE)
-      const placeholders: string[] = []
-      const values: unknown[] = []
-      for (const { flavorChart, contentHash } of chunk) {
-        const i = values.length
-        // 10 placeholders + literal NOW() for updated_at
-        placeholders.push(
-          `($${i + 1}, $${i + 2}, $${i + 3}, $${i + 4}, $${i + 5}, $${i + 6}, $${i + 7}, $${i + 8}, $${i + 9}, $${i + 10}, NOW())`,
-        )
-        values.push(
-          flavorChart.brandId,
-          flavorChart.f1,
-          flavorChart.f2,
-          flavorChart.f3,
-          flavorChart.f4,
-          flavorChart.f5,
-          flavorChart.f6,
-          flavorChart.source,
-          flavorChart.confidence ?? null,
-          contentHash,
-        )
-      }
-      await this.executor.query(
-        `INSERT INTO flavor_charts
-           (brand_id, f1, f2, f3, f4, f5, f6, source, confidence, content_hash, updated_at)
-         VALUES ${placeholders.join(', ')}
-         ON CONFLICT (brand_id) DO UPDATE SET
-           f1           = EXCLUDED.f1,
-           f2           = EXCLUDED.f2,
-           f3           = EXCLUDED.f3,
-           f4           = EXCLUDED.f4,
-           f5           = EXCLUDED.f5,
-           f6           = EXCLUDED.f6,
-           source       = EXCLUDED.source,
-           confidence   = EXCLUDED.confidence,
-           content_hash = EXCLUDED.content_hash,
-           updated_at   = NOW()`,
-        values,
-      )
-      onChunk?.(chunk.length)
-    }
-  }
-
-  async transaction<T>(fn: (tx: FlavorChartsDB) => Promise<T>): Promise<T> {
-    if ('release' in this.executor) {
-      return fn(this)
-    }
-    const client = await (this.executor as Pool).connect()
-    try {
-      await client.query('BEGIN')
-      const result = await fn(new PgFlavorChartsDB(client))
-      await client.query('COMMIT')
-      return result
-    } catch (err) {
-      await client.query('ROLLBACK').catch(() => {
-        /* swallow rollback failure; surface the original */
-      })
-      throw err
-    } finally {
-      client.release()
-    }
-  }
+const flavorChartsUpsertSpec: UpsertTableSpec<FlavorChartUpsert> = {
+  table: 'flavor_charts',
+  keyColumn: 'brand_id',
+  hashExpression: 'content_hash',
+  insertColumns: [
+    'brand_id',
+    'f1',
+    'f2',
+    'f3',
+    'f4',
+    'f5',
+    'f6',
+    'source',
+    'confidence',
+    'content_hash',
+  ],
+  valuesOf: ({ flavorChart, contentHash }) => [
+    flavorChart.brandId,
+    flavorChart.f1,
+    flavorChart.f2,
+    flavorChart.f3,
+    flavorChart.f4,
+    flavorChart.f5,
+    flavorChart.f6,
+    flavorChart.source,
+    flavorChart.confidence ?? null,
+    contentHash,
+  ],
 }
 
-export function makePgFlavorChartsDB(pool: Pool): FlavorChartsDB {
-  return new PgFlavorChartsDB(pool)
+export function makePgFlavorChartsDB(executor: Pool | PoolClient): FlavorChartsDB {
+  const driver = new PgUpsertDriver<FlavorChartUpsert>(executor, flavorChartsUpsertSpec)
+  const self: FlavorChartsDB = {
+    getExistingFlavorChartHashes: () => driver.getExistingHashes(),
+    upsertFlavorChartsBatch: (rows, onChunk) => driver.upsertBatch(rows, onChunk),
+    transaction<T>(fn: (tx: FlavorChartsDB) => Promise<T>): Promise<T> {
+      return withTransaction(executor, self, makePgFlavorChartsDB, fn)
+    },
+  }
+  return self
 }
 
 /**
@@ -509,69 +504,30 @@ export interface AreasDB {
   transaction<T>(fn: (tx: AreasDB) => Promise<T>): Promise<T>
 }
 
-class PgAreasDB implements AreasDB {
-  constructor(private readonly executor: Pool | PoolClient) {}
-
-  async getExistingAreaHashes(): Promise<Map<number, string>> {
-    const { rows } = await this.executor.query<{
-      area_id: number
-      content_hash: string
-    }>('SELECT area_id, content_hash FROM areas')
-    return new Map(rows.map((r) => [r.area_id, r.content_hash]))
-  }
-
-  async upsertAreasBatch(rows: readonly AreaUpsert[], onChunk?: BatchProgress): Promise<void> {
-    if (rows.length === 0) return
-    for (let start = 0; start < rows.length; start += BATCH_SIZE) {
-      const chunk = rows.slice(start, start + BATCH_SIZE)
-      const placeholders: string[] = []
-      const values: unknown[] = []
-      for (const { area, contentHash } of chunk) {
-        const i = values.length
-        placeholders.push(
-          `($${i + 1}, $${i + 2}, $${i + 3}, $${i + 4}, $${i + 5}, NOW())`,
-        )
-        values.push(area.areaId, area.name, area.source, area.confidence ?? null, contentHash)
-      }
-      await this.executor.query(
-        `INSERT INTO areas
-           (area_id, name, source, confidence, content_hash, updated_at)
-         VALUES ${placeholders.join(', ')}
-         ON CONFLICT (area_id) DO UPDATE SET
-           name         = EXCLUDED.name,
-           source       = EXCLUDED.source,
-           confidence   = EXCLUDED.confidence,
-           content_hash = EXCLUDED.content_hash,
-           updated_at   = NOW()`,
-        values,
-      )
-      onChunk?.(chunk.length)
-    }
-  }
-
-  async transaction<T>(fn: (tx: AreasDB) => Promise<T>): Promise<T> {
-    if ('release' in this.executor) {
-      return fn(this)
-    }
-    const client = await (this.executor as Pool).connect()
-    try {
-      await client.query('BEGIN')
-      const result = await fn(new PgAreasDB(client))
-      await client.query('COMMIT')
-      return result
-    } catch (err) {
-      await client.query('ROLLBACK').catch(() => {
-        /* swallow rollback failure; surface the original */
-      })
-      throw err
-    } finally {
-      client.release()
-    }
-  }
+const areasUpsertSpec: UpsertTableSpec<AreaUpsert> = {
+  table: 'areas',
+  keyColumn: 'area_id',
+  hashExpression: 'content_hash',
+  insertColumns: ['area_id', 'name', 'source', 'confidence', 'content_hash'],
+  valuesOf: ({ area, contentHash }) => [
+    area.areaId,
+    area.name,
+    area.source,
+    area.confidence ?? null,
+    contentHash,
+  ],
 }
 
-export function makePgAreasDB(pool: Pool): AreasDB {
-  return new PgAreasDB(pool)
+export function makePgAreasDB(executor: Pool | PoolClient): AreasDB {
+  const driver = new PgUpsertDriver<AreaUpsert>(executor, areasUpsertSpec)
+  const self: AreasDB = {
+    getExistingAreaHashes: () => driver.getExistingHashes(),
+    upsertAreasBatch: (rows, onChunk) => driver.upsertBatch(rows, onChunk),
+    transaction<T>(fn: (tx: AreasDB) => Promise<T>): Promise<T> {
+      return withTransaction(executor, self, makePgAreasDB, fn)
+    },
+  }
+  return self
 }
 
 export interface AreaRow {
@@ -626,72 +582,30 @@ export interface FlavorTagsDB {
   transaction<T>(fn: (tx: FlavorTagsDB) => Promise<T>): Promise<T>
 }
 
-class PgFlavorTagsDB implements FlavorTagsDB {
-  constructor(private readonly executor: Pool | PoolClient) {}
-
-  async getExistingFlavorTagHashes(): Promise<Map<number, string>> {
-    const { rows } = await this.executor.query<{
-      tag_id: number
-      content_hash: string
-    }>('SELECT tag_id, content_hash FROM flavor_tags')
-    return new Map(rows.map((r) => [r.tag_id, r.content_hash]))
-  }
-
-  async upsertFlavorTagsBatch(
-    rows: readonly FlavorTagUpsert[],
-    onChunk?: BatchProgress,
-  ): Promise<void> {
-    if (rows.length === 0) return
-    for (let start = 0; start < rows.length; start += BATCH_SIZE) {
-      const chunk = rows.slice(start, start + BATCH_SIZE)
-      const placeholders: string[] = []
-      const values: unknown[] = []
-      for (const { tag, contentHash } of chunk) {
-        const i = values.length
-        placeholders.push(
-          `($${i + 1}, $${i + 2}, $${i + 3}, $${i + 4}, $${i + 5}, NOW())`,
-        )
-        values.push(tag.tagId, tag.name, tag.source, tag.confidence ?? null, contentHash)
-      }
-      await this.executor.query(
-        `INSERT INTO flavor_tags
-           (tag_id, name, source, confidence, content_hash, updated_at)
-         VALUES ${placeholders.join(', ')}
-         ON CONFLICT (tag_id) DO UPDATE SET
-           name         = EXCLUDED.name,
-           source       = EXCLUDED.source,
-           confidence   = EXCLUDED.confidence,
-           content_hash = EXCLUDED.content_hash,
-           updated_at   = NOW()`,
-        values,
-      )
-      onChunk?.(chunk.length)
-    }
-  }
-
-  async transaction<T>(fn: (tx: FlavorTagsDB) => Promise<T>): Promise<T> {
-    if ('release' in this.executor) {
-      return fn(this)
-    }
-    const client = await (this.executor as Pool).connect()
-    try {
-      await client.query('BEGIN')
-      const result = await fn(new PgFlavorTagsDB(client))
-      await client.query('COMMIT')
-      return result
-    } catch (err) {
-      await client.query('ROLLBACK').catch(() => {
-        /* swallow rollback failure; surface the original */
-      })
-      throw err
-    } finally {
-      client.release()
-    }
-  }
+const flavorTagsUpsertSpec: UpsertTableSpec<FlavorTagUpsert> = {
+  table: 'flavor_tags',
+  keyColumn: 'tag_id',
+  hashExpression: 'content_hash',
+  insertColumns: ['tag_id', 'name', 'source', 'confidence', 'content_hash'],
+  valuesOf: ({ tag, contentHash }) => [
+    tag.tagId,
+    tag.name,
+    tag.source,
+    tag.confidence ?? null,
+    contentHash,
+  ],
 }
 
-export function makePgFlavorTagsDB(pool: Pool): FlavorTagsDB {
-  return new PgFlavorTagsDB(pool)
+export function makePgFlavorTagsDB(executor: Pool | PoolClient): FlavorTagsDB {
+  const driver = new PgUpsertDriver<FlavorTagUpsert>(executor, flavorTagsUpsertSpec)
+  const self: FlavorTagsDB = {
+    getExistingFlavorTagHashes: () => driver.getExistingHashes(),
+    upsertFlavorTagsBatch: (rows, onChunk) => driver.upsertBatch(rows, onChunk),
+    transaction<T>(fn: (tx: FlavorTagsDB) => Promise<T>): Promise<T> {
+      return withTransaction(executor, self, makePgFlavorTagsDB, fn)
+    },
+  }
+  return self
 }
 
 export interface FlavorTagRow {
@@ -717,7 +631,8 @@ export function rowToFlavorTag(row: FlavorTagRow): FlavorTag {
 //
 // ADR-0002: only the latest snapshot is retained. The DB contract is
 // "wholesale replace" rather than "upsert per row" — there is no
-// content_hash column on rankings and no idempotency-by-row.
+// content_hash column on rankings and no idempotency-by-row. This is why
+// rankings does NOT use `PgUpsertDriver`: it TRUNCATEs and re-INSERTs.
 
 export interface RankingsDB {
   /**
