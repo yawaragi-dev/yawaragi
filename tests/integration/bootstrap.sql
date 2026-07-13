@@ -20,9 +20,11 @@
 -- -----------------------------------------------------------------------
 --   * supabase_admin / pgbouncer / authenticator infrastructure roles —
 --     superset of what we test; not referenced by migrations or app code.
---   * auth.* schema (Supabase's gotrue tables) — we use Clerk for user auth;
---     auth.uid() is shimmed per-test in Phase 2.5+ when user-scoped tables
---     land, not bootstrapped here.
+--   * auth.* schema (Supabase's gotrue tables) — we use Clerk for user auth,
+--     so gotrue's tables are irrelevant. We DO, however, ship a minimal
+--     `auth.uid()` function (see below): RLS policies on user-scoped tables
+--     reference it, so the testcontainer must resolve the same symbol
+--     production does. Everything else under auth.* stays omitted.
 --   * realtime.* schema — we don't subscribe to realtime channels.
 --   * storage.* schema — no file storage usage path.
 --   * extensions schema and pre-installed extensions (pgcrypto, uuid-ossp,
@@ -63,3 +65,43 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public
   GRANT ALL ON SEQUENCES TO service_role;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public
   GRANT EXECUTE ON FUNCTIONS TO anon, authenticated, service_role;
+
+-- auth.uid() shim (#219)
+-- ----------------------
+-- User-scoped RLS policies read the current caller's identity via `auth.uid()`
+-- (e.g. `USING (auth.uid() = user_id)`). In production that function is part of
+-- Supabase's `auth` schema and resolves the `sub` claim of the verified JWT
+-- PostgREST puts in a per-request GUC. We use Clerk (not gotrue), but the
+-- PostgREST → GUC → auth.uid() mechanism is identical: Clerk is wired as a
+-- Supabase Third-Party Auth provider (ADR-0010), Supabase verifies the Clerk
+-- JWT against Clerk's JWKS, and PostgREST populates `request.jwt.claims` with
+-- the claim set. This shim reproduces that read so RLS behaves the same in the
+-- testcontainer as it does in production.
+--
+-- GUC choice: we read `request.jwt.claims` (the whole claim set as JSON) and
+-- extract `sub`, with a fallback to the legacy scalar `request.jwt.claim.sub`
+-- form. This mirrors Supabase's own `auth.uid()` coalesce and is exactly what
+-- `withUserContext()` (tests/integration/with-user-context.ts) sets. The second
+-- arg `true` to current_setting is `missing_ok` — an unset GUC yields NULL
+-- (unauthenticated) rather than erroring, so an anon caller simply matches no
+-- rows.
+--
+-- Return type is TEXT, not UUID (Supabase's stock signature). Clerk subject
+-- ids look like `user_2abc…`, which are NOT UUIDs; user-scoped tables therefore
+-- carry `user_id TEXT`. Casting to uuid here would throw on every real Clerk
+-- sub. Keeping it TEXT is the deliberate, documented divergence from stock
+-- Supabase for a Clerk-backed project.
+CREATE SCHEMA IF NOT EXISTS auth;
+GRANT USAGE ON SCHEMA auth TO anon, authenticated, service_role;
+
+CREATE OR REPLACE FUNCTION auth.uid() RETURNS text
+  LANGUAGE sql
+  STABLE
+AS $$
+  SELECT coalesce(
+    nullif(current_setting('request.jwt.claim.sub', true), ''),
+    nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'sub'
+  )
+$$;
+
+GRANT EXECUTE ON FUNCTION auth.uid() TO anon, authenticated, service_role;
