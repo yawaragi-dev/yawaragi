@@ -57,26 +57,26 @@ vi.mock('@/lib/ai/vision/registry', async () => {
   }
 })
 
-// Lookup helpers are the Sakenowa-side seam. Mocking at the module
-// boundary (the imports scan-action.ts reads) is the same pattern
-// suggest-action.test.ts uses to isolate the action from its MCP
-// factory. The real lookup code has its own `lookup.integration.test.ts`
-// against testcontainers — this file exercises the action's branching
-// on the tagged-union result shape.
+// The whole label-matching cascade — every pre-lookup guard AND the
+// 5-pass Sakenowa chain — lives behind `resolveScannedLabel` (#198).
+// scan-action.ts is now vision → resolveScannedLabel → map-to-render-
+// state, so this file mocks the resolver at the module boundary and
+// exercises the action's branching on the resolver's tagged-union
+// result. The guard × cascade COMPOSITION is unit-tested directly (no
+// vision, no rate-limit) in `resolve-scanned-label.test.ts`; the passes
+// themselves against Postgres in `lookup.integration.test.ts`.
+vi.mock('@/lib/sakenowa/resolve-scanned-label', () => ({
+  resolveScannedLabel: vi.fn(),
+}))
+
+// `lookupBreweryByBrand` + `lookupFlavorChart` are still called directly
+// by the matched-branch render mapping (ADR-0015 — the in-place result
+// card fetches the brewery romaji + flavor chart alongside the match).
+// Bare `vi.fn()` returns undefined; `Promise.all` treats non-thenables
+// as immediately fulfilled so matched tests pass without asserting on
+// the (null) chart value.
 vi.mock('@/lib/sakenowa/lookup', () => ({
-  findSakeByExtraction: vi.fn(),
-  findSakeByBrandOnly: vi.fn(),
-  findSakeByBreweryOnly: vi.fn(),
   lookupBreweryByBrand: vi.fn(),
-  // #183 added `lookupFlavorChart` to the matched branch (ADR-0015 —
-  // in-place result card fetches the chart alongside the brewery
-  // romaji). Without this export in the mock factory the import
-  // resolves to undefined and the matched branch throws
-  // `TypeError: lookupFlavorChart is not a function`, which
-  // scan-action's try/catch surfaces as `extraction_failed`. Bare
-  // `vi.fn()` returns undefined; `Promise.all` treats non-thenables
-  // as immediately fulfilled so matched tests pass without asserting
-  // on the (null) chart value.
   lookupFlavorChart: vi.fn(),
 }))
 
@@ -90,12 +90,8 @@ vi.mock('@/lib/rate-limit/config-gate', () => ({
 import { cookies, headers } from 'next/headers'
 import { getVisionProvider } from '@/lib/ai/vision/registry'
 import { createAnthropicHaikuProvider } from '@/lib/ai/vision/anthropic-haiku-provider'
-import {
-  findSakeByBrandOnly,
-  findSakeByBreweryOnly,
-  findSakeByExtraction,
-  lookupBreweryByBrand,
-} from '@/lib/sakenowa/lookup'
+import { resolveScannedLabel } from '@/lib/sakenowa/resolve-scanned-label'
+import { lookupBreweryByBrand } from '@/lib/sakenowa/lookup'
 import { assertRateLimitConfig } from '@/lib/rate-limit/config-gate'
 import { scanAction } from './scan-action'
 import { INITIAL_SCAN_ACTION_STATE } from './scan-action-state'
@@ -105,9 +101,7 @@ import type { Brewery } from '@/lib/schemas/brewery'
 const cookiesMock = vi.mocked(cookies)
 const headersMock = vi.mocked(headers)
 const getVisionProviderMock = vi.mocked(getVisionProvider)
-const findSakeByExtractionMock = vi.mocked(findSakeByExtraction)
-const findSakeByBrandOnlyMock = vi.mocked(findSakeByBrandOnly)
-const findSakeByBreweryOnlyMock = vi.mocked(findSakeByBreweryOnly)
+const resolveScannedLabelMock = vi.mocked(resolveScannedLabel)
 const lookupBreweryByBrandMock = vi.mocked(lookupBreweryByBrand)
 const assertRateLimitConfigMock = vi.mocked(assertRateLimitConfig)
 
@@ -396,6 +390,14 @@ describe('scanAction — session_missing (post-#161 middleware refactor)', () =>
 })
 
 // --- Vision-tier states (retry) --------------------------------------
+//
+// The guard-driven low_confidence outcomes (retry-tier confidence,
+// placeholder sentinel, Latin-only brewery) now live inside
+// `resolveScannedLabel` and are covered directly in
+// `resolve-scanned-label.test.ts`. Here we only assert scan-action's
+// side: a low_confidence resolver result maps to the low_confidence
+// state (and, being retryable, runs both tiers), and a vision throw is
+// caught as extraction_failed.
 
 describe('scanAction — vision-tier states', () => {
   afterEach(() => {
@@ -403,64 +405,20 @@ describe('scanAction — vision-tier states', () => {
     assertRateLimitConfigMock.mockReturnValue(null)
   })
 
-  it('returns low_confidence when the extraction confidence is below the retry threshold', async () => {
-    // Below 0.60 the action short-circuits BEFORE running the Sakenowa
-    // lookup. Tier-2 still runs (per the two-tier retry rules), so we
-    // wire tier-2 to return the same low-confidence extraction.
+  it('maps a low_confidence resolver result to the low_confidence state and retries tier-2', async () => {
     stubEmptyRequestContext()
     stubVisionTiers(
       mockModelReturning(RETRY_TIER_EXTRACTION),
       mockModelReturning(RETRY_TIER_EXTRACTION),
     )
+    resolveScannedLabelMock.mockResolvedValue({ kind: 'low_confidence' })
 
     const state = await scanAction(INITIAL_SCAN_ACTION_STATE, jpegFormData())
 
     expect(state.status).toBe('low_confidence')
-    // Retry tier short-circuits before Sakenowa; if the lookup was hit
-    // this test would surface the "no_match" state instead.
-    expect(findSakeByExtractionMock).not.toHaveBeenCalled()
-  })
-
-  it('routes to low_confidence when the model emits a "不明" placeholder even at high confidence', async () => {
-    // The system prompt forbids sentinel values but the model
-    // occasionally still emits them. The hard-coded routing to
-    // low_confidence ignores confidence entirely so a placeholder at
-    // 0.85 does not feed Sakenowa a query that can never match.
-    stubEmptyRequestContext()
-    const placeholder = {
-      source: 'llm_extracted',
-      name_ja: '不明',
-      brewery_ja: '旭酒造',
-      confidence: 0.9,
-    }
-    stubVisionTiers(mockModelReturning(placeholder), mockModelReturning(placeholder))
-
-    const state = await scanAction(INITIAL_SCAN_ACTION_STATE, jpegFormData())
-
-    expect(state.status).toBe('low_confidence')
-    expect(findSakeByExtractionMock).not.toHaveBeenCalled()
-  })
-
-  it('routes to low_confidence when brewery_ja is Latin-only (script guard fires)', async () => {
-    // Latin brewery names are the model misreading a rice-variety
-    // call-out, retailer name, or similar — never a real brewery in
-    // Sakenowa. Guard fires regardless of confidence.
-    stubEmptyRequestContext()
-    const latinBrewery = {
-      source: 'llm_extracted',
-      name_ja: '獺祭',
-      brewery_ja: 'YAMADA NISHIKI',
-      confidence: 0.9,
-    }
-    stubVisionTiers(
-      mockModelReturning(latinBrewery),
-      mockModelReturning(latinBrewery),
-    )
-
-    const state = await scanAction(INITIAL_SCAN_ACTION_STATE, jpegFormData())
-
-    expect(state.status).toBe('low_confidence')
-    expect(findSakeByExtractionMock).not.toHaveBeenCalled()
+    // low_confidence is a retryable tier-1 status, so tier-2 runs too.
+    expect(getVisionProviderMock).toHaveBeenCalledWith('anthropic-sonnet-4-6')
+    expect(resolveScannedLabelMock).toHaveBeenCalledTimes(2)
   })
 
   it('returns extraction_failed when both tiers throw', async () => {
@@ -479,7 +437,8 @@ describe('scanAction — vision-tier states', () => {
       // the debug log.
       expect(state.reason).toBe('Error')
     }
-    expect(findSakeByExtractionMock).not.toHaveBeenCalled()
+    // The vision call throws before the resolver is reached.
+    expect(resolveScannedLabelMock).not.toHaveBeenCalled()
   })
 })
 
@@ -491,11 +450,11 @@ describe('scanAction — Sakenowa lookup states', () => {
     assertRateLimitConfigMock.mockReturnValue(null)
   })
 
-  it('returns matched with the brand href when the first-pass lookup returns a single exact row', async () => {
+  it('returns matched with the brand href when the resolver returns an exact match', async () => {
     stubEmptyRequestContext()
     stubVisionTiers(mockModelReturning(DASSAI_EXTRACTION))
 
-    findSakeByExtractionMock.mockResolvedValueOnce({
+    resolveScannedLabelMock.mockResolvedValueOnce({
       kind: 'exact',
       sake: DASSAI_BRAND,
     })
@@ -522,7 +481,7 @@ describe('scanAction — Sakenowa lookup states', () => {
       mockModelReturning(DASSAI_EXTRACTION),
     )
 
-    findSakeByExtractionMock.mockResolvedValue({
+    resolveScannedLabelMock.mockResolvedValue({
       kind: 'no_match',
       query: { nameJa: '獺祭', breweryJa: '旭酒造' },
     })
@@ -534,7 +493,7 @@ describe('scanAction — Sakenowa lookup states', () => {
     // — so both tiers ran (tier-1 no_match → tier-2 no_match).
     expect(getVisionProviderMock).toHaveBeenCalledWith('anthropic-haiku-4-5')
     expect(getVisionProviderMock).toHaveBeenCalledWith('anthropic-sonnet-4-6')
-    expect(findSakeByExtractionMock).toHaveBeenCalledTimes(2)
+    expect(resolveScannedLabelMock).toHaveBeenCalledTimes(2)
   })
 
   it('returns matched_brand_only with brewery divergence when only the brand-only fallback resolves on tier-2', async () => {
@@ -547,7 +506,7 @@ describe('scanAction — Sakenowa lookup states', () => {
     // Tier-1 result → matched_brand_only → triggers retry to tier-2
     // (per the two-tier retry rules). Tier-2 lands on the same
     // matched_brand_only shape which the action returns as-is.
-    findSakeByExtractionMock.mockResolvedValue({
+    resolveScannedLabelMock.mockResolvedValue({
       kind: 'matched_brand_only',
       sake: DASSAI_BRAND,
       brewery: ASAHI_SHUZO,
@@ -588,7 +547,7 @@ describe('scanAction — Sakenowa lookup states', () => {
       }),
     )
 
-    findSakeByExtractionMock.mockResolvedValue({
+    resolveScannedLabelMock.mockResolvedValue({
       kind: 'matched_brewery_only',
       sake: TAKASHIMIZU_BRAND,
       brewery: TAKASHIMIZU_BREWERY,
@@ -626,7 +585,7 @@ describe('scanAction — Sakenowa lookup states', () => {
         confidence: 0.9,
       }),
     )
-    findSakeByExtractionMock.mockResolvedValue({
+    resolveScannedLabelMock.mockResolvedValue({
       kind: 'ambiguous',
       candidates: [
         { sake: DASSAI_BRAND, brewery: ASAHI_SHUZO },
@@ -658,127 +617,6 @@ describe('scanAction — Sakenowa lookup states', () => {
   })
 })
 
-// --- Single-char guard + brewery-only rescue -------------------------
-
-describe('scanAction — single-char hallucination guard', () => {
-  afterEach(() => {
-    vi.clearAllMocks()
-    assertRateLimitConfigMock.mockReturnValue(null)
-  })
-
-  it('rescues a single-char brand hallucination via brewery-only fallback', async () => {
-    // Model returns "寺田" (single character in the sense of Array.from
-    // length=1 for surrogate handling — here we use a genuinely 1-char
-    // brand hallucination). The single-char guard triggers the
-    // brewery-only fallback before falling back to low_confidence.
-    stubEmptyRequestContext()
-    const oneCharExtraction = {
-      source: 'llm_extracted',
-      name_ja: '梗',
-      brewery_ja: '高清水酒造',
-      confidence: 0.75,
-    }
-    stubVisionTiers(
-      mockModelReturning(oneCharExtraction),
-      mockModelReturning(oneCharExtraction),
-    )
-
-    findSakeByBreweryOnlyMock.mockResolvedValue({
-      kind: 'matched_brewery_only',
-      sake: TAKASHIMIZU_BRAND,
-      brewery: TAKASHIMIZU_BREWERY,
-      brandDivergence: { extracted: '梗', stored: '高清水' },
-      query: { nameJa: '梗', breweryJa: '高清水酒造' },
-    })
-
-    const state = await scanAction(INITIAL_SCAN_ACTION_STATE, jpegFormData())
-
-    expect(state.status).toBe('matched_brewery_only')
-    if (state.status === 'matched_brewery_only') {
-      expect(state.brandId).toBe(TAKASHIMIZU_BRAND.brandId)
-      expect(state.brandDivergence.extracted).toBe('梗')
-      expect(state.brandDivergence.stored).toBe('高清水')
-    }
-    // The guard short-circuits BEFORE findSakeByExtraction — only the
-    // brewery-only fallback runs.
-    expect(findSakeByExtractionMock).not.toHaveBeenCalled()
-    expect(findSakeByBreweryOnlyMock).toHaveBeenCalled()
-  })
-
-  it('rescues a single-char + wrong brewery via field-swap brand-only lookup', async () => {
-    // Model produced 1-char name + brewery field that's actually a
-    // brand kanji (field-swap case). Brewery-only misses; field-swap
-    // brand-only lookup hits. Landing state is matched_brand_only.
-    stubEmptyRequestContext()
-    const swapExtraction = {
-      source: 'llm_extracted',
-      name_ja: '梗',
-      brewery_ja: '獺祭',
-      confidence: 0.75,
-    }
-    stubVisionTiers(
-      mockModelReturning(swapExtraction),
-      mockModelReturning(swapExtraction),
-    )
-
-    findSakeByBreweryOnlyMock.mockResolvedValue({
-      kind: 'no_match',
-      query: { nameJa: '梗', breweryJa: '獺祭' },
-    })
-    findSakeByBrandOnlyMock.mockResolvedValue({
-      kind: 'matched_brand_only',
-      sake: DASSAI_BRAND,
-      brewery: ASAHI_SHUZO,
-      breweryDivergence: { extracted: '獺祭', stored: '旭酒造' },
-      query: { nameJa: '獺祭', breweryJa: '獺祭' },
-    })
-
-    const state = await scanAction(INITIAL_SCAN_ACTION_STATE, jpegFormData())
-
-    expect(state.status).toBe('matched_brand_only')
-    if (state.status === 'matched_brand_only') {
-      expect(state.brandId).toBe(DASSAI_BRAND.brandId)
-      // Field-swap path: sakeKanji falls back to the canonical form
-      // because the extraction's name_ja is the hallucinated single
-      // character, not a variant of the catalogue brand.
-      expect(state.sakeKanji).toBe('獺祭')
-      expect(state.breweryDivergence.stored).toBe('旭酒造')
-    }
-    expect(findSakeByBreweryOnlyMock).toHaveBeenCalled()
-    expect(findSakeByBrandOnlyMock).toHaveBeenCalled()
-    expect(findSakeByExtractionMock).not.toHaveBeenCalled()
-  })
-
-  it('falls through to low_confidence when the single-char guard fires and both rescues miss', async () => {
-    stubEmptyRequestContext()
-    const guardExtraction = {
-      source: 'llm_extracted',
-      name_ja: '梗',
-      brewery_ja: '存在しない',
-      confidence: 0.7,
-    }
-    stubVisionTiers(
-      mockModelReturning(guardExtraction),
-      mockModelReturning(guardExtraction),
-    )
-    findSakeByBreweryOnlyMock.mockResolvedValue({
-      kind: 'no_match',
-      query: { nameJa: '梗', breweryJa: '存在しない' },
-    })
-    findSakeByBrandOnlyMock.mockResolvedValue({
-      kind: 'no_match',
-      query: { nameJa: '存在しない', breweryJa: '存在しない' },
-    })
-
-    const state = await scanAction(INITIAL_SCAN_ACTION_STATE, jpegFormData())
-
-    expect(state.status).toBe('low_confidence')
-    // The main-path Sakenowa lookup is never reached — the guard's
-    // fallback chain owns the outcome.
-    expect(findSakeByExtractionMock).not.toHaveBeenCalled()
-  })
-})
-
 // --- Two-tier retry --------------------------------------------------
 
 describe('scanAction — two-tier Haiku → Sonnet retry', () => {
@@ -805,7 +643,7 @@ describe('scanAction — two-tier Haiku → Sonnet retry', () => {
       mockModelReturning(DASSAI_EXTRACTION),
     )
 
-    findSakeByExtractionMock
+    resolveScannedLabelMock
       .mockResolvedValueOnce({
         kind: 'no_match',
         query: { nameJa: '獺祭偽', breweryJa: '旭酒造' },
@@ -837,7 +675,7 @@ describe('scanAction — two-tier Haiku → Sonnet retry', () => {
     stubEmptyRequestContext()
     stubVisionTiers(mockModelReturning(DASSAI_EXTRACTION))
 
-    findSakeByExtractionMock.mockResolvedValueOnce({
+    resolveScannedLabelMock.mockResolvedValueOnce({
       kind: 'exact',
       sake: DASSAI_BRAND,
     })
