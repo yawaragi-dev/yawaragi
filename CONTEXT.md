@@ -31,8 +31,12 @@ A discrete categorical tag attached to a Sake from Sakenowa's 117-tag vocabulary
 _Avoid_: Tag (too generic), FlavorLabel, FlavorAttribute
 
 **TasteProfile**:
-A *User*'s aggregated preference, built up from their ratings and interactions. Lives in our own data, not Sakenowa. Mirrors the FlavorProfile shape (6 axes) plus a weighted set of preferred FlavorTags.
-_Avoid_: UserProfile (collides with auth), FlavorProfile (that's the Sake's, not the User's), Preference
+A *User*'s aggregated preference, derived from their **TasteEvents**. Lives in our own data, not Sakenowa. Mirrors the FlavorProfile shape (6 axes) plus a weighted set of preferred FlavorTags. Never stored as a snapshot — always recomputed from the TasteEvents, so it stays reproducible and erasable.
+_Avoid_: UserProfile (collides with auth), FlavorProfile (that's the Sake's, not the User's), Preference, TasteVector (that's the derived 6-axis result, not the profile)
+
+**TasteEvent**:
+A single dated interaction that feeds a *User*'s **TasteProfile**: a Sake rating, an accepted scan result, or a cross-beverage seed. Each carries a *signed strength* — a direction (toward or away from a FlavorProfile position) and a magnitude. A User has zero or more TasteEvents; the TasteProfile is the combination of them.
+_Avoid_: Interaction (too generic), Rating (only one of the three kinds), Signal, PreferenceEvent
 
 **Ranking**:
 A single Sake's position-and-score within a popularity list, for a specific month. Scope is either *overall* (global top 100) or a single Prefecture (regional top N). A Sake has zero or more Rankings: it may appear in overall, in its Brewery's Prefecture, in both, or in neither. The `year_month` records which monthly snapshot the position came from. We store only the latest snapshot — never historical.
@@ -57,7 +61,8 @@ _Avoid_: Anchor (overloaded — the research doc's raw exemplars are also "ancho
 - A **Brewery** is located in exactly one **Prefecture**
 - A **Sake** has exactly one **FlavorProfile**
 - A **Sake** has zero or more **FlavorTags**
-- A **User** has exactly one **TasteProfile** (derived, not stored as a snapshot)
+- A **User** has zero or more **TasteEvents**
+- A **User** has exactly one **TasteProfile**, derived from their **TasteEvents** (never stored as a snapshot)
 - A **Sake** has zero or more **Rankings** (at most one *overall*, at most one per its Brewery's Prefecture, both for the current month only)
 - Every displayed record carries a **Provenance** (source + optional confidence)
 
