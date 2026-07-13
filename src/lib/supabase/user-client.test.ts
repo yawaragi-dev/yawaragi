@@ -54,15 +54,36 @@ describe('getUserScopedClient', () => {
     expect(getToken).toHaveBeenCalledWith()
   })
 
-  it('returns null from the accessToken callback when the caller is anonymous', async () => {
+  it('throws a named error from the accessToken callback when the caller is anonymous', async () => {
+    // Loud-failure contract (#219): an unauthenticated caller must NOT silently
+    // fall back to the anon key and get an empty result set — that reads as
+    // "no data" in dev while being an auth bug on a user-scoped table. The
+    // callback throws the moment supabase-js tries to attach auth to the first
+    // request, which is exactly when the silent-empty would otherwise mislead.
     mockCreateClient.mockReturnValue({})
     mockAuth.mockResolvedValue({ getToken: async () => null })
-    const { getUserScopedClient } = await import('./user-client')
+    const { getUserScopedClient, UnauthenticatedUserScopeError } = await import('./user-client')
 
     getUserScopedClient()
 
     const [, , options] = mockCreateClient.mock.calls[0]
-    const token = await options.accessToken()
-    expect(token).toBeNull()
+    await expect(options.accessToken()).rejects.toThrow(UnauthenticatedUserScopeError)
+  })
+})
+
+describe('getAnonScopedClient', () => {
+  it('returns a supabase-js client on the anon key with NO accessToken callback (explicit escape hatch)', async () => {
+    const sentinel = { from: () => null }
+    mockCreateClient.mockReturnValue(sentinel)
+    const { getAnonScopedClient } = await import('./user-client')
+
+    const client = getAnonScopedClient()
+
+    expect(client).toBe(sentinel)
+    const [url, key, options] = mockCreateClient.mock.calls[0]
+    expect(url).toBe('https://test.supabase.co')
+    expect(key).toBe('anon-key')
+    // No Clerk token is attached: this path only ever sees anon-RLS rows.
+    expect(options).toBeUndefined()
   })
 })
