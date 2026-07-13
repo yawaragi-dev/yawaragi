@@ -1,6 +1,6 @@
 import { getTranslations } from 'next-intl/server'
 import type { ProvenanceSource } from '@/lib/schemas/with-provenance'
-import { shouldRenderBadge } from '@/lib/provenance/policy'
+import { type BadgeKind, resolveBadgeKind } from '@/lib/provenance/policy'
 import { cn } from '@/lib/utils'
 
 /**
@@ -30,25 +30,20 @@ interface ProvenanceBadgeProps {
   className?: string
 }
 
-// Keyed by the i18n message subkey so the view stays free of source-string
-// branching. `satisfies` ensures every non-canonical source has a key.
-type BadgeKind = 'llmExtracted' | 'llmInferred' | 'crossBeverageMap'
-
-const SOURCE_TO_KIND: Partial<Record<ProvenanceSource, BadgeKind>> = {
-  llm_extracted: 'llmExtracted',
-  llm_inferred: 'llmInferred',
-  cross_beverage_map: 'crossBeverageMap',
-} satisfies Partial<Record<ProvenanceSource, BadgeKind>>
+// The `source → BadgeKind` mapping (`SOURCE_TO_KIND`) and the `BadgeKind`
+// type now live in `@/lib/provenance/policy` so this async server wrapper
+// and the `'use client'` scan callers resolve the kind through one seam
+// (#198) — no more hardcoded `kind="..."` literals re-encoding the map.
 
 export async function ProvenanceBadge({
   source,
   confidence,
   className,
 }: ProvenanceBadgeProps) {
-  if (!shouldRenderBadge(source)) return null
-  const kind = SOURCE_TO_KIND[source]
-  // Narrowed by `shouldRenderBadge`, but TS can't see through the
-  // policy boundary; the runtime guard is a belt-and-braces.
+  const kind = resolveBadgeKind(source)
+  // `null` for canonical sources — the policy's single decision point for
+  // "does this source get a badge". Callers can always mount the badge next
+  // to a value and let the policy decide whether anything renders.
   if (!kind) return null
 
   const t = await getTranslations(`provenance.badge.${kind}`)

@@ -13,6 +13,7 @@ import { useRouter } from 'next/navigation'
 import { Link } from '@/i18n/navigation'
 import { Button } from '@/components/ui/button'
 import { ProvenanceBadgeView } from '@/components/sake/provenance-badge'
+import { resolveBadgeKind } from '@/lib/provenance/policy'
 // Per ADR-0014, attribution should render conditionally on the
 // rendered-source-set. In scan-form we render brewery kanji from a
 // Sakenowa-sourced brewery row in every status that mounts
@@ -592,7 +593,7 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
                 {state.extraction.name_ja}
               </span>
               <ProvenanceBadgeView
-                kind="llmExtracted"
+                kind={resolveBadgeKind('llm_extracted')}
                 label={tBadge('label')}
                 tooltip={tBadge('tooltip')}
                 confidence={state.extraction.confidence}
@@ -818,7 +819,7 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
               </span>
             )}
             <ProvenanceBadgeView
-              kind="llmExtracted"
+              kind={resolveBadgeKind('llm_extracted')}
               label={tBadge('label')}
               tooltip={tBadge('tooltip')}
               confidence={state.extraction.confidence}
@@ -892,7 +893,7 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
               </span>
             )}
             <ProvenanceBadgeView
-              kind="llmExtracted"
+              kind={resolveBadgeKind('llm_extracted')}
               label={tBadge('label')}
               tooltip={tBadge('tooltip')}
               confidence={state.extraction.confidence}

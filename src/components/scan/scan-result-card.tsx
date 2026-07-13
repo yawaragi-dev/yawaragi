@@ -8,6 +8,10 @@ import {
   buildFlavorAxisStrings,
 } from '@/components/sake/flavor-profile-view'
 import { markArrivedViaScan } from '@/lib/scan/arrived-via-scan'
+import {
+  resolveBadgeKind,
+  shouldRenderHeuristicDisclaimer,
+} from '@/lib/provenance/policy'
 import { SakenowaAttributionView } from '@/components/sake/sakenowa-attribution'
 import {
   findNearestExemplars,
@@ -118,6 +122,13 @@ export function ScanResultCard({
     ? findNearestExemplars(flavorChart)
     : null
 
+  // The reverse-exemplar section is cross-beverage-mapped by construction
+  // (reverse-lookup.ts §4 "Provenance stays cross_beverage_map"). Declaring
+  // that source ONCE lets the ADR-0005 policy drive BOTH decorations this
+  // section owes — the crossBeverageMap badge AND the HeuristicDisclaimer —
+  // instead of the two being hardcoded off separate triggers (#198).
+  const reverseExemplarSource = 'cross_beverage_map' as const
+
   // #190 stale-fade: the photo stays full-opacity (the visitor's new pick
   // is the acknowledgement the click landed); the whole content column
   // fades to 40%. Opacity doesn't inherit-cancel, so the fade lives on the
@@ -215,7 +226,7 @@ export function ScanResultCard({
               )}
               {typeof extractionConfidence === 'number' && (
                 <ProvenanceBadgeView
-                  kind="llmExtracted"
+                  kind={resolveBadgeKind('llm_extracted')}
                   label={tBadge('label')}
                   tooltip={tBadge('tooltip')}
                   confidence={extractionConfidence}
@@ -292,7 +303,7 @@ export function ScanResultCard({
                   {t('reverseExemplarHeading')}
                 </h3>
                 <ProvenanceBadgeView
-                  kind="crossBeverageMap"
+                  kind={resolveBadgeKind(reverseExemplarSource)}
                   label={tCrossBevBadge('label')}
                   tooltip={tCrossBevBadge('tooltip')}
                 />
@@ -319,10 +330,12 @@ export function ScanResultCard({
                   {t('reverseNoAnalog')}
                 </p>
               )}
-              <HeuristicDisclaimerView
-                title={tDisclaimer('title')}
-                body={tDisclaimer('body')}
-              />
+              {shouldRenderHeuristicDisclaimer(reverseExemplarSource) && (
+                <HeuristicDisclaimerView
+                  title={tDisclaimer('title')}
+                  body={tDisclaimer('body')}
+                />
+              )}
             </section>
           )}
 

@@ -2,6 +2,7 @@ import { getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
 import { HeuristicDisclaimer } from '@/components/legal/heuristic-disclaimer'
 import { ProvenanceBadge } from '@/components/sake/provenance-badge'
+import { shouldRenderHeuristicDisclaimer } from '@/lib/provenance/policy'
 import {
   FlavorProfileView,
   buildFlavorAxisStrings,
@@ -134,7 +135,16 @@ async function SuggestCard({ suggestion }: SuggestCardProps) {
             </span>
             <ProvenanceBadge source={suggestion.cross_beverage_descriptor.source} />
           </p>
-          <HeuristicDisclaimer />
+          {/*
+            The disclaimer obligation is driven by the SAME policy seam as
+            the badge (ADR-0005 / #198): a source that needs a badge for the
+            cross-beverage kind also owes the honesty caveat. Gating on
+            `shouldRenderHeuristicDisclaimer(source)` keeps this in lockstep
+            with the taxonomy instead of the bare `!== undefined` sentinel.
+          */}
+          {shouldRenderHeuristicDisclaimer(
+            suggestion.cross_beverage_descriptor.source,
+          ) && <HeuristicDisclaimer />}
         </div>
       )}
       {suggestion.flavor_profile !== undefined && (
