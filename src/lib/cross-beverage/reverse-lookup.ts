@@ -1,5 +1,6 @@
 import type { CrossBeverageMap, Exemplar } from '@/lib/schemas/cross-beverage-map'
 import { CROSS_BEVERAGE_MAP } from '@/lib/ai/tools/cross-beverage-data'
+import { flavorDistance, type FlavorAxes } from '@/lib/flavor/flavor-similarity'
 
 /**
  * Reverse cross-beverage lookup (UX-C, issue #164). Given a sake's 6-axis
@@ -19,16 +20,12 @@ import { CROSS_BEVERAGE_MAP } from '@/lib/ai/tools/cross-beverage-data'
  *      picking a sake vector at will. Reverse is a deterministic UI hook,
  *      not a tool.
  *
- *   2. **L2 Euclidean distance over the 6 axes.** Predictable, symmetric,
- *      anchor-invariant, cheap. Cosine similarity would ignore magnitude
- *      (a dry-and-crisp sake with mid values on every axis would look
- *      "similar" to any other dry-and-crisp mid-value profile regardless
- *      of *how* dry/crisp) — the axes are 0..1 and the magnitude carries
- *      real signal ("f3 = 0.85 juko" and "f3 = 0.15 juko" are opposite
- *      poles). Weighted distance was considered and rejected: no axis is
- *      privileged in the research doc's calibration section, and adding a
- *      weight vector introduces a tuning parameter the reverse hook does
- *      not need at this scope.
+ *   2. **L2 Euclidean distance over the 6 axes** — via the shared
+ *      `flavorDistance` in `@/lib/flavor/flavor-similarity` (which documents
+ *      why L2 over cosine, and where the one cosine path deliberately lives).
+ *      Weighted distance was considered and rejected here: no axis is
+ *      privileged in the research doc's calibration section, and a weight
+ *      vector adds a tuning parameter the reverse hook does not need.
  *
  *   3. **Honesty threshold.** Below the threshold the reverse hook must
  *      render an explicit "distinctly Japanese profile — no close Western
@@ -45,45 +42,6 @@ import { CROSS_BEVERAGE_MAP } from '@/lib/ai/tools/cross-beverage-data'
  *      `EXEMPLARS_BY_DESCRIPTOR` map in `cross-beverage-data.ts`. The LLM
  *      is forbidden from inventing new exemplars.
  */
-
-/**
- * The 6-axis input shape. Intentionally structural (not
- * `FlavorChartSchema`) so the reverse hook doesn't couple to the caller's
- * type — a `FlavorChart` from Sakenowa, a `FlavorProfile` from the LLM
- * tool, or a manual test fixture all satisfy this shape. Values are
- * expected to be in [0, 1] but the function does NOT clamp — a bad input
- * simply produces a large distance and drops to the "no analog" branch,
- * which is the correct fail-open behaviour.
- */
-export interface FlavorAxes {
-  readonly f1: number
-  readonly f2: number
-  readonly f3: number
-  readonly f4: number
-  readonly f5: number
-  readonly f6: number
-}
-
-/**
- * L2 (Euclidean) distance between two 6-axis vectors.
- *
- * Range: `[0, sqrt(6)] ≈ [0, 2.449]` since each axis is in [0, 1] and
- * there are six of them. Kept `readonly` on both inputs so a bug that
- * mutates the source vector shows up at call time.
- *
- * Exported so the unit test can pin the arithmetic — a change to the
- * distance formula would break rows of pre-computed expected distances,
- * not just the top-level `findNearestExemplars` behaviour.
- */
-export function flavorDistance(a: FlavorAxes, b: FlavorAxes): number {
-  const d1 = a.f1 - b.f1
-  const d2 = a.f2 - b.f2
-  const d3 = a.f3 - b.f3
-  const d4 = a.f4 - b.f4
-  const d5 = a.f5 - b.f5
-  const d6 = a.f6 - b.f6
-  return Math.sqrt(d1 * d1 + d2 * d2 + d3 * d3 + d4 * d4 + d5 * d5 + d6 * d6)
-}
 
 /**
  * Honesty threshold: reverse matches with L2 distance > this value are

@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import type { CrossBeverageMap } from '@/lib/schemas/cross-beverage-map'
-import {
-  REVERSE_MATCH_THRESHOLD,
-  findNearestExemplars,
-  flavorDistance,
-} from './reverse-lookup'
+// flavorDistance now lives in the shared flavor-similarity module; the
+// threshold-boundary tests below still use it to pin the reverse hook's
+// distance semantics against REVERSE_MATCH_THRESHOLD. Its own arithmetic tests
+// live next to it in flavor-similarity.test.ts.
+import { flavorDistance } from '@/lib/flavor/flavor-similarity'
+import { REVERSE_MATCH_THRESHOLD, findNearestExemplars } from './reverse-lookup'
 
 // A minimal fixture table so the tests pin behaviour against pre-computed
 // distances rather than the shipped 62-row `CROSS_BEVERAGE_MAP`. This
@@ -65,38 +66,6 @@ const FIXTURE_ROWS: readonly CrossBeverageMap[] = [
     ],
   },
 ]
-
-describe('flavorDistance', () => {
-  // A change to the distance formula (e.g. someone swapping L2 for
-  // Manhattan) would break every one of these assertions — the test would
-  // fail on math, not on the choice of a helper. That's the point.
-
-  it('returns 0 for two identical vectors', () => {
-    const a = { f1: 0.5, f2: 0.5, f3: 0.5, f4: 0.5, f5: 0.5, f6: 0.5 }
-    expect(flavorDistance(a, a)).toBe(0)
-  })
-
-  it('is symmetric: d(a, b) === d(b, a)', () => {
-    const a = { f1: 0.1, f2: 0.2, f3: 0.3, f4: 0.4, f5: 0.5, f6: 0.6 }
-    const b = { f1: 0.6, f2: 0.5, f3: 0.4, f4: 0.3, f5: 0.2, f6: 0.1 }
-    expect(flavorDistance(a, b)).toBeCloseTo(flavorDistance(b, a), 12)
-  })
-
-  it('computes the Euclidean distance between two known-different vectors', () => {
-    // Difference vector [0.3, 0.4, 0, 0, 0, 0] → L2 = sqrt(0.09 + 0.16) = 0.5
-    const a = { f1: 0.1, f2: 0.2, f3: 0.5, f4: 0.5, f5: 0.5, f6: 0.5 }
-    const b = { f1: 0.4, f2: 0.6, f3: 0.5, f4: 0.5, f5: 0.5, f6: 0.5 }
-    expect(flavorDistance(a, b)).toBeCloseTo(0.5, 10)
-  })
-
-  it('reaches sqrt(6) for opposite corners of the unit cube', () => {
-    // Every axis differs by 1 → L2 = sqrt(6). Sanity-checks the upper
-    // bound: a real flavor profile in [0, 1]^6 can never exceed this.
-    const zeros = { f1: 0, f2: 0, f3: 0, f4: 0, f5: 0, f6: 0 }
-    const ones = { f1: 1, f2: 1, f3: 1, f4: 1, f5: 1, f6: 1 }
-    expect(flavorDistance(zeros, ones)).toBeCloseTo(Math.sqrt(6), 10)
-  })
-})
 
 describe('findNearestExemplars', () => {
   it('returns the exemplar of the closest row when the profile matches one anchor', () => {
