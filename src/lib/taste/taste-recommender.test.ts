@@ -94,4 +94,17 @@ describe('recommendFromTasteEvents', () => {
     if (result.kind !== 'ranked') return
     expect(result.results).toHaveLength(1)
   })
+
+  it('ranks (not cold start) from cross-beverage seeds alone, excluding nothing — the hero path', () => {
+    // The differentiator: a visitor who only used the cross-beverage seed (no
+    // ratings/scans) still gets a ranked list. Seeds carry no brandId, so
+    // nothing is excluded — every candidate is rankable.
+    const seedOnly: TasteEvent[] = [
+      { kind: 'cross_beverage_seed', descriptor: 'smoky', target: TOP, occurredAt: NOW },
+    ]
+    const result = recommendFromTasteEvents(seedOnly, candidates, NOW)
+    expect(result.kind).toBe('ranked')
+    if (result.kind !== 'ranked') return
+    expect(result.results).toHaveLength(candidates.length)
+  })
 })
