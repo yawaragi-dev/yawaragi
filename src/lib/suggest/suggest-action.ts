@@ -1,20 +1,15 @@
 'use server'
 
-import { cookies, headers } from 'next/headers'
+import { cookies } from 'next/headers'
 import type { MCPClient } from '@ai-sdk/mcp'
 import { anthropic } from '@ai-sdk/anthropic'
 import { stepCountIs } from 'ai'
 
-import { env } from '@/env'
 import { getDefaultMcpClient } from '@/lib/ai/mcp/registry'
 import { tracedGenerateText } from '@/lib/ai/observability/langfuse-trace'
 import { DebugLog, debugAdd, runWithDebugLog } from '@/lib/debug/debug-log'
 import { isDebugEnabledFromCookies } from '@/lib/debug/debug-mode'
-import { readAnonymousSessionCookie } from '@/lib/legal/anonymous-session-cookie'
-import { anonymousRateLimit } from '@/lib/rate-limit/anonymous-rate-limit'
-import { assertRateLimitConfig } from '@/lib/rate-limit/config-gate'
-import { extractIp, hashIp } from '@/lib/rate-limit/ip-hash'
-import { UpstashKVClient } from '@/lib/rate-limit/upstash-kv-client'
+import { enforceRateLimit } from '@/lib/rate-limit/enforce-rate-limit'
 import { hydrateFlavorProfiles } from './hydrate-flavor-profiles'
 import { parseSuggestionsFromText } from './parse-suggestions'
 import {
@@ -125,7 +120,7 @@ export async function suggestAction(seed: SuggestSeed): Promise<SuggestActionSta
     //    the RSC page without hitting Next.js 15's "cookies can only be
     //    modified in a Server Action or Route Handler" guard. Non-prod
     //    without env skips (see scan-action for the same posture).
-    const rateLimit = await enforceRateLimit()
+    const rateLimit = await enforceRateLimit({ bucket: 'suggestions', logPrefix: '[suggest]' })
     if (rateLimit.kind === 'session_missing') {
       debugAdd('SuggestAction', 'session_missing — cookie absent', undefined, 'warn')
       return { status: 'session_missing' }
@@ -528,82 +523,6 @@ function buildSeedPrompt(seed: SuggestSeed): string {
   // until this switch is widened.
   const _exhaustive: never = seed
   return `Unknown seed kind: ${String((_exhaustive as { kind: string }).kind)}. Return [].`
-}
-
-// -------------------- rate-limit helper --------------------
-
-type RateLimitDecision =
-  | { kind: 'allowed'; allowed: true; retryAfterSec: number }
-  | { kind: 'denied'; allowed: false; retryAfterSec: number }
-  | { kind: 'session_missing' }
-
-/**
- * Read-only rate-limit gate. Post-#161 middleware refactor: the proxy
- * (`src/proxy.ts`) is the sole writer of `yawaragi_session`; this
- * function only READS the cookie and consults the `suggestions`
- * bucket. Structurally identical to `scan-action`'s `enforceRateLimit`
- * — the two share the same session cookie and the same env-triplet
- * fail-closed posture; only the bucket name differs.
- *
- * Extracting a shared helper was considered and rejected for this slice:
- * the two actions have different failure envelopes and different
- * downstream side-effects, so the cost of a shared helper (three-arg call
- * shape, discriminated-union return, tests that must cover both callers)
- * outweighs the DRY benefit. A future refactor can consolidate once a
- * third rate-limited action lands.
- */
-async function enforceRateLimit(): Promise<RateLimitDecision> {
-  // Dev/preview escape hatch (see env.ts `RATE_LIMIT_BYPASS`): skip
-  // the KV round-trip and cookie / IP-hash read entirely. Absence of
-  // the var is the safe default. Never set on Production Vercel.
-  if (env.RATE_LIMIT_BYPASS === '1') {
-    console.warn(
-      '[suggest] RATE_LIMIT_BYPASS=1 — rate limit skipped. Do NOT ship this in Production.',
-    )
-    return { kind: 'allowed', allowed: true, retryAfterSec: 0 }
-  }
-  const config = assertRateLimitConfig(
-    {
-      secret: env.SESSION_COOKIE_SECRET,
-      salt: env.IP_HASH_SALT,
-      kvUrl: env.UPSTASH_REDIS_REST_URL,
-      kvToken: env.UPSTASH_REDIS_REST_TOKEN,
-    },
-    process.env.NODE_ENV === 'production',
-  )
-  if (!config) {
-    console.warn(
-      '[suggest] rate-limit env not set; skipping enforcement (non-production only).',
-    )
-    return { kind: 'allowed', allowed: true, retryAfterSec: 0 }
-  }
-  const { secret, salt, kvUrl, kvToken } = config
-
-  const cookieJar = await cookies()
-  const requestHeaders = await headers()
-
-  const session = readAnonymousSessionCookie(cookieJar, secret)
-  if (!session) {
-    // Middleware is the sole writer post-#161. If we're here without a
-    // cookie, the middleware didn't run for this request (matcher gap,
-    // direct action invocation from a test, etc.). Surface as a typed
-    // state — never throw, never bypass the limiter.
-    console.warn(
-      '[suggest] session cookie missing — middleware did not stamp it.',
-    )
-    return { kind: 'session_missing' }
-  }
-
-  const ipHashed = hashIp(extractIp(requestHeaders), salt)
-  const kv = new UpstashKVClient(kvUrl, kvToken)
-  const result = await anonymousRateLimit(
-    { cookieId: session.sid, ipHashed, bucket: 'suggestions' },
-    { kv },
-  )
-
-  return result.allowed
-    ? { kind: 'allowed', allowed: true, retryAfterSec: result.retryAfterSec }
-    : { kind: 'denied', allowed: false, retryAfterSec: result.retryAfterSec }
 }
 
 /**
