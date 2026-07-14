@@ -37,6 +37,7 @@ export type DebugEventSource =
   | 'SuggestAction'
   | 'MCP'
   | 'Hydrate'
+  | 'TasteAction'
 
 export type DebugEventLevel = 'info' | 'warn' | 'error'
 

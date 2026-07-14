@@ -15,8 +15,12 @@ import type { KVClient } from './kv-client'
  *     Lower cap than vision-scan because a suggest call fans out to multiple
  *     MCP tool invocations under the LLM's control, so per-call cost is
  *     materially higher.
+ *   - `taste` (Phase 5 / #220): 60 calls / 24h — taste-event writes (rate a
+ *     sake, accept a scan, seed from cross-beverage). Far higher cap than the
+ *     paid-API buckets because these are cheap KV writes with no LLM/vision
+ *     cost; the cap is abuse/quota protection, not cost protection.
  */
-export type RateLimitBucket = 'vision-scan' | 'suggestions'
+export type RateLimitBucket = 'vision-scan' | 'suggestions' | 'taste'
 
 interface BucketConfig {
   /** Max allowed calls per identifier per window. */
@@ -42,6 +46,12 @@ const BUCKET_CONFIG: Readonly<Record<RateLimitBucket, BucketConfig>> = {
   },
   suggestions: {
     cap: 3,
+    windowSeconds: 60 * 60 * 24,
+  },
+  taste: {
+    // Generous: a taste-event is a cheap KV write, not a paid API call. The
+    // cap exists to bound scripted abuse of the write path, not per-call cost.
+    cap: 60,
     windowSeconds: 60 * 60 * 24,
   },
 }
