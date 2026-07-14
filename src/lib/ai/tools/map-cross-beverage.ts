@@ -2,6 +2,11 @@ import 'server-only'
 
 import { tool } from 'ai'
 import { z } from 'zod'
+import {
+  knownCrossBeverageDescriptors,
+  resolveCrossBeverageDescriptor,
+  resolveCrossBeverageTarget,
+} from '@/lib/cross-beverage/forward-lookup'
 import { CrossBeverageMapSchema, type CrossBeverageMap } from '@/lib/schemas/cross-beverage-map'
 import {
   CROSS_BEVERAGE_DESCRIPTOR_ALIASES,
@@ -118,16 +123,6 @@ type MapCrossBeverageError = {
 // Explicit union so the tool's declared output covers both branches.
 type MapCrossBeverageOutput = CrossBeverageMap | MapCrossBeverageError
 
-const resolveDescriptor = (input: string): string => {
-  // Normalise before alias resolution so `Peaty ` and `peaty` both land on
-  // `peated`. The alias table itself is keyed by lowercase-no-whitespace,
-  // matching the canonical descriptor convention (`cross-beverage-data.ts`
-  // JSDoc); the input schema enum keys are also lowercase, so normalisation
-  // is a defensive belt catching whatever the LLM emits.
-  const normalised = input.trim().toLowerCase()
-  return CROSS_BEVERAGE_DESCRIPTOR_ALIASES[normalised] ?? normalised
-}
-
 export const mapCrossBeverage = tool({
   description:
     'Look up a cross-beverage descriptor + beverage pair in the deterministic Yawaragi CrossBeverageMap and return the matching 6-axis FlavorProfile position. Use this whenever the user asks for sake that is like a Western beverage descriptor (smoky whisky, tannic wine, hoppy beer, etc.). Do NOT invent mappings beyond what this tool returns — if the tool responds with an `error` field, surface it to the user rather than guessing.',
@@ -152,22 +147,16 @@ export const mapCrossBeverage = tool({
     descriptor,
     beverage,
   }: MapCrossBeverageInput): Promise<MapCrossBeverageOutput> => {
-    const canonical = resolveDescriptor(descriptor)
-    const row = CROSS_BEVERAGE_MAP.find(
-      (r) => r.descriptor === canonical && r.beverage === beverage,
-    )
+    const row = resolveCrossBeverageTarget(descriptor, beverage)
 
     if (row == null) {
-      // The known set surfaces to the LLM as a hint. Filter by the current
+      // The known set surfaces to the LLM as a hint, filtered by the current
       // beverage so the model gets category-appropriate suggestions
       // ("peated" isn't a useful hint for a wine query) — same posture as
       // Sakenowa's smart-search: fail informatively.
-      const knownForBeverage = CROSS_BEVERAGE_MAP.filter((r) => r.beverage === beverage).map(
-        (r) => r.descriptor,
-      )
       return {
-        error: `No cross-beverage mapping for descriptor "${descriptor}" (resolved: "${canonical}") in beverage "${beverage}". Reply to the user acknowledging this — do not invent a mapping.`,
-        knownDescriptors: knownForBeverage,
+        error: `No cross-beverage mapping for descriptor "${descriptor}" (resolved: "${resolveCrossBeverageDescriptor(descriptor)}") in beverage "${beverage}". Reply to the user acknowledging this — do not invent a mapping.`,
+        knownDescriptors: knownCrossBeverageDescriptors(beverage),
       }
     }
 
