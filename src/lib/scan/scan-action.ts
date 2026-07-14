@@ -1,7 +1,6 @@
 'use server'
 
-import { cookies, headers } from 'next/headers'
-import { env } from '@/env'
+import { cookies } from 'next/headers'
 import { getPathname } from '@/i18n/navigation'
 import type { Locale } from '@/i18n/routing'
 import { routing } from '@/i18n/routing'
@@ -12,11 +11,7 @@ import {
 import type { VisionProvider } from '@/lib/ai/vision/vision-provider'
 import { DebugLog, debugAdd, runWithDebugLog } from '@/lib/debug/debug-log'
 import { isDebugEnabledFromCookies } from '@/lib/debug/debug-mode'
-import { readAnonymousSessionCookie } from '@/lib/legal/anonymous-session-cookie'
-import { anonymousRateLimit } from '@/lib/rate-limit/anonymous-rate-limit'
-import { assertRateLimitConfig } from '@/lib/rate-limit/config-gate'
-import { extractIp, hashIp } from '@/lib/rate-limit/ip-hash'
-import { UpstashKVClient } from '@/lib/rate-limit/upstash-kv-client'
+import { enforceRateLimit } from '@/lib/rate-limit/enforce-rate-limit'
 import { isKanjiVariant } from '@/lib/sakenowa/kanji-variants'
 import { lookupBreweryByBrand, lookupFlavorChart } from '@/lib/sakenowa/lookup'
 import {
@@ -205,7 +200,11 @@ export async function scanAction(
     // longer crashes with `Cookies can only be modified in a Server
     // Action or Route Handler`. On exhaustion the action returns the
     // tagged `rate_limited` state and never reaches the vision provider.
-    const rateLimit = await enforceRateLimit()
+    const rateLimit = await enforceRateLimit({
+      bucket: 'vision-scan',
+      logPrefix: '[scan]',
+      debug: debugAdd,
+    })
     if (rateLimit.kind === 'session_missing') {
       return { status: 'session_missing' }
     }
@@ -467,105 +466,3 @@ async function mapResolvedToState(
   }
 }
 
-type RateLimitDecision =
-  | { kind: 'allowed'; allowed: true; retryAfterSec: number }
-  | { kind: 'denied'; allowed: false; retryAfterSec: number }
-  | { kind: 'session_missing' }
-
-/**
- * Read-only rate-limit gate. Post-#161 middleware refactor: the proxy
- * (`src/proxy.ts`) issues / refreshes the `yawaragi_session` cookie
- * before the RSC render. This function only READS the cookie and
- * consults the `vision-scan` bucket — no `cookies().set(...)` on the
- * hot path, so calling the action mid-render (which forbids cookie
- * mutation in Next.js 15+) no longer crashes.
- *
- * Returns:
- *   - `session_missing` — cookie absent (should not happen post-
- *     middleware; kept as a defensive branch).
- *   - `denied` — either identifier has exhausted its 24h budget.
- *   - `allowed` — call may proceed.
- *
- * Production demands the full env triplet — failing closed is the only
- * safe mode for a rate-limiter, since silently bypassing defeats the
- * cost-protection point of this slice. Non-production skips with a
- * console warning so local dev and the existing S1 happy-path E2E
- * keep working on machines without Upstash credentials.
- */
-async function enforceRateLimit(): Promise<RateLimitDecision> {
-  // Dev/preview escape hatch (see env.ts `RATE_LIMIT_BYPASS`): skip
-  // the KV round-trip and cookie / IP-hash read entirely. Absence of
-  // the var is the safe default. Never set on Production Vercel.
-  if (env.RATE_LIMIT_BYPASS === '1') {
-    console.warn(
-      '[scan] RATE_LIMIT_BYPASS=1 — rate limit skipped. Do NOT ship this in Production.',
-    )
-    return { kind: 'allowed', allowed: true, retryAfterSec: 0 }
-  }
-  // Production fail-closed: any missing key throws (with the specific
-  // key name) before we touch the cookie or KV. Non-production returns
-  // null and we skip enforcement with a warning. The check is extracted
-  // so the prod-throw branch is unit-testable per-variable — see
-  // `config-gate.test.ts`. The same gate runs at boot in
-  // `src/instrumentation.ts`, so a misconfigured Production deploy
-  // fails at cold start rather than at first scan request.
-  const config = assertRateLimitConfig(
-    {
-      secret: env.SESSION_COOKIE_SECRET,
-      salt: env.IP_HASH_SALT,
-      kvUrl: env.UPSTASH_REDIS_REST_URL,
-      kvToken: env.UPSTASH_REDIS_REST_TOKEN,
-    },
-    process.env.NODE_ENV === 'production',
-  )
-  if (!config) {
-    console.warn(
-      '[scan] rate-limit env not set; skipping enforcement (non-production only).',
-    )
-    debugAdd('RateLimit', 'env unset → skipping enforcement (non-production)', undefined, 'warn')
-    return { kind: 'allowed', allowed: true, retryAfterSec: 0 }
-  }
-  const { secret, salt, kvUrl, kvToken } = config
-
-  const cookieJar = await cookies()
-  const requestHeaders = await headers()
-
-  const session = readAnonymousSessionCookie(cookieJar, secret)
-  if (!session) {
-    // The middleware is the sole writer of `yawaragi_session`; if the
-    // action reached this branch, the middleware didn't run against
-    // this request (matcher gap, direct action invocation, etc.).
-    // Surface as a typed state — never throw, never bypass the limiter.
-    debugAdd(
-      'RateLimit',
-      'session cookie missing — middleware did not stamp it (matcher gap? direct invocation?)',
-      undefined,
-      'warn',
-    )
-    return { kind: 'session_missing' }
-  }
-
-  const ipHashed = hashIp(extractIp(requestHeaders), salt)
-  const kv = new UpstashKVClient(kvUrl, kvToken)
-  const result = await anonymousRateLimit(
-    { cookieId: session.sid, ipHashed, bucket: 'vision-scan' },
-    { kv },
-  )
-
-  debugAdd(
-    'RateLimit',
-    result.allowed
-      ? `allowed (${result.remaining} remaining in vision-scan bucket)`
-      : `denied — retryAfter ${result.retryAfterSec}s`,
-    {
-      bucket: 'vision-scan',
-      cookieKey: `rl:vision-scan:cookie:${session.sid.slice(0, 8)}…`,
-      allowed: result.allowed,
-    },
-    result.allowed ? 'info' : 'warn',
-  )
-
-  return result.allowed
-    ? { kind: 'allowed', allowed: true, retryAfterSec: result.retryAfterSec }
-    : { kind: 'denied', allowed: false, retryAfterSec: result.retryAfterSec }
-}
