@@ -344,6 +344,40 @@ remembered to write down. They rarely encode:
 If an AC checkbox says "the button works", read it as "the button works
 across all of the above". The AC never spells it out; the implementer must.
 
+## Single source of visual truth
+
+A recurring visual element — a badge, a disclaimer, an attribution line, a
+chart, an axis label — has **exactly one component**, and every surface renders
+that component. Never hand-roll a second copy inline "just here".
+
+Why this is a hard rule, not a preference:
+
+- **Consistency is automatic, not policed.** When the cross-beverage
+  disclaimer's amber "warning" look was softened to a quiet neutral footnote,
+  it was a one-line change to `HeuristicDisclaimerView` and every surface —
+  suggest, scan, landing, /profile — updated at once. Had any surface inlined
+  its own amber copy, it would have silently drifted out of sync and kept the
+  old look. A divergent copy is a bug that ships looking fine.
+- **Invariants live in the component, not in reviewers' memory.** The
+  disclaimer's title-visible-but-body-in-tooltip structure, the provenance
+  badge's on-the-baseline placement, the axis label's romaji+kanji rule — these
+  are CLAUDE.md mandates. Encoded once in the component, they can't be
+  forgotten on the fifth surface that needs them.
+- **The restyle stays cheap.** Design iteration (like the disclaimer pass
+  above) is a component edit, not a find-and-replace across the app.
+
+The canonical components (extend this list as new shared elements appear):
+`<ProvenanceBadge />` / `ProvenanceBadgeView`, `<HeuristicDisclaimer />` /
+`HeuristicDisclaimerView`, `<SakenowaAttribution />`, `<FlavorAxisLabel />`,
+`<FlavorRadarView />` + `<FlavorProfileView />`. If you need a shared element
+that doesn't have a component yet, **create the component** — don't inline it
+and leave the extraction "for later". The split into a sync presentational
+`*View` (unit-testable) + an async i18n wrapper is the established shape.
+
+If you're restyling a shared element: change it in the one component, and
+confirm no inline copy exists (`grep` the hardcoded classes / copy). Two copies
+means the wrong one is already shipping somewhere.
+
 ## Pre-flight checklist
 
 Run before declaring any interactive UI slice done. Verb-first, deterministic;
@@ -382,6 +416,11 @@ if any answer is "no" or "unsure", do not open the PR. Cross-referenced by
 12. **Reward preserved on happy path**: after the successful action, does
     the surface show something that felt like it belonged to the visitor
     (their photo, their query, their choice)? Or did the state reset?
+13. **Shared element from its canonical component**: is every recurring visual
+    element (provenance badge, heuristic disclaimer, Sakenowa attribution,
+    flavor axis label, radar / bar chart) rendered from its one shared
+    component — not a hand-rolled inline copy? (See "Single source of visual
+    truth". A second copy silently drifts out of sync.)
 
 If your slice touched a state, a click, or a copy string, run the checklist.
 Green means every question answered "yes"; anything else is a merge block.

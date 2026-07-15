@@ -68,19 +68,26 @@ export function HeuristicDisclaimerView({
     <span
       role="note"
       className={cn(
-        'group relative inline-flex w-fit items-center gap-1.5 text-xs text-amber-800 dark:text-amber-300',
+        // Quiet "footnote" treatment (not amber/warning): the caveat is
+        // helpful context, not an alert, so it recedes into the layout as a
+        // calm neutral aside. Styling only — the title-visible + body-in-
+        // tooltip structure stays (CLAUDE.md).
+        'group relative inline-flex w-fit items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400',
         className,
       )}
       data-testid="heuristic-disclaimer"
     >
-      <span className="font-medium" data-testid="heuristic-disclaimer-title">
+      <span
+        className="font-medium text-zinc-700 dark:text-zinc-300"
+        data-testid="heuristic-disclaimer-title"
+      >
         {title}
       </span>
       <button
         type="button"
         aria-label={title}
         aria-describedby={tooltipId}
-        className="inline-flex items-center justify-center rounded-full text-amber-700 hover:text-amber-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-600 dark:text-amber-400 dark:hover:text-amber-200"
+        className="inline-flex items-center justify-center rounded-full text-zinc-400 hover:text-zinc-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 dark:text-zinc-500 dark:hover:text-zinc-300"
       >
         <InfoIcon />
       </button>
@@ -88,11 +95,13 @@ export function HeuristicDisclaimerView({
         id={tooltipId}
         role="tooltip"
         className={cn(
-          'pointer-events-none absolute left-0 top-full z-10 mt-1 w-max max-w-xs',
-          'rounded-md border border-amber-200 bg-white px-3 py-2 leading-snug text-amber-900 shadow-md',
+          // max-w caps to the viewport on mobile so a disclaimer near a screen
+          // edge can't push its tooltip off-screen.
+          'pointer-events-none absolute left-0 top-full z-10 mt-1 w-max max-w-[min(20rem,80vw)]',
+          'rounded-md border border-zinc-200 bg-white px-3 py-2 leading-snug text-zinc-700 shadow-md',
           'opacity-0 transition-opacity duration-150',
           'group-hover:opacity-100 group-focus-within:opacity-100',
-          'dark:border-amber-800 dark:bg-zinc-900 dark:text-amber-100',
+          'dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300',
         )}
         data-testid="heuristic-disclaimer-body"
       >
