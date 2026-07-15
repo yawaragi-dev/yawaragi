@@ -7,6 +7,7 @@
 import { type FormEvent, useState, useTransition } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
+import { HeuristicDisclaimerView } from '@/components/legal/heuristic-disclaimer'
 import { Button } from '@/components/ui/button'
 import { appendDebugEvents } from '@/lib/debug/debug-store'
 import { applyCrossBeverage } from '@/lib/taste/taste-actions'
@@ -37,6 +38,7 @@ export function CrossBeverageSeedForm({
 }: CrossBeverageSeedFormProps) {
   const t = useTranslations('profile')
   const tBeverage = useTranslations('profile.beverage')
+  const tDisclaimer = useTranslations('heuristicDisclaimer')
   const router = useRouter()
   const [beverage, setBeverage] = useState<Beverage>('whisky')
   const [descriptor, setDescriptor] = useState<string>(descriptorsByBeverage.whisky[0] ?? '')
@@ -77,6 +79,14 @@ export function CrossBeverageSeedForm({
 
   return (
     <form onSubmit={onSubmit} data-testid="cross-beverage-seed-form" className="flex flex-col gap-3">
+      {/*
+        CLAUDE.md § "Cross-beverage disclaimers": this form maps a Western
+        descriptor onto the six axes via the hand-curated CrossBeverageMap, so
+        the surface MUST carry <HeuristicDisclaimer /> — the "smoky whisky →
+        these axes" bridge is a heuristic, not science. Title stays visible;
+        body in the info-button tooltip (same density pass as scan / suggest).
+      */}
+      <HeuristicDisclaimerView title={tDisclaimer('title')} body={tDisclaimer('body')} />
       <div className="flex flex-wrap gap-3">
         <div className="flex flex-col gap-1">
           <label htmlFor="seed-beverage" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">

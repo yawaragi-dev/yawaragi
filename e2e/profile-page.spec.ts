@@ -73,6 +73,10 @@ test.describe('/en/profile — taste profile', () => {
     await expect(page.getByTestId('profile-cold-start')).toBeVisible()
     // The seed form (the cheap hero) is present with both selects + submit.
     await expect(page.getByTestId('cross-beverage-seed-form')).toBeVisible()
+    // CLAUDE.md: the cross-beverage mapping is heuristic → the disclaimer must
+    // ride on this surface (title visible, body in the info-button tooltip).
+    await expect(page.getByTestId('heuristic-disclaimer-title')).toBeVisible()
+    await expect(page.getByTestId('heuristic-disclaimer-body')).toBeAttached()
     await expect(page.getByTestId('seed-beverage')).toBeVisible()
     await expect(page.getByTestId('seed-descriptor')).toBeVisible()
     await expect(page.getByTestId('seed-submit')).toBeVisible()
