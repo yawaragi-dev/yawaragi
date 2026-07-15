@@ -4,29 +4,88 @@ import type { Metadata } from 'next'
 import { Link } from '@/i18n/navigation'
 import { isLaunched } from '@/i18n/launch-state'
 import { AgeGate } from '@/components/legal/age-gate'
-import { TasteProfileMock } from '@/components/profile/taste-profile-mock'
+import { CrossBeverageSeedForm } from '@/components/profile/cross-beverage-seed-form'
+import { TasteProvenanceSummary } from '@/components/profile/taste-provenance-summary'
+import { FlavorRadarView } from '@/components/sake/flavor-radar-view'
+import { knownCrossBeverageDescriptors } from '@/lib/cross-beverage/forward-lookup'
+import { isDebugEnabledFromCookies } from '@/lib/debug/debug-mode'
 import { hasAcceptedAgeGate } from '@/lib/legal/age-gate-cookie'
+import { readAnonymousSessionCookie } from '@/lib/legal/anonymous-session-cookie'
+import type { FlavorProfile } from '@/lib/schemas/flavor-profile'
+import { getTasteEventStore } from '@/lib/taste/get-taste-event-store'
+import {
+  type SessionTasteProfile,
+  readSessionTasteProfile,
+} from '@/lib/taste/read-session-taste-profile'
+import type { CrossBeverageSeedInput } from '@/lib/taste/taste-action-state'
+import { env } from '@/env'
 
 /**
- * `/[locale]/profile` — Taste profile coming-soon route (UX-D / #165).
+ * `/[locale]/profile` — the real Taste Profile (Phase 5 / #220, P5-04b).
  *
- * The real feature is Phase 5 (deferred with auth). This route exists so
- * the header nav has a real destination today, and so the design target
- * for Phase 5 lives somewhere maintainable — the sample radar mock IS the
- * design target the future personal profile builds toward. All copy is
- * discovery-framed and honestly labelled "coming soon"; the sample
- * profile carries an illustrative caption so nothing on the page can be
- * mistaken for real personal data (there is no personal data to collect
- * yet — see ADR-0009 minimisation principle).
+ * Radar-first: the visitor's derived TasteProfile (ADR-0019) rendered as the
+ * `<FlavorRadarView />`, with "what shaped this" provenance below and the
+ * cross-beverage seed form to build/refine it. The seed form is the cheap,
+ * deterministic build path — `/suggest` (an expensive LLM tool loop) is only a
+ * quiet secondary link, never the hero.
  *
- * Age gate: the mock renders flavor-vocabulary content that qualifies as
- * gated content under CLAUDE.md's "Do NOT display flavor or recommendation
- * data before the 18+ gate has been accepted" rule. Same pattern as the
- * suggest page — check `hasAcceptedAgeGate` on the RSC and render
- * `<AgeGate />` instead when unaccepted. Locale launch gate is handled
- * upstream by the proxy (`src/proxy.ts`), which rewrites all gated paths
- * on non-launched locales to the coming-soon landing.
+ * States: `profile` (radar + provenance) · `cold_start` (faded sample radar +
+ * seed form as hero) · `unavailable` (non-prod without session/store env).
+ *
+ * Age gate: renders flavor data → gated content (CLAUDE.md). Locale launch is
+ * handled upstream by the proxy; the belt below keeps a non-launched deep-link
+ * on the coming-soon block. Debug trace: ADR-0013 — the seed form pushes
+ * client events + forwards the action's server trace when `yawaragi_debug=1`.
  */
+
+type Beverage = CrossBeverageSeedInput['beverage']
+
+// Illustrative sample (a fragrant/crisp read) shown faded on cold start so the
+// visitor sees what a real map looks like before they have one. Not personal
+// data, not Sakenowa data — no attribution (ADR-0005).
+const COLD_START_SAMPLE: FlavorProfile = { f1: 0.72, f2: 0.35, f3: 0.25, f4: 0.45, f5: 0.55, f6: 0.68 }
+
+const tp = (
+  f1: number,
+  f2: number,
+  f3: number,
+  f4: number,
+  f5: number,
+  f6: number,
+): FlavorProfile => ({ f1, f2, f3, f4, f5, f6 })
+
+type CookieJar = Awaited<ReturnType<typeof cookies>>
+
+/**
+ * Read the session's taste profile, with a non-production stub seam
+ * (`yawaragi_taste_stub` cookie) so the Playwright E2E can drive each state
+ * without a live Upstash — mirrors scan's `e2e-stub` / suggest's stub cookie.
+ */
+async function resolveSessionTasteProfile(cookieJar: CookieJar): Promise<SessionTasteProfile> {
+  if (process.env.NODE_ENV !== 'production') {
+    const stub = cookieJar.get('yawaragi_taste_stub')?.value
+    if (stub === 'cold_start') return { kind: 'cold_start' }
+    if (stub === 'unavailable') return { kind: 'unavailable' }
+    if (stub === 'populated') {
+      return {
+        kind: 'profile',
+        profile: tp(0.68, 0.42, 0.3, 0.5, 0.4, 0.62),
+        events: [
+          { kind: 'rating', rating: 5, brandId: 1, target: tp(0.7, 0.4, 0.3, 0.5, 0.4, 0.6), occurredAt: 1 },
+          { kind: 'scan_accept', brandId: 2, target: tp(0.6, 0.5, 0.35, 0.45, 0.4, 0.6), occurredAt: 2 },
+          { kind: 'cross_beverage_seed', descriptor: 'smoky', target: tp(0.1, 0.8, 0.75, 0.2, 0.7, 0.15), occurredAt: 3 },
+        ],
+      }
+    }
+  }
+  const secret = env.SESSION_COOKIE_SECRET
+  const session = secret ? readAnonymousSessionCookie(cookieJar, secret) : null
+  return readSessionTasteProfile({
+    store: getTasteEventStore(),
+    sid: session?.sid ?? null,
+    now: Date.now(),
+  })
+}
 
 export async function generateMetadata({
   params,
@@ -46,11 +105,8 @@ export default async function ProfilePage({
   const { locale } = await params
   setRequestLocale(locale)
 
-  // Belt on top of the proxy's suspenders: the proxy rewrites gated
-  // paths on non-launched locales to the coming-soon landing before we
-  // get here, but if a future proxy-matcher change lets DE reach this
-  // route, render the same coming-soon block `/scan` and `/suggest`
-  // render (ADR-0008). Blank page would be a worse fallback.
+  // Belt on top of the proxy's suspenders (ADR-0008): a non-launched deep-link
+  // renders the same coming-soon block /scan and /suggest use.
   if (!isLaunched(locale)) {
     const tComingSoon = await getTranslations({ locale, namespace: 'comingSoon' })
     return (
@@ -58,17 +114,9 @@ export default async function ProfilePage({
         className="flex flex-1 w-full max-w-3xl mx-auto flex-col gap-6 py-16 px-8"
         data-testid="coming-soon"
       >
-        <h1 className="text-4xl font-semibold leading-tight tracking-tight">
-          {tComingSoon('title')}
-        </h1>
-        <p className="text-base text-zinc-700 dark:text-zinc-300 max-w-prose">
-          {tComingSoon('body')}
-        </p>
-        <Link
-          href="/"
-          locale="en"
-          className="text-base font-medium underline underline-offset-4"
-        >
+        <h1 className="text-4xl font-semibold leading-tight tracking-tight">{tComingSoon('title')}</h1>
+        <p className="text-base text-zinc-700 dark:text-zinc-300 max-w-prose">{tComingSoon('body')}</p>
+        <Link href="/" locale="en" className="text-base font-medium underline underline-offset-4">
           {tComingSoon('switchToEn')}
         </Link>
       </main>
@@ -76,13 +124,32 @@ export default async function ProfilePage({
   }
 
   const cookieJar = await cookies()
-  const gateAccepted = hasAcceptedAgeGate(cookieJar)
-
-  if (!gateAccepted) {
+  if (!hasAcceptedAgeGate(cookieJar)) {
     return <AgeGate />
   }
 
   const t = await getTranslations('profile')
+  const debugMode = isDebugEnabledFromCookies(cookieJar)
+  const session = await resolveSessionTasteProfile(cookieJar)
+
+  const descriptorsByBeverage = {
+    whisky: knownCrossBeverageDescriptors('whisky'),
+    wine: knownCrossBeverageDescriptors('wine'),
+    beer: knownCrossBeverageDescriptors('beer'),
+    spirit: knownCrossBeverageDescriptors('spirit'),
+    fortified: knownCrossBeverageDescriptors('fortified'),
+    cider: knownCrossBeverageDescriptors('cider'),
+  } satisfies Record<Beverage, readonly string[]>
+
+  const quietSuggestLink = (
+    <Link
+      href="/suggest"
+      className="w-fit text-xs text-zinc-500 underline underline-offset-2 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300"
+      data-testid="profile-suggest-quiet-link"
+    >
+      {t('suggestQuietLink')} <span aria-hidden>→</span>
+    </Link>
+  )
 
   return (
     <main
@@ -90,41 +157,50 @@ export default async function ProfilePage({
       data-testid="profile-page"
     >
       <section className="flex flex-col gap-3">
-        <div className="flex items-center gap-3">
-          <h1 className="text-3xl font-semibold leading-tight tracking-tight">
-            {t('title')}
-          </h1>
-          <span
-            className="rounded-full bg-zinc-200 px-2.5 py-0.5 text-xs font-medium uppercase tracking-wide text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
-            data-testid="profile-coming-soon-badge"
-          >
-            {t('comingSoonBadge')}
-          </span>
-        </div>
-        <p className="max-w-prose text-base text-zinc-700 dark:text-zinc-300">
-          {t('intro')}
-        </p>
+        <h1 className="text-3xl font-semibold leading-tight tracking-tight">{t('title')}</h1>
+        <p className="max-w-prose text-base text-zinc-700 dark:text-zinc-300">{t('intro')}</p>
       </section>
 
-      <section className="flex flex-col gap-4">
-        <h2 className="text-lg font-medium">{t('sampleHeading')}</h2>
-        <TasteProfileMock />
-      </section>
+      {session.kind === 'unavailable' && (
+        <section data-testid="profile-unavailable" className="flex flex-col gap-3">
+          <p className="max-w-prose text-sm text-zinc-600 dark:text-zinc-400">{t('unavailableBody')}</p>
+        </section>
+      )}
 
-      <section className="flex flex-col gap-3">
-        <h2 className="text-lg font-medium">{t('suggestBridgeHeading')}</h2>
-        <p className="max-w-prose text-sm text-zinc-600 dark:text-zinc-400">
-          {t('suggestBridgeBody')}
-        </p>
-        <Link
-          href="/suggest"
-          className="inline-flex w-fit items-center gap-1.5 rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-900 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-50 dark:hover:bg-zinc-800"
-          data-testid="profile-suggest-cta"
-        >
-          {t('suggestBridgeCta')}
-          <span aria-hidden>→</span>
-        </Link>
-      </section>
+      {session.kind === 'cold_start' && (
+        <section data-testid="profile-cold-start" className="flex flex-col gap-8">
+          <figure className="flex flex-col items-center gap-3">
+            <div className="opacity-40">
+              <FlavorRadarView profile={COLD_START_SAMPLE} />
+            </div>
+            <figcaption className="max-w-md text-center text-xs text-zinc-500 dark:text-zinc-500">
+              {t('sampleCaption')}
+            </figcaption>
+          </figure>
+          <section className="flex flex-col gap-3">
+            <h2 className="text-lg font-medium">{t('coldStartHeading')}</h2>
+            <p className="max-w-prose text-sm text-zinc-600 dark:text-zinc-400">{t('coldStartBody')}</p>
+            <h3 className="mt-2 text-base font-medium">{t('seedHeading')}</h3>
+            <CrossBeverageSeedForm descriptorsByBeverage={descriptorsByBeverage} debugMode={debugMode} />
+          </section>
+          {quietSuggestLink}
+        </section>
+      )}
+
+      {session.kind === 'profile' && (
+        <section data-testid="profile-populated" className="flex flex-col gap-8">
+          <div className="flex justify-center">
+            <FlavorRadarView profile={session.profile} />
+          </div>
+          <TasteProvenanceSummary events={session.events} />
+          <section className="flex flex-col gap-3">
+            <h2 className="text-lg font-medium">{t('refineHeading')}</h2>
+            <p className="max-w-prose text-sm text-zinc-600 dark:text-zinc-400">{t('refineBody')}</p>
+            <CrossBeverageSeedForm descriptorsByBeverage={descriptorsByBeverage} debugMode={debugMode} />
+          </section>
+          {quietSuggestLink}
+        </section>
+      )}
     </main>
   )
 }

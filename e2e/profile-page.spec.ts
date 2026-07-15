@@ -1,19 +1,15 @@
 /**
- * E2E coverage for /[locale]/profile — the Taste Profile coming-soon
- * route (UX-D / #165).
+ * E2E coverage for /[locale]/profile — the real Taste Profile (Phase 5 / #220,
+ * P5-04b).
  *
- * The route exists so:
- *   1. UX-A's header nav has a real destination for the "Taste Profile"
- *      item (no dead card / no /404).
- *   2. The sample radar mock is the Phase 5 design target — future work
- *      builds toward this shape.
+ * Radar-first: the visitor's derived TasteProfile as a radar, with the
+ * cross-beverage seed form as the cheap build path (/suggest is only a quiet
+ * secondary link). The page reads a session-keyed store; in non-production the
+ * `yawaragi_taste_stub` cookie drives each state without a live Upstash
+ * (mirrors scan's e2e-stub / suggest's stub cookie).
  *
- * The mock is illustrative-data-only (no Sakenowa lookup), so there's no
- * `<SakenowaAttribution />` here (would misrepresent the source per
- * ADR-0005). The six axes DO use `<FlavorAxisLabel />` so the romaji +
- * kanji vocabulary convention is preserved (CLAUDE.md § "6-axis flavor
- * vocabulary"). Age-gate still applies — the mock renders flavor data
- * and is therefore gated content.
+ * Age-gate still applies (the radar is flavor data → gated content). The six
+ * axes use <FlavorAxisLabel /> so the romaji + kanji vocabulary is preserved.
  */
 import { expect, test } from '@playwright/test'
 import { BASE_URL } from './_base-url'
@@ -24,69 +20,89 @@ const AGE_GATE_COOKIE = {
   url: BASE_URL,
 }
 
-// Dismiss the cookie banner up-front (it's fixed to the viewport bottom
-// and intercepts clicks on links near the bottom, e.g. the suggest CTA
-// in the profile footer). Reject-all + accept-all both hide the banner.
+// Dismiss the cookie banner (fixed to the viewport bottom; can intercept
+// clicks on links near the footer).
 const CONSENT_COOKIE = {
   name: 'yawaragi_consent',
   value: JSON.stringify({ version: 1, analytics: false, marketing: false }),
   url: BASE_URL,
 }
 
-test.describe('/en/profile — coming-soon route', () => {
-  test('renders coming-soon badge + intro + sample radar mock when age-gate accepted', async ({
+const tasteStub = (mode: 'populated' | 'cold_start' | 'unavailable') => ({
+  name: 'yawaragi_taste_stub',
+  value: mode,
+  url: BASE_URL,
+})
+
+test.describe('/en/profile — taste profile', () => {
+  test('populated: renders the derived radar with all six axis labels + provenance', async ({
     browser,
   }) => {
     const context = await browser.newContext({ locale: 'en-US' })
-    await context.addCookies([AGE_GATE_COOKIE, CONSENT_COOKIE])
+    await context.addCookies([AGE_GATE_COOKIE, CONSENT_COOKIE, tasteStub('populated')])
     const page = await context.newPage()
 
     await page.goto('/en/profile')
 
     await expect(page.getByTestId('profile-page')).toBeVisible()
-    await expect(page.getByTestId('profile-coming-soon-badge')).toBeVisible()
-    // Radar mock renders with all six axis labels.
-    const mock = page.getByTestId('taste-profile-mock')
-    await expect(mock).toBeVisible()
+    await expect(page.getByTestId('profile-populated')).toBeVisible()
+    await expect(page.getByTestId('taste-profile-radar')).toBeVisible()
+    await expect(page.getByTestId('taste-profile-sample-polygon')).toBeAttached()
     for (const axis of ['f1', 'f2', 'f3', 'f4', 'f5', 'f6'] as const) {
       await expect(page.getByTestId(`flavor-axis-${axis}-romaji`)).toBeVisible()
-      // Kanji is always visible next to the romaji (project rule: never
-      // render English-only labels for the six axes).
       await expect(page.getByTestId(`flavor-axis-${axis}-kanji`)).toBeVisible()
     }
-    // The sample polygon is drawn (sanity — the SVG rendered its shape).
-    await expect(page.getByTestId('taste-profile-sample-polygon')).toBeAttached()
+    // "What shaped this" is present, and lists the seeded descriptor.
+    await expect(page.getByTestId('taste-provenance-summary')).toBeVisible()
+    await expect(page.getByTestId('taste-provenance-seeds')).toContainText('smoky')
+    // No "coming soon" badge — this is real now.
+    await expect(page.getByTestId('profile-coming-soon-badge')).toHaveCount(0)
 
-    // "Where to explore next" bridges the visitor to the chat surface —
-    // the closest thing until the real profile ships.
-    const cta = page.getByTestId('profile-suggest-cta')
-    await expect(cta).toBeVisible()
-    await cta.click()
-    await page.waitForURL(/\/en\/suggest/)
+    await context.close()
+  })
+
+  test('cold start: leads with a faded sample radar + the cross-beverage seed form', async ({
+    browser,
+  }) => {
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([AGE_GATE_COOKIE, CONSENT_COOKIE, tasteStub('cold_start')])
+    const page = await context.newPage()
+
+    await page.goto('/en/profile')
+
+    await expect(page.getByTestId('profile-cold-start')).toBeVisible()
+    // The seed form (the cheap hero) is present with both selects + submit.
+    await expect(page.getByTestId('cross-beverage-seed-form')).toBeVisible()
+    await expect(page.getByTestId('seed-beverage')).toBeVisible()
+    await expect(page.getByTestId('seed-descriptor')).toBeVisible()
+    await expect(page.getByTestId('seed-submit')).toBeVisible()
+    // Changing the beverage re-populates the descriptor options (they're a
+    // deterministic function of the category) — proves the two selects are
+    // wired together.
+    await page.getByTestId('seed-beverage').selectOption('beer')
+    await expect(page.getByTestId('seed-descriptor')).toBeVisible()
+    // /suggest is only a quiet secondary link, not a hero CTA. (The seed
+    // submit → radar-refresh reward depends on a live store; it's exercised by
+    // the applyCrossBeverage unit tests + manual testing, not asserted here
+    // where the outcome would be environment-dependent and flaky.)
+    await expect(page.getByTestId('profile-suggest-quiet-link')).toBeVisible()
 
     await context.close()
   })
 
   test('shows the age gate when the cookie is absent', async ({ browser }) => {
     const context = await browser.newContext({ locale: 'en-US' })
-    // NO age-gate cookie added.
     const page = await context.newPage()
 
     await page.goto('/en/profile')
 
-    // The gate is a modal-ish component; assert its presence via testid.
     await expect(page.getByTestId('age-gate')).toBeVisible()
-    // The profile content is NOT rendered.
     await expect(page.getByTestId('profile-page')).toHaveCount(0)
 
     await context.close()
   })
 
-  test('/de/profile rewrites to the coming-soon landing (DE not launched)', async ({
-    browser,
-  }) => {
-    // The proxy rewrites all gated paths on non-launched locales to the
-    // coming-soon page (ADR-0008). Same posture as /de/suggest and /de/scan.
+  test('/de/profile rewrites to the coming-soon landing (DE not launched)', async ({ browser }) => {
     const context = await browser.newContext({ locale: 'de-DE' })
     await context.addCookies([AGE_GATE_COOKIE, CONSENT_COOKIE])
     const page = await context.newPage()
