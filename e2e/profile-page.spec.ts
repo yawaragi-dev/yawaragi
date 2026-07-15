@@ -71,6 +71,9 @@ test.describe('/en/profile — taste profile', () => {
     await page.goto('/en/profile')
 
     await expect(page.getByTestId('profile-cold-start')).toBeVisible()
+    // The illustrative radar is unmistakably tagged "Example" (not the
+    // visitor's data).
+    await expect(page.getByTestId('profile-example-badge')).toBeVisible()
     // The seed form (the cheap hero) is present with both selects + submit.
     await expect(page.getByTestId('cross-beverage-seed-form')).toBeVisible()
     // CLAUDE.md: the cross-beverage mapping is heuristic → the disclaimer must

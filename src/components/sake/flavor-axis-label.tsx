@@ -16,12 +16,28 @@ import { cn } from '@/lib/utils'
  * Vitest can't render async RSCs (CLAUDE.md). The view takes resolved
  * strings; unit tests assert on it. The wrapper does the locale work.
  */
+/**
+ * Which way the tooltip opens, so a label near a container/viewport edge
+ * doesn't push its tooltip off-screen. `left` (the default) anchors the
+ * tooltip's left edge and opens rightward — correct for a left-aligned label.
+ * The radar positions labels around a hexagon and passes `right` for its
+ * right-side axes and `center` for top/bottom so no tooltip overflows.
+ */
+export type TooltipAlign = 'left' | 'center' | 'right'
+
+const TOOLTIP_ALIGN_CLASS: Record<TooltipAlign, string> = {
+  left: 'left-0',
+  center: 'left-1/2 -translate-x-1/2',
+  right: 'right-0',
+}
+
 interface FlavorAxisLabelProps {
   axis: FlavorAxis
   className?: string
+  tooltipAlign?: TooltipAlign
 }
 
-export async function FlavorAxisLabel({ axis, className }: FlavorAxisLabelProps) {
+export async function FlavorAxisLabel({ axis, className, tooltipAlign }: FlavorAxisLabelProps) {
   const t = await getTranslations('flavorAxis')
   return (
     <FlavorAxisLabelView
@@ -31,6 +47,7 @@ export async function FlavorAxisLabel({ axis, className }: FlavorAxisLabelProps)
       approximation={t(`${axis}.label`)}
       caveat={t(`${axis}.caveat`)}
       className={className}
+      tooltipAlign={tooltipAlign}
     />
   )
 }
@@ -42,6 +59,7 @@ interface FlavorAxisLabelViewProps {
   approximation: string
   caveat: string
   className?: string
+  tooltipAlign?: TooltipAlign
 }
 
 // The tooltip body is always present in the DOM (referenced via
@@ -55,6 +73,7 @@ export function FlavorAxisLabelView({
   approximation,
   caveat,
   className,
+  tooltipAlign = 'left',
 }: FlavorAxisLabelViewProps) {
   const tooltipId = `flavor-axis-${axis}-tooltip`
 
@@ -82,7 +101,8 @@ export function FlavorAxisLabelView({
         id={tooltipId}
         role="tooltip"
         className={cn(
-          'pointer-events-none absolute left-0 top-full z-10 mt-1 w-max max-w-xs',
+          'pointer-events-none absolute top-full z-10 mt-1 w-max max-w-[min(16rem,80vw)]',
+          TOOLTIP_ALIGN_CLASS[tooltipAlign],
           'rounded-md border border-zinc-200 bg-white px-3 py-2 text-xs leading-snug shadow-md',
           'opacity-0 transition-opacity duration-150',
           'group-hover:opacity-100 group-focus-visible:opacity-100 group-focus-within:opacity-100',

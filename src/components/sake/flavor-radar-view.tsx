@@ -1,6 +1,18 @@
 import { FLAVOR_AXES, type FlavorAxis } from '@/lib/schemas/flavor-chart'
 import type { FlavorProfile } from '@/lib/schemas/flavor-profile'
-import { FlavorAxisLabel } from './flavor-axis-label'
+import { FlavorAxisLabel, type TooltipAlign } from './flavor-axis-label'
+
+// Open each axis label's tooltip toward the centre of the chart so a label at
+// the hexagon's right/left edge doesn't push its tooltip off-screen (the
+// reported overflow). Right-side axes open leftward; top/bottom stay centred.
+const AXIS_TOOLTIP_ALIGN: Readonly<Record<FlavorAxis, TooltipAlign>> = {
+  f1: 'center',
+  f2: 'right',
+  f3: 'right',
+  f4: 'center',
+  f5: 'left',
+  f6: 'left',
+}
 
 /**
  * Radar / hexagon visualisation of a FlavorProfile over the six Sakenowa
@@ -137,7 +149,7 @@ export function FlavorRadarView({ profile }: FlavorRadarViewProps) {
             style={{ left: anchor.left, top: anchor.top }}
             data-testid={`taste-profile-axis-anchor-${axis}`}
           >
-            <FlavorAxisLabel axis={axis} />
+            <FlavorAxisLabel axis={axis} tooltipAlign={AXIS_TOOLTIP_ALIGN[axis]} />
           </div>
         )
       })}

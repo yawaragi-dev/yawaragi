@@ -169,7 +169,13 @@ export default async function ProfilePage({
 
       {session.kind === 'cold_start' && (
         <section data-testid="profile-cold-start" className="flex flex-col gap-8">
-          <figure className="flex flex-col items-center gap-3">
+          <figure className="relative flex flex-col items-center gap-3">
+            <span
+              className="absolute left-0 top-0 z-10 rounded-full bg-zinc-200 px-2.5 py-0.5 text-xs font-medium uppercase tracking-wide text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+              data-testid="profile-example-badge"
+            >
+              {t('exampleBadge')}
+            </span>
             <div className="opacity-40">
               <FlavorRadarView profile={COLD_START_SAMPLE} />
             </div>
