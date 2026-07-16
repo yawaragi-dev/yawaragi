@@ -55,6 +55,14 @@ test.describe('/en/profile — taste profile', () => {
     // "What shaped this" is present, and lists the seeded descriptor.
     await expect(page.getByTestId('taste-provenance-summary')).toBeVisible()
     await expect(page.getByTestId('taste-provenance-seeds')).toContainText('smoky')
+    // P5-06: a populated profile surfaces ranked recommendations (the
+    // "rate → recommender favors your zone" loop end-to-end; the dynamic
+    // vector-shift itself is unit-tested in taste-recommender.test.ts). Each
+    // recommendation links to its sake detail page.
+    await expect(page.getByTestId('profile-recommendations')).toBeVisible()
+    const firstRec = page.getByTestId('recommendation-101')
+    await expect(firstRec).toBeVisible()
+    await expect(firstRec).toHaveAttribute('href', '/en/sake/101')
     // No "coming soon" badge — this is real now.
     await expect(page.getByTestId('profile-coming-soon-badge')).toHaveCount(0)
 
