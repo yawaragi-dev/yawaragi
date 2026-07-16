@@ -145,7 +145,12 @@ export function FlavorRadarView({ profile }: FlavorRadarViewProps) {
         return (
           <div
             key={axis}
-            className="absolute -translate-x-1/2 -translate-y-1/2"
+            // Each anchor uses `transform` to centre on its vertex, which
+            // creates a stacking context per label — so a later label's box
+            // would otherwise paint over an earlier label's open tooltip (the
+            // tooltip's own z-10 is trapped inside its anchor's context). Lift
+            // the hovered/focused anchor above its siblings so its tooltip wins.
+            className="absolute -translate-x-1/2 -translate-y-1/2 hover:z-20 focus-within:z-20"
             style={{ left: anchor.left, top: anchor.top }}
             data-testid={`taste-profile-axis-anchor-${axis}`}
           >
