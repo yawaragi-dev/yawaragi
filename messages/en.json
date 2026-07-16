@@ -30,6 +30,8 @@
     "shapedBySeedList": "Started from: {descriptors}",
     "refineHeading": "Refine your map",
     "refineBody": "Add another drink you love.",
+    "recommendedHeading": "Recommended for you",
+    "recommendedSubhead": "Sakes that match your taste map.",
     "seedHeading": "Start from a drink you love",
     "seedBeverageLabel": "Kind of drink",
     "seedDescriptorLabel": "What you like about it",

@@ -7,16 +7,20 @@ import { AgeGate } from '@/components/legal/age-gate'
 import { CrossBeverageSeedForm } from '@/components/profile/cross-beverage-seed-form'
 import { TasteProvenanceSummary } from '@/components/profile/taste-provenance-summary'
 import { FlavorRadarView } from '@/components/sake/flavor-radar-view'
+import { SakenowaAttribution } from '@/components/sake/sakenowa-attribution'
 import { knownCrossBeverageDescriptors } from '@/lib/cross-beverage/forward-lookup'
 import { isDebugEnabledFromCookies } from '@/lib/debug/debug-mode'
 import { hasAcceptedAgeGate } from '@/lib/legal/age-gate-cookie'
 import { readAnonymousSessionCookie } from '@/lib/legal/anonymous-session-cookie'
 import type { FlavorProfile } from '@/lib/schemas/flavor-profile'
+import type { TasteEvent } from '@/lib/schemas/taste-event'
+import { getFlavorCandidatePool } from '@/lib/taste/flavor-candidate-pool'
 import { getTasteEventStore } from '@/lib/taste/get-taste-event-store'
 import {
   type SessionTasteProfile,
   readSessionTasteProfile,
 } from '@/lib/taste/read-session-taste-profile'
+import { recommendFromTasteEvents } from '@/lib/taste/taste-recommender'
 import type { CrossBeverageSeedInput } from '@/lib/taste/taste-action-state'
 import { env } from '@/env'
 
@@ -87,6 +91,47 @@ async function resolveSessionTasteProfile(cookieJar: CookieJar): Promise<Session
   })
 }
 
+/** A Sake recommended for the visitor — enough to render a link + name. */
+interface Recommendation {
+  brandId: number
+  nameJa: string
+  nameRomaji: string | null
+}
+
+// Canned recommendations for the non-production E2E stub (the populated stub
+// profile). The real path fetches a candidate pool and ranks it; the stub
+// bypasses the DB so the E2E is deterministic without a live mirror.
+const STUB_RECOMMENDATIONS: readonly Recommendation[] = [
+  { brandId: 101, nameJa: '獺祭', nameRomaji: 'Dassai' },
+  { brandId: 102, nameJa: '田酒', nameRomaji: 'Denshu' },
+  { brandId: 103, nameJa: '而今', nameRomaji: 'Jikon' },
+]
+
+/**
+ * Rank the candidate pool against the visitor's taste vector (P5-05b). Fetches
+ * every charted Sake, ranks by flavor distance, excludes already-rated brands.
+ * The pool fetch degrades to `[]` without a DB, so this yields no recs rather
+ * than 500-ing the page.
+ */
+async function resolveRecommendations(
+  cookieJar: CookieJar,
+  events: readonly TasteEvent[],
+): Promise<readonly Recommendation[]> {
+  if (process.env.NODE_ENV !== 'production') {
+    const stub = cookieJar.get('yawaragi_taste_stub')?.value
+    if (stub === 'populated') return STUB_RECOMMENDATIONS
+    if (stub) return []
+  }
+  const pool = await getFlavorCandidatePool()
+  const result = recommendFromTasteEvents(events, pool, Date.now(), { limit: 6 })
+  if (result.kind !== 'ranked') return []
+  return result.results.map((match) => ({
+    brandId: match.candidate.brandId,
+    nameJa: match.candidate.nameJa,
+    nameRomaji: match.candidate.nameRomaji,
+  }))
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -131,6 +176,8 @@ export default async function ProfilePage({
   const t = await getTranslations('profile')
   const debugMode = isDebugEnabledFromCookies(cookieJar)
   const session = await resolveSessionTasteProfile(cookieJar)
+  const recommendations =
+    session.kind === 'profile' ? await resolveRecommendations(cookieJar, session.events) : []
 
   const descriptorsByBeverage = {
     whisky: knownCrossBeverageDescriptors('whisky'),
@@ -199,6 +246,35 @@ export default async function ProfilePage({
             <FlavorRadarView profile={session.profile} />
           </div>
           <TasteProvenanceSummary events={session.events} />
+          {recommendations.length > 0 && (
+            <section className="flex flex-col gap-3" data-testid="profile-recommendations">
+              <h2 className="text-lg font-medium">{t('recommendedHeading')}</h2>
+              <p className="max-w-prose text-sm text-zinc-600 dark:text-zinc-400">
+                {t('recommendedSubhead')}
+              </p>
+              <SakenowaAttribution placement="inline" />
+              <ul className="flex flex-col gap-2">
+                {recommendations.map((rec) => (
+                  <li key={rec.brandId}>
+                    <a
+                      href={`/${locale}/sake/${rec.brandId}`}
+                      data-testid={`recommendation-${rec.brandId}`}
+                      className="flex items-baseline gap-2 rounded-md border border-zinc-200 px-3 py-2 transition-colors hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 dark:border-zinc-800 dark:hover:bg-zinc-900"
+                    >
+                      <span className="text-base font-medium" lang="ja">
+                        {rec.nameJa}
+                      </span>
+                      {rec.nameRomaji && (
+                        <span className="text-sm text-zinc-600 dark:text-zinc-400">
+                          ({rec.nameRomaji})
+                        </span>
+                      )}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
           <section className="flex flex-col gap-3">
             <h2 className="text-lg font-medium">{t('refineHeading')}</h2>
             <p className="max-w-prose text-sm text-zinc-600 dark:text-zinc-400">{t('refineBody')}</p>

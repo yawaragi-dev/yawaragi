@@ -30,6 +30,8 @@
     "shapedBySeedList": "Ausgehend von: {descriptors}",
     "refineHeading": "Karte verfeinern",
     "refineBody": "Füge ein weiteres Getränk hinzu, das du magst.",
+    "recommendedHeading": "Für dich empfohlen",
+    "recommendedSubhead": "Sakes, die zu deiner Aromakarte passen.",
     "seedHeading": "Beginne mit einem Getränk, das du magst",
     "seedBeverageLabel": "Art des Getränks",
     "seedDescriptorLabel": "Was dir daran gefällt",
