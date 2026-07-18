@@ -1,0 +1,13 @@
+Drop real JP sake-bottle-label photos here — see ../README.md
+("MAINTAINER TODO: add 20 real bottle-label photos").
+
+Rules (enforced by the runner + schema):
+  - Bottle labels ONLY. Never a person / face (CLAUDE.md Art. 9 rule).
+  - Each photo needs a matching entry in ../ground-truth.json keyed by
+    its exact filename, with name_ja, brewery_ja, and a provenance block
+    whose rights are actually cleared (rightsCleared: true).
+  - Supported extensions: .jpg .jpeg .png .webp
+
+This directory is intentionally empty until the maintainer adds photos.
+The runner falls back to the synthetic smoke fixture and prints a
+DEGRADED banner while this stays empty.

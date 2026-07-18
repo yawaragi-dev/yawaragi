@@ -56,3 +56,7 @@ next-env.d.ts
 
 # clerk configuration (can include secrets)
 /.clerk/
+
+# label-scan eval — optional local provider list (env var is the committed
+# path; this file is a local convenience, see evals/label-scan-jp/README.md).
+/evals/label-scan-jp/providers.json
