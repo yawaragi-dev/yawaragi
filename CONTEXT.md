@@ -1,6 +1,6 @@
 # Yawaragi
 
-A sake companion — **Yawaragi** (和らぎ, "the water drunk between sake sips"; cf. *yawaragi-mizu*, 和らぎ水). Helps users recognise, discover, and track the sake they enjoy through four surfaces: label scan, search, tasting journal (its **TasteMap** is the derived output view), and chat recommender.
+A sake companion — **Yawaragi** (和らぎ, "the water drunk between sake sips"; cf. *yawaragi-mizu*, 和らぎ水). Helps users recognise, discover, and track the sake they enjoy through three flagship surfaces: label scan, chat recommender, and taste profile. The adopted next direction (ADR-0020) reframes the taste profile around a **tasting journal** as the spine — with the **TasteMap** as its derived output view — and adds search (#234); neither is shipped yet.
 
 Previously named "Kanpai"; renamed to avoid collision with KANPAI London Craft Sake Brewery. See `## Naming` below and ADR-0004.
 
