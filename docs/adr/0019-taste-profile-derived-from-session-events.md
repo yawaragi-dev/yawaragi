@@ -1,8 +1,10 @@
 ---
 title: ADR-0019 — Taste Profile v1 is derived from session-scoped TasteEvents, not a stored per-user vector
-status: accepted
+status: superseded by ADR-0020
 date: 2026-07-13
 ---
+
+> **Superseded by [ADR-0020](./0020-tasting-journal-spine-and-maintainer-only-persistence.md) (2026-07-18).** The "anonymous session-scoped taste profile for every visitor" decision below is overturned: the public now gets an *interactive-but-ephemeral example*, and the real *persistent* record is the auth-gated, maintainer-only tasting journal. What survives: the derive-don't-store fold, provenance-per-input, erasure-as-key-drop, and the pure testable `deriveTasteProfile`. See ADR-0020 for the fate of the shipped session-store code.
 
 # ADR-0019: Taste Profile v1 is derived from session-scoped TasteEvents, not a stored per-user vector
 

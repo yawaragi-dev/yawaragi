@@ -1,6 +1,6 @@
 # Yawaragi
 
-A sake companion — **Yawaragi** (和らぎ, "the water drunk between sake sips"; cf. *yawaragi-mizu*, 和らぎ水). Helps users recognise, discover, and track the sake they enjoy through three surfaces: label scan, chat recommender, taste profile.
+A sake companion — **Yawaragi** (和らぎ, "the water drunk between sake sips"; cf. *yawaragi-mizu*, 和らぎ水). Helps users recognise, discover, and track the sake they enjoy through three flagship surfaces: label scan, chat recommender, and taste profile. The adopted next direction (ADR-0020) reframes the taste profile around a **tasting journal** as the spine — with the **TasteMap** as its derived output view — and adds search (#234); neither is shipped yet.
 
 Previously named "Kanpai"; renamed to avoid collision with KANPAI London Craft Sake Brewery. See `## Naming` below and ADR-0004.
 
@@ -31,12 +31,20 @@ A discrete categorical tag attached to a Sake from Sakenowa's 117-tag vocabulary
 _Avoid_: Tag (too generic), FlavorLabel, FlavorAttribute
 
 **TasteProfile**:
-A *User*'s aggregated preference, derived from their **TasteEvents**. Lives in our own data, not Sakenowa. Mirrors the FlavorProfile shape (6 axes) plus a weighted set of preferred FlavorTags. Never stored as a snapshot — always recomputed from the TasteEvents, so it stays reproducible and erasable.
-_Avoid_: UserProfile (collides with auth), FlavorProfile (that's the Sake's, not the User's), Preference, TasteVector (that's the derived 6-axis result, not the profile)
+A *User*'s aggregated preference, derived from their **TasteEvents**. Lives in our own data, not Sakenowa. Mirrors the FlavorProfile shape (6 axes) plus a weighted set of preferred FlavorTags. Never stored as a snapshot — always recomputed from the TasteEvents, so it stays reproducible and erasable. Its user-facing rendering is the **TasteMap**.
+_Avoid_: UserProfile (collides with auth), FlavorProfile (that's the Sake's, not the User's), Preference, TasteVector (that's the derived 6-axis result, not the profile), "taste profile" as a *user-facing* label (retired per ADR-0020 — users see the "taste map")
+
+**TasteMap**:
+The user-facing name for the six-axis radar view of a *User*'s **TasteProfile** — the picture of their palate. A *derived output view* of the **TastingJournal**, not its own surface. Distinct from the journal (a list of what you tried) and from a Sake's **FlavorProfile** (the sake's own axes). Retires the earlier interchangeable "taste profile" / "taste map" copy.
+_Avoid_: taste profile (that's the internal TasteProfile object), flavor map, palate chart
 
 **TasteEvent**:
-A single dated interaction that feeds a *User*'s **TasteProfile**: a Sake rating, an accepted scan result, or a cross-beverage seed. Each carries a *signed strength* — a direction (toward or away from a FlavorProfile position) and a magnitude. A User has zero or more TasteEvents; the TasteProfile is the combination of them.
+A single dated interaction that feeds a *User*'s **TasteProfile**: a Sake rating, an accepted scan result, or a cross-beverage seed. Each carries a *signed strength* — a direction (toward or away from a FlavorProfile position) and a magnitude. A User has zero or more TasteEvents; the TasteProfile is the combination of them. A **JournalEntry** is a TasteEvent plus richer fields (see **TastingJournal**).
 _Avoid_: Interaction (too generic), Rating (only one of the three kinds), Signal, PreferenceEvent
+
+**TastingJournal**:
+A *User*'s durable, ordered record of Sakes they have tried — the **spine surface** everything else hangs off (per ADR-0020). A **JournalEntry** *is* a **TasteEvent** plus richer fields: free-text `notes`, an explicit `tried_at`, and (later) a scan reference. The **TasteMap** and recommender are *downstream outputs* of the journal. Persistence is auth-gated and maintainer-only in v1; the public sees an interactive-but-ephemeral example (ADR-0020). EN "tasting journal" / DE "Verkostungsjournal".
+_Avoid_: Log (clinical), Diary (personal-emotional), Cellar / Shelf (implies owning bottles, not tastings), History (too generic)
 
 **Ranking**:
 A single Sake's position-and-score within a popularity list, for a specific month. Scope is either *overall* (global top 100) or a single Prefecture (regional top N). A Sake has zero or more Rankings: it may appear in overall, in its Brewery's Prefecture, in both, or in neither. The `year_month` records which monthly snapshot the position came from. We store only the latest snapshot — never historical.
