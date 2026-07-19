@@ -27,7 +27,9 @@ import { type JournalEntry, JournalEntrySchema } from '@/lib/schemas/journal-ent
  * adapter is the one module that touches env + network and carries the marker.
  */
 export interface JournalStore {
-  /** All entries for a user, oldest→newest by tasting time. `[]` if none. */
+  /** All entries for a user, oldest→newest by the embedded `event.occurredAt`
+   *  (the field `deriveTasteProfile` replays on — equal to `triedAt` by the
+   *  creating action's convention). `[]` if none. */
   read(userId: string): Promise<JournalEntry[]>
   /** Upsert one entry by its `id` (create, or edit an existing entry). */
   put(userId: string, entry: JournalEntry): Promise<void>

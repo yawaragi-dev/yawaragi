@@ -113,5 +113,18 @@ const Env = z.object({
   // fails cold-start loudly rather than silently unmetering the paid-
   // API cost protection.
   RATE_LIMIT_BYPASS: empty(z.string().optional()),
+  // -------- Phase 5.5 — maintainer allowlist / private-beta journal (#244) --
+  // Comma-separated Clerk user ids (`user_…`) allowed to reach the persistent
+  // tasting journal (ADR-0020). v1 is maintainer-only: everyone else gets the
+  // interactive-but-ephemeral example, so this list is the single gate on
+  // account-linked journal persistence. Server-only — NOT `NEXT_PUBLIC`: the
+  // allowlist must never ship to the client (it would leak who the maintainers
+  // are and invite it being read as an authz source in the browser; the real
+  // check is always server-side via `currentUserIsMaintainer()`). Optional in
+  // the schema: unset ⇒ empty allowlist ⇒ nobody is a maintainer ⇒ the journal
+  // is example-only everywhere, which is the safe default (fail-closed). No
+  // env.parse-time tightening — an empty list is a valid, safe state, unlike a
+  // missing paid-API key.
+  MAINTAINER_USER_IDS: empty(z.string().optional()),
 })
 export const env = Env.parse(process.env)
