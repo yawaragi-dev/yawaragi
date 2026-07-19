@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { Pool } from 'pg'
-import { escapeLikePattern, searchBrandsFromPool } from '@/lib/sakenowa/search-brands'
+import {
+  escapeLikePattern,
+  MAX_BRAND_SEARCH_RESULTS,
+  searchBrandsFromPool,
+} from '@/lib/sakenowa/search-brands'
 
 /**
  * Pure-function + short-circuit unit tests. The SQL itself is exercised against
@@ -25,5 +29,16 @@ describe('searchBrandsFromPool', () => {
     const pool = { query: vi.fn() } as unknown as Pool
     expect(await searchBrandsFromPool('   ', pool)).toEqual([])
     expect(pool.query).not.toHaveBeenCalled()
+  })
+
+  it('caps the limit at MAX_BRAND_SEARCH_RESULTS and passes an escaped pattern', async () => {
+    const query = vi.fn<(sql: string, params: unknown[]) => Promise<{ rows: never[] }>>(async () => ({
+      rows: [],
+    }))
+    const pool = { query } as unknown as Pool
+    await searchBrandsFromPool('50%', pool, 50)
+    // publicQuery forwards (sql, [pattern, limit]) to pool.query.
+    const [, params] = query.mock.calls[0]!
+    expect(params).toEqual(['%50\\%%', MAX_BRAND_SEARCH_RESULTS])
   })
 })
