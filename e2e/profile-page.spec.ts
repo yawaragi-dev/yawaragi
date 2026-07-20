@@ -34,6 +34,14 @@ const tasteStub = (mode: 'populated' | 'cold_start' | 'unavailable') => ({
   url: BASE_URL,
 })
 
+// Non-prod seam (ADR-0020): drives the maintainer tasting-journal states + also
+// stands in for the maintainer gate, so the E2E needs no Clerk session / Upstash.
+const journalStub = (mode: 'populated' | 'empty' | 'unavailable') => ({
+  name: 'yawaragi_journal_stub',
+  value: mode,
+  url: BASE_URL,
+})
+
 test.describe('/en/profile — taste profile', () => {
   test('populated: renders the derived radar with all six axis labels + provenance', async ({
     browser,
@@ -126,6 +134,66 @@ test.describe('/en/profile — taste profile', () => {
 
     await expect(page.getByTestId('coming-soon')).toBeVisible()
     await expect(page.getByTestId('profile-page')).toHaveCount(0)
+
+    await context.close()
+  })
+})
+
+test.describe('/en/profile — maintainer tasting journal (ADR-0020)', () => {
+  test('populated: map hero + month-grouped timeline, and the log sheet opens', async ({
+    browser,
+  }) => {
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([AGE_GATE_COOKIE, CONSENT_COOKIE, journalStub('populated')])
+    const page = await context.newPage()
+
+    await page.goto('/en/profile')
+
+    // The maintainer journal replaces the anonymous example.
+    await expect(page.getByTestId('profile-journal-page')).toBeVisible()
+    await expect(page.getByTestId('profile-populated')).toHaveCount(0)
+    // Map hero (the real radar, six axis labels) + timeline with entries.
+    await expect(page.getByTestId('taste-profile-radar')).toBeVisible()
+    await expect(page.getByTestId('flavor-axis-f1-kanji')).toBeVisible()
+    await expect(page.getByTestId('journal-timeline')).toBeVisible()
+    await expect(page.getByTestId('journal-entry').first()).toContainText('而今')
+    // Sakenowa data on the surface → attribution present.
+    await expect(page.getByText('Powered by Sakenowa')).toBeVisible()
+
+    // The FAB opens the log sheet (title, sake search, rating, save).
+    await page.getByTestId('journal-log-open').click()
+    await expect(page.getByTestId('journal-log-form')).toBeVisible()
+    await expect(page.getByTestId('journal-search')).toBeVisible()
+    await expect(page.getByTestId('journal-log-save')).toBeVisible()
+
+    await context.close()
+  })
+
+  test('empty: shows the start-your-journal state with the log affordance', async ({ browser }) => {
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([AGE_GATE_COOKIE, CONSENT_COOKIE, journalStub('empty')])
+    const page = await context.newPage()
+
+    await page.goto('/en/profile')
+
+    await expect(page.getByTestId('profile-journal-page')).toBeVisible()
+    await expect(page.getByTestId('journal-empty')).toBeVisible()
+    await expect(page.getByTestId('journal-timeline')).toHaveCount(0)
+    // Even with no entries, the visitor can log their first sake.
+    await expect(page.getByTestId('journal-log-open')).toBeVisible()
+
+    await context.close()
+  })
+
+  test('unavailable: shows a quiet notice and no log affordance', async ({ browser }) => {
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([AGE_GATE_COOKIE, CONSENT_COOKIE, journalStub('unavailable')])
+    const page = await context.newPage()
+
+    await page.goto('/en/profile')
+
+    await expect(page.getByTestId('journal-unavailable')).toBeVisible()
+    await expect(page.getByTestId('journal-log-open')).toHaveCount(0)
 
     await context.close()
   })

@@ -1,4 +1,30 @@
 {
+  "journal": {
+    "title": "Your tasting journal",
+    "intro": "Every sake you log shapes your taste map.",
+    "mapHeading": "Your taste map",
+    "shapedBy": "Shaped by {count, plural, one {# tasting} other {# tastings}}",
+    "emptyMapCaption": "An example map — yours takes shape as you log.",
+    "emptyHeading": "Start your journal",
+    "emptyBody": "Log the first sake you tried and your taste map begins.",
+    "ratingStars": "{rating, plural, one {# star} other {# stars}}",
+    "logCta": "Log a sake",
+    "logTitle": "Log a sake",
+    "searchLabel": "Sake",
+    "searchChange": "Change",
+    "searchPlaceholder": "Search — 鍋島 / Nabeshima…",
+    "searching": "Searching…",
+    "searchNoResults": "No charted sake found — try another name.",
+    "ratingLabel": "Rating",
+    "notesLabel": "Notes",
+    "notesPlaceholder": "How was it? (optional)",
+    "triedAtLabel": "When you tried it",
+    "save": "Save to journal",
+    "saving": "Saving…",
+    "errorNoProfile": "That sake has no flavor data yet, so it can't join your map.",
+    "errorGeneric": "Couldn't save that just now — try again.",
+    "unavailableBody": "Your journal isn't available right now — please check back soon."
+  },
   "common": {
     "siteName": "Yawaragi",
     "skipToContent": "Skip to content"

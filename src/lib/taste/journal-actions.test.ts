@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { Brand } from '@/lib/schemas/brand'
 import type { FlavorChart } from '@/lib/schemas/flavor-chart'
 
 // Hoisted holder for the in-memory store, shared with the mocked factory (see
@@ -13,6 +14,7 @@ vi.mock('@/lib/auth/maintainer', () => ({
 }))
 vi.mock('@/lib/sakenowa/lookup', () => ({
   lookupFlavorChart: vi.fn(),
+  lookupBrand: vi.fn(),
 }))
 vi.mock('@/lib/taste/get-journal-store', () => ({
   getJournalStore: vi.fn(() => h.store),
@@ -20,7 +22,7 @@ vi.mock('@/lib/taste/get-journal-store', () => ({
 
 import { auth } from '@clerk/nextjs/server'
 import { currentUserIsMaintainer } from '@/lib/auth/maintainer'
-import { lookupFlavorChart } from '@/lib/sakenowa/lookup'
+import { lookupBrand, lookupFlavorChart } from '@/lib/sakenowa/lookup'
 import { InMemoryJournalStore } from '@/lib/taste/in-memory-journal-store'
 import {
   clearJournal,
@@ -39,6 +41,15 @@ const CHART: FlavorChart = {
   f4: 1,
   f5: 1,
   f6: 1,
+}
+
+const BRAND: Brand = {
+  brandId: 123,
+  name: 'Nabeshima',
+  nameKanji: '鍋島',
+  nameRomaji: 'Nabeshima',
+  breweryId: 9,
+  source: 'sakenowa',
 }
 
 const USER = 'user_admin'
@@ -60,6 +71,7 @@ beforeEach(() => {
   vi.mocked(currentUserIsMaintainer).mockResolvedValue(true)
   vi.mocked(auth).mockResolvedValue({ userId: USER } as never)
   vi.mocked(lookupFlavorChart).mockResolvedValue(CHART)
+  vi.mocked(lookupBrand).mockResolvedValue(BRAND)
 })
 
 describe('logSakeToJournal', () => {
@@ -70,6 +82,18 @@ describe('logSakeToJournal', () => {
     expect(entries[0]!.notes).toBe('warm finish')
     // Persisted under the user id, not a session.
     expect(await store().read(USER)).toHaveLength(1)
+  })
+
+  it('denormalises the sake display name from the brand lookup', async () => {
+    const entries = okEntries(await logSakeToJournal({ brandId: 123, rating: 5 }))
+    expect(entries[0]!.sake).toEqual({ nameKanji: '鍋島', nameRomaji: 'Nabeshima' })
+  })
+
+  it('skips when the brand row is missing even if a chart exists', async () => {
+    vi.mocked(lookupBrand).mockResolvedValue(null)
+    const state = await logSakeToJournal({ brandId: 123, rating: 5 })
+    expect(state.status).toBe('skipped_no_profile')
+    expect(await store().read(USER)).toHaveLength(0)
   })
 
   it('defaults triedAt to now and mirrors it onto the event occurredAt', async () => {

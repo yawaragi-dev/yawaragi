@@ -4,7 +4,7 @@ import { auth } from '@clerk/nextjs/server'
 import { currentUserIsMaintainer } from '@/lib/auth/maintainer'
 import { type JournalEntry, JournalEntrySchema } from '@/lib/schemas/journal-entry'
 import { type JournalLogInput, JournalLogInputSchema } from '@/lib/schemas/journal-log-input'
-import { lookupFlavorChart } from '@/lib/sakenowa/lookup'
+import { lookupBrand, lookupFlavorChart } from '@/lib/sakenowa/lookup'
 import { getJournalStore } from '@/lib/taste/get-journal-store'
 import type { JournalActionState } from '@/lib/taste/journal-action-state'
 import type { JournalStore } from '@/lib/taste/journal-store'
@@ -53,8 +53,11 @@ export async function logSakeToJournal(input: JournalLogInput): Promise<JournalA
   const { brandId, rating, notes, triedAt } = parsed.data
 
   return withMaintainerJournal(async (userId, store) => {
-    const chart = await lookupFlavorChart(brandId)
-    if (chart == null) return { status: 'skipped_no_profile' }
+    // Both are needed: the chart to place the sake in axis space, the brand for
+    // the denormalised display name. A charted brand always has a brands row, so
+    // a null brand here is a data anomaly — treat it the same as no chart.
+    const [chart, brand] = await Promise.all([lookupFlavorChart(brandId), lookupBrand(brandId)])
+    if (chart == null || brand == null) return { status: 'skipped_no_profile' }
 
     const now = Date.now()
     const tried = triedAt ?? now
@@ -68,6 +71,7 @@ export async function logSakeToJournal(input: JournalLogInput): Promise<JournalA
         target: { f1: chart.f1, f2: chart.f2, f3: chart.f3, f4: chart.f4, f5: chart.f5, f6: chart.f6 },
         occurredAt: tried,
       },
+      sake: { nameKanji: brand.nameKanji, nameRomaji: brand.nameRomaji },
       notes: trimmedNotes ? trimmedNotes : undefined,
       triedAt: tried,
       createdAt: now,
