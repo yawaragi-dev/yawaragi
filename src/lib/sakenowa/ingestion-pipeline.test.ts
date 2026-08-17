@@ -1,4 +1,20 @@
 import { describe, expect, it, vi } from 'vitest'
+
+// The ingest enrichment step (`enrichBeforeUpsert`) defaults to the
+// Anthropic-backed `transliterateBatch` when a test doesn't inject one. Several
+// classification tests below add/update rows WITHOUT injecting it, so without
+// this mock they fire a REAL api.anthropic.com call — which intermittently
+// hangs past the 5s test timeout on CI (a flaky failure unrelated to what those
+// tests assert). Stub the module-level default to an offline no-op returning
+// null romaji. Tests that specifically exercise enrichment pass their own
+// `transliterateBatch` via `deps`, which overrides this default, so they're
+// unaffected. Spread the original so the module's other exports survive.
+vi.mock('./romaji', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./romaji')>()),
+  transliterateBatch: vi.fn(async (items: ReadonlyArray<{ id: number }>) =>
+    items.map((item) => ({ id: item.id, nameRomaji: null })),
+  ),
+}))
 import {
   computeAreaContentHash,
   computeBreweryContentHash,
