@@ -56,3 +56,8 @@ next-env.d.ts
 
 # clerk configuration (can include secrets)
 /.clerk/
+
+# `pnpm journal:export` output — account-linked personal data (ADR-0009 RoPA:
+# the tasting journal). Written to the working directory by default; must never
+# be committed. Delete the file once the request that prompted it is satisfied.
+journal-export-*.json

@@ -32,6 +32,7 @@
     "add-manual-brand": "tsx --env-file=.env.local scripts/add-manual-brand.ts",
     "sakenowa:freshness": "tsx --env-file=.env.local scripts/sakenowa-freshness-check.ts",
     "rate-limit:reset": "tsx --env-file=.env.local scripts/clear-rate-limit.ts",
+    "journal:export": "tsx --conditions react-server --env-file=.env.local scripts/export-journal.ts",
     "eval": "tsx --env-file=.env.local scripts/eval.ts",
     "db:resync": "npm run db:reset -- --yes && npm run migrate && npm run ingest",
     "verify": "npm run lint && npm run typecheck && npm run test && npm run test:integration && npm run test:e2e && npm run i18n:audit && npm run anthropic-files:audit"
