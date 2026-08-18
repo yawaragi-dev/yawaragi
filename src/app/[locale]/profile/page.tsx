@@ -1,9 +1,18 @@
 import { cookies } from 'next/headers'
+import { auth } from '@clerk/nextjs/server'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import type { Metadata } from 'next'
 import { Link } from '@/i18n/navigation'
 import { isLaunched } from '@/i18n/launch-state'
 import { AgeGate } from '@/components/legal/age-gate'
+import { JournalView } from '@/components/profile/journal/journal-view'
+import { currentUserIsMaintainer } from '@/lib/auth/maintainer'
+import type { JournalEntry } from '@/lib/schemas/journal-entry'
+import { getJournalStore } from '@/lib/taste/get-journal-store'
+import {
+  type MaintainerJournalState,
+  resolveMaintainerJournal,
+} from '@/lib/taste/resolve-maintainer-journal'
 import { CrossBeverageSeedForm } from '@/components/profile/cross-beverage-seed-form'
 import { TasteProvenanceSummary } from '@/components/profile/taste-provenance-summary'
 import { FlavorRadarView } from '@/components/sake/flavor-radar-view'
@@ -59,6 +68,65 @@ const tp = (
 ): FlavorProfile => ({ f1, f2, f3, f4, f5, f6 })
 
 type CookieJar = Awaited<ReturnType<typeof cookies>>
+
+// --- Maintainer tasting journal (ADR-0020, P5.5-C) ---------------------------
+
+const STUB_JOURNAL_MAP: FlavorProfile = tp(0.62, 0.55, 0.4, 0.48, 0.3, 0.58)
+
+// Canned journal for the non-production E2E stub (`yawaragi_journal_stub`),
+// mirroring the anonymous `yawaragi_taste_stub` seam. Two entries across two
+// months so the timeline's month grouping is exercised without a live Upstash.
+const STUB_JOURNAL_ENTRIES: readonly JournalEntry[] = [
+  {
+    id: 's1',
+    event: { kind: 'rating', rating: 5, brandId: 1, target: STUB_JOURNAL_MAP, occurredAt: Date.UTC(2026, 6, 18) },
+    sake: { nameKanji: '而今', nameRomaji: 'Jikon' },
+    notes: 'Melon and white peach, gone in a clean line.',
+    triedAt: Date.UTC(2026, 6, 18),
+    createdAt: Date.UTC(2026, 6, 18),
+  },
+  {
+    id: 's2',
+    event: { kind: 'rating', rating: 4, brandId: 2, target: STUB_JOURNAL_MAP, occurredAt: Date.UTC(2026, 5, 24) },
+    sake: { nameKanji: '田酒', nameRomaji: 'Denshu' },
+    triedAt: Date.UTC(2026, 5, 24),
+    createdAt: Date.UTC(2026, 5, 24),
+  },
+]
+
+function resolveJournalStub(stub: string): MaintainerJournalState {
+  if (stub === 'unavailable') return { kind: 'unavailable' }
+  if (stub === 'populated') {
+    return { kind: 'journal', entries: STUB_JOURNAL_ENTRIES, profile: STUB_JOURNAL_MAP }
+  }
+  return { kind: 'empty' }
+}
+
+/**
+ * Decide the maintainer branch. Kept out of the component body (like
+ * `resolveSessionTasteProfile`) so the impure `Date.now()` read isn't in the
+ * render path — the non-prod `yawaragi_journal_stub` seam also stands in for the
+ * maintainer check + store so the E2E needs no Clerk/Upstash.
+ */
+async function resolveMaintainerJournalView(
+  cookieJar: CookieJar,
+): Promise<{ isMaintainer: boolean; journal: MaintainerJournalState | null }> {
+  const journalStub =
+    process.env.NODE_ENV !== 'production' ? cookieJar.get('yawaragi_journal_stub')?.value : undefined
+  if (journalStub != null) {
+    return { isMaintainer: true, journal: resolveJournalStub(journalStub) }
+  }
+  if (!(await currentUserIsMaintainer())) {
+    return { isMaintainer: false, journal: null }
+  }
+  const { userId } = await auth()
+  const journal = await resolveMaintainerJournal({
+    store: getJournalStore(),
+    userId,
+    now: Date.now(),
+  })
+  return { isMaintainer: true, journal }
+}
 
 /**
  * Read the session's taste profile, with a non-production stub seam
@@ -171,6 +239,41 @@ export default async function ProfilePage({
   const cookieJar = await cookies()
   if (!hasAcceptedAgeGate(cookieJar)) {
     return <AgeGate />
+  }
+
+  // Maintainer branch (ADR-0020): an allowlisted maintainer gets the REAL
+  // persistent tasting journal; everyone else falls through to the anonymous,
+  // interactive-but-ephemeral example below. The `yawaragi_journal_stub` cookie
+  // (non-prod only) drives the journal states for the E2E without Clerk/Upstash,
+  // and stands in for the maintainer check so the stub path needs no real auth.
+  const maintainerView = await resolveMaintainerJournalView(cookieJar)
+  if (maintainerView.isMaintainer && maintainerView.journal) {
+    const journal = maintainerView.journal
+    const tJournal = await getTranslations('journal')
+    return (
+      <main
+        className="flex flex-1 w-full max-w-2xl mx-auto flex-col gap-10 py-12 px-6"
+        data-testid="profile-journal-page"
+      >
+        <section className="flex flex-col gap-3">
+          <h1 className="text-3xl font-semibold leading-tight tracking-tight">{tJournal('title')}</h1>
+          <p className="max-w-prose text-base text-zinc-700 dark:text-zinc-300">{tJournal('intro')}</p>
+        </section>
+        {journal.kind === 'unavailable' ? (
+          <section data-testid="journal-unavailable" className="flex flex-col gap-3">
+            <p className="max-w-prose text-sm text-zinc-600 dark:text-zinc-400">
+              {tJournal('unavailableBody')}
+            </p>
+          </section>
+        ) : (
+          <JournalView
+            entries={journal.kind === 'journal' ? journal.entries : []}
+            profile={journal.kind === 'journal' ? journal.profile : null}
+            locale={locale}
+          />
+        )}
+      </main>
+    )
   }
 
   const t = await getTranslations('profile')

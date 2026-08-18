@@ -10,6 +10,7 @@ const NOW = 1_000_000
 const entry = (id: string, occurredAt: number): JournalEntry => ({
   id,
   event: { kind: 'rating', rating: 5, brandId: occurredAt, target: TARGET, occurredAt },
+  sake: { nameKanji: '鍋島', nameRomaji: 'Nabeshima' },
   triedAt: occurredAt,
   createdAt: occurredAt,
 })

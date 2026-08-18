@@ -8,6 +8,7 @@ const TARGET = { f1: 0.2, f2: 0.6, f3: 0.6, f4: 0.4, f5: 0.1, f6: 0.3 }
 const entry = (id: string, occurredAt: number, over: Partial<JournalEntry> = {}): JournalEntry => ({
   id,
   event: { kind: 'rating', rating: 5, brandId: occurredAt, target: TARGET, occurredAt },
+  sake: { nameKanji: '鍋島', nameRomaji: 'Nabeshima' },
   triedAt: occurredAt,
   createdAt: occurredAt,
   ...over,

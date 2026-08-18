@@ -1,6 +1,6 @@
 # Yawaragi
 
-A sake companion — **Yawaragi** (和らぎ, "the water drunk between sake sips"; cf. *yawaragi-mizu*, 和らぎ水). Helps users recognise, discover, and track the sake they enjoy through three flagship surfaces: label scan, chat recommender, and taste profile. The adopted next direction (ADR-0020) reframes the taste profile around a **tasting journal** as the spine — with the **TasteMap** as its derived output view — and adds search (#234); neither is shipped yet.
+A sake companion — **Yawaragi** (和らぎ, "the water drunk between sake sips"; cf. *yawaragi-mizu*, 和らぎ水). Helps users recognise, discover, and track the sake they enjoy through three flagship surfaces: label scan, chat recommender, and taste profile. The adopted next direction (ADR-0020) reframes the taste profile around a **tasting journal** as the spine — with the **TasteMap** as its derived output view — and adds search (#234). The tasting journal now ships as a **maintainer-only private beta** (the public still sees the anonymous, ephemeral taste-profile example); the deterministic search (#234) is not yet shipped as its own surface.
 
 Previously named "Kanpai"; renamed to avoid collision with KANPAI London Craft Sake Brewery. See `## Naming` below and ADR-0004.
 
@@ -43,7 +43,7 @@ A single dated interaction that feeds a *User*'s **TasteProfile**: a Sake rating
 _Avoid_: Interaction (too generic), Rating (only one of the three kinds), Signal, PreferenceEvent
 
 **TastingJournal**:
-A *User*'s durable, ordered record of Sakes they have tried — the **spine surface** everything else hangs off (per ADR-0020). A **JournalEntry** *is* a **TasteEvent** plus richer fields: free-text `notes`, an explicit `tried_at`, and (later) a scan reference. The **TasteMap** and recommender are *downstream outputs* of the journal. Persistence is auth-gated and maintainer-only in v1; the public sees an interactive-but-ephemeral example (ADR-0020). EN "tasting journal" / DE "Verkostungsjournal".
+A *User*'s durable, ordered record of Sakes they have tried — the **spine surface** everything else hangs off (per ADR-0020). A **JournalEntry** *is* a **TasteEvent** plus richer fields: free-text `notes`, an explicit `tried_at`, the denormalised sake display name (kanji + romaji, captured at log time so the record survives a catalogue change), and (later) a scan reference. The **TasteMap** and recommender are *downstream outputs* of the journal. Persistence is auth-gated and maintainer-only in v1; the public sees an interactive-but-ephemeral example (ADR-0020). EN "tasting journal" / DE "Verkostungsjournal".
 _Avoid_: Log (clinical), Diary (personal-emotional), Cellar / Shelf (implies owning bottles, not tastings), History (too generic)
 
 **Ranking**:

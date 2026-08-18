@@ -29,6 +29,15 @@ export const JournalEntrySchema = z.object({
   id: z.string().min(1),
   /** The TasteEvent this entry emits into `deriveTasteProfile`. */
   event: TasteEventSchema,
+  /** The sake's display name, denormalised at log time. A journal is a
+   *  permanent record: it must still read "而今 / Jikon" even if that brand is
+   *  later removed from the Sakenowa mirror, and the timeline shouldn't do an
+   *  N-row brand lookup on every render. `nameRomaji` is nullable (not every
+   *  brand has a transliteration), matching `brands.name_romaji`. */
+  sake: z.object({
+    nameKanji: z.string().min(1),
+    nameRomaji: z.string().nullable(),
+  }),
   /** Free-text tasting note. Optional — a quick check-in has none. */
   notes: z.string().max(2000).optional(),
   /** Epoch ms — when the User TRIED the sake (user-facing, may be backdated:
