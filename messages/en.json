@@ -350,5 +350,16 @@
   "heuristicDisclaimer": {
     "title": "These are cross-beverage approximations",
     "body": "Western descriptors like “smoky” or “tannic” don’t have a direct sake equivalent. We map them with a hand-curated heuristic so you can start from a familiar reference — treat these results as a starting point for discovery, not a precise match."
+  },
+  "signIn": {
+    "title": "Sign in",
+    "intro": "Yawaragi is in a private beta. Sign-in is for maintainers — there is no public account sign-up yet.",
+    "cardTitle": "Sign in to Yawaragi",
+    "cardSubtitle": "Maintainer access",
+    "emailLabel": "Email address",
+    "passwordLabel": "Password",
+    "submit": "Continue",
+    "signOut": "Sign out",
+    "signingOut": "Signing out…"
   }
 }

@@ -1,5 +1,7 @@
 import { getTranslations } from 'next-intl/server'
+import { Show } from '@clerk/nextjs'
 import { Link } from '@/i18n/navigation'
+import { HeaderAuth } from '@/components/auth/header-auth'
 import { LocaleSwitcher } from '@/components/layout/locale-switcher'
 import { HeaderNav, type HeaderNavMessages } from '@/components/layout/header-nav'
 
@@ -16,6 +18,7 @@ import { HeaderNav, type HeaderNavMessages } from '@/components/layout/header-na
 export async function Header() {
   const t = await getTranslations('header')
   const tCommon = await getTranslations('common')
+  const tSignIn = await getTranslations('signIn')
 
   const navMessages: HeaderNavMessages = {
     navScan: t('navScan'),
@@ -42,6 +45,15 @@ export async function Header() {
         </Link>
         <HeaderNav messages={navMessages} />
         <div className="ml-auto flex items-center gap-2">
+          {/* Clerk v7 replaced <SignedIn> with <Show when="signed-in">; it is
+              a server component, so the gate lives here and only the button
+              itself crosses the client boundary. */}
+          <Show when="signed-in">
+            <HeaderAuth
+              signOutLabel={tSignIn('signOut')}
+              signingOutLabel={tSignIn('signingOut')}
+            />
+          </Show>
           <LocaleSwitcher />
         </div>
       </div>

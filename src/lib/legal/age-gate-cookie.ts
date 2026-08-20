@@ -83,6 +83,10 @@ const UNGATED_LOCALE_PATHS: ReadonlySet<string> = new Set([
   '/privacy',
   '/Datenschutz',
   '/under-18',
+  // Maintainer login. Renders no sake, flavor, or recommendation data, so
+  // JMStV §6(5) has nothing to gate — and gating it would gate the
+  // maintainer's own way in behind an age-gate rewrite.
+  '/sign-in',
 ])
 
 export function isGatedPath(pathname: string): boolean {

@@ -350,5 +350,16 @@
   "heuristicDisclaimer": {
     "title": "Diese Ergebnisse sind Näherungen aus anderen Getränken",
     "body": "Westliche Begriffe wie „rauchig\" oder „gerbstoffreich\" haben keine direkte Entsprechung im Sake. Wir übertragen sie mit einer handgepflegten Näherung, damit du von einem vertrauten Bezugspunkt aus starten kannst — die Ergebnisse sind ein Ausgangspunkt zum Entdecken, keine exakte Übereinstimmung."
+  },
+  "signIn": {
+    "title": "Anmelden",
+    "intro": "Yawaragi befindet sich in einer geschlossenen Beta. Die Anmeldung ist Betreuer:innen vorbehalten — eine öffentliche Registrierung gibt es noch nicht.",
+    "cardTitle": "Bei Yawaragi anmelden",
+    "cardSubtitle": "Zugang für Betreuer:innen",
+    "emailLabel": "E-Mail-Adresse",
+    "passwordLabel": "Passwort",
+    "submit": "Weiter",
+    "signOut": "Abmelden",
+    "signingOut": "Wird abgemeldet…"
   }
 }
