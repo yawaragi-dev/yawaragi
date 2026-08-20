@@ -328,6 +328,15 @@ export async function suggestAction(seed: SuggestSeed): Promise<SuggestActionSta
       //    field-level provenance-pinned schema. An empty list is the
       //    honest no-match outcome — the page renders the noMatch copy
       //    instead of a card list. NEVER fabricate a card.
+      //
+      //    "Honest" depends on the loop having actually FINISHED. If it
+      //    stopped because `stopWhen(stepCountIs(...))` fired, the last step
+      //    still wanted to call tools (`finishReason === 'tool-calls'`) and
+      //    the model never got a turn to emit its JSON answer — the text we
+      //    hold is mid-reasoning prose, which parses to zero rows. Reporting
+      //    that as "no matches" tells the visitor no such sake exists when
+      //    the truth is we ran out of budget. Checked below, after the parse,
+      //    so a run that hit the cap but still produced usable rows is kept.
       let suggestions
       try {
         suggestions = parseSuggestionsFromText(llmResult.text ?? '')
@@ -341,6 +350,16 @@ export async function suggestAction(seed: SuggestSeed): Promise<SuggestActionSta
         console.warn('[suggest] parse failed:', message)
         debugAdd('SuggestAction', 'parse failed', { error: message }, 'error')
         return { status: 'error', reason: 'parse_failed' }
+      }
+
+      if (suggestions.length === 0 && llmResult.finishReason === 'tool-calls') {
+        debugAdd(
+          'SuggestAction',
+          'step budget exhausted before a final answer',
+          { finishReason: llmResult.finishReason, steps: llmResult.steps?.length },
+          'error',
+        )
+        return { status: 'error', reason: 'step_budget_exhausted' }
       }
 
       // 6. Fan-out `get_sake_details` in parallel to hydrate each card

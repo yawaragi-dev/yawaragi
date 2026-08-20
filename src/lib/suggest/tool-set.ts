@@ -1,6 +1,7 @@
 import 'server-only'
 
 import type { ToolSet } from 'ai'
+import { withNumericArgCoercion } from '@/lib/ai/mcp/coerce-numeric-args'
 import { mapCrossBeverage } from '@/lib/ai/tools/map-cross-beverage'
 
 /**
@@ -20,7 +21,13 @@ import { mapCrossBeverage } from '@/lib/ai/tools/map-cross-beverage'
  */
 export function buildSuggestToolSet(mcpTools: ToolSet): ToolSet {
   return {
-    ...mcpTools,
+    // MCP tools are wrapped so numeric-looking string arguments are coerced to
+    // the numbers their own schema declares. See `coerce-numeric-args.ts` — a
+    // model that sends `topK: "30"` used to burn half the step budget on
+    // rejected retries and leave the visitor with an empty result list.
+    // `mapCrossBeverage` is local and Zod-typed at its own boundary, so it is
+    // deliberately outside the wrapper.
+    ...withNumericArgCoercion(mcpTools),
     mapCrossBeverage,
   }
 }
