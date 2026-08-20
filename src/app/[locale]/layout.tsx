@@ -11,6 +11,7 @@ import { Header } from '@/components/layout/header'
 import { DebugPanelMount } from '@/components/debug/debug-panel-mount'
 import { CookieBanner } from '@/components/legal/cookie-banner'
 import { CookieSettingsLink } from '@/components/legal/cookie-settings-link'
+import { buildClerkLocalization } from '@/lib/auth/clerk-localization'
 import { isDebugEnabledFromCookies } from '@/lib/debug/debug-mode'
 import { getComplianceState } from '@/lib/legal/compliance-state'
 import '../globals.css'
@@ -50,14 +51,30 @@ export default async function LocaleLayout({
   // redirect from /scan to /sake/[brandId].
   const debugMode = isDebugEnabledFromCookies(cookieJar)
   const tFooter = await getTranslations({ locale, namespace: 'footer' })
+  const tSignIn = await getTranslations({ locale, namespace: 'signIn' })
 
   // ClerkProvider wraps NextIntlClientProvider so Clerk's auth context is
   // available to any client component that also needs the intl context.
-  // Phase 2 renders no Clerk UI (no <SignIn/>, <SignUp/>, <UserButton/>) —
-  // this is the deliberate exception to the "no half-finished" rule
-  // documented in PRD #21 / issue #55. Phase 2.5+ surfaces attach here.
+  //
+  // Phase 2 deliberately rendered NO Clerk UI (PRD #21 / issue #55). Phase 5.5
+  // ended that: the tasting journal gates on `auth().userId`, so a session had
+  // to become obtainable. The app now renders exactly two Clerk surfaces —
+  // `<SignIn/>` on `/[locale]/sign-in` and a sign-out control in the header.
+  // Still NO `<SignUp/>`: ADR-0020 keeps v1 a maintainer-only private beta
+  // with no public account creation.
   return (
-    <ClerkProvider>
+    <ClerkProvider
+      // Clerk's widgets ship English copy; localisation is applied at the
+      // provider, not per widget. Sourcing it from our own catalogue keeps
+      // the German in `messages/de.json` — see `clerk-localization.ts`.
+      localization={buildClerkLocalization({
+        cardTitle: tSignIn('cardTitle'),
+        cardSubtitle: tSignIn('cardSubtitle'),
+        emailLabel: tSignIn('emailLabel'),
+        passwordLabel: tSignIn('passwordLabel'),
+        submit: tSignIn('submit'),
+      })}
+    >
       <html
         lang={locale}
         // `overflow-x-clip` (not `-hidden`) is load-bearing on both

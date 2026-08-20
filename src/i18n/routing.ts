@@ -28,6 +28,9 @@ export const routing = defineRouting({
       de: '/Datenschutz',
     },
     '/under-18': '/under-18',
+    // Same external path in both locales — the widget's own copy is localised
+    // through next-intl (see `sign-in-card.tsx`), not through the URL.
+    '/sign-in': '/sign-in',
     '/sake/[brandId]': '/sake/[brandId]',
     '/scan': '/scan',
     '/suggest': '/suggest',
