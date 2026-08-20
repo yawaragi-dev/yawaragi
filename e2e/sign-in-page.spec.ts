@@ -34,15 +34,29 @@ test.describe('sign-in page', () => {
     })
   }
 
-  test('offers no route to creating an account', async ({ page }) => {
-    // ADR-0020 keeps v1 a maintainer-only private beta. The widget ships a
-    // "Don't have an account? Sign up" footer by default; if a Clerk upgrade
-    // ever restores it, this fails instead of quietly inviting sign-ups.
+  test('renders the login widget with our own copy, not Clerk defaults', async ({ page }) => {
+    // Positive assertion by design. There is deliberately NO e2e test here
+    // asserting the absence of a sign-up link, because such a test cannot be
+    // made trustworthy: Clerk mounts asynchronously and its footer arrives
+    // after the form fields, so every "expect no sign-up link" variant passed
+    // even with all suppression removed — a mutation test proved it twice.
+    // A test that cannot fail is worse than no test.
+    //
+    // What actually guards "login only":
+    //   1. `clerk-localization.test.ts` — deterministic, and verified to fail
+    //      when the blanked actionText/actionLink are restored.
+    //   2. The Clerk instance's own sign-up mode (Restrictions → Restricted).
+    //      That is the enforcement of record; the in-app `appearance` rule is
+    //      cosmetic and cannot remove the anchor from the DOM.
     await page.goto('/en/sign-in')
     await expect(page.getByTestId('sign-in-page')).toBeVisible()
 
-    await expect(page.getByRole('link', { name: /sign up/i })).toHaveCount(0)
-    await expect(page.locator('a[href*="sign-up"]')).toHaveCount(0)
+    // The widget mounted and took our localised submit label — which is the
+    // same mechanism that blanks the sign-up invitation.
+    // `exact` matters: Clerk also renders "Continue with Google", and
+    // Playwright's name matching is substring-by-default.
+    await expect(page.getByRole('button', { name: 'Continue', exact: true })).toBeVisible()
+    await expect(page.getByText('Email address', { exact: true })).toBeVisible()
   })
 
   test('German visitors get German copy, not Clerk defaults', async ({ browser }) => {

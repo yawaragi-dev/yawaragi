@@ -49,7 +49,10 @@ export async function Header() {
               a server component, so the gate lives here and only the button
               itself crosses the client boundary. */}
           <Show when="signed-in">
-            <HeaderAuth signOutLabel={tSignIn('signOut')} />
+            <HeaderAuth
+              signOutLabel={tSignIn('signOut')}
+              signingOutLabel={tSignIn('signingOut')}
+            />
           </Show>
           <LocaleSwitcher />
         </div>

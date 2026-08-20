@@ -359,7 +359,7 @@
     "emailLabel": "Email address",
     "passwordLabel": "Password",
     "submit": "Continue",
-    "signedInAs": "Signed in as {identifier}",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "signingOut": "Signing out…"
   }
 }
