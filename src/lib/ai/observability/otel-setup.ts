@@ -22,7 +22,7 @@ import { env } from '@/env'
  *     integration: it turns the SDK's lifecycle callbacks into OTel
  *     spans, which `LangfuseSpanProcessor` then exports. Remove this
  *     call and Langfuse goes silent without a single failing test —
- *     which is exactly why `langfuse-trace.test.ts` pins it.
+ *     which is exactly why `otel-setup.test.ts` pins it. See ADR-0021.
  *
  *   - **`@vercel/otel` over raw `@opentelemetry/sdk-node`**: Vercel's
  *     wrapper preserves Next.js' built-in tracing (request spans,
