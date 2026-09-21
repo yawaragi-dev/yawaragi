@@ -273,7 +273,11 @@ export async function suggestAction(seed: SuggestSeed): Promise<SuggestActionSta
             // and `RATE_LIMIT_BYPASS=1` env — the debug panel shows
             // `tool-call:`, `tool-result:`, and `step complete` lines
             // for each MCP call inside the loop.
-            onStepFinish: (step) => {
+            // `onStepEnd` — AI SDK 7's name for what v6 called
+            // `onStepFinish` (the old key still works but is
+            // `@deprecated`; the callback type is a straight alias, so
+            // the body is unchanged).
+            onStepEnd: (step) => {
               for (const call of step.toolCalls) {
                 const argsPreview = JSON.stringify(call.input).slice(0, 200)
                 debugAdd('SuggestAction', `tool-call: ${call.toolName}(${argsPreview})`)
