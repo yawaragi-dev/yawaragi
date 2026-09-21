@@ -2,7 +2,6 @@ import 'server-only'
 
 import type { LanguageModel } from 'ai'
 import { anthropic } from '@ai-sdk/anthropic'
-import type { AttributeValue } from '@opentelemetry/api'
 import {
   LabelScanExtractionSchema,
   type LabelScanExtraction,
@@ -22,11 +21,15 @@ import type { VisionProvider } from './vision-provider'
  *     `source: 'llm_extracted'` pinning enforced by the schema runs at the
  *     seam. A model that hallucinates a different `source` value throws
  *     here, not downstream.
- *   - The image is passed as an `ImagePart` with `image: Uint8Array`. The
- *     `@ai-sdk/anthropic` provider serialises that to inline base64 on
- *     `/v1/messages` — it never reaches `/v1/files`. The forbidden-pattern
- *     scan in `scripts/audit-anthropic-files-api.ts` stays clean against
- *     this module. CLAUDE.md § "Anthropic Files API ban".
+ *   - The image is passed as a `FilePart` with `data: { type: 'data', data:
+ *     Uint8Array }` and an `image/*` media type (AI SDK 7 deprecated the
+ *     `ImagePart` shape). The `@ai-sdk/anthropic` provider serialises that
+ *     to inline base64 on `/v1/messages` — it never reaches `/v1/files`.
+ *     Only the `data` variant of AI SDK 7's tagged file-data union is
+ *     ZDR-eligible; `{ type: 'reference' }` *is* the Files-API upload path.
+ *     The forbidden-pattern scan in
+ *     `scripts/audit-anthropic-files-api.ts` stays clean against this
+ *     module. CLAUDE.md § "Anthropic Files API ban".
  *   - `ZDR_ACTIVE` is read from the source-of-truth. ADR-0009 documents
  *     7-day standard Anthropic retention (reduced from 30 on 2025-09-14)
  *     as the acceptable baseline; ZDR is a pre-DACH-launch action, not a
@@ -63,14 +66,17 @@ export interface AnthropicHaikuProviderOptions {
    */
   nodeEnv?: string
   /**
-   * Optional extra OpenTelemetry attributes attached to the Langfuse
-   * span emitted by `tracedGenerateObject`. Phase 4 / S4 (#141) — the
+   * Optional extra trace attributes attached to the Langfuse trace
+   * emitted by `tracedGenerateObject`. Phase 4 / S4 (#141) — the
    * provider always emits a trace; the caller (registry / scan-action)
    * uses this to tag the call with provider key, tier, or other
    * action-level context. Keys follow the `<area>.<key>` convention
    * (`provider.key`, `scan.tier`, etc.).
+   *
+   * String values only — Langfuse's `propagateAttributes` drops
+   * non-strings with a console warning. See `TracedCallContext.metadata`.
    */
-  telemetryMetadata?: Record<string, AttributeValue>
+  telemetryMetadata?: Record<string, string>
 }
 
 // The system prompt teaches the model the difference between the
@@ -193,11 +199,19 @@ export function createAnthropicHaikuProvider(
           ? String((resolvedModel as { modelId: unknown }).modelId)
           : 'unknown'
 
-      // Convert the JPEG blob to a Uint8Array. The AI SDK's `ImagePart`
-      // with `image: Uint8Array` is serialised by `@ai-sdk/anthropic`
+      // Convert the JPEG blob to a Uint8Array. The AI SDK's `FilePart`
+      // with `data: Uint8Array` is serialised by `@ai-sdk/anthropic`
       // into inline base64 in the `/v1/messages` request body — never
       // through `/v1/files`. The forbidden-pattern audit (`pnpm
       // anthropic-files:audit`) protects against any regression here.
+      //
+      // AI SDK 7 deprecated the `image` content part in favour of a
+      // `file` part with an `image/*` media type. The replacement matters
+      // beyond the deprecation warning: `FilePart.data` is now a tagged
+      // union, and only `{ type: 'data' }` (raw bytes / base64) is
+      // ZDR-eligible. `{ type: 'reference' }` is the Files-API upload
+      // shape that CLAUDE.md forbids — `anthropic-haiku-provider.test.ts`
+      // asserts the discriminant so a regression is caught in CI.
       const arrayBuffer = await jpegBlob.arrayBuffer()
       const bytes = new Uint8Array(arrayBuffer)
 
@@ -228,8 +242,8 @@ export function createAnthropicHaikuProvider(
               content: [
                 { type: 'text', text: USER_PROMPT },
                 {
-                  type: 'image',
-                  image: bytes,
+                  type: 'file',
+                  data: { type: 'data', data: bytes },
                   mediaType: jpegBlob.type || 'image/jpeg',
                 },
               ],
@@ -241,7 +255,7 @@ export function createAnthropicHaikuProvider(
 
       // `generateObject` already runs the schema parse, so `object` is
       // semantically `LabelScanExtraction`. The traced wrapper returns
-      // `unknown` (AI SDK 6's overload union loses precision when piped
+      // `unknown` (AI SDK 7's overload union loses precision when piped
       // through `Parameters<>` / `ReturnType<>`), so we re-parse here to
       // recover the type AND keep the documented contract of this method
       // ("returns a value that has passed LabelScanExtractionSchema.parse").

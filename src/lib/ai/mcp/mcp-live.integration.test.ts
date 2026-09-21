@@ -40,7 +40,7 @@ import type { MCPClient } from '@ai-sdk/mcp'
 import { getDefaultMcpClient } from './registry'
 
 /**
- * AI SDK 6's MCP client doesn't reject the promise when an MCP tool
+ * AI SDK 7's MCP client doesn't reject the promise when an MCP tool
  * returns a server-side error — it resolves with
  * `{ content: [...], isError: true }`. This helper asserts the result
  * has the success shape and returns its serialised content for
@@ -132,7 +132,7 @@ describe.skipIf(!SHOULD_RUN)('MCP integration — live @yawaragi/sakenowa-mcp', 
     expect(tool).toBeDefined()
     const result = await tool!.execute(
       {},
-      { toolCallId: 'integration-list_prefectures', messages: [] },
+      { toolCallId: 'integration-list_prefectures', messages: [], context: {} },
     )
     const serialised = expectSuccessfulToolResult(result)
     expect(serialised).toMatch(/北海道/) // Hokkaido is area_id 1
@@ -154,7 +154,7 @@ describe.skipIf(!SHOULD_RUN)('MCP integration — live @yawaragi/sakenowa-mcp', 
     // hasn't run.
     const result = await tool!.execute(
       { query: 'Dassai' },
-      { toolCallId: 'integration-search', messages: [] },
+      { toolCallId: 'integration-search', messages: [], context: {} },
     )
     const serialised = expectSuccessfulToolResult(result)
     expect(
@@ -172,7 +172,7 @@ describe.skipIf(!SHOULD_RUN)('MCP integration — live @yawaragi/sakenowa-mcp', 
     // result small and predictable.
     const result = await tool!.execute(
       { brandId: 1, topK: 3 },
-      { toolCallId: 'integration-similar', messages: [] },
+      { toolCallId: 'integration-similar', messages: [], context: {} },
     )
     expectSuccessfulToolResult(result)
   })
@@ -183,7 +183,7 @@ describe.skipIf(!SHOULD_RUN)('MCP integration — live @yawaragi/sakenowa-mcp', 
     expect(tool).toBeDefined()
     const result = await tool!.execute(
       { brandId: 1 },
-      { toolCallId: 'integration-details', messages: [] },
+      { toolCallId: 'integration-details', messages: [], context: {} },
     )
     const serialised = expectSuccessfulToolResult(result)
     // Assert the canonical response shape, not the specific content —
@@ -206,7 +206,7 @@ describe.skipIf(!SHOULD_RUN)('MCP integration — live @yawaragi/sakenowa-mcp', 
     // stable across mirrors.
     const result = await tool!.execute(
       { f1Min: 0.6, f1Max: 1.0, f5Min: 0.4, f5Max: 1.0, topK: 5 },
-      { toolCallId: 'integration-flavor', messages: [] },
+      { toolCallId: 'integration-flavor', messages: [], context: {} },
     )
     expectSuccessfulToolResult(result)
   })
@@ -217,14 +217,14 @@ describe.skipIf(!SHOULD_RUN)('MCP integration — live @yawaragi/sakenowa-mcp', 
     expect(tool).toBeDefined()
     const result = await tool!.execute(
       { scope: 'overall' },
-      { toolCallId: 'integration-ranked', messages: [] },
+      { toolCallId: 'integration-ranked', messages: [], context: {} },
     )
     expectSuccessfulToolResult(result)
   })
 
   // Error-path coverage. The MCP server surfaces tool errors as a
   // resolved promise with `{ isError: true, content: [...] }` — NOT as
-  // a rejected promise (per AI SDK 6's MCP client contract). The test
+  // a rejected promise (per AI SDK 7's MCP client contract). The test
   // therefore asserts the success-vs-error sentinel on the resolved
   // value rather than `.rejects`.
 
@@ -236,7 +236,7 @@ describe.skipIf(!SHOULD_RUN)('MCP integration — live @yawaragi/sakenowa-mcp', 
     // server-side Zod parse and propagate back as a structured error.
     const result = await tool!.execute(
       { brandId: 'not-a-number', topK: 3 },
-      { toolCallId: 'integration-bad-input', messages: [] },
+      { toolCallId: 'integration-bad-input', messages: [], context: {} },
     )
     const obj = result as { isError?: boolean; content?: unknown }
     expect(obj.isError).toBe(true)

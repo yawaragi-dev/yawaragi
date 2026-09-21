@@ -1,26 +1,32 @@
 /**
  * Phase 4 / S4 (#141): tests for the Langfuse-trace wrapper.
+ * Updated for the AI SDK 7 migration (#268).
  *
  * The wrapper's contract:
  *
- *   1. Every traced call passes `experimental_telemetry: { isEnabled: true,
- *      functionId, metadata, recordInputs, recordOutputs }` to the AI SDK
- *      primitive. We assert by spying on `generateText` / `generateObject`
- *      and inspecting the args.
- *   2. `recordInputs` / `recordOutputs` default to `false` (ADR-0009
+ *   1. Every traced call passes `telemetry: { isEnabled: true, functionId,
+ *      recordInputs, recordOutputs }` to the AI SDK primitive. We assert by
+ *      spying on `generateText` / `generateObject` and inspecting the args.
+ *   2. Trace identity (`traceName` + the caller's flat `metadata` bag) is
+ *      carried by Langfuse's `propagateAttributes` around the call. AI SDK 7
+ *      deleted `TelemetrySettings.metadata`, so this is the *only* place the
+ *      identifying attributes live — a regression here de-identifies every
+ *      production trace without breaking anything else, which is exactly why
+ *      it is pinned.
+ *   3. `recordInputs` / `recordOutputs` default to `false` (ADR-0009
  *      "redacted prompts and completions" posture).
- *   3. The wrapper passes through every other arg unchanged.
- *   4. Caller-supplied `experimental_telemetry` is silently overridden —
- *      tracing is non-negotiable.
- *   5. In production, missing `LANGFUSE_PUBLIC_KEY` / `LANGFUSE_SECRET_KEY`
+ *   4. The wrapper passes through every other arg unchanged.
+ *   5. Caller-supplied `telemetry` / `experimental_telemetry` is silently
+ *      overridden — tracing is non-negotiable.
+ *   6. In production, missing `LANGFUSE_PUBLIC_KEY` / `LANGFUSE_SECRET_KEY`
  *      throws BEFORE the AI SDK is called.
- *   6. Outside production, missing env is tolerated (local dev / e2e).
+ *   7. Outside production, missing env is tolerated (local dev / e2e).
  *
- * We don't spin up a real OpenTelemetry SDK here. The AI SDK 6's job is
- * to emit the OTel span when `isEnabled: true`; `LangfuseSpanProcessor`
- * (registered in `otel-setup.ts`) ships it to Langfuse. Neither layer
- * is ours to test — what's ours is whether the wrapper's args are
- * shaped correctly.
+ * We don't spin up a real OpenTelemetry SDK here. On AI SDK 7 the span-
+ * producing layer is `LangfuseVercelAiSdkIntegration` (registered in
+ * `otel-setup.ts` — see `otel-setup.test.ts`), and `LangfuseSpanProcessor`
+ * ships the spans. Neither layer is ours to test — what's ours is whether
+ * the wrapper's args and propagated attributes are shaped correctly.
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -31,6 +37,22 @@ vi.mock('ai', async (importOriginal) => {
     ...actual,
     generateText: vi.fn(),
     generateObject: vi.fn(),
+  }
+})
+
+// `propagateAttributes` is the AI SDK 7 replacement for
+// `experimental_telemetry.metadata`. The stub records the params and still
+// invokes the wrapped function, so the assertions below cover both "the
+// identity was propagated" and "the call still happened".
+const propagateAttributesSpy =
+  vi.fn<(params: Record<string, unknown>, fn: () => unknown) => unknown>()
+
+vi.mock('@langfuse/tracing', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@langfuse/tracing')>()
+  return {
+    ...actual,
+    propagateAttributes: (params: Record<string, unknown>, fn: () => unknown) =>
+      propagateAttributesSpy(params, fn),
   }
 })
 
@@ -45,7 +67,8 @@ vi.mock('@/env', () => ({
 import { generateObject, generateText } from 'ai'
 
 import {
-  buildTelemetrySettings,
+  buildPropagatedAttributes,
+  buildTelemetryOptions,
   isLangfuseConfigured,
   tracedGenerateObject,
   tracedGenerateText,
@@ -59,37 +82,57 @@ const generateObjectMock = vi.mocked(generateObject)
 beforeEach(() => {
   generateTextMock.mockReset().mockResolvedValue({ text: '' } as never)
   generateObjectMock.mockReset().mockResolvedValue({ object: {} } as never)
+  propagateAttributesSpy.mockReset().mockImplementation((_params, fn) => fn())
 })
 
 afterEach(() => {
   vi.unstubAllEnvs()
 })
 
-describe('buildTelemetrySettings', () => {
+describe('buildTelemetryOptions', () => {
   it('always sets isEnabled true and defaults inputs/outputs to redacted', () => {
-    const settings = buildTelemetrySettings({
+    const options = buildTelemetryOptions({
       functionId: 'scan-extract-label',
       metadata: { 'provider.key': 'anthropic-haiku-4-5' },
     })
 
-    expect(settings).toMatchObject({
+    expect(options).toMatchObject({
       isEnabled: true,
       functionId: 'scan-extract-label',
-      metadata: { 'provider.key': 'anthropic-haiku-4-5' },
       recordInputs: false,
       recordOutputs: false,
     })
   })
 
   it('honours an explicit recordInputs / recordOutputs opt-in', () => {
-    const settings = buildTelemetrySettings({
+    const options = buildTelemetryOptions({
       functionId: 'debug-replay',
       recordInputs: true,
       recordOutputs: true,
     })
 
-    expect(settings.recordInputs).toBe(true)
-    expect(settings.recordOutputs).toBe(true)
+    expect(options.recordInputs).toBe(true)
+    expect(options.recordOutputs).toBe(true)
+  })
+})
+
+describe('buildPropagatedAttributes', () => {
+  it('names the trace after the call site and carries the caller metadata', () => {
+    expect(
+      buildPropagatedAttributes({
+        functionId: 'suggest-tool-loop',
+        metadata: { 'seed.kind': 'brand', 'seed.brandId': '1' },
+      }),
+    ).toEqual({
+      traceName: 'suggest-tool-loop',
+      metadata: { 'seed.kind': 'brand', 'seed.brandId': '1' },
+    })
+  })
+
+  it('omits metadata entirely when the caller supplied none', () => {
+    expect(buildPropagatedAttributes({ functionId: 'scan-extract-label' })).toEqual({
+      traceName: 'scan-extract-label',
+    })
   })
 })
 
@@ -114,16 +157,30 @@ describe('tracedGenerateText', () => {
     expect(generateTextMock).toHaveBeenCalledTimes(1)
     const passedArgs = generateTextMock.mock.calls[0]?.[0] as Record<string, unknown>
     expect(passedArgs.prompt).toBe('hello')
-    expect(passedArgs.experimental_telemetry).toMatchObject({
+    expect(passedArgs.telemetry).toMatchObject({
       isEnabled: true,
       functionId: 'suggest-tool-loop',
-      metadata: { 'session.hash': 'abc123' },
       recordInputs: false,
       recordOutputs: false,
     })
   })
 
-  it('overrides caller-supplied experimental_telemetry to keep tracing non-negotiable', async () => {
+  it('identifies the trace in Langfuse with the call site and its metadata', async () => {
+    vi.stubEnv('NODE_ENV', 'test')
+
+    await tracedGenerateText(
+      { functionId: 'suggest-tool-loop', metadata: { 'session.hash': 'abc123' } },
+      { model: 'model-stub' as never, prompt: 'hello' },
+    )
+
+    expect(propagateAttributesSpy).toHaveBeenCalledTimes(1)
+    expect(propagateAttributesSpy.mock.calls[0]?.[0]).toEqual({
+      traceName: 'suggest-tool-loop',
+      metadata: { 'session.hash': 'abc123' },
+    })
+  })
+
+  it('overrides caller-supplied telemetry to keep tracing non-negotiable', async () => {
     vi.stubEnv('NODE_ENV', 'test')
 
     await tracedGenerateText(
@@ -131,15 +188,19 @@ describe('tracedGenerateText', () => {
       {
         model: 'model-stub' as never,
         prompt: 'hi',
-        experimental_telemetry: { isEnabled: false, functionId: 'sneaky-disable' },
+        telemetry: { isEnabled: false, functionId: 'sneaky-disable' },
+        experimental_telemetry: { isEnabled: false, functionId: 'sneaky-legacy-disable' },
       } as Parameters<typeof tracedGenerateText>[1],
     )
 
     const passedArgs = generateTextMock.mock.calls[0]?.[0] as Record<string, unknown>
-    expect(passedArgs.experimental_telemetry).toMatchObject({
+    expect(passedArgs.telemetry).toMatchObject({
       isEnabled: true,
       functionId: 'enforced',
     })
+    // The deprecated alias must not survive — AI SDK 7 still reads it, so a
+    // leftover `isEnabled: false` there could silence the call.
+    expect(passedArgs.experimental_telemetry).toBeUndefined()
   })
 })
 
@@ -158,12 +219,15 @@ describe('tracedGenerateObject', () => {
     expect(generateObjectMock).toHaveBeenCalledTimes(1)
     const passedArgs = generateObjectMock.mock.calls[0]?.[0] as Record<string, unknown>
     expect(passedArgs.prompt).toBe('extract')
-    expect(passedArgs.experimental_telemetry).toMatchObject({
+    expect(passedArgs.telemetry).toMatchObject({
       isEnabled: true,
       functionId: 'scan-extract-label',
-      metadata: { 'model.id': 'claude-haiku-4-5' },
       recordInputs: false,
       recordOutputs: false,
+    })
+    expect(propagateAttributesSpy.mock.calls[0]?.[0]).toEqual({
+      traceName: 'scan-extract-label',
+      metadata: { 'model.id': 'claude-haiku-4-5' },
     })
   })
 

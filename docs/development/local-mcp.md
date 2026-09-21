@@ -86,7 +86,7 @@ When sakenowa-mcp is ready to ship a release, follow this sequence. **None of th
 
 ### 3.3 Vercel + env
 
-- The MCP server is consumed via the AI SDK 6 MCP client at runtime, reaching out to a streamable-HTTP endpoint per [ADR-0003](../adr/0003-mcp-server-extractability.md) and the Phase 4 PRD (#138).
+- The MCP server is consumed via the AI SDK 7 MCP client at runtime, reaching out to a streamable-HTTP endpoint per [ADR-0003](../adr/0003-mcp-server-extractability.md) and the Phase 4 PRD (#138).
 - `@yawaragi/sakenowa-mcp` v0.1.0 ships both transports natively: the binary defaults to stdio (Claude Desktop / IDE consumer pattern) and switches to streamable HTTP when started with `MCP_TRANSPORT=http`. Production deploys run the HTTP mode behind a TLS-terminating proxy (Vercel rewrite, Cloudflare Tunnel, etc.).
 - The yawaragi env var `MCP_SAKENOWA_URL` holds the production MCP-server endpoint (e.g. `https://mcp.yawaragi.dev/mcp`). Set on Vercel (Production + Preview).
 - **The MCP server's own `DATABASE_URL` MUST carry `?options=-c search_path=mcp_read,public`** (URL-encoded: `?options=-c%20search_path%3Dmcp_read,public`). This is what enforces the ADR-0014 `superseded_at IS NULL` invariant on the MCP read path (migration `0012` creates the `mcp_read` schema of filtered views; the MCP references tables by bare name so the `search_path` redirects `brands`/`breweries` to those views with **zero MCP code change**). Without it, superseded manual_curation rows leak into chat answers. Standalone OSS users of `@yawaragi/sakenowa-mcp` simply don't set this and are unaffected. Migration `0012` must be applied to the DB **before** the MCP deploy picks up the search_path. See ADR-0014 §"Read-side".

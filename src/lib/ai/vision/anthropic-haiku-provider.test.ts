@@ -11,8 +11,9 @@ type DoGenerateFn = MockLanguageModelV3['doGenerate']
 type DoGenerateOptions = Parameters<DoGenerateFn>[0]
 type DoGenerateResult = Awaited<ReturnType<DoGenerateFn>>
 
-// `ai/test` exports `MockLanguageModelV3` (V3 in AI SDK 6 — what the
-// docstring on CLAUDE.md calls "MockLanguageModelV2" was the older name).
+// `ai/test` exports `MockLanguageModelV3` (introduced in AI SDK 6 and still
+// the mandated double on AI SDK 7 — CLAUDE.md's "MockLanguageModelV2" is the
+// older AI SDK 5 name).
 // We construct the mock with a fixed `doGenerate` shape mirroring what
 // the Anthropic provider would otherwise return for a structured-output
 // call.
@@ -26,6 +27,34 @@ const DASSAI_OBJECT = {
 
 function jpegBlob(payload = 'pretend-jpeg-bytes'): Blob {
   return new Blob([payload], { type: 'image/jpeg' })
+}
+
+/**
+ * Normalises the two encodings AI SDK 7 can hand a provider for a file part,
+ * so the ZDR assertion below reads as one statement about *how the bytes
+ * travel* rather than about SDK internals.
+ *
+ * On the V4 model spec, `FilePart.data` is a tagged union:
+ *
+ *   { type: 'data', data }           → inline bytes / base64
+ *   { type: 'url', url }             → provider fetches the URL
+ *   { type: 'reference', reference } → a provider file-upload id (/v1/files)
+ *   { type: 'text', text }           → inline text document
+ *
+ * On the V3 compat path (which `MockLanguageModelV3` declares) the field is
+ * typed as the bare value instead. Accept both and report a single
+ * `encoding` discriminant.
+ */
+function describeFileData(data: unknown): { encoding: string; payload: unknown } {
+  if (data instanceof URL) return { encoding: 'url', payload: data }
+  if (typeof data === 'object' && data !== null && 'type' in data) {
+    const tagged = data as { type: string; data?: unknown; url?: unknown; reference?: unknown }
+    return {
+      encoding: tagged.type,
+      payload: tagged.data ?? tagged.url ?? tagged.reference,
+    }
+  }
+  return { encoding: 'data', payload: data }
 }
 
 async function doGenerateOk(): Promise<DoGenerateResult> {
@@ -135,21 +164,19 @@ describe('createAnthropicHaikuProvider', () => {
       (part) => 'type' in part && part.type === 'file',
     )
     expect(filePart).toBeDefined()
-    // The AI SDK normalises an `ImagePart` (the user-facing shape) into a
-    // `FilePart` on the provider-facing prompt. `data` is the raw bytes
-    // (Uint8Array / Buffer / base64 string), and `mediaType` carries the
-    // image type. Critically, the data is NOT a URL — that's what we're
-    // asserting here.
+    // The bytes must travel inline. AI SDK 7 introduced a tagged file-data
+    // union (see `describeFileData`), so the ZDR invariant is now expressible
+    // as one assertion on the discriminant — stronger than the old "not a
+    // URL" check, because it also rules out the `reference` variant, which is
+    // exactly the /v1/files upload id CLAUDE.md forbids (Files API uploads
+    // are NOT ZDR-eligible and retain indefinitely).
     if (!filePart || !('data' in filePart)) throw new Error('expected file part with data')
-    // The data must be the raw bytes (Uint8Array / Buffer / base64
-    // string), NOT a URL. A URL would let the Anthropic provider lift
-    // the upload to /v1/files (which is forbidden by CLAUDE.md and the
-    // audit script). Assert the positive shape AND the negative.
-    expect(filePart.data instanceof URL).toBe(false)
+    const { encoding, payload } = describeFileData(filePart.data as unknown)
+    expect(encoding).toBe('data')
     const isInlineBytes =
-      filePart.data instanceof Uint8Array ||
-      filePart.data instanceof ArrayBuffer ||
-      typeof filePart.data === 'string'
+      payload instanceof Uint8Array ||
+      payload instanceof ArrayBuffer ||
+      typeof payload === 'string'
     expect(isInlineBytes).toBe(true)
     expect(filePart.mediaType).toMatch(/^image\//)
   })

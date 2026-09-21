@@ -84,11 +84,15 @@ export async function GET(request: Request): Promise<Response> {
         { status: 502, headers: RESPONSE_HEADERS },
       )
     }
-    // `tool.execute` (AI SDK 6 contract) takes the input args + an
+    // `tool.execute` (AI SDK 7 contract) takes the input args + an
     // options bag. `list_prefectures` accepts an empty input per its
     // Zod schema; we pass `{}` rather than `undefined` so the server's
     // `.strict()` parse accepts it.
-    const result = await tool.execute({}, { toolCallId: 'smoke', messages: [] })
+    //
+    // `context` became a required field in AI SDK 7 (tool-scoped runtime
+    // context). MCP tools declare no context schema, so the empty object
+    // is the correct "no context" value — not a placeholder.
+    const result = await tool.execute({}, { toolCallId: 'smoke', messages: [], context: {} })
     return Response.json(
       {
         ok: true,

@@ -9,7 +9,7 @@ import type { ToolSet } from 'ai'
  * `find_sakes_by_flavor({f1Min: "0.55", f6Min: "0.4", topK: "30"})` — and the
  * server's Zod schema rejected them (`expected number, received string`). The
  * model retried the identical call twice more, burning three of the loop's six
- * steps; `stopWhen(stepCountIs(6))` then fired before it could emit its final
+ * steps; `stopWhen(isStepCount(6))` then fired before it could emit its final
  * JSON answer, so the parser got prose and produced an empty list. Nothing in
  * our dependency tree had changed — `ai`, `@ai-sdk/mcp` and the MCP server were
  * all identical across the preceding merges. It was model-behaviour drift, and

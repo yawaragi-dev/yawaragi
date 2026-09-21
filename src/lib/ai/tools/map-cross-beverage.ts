@@ -14,7 +14,7 @@ import {
 } from './cross-beverage-data'
 
 /**
- * `mapCrossBeverage` — AI SDK 6 tool that resolves a Western-beverage
+ * `mapCrossBeverage` — AI SDK 7 tool that resolves a Western-beverage
  * descriptor (`smoky`, `tannic`, `hoppy-west-coast`, ...) plus a beverage
  * category (`whisky` | `wine` | `beer` | `spirit` | `fortified` | `cider`)
  * into a position on the 6-axis FlavorProfile — the deterministic table

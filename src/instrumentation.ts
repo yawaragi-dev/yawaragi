@@ -12,12 +12,14 @@
  *    per-request failure into a cold-start failure, which Vercel
  *    surfaces loudly. Only fires when `NODE_ENV === 'production'`.
  *
- * 2. Register the OpenTelemetry SDK with the Langfuse span processor so
- *    every AI SDK 6 call wrapped with `tracedGenerateObject` /
- *    `tracedGenerateText` (see `src/lib/ai/observability/langfuse-trace.ts`)
- *    emits a Langfuse trace. Runs in every environment that has the
- *    `LANGFUSE_*` env vars set; no-ops otherwise so local dev works
- *    without Langfuse credentials.
+ * 2. Register the OpenTelemetry SDK with the Langfuse span processor AND
+ *    register the Langfuse AI SDK telemetry integration, so every AI SDK 7
+ *    call wrapped with `tracedGenerateObject` / `tracedGenerateText` (see
+ *    `src/lib/ai/observability/langfuse-trace.ts`) emits a Langfuse trace.
+ *    Both halves are required on AI SDK 7 — `ai@7` has no OpenTelemetry
+ *    dependency and only emits telemetry through registered integrations.
+ *    Runs in every environment that has the `LANGFUSE_*` env vars set;
+ *    no-ops otherwise so local dev works without Langfuse credentials.
  */
 export async function register() {
   if (process.env.NEXT_RUNTIME !== 'nodejs') return
