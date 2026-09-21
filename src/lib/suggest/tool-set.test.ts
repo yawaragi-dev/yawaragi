@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { ToolSet } from 'ai'
 import { buildSuggestToolSet } from './tool-set'
+import { mapCrossBeverage } from '@/lib/ai/tools/map-cross-beverage'
 
 // The suggest tool loop's public surface to the LLM is the tool set. The
 // two invariants below are what the surface promises the visitor: (1) the
@@ -47,5 +48,44 @@ describe('buildSuggestToolSet', () => {
     expect(
       (tools.mapCrossBeverage as unknown as { __sentinel?: string }).__sentinel,
     ).toBeUndefined()
+  })
+})
+
+describe('numeric argument coercion on MCP tools', () => {
+  it('repairs the string-number arguments that emptied the suggest surface', async () => {
+    // 2026-08-20 regression: Haiku sent find_sakes_by_flavor({f1Min:"0.55",
+    // topK:"30"}), the server rejected it three times, and the step budget ran
+    // out before a final answer. The tool must now receive real numbers.
+    const received: unknown[] = []
+    const mcpTools = {
+      find_sakes_by_flavor: {
+        description: 'stub',
+        inputSchema: {
+          jsonSchema: {
+            type: 'object',
+            properties: {
+              f1Min: { type: 'number' },
+              f6Min: { $ref: '#/properties/f1Min' },
+              topK: { type: 'integer' },
+            },
+          },
+        },
+        execute: async (args: unknown) => {
+          received.push(args)
+          return 'ok'
+        },
+      },
+    } as unknown as ToolSet
+
+    const tools = buildSuggestToolSet(mcpTools)
+    const tool = tools.find_sakes_by_flavor as { execute: (a: unknown, o: unknown) => Promise<unknown> }
+    await tool.execute({ f1Min: '0.55', f6Min: '0.4', topK: '30' }, {})
+
+    expect(received).toEqual([{ f1Min: 0.55, f6Min: 0.4, topK: 30 }])
+  })
+
+  it('leaves the local mapCrossBeverage tool unwrapped', () => {
+    const tools = buildSuggestToolSet({} as ToolSet)
+    expect(tools.mapCrossBeverage).toBe(mapCrossBeverage)
   })
 })
