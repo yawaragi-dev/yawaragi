@@ -9,8 +9,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 //   - MCP transport failure surfaces as `service_unavailable`, not a throw
 //
 // The Langfuse-traced happy path with a real tool loop is exercised on
-// preview deploy (the maintainer step in the PR body), because AI SDK 6's
-// `stopWhen: stepCountIs(6)` tool-loop shape needs a full LanguageModelV3
+// preview deploy (the maintainer step in the PR body), because AI SDK 7's
+// `stopWhen: isStepCount(6)` tool-loop shape needs a full LanguageModelV3
 // that responds to tool calls with tool results — which the
 // `MockLanguageModelV3` from `ai/test` requires substantial per-call
 // scripting to simulate, and the exercise wouldn't tell us anything the

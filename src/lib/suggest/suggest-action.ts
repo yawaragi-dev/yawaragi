@@ -3,7 +3,7 @@
 import { cookies } from 'next/headers'
 import type { MCPClient } from '@ai-sdk/mcp'
 import { anthropic } from '@ai-sdk/anthropic'
-import { stepCountIs } from 'ai'
+import { isStepCount } from 'ai'
 
 import { getDefaultMcpClient } from '@/lib/ai/mcp/registry'
 import { tracedGenerateText } from '@/lib/ai/observability/langfuse-trace'
@@ -181,7 +181,7 @@ export async function suggestAction(seed: SuggestSeed): Promise<SuggestActionSta
       //    MCP tools for seed-mode discovery, (b) never invent cross-
       //    beverage mappings beyond what `mapCrossBeverage` returns, and
       //    (c) emit the final answer as a JSON array of Suggestion
-      //    records. `stepCountIs(6)` bounds the runaway case (a model
+      //    records. `isStepCount(6)` bounds the runaway case (a model
       //    stuck in a tool-call loop) — five tool calls plus one final
       //    text emit is more than a well-formed suggest tool loop should
       //    ever need.
@@ -196,24 +196,50 @@ export async function suggestAction(seed: SuggestSeed): Promise<SuggestActionSta
         llmResult = await tracedGenerateText(
           {
             functionId: 'suggest-tool-loop',
+            // String values only: AI SDK 7 dropped `TelemetrySettings.
+            // metadata`, so trace identity now rides on Langfuse's
+            // `propagateAttributes`, which accepts string-valued
+            // metadata and drops anything else with a console warning.
+            // `seed.brandId` is a number — stringify it explicitly
+            // rather than lose the attribute in production.
             metadata: {
               'seed.kind': seed.kind,
               ...(seed.kind === 'brand'
-                ? { 'seed.brandId': seed.brandId }
+                ? { 'seed.brandId': String(seed.brandId) }
                 : { 'seed.query': seed.query }),
             },
           },
           {
             model: anthropic('claude-haiku-4-5'),
             tools,
-            stopWhen: stepCountIs(6),
-            // Messages-array form (instead of `system:` + `prompt:`
-            // shorthand) so we can attach `providerOptions.anthropic.
-            // cacheControl` to the system message. Combined with the
-            // cacheControl on `mapCrossBeverage` (the last tool in the
-            // bundle — see `src/lib/ai/tools/map-cross-beverage.ts`),
-            // this gives Anthropic two prompt-cache breakpoints: one
-            // after the tools block, one after the system block.
+            stopWhen: isStepCount(6),
+            // The system prompt rides in `instructions` as a
+            // `SystemModelMessage` — NOT as a bare string, and NOT as a
+            // `role: 'system'` entry in `messages`.
+            //
+            // AI SDK 7 rejects system messages inside `messages` at
+            // runtime ("System messages are not allowed in the prompt or
+            // messages fields. Use the instructions option instead."),
+            // which is a *runtime* error the type checker does not catch —
+            // it broke the whole tool loop on the v7 bump. There is an
+            // `allowSystemInMessages: true` escape hatch; we deliberately
+            // don't use it, because `instructions` is the supported shape.
+            //
+            // The object form is load-bearing. `Instructions` is
+            // `string | SystemModelMessage | SystemModelMessage[]`, and
+            // only the message form carries `providerOptions` — the AI SDK
+            // types say so outright: "if you need to pass additional
+            // provider options (e.g. for caching), a `SystemModelMessage`".
+            // Collapsing this to `instructions: SUGGEST_SYSTEM_PROMPT`
+            // would type-check, run fine, and silently drop
+            // `cacheControl`, costing the ~72-76% cache hit ratio below
+            // with no error and no failing test.
+            //
+            // Combined with the cacheControl on `mapCrossBeverage` (the
+            // last tool in the bundle — see
+            // `src/lib/ai/tools/map-cross-beverage.ts`), this gives
+            // Anthropic two prompt-cache breakpoints: one after the tools
+            // block, one after the system block.
             //
             // Haiku 4.5 minimum cacheable prefix (per Anthropic docs):
             // 4096 tokens. Verified by direct-API probe 2026-07-06 —
@@ -233,16 +259,16 @@ export async function suggestAction(seed: SuggestSeed): Promise<SuggestActionSta
             //     are larger and per-request output variance grew)
             //   - $0.17-0.20/run at Haiku 4.5 pricing (up ~20% from S7)
             //   - mean recall@3 0.42, recall@5 0.52-0.54 (up from 0.36/0.42)
-            messages: [
-              {
-                role: 'system',
-                content: SUGGEST_SYSTEM_PROMPT,
-                providerOptions: {
-                  anthropic: {
-                    cacheControl: { type: 'ephemeral' as const },
-                  },
+            instructions: {
+              role: 'system',
+              content: SUGGEST_SYSTEM_PROMPT,
+              providerOptions: {
+                anthropic: {
+                  cacheControl: { type: 'ephemeral' as const },
                 },
               },
+            },
+            messages: [
               {
                 role: 'user',
                 content: buildSeedPrompt(seed),
@@ -267,7 +293,11 @@ export async function suggestAction(seed: SuggestSeed): Promise<SuggestActionSta
             // and `RATE_LIMIT_BYPASS=1` env — the debug panel shows
             // `tool-call:`, `tool-result:`, and `step complete` lines
             // for each MCP call inside the loop.
-            onStepFinish: (step) => {
+            // `onStepEnd` — AI SDK 7's name for what v6 called
+            // `onStepFinish` (the old key still works but is
+            // `@deprecated`; the callback type is a straight alias, so
+            // the body is unchanged).
+            onStepEnd: (step) => {
               for (const call of step.toolCalls) {
                 const argsPreview = JSON.stringify(call.input).slice(0, 200)
                 debugAdd('SuggestAction', `tool-call: ${call.toolName}(${argsPreview})`)
@@ -330,7 +360,7 @@ export async function suggestAction(seed: SuggestSeed): Promise<SuggestActionSta
       //    instead of a card list. NEVER fabricate a card.
       //
       //    "Honest" depends on the loop having actually FINISHED. If it
-      //    stopped because `stopWhen(stepCountIs(...))` fired, the last step
+      //    stopped because `stopWhen(isStepCount(...))` fired, the last step
       //    still wanted to call tools (`finishReason === 'tool-calls'`) and
       //    the model never got a turn to emit its JSON answer — the text we
       //    hold is mid-reasoning prose, which parses to zero rows. Reporting

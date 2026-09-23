@@ -1,8 +1,9 @@
 import 'server-only'
 
 import { generateObject, generateText } from 'ai'
-import type { TelemetrySettings } from 'ai'
-import type { AttributeValue } from '@opentelemetry/api'
+import type { TelemetryOptions } from 'ai'
+import { propagateAttributes } from '@langfuse/tracing'
+import type { PropagateAttributesParams } from '@langfuse/tracing'
 
 import { env } from '@/env'
 
@@ -16,25 +17,50 @@ type GenerateObjectReturn = ReturnType<typeof generateObject>
  *
  * Every paid AI SDK call in Yawaragi flows through `tracedGenerateText`
  * / `tracedGenerateObject`. They are *thin* wrappers — they don't
- * spy on the Langfuse SDK or build their own trace payloads. AI SDK 6
- * emits OpenTelemetry spans when `experimental_telemetry.isEnabled` is
- * true; `LangfuseSpanProcessor` (wired in `otel-setup.ts`) reads those
- * spans and ships them to Langfuse Cloud.
+ * spy on the Langfuse SDK or build their own trace payloads.
+ *
+ * ## How tracing reaches Langfuse (AI SDK 7)
+ *
+ * AI SDK 6 instrumented itself with OpenTelemetry directly: setting
+ * `experimental_telemetry.isEnabled` made the SDK open spans, and
+ * `LangfuseSpanProcessor` exported them. **AI SDK 7 removed the
+ * OpenTelemetry dependency entirely** — `ai@7` ships zero OTel code and
+ * instead exposes a callback-based `Telemetry` integration interface
+ * plus a `registerTelemetry()` global registry.
+ *
+ * So the span-producing layer moved out of `ai` and into
+ * `@langfuse/vercel-ai-sdk`'s `LangfuseVercelAiSdkIntegration`, which is
+ * registered once at cold start in `otel-setup.ts`. Without that
+ * registration **no telemetry is emitted at all**, regardless of what
+ * this module passes — the registration is the load-bearing piece, and
+ * `isEnabled: true` below only guards against a caller opting out.
+ *
+ * ## How trace identity survived the migration
+ *
+ * AI SDK 7's `TelemetryOptions` dropped the flat `metadata` bag that
+ * AI SDK 6's `TelemetrySettings` carried. The replacement is Langfuse's
+ * `propagateAttributes()` (from `@langfuse/tracing`), which stashes
+ * trace-level attributes — `traceName`, `metadata`, and optionally
+ * `userId` / `sessionId` / `tags` — in the active OpenTelemetry context.
+ * Every Langfuse observation created inside the callback inherits them.
+ * `TracedCallContext` is unchanged from the caller's point of view;
+ * only the mechanism underneath moved. See ADR-0021 for the full
+ * decision record.
  *
  * The wrapper's job is therefore:
  *
- *   1. Force `experimental_telemetry.isEnabled = true` on every call,
- *      so nobody can ship an untraced AI SDK call by accident.
+ *   1. Force `telemetry.isEnabled = true` on every call, so nobody can
+ *      ship an untraced AI SDK call by accident.
  *   2. Default `recordInputs` / `recordOutputs` to `false`, so raw
  *      prompts and model outputs don't land in traces unless the
  *      caller explicitly opts in. This is the GDPR backstop — ADR-0009
  *      RoPA documents Langfuse as "redacted prompts + completions",
  *      and the only way to make that stick across many call sites is
  *      to bake it into the wrapper.
- *   3. Attach a stable `functionId` and a flat `metadata` bag of
- *      OpenTelemetry-typed attributes (model id, provider key,
- *      hashed session id, etc.). Callers spell out *what* the call
- *      is, not *how* it's traced.
+ *   3. Attach a stable `functionId` (AI SDK observation grouping *and*
+ *      the Langfuse `traceName`) plus a flat `metadata` bag (model id,
+ *      provider key, seed kind, etc.) via `propagateAttributes`.
+ *      Callers spell out *what* the call is, not *how* it's traced.
  *   4. Fail loudly at call time if the Langfuse env vars are missing
  *      in production. Local dev / test / e2e can stub the helpers; in
  *      production a missing key means traces silently drop, which is
@@ -42,10 +68,10 @@ type GenerateObjectReturn = ReturnType<typeof generateObject>
  *      runtime-throw pattern in `src/lib/rate-limit/...`.
  *
  * Action-level attributes (anonymous-session id hash, rate-limit
- * budget remaining) belong on the *parent* OTel span the action
- * opens around its critical section. AI SDK 6's experimental_telemetry
- * creates a *child* span on each generate call, which inherits the
- * parent context. So callers wrap their action body in their own
+ * budget remaining) belong on the *parent* OTel span the action opens
+ * around its critical section. The Langfuse integration creates a
+ * *child* span per generate call, which inherits the parent context.
+ * So callers wrap their action body in their own
  * `tracer.startActiveSpan('suggest-action', ...)` and the AI calls
  * inside automatically join. The helpers in this module only own the
  * per-AI-call layer; the action layer is the caller's responsibility.
@@ -53,18 +79,26 @@ type GenerateObjectReturn = ReturnType<typeof generateObject>
 
 export interface TracedCallContext {
   /**
-   * Stable identifier for the call site. Becomes the Langfuse span
-   * name and the OTel attribute `ai.functionId`. Use kebab-case
-   * scoping: `scan-extract-label`, `suggest-tool-loop`, etc.
+   * Stable identifier for the call site. Becomes the AI SDK
+   * `telemetry.functionId` (observation grouping) *and* the Langfuse
+   * `traceName`. Use kebab-case scoping: `scan-extract-label`,
+   * `suggest-tool-loop`, etc.
    */
   functionId: string
   /**
-   * Flat metadata bag. Keys go straight onto the OTel span as
-   * attributes (so they're queryable in Langfuse). Use the
+   * Flat metadata bag propagated onto every Langfuse observation the
+   * call produces (so it's queryable in Langfuse). Use the
    * `<area>.<key>` convention: `provider.key`, `model.id`,
    * `session.hash`, `rate-limit.remaining`.
+   *
+   * Values are `string` — not `AttributeValue` — because Langfuse's
+   * `propagateAttributes` accepts string-valued metadata only and
+   * **silently drops non-string values with a console warning**. A
+   * compile error at the call site beats a missing attribute in
+   * production. Stringify numbers/booleans at the call site. Keep
+   * values under 200 characters (Langfuse truncates past that).
    */
-  metadata?: Record<string, AttributeValue>
+  metadata?: Record<string, string>
   /**
    * If true, the raw prompt text lands in Langfuse. Defaults to
    * `false` to match ADR-0009's "redacted prompts" posture. Set true
@@ -104,30 +138,49 @@ function assertLangfuseConfigured(): void {
 }
 
 /**
- * Builds the `experimental_telemetry` settings the AI SDK 6 expects.
- * Exported so callers that need to pass telemetry through a deeper
- * boundary (e.g. a vision provider's optional `telemetry` option) can
- * construct the same settings without reaching into the AI SDK's
- * type space.
+ * Builds the `telemetry` options AI SDK 7 expects. Exported so callers
+ * that need to pass telemetry through a deeper boundary (e.g. a vision
+ * provider's optional `telemetry` option) can construct the same
+ * options without reaching into the AI SDK's type space.
+ *
+ * Note what is *not* here: `metadata`. AI SDK 7's `TelemetryOptions`
+ * has no metadata field — see `buildPropagatedAttributes`, which
+ * carries it via the Langfuse OTel context instead.
  */
-export function buildTelemetrySettings(ctx: TracedCallContext): TelemetrySettings {
+export function buildTelemetryOptions(ctx: TracedCallContext): TelemetryOptions {
   return {
     isEnabled: true,
     functionId: ctx.functionId,
-    metadata: ctx.metadata,
     recordInputs: ctx.recordInputs ?? false,
     recordOutputs: ctx.recordOutputs ?? false,
   }
 }
 
 /**
+ * Builds the Langfuse trace-level attributes that replace AI SDK 6's
+ * `experimental_telemetry.metadata`. `traceName` mirrors `functionId`
+ * so a Langfuse trace is still identifiable by call site, and
+ * `metadata` carries the caller's flat bag.
+ *
+ * Exported for the same reason as `buildTelemetryOptions`: a caller
+ * that wraps a deeper boundary can reuse the identity mapping instead
+ * of re-deriving it.
+ */
+export function buildPropagatedAttributes(ctx: TracedCallContext): PropagateAttributesParams {
+  return {
+    traceName: ctx.functionId,
+    ...(ctx.metadata === undefined ? {} : { metadata: ctx.metadata }),
+  }
+}
+
+/**
  * `generateText` with Langfuse tracing enforced. Call sites pass the
  * same args they'd pass to `generateText`, plus a `TracedCallContext`.
- * The wrapper overrides any caller-supplied `experimental_telemetry`
- * — tracing is non-negotiable.
+ * The wrapper overrides any caller-supplied `telemetry` /
+ * `experimental_telemetry` — tracing is non-negotiable.
  *
  * Types pass through `Parameters<>` / `ReturnType<>` and lose AI SDK
- * 6's discriminated-union precision (messages | prompt; tool/output
+ * 7's discriminated-union precision (messages | prompt; tool/output
  * variants). Omit-then-spread on a discriminated union drops the
  * discriminant in TS 5.4+, which forces a cast. Callers cast their
  * result if they need the narrowed shape — generateText's runtime
@@ -140,9 +193,13 @@ export async function tracedGenerateText(
   assertLangfuseConfigured()
   const withTelemetry = {
     ...args,
-    experimental_telemetry: buildTelemetrySettings(ctx),
+    telemetry: buildTelemetryOptions(ctx),
+    // `experimental_telemetry` is AI SDK 7's deprecated alias for
+    // `telemetry`. Blank it so a caller that still sets the old key
+    // can't fight the enforced options above.
+    experimental_telemetry: undefined,
   } as GenerateTextArgs
-  return generateText(withTelemetry)
+  return propagateAttributes(buildPropagatedAttributes(ctx), () => generateText(withTelemetry))
 }
 
 /**
@@ -156,7 +213,8 @@ export async function tracedGenerateObject(
   assertLangfuseConfigured()
   const withTelemetry = {
     ...args,
-    experimental_telemetry: buildTelemetrySettings(ctx),
+    telemetry: buildTelemetryOptions(ctx),
+    experimental_telemetry: undefined,
   } as GenerateObjectArgs
-  return generateObject(withTelemetry)
+  return propagateAttributes(buildPropagatedAttributes(ctx), () => generateObject(withTelemetry))
 }

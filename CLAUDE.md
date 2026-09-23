@@ -12,7 +12,7 @@ Naming history: previously "Kanpai"; renamed to avoid collision with KANPAI Lond
 - Next.js 16 App Router + React Server Components (RSC by default; 'use client' only when necessary)
 - TypeScript strict
 - Tailwind + shadcn/ui (defaults; no custom design tokens until Phase 7)
-- Vercel AI SDK 6 for all LLM work — never the raw Anthropic SDK
+- Vercel AI SDK 7 for all LLM work — never the raw Anthropic SDK
 - @ai-sdk/mcp for connecting to our own MCP server
 - Supabase (Postgres + auth-helpers for service role) for data
 - Clerk for user auth (Supabase only stores domain data, not users)
@@ -151,7 +151,8 @@ See `docs/adr/0007-i18n-en-de.md`.
 
 ## Anti-patterns (do NOT do these)
 - Do NOT call the Anthropic API directly. Always go through AI SDK.
-- Do NOT mock the AI SDK in tests by stubbing fetch. Use `MockLanguageModelV3` from `ai/test` (the AI SDK 5 export `MockLanguageModelV2` was replaced in AI SDK 6).
+- Do NOT mock the AI SDK in tests by stubbing fetch. Use `MockLanguageModelV3` from `ai/test` (the AI SDK 5 export `MockLanguageModelV2` was replaced in AI SDK 6; AI SDK 7 keeps `MockLanguageModelV3` and adds a `MockLanguageModelV4` for the v4 model spec — V3 remains the double this repo uses).
+- Do NOT remove or weaken `registerTelemetry(new LangfuseVercelAiSdkIntegration())` in `src/lib/ai/observability/otel-setup.ts`. **AI SDK 7 ships zero OpenTelemetry code** — unlike AI SDK 6, which instrumented itself, `ai@7` emits telemetry *only* through registered `Telemetry` integrations. Delete that line and every AI call still succeeds, every test still passes, and Langfuse silently receives nothing. `otel-setup.test.ts` is the tripwire. Related: AI SDK 7's `TelemetryOptions` has **no `metadata` field** (AI SDK 6's `TelemetrySettings` did) — trace identity travels via `propagateAttributes()` from `@langfuse/tracing`, wired in `langfuse-trace.ts`. Values there must be **strings**; Langfuse drops non-strings with a console warning, so `TracedCallContext.metadata` is typed `Record<string, string>` to turn that into a compile error. See [ADR-0021](./docs/adr/0021-ai-sdk-7-telemetry-via-langfuse-integration.md).
 - Do NOT write all tests up front for a feature. One red, one green, repeat.
 - Do NOT add a 'use client' directive without a concrete reason (state, effect, browser API, event handler). Server is the default.
 - Do NOT inline secrets. All env vars go through `src/env.ts` (zod-validated).

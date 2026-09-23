@@ -6,7 +6,7 @@ import {
 } from './cross-beverage-data'
 import { mapCrossBeverage } from './map-cross-beverage'
 
-// The tool ships as an AI SDK 6 `tool({...})` object; its runtime behaviour
+// The tool ships as an AI SDK 7 `tool({...})` object; its runtime behaviour
 // is entirely inside `execute`. Testing the tool's `execute` directly (not
 // via a live LLM loop) is the CLAUDE.md-aligned way to prove the tool
 // boundary — no mocked AI SDK, no fake language model, just the pure lookup
@@ -14,12 +14,14 @@ import { mapCrossBeverage } from './map-cross-beverage'
 // descriptor / beverage enum) are exercised separately by the schema-parse
 // tests further down.
 
-// AI SDK 6's `tool.execute` requires a second argument with `toolCallId` and
-// `messages` — `messages: []` is semantically meaningless here (no LLM in
-// the loop) but the type demands it. Same shape used by the MCP integration
-// tests (`src/lib/ai/mcp/mcp-live.integration.test.ts:135`) and the smoke
-// route (`src/app/api/debug/mcp-smoke/route.ts:91`).
-const EXECUTE_OPTIONS = { toolCallId: 'unit-test', messages: [] }
+// AI SDK 7's `tool.execute` requires a second argument with `toolCallId`,
+// `messages` and `context` — `messages: []` is semantically meaningless here
+// (no LLM in the loop) but the type demands it, and `context: {}` is the
+// correct "this tool declares no context schema" value (AI SDK 7 made
+// `context` required). Same shape used by the MCP integration tests
+// (`src/lib/ai/mcp/mcp-live.integration.test.ts:135`) and the smoke route
+// (`src/app/api/debug/mcp-smoke/route.ts:91`).
+const EXECUTE_OPTIONS = { toolCallId: 'unit-test', messages: [], context: {} }
 
 const executeTool = async (input: { descriptor: string; beverage: string }) => {
   // `mapCrossBeverage.execute` is defined on the tool; the AI SDK types make
@@ -174,7 +176,7 @@ describe('mapCrossBeverage — tool contract', () => {
     //
     // We reach through the AI SDK's `FlexibleSchema` wrapper — the
     // underlying zod schema is accessible via `inputSchema` on the tool
-    // object; on AI SDK 6 tools built from a plain zod schema, that is
+    // object; on AI SDK 7 tools built from a plain zod schema, that is
     // the same object we passed in.
     const schema = mapCrossBeverage.inputSchema as z.ZodType<unknown>
     const parsed = schema.safeParse({

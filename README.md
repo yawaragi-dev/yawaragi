@@ -27,7 +27,7 @@ Previously named "Kanpai"; renamed to avoid collision with [KANPAI London Craft 
 ## Stack
 
 - Next.js 16 (App Router, RSC by default) · TypeScript strict · Tailwind + shadcn/ui
-- Vercel AI SDK 6 for LLM work · `@ai-sdk/mcp` connecting to our own MCP server
+- Vercel AI SDK 7 for LLM work · `@ai-sdk/mcp` connecting to our own MCP server
 - Supabase (Postgres) · Clerk (auth) · Langfuse Cloud (tracing)
 - Vitest + happy-dom (unit) · Playwright (E2E + async RSC)
 - pnpm
