@@ -6,6 +6,11 @@ import { anthropic } from '@ai-sdk/anthropic'
 import { isStepCount } from 'ai'
 
 import { getDefaultMcpClient } from '@/lib/ai/mcp/registry'
+import {
+  type ActionOutcome,
+  recordActionMetadata,
+  withActionSpan,
+} from '@/lib/ai/observability/action-span'
 import { tracedGenerateText } from '@/lib/ai/observability/langfuse-trace'
 import { DebugLog, debugAdd, runWithDebugLog } from '@/lib/debug/debug-log'
 import { isDebugEnabledFromCookies } from '@/lib/debug/debug-mode'
@@ -49,6 +54,66 @@ import { buildSuggestToolSet } from './tool-set'
  * KV query key with a 24h TTL and never enters Postgres or a log.
  */
 export async function suggestAction(seed: SuggestSeed): Promise<SuggestActionState> {
+  // #287 — wrap the whole action in one Langfuse span and classify what it
+  // decided. The per-call spans from `tracedGenerateText` nest underneath,
+  // so a trace shows both the model calls AND the answer the visitor got.
+  //
+  // The outcome is derived at this boundary rather than at the dozen
+  // `return` sites inside, so a future return path cannot ship
+  // untelemetered — which is how #270 stayed invisible for a month.
+  return withActionSpan(
+    {
+      name: 'suggest-action',
+      metadata: { 'seed.kind': seed.kind },
+      classify: classifySuggestOutcome,
+    },
+    () => runSuggestAction(seed),
+  )
+}
+
+/**
+ * Maps the action's own return value onto a Langfuse outcome.
+ *
+ * `ok` with an EMPTY list is deliberately `WARNING`, not `DEFAULT`. That
+ * is the exact shape of the #270 regression — a structurally perfect run
+ * that tells the visitor "no matches" — and it is indistinguishable from
+ * success in the per-call spans. It is not an error (a genuine no-match
+ * is a legitimate answer), so `WARNING` is the honest level: worth
+ * charting and alerting on a rising rate, not worth paging over one.
+ */
+function classifySuggestOutcome(state: SuggestActionState): ActionOutcome {
+  switch (state.status) {
+    case 'ok':
+      return state.suggestions.length === 0
+        ? {
+            outcome: 'no_match',
+            level: 'WARNING',
+            statusMessage: 'tool loop completed but produced no suggestions',
+            metadata: { 'suggestions.count': 0 },
+          }
+        : { outcome: 'ok', metadata: { 'suggestions.count': state.suggestions.length } }
+    case 'error':
+      return {
+        outcome: state.reason,
+        level: 'ERROR',
+        statusMessage: `suggest failed: ${state.reason}`,
+      }
+    case 'invalid_input':
+      return { outcome: `invalid_input.${state.reason}`, level: 'DEFAULT' }
+    case 'rate_limited':
+      return { outcome: 'rate_limited', level: 'DEFAULT' }
+    case 'service_unavailable':
+      return { outcome: 'service_unavailable', level: 'ERROR' }
+    case 'session_missing':
+      return { outcome: 'session_missing', level: 'WARNING' }
+    default:
+      // A status added without updating this switch still shows up,
+      // rather than vanishing into an unlabelled span.
+      return { outcome: 'unclassified', level: 'WARNING' }
+  }
+}
+
+async function runSuggestAction(seed: SuggestSeed): Promise<SuggestActionState> {
   // 1. Validate the seed FIRST — before any I/O. Both variants are re-
   //    validated here even though the page's query-string parse already
   //    narrows them, because the action is a public server surface and
@@ -346,6 +411,21 @@ export async function suggestAction(seed: SuggestSeed): Promise<SuggestActionSta
           cacheWrite,
           noCache,
           cacheHitRatio: Number(cacheHitRatio.toFixed(3)),
+        })
+        // #287 — the same numbers onto the action span. `debugAdd` above
+        // is a no-op unless the visitor holds the debug cookie, so until
+        // now prompt-cache health was invisible in production and could
+        // only be read by hand-driving a debug session. CLAUDE.md requires
+        // re-verifying the hit ratio whenever a cached prompt changes;
+        // this makes a regression chartable instead of a manual probe.
+        recordActionMetadata({
+          'usage.inputTokens': usage.inputTokens,
+          'usage.outputTokens': usage.outputTokens,
+          'cache.readTokens': cacheRead,
+          'cache.writeTokens': cacheWrite,
+          'cache.noCacheTokens': noCache,
+          'cache.hitRatio': Number(cacheHitRatio.toFixed(3)),
+          'loop.steps': llmResult.steps?.length ?? 0,
         })
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err)
