@@ -56,7 +56,10 @@ type GenerateObjectReturn = ReturnType<typeof generateObject>
  *      caller explicitly opts in. This is the GDPR backstop — ADR-0009
  *      RoPA documents Langfuse as "redacted prompts + completions",
  *      and the only way to make that stick across many call sites is
- *      to bake it into the wrapper.
+ *      to bake it into the wrapper. The sole exception is the local-dev
+ *      `LANGFUSE_RECORD_IO=1` escape hatch, which `payloadRecordingEnabled()`
+ *      refuses to honour in production — so the RoPA promise holds by
+ *      construction, not by remembering not to set a variable.
  *   3. Attach a stable `functionId` (AI SDK observation grouping *and*
  *      the Langfuse `traceName`) plus a flat `metadata` bag (model id,
  *      provider key, seed kind, etc.) via `propagateAttributes`.
@@ -100,14 +103,16 @@ export interface TracedCallContext {
    */
   metadata?: Record<string, string>
   /**
-   * If true, the raw prompt text lands in Langfuse. Defaults to
-   * `false` to match ADR-0009's "redacted prompts" posture. Set true
-   * only for explicitly-opted-in debug runs.
+   * If true, the raw prompt text lands in Langfuse. Left unset it
+   * follows `payloadRecordingEnabled()` — `false` everywhere except a
+   * local dev process with `LANGFUSE_RECORD_IO=1`, never production —
+   * which matches ADR-0009's "redacted prompts" posture. Set it
+   * explicitly only for a call site that has its own reason.
    */
   recordInputs?: boolean
   /**
-   * If true, the model's raw output lands in Langfuse. Defaults to
-   * `false` for the same reason.
+   * If true, the model's raw output lands in Langfuse. Same defaulting
+   * and same reasoning as `recordInputs`.
    */
   recordOutputs?: boolean
 }
@@ -148,12 +153,45 @@ function assertLangfuseConfigured(): void {
  * carries it via the Langfuse OTel context instead.
  */
 export function buildTelemetryOptions(ctx: TracedCallContext): TelemetryOptions {
+  const recordPayloads = payloadRecordingEnabled()
   return {
     isEnabled: true,
     functionId: ctx.functionId,
-    recordInputs: ctx.recordInputs ?? false,
-    recordOutputs: ctx.recordOutputs ?? false,
+    recordInputs: ctx.recordInputs ?? recordPayloads,
+    recordOutputs: ctx.recordOutputs ?? recordPayloads,
   }
+}
+
+/** Warn at most once per process, so a misconfigured deploy isn't spammy. */
+let warnedAboutProductionPayloadRecording = false
+
+/**
+ * Whether raw prompts and completions may be recorded into Langfuse.
+ *
+ * `false` unless `LANGFUSE_RECORD_IO=1`, and **always** `false` in
+ * production regardless of the env var. ADR-0009's RoPA commits us to
+ * "redacted prompts + completions" in Langfuse; this keeps that true no
+ * matter what lands in a production environment, so the promise holds by
+ * construction rather than by remembering not to set a variable.
+ *
+ * Refusing silently (rather than throwing, as `RATE_LIMIT_BYPASS` does)
+ * is deliberate: for a privacy control the safe failure is "record
+ * nothing", and taking the deploy down would trade a data risk for an
+ * availability incident. The one-shot warning stops the operator being
+ * misled into thinking it took effect.
+ */
+function payloadRecordingEnabled(): boolean {
+  if (env.LANGFUSE_RECORD_IO !== '1') return false
+  if (process.env.NODE_ENV === 'production') {
+    if (!warnedAboutProductionPayloadRecording) {
+      warnedAboutProductionPayloadRecording = true
+      console.warn(
+        '[langfuse] LANGFUSE_RECORD_IO=1 ignored on Production — recording raw prompts/completions would contradict ADR-0009 RoPA ("redacted prompts + completions"). Traces keep metadata only.',
+      )
+    }
+    return false
+  }
+  return true
 }
 
 /**

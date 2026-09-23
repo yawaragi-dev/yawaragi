@@ -41,6 +41,30 @@ const Env = z.object({
   LANGFUSE_PUBLIC_KEY: empty(z.string().optional()),
   LANGFUSE_SECRET_KEY: empty(z.string().optional()),
   LANGFUSE_HOST: empty(z.string().url().optional()),
+  // Set to `1` to record raw prompts AND model completions into Langfuse
+  // traces. Absence is the safe default (metadata only), matching ADR-0009's
+  // RoPA entry, which commits us to "redacted prompts + completions".
+  //
+  // A LOCAL-DEV debugging aid. Langfuse traces show span structure, token
+  // counts and outcomes, but `Input: null` / `Output: undefined` — which is
+  // correct for production and unhelpful when you are chasing why a tool loop
+  // answered the way it did. This flips payloads on without amending ADR-0009,
+  // because it cannot take effect in production (see below).
+  //
+  // **Ignored on Production, by construction.** `payloadRecordingEnabled()` in
+  // `src/lib/ai/observability/langfuse-trace.ts` returns false when
+  // `NODE_ENV === 'production'` no matter what this is set to, and warns once.
+  // Unlike `RATE_LIMIT_BYPASS` there is no boot-time throw: for a *privacy*
+  // control, silently refusing is the fail-safe outcome (no personal data
+  // recorded), whereas killing the deploy would trade a data risk for an
+  // availability incident. The warning exists so the operator is not misled
+  // into thinking it worked.
+  //
+  // Deliberately NOT wired to the `yawaragi_debug` cookie: that is
+  // visitor-activatable via `?debug=1`, so a visitor could opt their own
+  // prompts into 30-day Langfuse retention without meaningfully consenting.
+  // An env var keeps the decision with the maintainer.
+  LANGFUSE_RECORD_IO: empty(z.string().optional()),
   // Shared secret for the /api/cron/ingest route (#54). Required
   // because the route is the only auth gate — a missing secret would
   // either crash the route at first request or, worse, fall through to

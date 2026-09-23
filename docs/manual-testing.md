@@ -18,6 +18,7 @@ VISION_PROVIDER=e2e-stub SUGGEST_STUB= RATE_LIMIT_BYPASS=1 pnpm dev
 - `VISION_PROVIDER=e2e-stub` — scan never calls Anthropic vision; it returns a stub extraction you control by cookie.
 - `SUGGEST_STUB=` (left empty) — suggest/chat reads its state from a **per-browser cookie** instead of a fixed env mode. Set it to a mode string (below) if you'd rather pin one mode for the whole server.
 - `RATE_LIMIT_BYPASS=1` — skip the anonymous rate limits (scan 5/24h, suggest 3/24h) so you can re-run freely. **Dev/preview only** — a boot-time guard (`src/instrumentation.ts`) fails a production deploy that sets this. See the CLAUDE.md anti-pattern.
+- `LANGFUSE_RECORD_IO=1` — show the actual prompts and model completions in Langfuse instead of `Input: null` / `Output: undefined`. Traces are metadata-only by default because ADR-0009's RoPA commits us to "redacted prompts + completions"; this flips payloads on for a local debugging session. **Ignored on Production by construction** (`payloadRecordingEnabled()` in `src/lib/ai/observability/langfuse-trace.ts` returns false there regardless, and warns once) — so it cannot leak visitor prompts into 30-day retention. Deliberately not tied to the `?debug=1` cookie, which a visitor can set themselves.
 
 Then set cookies from the browser (below). Upload any JPEG on `/scan` (e.g. `e2e/fixtures/dassai-label.jpg`).
 
