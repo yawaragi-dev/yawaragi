@@ -10,7 +10,7 @@ A sake companion. Three flagship surfaces: **label scan**, **chat recommender**,
 
 ## Milestone progress
 
-_Snapshot generated 2026-09-22 from GitHub Issues + merged PRs. Regenerate with `pnpm progress`. Detail: [docs/PROGRESS.md](./docs/PROGRESS.md)._
+_Snapshot generated 2026-09-23 from GitHub Issues + merged PRs. Regenerate with `pnpm progress`. Detail: [docs/PROGRESS.md](./docs/PROGRESS.md)._
 
 | Milestone | Progress | Issues | ETA (median) |
 | --- | --- | --- | --- |
