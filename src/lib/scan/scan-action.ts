@@ -9,6 +9,7 @@ import {
   TIER_2_VISION_PROVIDER_KEY,
 } from '@/lib/ai/vision/registry'
 import type { VisionProvider } from '@/lib/ai/vision/vision-provider'
+import { recordActionMetadata, withActionSpan } from '@/lib/ai/observability/action-span'
 import { DebugLog, debugAdd, runWithDebugLog } from '@/lib/debug/debug-log'
 import { isDebugEnabledFromCookies } from '@/lib/debug/debug-mode'
 import { enforceRateLimit } from '@/lib/rate-limit/enforce-rate-limit'
@@ -23,6 +24,7 @@ import type { Brand } from '@/lib/schemas/brand'
 import type { Brewery } from '@/lib/schemas/brewery'
 import type { LabelScanExtraction } from '@/lib/schemas/label-scan-extraction'
 import type { ScanActionState } from './scan-action-state'
+import { classifyScanOutcome } from './scan-outcome'
 
 /**
  * Phase 3 / S1 + S2 + S3 scan Server Action.
@@ -169,6 +171,20 @@ export async function scanAction(
   _prev: ScanActionState,
   formData: FormData,
 ): Promise<ScanActionState> {
+  // #287 slice D — one Langfuse span per scan, with the tier-2 retry rate
+  // recorded on it. Sonnet 4.6 costs ~6x Haiku and fires on every tier-1
+  // status except a clean `matched`, so the retry rate is the dominant
+  // driver of scan spend and nothing tracked it before.
+  return withActionSpan(
+    { name: 'scan-action', classify: classifyScanOutcome },
+    () => runScanAction(_prev, formData),
+  )
+}
+
+async function runScanAction(
+  _prev: ScanActionState,
+  formData: FormData,
+): Promise<ScanActionState> {
   // Read the debug cookie up-front. When set, every downstream module
   // (rate-limit, vision, Sakenowa) appends per-step events via
   // `getCurrentDebugLog()` / `debugAdd(...)` — no parameter threading
@@ -268,12 +284,27 @@ export async function scanAction(
         { tier1Status: tier1Result.status },
         'warn',
       )
+      // The cost signal. `scan.tier2Used` over all scans gives the retry
+      // rate; `scan.tier1Status` says WHICH tier-1 outcome is driving it,
+      // which is what tells you whether to tune the prompt, the confidence
+      // thresholds, or the tier-1 model itself.
+      recordActionMetadata({
+        'scan.tier1Status': tier1Result.status,
+        'scan.tier2Used': true,
+        'scan.tier2Provider': TIER_2_VISION_PROVIDER_KEY,
+      })
       return extractAndLookupWithProvider(
         getVisionProvider(TIER_2_VISION_PROVIDER_KEY),
         image,
         localeRaw,
       )
     }
+    // Recorded on the cheap path too — a retry RATE needs the denominator,
+    // not just the numerator.
+    recordActionMetadata({
+      'scan.tier1Status': tier1Result.status,
+      'scan.tier2Used': false,
+    })
     return tier1Result
   })
 

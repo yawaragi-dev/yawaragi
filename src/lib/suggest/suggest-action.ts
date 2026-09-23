@@ -6,6 +6,7 @@ import { anthropic } from '@ai-sdk/anthropic'
 import { isStepCount } from 'ai'
 
 import { getDefaultMcpClient } from '@/lib/ai/mcp/registry'
+import { recordActionMetadata, withActionSpan } from '@/lib/ai/observability/action-span'
 import { tracedGenerateText } from '@/lib/ai/observability/langfuse-trace'
 import { DebugLog, debugAdd, runWithDebugLog } from '@/lib/debug/debug-log'
 import { isDebugEnabledFromCookies } from '@/lib/debug/debug-mode'
@@ -17,6 +18,7 @@ import {
   type SuggestActionState,
   type SuggestSeed,
 } from './suggest-action-state'
+import { classifySuggestOutcome } from './suggest-outcome'
 import { buildSuggestToolSet } from './tool-set'
 
 /**
@@ -49,6 +51,24 @@ import { buildSuggestToolSet } from './tool-set'
  * KV query key with a 24h TTL and never enters Postgres or a log.
  */
 export async function suggestAction(seed: SuggestSeed): Promise<SuggestActionState> {
+  // #287 — wrap the whole action in one Langfuse span and classify what it
+  // decided. The per-call spans from `tracedGenerateText` nest underneath,
+  // so a trace shows both the model calls AND the answer the visitor got.
+  //
+  // The outcome is derived at this boundary rather than at the dozen
+  // `return` sites inside, so a future return path cannot ship
+  // untelemetered — which is how #270 stayed invisible for a month.
+  return withActionSpan(
+    {
+      name: 'suggest-action',
+      metadata: { 'seed.kind': seed.kind },
+      classify: classifySuggestOutcome,
+    },
+    () => runSuggestAction(seed),
+  )
+}
+
+async function runSuggestAction(seed: SuggestSeed): Promise<SuggestActionState> {
   // 1. Validate the seed FIRST — before any I/O. Both variants are re-
   //    validated here even though the page's query-string parse already
   //    narrows them, because the action is a public server surface and
@@ -186,6 +206,19 @@ export async function suggestAction(seed: SuggestSeed): Promise<SuggestActionSta
       //    text emit is more than a well-formed suggest tool loop should
       //    ever need.
       let llmResult
+      // #287 slice A — the drift early-warning signal.
+      //
+      // #270's signature was the model re-issuing an IDENTICAL tool call
+      // after the MCP server's Zod rejected it: same tool, same args,
+      // three times, eating half the step budget before `stopWhen` fired.
+      // A well-formed loop never repeats a call verbatim — there is no
+      // reason to ask the same question twice — so a non-zero duplicate
+      // count is a reliable tell that the model and the tool schema have
+      // stopped agreeing. Watching this rate surfaces the next drift in
+      // days rather than the month #270 took.
+      const toolCallCounts = new Map<string, number>()
+      let duplicateToolCalls = 0
+      let totalToolCalls = 0
       try {
         debugAdd('SuggestAction', 'starting tool loop', {
           model: 'claude-haiku-4-5',
@@ -301,6 +334,15 @@ export async function suggestAction(seed: SuggestSeed): Promise<SuggestActionSta
               for (const call of step.toolCalls) {
                 const argsPreview = JSON.stringify(call.input).slice(0, 200)
                 debugAdd('SuggestAction', `tool-call: ${call.toolName}(${argsPreview})`)
+
+                // Keyed on tool + full args, not the preview — two calls
+                // differing only past the 200-char truncation are genuinely
+                // different calls and must not count as a repeat.
+                totalToolCalls += 1
+                const signature = `${call.toolName}:${JSON.stringify(call.input)}`
+                const timesSeen = (toolCallCounts.get(signature) ?? 0) + 1
+                toolCallCounts.set(signature, timesSeen)
+                if (timesSeen > 1) duplicateToolCalls += 1
               }
               for (const result of step.toolResults) {
                 const outputPreview = JSON.stringify(result.output).slice(0, 150)
@@ -346,6 +388,23 @@ export async function suggestAction(seed: SuggestSeed): Promise<SuggestActionSta
           cacheWrite,
           noCache,
           cacheHitRatio: Number(cacheHitRatio.toFixed(3)),
+        })
+        // #287 — the same numbers onto the action span. `debugAdd` above
+        // is a no-op unless the visitor holds the debug cookie, so until
+        // now prompt-cache health was invisible in production and could
+        // only be read by hand-driving a debug session. CLAUDE.md requires
+        // re-verifying the hit ratio whenever a cached prompt changes;
+        // this makes a regression chartable instead of a manual probe.
+        recordActionMetadata({
+          'usage.inputTokens': usage.inputTokens,
+          'usage.outputTokens': usage.outputTokens,
+          'cache.readTokens': cacheRead,
+          'cache.writeTokens': cacheWrite,
+          'cache.noCacheTokens': noCache,
+          'cache.hitRatio': Number(cacheHitRatio.toFixed(3)),
+          'loop.steps': llmResult.steps?.length ?? 0,
+          'tools.calls': totalToolCalls,
+          'tools.duplicateCalls': duplicateToolCalls,
         })
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err)

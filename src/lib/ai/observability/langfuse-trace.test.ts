@@ -295,3 +295,57 @@ describe('production env guard', () => {
     ).resolves.toBeDefined()
   })
 })
+
+describe('LANGFUSE_RECORD_IO payload recording', () => {
+  /** Re-import the module against a specific env + NODE_ENV. */
+  async function buildWith(recordIo: string | undefined, nodeEnv: string) {
+    vi.resetModules()
+    vi.doMock('@/env', () => ({
+      env: {
+        LANGFUSE_PUBLIC_KEY: 'pk-test',
+        LANGFUSE_SECRET_KEY: 'sk-test',
+        LANGFUSE_HOST: 'https://cloud.langfuse.com',
+        LANGFUSE_RECORD_IO: recordIo,
+      },
+    }))
+    vi.stubEnv('NODE_ENV', nodeEnv)
+    const mod = await import('./langfuse-trace')
+    return mod.buildTelemetryOptions({ functionId: 'suggest-tool-loop' })
+  }
+
+  afterEach(() => {
+    vi.doUnmock('@/env')
+    vi.resetModules()
+  })
+
+  it('keeps prompts out of Langfuse when the flag is unset', async () => {
+    const options = await buildWith(undefined, 'development')
+
+    expect(options.recordInputs).toBe(false)
+    expect(options.recordOutputs).toBe(false)
+  })
+
+  it('records prompts locally when the maintainer opts in', async () => {
+    const options = await buildWith('1', 'development')
+
+    expect(options.recordInputs).toBe(true)
+    expect(options.recordOutputs).toBe(true)
+  })
+
+  it('REFUSES to record prompts in production even when the flag is set', async () => {
+    // The guard that makes ADR-0009's "redacted prompts + completions"
+    // RoPA entry true by construction: a stray LANGFUSE_RECORD_IO=1 on a
+    // production deploy must not start retaining visitors' queries and
+    // model completions for 30 days.
+    const options = await buildWith('1', 'production')
+
+    expect(options.recordInputs).toBe(false)
+    expect(options.recordOutputs).toBe(false)
+  })
+
+  it('treats any value other than "1" as off', async () => {
+    const options = await buildWith('true', 'development')
+
+    expect(options.recordInputs).toBe(false)
+  })
+})
