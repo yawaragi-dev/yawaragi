@@ -213,13 +213,33 @@ export async function suggestAction(seed: SuggestSeed): Promise<SuggestActionSta
             model: anthropic('claude-haiku-4-5'),
             tools,
             stopWhen: isStepCount(6),
-            // Messages-array form (instead of `system:` + `prompt:`
-            // shorthand) so we can attach `providerOptions.anthropic.
-            // cacheControl` to the system message. Combined with the
-            // cacheControl on `mapCrossBeverage` (the last tool in the
-            // bundle — see `src/lib/ai/tools/map-cross-beverage.ts`),
-            // this gives Anthropic two prompt-cache breakpoints: one
-            // after the tools block, one after the system block.
+            // The system prompt rides in `instructions` as a
+            // `SystemModelMessage` — NOT as a bare string, and NOT as a
+            // `role: 'system'` entry in `messages`.
+            //
+            // AI SDK 7 rejects system messages inside `messages` at
+            // runtime ("System messages are not allowed in the prompt or
+            // messages fields. Use the instructions option instead."),
+            // which is a *runtime* error the type checker does not catch —
+            // it broke the whole tool loop on the v7 bump. There is an
+            // `allowSystemInMessages: true` escape hatch; we deliberately
+            // don't use it, because `instructions` is the supported shape.
+            //
+            // The object form is load-bearing. `Instructions` is
+            // `string | SystemModelMessage | SystemModelMessage[]`, and
+            // only the message form carries `providerOptions` — the AI SDK
+            // types say so outright: "if you need to pass additional
+            // provider options (e.g. for caching), a `SystemModelMessage`".
+            // Collapsing this to `instructions: SUGGEST_SYSTEM_PROMPT`
+            // would type-check, run fine, and silently drop
+            // `cacheControl`, costing the ~72-76% cache hit ratio below
+            // with no error and no failing test.
+            //
+            // Combined with the cacheControl on `mapCrossBeverage` (the
+            // last tool in the bundle — see
+            // `src/lib/ai/tools/map-cross-beverage.ts`), this gives
+            // Anthropic two prompt-cache breakpoints: one after the tools
+            // block, one after the system block.
             //
             // Haiku 4.5 minimum cacheable prefix (per Anthropic docs):
             // 4096 tokens. Verified by direct-API probe 2026-07-06 —
@@ -239,16 +259,16 @@ export async function suggestAction(seed: SuggestSeed): Promise<SuggestActionSta
             //     are larger and per-request output variance grew)
             //   - $0.17-0.20/run at Haiku 4.5 pricing (up ~20% from S7)
             //   - mean recall@3 0.42, recall@5 0.52-0.54 (up from 0.36/0.42)
-            messages: [
-              {
-                role: 'system',
-                content: SUGGEST_SYSTEM_PROMPT,
-                providerOptions: {
-                  anthropic: {
-                    cacheControl: { type: 'ephemeral' as const },
-                  },
+            instructions: {
+              role: 'system',
+              content: SUGGEST_SYSTEM_PROMPT,
+              providerOptions: {
+                anthropic: {
+                  cacheControl: { type: 'ephemeral' as const },
                 },
               },
+            },
+            messages: [
               {
                 role: 'user',
                 content: buildSeedPrompt(seed),
