@@ -251,6 +251,19 @@ async function runSuggestAction(seed: SuggestSeed): Promise<SuggestActionState> 
       //    text emit is more than a well-formed suggest tool loop should
       //    ever need.
       let llmResult
+      // #287 slice A — the drift early-warning signal.
+      //
+      // #270's signature was the model re-issuing an IDENTICAL tool call
+      // after the MCP server's Zod rejected it: same tool, same args,
+      // three times, eating half the step budget before `stopWhen` fired.
+      // A well-formed loop never repeats a call verbatim — there is no
+      // reason to ask the same question twice — so a non-zero duplicate
+      // count is a reliable tell that the model and the tool schema have
+      // stopped agreeing. Watching this rate surfaces the next drift in
+      // days rather than the month #270 took.
+      const toolCallCounts = new Map<string, number>()
+      let duplicateToolCalls = 0
+      let totalToolCalls = 0
       try {
         debugAdd('SuggestAction', 'starting tool loop', {
           model: 'claude-haiku-4-5',
@@ -366,6 +379,15 @@ async function runSuggestAction(seed: SuggestSeed): Promise<SuggestActionState> 
               for (const call of step.toolCalls) {
                 const argsPreview = JSON.stringify(call.input).slice(0, 200)
                 debugAdd('SuggestAction', `tool-call: ${call.toolName}(${argsPreview})`)
+
+                // Keyed on tool + full args, not the preview — two calls
+                // differing only past the 200-char truncation are genuinely
+                // different calls and must not count as a repeat.
+                totalToolCalls += 1
+                const signature = `${call.toolName}:${JSON.stringify(call.input)}`
+                const timesSeen = (toolCallCounts.get(signature) ?? 0) + 1
+                toolCallCounts.set(signature, timesSeen)
+                if (timesSeen > 1) duplicateToolCalls += 1
               }
               for (const result of step.toolResults) {
                 const outputPreview = JSON.stringify(result.output).slice(0, 150)
@@ -426,6 +448,8 @@ async function runSuggestAction(seed: SuggestSeed): Promise<SuggestActionState> 
           'cache.noCacheTokens': noCache,
           'cache.hitRatio': Number(cacheHitRatio.toFixed(3)),
           'loop.steps': llmResult.steps?.length ?? 0,
+          'tools.calls': totalToolCalls,
+          'tools.duplicateCalls': duplicateToolCalls,
         })
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err)

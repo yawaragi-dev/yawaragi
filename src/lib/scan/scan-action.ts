@@ -9,6 +9,11 @@ import {
   TIER_2_VISION_PROVIDER_KEY,
 } from '@/lib/ai/vision/registry'
 import type { VisionProvider } from '@/lib/ai/vision/vision-provider'
+import {
+  type ActionOutcome,
+  recordActionMetadata,
+  withActionSpan,
+} from '@/lib/ai/observability/action-span'
 import { DebugLog, debugAdd, runWithDebugLog } from '@/lib/debug/debug-log'
 import { isDebugEnabledFromCookies } from '@/lib/debug/debug-mode'
 import { enforceRateLimit } from '@/lib/rate-limit/enforce-rate-limit'
@@ -169,6 +174,58 @@ export async function scanAction(
   _prev: ScanActionState,
   formData: FormData,
 ): Promise<ScanActionState> {
+  // #287 slice D — one Langfuse span per scan, with the tier-2 retry rate
+  // recorded on it. Sonnet 4.6 costs ~6x Haiku and fires on every tier-1
+  // status except a clean `matched`, so the retry rate is the dominant
+  // driver of scan spend and nothing tracked it before.
+  return withActionSpan(
+    { name: 'scan-action', classify: classifyScanOutcome },
+    () => runScanAction(_prev, formData),
+  )
+}
+
+/**
+ * Maps a scan result onto a Langfuse outcome.
+ *
+ * Severity follows "did the visitor get an answer", not "did the code
+ * work". `no_match` and `low_confidence` are honest outcomes for a blurry
+ * or unknown bottle, so they sit at WARNING — worth watching as a rate,
+ * not worth paging on. `extraction_failed` is ERROR: the model returned
+ * nothing usable even after the tier-2 retry, which is a real failure of
+ * the pipeline rather than a property of the photo.
+ */
+function classifyScanOutcome(state: ScanActionState): ActionOutcome {
+  switch (state.status) {
+    case 'matched':
+      return { outcome: 'matched' }
+    case 'matched_brand_only':
+    case 'matched_brewery_only':
+    case 'ambiguous':
+      return { outcome: state.status, level: 'DEFAULT' }
+    case 'no_match':
+    case 'low_confidence':
+      return { outcome: state.status, level: 'WARNING' }
+    case 'extraction_failed':
+      return {
+        outcome: 'extraction_failed',
+        level: 'ERROR',
+        statusMessage: 'vision returned nothing usable after the tier-2 retry',
+      }
+    case 'rate_limited':
+    case 'invalid_input':
+    case 'idle':
+      return { outcome: state.status, level: 'DEFAULT' }
+    case 'session_missing':
+      return { outcome: 'session_missing', level: 'WARNING' }
+    default:
+      return { outcome: 'unclassified', level: 'WARNING' }
+  }
+}
+
+async function runScanAction(
+  _prev: ScanActionState,
+  formData: FormData,
+): Promise<ScanActionState> {
   // Read the debug cookie up-front. When set, every downstream module
   // (rate-limit, vision, Sakenowa) appends per-step events via
   // `getCurrentDebugLog()` / `debugAdd(...)` — no parameter threading
@@ -268,12 +325,27 @@ export async function scanAction(
         { tier1Status: tier1Result.status },
         'warn',
       )
+      // The cost signal. `scan.tier2Used` over all scans gives the retry
+      // rate; `scan.tier1Status` says WHICH tier-1 outcome is driving it,
+      // which is what tells you whether to tune the prompt, the confidence
+      // thresholds, or the tier-1 model itself.
+      recordActionMetadata({
+        'scan.tier1Status': tier1Result.status,
+        'scan.tier2Used': true,
+        'scan.tier2Provider': TIER_2_VISION_PROVIDER_KEY,
+      })
       return extractAndLookupWithProvider(
         getVisionProvider(TIER_2_VISION_PROVIDER_KEY),
         image,
         localeRaw,
       )
     }
+    // Recorded on the cheap path too — a retry RATE needs the denominator,
+    // not just the numerator.
+    recordActionMetadata({
+      'scan.tier1Status': tier1Result.status,
+      'scan.tier2Used': false,
+    })
     return tier1Result
   })
 
