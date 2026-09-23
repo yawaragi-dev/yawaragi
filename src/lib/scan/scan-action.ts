@@ -9,11 +9,7 @@ import {
   TIER_2_VISION_PROVIDER_KEY,
 } from '@/lib/ai/vision/registry'
 import type { VisionProvider } from '@/lib/ai/vision/vision-provider'
-import {
-  type ActionOutcome,
-  recordActionMetadata,
-  withActionSpan,
-} from '@/lib/ai/observability/action-span'
+import { recordActionMetadata, withActionSpan } from '@/lib/ai/observability/action-span'
 import { DebugLog, debugAdd, runWithDebugLog } from '@/lib/debug/debug-log'
 import { isDebugEnabledFromCookies } from '@/lib/debug/debug-mode'
 import { enforceRateLimit } from '@/lib/rate-limit/enforce-rate-limit'
@@ -28,6 +24,7 @@ import type { Brand } from '@/lib/schemas/brand'
 import type { Brewery } from '@/lib/schemas/brewery'
 import type { LabelScanExtraction } from '@/lib/schemas/label-scan-extraction'
 import type { ScanActionState } from './scan-action-state'
+import { classifyScanOutcome } from './scan-outcome'
 
 /**
  * Phase 3 / S1 + S2 + S3 scan Server Action.
@@ -182,44 +179,6 @@ export async function scanAction(
     { name: 'scan-action', classify: classifyScanOutcome },
     () => runScanAction(_prev, formData),
   )
-}
-
-/**
- * Maps a scan result onto a Langfuse outcome.
- *
- * Severity follows "did the visitor get an answer", not "did the code
- * work". `no_match` and `low_confidence` are honest outcomes for a blurry
- * or unknown bottle, so they sit at WARNING — worth watching as a rate,
- * not worth paging on. `extraction_failed` is ERROR: the model returned
- * nothing usable even after the tier-2 retry, which is a real failure of
- * the pipeline rather than a property of the photo.
- */
-function classifyScanOutcome(state: ScanActionState): ActionOutcome {
-  switch (state.status) {
-    case 'matched':
-      return { outcome: 'matched' }
-    case 'matched_brand_only':
-    case 'matched_brewery_only':
-    case 'ambiguous':
-      return { outcome: state.status, level: 'DEFAULT' }
-    case 'no_match':
-    case 'low_confidence':
-      return { outcome: state.status, level: 'WARNING' }
-    case 'extraction_failed':
-      return {
-        outcome: 'extraction_failed',
-        level: 'ERROR',
-        statusMessage: 'vision returned nothing usable after the tier-2 retry',
-      }
-    case 'rate_limited':
-    case 'invalid_input':
-    case 'idle':
-      return { outcome: state.status, level: 'DEFAULT' }
-    case 'session_missing':
-      return { outcome: 'session_missing', level: 'WARNING' }
-    default:
-      return { outcome: 'unclassified', level: 'WARNING' }
-  }
 }
 
 async function runScanAction(
