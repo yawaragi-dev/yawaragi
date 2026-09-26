@@ -50,6 +50,11 @@ The Expo / React Native rewrite path is **a separate decision**, deferred furthe
 **Phase 3 (label scan) constraints:**
 
 - Capture path is HTML5 `<input type="file" capture="environment">` (no `getUserMedia` / `<canvas>` MediaDevices flow in v1). Per ADR's "without a UI rewrite" rule, the native OS picker is the universal path. A nicer in-app live-preview UX is permitted in a later slice provided it falls back cleanly outside the wrap.
+
+  > **Update 2026-09-26 (design v1.4 §4).** The "later slice" is now specified: a full-screen live preview with corner brackets, a centred shutter and a reading sweep. It satisfies the fallback condition — the gallery button is a **complete** fallback running the same pipeline, and the design specifies explicit permission-denied ("Camera is off") and desktop / no-camera ("No camera here", drop zone) panels. Two constraints this ADR adds to that slice:
+  >
+  > - **The torch toggle cannot ship on iOS.** `MediaStreamTrack.applyConstraints({ torch: true })` is unavailable in WKWebView, which is the wrap's renderer on iOS. The design's answer is to **hide** the control there while keeping its 44px grid slot so the title does not shift — not to render a disabled button.
+  > - **The file-input path stays.** It is the fallback, the desktop path, and the only capture route that is guaranteed inside the wrap. `getUserMedia` is an enhancement layered over it, never a replacement — a build where the OS picker is unreachable violates this ADR.
 - Image downscale runs client-side via `<canvas>.toBlob` — no `sharp` server dependency.
 - The wire shape (Server Action over `<form>`) works identically against a hosted backend from inside the wrap.
 

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/nocturne-9c99b1eb-b42d-45c4-9cc2-5ee7dbf09ad5/styles.css">
+<script src="_ds/nocturne-9c99b1eb-b42d-45c4-9cc2-5ee7dbf09ad5/_ds_bundle.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<style>
+:root{--color-bg:#1b1a19;--color-surface:#232221;--color-text:#e8e4dd;--color-accent:#cf8a6e;--color-divider:rgba(232,228,221,.14);--color-neutral-200:#2d2b29;--color-neutral-300:#383634;--color-neutral-400:#4a4744;--color-neutral-500:#8a867e;--color-neutral-600:#a8a49c;--color-neutral-700:#bdb9b1;--color-neutral-800:#d6d2ca;--color-accent-100:#2a201c;--color-accent-500:#b8735a;--color-accent-600:#cf8a6e;--color-accent-700:#e0a88f;--color-accent-800:#eec2ae;--shadow-sm:0 0 0 1px #302e2c;--shadow-md:0 0 0 1px #302e2c,0 10px 26px rgba(0,0,0,.42)}
+body{margin:0;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body)}
+a{color:var(--color-accent-700);text-decoration:none}
+a:hover{color:var(--color-accent-800)}
+</style>
+</helmet>
+
+<div style="min-height:100vh;display:flex;flex-direction:column;padding-bottom:{{ padBottom }};box-sizing:border-box">
+  <header style="display:flex;align-items:center;gap:14px;padding:18px clamp(20px,5vw,56px);max-width:1120px;width:100%;box-sizing:border-box;margin:0 auto">
+    <div style="display:flex;align-items:baseline;gap:8px;flex:1">
+      <span style="font-family:var(--font-heading);font-weight:500;font-size:18px;letter-spacing:-.01em">Yawaragi</span>
+      <span lang="ja" style="font-size:13px;color:var(--color-neutral-600)">和らぎ</span>
+    </div>
+    <div style="display:inline-flex;border:1px solid var(--color-divider);border-radius:var(--radius-md);overflow:hidden">
+      <button style="padding:5px 11px;font-size:12px;border:0;background:var(--color-accent-100);color:var(--color-accent-700);font-family:var(--font-heading);font-weight:500;cursor:pointer" aria-label="English">EN</button>
+      <button style="padding:5px 11px;font-size:12px;border:0;background:transparent;color:var(--color-neutral-600);font-family:var(--font-heading);font-weight:500;cursor:pointer" aria-label="Deutsch, coming soon" title="Deutsch kommt bald">DE · soon</button>
+    </div>
+    <a href="Yawaragi Mobile.dc.html" class="btn btn-secondary" style="height:38px;font-size:13px">Open the app</a>
+  </header>
+
+  <main style="flex:1;max-width:1120px;width:100%;box-sizing:border-box;margin:0 auto;padding:0 clamp(20px,5vw,56px)">
+    <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:clamp(28px,5vw,64px);align-items:center;padding:clamp(36px,8vw,96px) 0 clamp(40px,7vw,80px)">
+      <div style="display:flex;flex-direction:column;gap:18px;max-width:520px">
+        <div style="display:flex;align-items:center;gap:8px"><span style="width:2px;height:14px;background:var(--color-accent-500);display:block"></span><span style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--color-accent-700)">A journal for sake</span></div>
+        <h1 style="margin:0;font-family:var(--font-heading);font-weight:500;font-size:clamp(36px,6vw,58px);line-height:1.04;letter-spacing:-.03em;text-wrap:balance">Know what’s in the cup.</h1>
+        <p style="margin:0;font-size:17px;line-height:1.6;color:var(--color-neutral-700);text-wrap:pretty">Point your phone at a sake label. Yawaragi tells you what it is, how it tastes, and whether you’ll like it. One tap and it’s in your journal.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
+          <a href="Yawaragi Mobile.dc.html" class="btn btn-primary" style="height:48px;font-size:15px;padding-inline:22px;border-width:1.5px;gap:8px"><i class="ph ph-camera" style="font-size:18px"></i>Scan your first label</a>
+          <a href="#how" class="btn btn-ghost" style="height:48px;font-size:14px">How it works</a>
+        </div>
+        <div style="font-size:12px;color:var(--color-neutral-600)">Free · no account needed · for adults 18+</div>
+      </div>
+      <div style="justify-self:center;width:min(100%,300px);aspect-ratio:9/19;border-radius:34px;background:repeating-linear-gradient(135deg,#232221,#232221 8px,#2a2826 8px,#2a2826 16px);box-shadow:var(--shadow-md);display:grid;place-items:center">
+        <span style="font-family:ui-monospace,monospace;font-size:11px;color:var(--color-neutral-600);text-align:center;padding:20px">app screenshot<br>result card</span>
+      </div>
+    </section>
+
+    <section id="how" style="padding:clamp(28px,5vw,56px) 0;display:flex;flex-direction:column;gap:24px">
+      <h2 style="margin:0;font-family:var(--font-heading);font-weight:500;font-size:clamp(24px,3.5vw,32px);letter-spacing:-.02em">Three things, done well</h2>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:18px">
+        <div style="display:flex;flex-direction:column;gap:10px;padding:20px;border-radius:var(--radius-lg);background:var(--color-surface);box-shadow:var(--shadow-sm)">
+          <i class="ph ph-camera" style="font-size:24px;color:var(--color-accent-600)"></i>
+          <div style="font-family:var(--font-heading);font-weight:500;font-size:17px">Identify</div>
+          <div style="font-size:14px;color:var(--color-neutral-700);line-height:1.55;text-wrap:pretty">Kanji, romaji or barcode — the camera reads whichever the bottle gives you. No camera? Use a photo or type the name.</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;padding:20px;border-radius:var(--radius-lg);background:var(--color-surface);box-shadow:var(--shadow-sm)">
+          <i class="ph ph-star" style="font-size:24px;color:var(--color-accent-600)"></i>
+          <div style="font-family:var(--font-heading);font-weight:500;font-size:17px">Rate in one tap</div>
+          <div style="font-size:14px;color:var(--color-neutral-700);line-height:1.55;text-wrap:pretty">The star is the save. Add a note if you want, or detailed tasting notes later.</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;padding:20px;border-radius:var(--radius-lg);background:var(--color-surface);box-shadow:var(--shadow-sm)">
+          <i class="ph ph-hexagon" style="font-size:24px;color:var(--color-accent-600)"></i>
+          <div style="font-family:var(--font-heading);font-weight:500;font-size:17px">Learn your palate</div>
+          <div style="font-size:14px;color:var(--color-neutral-700);line-height:1.55;text-wrap:pretty">After three tastings it shows what you like — and why. Already know whisky or wine? Start from a drink you love.</div>
+        </div>
+      </div>
+    </section>
+
+    <section style="padding:clamp(28px,5vw,56px) 0 clamp(48px,8vw,96px)">
+      <div style="padding:clamp(22px,4vw,36px);border-radius:var(--radius-lg);border:1px solid var(--color-divider);display:flex;flex-wrap:wrap;gap:18px;align-items:center;justify-content:space-between">
+        <div style="display:flex;flex-direction:column;gap:6px;max-width:560px">
+          <div style="font-family:var(--font-heading);font-weight:500;font-size:21px;letter-spacing:-.01em">Your journal stays yours</div>
+          <div style="font-size:14px;color:var(--color-neutral-700);line-height:1.55;text-wrap:pretty">Everything works on your phone without an account. Nothing is posted publicly, and your ratings are only shared — anonymously — if you choose to.</div>
+        </div>
+        <a href="Yawaragi Mobile.dc.html" class="btn btn-primary" style="height:46px;font-size:14px;border-width:1.5px;padding-inline:20px">Open the app</a>
+      </div>
+    </section>
+  </main>
+
+  <footer style="border-top:1px solid var(--color-divider)">
+    <div style="max-width:1120px;margin:0 auto;padding:22px clamp(20px,5vw,56px) 30px;display:flex;flex-wrap:wrap;gap:14px 22px;align-items:center;font-size:12px;color:var(--color-neutral-600)">
+      <span style="flex:1;min-width:200px">© 2026 Yawaragi · Flavour chart data <a href="https://sakenowa.com">Powered by Sakenowa</a></span>
+      <nav style="display:flex;flex-wrap:wrap;gap:16px">
+        <a href="#impressum">Impressum</a>
+        <a href="#privacy">Privacy notice</a>
+        <a href="#terms">Terms</a>
+        <a href="#cookies" onClick="{{ openCookies }}">Cookie settings</a>
+        <a href="#">Drink responsibly</a>
+      </nav>
+    </div>
+  </footer>
+
+  <sc-if value="{{ show }}">
+  <div role="region" aria-label="Cookie choices" style="position:fixed;left:50%;transform:translateX(-50%);bottom:16px;width:min(560px,calc(100% - 32px));max-height:calc(100vh - 32px);overflow-y:auto;box-sizing:border-box;padding:16px;border-radius:var(--radius-lg);background:var(--color-surface);box-shadow:var(--shadow-md);display:flex;flex-direction:column;gap:12px;z-index:10">
+    <div style="font-family:var(--font-heading);font-weight:500;font-size:15px">{{ title }}</div>
+    <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.5;text-wrap:pretty">{{ body }}</div>
+    <sc-if value="{{ custom }}">
+      <div style="display:flex;flex-direction:column">
+        <sc-for list="{{ rows }}" as="r" hint-placeholder-count="3">
+          <button onClick="{{ r.flip }}" disabled="{{ r.locked }}" style="display:flex;align-items:center;gap:12px;min-height:50px;padding:8px 0;border:0;border-bottom:1px solid var(--color-divider);background:transparent;width:100%;text-align:left;cursor:{{ r.cursor }};font-family:var(--font-body);color:var(--color-text)">
+            <div style="flex:1;min-width:0">
+              <div style="font-size:14px">{{ r.label }}</div>
+              <div style="font-size:12px;color:var(--color-neutral-600);margin-top:2px">{{ r.sub }}</div>
+            </div>
+            <span style="width:42px;height:26px;border-radius:13px;flex:none;position:relative;background:{{ r.track }}"><span style="position:absolute;top:3px;left:{{ r.left }};width:20px;height:20px;border-radius:50%;background:{{ r.knob }}"></span></span>
+          </button>
+        </sc-for>
+      </div>
+    </sc-if>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+      <button class="btn btn-secondary" style="height:42px;font-size:13px" onClick="{{ reject }}">Reject all</button>
+      <button class="btn btn-secondary" style="height:42px;font-size:13px" onClick="{{ middle }}">{{ middleLabel }}</button>
+      <button class="btn btn-secondary" style="height:42px;font-size:13px" onClick="{{ accept }}">Accept all</button>
+    </div>
+  </div>
+  </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { choice: null, open: true, custom: false, draft: { stats: false, crash: false } }
+
+  renderVals() {
+    const s = this.state
+    const d = s.draft
+    const save = (choice, draft) => this.setState({ choice, open: false, custom: false, draft: draft || d })
+    const row = (k, label, sub, locked) => {
+      const on = locked || d[k]
+      return {
+        label, sub, locked: locked ? true : undefined, cursor: locked ? 'default' : 'pointer',
+        track: on ? (locked ? '#5c3b2f' : '#b8735a') : '#4a4744', knob: on ? '#1b1a19' : '#bdb9b1', left: on ? '19px' : '3px',
+        flip: locked ? () => {} : () => this.setState({ draft: { ...d, [k]: !d[k] } }),
+      }
+    }
+    return {
+      show: s.open,
+      padBottom: s.open ? (s.custom ? '360px' : '200px') : '0',
+      custom: s.custom,
+      title: s.custom ? 'Choose what we store' : 'Cookies on this site',
+      body: s.custom
+        ? 'Only what’s needed to run the site is on. Everything else stays off until you turn it on.'
+        : 'We use what’s needed to run the site. Usage stats and crash reports only with your yes. The same choice applies inside the app.',
+      rows: [
+        row('base', 'Needed to run the site', 'Language, your cookie choice, sign-in', true),
+        row('stats', 'Usage stats', 'Anonymous — which pages are used', false),
+        row('crash', 'Crash reports', 'Sent only when something breaks', false),
+      ],
+      reject: () => save('reject', { stats: false, crash: false }),
+      accept: () => save('accept', { stats: true, crash: true }),
+      middleLabel: s.custom ? 'Save choice' : 'Customise',
+      middle: s.custom ? () => save('custom') : () => this.setState({ custom: true }),
+      openCookies: (e) => { if (e && e.preventDefault) e.preventDefault(); this.setState({ open: true, custom: true }) },
+    }
+  }
+}
+</script>
+</body>
+</html>

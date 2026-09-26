@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><link rel="stylesheet" href="_ds/nocturne-9c99b1eb-b42d-45c4-9cc2-5ee7dbf09ad5/styles.css"><link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css"><link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css"><style>
+:root{
+  --color-bg:#1b1a19; --color-surface:#232221; --color-text:#e8e4dd;
+  --color-accent:#cf8a6e; --color-accent-2:#cf8a6e;
+  --color-divider:rgba(232,228,221,.14);
+  --color-neutral-100:#201f1e; --color-neutral-200:#2d2b29; --color-neutral-300:#383634;
+  --color-neutral-400:#4a4744; --color-neutral-500:#8a867e; --color-neutral-600:#a8a49c;
+  --color-neutral-700:#bdb9b1; --color-neutral-800:#d6d2ca; --color-neutral-900:#ece8e1;
+  --color-accent-100:#2a201c; --color-accent-200:#3a2a23; --color-accent-300:#5c3b2f;
+  --color-accent-400:#8a5642; --color-accent-500:#b8735a; --color-accent-600:#cf8a6e;
+  --color-accent-700:#e0a88f; --color-accent-800:#eec2ae; --color-accent-900:#f6ddd1;
+  --color-accent-2-100:#2a201c; --color-accent-2-200:#3a2a23; --color-accent-2-300:#5c3b2f;
+  --color-accent-2-400:#8a5642; --color-accent-2-500:#b8735a; --color-accent-2-600:#cf8a6e;
+  --color-accent-2-700:#e0a88f; --color-accent-2-800:#eec2ae; --color-accent-2-900:#f6ddd1;
+  --shadow-sm:0 0 0 1px #302e2c;
+  --shadow-md:0 0 0 1px #302e2c, 0 10px 26px rgba(0,0,0,.42);
+  --shadow-lg:0 0 0 1px #363431, 0 18px 44px rgba(0,0,0,.55);
+}
+body{margin:0;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body)}
+a{color:var(--color-accent-700);text-decoration:none}a:hover{color:var(--color-accent-600)}
+.tag-neutral{background:var(--color-neutral-200);color:var(--color-neutral-800)}
+.tag-accent{background:var(--color-accent-100);color:var(--color-accent-700)}
+</style></helmet>
+
+<div style="max-width:880px;margin:0 auto;padding:44px 28px 80px;display:flex;flex-direction:column;gap:40px">
+
+  <header style="display:flex;flex-direction:column;gap:8px">
+    <div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700)">Yawaragi mobile · foundations</div>
+    <h1 style="font-size:38px;margin:0;letter-spacing:-.02em">Nocturne, inverted</h1>
+    <p style="max-width:62ch;font-size:15px;color:var(--color-neutral-700);margin:0;text-wrap:pretty">Nocturne's structure kept whole — compact 0.7× spacing, 8px radii, outlined primary actions, rules that fade at their ends, elevation as a hairline plus ambient shade. Two things change: the ground warms from blue-grey to ash so bottle photography stays honest in dim rooms, and the accent moves from blurple to ginshu (銀朱, vermilion knocked back with ash) — the seal on a sake label, related to the object without matching its gold and kraft. Every value below is a CSS custom property, so a later native port reads one token table rather than a stylesheet.</p>
+  </header>
+
+  <section style="display:flex;flex-direction:column;gap:14px">
+    <h2 style="font-size:13px;margin:0;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-600);font-weight:500">Ground &amp; ink</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px">
+      <sc-for list="{{ roles }}" as="c" hint-placeholder-count="4">
+        <div style="display:flex;flex-direction:column;gap:7px">
+          <div style="height:72px;border-radius:var(--radius-md);background:{{ c.hex }};box-shadow:var(--shadow-sm)"></div>
+          <div>
+            <div style="font-size:13px;font-family:var(--font-heading);font-weight:500">{{ c.name }}</div>
+            <div style="font-family:ui-monospace,monospace;font-size:11px;color:var(--color-neutral-600)">{{ c.hex }}</div>
+            <div style="font-size:11px;color:var(--color-neutral-600);margin-top:2px">{{ c.use }}</div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:14px">
+    <h2 style="font-size:13px;margin:0;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-600);font-weight:500">Ginshu ramp</h2>
+    <div style="display:flex;border-radius:var(--radius-md);overflow:hidden;box-shadow:var(--shadow-sm)">
+      <sc-for list="{{ amber }}" as="a" hint-placeholder-count="9">
+        <div style="flex:1;height:84px;background:{{ a.hex }};display:flex;flex-direction:column;justify-content:flex-end;padding:7px 6px;gap:1px">
+          <span style="font-size:10px;font-weight:500;color:{{ a.fg }}">{{ a.step }}</span>
+          <span style="font-family:ui-monospace,monospace;font-size:8.5px;color:{{ a.fg }};opacity:.7">{{ a.hex }}</span>
+        </div>
+      </sc-for>
+    </div>
+    <p style="font-size:12px;color:var(--color-neutral-700);margin:0;max-width:62ch">Steps count outward from the ground: 100–200 for tinted fills and hovers, 500 for marks and chart bars, 600 for stars, controls and the primary outline — one step brighter than the marks so it survives a phone dimmed to 20% — 700 for accent text at paragraph size (7:1 on <code style="font-family:ui-monospace,monospace">--color-bg</code>), 800 for text on an accent-100 tint.</p>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:14px">
+    <h2 style="font-size:13px;margin:0;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-600);font-weight:500">Neutral ramp</h2>
+    <div style="display:flex;border-radius:var(--radius-md);overflow:hidden;box-shadow:var(--shadow-sm)">
+      <sc-for list="{{ neutrals }}" as="n" hint-placeholder-count="9">
+        <div style="flex:1;height:84px;background:{{ n.hex }};display:flex;flex-direction:column;justify-content:flex-end;padding:7px 6px;gap:1px">
+          <span style="font-size:10px;font-weight:500;color:{{ n.fg }}">{{ n.step }}</span>
+          <span style="font-family:ui-monospace,monospace;font-size:8.5px;color:{{ n.fg }};opacity:.7">{{ n.hex }}</span>
+        </div>
+      </sc-for>
+    </div>
+    <p style="font-size:12px;color:var(--color-neutral-700);margin:0;max-width:62ch">Warm-neutral rather than Nocturne's blue-grey, so labels are not cooled by the UI around them. Steps count outward from the ground; 500 is the lowest step legible as 11px metadata, body-size muted text uses 600 or above. The camera and overlay ground is a fixed #121110, below the ramp.</p>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:14px">
+    <h2 style="font-size:13px;margin:0;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-600);font-weight:500">Type scale</h2>
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <sc-for list="{{ type }}" as="t" hint-placeholder-count="6">
+        <div style="display:flex;align-items:baseline;gap:20px;padding:9px 0;border-bottom:1px solid color-mix(in srgb,#e8e4dd 8%,transparent)">
+          <div style="width:130px;flex:none;font-family:ui-monospace,monospace;font-size:11px;color:var(--color-neutral-600)">{{ t.spec }}</div>
+          <div style="flex:1;min-width:0;font-family:var(--font-heading);font-weight:500;font-size:{{ t.size }};letter-spacing:-.015em;line-height:1.14">{{ t.sample }}</div>
+          <div style="width:150px;flex:none;font-size:11px;color:var(--color-neutral-600);text-align:right">{{ t.use }}</div>
+        </div>
+      </sc-for>
+    </div>
+    <p style="font-size:12px;color:var(--color-neutral-700);margin:0;max-width:62ch">Inter throughout, headings at 500 — hierarchy is size and space, never weight past medium. Japanese names set in the same stack with <code style="font-family:ui-monospace,monospace">lang="ja"</code> so the system font falls through; romaji leads, kanji sits secondary.</p>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:14px">
+    <h2 style="font-size:13px;margin:0;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-600);font-weight:500">Spacing &amp; radius</h2>
+    <div style="display:flex;flex-wrap:wrap;gap:22px;align-items:flex-end">
+      <sc-for list="{{ space }}" as="p" hint-placeholder-count="6">
+        <div style="display:flex;flex-direction:column;gap:6px;align-items:center">
+          <div style="width:{{ p.px }};height:{{ p.px }};background:var(--color-accent-700);border-radius:2px"></div>
+          <div style="font-family:ui-monospace,monospace;font-size:10px;color:var(--color-neutral-600)">{{ p.name }}</div>
+          <div style="font-size:10px;color:var(--color-neutral-500)">{{ p.px }}</div>
+        </div>
+      </sc-for>
+      <div style="display:flex;gap:14px;margin-left:8px">
+        <div style="display:flex;flex-direction:column;gap:6px;align-items:center">
+          <div style="width:52px;height:52px;border-radius:4px;box-shadow:var(--shadow-sm)"></div>
+          <div style="font-family:ui-monospace,monospace;font-size:10px;color:var(--color-neutral-600)">radius-sm</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;align-items:center">
+          <div style="width:52px;height:52px;border-radius:8px;box-shadow:var(--shadow-sm)"></div>
+          <div style="font-family:ui-monospace,monospace;font-size:10px;color:var(--color-neutral-600)">radius-md</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;align-items:center">
+          <div style="width:52px;height:52px;border-radius:14px;box-shadow:var(--shadow-sm)"></div>
+          <div style="font-family:ui-monospace,monospace;font-size:10px;color:var(--color-neutral-600)">radius-lg</div>
+        </div>
+      </div>
+    </div>
+    <p style="font-size:12px;color:var(--color-neutral-700);margin:0;max-width:62ch">Nocturne's 0.7× density unchanged. One mobile addition: no tappable target below 44px, so controls take padding from the scale but floor their height.</p>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:16px">
+    <h2 style="font-size:13px;margin:0;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-600);font-weight:500">Core components</h2>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px">
+      <div style="display:flex;flex-direction:column;gap:9px;padding:16px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm)">
+        <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent-700)">Actions</div>
+        <button class="btn btn-primary" style="border-width:1.5px;height:44px">Back up journal</button>
+        <button class="btn btn-secondary" style="height:44px;gap:7px"><i class="ph ph-sliders-horizontal" style="font-size:16px"></i>Add detailed notes</button>
+        <button class="btn btn-ghost">Not this one</button>
+        <button class="btn btn-primary" style="border-width:1.5px;height:44px" disabled="{{ yes }}">Disabled</button>
+        <div style="font-size:11px;color:var(--color-neutral-600)">Primary stays an outline, never a fill — Nocturne's rule, and it keeps ginshu a mark rather than a flood.</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:9px;padding:16px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm)">
+        <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent-700)">Rating</div>
+        <div style="display:flex;gap:3px;color:var(--color-accent-600);font-size:26px">
+          <i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star-half"></i>
+        </div>
+        <div style="font-size:11px;color:var(--color-neutral-600)">Five stars, half steps, 34px, each split into two tap halves. Tapping saves — there is no Save button; an undo notice covers mistakes. Filled stars are accent-600, empty neutral-400. Read-only rows use the same glyph at 11–13px.</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:9px;padding:16px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm)">
+        <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent-700)">Tags</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <span class="tag tag-accent">Sure match</span>
+          <span class="tag tag-accent">94% for you</span>
+          <span class="tag tag-neutral">Junmai</span>
+          <span class="tag tag-neutral">Good warm</span>
+        </div>
+        <div style="font-size:11px;color:var(--color-neutral-600)">Accent tint carries the app’s own claims (match, confidence, “Tasted”); neutral carries facts about the sake. Never more than one accent tag per row.</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:9px;padding:16px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm)">
+        <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent-700)">Flavour axis</div>
+        <sc-for list="{{ axes }}" as="a" hint-placeholder-count="3">
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--color-neutral-700)"><span>{{ a.label }}</span><span style="color:var(--color-neutral-500)">{{ a.pct }}</span></div>
+            <div style="height:4px;border-radius:2px;background:var(--color-neutral-200);overflow:hidden"><div style="height:100%;background:var(--color-accent-500);width:{{ a.pct }}"></div></div>
+          </div>
+        </sc-for>
+        <div style="font-size:11px;color:var(--color-neutral-600)">Bars in cards and lists; the hexagon radar only on Palate, where the six axes are the subject.</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:9px;padding:16px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm)">
+        <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent-700)">Fields</div>
+        <div class="field"><label>Search</label><input class="input" placeholder="Name, brewery or kanji" style="min-height:44px" /></div>
+        <div class="field"><label>Note</label><textarea class="input" placeholder="Add a note — what struck you?" style="min-height:62px"></textarea></div>
+        <div style="font-size:11px;color:var(--color-neutral-600)">Placeholders are always italic, so an empty field never reads as filled.</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:9px;padding:16px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm)">
+        <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent-700)">Placeholders</div>
+        <div style="height:72px;border-radius:var(--radius-md);background:repeating-linear-gradient(135deg,#2a2826,#2a2826 5px,#33302d 5px,#33302d 10px);display:grid;place-items:center"><span style="font-family:ui-monospace,monospace;font-size:10px;color:var(--color-neutral-600)">bottle photography</span></div>
+        <div style="font-size:11px;color:var(--color-neutral-600)">Every image is a striped slot with a monospace label until real photography lands. On this dark ground Nocturne’s <code style="font-family:ui-monospace,monospace">.lighten</code> blend applies again — photographs of bottles on black fall into the page. Slots use neutral stripes, never light ones.</div>
+      </div>
+    </div>
+  </section>
+
+
+  <section style="display:flex;flex-direction:column;gap:16px">
+    <h2 style="font-size:13px;margin:0;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-600);font-weight:500">Components added since</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px">
+
+      <div style="display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm)">
+        <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent-700)">Accent mark</div>
+        <div style="display:flex;align-items:center;gap:8px"><span style="width:2px;height:14px;background:var(--color-accent-500);display:block"></span><span style="font-family:var(--font-heading);font-weight:500;font-size:15px">Logged tonight</span></div>
+        <div style="font-size:11px;color:var(--color-neutral-600);line-height:1.55;text-wrap:pretty">A 2px × 14px accent-500 rule before a heading marks the one thing on a screen that is yours or recommended. It replaces tinted fills; one per surface.</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm)">
+        <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent-700)">Log panel</div>
+        <div style="border-radius:var(--radius-md);overflow:hidden;box-shadow:var(--shadow-sm)">
+          <div style="padding:12px;background:var(--color-neutral-100);font-size:12px;color:var(--color-neutral-700)">Your take · Last logged 19 Sep · 4.5</div>
+          <div style="padding:12px;background:var(--color-accent-100);font-size:12px;color:var(--color-accent-800)">Logged tonight · 21:40 · 2nd time</div>
+        </div>
+        <div style="font-size:11px;color:var(--color-neutral-600);line-height:1.55;text-wrap:pretty">The bottom of the result card. neutral-100 before rating, accent-100 once saved — the only place the accent tints a surface. Note field, flavour chips and “Add detailed notes” appear only after the first star.</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm)">
+        <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent-700)">Chips</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap"><span style="padding:6px 11px;border-radius:999px;background:var(--color-accent-600);color:#1b1a19;font-size:12px">Sour apple</span><span style="padding:6px 11px;border-radius:999px;border:1px solid var(--color-divider);color:var(--color-neutral-700);font-size:12px">Cider-like</span><span style="padding:6px 11px;border-radius:999px;border:1px solid var(--color-divider);color:var(--color-neutral-700);font-size:12px">Warm</span><span style="padding:6px 11px;border-radius:999px;background:var(--color-accent-600);color:#1b1a19;font-size:12px">With food</span></div>
+        <div style="font-size:11px;color:var(--color-neutral-600);line-height:1.55;text-wrap:pretty">Pill, 36px min height, 12–13px. Selected: accent-600 fill, #1b1a19 ink. Unselected: divider outline, neutral-700 ink. Same component for single-choice and multi-choice; the label above says which (“pick any”).</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm)">
+        <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent-700)">Five-step scale</div>
+        <div style="display:flex;justify-content:space-between;font-size:12px"><span>Acidity</span><span style="color:var(--color-neutral-600)">High</span></div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px"><span style="height:8px;border-radius:4px;background:var(--color-accent-500)"></span><span style="height:8px;border-radius:4px;background:var(--color-accent-500)"></span><span style="height:8px;border-radius:4px;background:var(--color-accent-500)"></span><span style="height:8px;border-radius:4px;background:var(--color-accent-500)"></span><span style="height:8px;border-radius:4px;background:var(--color-neutral-300)"></span></div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--color-neutral-600)"><span>Soft</span><span>Sharp</span></div>
+        <div style="font-size:11px;color:var(--color-neutral-600);line-height:1.55;text-wrap:pretty">Detailed-notes palate scales. Each segment sits in a 30px-tall tap target; tapping the current step clears it. The value is always named in words, never as a number.</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm)">
+        <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent-700)">Comparison bar</div>
+        <div style="display:flex;align-items:center;gap:10px"><span style="width:52px;font-size:13px">Rich</span><div style="flex:1;position:relative;height:6px;border-radius:3px;background:var(--color-neutral-300)"><div style="position:absolute;left:0;top:0;bottom:0;width:86%;border-radius:3px;background:var(--color-accent-500)"></div><div style="position:absolute;top:-4px;bottom:-4px;left:52%;width:2px;background:var(--color-neutral-700)"></div></div></div>
+        <div style="font-size:11px;color:var(--color-neutral-600);line-height:1.55;text-wrap:pretty">Palate axes: your value as the bar, the typical drinker as a 2px neutral-700 tick. Label the difference in words (“More than most”) rather than showing both numbers.</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm)">
+        <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent-700)">Toggle & settings row</div>
+        <div style="display:flex;align-items:center;gap:12px;min-height:50px;border-bottom:1px solid var(--color-divider)"><i class="ph ph-magic-wand" style="font-size:19px;color:var(--color-neutral-600)"></i><div style="flex:1"><div style="font-size:14px">Use my palate for Ask</div><div style="font-size:12px;color:var(--color-neutral-600)">Suggestions lean on what you’ve rated</div></div><span style="width:42px;height:26px;border-radius:13px;background:var(--color-accent-500);position:relative"><span style="position:absolute;top:3px;left:19px;width:20px;height:20px;border-radius:50%;background:#1b1a19"></span></span></div>
+        <div style="display:flex;align-items:center;gap:12px;min-height:50px;border-bottom:1px solid var(--color-divider)"><i class="ph ph-translate" style="font-size:19px;color:var(--color-neutral-600)"></i><div style="flex:1;min-width:0;font-size:14px;white-space:nowrap">Sake names</div><span style="font-size:13px;color:var(--color-neutral-700)">Romaji + kanji</span><i class="ph ph-caret-right" style="font-size:15px;color:var(--color-neutral-500)"></i></div>
+        <div style="font-size:11px;color:var(--color-neutral-600);line-height:1.55;text-wrap:pretty">Account rows: 50px minimum, icon in neutral-600, value right-aligned in neutral-700. Toggle on = accent-500 track; off = neutral-400. Only personal-data choices get toggles.</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm)">
+        <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent-700)">Notice</div>
+        <div style="padding:12px 14px;border-radius:var(--radius-md);background:#121110;color:#f6f2ea;display:flex;align-items:center;gap:10px"><i class="ph-fill ph-check-circle" style="font-size:19px;color:var(--color-accent-600)"></i><div style="flex:1;font-size:13px">Logged · palate updated</div><span style="color:var(--color-accent-700);font-size:12px">Undo</span></div>
+        <div style="font-size:11px;color:var(--color-neutral-600);line-height:1.55;text-wrap:pretty">Sits 96px above the bottom edge, clearing the tab bar, and disappears after about 3 seconds. One action at most: Undo for saves, View for adds to cellar or wishlist. The ground is the fixed camera colour #121110.</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm)">
+        <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent-700)">Sheet</div>
+        <div style="border-radius:16px 16px 0 0;background:var(--color-neutral-100);box-shadow:var(--shadow-md);padding:8px 14px 14px;display:flex;flex-direction:column;gap:8px"><span style="width:36px;height:4px;border-radius:2px;background:var(--color-neutral-400);align-self:center"></span><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-family:var(--font-heading);font-weight:500;font-size:17px">Keep this tasting</span><i class="ph ph-x" style="font-size:16px"></i></div><div style="height:38px;border-radius:var(--radius-md);border:1px solid var(--color-divider)"></div><div style="height:38px;border-radius:var(--radius-md);border:1px solid var(--color-divider)"></div></div>
+        <div style="font-size:11px;color:var(--color-neutral-600);line-height:1.55;text-wrap:pretty">Sign-in and detailed notes. Handle, 21px title, close at the right; a back arrow appears for step two. Scrim rgba(0,0,0,.55), and tapping it dismisses. Sheets never hold a Save button — everything already saved.</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm)">
+        <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent-700)">Ranked row</div>
+        <div style="display:flex;gap:12px"><div style="display:flex;flex-direction:column;align-items:center;gap:6px;width:20px"><span style="font-family:var(--font-heading);font-size:15px;color:var(--color-accent-600)">1</span><span style="width:2px;height:20px;background:var(--color-accent-500)"></span></div><div style="flex:1"><div style="display:flex;justify-content:space-between"><span style="font-family:var(--font-heading);font-weight:500;font-size:15px">Akishika Okuharuka</span><span style="font-size:13px;color:var(--color-neutral-700)">¥1,100</span></div><div style="font-size:12px;color:var(--color-neutral-600)" lang="ja">秋鹿 奥鹿 · Junmai</div><div style="margin-top:5px"><span class="tag tag-accent">94% for you</span></div></div></div>
+        <div style="font-size:11px;color:var(--color-neutral-600);line-height:1.55;text-wrap:pretty">Menu results. Rank in the heading face; only #1 gets the accent rank colour and the mark. The name as printed stays visible under the matched name, so the user can point at the menu.</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm)">
+        <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent-700)">Freshness line</div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--color-neutral-700)"><i class="ph ph-lock-simple" style="font-size:14px"></i>Unopened · keeps for months</div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--color-neutral-700)"><i class="ph ph-drop" style="font-size:14px"></i>Open 3 days · nama, keep cold</div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--color-accent-700)"><i class="ph ph-hourglass-medium" style="font-size:14px"></i>Open 12 days — best finished this week</div>
+        <div style="font-size:11px;color:var(--color-neutral-600);line-height:1.55;text-wrap:pretty">Cellar state. Only the drink-soon state takes the accent (accent-700 text), and those bottles sort first. Current thresholds are 10 days, or 5 for nama — placeholders until they are checked.</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm)">
+        <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent-700)">Camera frame</div>
+        <div style="display:flex;gap:16px;align-items:flex-end;justify-content:center;padding:8px;background:#121110;border-radius:var(--radius-md)"><div style="width:53px;height:73px;border:2px solid var(--color-accent-600);border-radius:5px"></div><div style="width:70px;height:83px;border:2px solid var(--color-accent-600);border-radius:5px"></div></div>
+        <div style="display:flex;justify-content:space-around;font-size:11px;color:var(--color-neutral-600)"><span>Label 212 × 292</span><span>Menu 278 × 330</span></div>
+        <div style="font-size:11px;color:var(--color-neutral-600);line-height:1.55;text-wrap:pretty">The frame eases between the two sizes over 280ms. The hint below has a fixed two-line height so nothing jumps. Controls sit in a 1fr·auto·1fr grid, so the shutter stays centred even when a side slot is empty.</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm)">
+        <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent-700)">Scroll edge</div>
+        <div style="height:64px;border-radius:var(--radius-md);background:var(--color-bg);box-shadow:var(--shadow-sm);overflow:hidden;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 18px);mask-image:linear-gradient(to bottom,transparent 0,#000 18px);padding:10px 12px;font-size:13px;line-height:1.7;color:var(--color-neutral-800)">Katori 90<br>Tamagawa Time Machine<br>Jikon Tokubetsu</div>
+        <div style="font-size:11px;color:var(--color-neutral-600);line-height:1.55;text-wrap:pretty">Rule: any list that scrolls under a fixed header or control fades over 18px at that edge (a mask, not an overlay), with at least 16px of padding so nothing fades at rest. The fade replaces a hard border; don’t use both. Bottom fades only where content scrolls over a borderless control (Ask’s chips and composer). The tab bar keeps its surface and border instead.</div>
+      </div>
+    </div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:12px">
+    <h2 style="font-size:13px;margin:0;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-600);font-weight:500">Behaviour rules</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px">
+      <sc-for list="{{ rules }}" as="r" hint-placeholder-count="6">
+        <div style="padding:14px;border-radius:var(--radius-md);border:1px solid var(--color-divider);display:flex;flex-direction:column;gap:5px">
+          <div style="font-family:var(--font-heading);font-weight:500;font-size:14px">{{ r.t }}</div>
+          <div style="font-size:12px;color:var(--color-neutral-700);line-height:1.55;text-wrap:pretty">{{ r.d }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:12px">
+    <h2 style="font-size:13px;margin:0;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-600);font-weight:500">Built for the port</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px">
+      <sc-for list="{{ port }}" as="p" hint-placeholder-count="4">
+        <div style="display:flex;flex-direction:column;gap:5px;padding:14px;border-radius:var(--radius-md);border:1px solid var(--color-divider)">
+          <div style="font-family:var(--font-heading);font-weight:500;font-size:15px">{{ p.title }}</div>
+          <div style="font-size:12px;color:var(--color-neutral-700);text-wrap:pretty">{{ p.body }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      yes: true,
+      rules: [
+        { t: 'The star is the save', d: 'Rating on the result card creates the journal entry immediately. No Save step anywhere; every save shows an Undo notice for about 3 seconds.' },
+        { t: 'Ask to sign in after the first save', d: 'The first tasting, wishlist save or cellar add opens the sign-in sheet about 650ms later. The item is already stored on the phone. “Not now” stops the prompt for the session; the journal card stays as a quiet reminder.' },
+        { t: 'Age by region', d: 'The gate states the drinking age for the detected region (Japan 20, US 21, UK 18, South Korea 19, elsewhere 18) and lets the user change it. These figures need legal review.' },
+        { t: 'Contribute by default', d: 'Ratings and flavour words feed Yawaragi flavour charts anonymously, on by default. Disclosed on the sign-in sheet; switch in Account → Privacy. Written notes are shared only one by one, by choice. Captions name every source.' },
+        { t: 'Missing data is said, not hidden', d: 'Unpublished specs read “Not published” in italic neutral-700. Low-confidence matches say “Best guess” and offer other candidates. Missing charts invite the user to add their own.' },
+        { t: 'Wishlist clears itself', d: 'Logging a sake removes it from the wishlist. “Bought it” moves it to the cellar; “Tried it” goes straight to the rating card.' },
+        { t: 'Menu mode has no typing', d: 'In Menu mode “Type it” is hidden; the photo button stays for screenshots of drinks lists online. Sakes the camera read but couldn’t match are listed and open search already filled in.' },
+      ],
+      roles: [
+        { name: 'bg', hex: '#1b1a19', use: 'App ground — warm ash, for dim rooms' },
+        { name: 'surface', hex: '#232221', use: 'Cards, sheets, tab bar' },
+        { name: 'text', hex: '#e8e4dd', use: 'Kinari — warm, never pure white' },
+        { name: 'accent', hex: '#cf8a6e', use: 'Ginshu — controls, stars, outlines (500 #b8735a for marks)' },
+      ],
+      amber: [100, 200, 300, 400, 500, 600, 700, 800, 900].map((step, i) => ({
+        step,
+        hex: ['#2a201c', '#3a2a23', '#5c3b2f', '#8a5642', '#b8735a', '#cf8a6e', '#e0a88f', '#eec2ae', '#f6ddd1'][i],
+        fg: i < 4 ? '#f6ddd1' : '#1b1a19',
+      })),
+      neutrals: [100, 200, 300, 400, 500, 600, 700, 800, 900].map((step, i) => ({
+        step,
+        hex: ['#201f1e', '#2d2b29', '#383634', '#4a4744', '#8a867e', '#a8a49c', '#bdb9b1', '#d6d2ca', '#ece8e1'][i],
+        fg: i < 4 ? '#ece8e1' : '#1b1a19',
+      })),
+      type: [
+        { spec: '32 / 1.14 / -.02em', size: '32px', sample: 'What are you drinking?', use: 'Screen title, gate' },
+        { spec: '26 / 1.14 / -.02em', size: '26px', sample: 'Good evening', use: 'Tab screen heading' },
+        { spec: '21 / 1.2 / -.015em', size: '21px', sample: 'Log a tasting', use: 'Sheet title' },
+        { spec: '16 / 1.2', size: '16px', sample: 'Kidoizumi AFS', use: 'List item, sake name' },
+        { spec: '13 / 1.55', size: '13px', sample: 'Sour apple, almost cider', use: 'Body, notes' },
+        { spec: '11 / .1em / upper', size: '11px', sample: 'RECENT TASTINGS', use: 'Section label' },
+      ],
+      space: [
+        { name: 'space-1', px: '2.8px' }, { name: 'space-2', px: '5.6px' },
+        { name: 'space-3', px: '8.4px' }, { name: 'space-4', px: '11.2px' },
+        { name: 'space-6', px: '16.8px' }, { name: 'space-8', px: '22.4px' },
+      ],
+      axes: [
+        { label: 'Rich', pct: '86%' }, { label: 'Floral', pct: '72%' }, { label: 'Dry', pct: '61%' },
+      ],
+      port: [
+        { title: 'Tokens, not stylesheets', body: 'Colour (the Ginshu and neutral ramps), type, spacing, radius and elevation are 40-odd named values, plus one fixed camera ground, #121110. A React Native or SwiftUI port copies that table; nothing else in the design carries a literal.' },
+        { title: 'Webview-safe first', body: 'No hover-only affordances, no desktop-width assumptions, 44px minimum targets, and safe-area padding at the base of every screen — so the same markup survives inside a shell.' },
+        { title: 'Three lists, one row pattern', body: 'Journal, cellar and wishlist are segments of Collection and share the same row: bottle slot, name, brewery, one status line, then at most two actions. A new list costs a segment, not a tab.' },
+        { title: 'One camera, two jobs', body: 'Label and Menu share one viewfinder with a mode switch. The frame resizes and the side controls adapt; Label leads to the result card, Menu to a ranked list. Neither needs its own navigation.' },
+      ],
+    }
+  }
+}
+</script>
+</body>
+</html>

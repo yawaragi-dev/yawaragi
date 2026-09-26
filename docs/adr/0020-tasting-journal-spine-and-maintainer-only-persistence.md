@@ -51,6 +51,8 @@ Enabling facts discovered during the grill:
 
 ### 5. Vocabulary
 
+> **Amended 2026-09-26 (design v1.4).** The radar view's user-facing name is now **"Palate"**, not "taste map" — it is the name of the fourth tab in the adopted design, and a third name for one concept was one too many. Everything else in this section stands: "tasting journal" / "Verkostungsjournal" for the record, `TasteProfile` as the internal object, "taste profile" retired as a user-facing label. `CONTEXT.md` carries the current term; the paragraphs below are kept as written for the historical record. Code comments and `messages/*.json` are corrected per surface as each is ported, not in a sweep.
+
 - Adopt **"tasting journal"** (EN) / **"Verkostungsjournal"** (DE) for the record, and **"taste map"** for the radar view. Retire user-facing **"taste profile"** as a label.
 - Keep the internal glossary term **TasteProfile** (the derived six-axis object); its user-facing rendering is "your taste map".
 - The internal `TasteEvent` kind `cross_beverage_seed` stays (it accurately names a cold-start seed); only the *user-facing* "seed" wording is retired (already done in #236 values; the `seed*` i18n **keys** are renamed opportunistically when those surfaces are next touched).

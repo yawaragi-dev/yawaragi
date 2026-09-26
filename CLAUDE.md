@@ -11,7 +11,8 @@ Naming history: previously "Kanpai"; renamed to avoid collision with KANPAI Lond
 ## Tech stack
 - Next.js 16 App Router + React Server Components (RSC by default; 'use client' only when necessary)
 - TypeScript strict
-- Tailwind + shadcn/ui (defaults; no custom design tokens until Phase 7)
+- Tailwind v4 (CSS-first, no `tailwind.config.*`) + shadcn/ui, themed with the **Ginshu** token set from the design handoff — warm-ash dark ground, ginshu (銀朱) accent. Tokens live in `src/app/globals.css`; the spec is `design/README.md` § "Design tokens". Dark-first and dark-only: there is no light theme.
+- Phosphor icons (inline SVG, not the `@phosphor-icons/web` font the prototype loads from unpkg — a CDN stylesheet breaks CSP, offline and the webview wrap)
 - Vercel AI SDK 7 for all LLM work — never the raw Anthropic SDK
 - @ai-sdk/mcp for connecting to our own MCP server
 - Supabase (Postgres + auth-helpers for service role) for data
@@ -86,9 +87,10 @@ The Sakenowa f1–f6 axes are Japanese brewers' terms with no exact English equi
 | f6   | keikai   | 軽快    | light / crisp         | refreshing finish, low residual          |
 
 Rules:
-- The `<FlavorAxisLabel />` component shows romaji + kanji + the English/German approximation in a tooltip explaining "This is a brewer's term; the English label is an approximation."
-- Never use only the English approximation in a UI element.
-- In LLM prompts, instruct the model to use the romaji name + kanji in tasting notes, with the English approximation parenthetical.
+- **In the UI, axes render as the locale's approximation** — Floral, Mellow, Rich, Mild, Dry, Light (EN) — in `f1..f6` order. The Japanese terms are disclosed via the info button beside the chart heading, which opens the shared info sheet (design §16) listing all six as `English · 日本語 · romaji · note` and stating that the English words are approximations of brewers' terms, not translations. See [ADR-0022](./docs/adr/0022-english-flavour-axis-labels-with-disclosure-sheet.md).
+- **The disclosure is required, not optional.** The sheet is to the flavour chart what `<HeuristicDisclaimer />` is to a cross-beverage result. Caveat text stays in the DOM and is wired to the button via `aria-describedby`.
+- **Romaji remains the canonical identifier in code and data** — the `FlavorAxis` enum, schema keys, LLM prompts. `f1..f6` stays a storage detail. Only the rendered label is English.
+- In LLM prompts, instruct the model to use the romaji name + kanji in tasting notes, with the English approximation parenthetical. This is unchanged by ADR-0022, which is about chart rendering, not generated prose.
 
 The f1–f6 → Japanese-label mapping above was verified on 2026-05-22 against Sakenowa's published data documentation at https://muro.sakenowa.com/sakenowa-data. The Sakenowa Data API itself returns only numeric `f1..f6`; the labels come from Sakenowa's accompanying type docs.
 
@@ -149,6 +151,17 @@ See ADR-0009 §"Per-PR GDPR review questions" for the canonical list. The Record
 
 See `docs/adr/0007-i18n-en-de.md`.
 
+## Design
+- Spec: design/README.md — read it before any UI work. Check its Changelog for what changed since last time.
+- The .dc.html files are visual references, not code to copy. To view them: `npx serve design`, then open Yawaragi Mobile.dc.html.
+- The numbered **"Screens" section is the single spec** (§0 landing … §17 flavour chart). Each section names its reference screenshots.
+- `design/screenshots/` holds 33 reference PNGs at 390×844 — the fastest way to check a port. **01–26 are the v1 ship: EU/Germany, Ask off, Label-only scan.** 27–32 are Japan / Ask-on variants; 33 is deferred menu scan. Unless a screenshot is marked JP or Ask-on, it is what we build.
+- Two shared components have their own sections and are the source of truth over any screen that uses them: **§17 flavour chart** (trademark wording, `"Powered by Sakenowa ↗"` attribution, axis order, two-tone fallback, the two empty-chart strings) and **§16 info sheets** (the caveat-line + info-button pattern — reuse it for every inferred claim, not just cross-beverage).
+- Items under "Open decisions" are not ours to settle — leave a TODO and a placeholder.
+- If the build and the spec disagree, ask; don't silently pick one. If the README and the prototype disagree, **the prototype wins** — and report the mismatch to the designers.
+- The package is a snapshot; the Claude Design project is the source of truth. Drops land at `design/` (the designers' instructions say `design/yawaragi/` — we flattened it, since the repo is already Yawaragi).
+- **Snapshot in the repo is design v1.4; the code is built against v1.0** — i.e. nothing is ported yet. This line records which version the *code* matches, so "implement the changelog" has a baseline. Bump it in the PR that ports a version.
+
 ## Anti-patterns (do NOT do these)
 - Do NOT call the Anthropic API directly. Always go through AI SDK.
 - Do NOT mock the AI SDK in tests by stubbing fetch. Use `MockLanguageModelV3` from `ai/test` (the AI SDK 5 export `MockLanguageModelV2` was replaced in AI SDK 6; AI SDK 7 keeps `MockLanguageModelV3` and adds a `MockLanguageModelV4` for the v4 model spec — V3 remains the double this repo uses).
@@ -163,7 +176,7 @@ See `docs/adr/0007-i18n-en-de.md`.
 - Do NOT set `RATE_LIMIT_BYPASS=1` on Production Vercel. The env var is a dev/preview escape hatch that short-circuits the anonymous rate limit on scan (5/24h) and suggest (3/24h). On Production it silently unmeters the paid-API cost protection. A boot-time guard in `src/instrumentation.ts` (via `assertRateLimitConfig`, throwing `RateLimitBypassInProductionError`) fails the deploy at cold start so this can't ship unnoticed — do NOT weaken or remove that guard.
 - Do NOT display flavor or recommendation data before the 18+ gate has been accepted.
 - Do NOT show LLM-extracted data without a `<ProvenanceBadge />`.
-- Do NOT render English labels for the 6 flavor axes without romaji + kanji + tooltip.
+- Do NOT ship a flavour chart whose axis labels have no reachable disclosure. Since [ADR-0022](./docs/adr/0022-english-flavour-axis-labels-with-disclosure-sheet.md) the six axes render as **English words** (Floral, Mellow, Rich, Mild, Dry, Light = `f1..f6`), but the info button beside the chart heading — opening the sheet that names 華やか hanayaka etc. and states the English words are approximations of brewers' terms — is **load-bearing, not decorative**. The caveat text stays in the DOM, wired via `aria-describedby`, exactly like `<HeuristicDisclaimer />`. Romaji stays the canonical identifier in code (`FlavorAxis` enum); only the rendering changed.
 - Do NOT show cross-beverage results without `<HeuristicDisclaimer />`.
 - Do NOT use promotional copy (see "Age gate and JMStV compliance").
 - Do NOT merge a component with English-only strings.

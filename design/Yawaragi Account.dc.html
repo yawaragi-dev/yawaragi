@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/nocturne-9c99b1eb-b42d-45c4-9cc2-5ee7dbf09ad5/styles.css">
+<script src="_ds/nocturne-9c99b1eb-b42d-45c4-9cc2-5ee7dbf09ad5/_ds_bundle.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<style>
+:root{
+  --color-bg:#1b1a19; --color-surface:#232221; --color-text:#e8e4dd;
+  --color-accent:#cf8a6e; --color-accent-2:#cf8a6e;
+  --color-divider:rgba(232,228,221,.14);
+  --color-neutral-100:#201f1e; --color-neutral-200:#2d2b29; --color-neutral-300:#383634;
+  --color-neutral-400:#4a4744; --color-neutral-500:#8a867e; --color-neutral-600:#a8a49c;
+  --color-neutral-700:#bdb9b1; --color-neutral-800:#d6d2ca; --color-neutral-900:#ece8e1;
+  --color-accent-100:#2a201c; --color-accent-200:#3a2a23; --color-accent-300:#5c3b2f;
+  --color-accent-400:#8a5642; --color-accent-500:#b8735a; --color-accent-600:#cf8a6e;
+  --color-accent-700:#e0a88f; --color-accent-800:#eec2ae; --color-accent-900:#f6ddd1;
+  --shadow-sm:0 0 0 1px #302e2c;
+  --shadow-md:0 0 0 1px #302e2c, 0 10px 26px rgba(0,0,0,.42);
+  --shadow-lg:0 0 0 1px #363431, 0 18px 44px rgba(0,0,0,.55);
+}
+body{margin:0;background:#121110;font-family:var(--font-body);color:var(--color-text)}
+a{color:var(--color-accent-700);text-decoration:none}
+a:hover{color:var(--color-accent-800)}
+textarea::placeholder,input::placeholder{font-style:italic}
+.tag-neutral{background:var(--color-neutral-200);color:var(--color-neutral-800)}
+.tag-accent{background:var(--color-accent-100);color:var(--color-accent-700)}
+@keyframes yw-rise{0%{transform:translateY(14px);opacity:0}100%{transform:translateY(0);opacity:1}}
+@keyframes yw-sheet{0%{transform:translateY(100%)}100%{transform:translateY(0)}}
+@keyframes yw-fade{0%{opacity:0}100%{opacity:1}}
+</style>
+</helmet>
+
+<section style="padding:30px 28px 40px;display:flex;flex-direction:column;gap:22px">
+  <div style="max-width:880px;display:flex;flex-direction:column;gap:8px">
+    <div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700)">Turn 1 · sign-in</div>
+    <div style="font-family:var(--font-heading);font-weight:500;font-size:27px;letter-spacing:-.02em">When should the app ask who you are?</div>
+    <div style="font-size:14px;color:var(--color-neutral-700);line-height:1.6;max-width:680px;text-wrap:pretty">Both use the same three doors — Apple, Google, or an emailed six-digit code; no passwords anywhere. The difference is timing. <a href="#1a">1a</a> lets you scan and log first and asks only when there is something worth keeping. <a href="#1b">1b</a> asks once, right after the age gate, with a way to skip.</div>
+  </div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:30px;align-items:flex-start">
+
+    <div id="1a" style="width:390px;display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-family:var(--font-heading);font-weight:500;font-size:12px;padding:4px 9px;border-radius:999px;background:var(--color-accent-600);color:#1b1a19">1a</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-family:var(--font-heading);font-weight:500;font-size:17px">Ask when it’s worth keeping</div>
+          <div style="font-size:12px;color:var(--color-neutral-700)">After the third tasting · from the journal</div>
+        </div>
+        <button class="btn btn-secondary" style="font-size:12px" onClick="{{ aReset }}">Reset</button>
+      </div>
+
+      <div style="width:390px;height:844px;position:relative;overflow:hidden;border-radius:38px;background:var(--color-bg);box-shadow:var(--shadow-lg);display:flex;flex-direction:column">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 22px 2px;font-size:12px;font-weight:500;color:var(--color-neutral-600);flex:none">
+          <span>21:40</span><span style="display:flex;gap:5px"><i class="ph ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span>
+        </div>
+
+        <sc-if value="{{ aJournalView }}" hint-placeholder-val="{{ true }}">
+          <div style="flex:1;min-height:0;display:flex;flex-direction:column">
+            <div style="display:flex;align-items:center;padding:12px 22px 6px;flex:none">
+              <div style="font-family:var(--font-heading);font-weight:500;font-size:24px;letter-spacing:-.02em;flex:1">Collection</div>
+              <sc-if value="{{ aSignedIn }}">
+                <span style="width:32px;height:32px;border-radius:50%;background:var(--color-accent-200);color:var(--color-accent-800);display:grid;place-items:center;font-family:var(--font-heading);font-weight:500;font-size:13px">K</span>
+              </sc-if>
+            </div>
+            <div style="padding:6px 22px 0;flex:none">
+              <div style="display:inline-flex;border:1px solid var(--color-divider);border-radius:var(--radius-md);overflow:hidden">
+                <span style="padding:7px 14px;font-size:13px;background:var(--color-accent-100);color:var(--color-accent-700);font-family:var(--font-heading);font-weight:500">Journal</span>
+                <span style="padding:7px 14px;font-size:13px;color:var(--color-neutral-600);font-family:var(--font-heading);font-weight:500">Cellar</span>
+                <span style="padding:7px 14px;font-size:13px;color:var(--color-neutral-600);font-family:var(--font-heading);font-weight:500">Wishlist</span>
+              </div>
+            </div>
+
+            <div style="flex:1;min-height:0;overflow-y:auto;padding:14px 22px 16px;display:flex;flex-direction:column">
+              <sc-if value="{{ aShowNudge }}" hint-placeholder-val="{{ true }}">
+                <div style="padding:14px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm);display:flex;flex-direction:column;gap:10px;margin-bottom:8px;animation:yw-rise .3s ease-out">
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <span style="width:2px;height:14px;background:var(--color-accent-500);display:block"></span>
+                    <div style="font-family:var(--font-heading);font-weight:500;font-size:15px">Three tastings, only on this phone</div>
+                  </div>
+                  <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.5;text-wrap:pretty">Sign in to back them up and keep your palate if you change phones. Nothing is shared.</div>
+                  <div style="display:flex;gap:8px">
+                    <button class="btn btn-primary" style="flex:1;height:40px;font-size:13px" onClick="{{ aOpenSheet }}">Back up journal</button>
+                    <button class="btn btn-ghost" style="height:40px;font-size:13px" onClick="{{ aDismiss }}">Not now</button>
+                  </div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ aShowSynced }}">
+                <div style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--color-neutral-700);padding:2px 0 8px;animation:yw-fade .3s ease-out">
+                  <i class="ph ph-cloud-check" style="font-size:15px;color:var(--color-accent-600)"></i>Backed up · 3 tastings
+                </div>
+              </sc-if>
+              <sc-for list="{{ journal }}" as="e" hint-placeholder-count="3">
+                <div style="display:flex;gap:14px;padding:13px 0;border-bottom:1px solid var(--color-divider)">
+                  <div style="width:34px;flex:none;text-align:center">
+                    <div style="font-family:var(--font-heading);font-size:18px;line-height:1">{{ e.day }}</div>
+                    <div style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600);margin-top:3px">{{ e.mon }}</div>
+                  </div>
+                  <div style="flex:1;min-width:0">
+                    <div style="display:flex;align-items:baseline;gap:8px">
+                      <div style="font-family:var(--font-heading);font-weight:500;font-size:15px;flex:1;min-width:0">{{ e.name }}</div>
+                      <div style="display:flex;gap:1px;color:var(--color-accent-600);font-size:12px;flex:none">
+                        <sc-for list="{{ e.stars }}" as="s" hint-placeholder-count="5"><i class="ph {{ s.cls }}"></i></sc-for>
+                      </div>
+                    </div>
+                    <div style="font-size:12px;color:var(--color-neutral-600);margin-top:2px">{{ e.brewery }}</div>
+                    <div style="font-size:13px;color:var(--color-neutral-700);margin-top:5px;font-style:italic;text-wrap:pretty">{{ e.note }}</div>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+
+            <nav style="flex:none;display:grid;grid-template-columns:repeat(4,1fr);padding:9px 6px 24px;border-top:1px solid var(--color-divider);background:var(--color-surface)">
+              <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4">
+                <div style="display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;padding:6px 0;color:{{ t.color }}"><i class="ph {{ t.icon }}" style="font-size:22px"></i>{{ t.label }}</div>
+              </sc-for>
+            </nav>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ aSheetOpen }}">
+          <div style="position:absolute;inset:0;background:rgba(0,0,0,.55);animation:yw-fade .2s ease-out;display:flex;flex-direction:column;justify-content:flex-end">
+            <div style="background:var(--color-surface);border-radius:22px 22px 0 0;padding:10px 22px 30px;display:flex;flex-direction:column;gap:14px;animation:yw-sheet .28s ease-out;box-shadow:var(--shadow-lg)">
+              <div style="width:36px;height:4px;border-radius:2px;background:var(--color-neutral-400);align-self:center"></div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <sc-if value="{{ aSheetBack }}">
+                  <button class="btn" style="padding-inline:2px" onClick="{{ aBack }}" aria-label="Back"><i class="ph ph-arrow-left" style="font-size:18px"></i></button>
+                </sc-if>
+                <div style="font-family:var(--font-heading);font-weight:500;font-size:21px;letter-spacing:-.02em;flex:1">{{ aSheetTitle }}</div>
+                <button class="btn" style="padding-inline:2px" onClick="{{ aClose }}" aria-label="Close"><i class="ph ph-x" style="font-size:18px"></i></button>
+              </div>
+
+              <sc-if value="{{ aStepMethods }}">
+                <div style="display:flex;flex-direction:column;gap:9px">
+                  <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.5;margin-bottom:4px;text-wrap:pretty">No password. Your tastings stay private — we never post anything.</div>
+                  <button class="btn btn-secondary btn-block" style="height:48px;font-size:14px;gap:9px;margin:0" onClick="{{ aProvider }}"><i class="ph-fill ph-apple-logo" style="font-size:19px"></i>Continue with Apple</button>
+                  <button class="btn btn-secondary btn-block" style="height:48px;font-size:14px;gap:9px;margin:0" onClick="{{ aProvider }}"><i class="ph ph-google-logo" style="font-size:18px"></i>Continue with Google</button>
+                  <button class="btn btn-secondary btn-block" style="height:48px;font-size:14px;gap:9px;margin:0" onClick="{{ aToEmail }}"><i class="ph ph-envelope-simple" style="font-size:18px"></i>Continue with email</button>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ aStepEmail }}">
+                <div style="display:flex;flex-direction:column;gap:11px">
+                  <div style="font-size:13px;color:var(--color-neutral-700);text-wrap:pretty">We’ll send a six-digit code. No password to remember.</div>
+                  <input class="input" type="email" placeholder="you@example.com" value="{{ aEmail }}" onChange="{{ aSetEmail }}" style="height:48px;font-size:15px" />
+                  <button class="btn btn-primary btn-block" style="height:48px;font-size:14px;margin:0" disabled="{{ aNoEmail }}" onClick="{{ aSendCode }}">Send code</button>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ aStepCode }}">
+                <div style="display:flex;flex-direction:column;gap:11px">
+                  <div style="font-size:13px;color:var(--color-neutral-700);text-wrap:pretty">Sent to <span style="color:var(--color-text)">{{ aEmailShown }}</span>. It fills in by itself if you open it on this phone.</div>
+                  <input class="input" inputmode="numeric" maxlength="6" placeholder="······" value="{{ aCode }}" onChange="{{ aSetCode }}" style="height:56px;font-size:24px;letter-spacing:.5em;text-align:center;font-family:var(--font-heading)" />
+                  <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--color-neutral-600)">
+                    <button class="btn btn-ghost" style="font-size:12px;padding:4px 0" onClick="{{ aBack }}">Wrong address?</button>
+                    <button class="btn btn-ghost" style="font-size:12px;padding:4px 0" onClick="{{ aAutofill }}">Resend · or tap to autofill</button>
+                  </div>
+                </div>
+              </sc-if>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+
+      <div style="font-size:12px;color:var(--color-neutral-700);line-height:1.6;text-wrap:pretty">
+        <strong style="font-weight:500;color:var(--color-text)">Why:</strong> the first scan should happen within seconds of opening the app, and nobody wants an account for something they haven’t tried. By the third tasting the journal has value you can lose — that is the moment the question makes sense, and the copy can say exactly what is at stake.
+        <br><strong style="font-weight:500;color:var(--color-text)">Cost:</strong> local-only data needs a real migration path, and Ask can’t personalise across devices until sign-in.
+      </div>
+    </div>
+
+    <div id="1b" style="width:390px;display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-family:var(--font-heading);font-weight:500;font-size:12px;padding:4px 9px;border-radius:999px;background:var(--color-accent-600);color:#1b1a19">1b</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-family:var(--font-heading);font-weight:500;font-size:17px">Ask once, at the door</div>
+          <div style="font-size:12px;color:var(--color-neutral-700)">After the age gate · skippable</div>
+        </div>
+        <button class="btn btn-secondary" style="font-size:12px" onClick="{{ bReset }}">Reset</button>
+      </div>
+
+      <div style="width:390px;height:844px;position:relative;overflow:hidden;border-radius:38px;background:var(--color-bg);box-shadow:var(--shadow-lg);display:flex;flex-direction:column">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 22px 2px;font-size:12px;font-weight:500;color:var(--color-neutral-600);flex:none">
+          <span>21:40</span><span style="display:flex;gap:5px"><i class="ph ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span>
+        </div>
+
+        <sc-if value="{{ bWelcome }}" hint-placeholder-val="{{ true }}">
+          <div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:0 26px 34px">
+            <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:12px">
+              <div style="font-family:var(--font-heading);font-weight:500;font-size:15px;color:var(--color-accent-700);letter-spacing:.02em" lang="ja">和らぎ</div>
+              <div style="font-family:var(--font-heading);font-weight:500;font-size:36px;line-height:1.08;letter-spacing:-.03em;text-wrap:pretty">A journal for what’s in the cup.</div>
+              <div style="font-size:14px;color:var(--color-neutral-700);line-height:1.55;max-width:290px;text-wrap:pretty">Scan a label, rate it, and your palate takes shape. Sign in so it follows you.</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:9px">
+              <sc-if value="{{ bStepMethods }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex;flex-direction:column;gap:9px">
+                  <button class="btn btn-secondary btn-block" style="height:50px;font-size:14px;gap:9px;margin:0" onClick="{{ bProvider }}"><i class="ph-fill ph-apple-logo" style="font-size:19px"></i>Continue with Apple</button>
+                  <button class="btn btn-secondary btn-block" style="height:50px;font-size:14px;gap:9px;margin:0" onClick="{{ bProvider }}"><i class="ph ph-google-logo" style="font-size:18px"></i>Continue with Google</button>
+                  <button class="btn btn-secondary btn-block" style="height:50px;font-size:14px;gap:9px;margin:0" onClick="{{ bToEmail }}"><i class="ph ph-envelope-simple" style="font-size:18px"></i>Continue with email</button>
+                  <button class="btn btn-ghost btn-block" style="height:44px;font-size:13px;margin:4px 0 0" onClick="{{ bSkip }}">Try it first — sign in later</button>
+                </div>
+              </sc-if>
+              <sc-if value="{{ bStepEmail }}">
+                <div style="display:flex;flex-direction:column;gap:10px;animation:yw-fade .2s ease-out">
+                  <input class="input" type="email" placeholder="you@example.com" value="{{ bEmail }}" onChange="{{ bSetEmail }}" style="height:50px;font-size:15px" />
+                  <button class="btn btn-primary btn-block" style="height:50px;font-size:14px;margin:0" disabled="{{ bNoEmail }}" onClick="{{ bSendCode }}">Send code</button>
+                  <button class="btn btn-ghost btn-block" style="height:40px;font-size:13px;margin:0" onClick="{{ bBack }}">Other ways to sign in</button>
+                </div>
+              </sc-if>
+              <sc-if value="{{ bStepCode }}">
+                <div style="display:flex;flex-direction:column;gap:10px;animation:yw-fade .2s ease-out">
+                  <div style="font-size:13px;color:var(--color-neutral-700)">Code sent to <span style="color:var(--color-text)">{{ bEmailShown }}</span></div>
+                  <input class="input" inputmode="numeric" maxlength="6" placeholder="······" value="{{ bCode }}" onChange="{{ bSetCode }}" style="height:56px;font-size:24px;letter-spacing:.5em;text-align:center;font-family:var(--font-heading)" />
+                  <button class="btn btn-ghost btn-block" style="height:40px;font-size:13px;margin:0" onClick="{{ bAutofill }}">Resend · or tap to autofill</button>
+                </div>
+              </sc-if>
+              <div style="font-size:11px;color:var(--color-neutral-600);line-height:1.5;text-align:center;margin-top:6px;text-wrap:pretty">By continuing you agree to the <a href="#1b">Terms</a> and <a href="#1b">Privacy notice</a>.</div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ bHome }}">
+          <div style="flex:1;min-height:0;display:flex;flex-direction:column;animation:yw-fade .3s ease-out">
+            <div style="display:flex;align-items:center;padding:12px 22px 6px">
+              <div style="flex:1">
+                <div style="font-size:12px;color:var(--color-neutral-600)">{{ bGreetingSub }}</div>
+                <div style="font-family:var(--font-heading);font-weight:500;font-size:24px;letter-spacing:-.02em">{{ bGreeting }}</div>
+              </div>
+              <sc-if value="{{ bSignedIn }}">
+                <span style="width:32px;height:32px;border-radius:50%;background:var(--color-accent-200);color:var(--color-accent-800);display:grid;place-items:center;font-family:var(--font-heading);font-weight:500;font-size:13px">K</span>
+              </sc-if>
+            </div>
+            <div style="flex:1;padding:18px 22px;display:flex;flex-direction:column;gap:12px">
+              <div style="height:180px;border-radius:var(--radius-lg);border:1px dashed var(--color-neutral-400);display:grid;place-items:center;text-align:center;padding:20px">
+                <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+                  <i class="ph ph-camera" style="font-size:26px;color:var(--color-accent-600)"></i>
+                  <div style="font-family:var(--font-heading);font-weight:500;font-size:15px">Scan your first label</div>
+                  <div style="font-size:12px;color:var(--color-neutral-600)">Home continues as in the prototype</div>
+                </div>
+              </div>
+            </div>
+            <nav style="flex:none;display:grid;grid-template-columns:repeat(4,1fr);padding:9px 6px 24px;border-top:1px solid var(--color-divider);background:var(--color-surface)">
+              <sc-for list="{{ tabsHome }}" as="t" hint-placeholder-count="4">
+                <div style="display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;padding:6px 0;color:{{ t.color }}"><i class="ph {{ t.icon }}" style="font-size:22px"></i>{{ t.label }}</div>
+              </sc-for>
+            </nav>
+          </div>
+        </sc-if>
+      </div>
+
+      <div style="font-size:12px;color:var(--color-neutral-700);line-height:1.6;text-wrap:pretty">
+        <strong style="font-weight:500;color:var(--color-text)">Why:</strong> one decision, made once, and from the first tasting everything syncs, including Ask. Simpler to build and to explain.
+        <br><strong style="font-weight:500;color:var(--color-text)">Cost:</strong> a wall before any value. It comes straight after the age gate, so that makes two screens of questions before the first scan. The skip link has to carry a lot of weight.
+      </div>
+    </div>
+  </div>
+</section>
+
+<section style="padding:0 28px 56px;display:flex;flex-direction:column;gap:22px">
+  <div style="max-width:880px;display:flex;flex-direction:column;gap:8px">
+    <div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700)">Turn 1 · account</div>
+    <div style="font-family:var(--font-heading);font-weight:500;font-size:27px;letter-spacing:-.02em">One account screen, for either answer</div>
+    <div style="font-size:14px;color:var(--color-neutral-700);line-height:1.6;max-width:680px;text-wrap:pretty">Reached from the avatar on Palate. Short on purpose: your data, how it’s shown, what it’s used for, and the way out. Try the toggles, sign out, and delete.</div>
+  </div>
+
+  <div id="1c" style="width:390px;display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span style="font-family:var(--font-heading);font-weight:500;font-size:12px;padding:4px 9px;border-radius:999px;background:var(--color-accent-600);color:#1b1a19">1c</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-family:var(--font-heading);font-weight:500;font-size:17px">Account</div>
+        <div style="font-size:12px;color:var(--color-neutral-700)">Shared by 1a and 1b</div>
+      </div>
+      <button class="btn btn-secondary" style="font-size:12px" onClick="{{ cReset }}">Reset</button>
+    </div>
+
+    <div style="width:390px;height:844px;position:relative;overflow:hidden;border-radius:38px;background:var(--color-bg);box-shadow:var(--shadow-lg);display:flex;flex-direction:column">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 22px 2px;font-size:12px;font-weight:500;color:var(--color-neutral-600);flex:none">
+        <span>21:40</span><span style="display:flex;gap:5px"><i class="ph ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;padding:10px 14px;flex:none">
+        <button class="btn" style="padding-inline:4px" aria-label="Back"><i class="ph ph-arrow-left" style="font-size:19px"></i></button>
+        <div style="font-family:var(--font-heading);font-weight:500;font-size:15px;flex:1">Account</div>
+      </div>
+
+      <div style="flex:1;min-height:0;overflow-y:auto;padding:4px 22px 26px;display:flex;flex-direction:column;gap:22px">
+        <sc-if value="{{ cSignedIn }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;align-items:center;gap:13px">
+            <span style="width:52px;height:52px;border-radius:50%;background:var(--color-accent-200);color:var(--color-accent-800);display:grid;place-items:center;font-family:var(--font-heading);font-weight:500;font-size:20px;flex:none">K</span>
+            <div style="flex:1;min-width:0">
+              <div style="font-family:var(--font-heading);font-weight:500;font-size:19px;letter-spacing:-.01em">Kenji Mori</div>
+              <div style="font-size:12px;color:var(--color-neutral-600);margin-top:2px">kenji@example.com · via Apple</div>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ cSignedOut }}">
+          <div style="padding:14px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm);display:flex;flex-direction:column;gap:10px;animation:yw-fade .25s ease-out">
+            <div style="font-family:var(--font-heading);font-weight:500;font-size:15px">Signed out</div>
+            <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.5;text-wrap:pretty">Your 47 tastings are still on this phone. Sign in again to keep them backed up.</div>
+            <button class="btn btn-primary" style="height:40px;font-size:13px" onClick="{{ cSignIn }}">Sign in</button>
+          </div>
+        </sc-if>
+
+        <sc-for list="{{ cGroups }}" as="g" hint-placeholder-count="3">
+          <div style="display:flex;flex-direction:column">
+            <h6 style="margin:0 0 4px;font-size:11px;letter-spacing:.1em;color:var(--color-neutral-600)">{{ g.title }}</h6>
+            <sc-for list="{{ g.rows }}" as="r" hint-placeholder-count="3">
+              <button onClick="{{ r.act }}" style="display:flex;align-items:center;gap:12px;min-height:50px;padding:10px 0;border:0;border-bottom:1px solid var(--color-divider);background:transparent;width:100%;text-align:left;cursor:pointer;font-family:var(--font-body);color:var(--color-text)">
+                <i class="ph {{ r.icon }}" style="font-size:19px;color:var(--color-neutral-600);flex:none"></i>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:14px">{{ r.label }}</div>
+                  <sc-if value="{{ r.hasSub }}"><div style="font-size:12px;color:var(--color-neutral-600);margin-top:2px;text-wrap:pretty">{{ r.sub }}</div></sc-if>
+                </div>
+                <sc-if value="{{ r.hasValue }}"><span style="font-size:13px;color:var(--color-neutral-700);flex:none">{{ r.value }}</span></sc-if>
+                <sc-if value="{{ r.isToggle }}">
+                  <span style="width:42px;height:26px;border-radius:13px;flex:none;position:relative;background:{{ r.trackBg }};transition:background .2s">
+                    <span style="position:absolute;top:3px;left:{{ r.knobLeft }};width:20px;height:20px;border-radius:50%;background:{{ r.knobBg }};transition:left .2s"></span>
+                  </span>
+                </sc-if>
+                <sc-if value="{{ r.isNav }}"><i class="ph ph-caret-right" style="font-size:15px;color:var(--color-neutral-500);flex:none"></i></sc-if>
+              </button>
+            </sc-for>
+          </div>
+        </sc-for>
+
+        <div style="font-size:11px;color:var(--color-neutral-600);line-height:1.5;text-wrap:pretty">Yawaragi 1.0 · <a href="#1c">Terms</a> · <a href="#1c">Privacy notice</a> · <a href="#1c">Drink responsibly</a></div>
+      </div>
+
+      <sc-if value="{{ cDialog }}">
+        <div style="position:absolute;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:24px;animation:yw-fade .2s ease-out">
+          <div style="background:var(--color-surface);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);padding:20px;display:flex;flex-direction:column;gap:12px;animation:yw-rise .24s ease-out">
+            <div style="font-family:var(--font-heading);font-weight:500;font-size:19px;letter-spacing:-.01em">Delete account and journal?</div>
+            <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.55;text-wrap:pretty">All 47 tastings, your palate and your Ask history will be erased from this phone and from our servers. This can’t be undone.</div>
+            <button class="btn btn-secondary btn-block" style="height:44px;font-size:13px;gap:7px;margin:4px 0 0"><i class="ph ph-download-simple" style="font-size:16px"></i>Export journal first</button>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-ghost" style="flex:1;height:44px;font-size:13px" onClick="{{ cCloseDialog }}">Keep account</button>
+              <button onClick="{{ cCloseDialog }}" style="flex:1;height:44px;font-size:13px;border-radius:var(--radius-md);border:1px solid var(--color-accent-700);background:var(--color-accent-100);color:var(--color-accent-800);font-family:var(--font-body);cursor:pointer">Delete permanently</button>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+
+    <div style="font-size:12px;color:var(--color-neutral-700);line-height:1.6;text-wrap:pretty">
+      <strong style="font-weight:500;color:var(--color-text)">Decisions:</strong> the age rule follows your region (Japan, 20+) instead of a flat 18+. Using your palate for Ask is a visible switch, because it’s personal data. Adding ratings to shared flavour charts is off by default. Delete offers an export first, and signing out never wipes the phone.
+    </div>
+  </div>
+</section>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:900,&quot;height&quot;:1100}}">
+const JOURNAL = [
+  { day: '21', mon: 'Sep', name: 'Kidoizumi AFS', brewery: 'Kidoizumi Shuzō · Chiba', note: '“Sour apple, almost cider.”', rating: 4.5 },
+  { day: '19', mon: 'Sep', name: 'Katori 90', brewery: 'Terada Honke · Chiba', note: '“Wild, grainy, very dry.”', rating: 4 },
+  { day: '14', mon: 'Sep', name: 'Kamoshibito Kuheiji', brewery: 'Banjō Jōzō · Aichi', note: '“White peach, long finish.”', rating: 5 },
+]
+const TAB_DEFS = [
+  { label: 'Home', icon: 'ph-house' }, { label: 'Scan', icon: 'ph-camera' },
+  { label: 'Collection', icon: 'ph-notebook' }, { label: 'Palate', icon: 'ph-hexagon' },
+]
+const A0 = { step: 'journal', email: '', code: '', signedIn: false, dismissed: false }
+const B0 = { step: 'methods', email: '', code: '', done: false, signedIn: false }
+const C0 = { signedIn: true, palate: true, contribute: false, dialog: false, names: 0, temp: 0 }
+
+class Component extends DCLogic {
+  state = { a: A0, b: B0, c: C0 }
+  setA(p) { this.setState((s) => ({ a: { ...s.a, ...p } })) }
+  setB(p) { this.setState((s) => ({ b: { ...s.b, ...p } })) }
+  setC(p) { this.setState((s) => ({ c: { ...s.c, ...p } })) }
+
+  stars(v) {
+    return [1, 2, 3, 4, 5].map((i) => ({ cls: v >= i ? 'ph-fill ph-star' : v >= i - 0.5 ? 'ph-fill ph-star-half' : 'ph ph-star' }))
+  }
+  tabs(active) {
+    return TAB_DEFS.map((t, i) => ({ label: t.label, icon: (i === active ? 'ph-fill ' : 'ph ') + t.icon, color: i === active ? '#cf8a6e' : '#a8a49c' }))
+  }
+  toggleRow(label, sub, icon, on, flip) {
+    return {
+      label, sub, hasSub: !!sub, icon, isToggle: true, isNav: false, hasValue: false, act: flip,
+      trackBg: on ? '#b8735a' : '#4a4744', knobBg: on ? '#1b1a19' : '#bdb9b1', knobLeft: on ? '19px' : '3px',
+    }
+  }
+  navRow(label, value, icon, act, sub) {
+    return { label, value, hasValue: !!value, sub, hasSub: !!sub, icon, isToggle: false, isNav: true, act: act || (() => {}) }
+  }
+
+  renderVals() {
+    const { a, b, c } = this.state
+    const okEmail = (e) => /.+@.+\..+/.test(e || '')
+    const aSheetSteps = ['methods', 'email', 'code']
+    const NAMES = ['Romaji + kanji', 'Romaji only', 'Kanji only']
+    const TEMPS = ['°C', '°F']
+
+    return {
+      journal: JOURNAL.map((e) => ({ ...e, stars: this.stars(e.rating) })),
+      tabs: this.tabs(2),
+      tabsHome: this.tabs(0),
+
+      aReset: () => this.setState({ a: A0 }),
+      aJournalView: true,
+      aSignedIn: a.signedIn,
+      aShowNudge: !a.signedIn && !a.dismissed,
+      aShowSynced: a.signedIn,
+      aOpenSheet: () => this.setA({ step: 'methods' }),
+      aDismiss: () => this.setA({ dismissed: true }),
+      aSheetOpen: aSheetSteps.indexOf(a.step) >= 0,
+      aSheetBack: a.step !== 'methods',
+      aSheetTitle: a.step === 'methods' ? 'Keep your journal' : a.step === 'email' ? 'Your email' : 'Enter the code',
+      aStepMethods: a.step === 'methods',
+      aStepEmail: a.step === 'email',
+      aStepCode: a.step === 'code',
+      aBack: () => this.setA({ step: a.step === 'code' ? 'email' : 'methods' }),
+      aClose: () => this.setA({ step: 'journal' }),
+      aProvider: () => this.setA({ step: 'journal', signedIn: true }),
+      aToEmail: () => this.setA({ step: 'email' }),
+      aEmail: a.email,
+      aSetEmail: (ev) => this.setA({ email: ev.target.value }),
+      aNoEmail: okEmail(a.email) ? undefined : true,
+      aSendCode: () => this.setA({ step: 'code', code: '' }),
+      aEmailShown: a.email,
+      aCode: a.code,
+      aSetCode: (ev) => {
+        const v = ev.target.value.replace(/\D/g, '').slice(0, 6)
+        this.setA(v.length === 6 ? { code: v, step: 'journal', signedIn: true } : { code: v })
+      },
+      aAutofill: () => {
+        this.setA({ code: '482913' })
+        clearTimeout(this._a); this._a = setTimeout(() => this.setA({ step: 'journal', signedIn: true }), 450)
+      },
+
+      bReset: () => this.setState({ b: B0 }),
+      bWelcome: !b.done,
+      bHome: b.done,
+      bStepMethods: b.step === 'methods',
+      bStepEmail: b.step === 'email',
+      bStepCode: b.step === 'code',
+      bProvider: () => this.setB({ done: true, signedIn: true }),
+      bToEmail: () => this.setB({ step: 'email' }),
+      bSkip: () => this.setB({ done: true, signedIn: false }),
+      bBack: () => this.setB({ step: 'methods' }),
+      bEmail: b.email,
+      bSetEmail: (ev) => this.setB({ email: ev.target.value }),
+      bNoEmail: okEmail(b.email) ? undefined : true,
+      bSendCode: () => this.setB({ step: 'code', code: '' }),
+      bEmailShown: b.email,
+      bCode: b.code,
+      bSetCode: (ev) => {
+        const v = ev.target.value.replace(/\D/g, '').slice(0, 6)
+        this.setB(v.length === 6 ? { code: v, done: true, signedIn: true } : { code: v })
+      },
+      bAutofill: () => {
+        this.setB({ code: '482913' })
+        clearTimeout(this._b); this._b = setTimeout(() => this.setB({ done: true, signedIn: true }), 450)
+      },
+      bSignedIn: b.signedIn,
+      bGreeting: b.signedIn ? 'Good evening, Kenji' : 'Good evening',
+      bGreetingSub: b.signedIn ? 'Signed in · synced' : 'Not signed in · journal on this phone',
+
+      cReset: () => this.setState({ c: C0 }),
+      cSignedIn: c.signedIn,
+      cSignedOut: !c.signedIn,
+      cSignIn: () => this.setC({ signedIn: true }),
+      cDialog: c.dialog,
+      cCloseDialog: () => this.setC({ dialog: false }),
+      cGroups: [
+        {
+          title: 'Your journal',
+          rows: [
+            this.navRow('Backup', c.signedIn ? 'Synced 2 min ago' : 'Off', 'ph-cloud-check'),
+            this.navRow('Export journal', 'CSV · JSON', 'ph-download-simple'),
+          ],
+        },
+        {
+          title: 'Display',
+          rows: [
+            this.navRow('Sake names', NAMES[c.names], 'ph-translate', () => this.setC({ names: (c.names + 1) % 3 })),
+            this.navRow('Temperature', TEMPS[c.temp], 'ph-thermometer-simple', () => this.setC({ temp: (c.temp + 1) % 2 })),
+            this.navRow('Region & drinking age', 'Japan · 20+', 'ph-globe-hemisphere-east'),
+          ],
+        },
+        {
+          title: 'Privacy',
+          rows: [
+            this.toggleRow('Use my palate for Ask', 'Suggestions lean on what you’ve rated', 'ph-magic-wand', c.palate, () => this.setC({ palate: !c.palate })),
+            this.toggleRow('Contribute to flavour charts', 'Anonymous ratings help fill charts for small breweries', 'ph-hexagon', c.contribute, () => this.setC({ contribute: !c.contribute })),
+          ],
+        },
+        {
+          title: 'Account',
+          rows: c.signedIn
+            ? [
+                this.navRow('Sign out', '', 'ph-sign-out', () => this.setC({ signedIn: false }), 'Your journal stays on this phone'),
+                this.navRow('Delete account', '', 'ph-trash', () => this.setC({ dialog: true })),
+              ]
+            : [this.navRow('Delete local data', '', 'ph-trash', () => this.setC({ dialog: true }))],
+        },
+      ],
+    }
+  }
+
+  componentWillUnmount() { clearTimeout(this._a); clearTimeout(this._b) }
+}
+</script>
+</body>
+</html>
