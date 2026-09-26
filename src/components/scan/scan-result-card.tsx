@@ -7,6 +7,7 @@ import {
   FlavorProfileView,
   buildFlavorAxisStrings,
 } from '@/components/sake/flavor-profile-view'
+import { buildFlavorTermsStrings } from '@/components/sake/flavor-terms-sheet'
 import { markArrivedViaScan } from '@/lib/scan/arrived-via-scan'
 import {
   resolveBadgeKind,
@@ -380,6 +381,8 @@ function FlavorGridForCard({ chart }: { chart: FlavorChart }) {
       variant="grid"
       chartLabel={t('flavorChartLabel')}
       axisStrings={buildFlavorAxisStrings((axis, field) => tAxis(`${axis}.${field}`))}
+      termsStrings={buildFlavorTermsStrings((key) => tAxis(`disclosure.${key}`))}
+      instanceId="scan"
     />
   )
 }

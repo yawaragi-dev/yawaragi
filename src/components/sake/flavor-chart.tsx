@@ -4,6 +4,7 @@ import {
   FlavorProfileView,
   buildFlavorAxisStrings,
 } from './flavor-profile-view'
+import { buildFlavorTermsStrings } from './flavor-terms-sheet'
 
 /**
  * Sake-detail flavor chart — labelled horizontal bars, one axis per line.
@@ -32,6 +33,8 @@ export async function FlavorChartView({ chart }: FlavorChartProps) {
       variant="row"
       chartLabel={t('flavorChartLabel')}
       axisStrings={buildFlavorAxisStrings((axis, field) => tAxis(`${axis}.${field}`))}
+      termsStrings={buildFlavorTermsStrings((key) => tAxis(`disclosure.${key}`))}
+      instanceId={`brand-${chart.brandId}`}
     />
   )
 }

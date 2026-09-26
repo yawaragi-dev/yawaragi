@@ -38,6 +38,7 @@ function SheetOverlay({ className, ...props }: SheetPrimitive.Backdrop.Props) {
 
 function SheetContent({
   className,
+  overlayClassName,
   children,
   side = "right",
   showCloseButton = true,
@@ -45,10 +46,14 @@ function SheetContent({
 }: SheetPrimitive.Popup.Props & {
   side?: "top" | "right" | "bottom" | "left"
   showCloseButton?: boolean
+  /** Restyles the scrim. Ginshu sheets use a heavier one (`rgba(0,0,0,.55)`,
+   *  design v1.4 §16) than this primitive's default `bg-black/10`, and the
+   *  overlay is rendered internally so a caller cannot otherwise reach it. */
+  overlayClassName?: string
 }) {
   return (
     <SheetPortal>
-      <SheetOverlay />
+      <SheetOverlay className={overlayClassName} />
       <SheetPrimitive.Popup
         data-slot="sheet-content"
         data-side={side}

@@ -327,7 +327,7 @@ export default async function ProfilePage({
               {t('exampleBadge')}
             </span>
             <div className="opacity-40">
-              <FlavorRadarView profile={COLD_START_SAMPLE} />
+              <FlavorRadarView profile={COLD_START_SAMPLE} instanceId="cold-start" />
             </div>
             <figcaption className="max-w-md text-center text-xs text-zinc-500 dark:text-zinc-500">
               {t('sampleCaption')}
@@ -346,7 +346,7 @@ export default async function ProfilePage({
       {session.kind === 'profile' && (
         <section data-testid="profile-populated" className="flex flex-col gap-8">
           <div className="flex justify-center">
-            <FlavorRadarView profile={session.profile} />
+            <FlavorRadarView profile={session.profile} instanceId="session" />
           </div>
           <TasteProvenanceSummary events={session.events} />
           {recommendations.length > 0 && (
