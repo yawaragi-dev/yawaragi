@@ -16,7 +16,7 @@ The two positions looked irreconcilable until design v1.1 §10, which kept the d
 
 1. **The six axes render as English words** in the flavour chart and the Palate list: Floral, Mellow, Rich, Mild, Dry, Light, in that order — which is exactly `f1…f6`.
 2. **The Japanese terms are disclosed, not dropped.** The chart heading carries an info button that opens the §16 sheet listing all six as `English · 日本語 · romaji · note`, prefaced by the statement that these are brewers' terms and the English words are approximations.
-3. **Romaji stays the canonical identifier in code and data.** `FlavorAxis` remains the `hanayaka | hojun | juko | odayaka | dry | keikai` enum; `f1..f6` remains a storage detail; the English words are a presentation layer keyed off the enum and translated per locale like any other string.
+3. **Nothing below the presentation layer moves.** The `FlavorAxis` enum stays `f1..f6`, `FLAVOR_AXIS_ROMAJI` stays the romaji lookup, romaji stays the canonical *domain* name in `CONTEXT.md` and in LLM prompts, and the i18n keys stay `flavorAxis.<f1..f6>.*`. The English words are a presentation layer keyed off the enum and translated per locale like any other string.
 4. **This is a presentation decision, not a data one.** Nothing about provenance, the Sakenowa licence or the trademark rule changes.
 
 ## Consequences

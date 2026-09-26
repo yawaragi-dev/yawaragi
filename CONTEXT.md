@@ -24,7 +24,7 @@ _Avoid_: FlavorChart, TasteVector, FlavorMap
 
 **FlavorAxis**:
 One of the six fixed axes of a FlavorProfile, identified by romaji name: `hanayaka` (華やか), `hojun` (芳醇), `juko` (重厚), `odayaka` (穏やか), `dry` (ドライ), `keikai` (軽快). Closed enum — never extended. English labels are *approximations only*, not canonical identifiers.
-Since ADR-0022 the **UI renders the locale's approximation** (EN: Floral, Mellow, Rich, Mild, Dry, Light — in `f1..f6` order), with the Japanese terms disclosed through the info sheet beside the chart heading. The romaji names above remain the identifiers in code, schemas and LLM prompts; only the rendered label is English.
+Since ADR-0022 the **UI renders the locale's approximation** (EN: Floral, Mellow, Rich, Mild, Dry, Light — in `f1..f6` order), with the Japanese terms disclosed through the info sheet beside the chart heading. The romaji names above remain the canonical *domain* identifiers — used in this glossary, in `FLAVOR_AXIS_ROMAJI` and in LLM prompts. The TypeScript enum and the i18n keys are `f1..f6` (a storage detail that predates this change and is unaffected by it). Only the rendered label is English.
 _Avoid_: f1..f6 (storage detail only), flavor dimension, taste axis
 
 **FlavorTag**:
