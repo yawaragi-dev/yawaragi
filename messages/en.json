@@ -368,5 +368,14 @@
     "submit": "Continue",
     "signOut": "Sign out",
     "signingOut": "Signing out…"
+  },
+  "rating": {
+    "band": {
+      "outstanding": "Outstanding",
+      "veryGood": "Very good",
+      "solid": "Solid",
+      "notForMe": "Not for me",
+      "pouredItOut": "Poured it out"
+    }
   }
 }

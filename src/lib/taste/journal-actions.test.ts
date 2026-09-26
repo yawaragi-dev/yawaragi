@@ -125,6 +125,15 @@ describe('logSakeToJournal', () => {
     expect(lookupFlavorChart).not.toHaveBeenCalled()
   })
 
+  it('rejects a rating between the half-star steps', async () => {
+    // The journal entry embeds the TasteEvent it emits, so the two schemas
+    // must agree on the scale. If this one drifted to a bare min/max, a 3.7
+    // would parse here and then fail one layer down with a confusing error.
+    const state = await logSakeToJournal({ brandId: 123, rating: 3.7 })
+    expect(state.status).toBe('invalid_input')
+    expect(lookupFlavorChart).not.toHaveBeenCalled()
+  })
+
   it('is forbidden for a non-maintainer, and writes nothing', async () => {
     vi.mocked(currentUserIsMaintainer).mockResolvedValue(false)
     const state = await logSakeToJournal({ brandId: 123, rating: 5 })

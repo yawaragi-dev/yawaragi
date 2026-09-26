@@ -18,8 +18,7 @@ import { deriveTasteProfile } from '@/lib/taste/derive-taste-profile'
 import { getTasteEventStore } from '@/lib/taste/get-taste-event-store'
 import {
   type CrossBeverageSeedInput,
-  MAX_RATING,
-  MIN_RATING,
+  isValidRating,
   type TasteActionState,
 } from '@/lib/taste/taste-action-state'
 
@@ -123,17 +122,12 @@ async function recordTasteEvent(
 }
 
 /**
- * Record that the visitor rated a Sake 1–5. A 3-star rating is inert (weight
- * 0); below pushes the vector away, above pulls it toward the Sake's profile.
+ * Record that the visitor rated a Sake, 0.5–5 in half-star steps. A 3-star
+ * rating is inert (weight 0); below pushes the vector away, above pulls it
+ * toward the Sake's profile.
  */
 export async function rateSake(brandId: number, rating: number): Promise<TasteActionState> {
-  if (
-    !Number.isInteger(brandId) ||
-    brandId <= 0 ||
-    !Number.isInteger(rating) ||
-    rating < MIN_RATING ||
-    rating > MAX_RATING
-  ) {
+  if (!Number.isInteger(brandId) || brandId <= 0 || !isValidRating(rating)) {
     return { status: 'invalid_input' }
   }
 

@@ -368,5 +368,14 @@
     "submit": "Weiter",
     "signOut": "Abmelden",
     "signingOut": "Wird abgemeldet…"
+  },
+  "rating": {
+    "band": {
+      "outstanding": "Hervorragend",
+      "veryGood": "Sehr gut",
+      "solid": "Solide",
+      "notForMe": "Nicht mein Fall",
+      "pouredItOut": "Weggeschüttet"
+    }
   }
 }

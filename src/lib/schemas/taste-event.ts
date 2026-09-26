@@ -32,8 +32,11 @@ const baseFields = {
 
 export const RatingTasteEventSchema = z.object({
   kind: z.literal('rating'),
-  /** 1–5 stars. 3 is neutral (inert); below pushes away, above pulls toward. */
-  rating: z.number().int().min(1).max(5),
+  /** 0.5–5 stars in half-star steps (design v1.4 §5). 3 is neutral (inert);
+   *  below pushes away, above pulls toward. `multipleOf(0.5)` is what makes
+   *  this a *scale* rather than an arbitrary float — without it a caller
+   *  could persist 3.7 and the star row would have nothing to render. */
+  rating: z.number().min(0.5).max(5).multipleOf(0.5),
   /** The rated Sake (Sakenowa `brand_id`), kept for the /profile "which inputs
    *  shaped this" view. */
   brandId: z.number().int().positive(),
