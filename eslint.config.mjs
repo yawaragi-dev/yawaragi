@@ -40,6 +40,11 @@ const eslintConfig = defineConfig([
     // Surfaced when adding @testcontainers/postgresql + pg, whose .d.ts files
     // trip the base rules (@ts-ignore, unused __Unused vars, etc.).
     "node_modules/**",
+    // The vendored design snapshot. `support.js` is the designers' own
+    // prototype runtime (ReactDOM.render, module reassignment, the lot) —
+    // third-party code we are explicitly told not to port, so linting it
+    // reports on someone else's build rather than ours.
+    "design/**",
     // Local agent worktrees live inside the repo; don't lint them as
     // sibling copies of src/ — they're separate git checkouts.
     ".claude/**",
