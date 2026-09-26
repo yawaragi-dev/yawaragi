@@ -6,7 +6,8 @@ import { flavorProfileFields } from './flavor-profile'
 // (`flavor-profile.ts`) attached to a specific brand, plus provenance. The
 // axes are brewers' terms — see the 6-axis vocabulary table in CONTEXT.md
 // and the <FlavorAxisLabel /> component. Storage keeps the f1..f6 names
-// verbatim; UI translates to romaji + kanji.
+// verbatim; the UI renders the locale approximation and discloses the
+// brewers' terms through <FlavorTermsSheet /> (ADR-0022).
 //
 // FlavorChart is the *stored mirror record* (named after Sakenowa's
 // endpoint, carries brandId); the bare 6-tuple concept CONTEXT.md calls

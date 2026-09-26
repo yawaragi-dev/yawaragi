@@ -292,6 +292,13 @@
       "label": "leicht / spritzig",
       "kanji": "軽快",
       "caveat": "Erfrischender Abgang, geringer Restzucker. Brauer-Begriff; die deutsche Bezeichnung ist eine Annäherung."
+    },
+    "disclosure": {
+      "caveat": "Brauer-Begriffe, frei übersetzt.",
+      "triggerLabel": "Über diese Geschmacksbegriffe",
+      "title": "Über diese Geschmacksbegriffe",
+      "intro": "Diese sechs sind japanische Brauer-Begriffe. Die deutschen Wörter sind Annäherungen, keine Übersetzungen — sie treffen die Richtung, aber nicht den genauen Sinn.",
+      "closeLabel": "Schließen"
     }
   },
   "privacy": {

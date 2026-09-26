@@ -349,18 +349,15 @@ test.describe('suggest page — seed + happy path (stubbed)', () => {
     // absence is skipped, not placeholder'd.
     const flavorClusters = page.getByTestId('suggest-card-flavor-cluster')
     await expect(flavorClusters).toHaveCount(2)
-    // The first cluster renders all six axes with romaji + kanji per
-    // CLAUDE.md § "6-axis flavor vocabulary" (never English-only).
+    // The first cluster renders all six axes as locale words, each carrying
+    // the brewers'-term disclosure (ADR-0022). The cluster has no heading to
+    // hang the caveat from, so it trails the chips — assert it is there,
+    // because a cluster is the easiest place to lose it.
     const firstCluster = flavorClusters.first()
     for (const axis of ['f1', 'f2', 'f3', 'f4', 'f5', 'f6']) {
       await expect(firstCluster.getByTestId(`flavor-axis-${axis}`)).toBeVisible()
-      await expect(
-        firstCluster.getByTestId(`flavor-axis-${axis}-romaji`),
-      ).toBeVisible()
-      await expect(
-        firstCluster.getByTestId(`flavor-axis-${axis}-kanji`),
-      ).toHaveAttribute('lang', 'ja')
     }
+    await expect(firstCluster.getByText(/brewers' terms/i)).toBeVisible()
     // The third card has NO cluster — the mirror-null case renders
     // cleanly without any placeholder, not even an empty section.
     const thirdCard = cards.nth(2)

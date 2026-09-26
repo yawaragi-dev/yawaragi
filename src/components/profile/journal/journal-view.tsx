@@ -40,7 +40,7 @@ export async function JournalView({ entries, profile, locale }: JournalViewProps
       <section className="flex flex-col items-center gap-3 text-center">
         <h2 className="text-sm font-medium uppercase tracking-[0.2em] text-zinc-500">{t('mapHeading')}</h2>
         <div className={`w-full max-w-md ${isEmpty ? 'opacity-40' : ''}`}>
-          <FlavorRadarView profile={profile ?? EMPTY_SAMPLE} />
+          <FlavorRadarView profile={profile ?? EMPTY_SAMPLE} instanceId="journal" />
         </div>
         {isEmpty ? (
           <p className="max-w-md text-sm text-zinc-500">{t('emptyMapCaption')}</p>

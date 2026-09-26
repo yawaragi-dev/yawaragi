@@ -9,7 +9,8 @@
  * (mirrors scan's e2e-stub / suggest's stub cookie).
  *
  * Age-gate still applies (the radar is flavor data → gated content). The six
- * axes use <FlavorAxisLabel /> so the romaji + kanji vocabulary is preserved.
+ * axes use <FlavorAxisLabel /> and the radar carries its own brewers'-term
+ * disclosure, so the Japanese vocabulary stays reachable (ADR-0022).
  */
 import { expect, test } from '@playwright/test'
 import { BASE_URL } from './_base-url'
@@ -57,9 +58,11 @@ test.describe('/en/profile — taste profile', () => {
     await expect(page.getByTestId('taste-profile-radar')).toBeVisible()
     await expect(page.getByTestId('taste-profile-sample-polygon')).toBeAttached()
     for (const axis of ['f1', 'f2', 'f3', 'f4', 'f5', 'f6'] as const) {
-      await expect(page.getByTestId(`flavor-axis-${axis}-romaji`)).toBeVisible()
-      await expect(page.getByTestId(`flavor-axis-${axis}-kanji`)).toBeVisible()
+      await expect(page.getByTestId(`flavor-axis-${axis}`)).toBeVisible()
     }
+    // The radar does not go through the shared chart view, so it mounts its
+    // own disclosure (ADR-0022). Easy to drop when the radar is next touched.
+    await expect(page.getByText(/brewers' terms/i).first()).toBeVisible()
     // "What shaped this" is present, and lists the seeded descriptor.
     await expect(page.getByTestId('taste-provenance-summary')).toBeVisible()
     await expect(page.getByTestId('taste-provenance-seeds')).toContainText('smoky')
@@ -154,7 +157,7 @@ test.describe('/en/profile — maintainer tasting journal (ADR-0020)', () => {
     await expect(page.getByTestId('profile-populated')).toHaveCount(0)
     // Map hero (the real radar, six axis labels) + timeline with entries.
     await expect(page.getByTestId('taste-profile-radar')).toBeVisible()
-    await expect(page.getByTestId('flavor-axis-f1-kanji')).toBeVisible()
+    await expect(page.getByTestId('flavor-axis-f1')).toBeVisible()
     await expect(page.getByTestId('journal-timeline')).toBeVisible()
     await expect(page.getByTestId('journal-entry').first()).toContainText('而今')
     // Sakenowa data on the surface → attribution present.

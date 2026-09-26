@@ -292,6 +292,13 @@
       "label": "light / crisp",
       "kanji": "軽快",
       "caveat": "Refreshing finish, low residual. Brewer's term; the English label is an approximation."
+    },
+    "disclosure": {
+      "caveat": "Brewers' terms, translated loosely.",
+      "triggerLabel": "About these flavour words",
+      "title": "About these flavour words",
+      "intro": "These six are Japanese brewers' terms. The English words are approximations, not translations — they point at the right idea without matching it exactly.",
+      "closeLabel": "Close"
     }
   },
   "privacy": {

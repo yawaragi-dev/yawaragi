@@ -20,6 +20,17 @@ const profile: FlavorProfile = {
 // here we just echo the key so assertions can be exact without i18n.
 const axisStrings = buildFlavorAxisStrings((axis, field) => `${axis}:${field}`)
 
+// ADR-0022 made the disclosure a required prop rather than an optional one,
+// precisely so a chart cannot be constructed without it. These tests pay that
+// cost on every render — which is the point.
+const termsStrings = {
+  caveat: "Brewers' terms, translated loosely.",
+  triggerLabel: 'About these flavour words',
+  title: 'About these flavour words',
+  intro: 'These six are Japanese brewers\' terms.',
+  closeLabel: 'Close',
+}
+
 describe('FlavorProfileView', () => {
   it('renders all six axes as progressbars carrying the input value on the bar variants', () => {
     render(
@@ -28,6 +39,8 @@ describe('FlavorProfileView', () => {
         axisStrings={axisStrings}
         chartLabel="Flavor chart"
         variant="row"
+        termsStrings={termsStrings}
+        instanceId="test"
       />,
     )
     for (const axis of FLAVOR_AXES) {
@@ -46,6 +59,8 @@ describe('FlavorProfileView', () => {
         axisStrings={axisStrings}
         chartLabel="Flavor chart"
         variant="grid"
+        termsStrings={termsStrings}
+        instanceId="test"
       />,
     )
     const fill = screen.getByTestId('flavor-axis-f1-bar')
@@ -60,6 +75,8 @@ describe('FlavorProfileView', () => {
         axisStrings={axisStrings}
         chartLabel="Flavor chart"
         variant="row"
+        termsStrings={termsStrings}
+        instanceId="test"
       />,
     )
     expect(screen.getByTestId('brand-flavor-chart')).toBeTruthy()
@@ -69,6 +86,8 @@ describe('FlavorProfileView', () => {
         axisStrings={axisStrings}
         chartLabel="Flavor chart"
         variant="grid"
+        termsStrings={termsStrings}
+        instanceId="test"
       />,
     )
     expect(screen.getByTestId('brand-flavor-chart')).toBeTruthy()
@@ -81,6 +100,8 @@ describe('FlavorProfileView', () => {
         axisStrings={axisStrings}
         chartLabel="Flavor chart"
         variant="cluster"
+        termsStrings={termsStrings}
+        instanceId="test"
       />,
     )
     const cluster = screen.getByTestId('suggest-card-flavor-cluster')
@@ -91,6 +112,65 @@ describe('FlavorProfileView', () => {
     expect(screen.queryByTestId('flavor-axis-f1-bar')).toBeNull()
   })
 
+  it.each(['row', 'grid', 'cluster'] as const)(
+    'mounts the brewers-term disclosure on the %s variant',
+    (variant) => {
+      // THE ADR-0022 test. The axes render as English approximations only
+      // because this sheet is reachable from every chart. A variant that
+      // renders the words without it is the exact regression the ADR warns
+      // about, and it would look completely fine on screen.
+      render(
+        <FlavorProfileView
+          profile={profile}
+          axisStrings={axisStrings}
+          chartLabel="Flavor chart"
+          variant={variant}
+          termsStrings={termsStrings}
+          instanceId="test"
+        />,
+      )
+
+      const caveat = screen.getByTestId('info-sheet-flavour-terms-test-caveat')
+      expect(caveat.textContent).toBe("Brewers' terms, translated loosely.")
+
+      // The caveat must be wired to the trigger, not merely present: that is
+      // what gets it announced without opening the sheet.
+      const trigger = screen.getByTestId('info-sheet-flavour-terms-test-trigger')
+      expect(trigger.getAttribute('aria-describedby')).toBe(caveat.id)
+    },
+  )
+
+  it('keys the disclosure by instance so several charts can share a page', () => {
+    // `/suggest` renders up to five cards, each with a cluster. Duplicate ids
+    // would point every trigger's aria-describedby at the first caveat.
+    render(
+      <>
+        <FlavorProfileView
+          profile={profile}
+          axisStrings={axisStrings}
+          chartLabel="Flavor chart"
+          variant="cluster"
+          termsStrings={termsStrings}
+          instanceId="one"
+        />
+        <FlavorProfileView
+          profile={profile}
+          axisStrings={axisStrings}
+          chartLabel="Flavor chart"
+          variant="cluster"
+          termsStrings={termsStrings}
+          instanceId="two"
+        />
+      </>,
+    )
+
+    const a = screen.getByTestId('info-sheet-flavour-terms-one-trigger')
+    const b = screen.getByTestId('info-sheet-flavour-terms-two-trigger')
+    expect(a.getAttribute('aria-describedby')).not.toBe(
+      b.getAttribute('aria-describedby'),
+    )
+  })
+
   it('exposes the localised chart label as the region accessible name', () => {
     render(
       <FlavorProfileView
@@ -98,6 +178,8 @@ describe('FlavorProfileView', () => {
         axisStrings={axisStrings}
         chartLabel="Geschmacksprofil"
         variant="row"
+        termsStrings={termsStrings}
+        instanceId="test"
       />,
     )
     expect(
