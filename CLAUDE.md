@@ -77,14 +77,16 @@ Sakenowa data is free under an attribution-only licence. **Footer attribution is
 
 The Sakenowa f1–f6 axes are Japanese brewers' terms with no exact English equivalent. **NEVER render them with only an English label.** The canonical mapping (also in `CONTEXT.md`):
 
-| Axis | Romaji   | Kanji   | English approximation | Caveat                                  |
-|------|----------|---------|-----------------------|------------------------------------------|
-| f1   | hanayaka | 華やか   | fragrant / floral     | not "perfumed"; aromatic-ester-driven    |
-| f2   | hojun    | 芳醇    | mellow / rich         | not "creamy"; umami-and-aroma depth      |
-| f3   | juko     | 重厚    | heavy / full-bodied   | not "tannic"; weight + amino acid        |
-| f4   | odayaka  | 穏やか   | mild / calm           | restrained aroma, not "neutral"          |
-| f5   | dry      | ドライ   | dry                   | closest 1:1; tracks SMV broadly          |
-| f6   | keikai   | 軽快    | light / crisp         | refreshing finish, low residual          |
+| Axis | Romaji   | Kanji   | UI label (EN / DE)   | Caveat                                  |
+|------|----------|---------|----------------------|------------------------------------------|
+| f1   | hanayaka | 華やか   | Floral / Blumig      | not "perfumed"; aromatic-ester-driven    |
+| f2   | hojun    | 芳醇    | Mellow / Vollmundig  | not "creamy"; umami-and-aroma depth      |
+| f3   | juko     | 重厚    | Rich / Kräftig       | not "tannic"; weight + amino acid        |
+| f4   | odayaka  | 穏やか   | Mild / Mild          | restrained aroma, not "neutral"          |
+| f5   | dry      | ドライ   | Dry / Trocken        | closest 1:1; tracks SMV broadly          |
+| f6   | keikai   | 軽快    | Light / Leicht       | refreshing finish, low residual          |
+
+The UI-label column is the **single word the design renders** (v1.4 §17), which is what `flavorAxis.<axis>.label` holds. Earlier this column carried descriptive pairs ("fragrant / floral"); those read as glosses rather than labels and did not fit the two-column chart.
 
 Rules:
 - **In the UI, axes render as the locale's approximation** — Floral, Mellow, Rich, Mild, Dry, Light (EN) — in `f1..f6` order. The Japanese terms are disclosed via the info button beside the chart heading, which opens the shared info sheet (design §16) listing all six as `English · 日本語 · romaji · note` and stating that the English words are approximations of brewers' terms, not translations. See [ADR-0022](./docs/adr/0022-english-flavour-axis-labels-with-disclosure-sheet.md).
