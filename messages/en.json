@@ -264,34 +264,34 @@
   },
   "flavorAxis": {
     "f1": {
-      "label": "fragrant / floral",
+      "label": "Floral",
       "kanji": "華やか",
-      "caveat": "Not 'perfumed' — aromatic-ester-driven. Brewer's term; the English label is an approximation."
+      "caveat": "Showy and aromatic — fruit and blossom on the nose."
     },
     "f2": {
-      "label": "mellow / rich",
+      "label": "Mellow",
       "kanji": "芳醇",
-      "caveat": "Not 'creamy' — umami-and-aroma depth. Brewer's term; the English label is an approximation."
+      "caveat": "Depth of umami and aroma, not creaminess."
     },
     "f3": {
-      "label": "heavy / full-bodied",
+      "label": "Rich",
       "kanji": "重厚",
-      "caveat": "Not 'tannic' — weight + amino acid. Brewer's term; the English label is an approximation."
+      "caveat": "Weight and amino acid — body, not tannin."
     },
     "f4": {
-      "label": "mild / calm",
+      "label": "Mild",
       "kanji": "穏やか",
-      "caveat": "Restrained aroma, not 'neutral'. Brewer's term; the English label is an approximation."
+      "caveat": "Restrained aroma. Quiet, not neutral."
     },
     "f5": {
-      "label": "dry",
+      "label": "Dry",
       "kanji": "ドライ",
-      "caveat": "Closest 1:1 to a Western descriptor; tracks SMV broadly."
+      "caveat": "The closest of the six to a Western descriptor; tracks SMV broadly."
     },
     "f6": {
-      "label": "light / crisp",
+      "label": "Light",
       "kanji": "軽快",
-      "caveat": "Refreshing finish, low residual. Brewer's term; the English label is an approximation."
+      "caveat": "A refreshing finish, with little left behind."
     },
     "disclosure": {
       "caveat": "Brewers' terms, translated loosely.",

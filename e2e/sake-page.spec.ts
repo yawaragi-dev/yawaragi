@@ -132,14 +132,23 @@ test.describe('sake brand page', () => {
     await expect(label).toBeVisible()
     await expect(label).toHaveText('Floral')
 
-    const caveat = page.getByTestId('info-sheet-flavour-terms-brand-caveat').first()
+    // The instance id carries the brand id, so match on the prefix rather
+    // than pinning a testid that changes with the fixture.
+    const caveat = page
+      .locator('[data-testid^="info-sheet-flavour-terms-"][data-testid$="-caveat"]')
+      .first()
     await expect(caveat).toBeVisible()
     await expect(caveat).toHaveText(/brewers' terms/i)
 
     // Wired, not merely present: this is what a screen reader announces on
     // reaching the button, with the sheet never opened.
-    const trigger = page.getByTestId('info-sheet-flavour-terms-brand-trigger').first()
-    await expect(trigger).toHaveAttribute('aria-describedby', await caveat.getAttribute('id') ?? '')
+    const trigger = page
+      .locator('[data-testid^="info-sheet-flavour-terms-"][data-testid$="-trigger"]')
+      .first()
+    await expect(trigger).toHaveAttribute(
+      'aria-describedby',
+      (await caveat.getAttribute('id')) ?? '',
+    )
 
     // Opening it names the brewer's term the English word approximates.
     await trigger.click()
@@ -147,7 +156,7 @@ test.describe('sake brand page', () => {
     await expect(terms).toBeVisible()
     await expect(terms).toContainText('華やか')
     await expect(terms).toContainText('hanayaka')
-    await expect(terms).toContainText(/approximations, not translations/i)
+    await expect(page.getByText(/approximations, not translations/i)).toBeVisible()
 
     await context.close()
   })
