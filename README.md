@@ -26,7 +26,8 @@ Previously named "Kanpai"; renamed to avoid collision with [KANPAI London Craft 
 
 ## Stack
 
-- Next.js 16 (App Router, RSC by default) · TypeScript strict · Tailwind + shadcn/ui
+- Next.js 16 (App Router, RSC by default) · TypeScript strict · Tailwind v4 + shadcn/ui
+- **Ginshu** design system — a warm-ash dark palette with a ginshu (銀朱) accent, built for reading a bottle label in a dim izakaya. Spec and reference screenshots in [`design/`](./design); tokens in `src/app/globals.css`.
 - Vercel AI SDK 7 for LLM work · `@ai-sdk/mcp` connecting to our own MCP server
 - Supabase (Postgres) · Clerk (auth) · Langfuse Cloud (tracing)
 - Vitest + happy-dom (unit) · Playwright (E2E + async RSC)
