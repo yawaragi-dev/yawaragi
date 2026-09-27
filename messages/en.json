@@ -84,12 +84,29 @@
     "sectionProfileTitle": "Build a taste profile",
     "sectionProfileBody": "Over time, your reactions shape a personal flavor map you can compare with others.",
     "hero": {
-      "kicker": "A real example scan",
-      "heading": "Discover a sake from its label",
-      "subhead": "Here's what Yawaragi shows after reading a real bottle — its flavor profile and a familiar reference point to start from. Scan your own to explore more.",
-      "scanYourOwn": "Scan your own",
       "photoAlt": "A chilled bottle of 木戸泉 (Kidoizumi) sake",
       "exampleChip": "Example"
+    },
+    "openApp": "Open the app",
+    "kicker": "A journal for sake",
+    "heading": "Know what's in the cup.",
+    "lead": "Point your phone at a sake label. Yawaragi tells you what it is, how it tastes, and whether you'll like it. One tap and it's in your journal.",
+    "ctaScan": "Scan your first label",
+    "ctaHow": "How it works",
+    "smallPrint": "Free · no account needed · for adults 18+",
+    "featuresHeading": "Three things, done well",
+    "featureIdentifyTitle": "Identify",
+    "featureIdentifyBody": "Kanji, romaji or barcode — the camera reads whichever the bottle gives you. No camera? Use a photo or type the name.",
+    "featureRateTitle": "Rate in one tap",
+    "featureRateBody": "The star is the save. Add a note if you want, or detailed tasting notes later.",
+    "featurePalateTitle": "Learn your palate",
+    "featurePalateBody": "After three tastings it shows what you like — and why. Already know whisky or wine? Start from a drink you love.",
+    "privacyTitle": "Your journal stays yours",
+    "privacyBody": "Everything works on your phone without an account. Nothing is posted publicly, and your ratings are only shared — anonymously — if you choose to.",
+    "footer": {
+      "copyright": "© 2026 Yawaragi · Flavor chart data",
+      "poweredBySakenowa": "Powered by Sakenowa",
+      "drinkResponsibly": "Drink responsibly"
     }
   },
   "localeSwitcher": {

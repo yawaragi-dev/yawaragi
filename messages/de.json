@@ -84,12 +84,29 @@
     "sectionProfileTitle": "Geschmacksprofil aufbauen",
     "sectionProfileBody": "Mit der Zeit formen deine Reaktionen eine persönliche Aromakarte, die du mit anderen vergleichen kannst.",
     "hero": {
-      "kicker": "Ein echtes Beispiel",
-      "heading": "Entdecke einen Sake anhand seines Etiketts",
-      "subhead": "So sieht es aus, wenn Yawaragi ein echtes Etikett liest — sein Aromaprofil und ein vertrauter Bezugspunkt zum Einstieg. Scanne dein eigenes, um mehr zu entdecken.",
-      "scanYourOwn": "Eigenes scannen",
       "photoAlt": "Eine gekühlte Flasche 木戸泉 (Kidoizumi) Sake",
       "exampleChip": "Beispiel"
+    },
+    "openApp": "Zur App",
+    "kicker": "Ein Journal für Sake",
+    "heading": "Wisse, was in der Schale ist.",
+    "lead": "Richte dein Handy auf ein Sake-Etikett. Yawaragi sagt dir, was es ist, wie es schmeckt und ob es dir liegen wird. Ein Tipp, und es steht in deinem Journal.",
+    "ctaScan": "Erstes Etikett scannen",
+    "ctaHow": "So funktioniert es",
+    "smallPrint": "Kostenlos · ohne Konto · für Erwachsene ab 18",
+    "featuresHeading": "Drei Dinge, richtig gemacht",
+    "featureIdentifyTitle": "Erkennen",
+    "featureIdentifyBody": "Kanji, Romaji oder Barcode — die Kamera liest, was die Flasche hergibt. Keine Kamera? Nimm ein Foto oder tippe den Namen ein.",
+    "featureRateTitle": "Mit einem Tipp bewerten",
+    "featureRateBody": "Der Stern ist das Speichern. Füge eine Notiz hinzu, wenn du magst, oder später ausführliche Verkostungsnotizen.",
+    "featurePalateTitle": "Deine Palate kennenlernen",
+    "featurePalateBody": "Nach drei Verkostungen zeigt sie dir, was dir schmeckt — und warum. Du kennst dich mit Whisky oder Wein aus? Beginne bei einem Getränk, das du magst.",
+    "privacyTitle": "Dein Journal bleibt deins",
+    "privacyBody": "Alles funktioniert auf deinem Handy, ganz ohne Konto. Nichts wird öffentlich gepostet, und deine Bewertungen werden nur geteilt — anonym — wenn du es möchtest.",
+    "footer": {
+      "copyright": "© 2026 Yawaragi · Flavor-Chart-Daten",
+      "poweredBySakenowa": "Powered by Sakenowa",
+      "drinkResponsibly": "Verantwortungsvoll genießen"
     }
   },
   "localeSwitcher": {

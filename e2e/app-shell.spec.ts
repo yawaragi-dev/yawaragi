@@ -227,7 +227,10 @@ test.describe('app shell — the landing page is outside it', () => {
 
     await page.goto('/en')
 
-    await expect(page.getByTestId('site-header')).toBeVisible()
+    // §0's own header, not the app's: wordmark with the kanji, locale switch,
+    // and one button into the product.
+    await expect(page.getByTestId('landing-header')).toBeVisible()
+    await expect(page.getByTestId('site-header')).toHaveCount(0)
     // The landing is "a separate, normally scrolling page outside the app
     // shell" — giving it tabs would advertise an app the visitor has not
     // entered yet.

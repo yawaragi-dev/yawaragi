@@ -1,14 +1,28 @@
 import { getTranslations } from 'next-intl/server'
-import { Link, getPathname } from '@/i18n/navigation'
+import { getPathname } from '@/i18n/navigation'
 import { ScanResultCard } from '@/components/scan/scan-result-card'
 import { SAMPLE_SCAN_PHOTO_SRC, type LandingSampleScan } from '@/lib/landing/sample-scan'
 
 /**
- * UX-E (#166): "show, don't tell" landing hero. Leads with a real example
- * scan result — the maintainer's own photo of a catalogued sake, its real
+ * The hero's right column — design v1.4 §0: "phone placeholder (9:19, radius
+ * 34) — **replace with a real app screenshot**".
+ *
+ * This is that screenshot, except live. UX-E (#166) already built a real
+ * example scan — the maintainer's own photo of a catalogued sake, its real
  * flavor chart, and the reverse cross-beverage hook — reusing the exact
  * `<ScanResultCard />` a visitor sees after their own scan (issue #163 AC:
- * "the result card is a reusable component consumable by UX-E").
+ * "the result card is a reusable component consumable by UX-E"). Framing it
+ * as the device beats mocking one.
+ *
+ * **It used to be a section of its own**, with its own kicker, heading,
+ * subhead and "Scan your own →" button, because #166 was built against the
+ * old text-only landing — there was no hero to sit beside. Porting §0 on top
+ * of it left the page carrying two answers to the same question: §0's hero
+ * with an empty right column, and UX-E's block below it. Both designs wanted
+ * one thing, "show the app next to the headline", so they are one thing now.
+ * The heading and subhead are gone (§0's "Know what's in the cup." is the
+ * page's one title) and so is the second CTA — `landing-scan-cta` in the left
+ * column is the route into scan.
  *
  * Server component: it only needs the resolved sample data + a localised
  * `sakeHref`, and delegates the flavor-data rendering (and its inherited
@@ -37,19 +51,22 @@ export async function LandingHero({
   })
 
   return (
-    <section className="flex flex-col gap-6" data-testid="landing-hero">
-      <div className="flex flex-col gap-2">
-        <p className="text-sm font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-          {t('kicker')}
-        </p>
-        <h1 className="text-4xl font-semibold leading-tight tracking-tight">
-          {t('heading')}
-        </h1>
-        <p className="max-w-prose text-base text-zinc-600 dark:text-zinc-400">
-          {t('subhead')}
-        </p>
-      </div>
-
+    // The device: §0's phone, 9:19 and radius 34.
+    //
+    // It **scrolls** rather than crops. The frame holds a live card — links,
+    // the flavour-terms info button, the heuristic caveat — so cropping to
+    // 9:19 would leave focusable, screen-reader-reachable content outside the
+    // visible box. Scrolling keeps every one of them reachable and is what a
+    // real phone does with this screen anyway.
+    //
+    // The aspect only applies from 700px, the width at which §0 says the hero
+    // stops being two columns. Below that the frame is the column, so it takes
+    // its natural height — a nested scroll area under a thumb is worse than a
+    // tall section, and there is no phone to imitate when you are holding one.
+    <section
+      className="mx-auto w-full max-w-[390px] overflow-hidden rounded-[34px] ring-1 ring-divider min-[700px]:aspect-[9/19] min-[700px]:overflow-y-auto"
+      data-testid="landing-hero"
+    >
       {/*
         The example card. `extractionConfidence` is omitted on purpose —
         this is a curated Sakenowa row, not an `llm_extracted` scan, so
@@ -68,15 +85,6 @@ export async function LandingHero({
         flavorChart={sample.flavorChart}
         exampleLabel={t('exampleChip')}
       />
-
-      <Link
-        href="/scan"
-        className="inline-flex w-fit items-center gap-1.5 rounded-lg bg-zinc-900 px-5 py-3 text-base font-medium text-white transition-colors hover:bg-zinc-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300 dark:focus-visible:outline-zinc-100"
-        data-testid="landing-hero-scan-cta"
-      >
-        {t('scanYourOwn')}
-        <span aria-hidden>→</span>
-      </Link>
     </section>
   )
 }
