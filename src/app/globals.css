@@ -234,11 +234,26 @@ body {
   --text-card-heading: 15px;
   --text-card-heading--letter-spacing: -0.01em;
   --text-body: 14px;
-  --text-secondary: 13px;
+  /* The design calls this step "13 secondary". It is NOT named
+   * `--text-secondary` here, and that is load-bearing: shadcn's
+   * `--color-secondary` also generates a `text-secondary` utility, the two
+   * collide, and the COLOUR wins — painting 13px text #2d2b29 on a near-black
+   * panel. Invisible, and nothing catches it but your eyes. Any scale name
+   * that matches a `--color-*` name has the same problem. */
+  --text-subtle: 13px;
   --text-meta: 12px;
   --text-section-label: 11px;
   --text-section-label--letter-spacing: 0.1em;
   --text-micro: 10px;
+
+  /* -- App shell ------------------------------------------------------
+   * The tab bar's height. §2 fixes the cookie banner "88px from the bottom
+   * so it sits above the tab bar", so the design treats this as a constant —
+   * and anything else on the bottom edge has to agree with it, or it paints
+   * over the tabs. One token, so the bar and everything clearing it cannot
+   * drift apart. `<TabBar />` sets its own min-height from this, and
+   * `app-shell.spec.ts` pins the rendered bar to it. */
+  --tab-bar-h: 88px;
 
   /* -- Motion ---------------------------------------------------------
    * Durations are the midpoint of each range in the spec. `yw-sweep` is

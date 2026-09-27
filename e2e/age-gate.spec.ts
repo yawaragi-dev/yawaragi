@@ -1,8 +1,10 @@
 import { expect, test } from '@playwright/test'
 import { BASE_URL } from './_base-url'
 
-const GATE_COPY_EN = 'Are you 18 or older?'
-const GATE_COPY_DE = 'Bist du 18 oder älter?'
+// The law line, not the hero: it is the string JMStV compliance actually
+// rests on, so it is the one worth pinning. Design v1.4 §1.
+const GATE_COPY_EN = 'Under German youth-protection law (JMStV)'
+const GATE_COPY_DE = 'Jugendmedienschutz-Staatsvertrag'
 const LANDING_BODY_EN = 'A companion for discovering sake.'
 
 test.describe('age gate enforcement', () => {

@@ -169,37 +169,42 @@ test.describe('app shell — tab bar', () => {
     await context.close()
   })
 
-  test('publishes its height so bottom-edge overlays can clear it', async ({ browser }) => {
+  test('renders at exactly the height the bottom-edge overlays clear', async ({
+    browser,
+  }) => {
     const { context, page } = await appPage(browser)
     await page.setViewportSize({ width: 390, height: 844 })
 
     await page.goto('/en/profile')
 
     // The bar sits in normal flow with no stacking context of its own, so a
-    // `fixed bottom-6 z-40` overlay paints straight over the tabs. Anything
-    // on the bottom edge has to offset by the bar's real height — which
-    // varies with the locale's label lengths and the home-indicator padding,
-    // so it is measured rather than hard-coded. Mirrors the pattern
-    // <CookieBanner /> already uses for `--cookie-banner-h`.
+    // `fixed bottom-6 z-40` overlay paints straight over the tabs. §2's cookie
+    // banner and the journal's log button both offset by `--tab-bar-h` to
+    // avoid that, which only holds while the bar really is that tall — so the
+    // token and the rendered bar are pinned to each other here.
+    const token = await page.evaluate(() =>
+      getComputedStyle(document.documentElement).getPropertyValue('--tab-bar-h'),
+    )
     const barHeight = await page
       .getByTestId('tab-bar')
       .evaluate((el) => el.getBoundingClientRect().height)
 
-    // Polled, not sampled once: the bar measures itself in an effect, so the
-    // value lands at hydration rather than in the server-rendered HTML. A
-    // single read right after `goto` races that and sees an unset variable on
-    // a cold runner — which is exactly how this first went red on CI while
-    // passing locally against a warm dev server.
-    await expect
-      .poll(() =>
-        page.evaluate(
-          () =>
-            Number.parseFloat(
-              getComputedStyle(document.documentElement).getPropertyValue('--tab-bar-h'),
-            ) || 0,
-        ),
-      )
-      .toBeCloseTo(barHeight, 0)
+    expect(Number.parseFloat(token)).toBeCloseTo(barHeight, 0)
+
+    // And the overlays actually sit clear of it, which is the point.
+    const bannerBottomOffset = await page.evaluate(() => {
+      const probe = document.createElement('div')
+      probe.style.cssText =
+        'position:fixed;bottom:var(--tab-bar-h);height:1px;width:1px'
+      document.body.append(probe)
+      const top = probe.getBoundingClientRect().top
+      probe.remove()
+      return top
+    })
+    const barTop = await page
+      .getByTestId('tab-bar')
+      .evaluate((el) => el.getBoundingClientRect().top)
+    expect(bannerBottomOffset).toBeLessThanOrEqual(barTop + 1)
 
     await context.close()
   })

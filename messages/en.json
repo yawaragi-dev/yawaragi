@@ -98,10 +98,13 @@
     "german": "Deutsch"
   },
   "ageGate": {
-    "title": "Are you 18 or older?",
-    "description": "German law requires us to confirm your age before showing information about sake. Yawaragi is a discovery and learning tool — no purchase, no checkout.",
-    "accept": "I am 18 or older",
-    "decline": "I am under 18"
+    "hero": "The water between sips.",
+    "lead": "Scan a label, keep a tasting journal, and watch your own palate take shape.",
+    "lawLine": "Under German youth-protection law (JMStV), Yawaragi is for adults 18 and over.",
+    "accept": "I'm 18 or older",
+    "decline": "I'm not",
+    "imprintLink": "Impressum",
+    "privacyLink": "Privacy"
   },
   "under18": {
     "title": "Come back when you are 18",
@@ -115,15 +118,17 @@
   },
   "cookieBanner": {
     "label": "Cookie preferences",
-    "description": "We use a small set of cookies to make Yawaragi work and, with your consent, to learn how it is used. Essential cookies are always on; you decide the rest.",
+    "title": "Cookies and similar storage",
+    "description": "We need some storage to run the app. With your permission we would also like anonymous usage stats and crash reports. Nothing loads until you choose.",
+    "customizeTitle": "Choose what we store",
     "categoriesLegend": "Cookie categories",
     "categoryNecessary": "Essential (always on)",
     "categoryAnalytics": "Analytics",
     "categoryMarketing": "Marketing",
     "acceptAll": "Accept all",
-    "rejectNonEssential": "Reject non-essential",
-    "customize": "Customize",
-    "savePreferences": "Save preferences",
+    "rejectNonEssential": "Reject all",
+    "customize": "Customise",
+    "savePreferences": "Save choice",
     "settingsLink": "Cookie preferences"
   },
   "sake": {

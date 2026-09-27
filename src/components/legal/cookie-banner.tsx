@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { useTranslations } from 'next-intl'
-import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import { setConsent } from '@/lib/legal/consent-actions'
 import type { ConsentDecision } from '@/lib/legal/consent'
 import { COOKIE_BANNER_OPEN_EVENT } from './cookie-banner-events'
@@ -16,10 +16,23 @@ import { COOKIE_BANNER_OPEN_EVENT } from './cookie-banner-events'
  */
 const COOKIE_BANNER_HEIGHT_CSS_VAR = '--cookie-banner-h'
 
+/**
+ * Where the banner sits, which differs by route group.
+ *
+ * `app` — §2: 10px from the sides, the tab bar's height from the bottom so it
+ *   clears the tab
+ * bar**. `site` — §0: a 560px card centred 16px above the bottom edge, because
+ * the landing has no tab bar to clear. One consent covers both (same cookie,
+ * same domain); only the geometry differs.
+ */
+export type CookieBannerPlacement = 'app' | 'site'
+
 export function CookieBanner({
   initialDecision,
+  placement = 'app',
 }: {
   initialDecision: ConsentDecision | null
+  placement?: CookieBannerPlacement
 }) {
   const t = useTranslations('cookieBanner')
   const [isPending, startTransition] = useTransition()
@@ -82,19 +95,32 @@ export function CookieBanner({
       role="region"
       aria-label={t('label')}
       data-testid="cookie-banner"
-      className="fixed bottom-0 inset-x-0 z-40 border-t border-border bg-popover text-popover-foreground shadow-2xl"
+      data-placement={placement}
+      // §2 / §0: a card floating above the bottom edge, not a full-width bar.
+      // It deliberately does NOT block the screen behind it — the design says
+      // so, and a consent prompt that blocks the product is a dark pattern in
+      // its own right.
+      className={cn(
+        'fixed inset-x-2.5 z-40 rounded-xl bg-surface p-3.5 shadow-yw-lg',
+        placement === 'app' ? 'bottom-[var(--tab-bar-h)]' : 'bottom-4 mx-auto max-w-[560px]',
+      )}
     >
-      <div className="max-w-4xl mx-auto flex flex-col gap-3 px-6 py-4">
-        <p className="text-sm">{t('description')}</p>
+      <div className="flex flex-col gap-3">
+        <h2 className="text-card-heading font-medium text-ink">
+          {/* §2: expanding Customise renames the card in place rather than
+              opening a second surface. */}
+          {customizing ? t('customizeTitle') : t('title')}
+        </h2>
+        <p className="text-meta text-ash-600">{t('description')}</p>
 
         {customizing && (
-          <fieldset className="flex flex-col gap-2 sm:flex-row sm:gap-6">
+          <fieldset className="flex flex-col gap-2">
             <legend className="sr-only">{t('categoriesLegend')}</legend>
-            <label className="flex items-center gap-2 text-sm text-muted-foreground">
+            <label className="flex items-center gap-2 text-meta text-ash-600">
               <input type="checkbox" checked disabled aria-disabled="true" />
               {t('categoryNecessary')}
             </label>
-            <label className="flex items-center gap-2 text-sm">
+            <label className="flex items-center gap-2 text-meta text-ink">
               <input
                 type="checkbox"
                 checked={analytics}
@@ -103,7 +129,7 @@ export function CookieBanner({
               />
               {t('categoryAnalytics')}
             </label>
-            <label className="flex items-center gap-2 text-sm">
+            <label className="flex items-center gap-2 text-meta text-ink">
               <input
                 type="checkbox"
                 checked={marketing}
@@ -115,44 +141,84 @@ export function CookieBanner({
           </fieldset>
         )}
 
-        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        {/* §2: a three-column grid of buttons at **identical size and style**.
+            That is not only the design — GDPR requires Accept and Reject at
+            equal prominence, and the previous layout gave Accept the filled
+            `default` variant while Reject and Customise were outlined. */}
+        <div className="grid grid-cols-3 gap-2">
           {customizing ? (
-            <Button
-              onClick={() => save({ analytics, marketing })}
-              disabled={isPending}
-              data-testid="cookie-banner-save"
-            >
-              {t('savePreferences')}
-            </Button>
-          ) : (
             <>
-              <Button
-                variant="outline"
-                onClick={() => setCustomizing(true)}
-                disabled={isPending}
-                data-testid="cookie-banner-customize"
-              >
-                {t('customize')}
-              </Button>
-              <Button
-                variant="outline"
+              <ConsentButton
                 onClick={() => save({ analytics: false, marketing: false })}
                 disabled={isPending}
-                data-testid="cookie-banner-reject"
-              >
-                {t('rejectNonEssential')}
-              </Button>
-              <Button
+                testId="cookie-banner-reject"
+                label={t('rejectNonEssential')}
+              />
+              <ConsentButton
+                onClick={() => save({ analytics, marketing })}
+                disabled={isPending}
+                testId="cookie-banner-save"
+                label={t('savePreferences')}
+              />
+              <ConsentButton
                 onClick={() => save({ analytics: true, marketing: true })}
                 disabled={isPending}
-                data-testid="cookie-banner-accept"
-              >
-                {t('acceptAll')}
-              </Button>
+                testId="cookie-banner-accept"
+                label={t('acceptAll')}
+              />
+            </>
+          ) : (
+            <>
+              <ConsentButton
+                onClick={() => save({ analytics: false, marketing: false })}
+                disabled={isPending}
+                testId="cookie-banner-reject"
+                label={t('rejectNonEssential')}
+              />
+              <ConsentButton
+                onClick={() => setCustomizing(true)}
+                disabled={isPending}
+                testId="cookie-banner-customize"
+                label={t('customize')}
+              />
+              <ConsentButton
+                onClick={() => save({ analytics: true, marketing: true })}
+                disabled={isPending}
+                testId="cookie-banner-accept"
+                label={t('acceptAll')}
+              />
             </>
           )}
         </div>
       </div>
     </section>
+  )
+}
+
+interface ConsentButtonProps {
+  onClick: () => void
+  disabled: boolean
+  testId: string
+  label: string
+}
+
+/**
+ * One of the three consent controls. A local component rather than the shared
+ * `<Button>` because the whole point is that all three are **indistinguishable
+ * from each other** — same 42px height, same fill, same weight. Reaching for
+ * `<Button variant>` is how one of them quietly becomes more prominent than
+ * the others again, which is the dark pattern GDPR names.
+ */
+function ConsentButton({ onClick, disabled, testId, label }: ConsentButtonProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      data-testid={testId}
+      className="h-[42px] rounded-lg bg-ash-200 px-2 text-meta font-medium text-ink transition-colors hover:bg-ash-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600 disabled:opacity-60"
+    >
+      {label}
+    </button>
   )
 }

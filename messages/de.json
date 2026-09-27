@@ -98,10 +98,13 @@
     "german": "Deutsch"
   },
   "ageGate": {
-    "title": "Bist du 18 oder älter?",
-    "description": "Das deutsche Recht verpflichtet uns, dein Alter zu bestätigen, bevor wir Informationen zu Sake zeigen. Yawaragi ist ein Werkzeug zum Entdecken und Lernen — kein Kauf, kein Bezahlvorgang.",
+    "hero": "Das Wasser zwischen den Schlucken.",
+    "lead": "Scanne ein Etikett, führe ein Verkostungsjournal und sieh zu, wie deine Palate Gestalt annimmt.",
+    "lawLine": "Nach dem Jugendmedienschutz-Staatsvertrag (JMStV) richtet sich Yawaragi an Erwachsene ab 18 Jahren.",
     "accept": "Ich bin 18 oder älter",
-    "decline": "Ich bin unter 18"
+    "decline": "Bin ich nicht",
+    "imprintLink": "Impressum",
+    "privacyLink": "Datenschutz"
   },
   "under18": {
     "title": "Komm wieder, wenn du 18 bist",
@@ -115,15 +118,17 @@
   },
   "cookieBanner": {
     "label": "Cookie-Einstellungen",
-    "description": "Wir nutzen einen kleinen Satz Cookies, damit Yawaragi funktioniert, und – mit deiner Einwilligung – um zu erfahren, wie es genutzt wird. Essenzielle Cookies sind immer aktiv; den Rest entscheidest du.",
+    "title": "Cookies und ähnliche Speicherung",
+    "description": "Etwas Speicher brauchen wir, damit die App läuft. Mit deiner Erlaubnis hätten wir gern anonyme Nutzungsstatistiken und Absturzberichte. Vor deiner Wahl lädt nichts davon.",
+    "customizeTitle": "Wähle, was wir speichern",
     "categoriesLegend": "Cookie-Kategorien",
     "categoryNecessary": "Essenziell (immer aktiv)",
     "categoryAnalytics": "Analyse",
     "categoryMarketing": "Marketing",
     "acceptAll": "Alle akzeptieren",
-    "rejectNonEssential": "Nicht-essenzielle ablehnen",
+    "rejectNonEssential": "Alle ablehnen",
     "customize": "Anpassen",
-    "savePreferences": "Einstellungen speichern",
+    "savePreferences": "Auswahl speichern",
     "settingsLink": "Cookie-Einstellungen"
   },
   "sake": {

@@ -88,11 +88,11 @@ export function FlavorTermsSheet({
           const s = axisStrings[axis]
           return (
             <div key={axis} className="flex gap-3" data-testid={`flavor-term-${axis}`}>
-              <dt className="w-[62px] shrink-0 text-secondary font-medium text-ink">
+              <dt className="w-[62px] shrink-0 text-subtle font-medium text-ink">
                 {s.approximation}
               </dt>
               <dd className="min-w-0 flex-1">
-                <span className="text-secondary text-ink" lang="ja">
+                <span className="text-subtle text-ink" lang="ja">
                   {s.kanji}
                 </span>{' '}
                 <span className="text-meta text-ash-600">

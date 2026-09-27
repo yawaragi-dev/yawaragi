@@ -1,3 +1,6 @@
+import { cookies } from 'next/headers'
+import { CookieBanner } from '@/components/legal/cookie-banner'
+import { getComplianceState } from '@/lib/legal/compliance-state'
 import { getTranslations } from 'next-intl/server'
 import { Header } from '@/components/layout/header'
 import { LegalFooter } from '@/components/layout/legal-footer'
@@ -42,6 +45,7 @@ export default async function AppShellLayout({
   children: React.ReactNode
 }) {
   const t = await getTranslations('tabs')
+  const { consent } = getComplianceState(await cookies())
 
   const messages: TabBarMessages = {
     navLabel: t('navLabel'),
@@ -67,6 +71,9 @@ export default async function AppShellLayout({
         <LegalFooter />
       </main>
       <TabBar messages={messages} />
+      {/* Fixed, so it sits outside the scrolling pane and above the tab
+          bar — §2 puts it 88px up for exactly that clearance. */}
+      <CookieBanner initialDecision={consent} placement="app" />
     </div>
   )
 }
