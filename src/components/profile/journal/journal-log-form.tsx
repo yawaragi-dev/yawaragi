@@ -113,16 +113,14 @@ export function JournalLogForm() {
       }}
     >
       <SheetTrigger
-        // Offset by the tab bar's published height (`--tab-bar-h`, set by
-        // <TabBar />) so this clears the bottom edge instead of painting over
-        // the tabs — the bar is in normal flow with no z-index, so a `z-40`
-        // fixed button wins against it. The `0px` fallback keeps the plain
-        // 24px inset on any surface rendered outside the app shell.
+        // Offset by `--tab-bar-h` so this clears the bottom edge instead of
+        // painting over the tabs — the bar is in normal flow with no z-index,
+        // so a `z-40` fixed button wins against it.
         //
         // Interim: rule 11 gives the bottom edge to the tab bar alone and puts
         // screen-level actions in the content. This button moves there when
         // §12 ports the Palate. Tracked on #300.
-        className="fixed bottom-[calc(var(--tab-bar-h,0px)+1.5rem)] right-6 z-40 rounded-full bg-zinc-900 px-5 py-3 text-sm font-medium text-white shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 dark:bg-white dark:text-zinc-900"
+        className="fixed bottom-[calc(var(--tab-bar-h)+1.5rem)] right-6 z-40 rounded-full bg-zinc-900 px-5 py-3 text-sm font-medium text-white shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 dark:bg-white dark:text-zinc-900"
         data-testid="journal-log-open"
       >
         ＋ {t('logCta')}

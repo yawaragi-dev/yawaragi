@@ -240,6 +240,15 @@ body {
   --text-section-label--letter-spacing: 0.1em;
   --text-micro: 10px;
 
+  /* -- App shell ------------------------------------------------------
+   * The tab bar's height. §2 fixes the cookie banner "88px from the bottom
+   * so it sits above the tab bar", so the design treats this as a constant —
+   * and anything else on the bottom edge has to agree with it, or it paints
+   * over the tabs. One token, so the bar and everything clearing it cannot
+   * drift apart. `<TabBar />` sets its own min-height from this, and
+   * `app-shell.spec.ts` pins the rendered bar to it. */
+  --tab-bar-h: 88px;
+
   /* -- Motion ---------------------------------------------------------
    * Durations are the midpoint of each range in the spec. `yw-sweep` is
    * the repeating band on the camera frame while a label is being read. */

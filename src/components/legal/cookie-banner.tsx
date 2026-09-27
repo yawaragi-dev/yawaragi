@@ -19,7 +19,8 @@ const COOKIE_BANNER_HEIGHT_CSS_VAR = '--cookie-banner-h'
 /**
  * Where the banner sits, which differs by route group.
  *
- * `app` — §2: 10px from the sides, **88px from the bottom so it clears the tab
+ * `app` — §2: 10px from the sides, the tab bar's height from the bottom so it
+ *   clears the tab
  * bar**. `site` — §0: a 560px card centred 16px above the bottom edge, because
  * the landing has no tab bar to clear. One consent covers both (same cookie,
  * same domain); only the geometry differs.
@@ -101,7 +102,7 @@ export function CookieBanner({
       // its own right.
       className={cn(
         'fixed inset-x-2.5 z-40 rounded-xl bg-surface p-3.5 shadow-yw-lg',
-        placement === 'app' ? 'bottom-[88px]' : 'bottom-4 mx-auto max-w-[560px]',
+        placement === 'app' ? 'bottom-[var(--tab-bar-h)]' : 'bottom-4 mx-auto max-w-[560px]',
       )}
     >
       <div className="flex flex-col gap-3">
