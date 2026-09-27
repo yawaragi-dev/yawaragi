@@ -135,7 +135,7 @@ test.describe('sake brand page', () => {
     // The instance id carries the brand id, so match on the prefix rather
     // than pinning a testid that changes with the fixture.
     const caveat = page
-      .locator('[data-testid^="info-sheet-flavour-terms-"][data-testid$="-caveat"]')
+      .locator('[data-testid^="info-sheet-flavor-terms-"][data-testid$="-caveat"]')
       .first()
     await expect(caveat).toBeVisible()
     await expect(caveat).toHaveText(/brewers' terms/i)
@@ -143,7 +143,7 @@ test.describe('sake brand page', () => {
     // Wired, not merely present: this is what a screen reader announces on
     // reaching the button, with the sheet never opened.
     const trigger = page
-      .locator('[data-testid^="info-sheet-flavour-terms-"][data-testid$="-trigger"]')
+      .locator('[data-testid^="info-sheet-flavor-terms-"][data-testid$="-trigger"]')
       .first()
     await expect(trigger).toHaveAttribute(
       'aria-describedby',
@@ -152,7 +152,7 @@ test.describe('sake brand page', () => {
 
     // Opening it names the brewer's term the English word approximates.
     await trigger.click()
-    const terms = page.getByTestId('flavour-terms-list')
+    const terms = page.getByTestId('flavor-terms-list')
     await expect(terms).toBeVisible()
     await expect(terms).toContainText('華やか')
     await expect(terms).toContainText('hanayaka')

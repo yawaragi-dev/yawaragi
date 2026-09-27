@@ -27,7 +27,7 @@ import {
  * design writes are paragraphs, not a sentence, and a hover tooltip is a
  * poor target on the phone this product is built for.
  *
- * **The caveat is not decorative.** ADR-0022 leans on it: the flavour axes
+ * **The caveat is not decorative.** ADR-0022 leans on it: the flavor axes
  * render as English approximations only *because* this pattern carries the
  * "these are brewers' terms" disclosure. A chart that drops the sheet is a
  * regression against the ADR, not just against the design. Same for
@@ -81,7 +81,11 @@ export function InfoSheet({
     >
       <span
         id={caveatId}
-        className="text-section-label leading-snug text-ash-700"
+        // The caveat and the trigger sit INLINE on whatever page mounts
+        // them, so they take that page's palette. The sheet below paints its
+        // own ground and can be Ginshu. Mixing that up is how the chart ended
+        // up at 1.96:1 on a white page.
+        className="text-xs leading-snug text-zinc-500 dark:text-zinc-400"
         data-testid={`info-sheet-${id}-caveat`}
       >
         {caveat}
@@ -97,7 +101,7 @@ export function InfoSheet({
               // dot stays 16px and inline with the caveat, but the hit area
               // meets the touch-target floor. Without this the button is a
               // 16px target in the middle of a text line.
-              className="-m-3 inline-flex size-11 items-center justify-center rounded-full text-ash-600 transition-colors hover:text-ginshu-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ginshu-600"
+              className="-m-3 inline-flex size-11 items-center justify-center rounded-full text-zinc-400 transition-colors hover:text-zinc-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 dark:text-zinc-500 dark:hover:text-zinc-300"
               data-testid={`info-sheet-${id}-trigger`}
             />
           }

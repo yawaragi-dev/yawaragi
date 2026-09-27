@@ -3,7 +3,7 @@ import { InfoSheet } from '@/components/ui/info-sheet'
 import type { FlavorAxisStrings } from './flavor-profile-view'
 
 /**
- * The disclosure that makes ADR-0022 defensible: the six flavour axes render
+ * The disclosure that makes ADR-0022 defensible: the six flavor axes render
  * as English words, and this sheet is where the app says what those words
  * actually are — approximations of Japanese brewers' terms, not translations.
  *
@@ -75,7 +75,7 @@ export function FlavorTermsSheet({
 }: FlavorTermsSheetProps) {
   return (
     <InfoSheet
-      id={`flavour-terms-${instanceId}`}
+      id={`flavor-terms-${instanceId}`}
       caveat={strings.caveat}
       triggerLabel={strings.triggerLabel}
       title={strings.title}
@@ -83,11 +83,11 @@ export function FlavorTermsSheet({
       className={className}
     >
       <p className="mb-4">{strings.intro}</p>
-      <dl className="flex flex-col gap-3" data-testid="flavour-terms-list">
+      <dl className="flex flex-col gap-3" data-testid="flavor-terms-list">
         {FLAVOR_AXES.map((axis) => {
           const s = axisStrings[axis]
           return (
-            <div key={axis} className="flex gap-3" data-testid={`flavour-term-${axis}`}>
+            <div key={axis} className="flex gap-3" data-testid={`flavor-term-${axis}`}>
               <dt className="w-[62px] shrink-0 text-secondary font-medium text-ink">
                 {s.approximation}
               </dt>
