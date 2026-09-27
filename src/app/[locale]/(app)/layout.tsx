@@ -21,6 +21,17 @@ import { TabBar, type TabBarMessages } from '@/components/layout/tab-bar'
  * `overscroll-contain` stops a scroll that reaches the end of the pane from
  * rubber-banding the page behind it.
  *
+ * **`overflow-x-clip` is not redundant with `overflow-y-auto`** — it is the
+ * correction for it. CSS computes a `visible` axis to `auto` whenever the
+ * other axis is not visible, so `overflow-y: auto` alone silently makes the
+ * pane pannable sideways. That matters here more than it would anywhere else:
+ * `[locale]/layout.tsx` carries `overflow-x-clip` on <html> and <body> as a
+ * deliberate defence against overhanging popovers (the provenance badge's
+ * tooltip is `w-max max-w-xs` and runs ~72px past a 390px screen), and moving
+ * the scrolling box off the document put the new box INSIDE that defence
+ * rather than under it. Pinned by "clips an over-wide child instead of letting
+ * the pane pan sideways" in `e2e/app-shell.spec.ts`.
+ *
  * Why 100dvh and not 100vh: on mobile Safari `vh` is the *largest* viewport,
  * so the tab bar would sit behind the browser's own chrome until the user
  * scrolls. `dvh` tracks the visible area.
@@ -49,7 +60,7 @@ export default async function AppShellLayout({
           the parent layout would add its height to `100dvh` and the page
           itself would scroll — the one thing rule 10 forbids. */}
       <Header />
-      <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+      <main className="min-h-0 flex-1 overflow-y-auto overflow-x-clip overscroll-contain">
         {children}
         {/* Inside the scrolling pane, so the Impressum stays reachable from
             every app screen without a second fixed bar. See <LegalFooter />. */}

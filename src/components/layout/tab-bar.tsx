@@ -3,6 +3,7 @@
 import type { Icon } from '@phosphor-icons/react'
 import { Camera, Hexagon, House, Notebook } from '@phosphor-icons/react/dist/ssr'
 import { useLinkStatus } from 'next/link'
+import { useEffect, useRef } from 'react'
 import { Link, usePathname } from '@/i18n/navigation'
 import { cn } from '@/lib/utils'
 
@@ -21,6 +22,32 @@ import { cn } from '@/lib/utils'
  * Client component for `usePathname()` — the active tab has to be known on
  * the client because the bar persists across navigations inside the shell.
  */
+
+/**
+ * The bar's rendered height, published on <html> for anything that has to sit
+ * clear of the bottom edge.
+ *
+ * The bar is in normal flow with no stacking context of its own, so a
+ * `fixed bottom-6 z-40` overlay paints straight over the tabs — which is
+ * exactly what the journal's "Log sake" button did once the shell arrived.
+ * Rule 11 says the bottom edge belongs to the tab bar alone and screen-level
+ * actions belong in the content, so those overlays are on their way out; until
+ * each screen is ported they at least have to clear the bar.
+ *
+ * Measured rather than hard-coded: the height moves with the locale's label
+ * lengths and with the home-indicator padding. Same pattern <CookieBanner />
+ * uses for `--cookie-banner-h`.
+ *
+ * It lands at hydration, not in the server-rendered HTML, so a consumer has to
+ * carry a sensible fallback in its own `var()` — before hydration the variable
+ * is simply unset.
+ *
+ * Deliberately not exported: a consumer has to spell the name inside a Tailwind
+ * class string (`bottom-[calc(var(--tab-bar-h,0px)+1.5rem)]`), which the
+ * compiler only sees as a literal, so an imported constant could not be used
+ * there anyway.
+ */
+const TAB_BAR_HEIGHT_CSS_VAR = '--tab-bar-h'
 
 const TABS = [
   { href: '/home', icon: House, labelKey: 'home', testId: 'tab-home' },
@@ -57,9 +84,31 @@ export function isTabActive(pathname: string, href: string): boolean {
 
 export function TabBar({ messages }: TabBarProps) {
   const pathname = usePathname()
+  const barRef = useRef<HTMLElement>(null)
+
+  useEffect(() => {
+    const el = barRef.current
+    if (!el) return
+
+    const publish = () => {
+      document.documentElement.style.setProperty(
+        TAB_BAR_HEIGHT_CSS_VAR,
+        `${el.offsetHeight}px`,
+      )
+    }
+    publish()
+
+    const observer = new ResizeObserver(publish)
+    observer.observe(el)
+    return () => {
+      observer.disconnect()
+      document.documentElement.style.removeProperty(TAB_BAR_HEIGHT_CSS_VAR)
+    }
+  }, [])
 
   return (
     <nav
+      ref={barRef}
       aria-label={messages.navLabel}
       // `pb-6` is the prototype's 24px bottom padding: it keeps the labels
       // clear of the iOS home indicator. `flex-none` so the bar never

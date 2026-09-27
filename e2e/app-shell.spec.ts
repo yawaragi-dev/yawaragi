@@ -131,6 +131,79 @@ test.describe('app shell — tab bar', () => {
     await context.close()
   })
 
+  test('clips an over-wide child instead of letting the pane pan sideways', async ({
+    browser,
+  }) => {
+    const { context, page } = await appPage(browser)
+    await page.setViewportSize({ width: 390, height: 844 })
+
+    await page.goto('/en/collection')
+
+    // Rule 10's horizontal half, and the reason it needs its own pin:
+    // `overflow-y: auto` alone computes `overflow-x` to `auto` (CSS turns a
+    // `visible` axis into `auto` when the other axis is not visible). So the
+    // moment the shell moved the scroll container off the document and onto
+    // `<main>`, the pane became pannable — and the `overflow-x-clip` that
+    // `[locale]/layout.tsx` carries on <html>/<body> no longer covered it,
+    // because the scrolling box now sits INSIDE that defence. A popover near
+    // the right edge is the realistic trigger: the provenance badge's tooltip
+    // is `w-max max-w-xs` and overhangs by ~72px on a 390px screen.
+    //
+    // Asserted as "is the pane a horizontal scroll container", not as a
+    // gesture or a `scrollWidth` reading: under overlay scrollbars a
+    // synthetic wheel behaves the same on `auto` and `hidden`, and
+    // `scrollWidth` reports the overhang either way. `hidden` and `clip` both
+    // satisfy the rule, so an equivalent future fix keeps this green.
+    const overflowX = await page
+      .locator('main')
+      .evaluate((pane) => getComputedStyle(pane).overflowX)
+
+    expect(['hidden', 'clip']).toContain(overflowX)
+
+    // And the document still must not gain a sideways scroll of its own.
+    const docPans = await page.evaluate(
+      () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+    )
+    expect(docPans).toBe(false)
+
+    await context.close()
+  })
+
+  test('publishes its height so bottom-edge overlays can clear it', async ({ browser }) => {
+    const { context, page } = await appPage(browser)
+    await page.setViewportSize({ width: 390, height: 844 })
+
+    await page.goto('/en/profile')
+
+    // The bar sits in normal flow with no stacking context of its own, so a
+    // `fixed bottom-6 z-40` overlay paints straight over the tabs. Anything
+    // on the bottom edge has to offset by the bar's real height — which
+    // varies with the locale's label lengths and the home-indicator padding,
+    // so it is measured rather than hard-coded. Mirrors the pattern
+    // <CookieBanner /> already uses for `--cookie-banner-h`.
+    const barHeight = await page
+      .getByTestId('tab-bar')
+      .evaluate((el) => el.getBoundingClientRect().height)
+
+    // Polled, not sampled once: the bar measures itself in an effect, so the
+    // value lands at hydration rather than in the server-rendered HTML. A
+    // single read right after `goto` races that and sees an unset variable on
+    // a cold runner — which is exactly how this first went red on CI while
+    // passing locally against a warm dev server.
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () =>
+            Number.parseFloat(
+              getComputedStyle(document.documentElement).getPropertyValue('--tab-bar-h'),
+            ) || 0,
+        ),
+      )
+      .toBeCloseTo(barHeight, 0)
+
+    await context.close()
+  })
+
   test('keeps the Impressum reachable from an app screen', async ({ browser }) => {
     const { context, page } = await appPage(browser)
 
