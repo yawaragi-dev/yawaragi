@@ -34,13 +34,7 @@
     "privacyLink": "Datenschutz"
   },
   "header": {
-    "wordmarkLabel": "Yawaragi Startseite",
-    "navScan": "Scannen",
-    "navChat": "Chat",
-    "navProfile": "Geschmacksprofil",
-    "profileBadge": "Bald",
-    "menuOpen": "Menü öffnen",
-    "primaryLabel": "Hauptnavigation"
+    "wordmarkLabel": "Yawaragi Startseite"
   },
   "profile": {
     "title": "Dein Geschmacksprofil",
@@ -376,6 +370,25 @@
       "solid": "Solide",
       "notForMe": "Nicht mein Fall",
       "pouredItOut": "Weggeschüttet"
+    }
+  },
+  "tabs": {
+    "navLabel": "Hauptbereiche",
+    "home": "Start",
+    "scan": "Scannen",
+    "collection": "Sammlung",
+    "palate": "Palate"
+  },
+  "tabPlaceholder": {
+    "home": {
+      "title": "Dein Startbildschirm entsteht noch",
+      "body": "Hier erscheinen später deine letzten Verkostungen und der schnellste Weg zu einem neuen Etikett. Bis dahin beginnst du am besten mit der Kamera.",
+      "linkLabel": "Etikett scannen"
+    },
+    "collection": {
+      "title": "Deine Sammlung entsteht noch",
+      "body": "Drei Dinge kommen hier zusammen: die Sake, die du verkostet hast, die Flaschen, die du besitzt, und die, die du kennenlernen möchtest. Dein Verkostungsjournal findest du vorläufig im Bereich Palate.",
+      "linkLabel": "Journal öffnen"
     }
   }
 }

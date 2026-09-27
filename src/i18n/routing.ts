@@ -35,6 +35,12 @@ export const routing = defineRouting({
     '/scan': '/scan',
     '/suggest': '/suggest',
     '/profile': '/profile',
+    // The four tab destinations. `/` stays the landing page (§0, outside the
+    // app shell), so the Home *tab* needs its own segment. String shorthand
+    // like the other app routes: the legal pages are localised because German
+    // visitors bookmark /Impressum, but nobody bookmarks an app tab.
+    '/home': '/home',
+    '/collection': '/collection',
   },
 })
 

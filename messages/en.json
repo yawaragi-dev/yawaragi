@@ -34,13 +34,7 @@
     "privacyLink": "Privacy"
   },
   "header": {
-    "wordmarkLabel": "Yawaragi home",
-    "navScan": "Scan",
-    "navChat": "Chat",
-    "navProfile": "Taste profile",
-    "profileBadge": "Soon",
-    "menuOpen": "Open menu",
-    "primaryLabel": "Primary"
+    "wordmarkLabel": "Yawaragi home"
   },
   "profile": {
     "title": "Your taste profile",
@@ -376,6 +370,25 @@
       "solid": "Solid",
       "notForMe": "Not for me",
       "pouredItOut": "Poured it out"
+    }
+  },
+  "tabs": {
+    "navLabel": "Main sections",
+    "home": "Home",
+    "scan": "Scan",
+    "collection": "Collection",
+    "palate": "Palate"
+  },
+  "tabPlaceholder": {
+    "home": {
+      "title": "Your home screen is on its way",
+      "body": "It will open with your recent tastings and the fastest way to read a new label. Until then, the camera is the place to start.",
+      "linkLabel": "Scan a label"
+    },
+    "collection": {
+      "title": "Your collection is on its way",
+      "body": "Three things will live here together: the sakes you have tasted, the bottles you own, and the ones you want to try. Your tasting journal is on the Palate tab for now.",
+      "linkLabel": "Open your journal"
     }
   }
 }

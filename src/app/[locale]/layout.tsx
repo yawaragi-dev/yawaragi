@@ -1,22 +1,21 @@
 import { cookies } from 'next/headers'
 import { hasLocale, NextIntlClientProvider } from 'next-intl'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
-import { Geist, Geist_Mono } from 'next/font/google'
+import { Geist_Mono, Inter } from 'next/font/google'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { ClerkProvider } from '@clerk/nextjs'
 import { routing } from '@/i18n/routing'
-import { Link } from '@/i18n/navigation'
-import { Header } from '@/components/layout/header'
 import { DebugPanelMount } from '@/components/debug/debug-panel-mount'
 import { CookieBanner } from '@/components/legal/cookie-banner'
-import { CookieSettingsLink } from '@/components/legal/cookie-settings-link'
 import { buildClerkLocalization } from '@/lib/auth/clerk-localization'
 import { isDebugEnabledFromCookies } from '@/lib/debug/debug-mode'
 import { getComplianceState } from '@/lib/legal/compliance-state'
 import '../globals.css'
 
-const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] })
+// Inter, per the design's type section. `--font-inter` is what `--font-sans`
+// resolves to in globals.css. Geist Mono stays for the debug panel's numbers.
+const inter = Inter({ variable: '--font-inter', subsets: ['latin'] })
 const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] })
 
 export const metadata: Metadata = {
@@ -50,7 +49,6 @@ export default async function LocaleLayout({
   // events accumulate in sessionStorage and survive the matched-scan
   // redirect from /scan to /sake/[brandId].
   const debugMode = isDebugEnabledFromCookies(cookieJar)
-  const tFooter = await getTranslations({ locale, namespace: 'footer' })
   const tSignIn = await getTranslations({ locale, namespace: 'signIn' })
 
   // ClerkProvider wraps NextIntlClientProvider so Clerk's auth context is
@@ -103,10 +101,14 @@ export default async function LocaleLayout({
         // preview, triggered by navigating to /sake/[brandId]. The
         // panel itself measured viewport-width on Chromium repros;
         // the document was overflowing because of the tooltip.)
-        className={`${geistSans.variable} ${geistMono.variable} h-full overflow-x-clip antialiased`}
+        className={`${inter.variable} ${geistMono.variable} h-full overflow-x-clip antialiased`}
       >
         <body
-          className="min-h-full flex flex-col overflow-x-clip bg-zinc-50 font-sans dark:bg-black"
+          // The ground comes from `--background` (now Ginshu, dark-only) via the
+          // `body` rule in globals.css. No `bg-*` utility here: a second source of
+          // truth for the app ground is how half-ported surfaces end up on the
+          // wrong one.
+          className="min-h-full overflow-x-clip font-sans"
           // Reserve bottom space for the mobile debug-panel strip so it
           // behaves like a sticky footer (content scrolls above it
           // instead of being overlaid). The variable is published by
@@ -117,28 +119,7 @@ export default async function LocaleLayout({
           style={{ paddingBottom: 'var(--debug-panel-h, 0px)' }}
         >
           <NextIntlClientProvider>
-            <Header />
             {children}
-            <footer
-              className="flex flex-wrap items-center justify-end gap-4 px-6 py-3"
-              data-testid="site-footer"
-            >
-              <Link
-                href="/imprint"
-                data-testid="footer-imprint-link"
-                className="text-sm text-zinc-500 underline underline-offset-4 hover:text-zinc-900 dark:hover:text-zinc-50"
-              >
-                {tFooter('imprintLink')}
-              </Link>
-              <Link
-                href="/privacy"
-                data-testid="footer-privacy-link"
-                className="text-sm text-zinc-500 underline underline-offset-4 hover:text-zinc-900 dark:hover:text-zinc-50"
-              >
-                {tFooter('privacyLink')}
-              </Link>
-              <CookieSettingsLink />
-            </footer>
             <CookieBanner initialDecision={consent} />
             <DebugPanelMount debugMode={debugMode} />
           </NextIntlClientProvider>

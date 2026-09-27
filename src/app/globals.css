@@ -1,26 +1,50 @@
 @import "tailwindcss";
 
+/*
+ * The shadcn semantic layer, repointed at Ginshu (design v1.4).
+ *
+ * It used to be shadcn's greyscale defaults with a `prefers-color-scheme:
+ * dark` override. Ginshu is **dark-only** — there is no light theme — so
+ * there is one set of values and no media query. The hexes are the design's
+ * ramp, named in the `@theme` block further down; they are spelled out here
+ * rather than referenced through `var(--color-ash-*)` because Tailwind
+ * resolves `@theme` after this block and a forward reference would silently
+ * compute to nothing.
+ *
+ * Mapping, and why each one:
+ *   background → ground     the app ground the design specifies
+ *   card/popover → surface  every raised panel in the design is one colour
+ *   primary → ginshu-600    the accent at button weight; 600 not 500 because
+ *                           the design uses 600 for anything with an outline
+ *                           or a glyph ("brighter so it holds up at low
+ *                           screen brightness")
+ *   secondary/muted/accent → ash-200/ash-300, the two panel-on-panel steps
+ *   muted-foreground → ash-600, the design's secondary text
+ *   border/input → divider, a translucent white so it reads on any panel
+ */
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --background: #1b1a19;
+  --foreground: #e8e4dd;
+  --card: #232221;
+  --card-foreground: #e8e4dd;
+  --popover: #232221;
+  --popover-foreground: #e8e4dd;
+  --primary: #cf8a6e;
+  /* Text ON the accent is the ground, never white — the design is explicit:
+     "Selected chip: 600 fill with #1b1a19 text." */
+  --primary-foreground: #1b1a19;
+  --secondary: #2d2b29;
+  --secondary-foreground: #e8e4dd;
+  --muted: #2d2b29;
+  --muted-foreground: #a8a49c;
+  --accent: #383634;
+  --accent-foreground: #ece8e1;
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: #1b1a19;
+  --border: rgba(232, 228, 221, 0.14);
+  --input: rgba(232, 228, 221, 0.2);
+  --ring: #b8735a;
 }
 
 @theme inline {
@@ -47,38 +71,36 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-inter);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.922 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --destructive-foreground: oklch(0.985 0 0);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
-  }
-}
+/*
+ * `dark:` resolves to "always" because Ginshu is dark-only.
+ *
+ * 40 components carry `dark:` variants written when the app followed the
+ * system colour scheme. With the tokens above now unconditionally dark, a
+ * visitor whose OS prefers light would have got every one of those components'
+ * LIGHT branch — `bg-white`, `text-zinc-900` — on a #1b1a19 ground. Unreadable,
+ * and invisible to anyone developing in dark mode.
+ *
+ * Redefining the variant renders the dark branch for everyone and leaves all
+ * 40 files compiling untouched. The light-branch classes beside them are now
+ * dead weight, stripped per surface as each is ported rather than in one
+ * 40-file sweep that would collide with every open port PR.
+ *
+ * `&` and not `&:where(...)`: there is no selector to match on, because there
+ * is no light theme to distinguish from.
+ */
+@custom-variant dark (&);
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  /* Inter, per the design's type section. `--font-sans` is wired to
+     next/font's Inter in the `@theme inline` block and already carries its own
+     fallback face; `system-ui` covers the case where the variable is unset. */
+  font-family: var(--font-sans), system-ui, sans-serif;
 }
 
 /*
@@ -127,12 +149,16 @@ body {
  * Warm-ash dark ground with a ginshu (銀朱, "silvered red") accent. Structure,
  * spacing, radii and type come from Nocturne; only the colours are overridden.
  *
- * ADDITIVE ON PURPOSE. The shadcn semantic tokens above (--background,
- * --card, --primary …) are deliberately left alone: 39 components still
- * render `bg-white dark:bg-zinc-900`, and repointing the semantic layer here
- * would leave the app half-ported and visibly wrong between PRs. Surfaces opt
- * into Ginshu as they are ported; the final port PR repoints the semantic
- * tokens at these ramps and deletes the greyscale block above.
+ * The shadcn semantic tokens above now point AT this ramp. They did not when
+ * this block landed (#302) — repointing them mid-port would have left the app
+ * half-ported and visibly wrong between PRs, so the block was additive and
+ * unused. The app-shell PR flipped them, which is why `dark:` is now forced
+ * and the greyscale `prefers-color-scheme` block is gone.
+ *
+ * Reach for a named ramp step (`bg-ash-200`, `text-ginshu-700`) when the
+ * design names one, and the semantic token (`bg-card`, `text-muted-
+ * foreground`) when you are styling a shadcn primitive. They resolve to the
+ * same hexes; the difference is which vocabulary the reader expects.
  *
  * Ginshu is DARK-ONLY. There is no light variant, so these values sit on bare
  * `:root` with no `prefers-color-scheme` or `[data-theme]` branch — the
