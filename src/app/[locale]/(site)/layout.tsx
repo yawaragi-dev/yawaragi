@@ -1,8 +1,6 @@
 import { cookies } from 'next/headers'
 import { CookieBanner } from '@/components/legal/cookie-banner'
 import { getComplianceState } from '@/lib/legal/compliance-state'
-import { Header } from '@/components/layout/header'
-import { LegalFooter } from '@/components/layout/legal-footer'
 
 /**
  * Everything outside the app shell: the landing page, the legal documents and
@@ -14,9 +12,11 @@ import { LegalFooter } from '@/components/layout/legal-footer'
  * than the one we have. So rule 10's phone lock lives in `(app)` only, and
  * this group keeps ordinary document flow.
  *
- * §0 replaces this header and footer with the landing's own (wordmark + 和らぎ,
- * locale switch, "Open the app"; a five-link footer with the Sakenowa credit).
- * That is the landing MR's job — this is the shared chrome until then.
+ * The group holds only the consent banner now. The landing brings §0's own
+ * header and footer; the legal documents keep the plain app chrome through the
+ * nested `(chrome)` group. The banner is common to both, and its `site`
+ * placement is §0's geometry — centred above the bottom edge, since there is
+ * no tab bar here to clear.
  */
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
   // Only the GDPR `consent` field: the banner is GDPR, the age gate is
@@ -25,9 +25,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
 
   return (
     <>
-      <Header />
       {children}
-      <LegalFooter />
       <CookieBanner initialDecision={consent} placement="site" />
     </>
   )

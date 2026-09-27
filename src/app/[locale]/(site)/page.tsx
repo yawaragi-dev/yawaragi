@@ -1,12 +1,35 @@
+import { Camera, Hexagon, Star } from '@phosphor-icons/react/dist/ssr'
+import type { Icon } from '@phosphor-icons/react'
 import { cookies } from 'next/headers'
 import { getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
 import { isLaunched } from '@/i18n/launch-state'
 import { AgeGate } from '@/components/legal/age-gate'
+import { LandingFooter } from '@/components/landing/landing-footer'
+import { LandingHeader } from '@/components/landing/landing-header'
 import { LandingHero } from '@/components/landing/landing-hero'
 import { hasAcceptedAgeGate } from '@/lib/legal/age-gate-cookie'
 import { getLandingSampleScan } from '@/lib/landing/sample-scan'
 
+/**
+ * The landing page — design v1.4 §0.
+ *
+ * A normally scrolling page outside the app shell: §0's own header, a hero,
+ * three feature cards, the privacy promise, and the five-item footer with the
+ * Sakenowa credit.
+ *
+ * **Where the real example sits.** §0 puts a phone placeholder in the hero's
+ * right column and tells us to "replace with a real app screenshot". We have
+ * something better than a screenshot — `<LandingHero />` renders an actual
+ * scan result from the Sakenowa mirror (UX-E #166) — so rather than mock a
+ * phone, it gets its own section directly under the hero. Its heading drops
+ * from `h1` to `h2`, because §0's "Know what's in the cup." is the page's one
+ * `h1`.
+ *
+ * It renders **only after the 18+ gate is accepted**, and is fetched lazily
+ * for the same reason: it is Sakenowa flavor data, and JMStV allows none of
+ * that before acceptance. That predates this port and is unchanged by it.
+ */
 export default async function LandingPage({
   params,
 }: {
@@ -21,114 +44,119 @@ export default async function LandingPage({
   const t = await getTranslations('landing')
   const cookieJar = await cookies()
   const gateAccepted = hasAcceptedAgeGate(cookieJar)
-
-  // UX-E (#166): lead with a real example scan result — but ONLY after the
-  // 18+ gate is accepted, because the hero renders Sakenowa flavor data
-  // (JMStV: no flavor data before acceptance). We fetch the sample lazily
-  // for the same reason — no flavor data touches the DOM pre-acceptance —
-  // and fall back to the text intro when the mirror has no sample row.
   const sample = gateAccepted ? await getLandingSampleScan() : null
 
   return (
     <>
-      <main className="flex flex-1 w-full max-w-4xl mx-auto flex-col gap-12 py-16 px-8">
-        {sample ? (
-          <LandingHero sample={sample} locale={locale} />
-        ) : (
-          <section className="flex flex-col gap-4">
-            <h1 className="text-4xl font-semibold leading-tight tracking-tight">
-              {t('title')}
-            </h1>
-            <p className="text-xl text-zinc-700 dark:text-zinc-300">
-              {t('tagline')}
-            </p>
-            <p className="text-base text-zinc-600 dark:text-zinc-400 max-w-prose">
-              {t('intro')}
-            </p>
+      <LandingHeader />
+      <main className="mx-auto w-full max-w-[1120px] px-5 pb-16 sm:px-[clamp(20px,5vw,56px)]">
+        <section className="flex flex-col gap-5 py-14" data-testid="landing-intro">
+          <p className="flex items-center gap-2.5 text-section-label uppercase text-ash-600">
+            {/* The design's accent "mark": a 2px × 14px rule before a heading. */}
+            <span className="h-3.5 w-0.5 bg-ginshu-500" aria-hidden="true" />
+            {t('kicker')}
+          </p>
+          <h1 className="max-w-[16ch] text-[clamp(36px,7vw,58px)] font-medium leading-[1.05] tracking-[-0.03em] text-balance text-ink">
+            {t('heading')}
+          </h1>
+          <p className="max-w-[54ch] text-md-alt text-ash-600">{t('lead')}</p>
+          <div className="flex flex-wrap items-center gap-3 pt-1">
+            <Link
+              href="/scan"
+              className="inline-flex h-12 items-center gap-2 rounded-lg bg-ash-200 px-5 text-card-heading font-medium text-ink transition-colors hover:bg-ash-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+              data-testid="landing-scan-cta"
+            >
+              <Camera size={17} aria-hidden="true" />
+              {t('ctaScan')}
+            </Link>
+            {/* An in-page anchor, so it is a real destination rather than a
+                promise: it scrolls to the three feature cards below. */}
+            <a
+              href="#how"
+              className="inline-flex h-12 items-center rounded-lg px-4 text-card-heading text-ash-600 transition-colors hover:text-ash-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+              data-testid="landing-how-cta"
+            >
+              {t('ctaHow')}
+            </a>
+          </div>
+          <p className="text-meta text-ash-500">{t('smallPrint')}</p>
+        </section>
+
+        {sample && (
+          <section className="pb-14" data-testid="landing-example">
+            <LandingHero sample={sample} locale={locale} headingLevel="h2" />
           </section>
         )}
 
-        <section className="grid gap-8 sm:grid-cols-3">
-          {/*
-            All three cards resolve to a live route. Chat → `/suggest`
-            (Phase 4 shipped); Profile → `/profile` (Phase 5 coming-soon
-            mock, UX-D #165). Shared `<LandingCard />` shape so the
-            hover / focus / arrow affordances stay in lockstep — a dead
-            card here would collide with UX-A's header-nav promise that
-            every advertised surface has a real destination (#162 AC).
-          */}
-          <LandingCard
-            href="/scan"
-            title={t('sectionScanTitle')}
-            body={t('sectionScanBody')}
-            testId="landing-scan-cta"
-          />
-          <LandingCard
-            href="/suggest"
-            title={t('sectionChatTitle')}
-            body={t('sectionChatBody')}
-            testId="landing-chat-cta"
-          />
-          <LandingCard
-            href="/profile"
-            title={t('sectionProfileTitle')}
-            body={t('sectionProfileBody')}
-            testId="landing-profile-cta"
-          />
+        <section id="how" className="flex scroll-mt-6 flex-col gap-6 pb-14">
+          <h2 className="text-headline font-medium text-ink">{t('featuresHeading')}</h2>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <FeatureCard
+              icon={Camera}
+              title={t('featureIdentifyTitle')}
+              body={t('featureIdentifyBody')}
+              testId="landing-feature-identify"
+            />
+            <FeatureCard
+              icon={Star}
+              title={t('featureRateTitle')}
+              body={t('featureRateBody')}
+              testId="landing-feature-rate"
+            />
+            <FeatureCard
+              icon={Hexagon}
+              title={t('featurePalateTitle')}
+              body={t('featurePalateBody')}
+              testId="landing-feature-palate"
+            />
+          </div>
+        </section>
+
+        <section
+          className="flex flex-col items-start gap-3 rounded-xl border border-divider p-6"
+          data-testid="landing-privacy-promise"
+        >
+          <h2 className="text-title font-medium text-ink">{t('privacyTitle')}</h2>
+          <p className="max-w-[62ch] text-body text-ash-600">{t('privacyBody')}</p>
+          <Link
+            href="/home"
+            className="mt-1 inline-flex h-11 items-center rounded-lg bg-ash-200 px-4 text-body font-medium text-ink transition-colors hover:bg-ash-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+            data-testid="landing-privacy-cta"
+          >
+            {t('openApp')}
+          </Link>
         </section>
       </main>
+      <LandingFooter />
       {!gateAccepted && <AgeGate />}
     </>
   )
 }
 
-interface LandingCardProps {
-  href: '/scan' | '/suggest' | '/profile'
+interface FeatureCardProps {
+  icon: Icon
   title: string
   body: string
   testId: string
 }
 
-function LandingCard({ href, title, body, testId }: LandingCardProps) {
+function FeatureCard({ icon: Icon, title, body, testId }: FeatureCardProps) {
   return (
-    <Link
-      href={href}
-      className="group flex flex-col gap-2 -m-3 p-3 rounded-lg transition-colors hover:bg-zinc-100/70 dark:hover:bg-zinc-800/60 active:bg-zinc-200/70 dark:active:bg-zinc-700/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900 dark:focus-visible:outline-zinc-100"
-      data-testid={testId}
-    >
-      <h2 className="text-lg font-medium inline-flex items-center gap-1.5">
-        {title}
-        <span
-          aria-hidden
-          className="inline-block transition-transform duration-200 group-hover:translate-x-0.5"
-        >
-          →
-        </span>
-      </h2>
-      <p className="text-sm text-zinc-600 dark:text-zinc-400">{body}</p>
-    </Link>
+    <div className="flex flex-col gap-2.5 rounded-xl bg-surface p-5" data-testid={testId}>
+      <Icon size={24} className="text-ginshu-600" aria-hidden="true" />
+      <h3 className="text-md-alt font-medium text-ink">{title}</h3>
+      <p className="text-body text-ash-600">{body}</p>
+    </div>
   )
 }
 
 async function ComingSoonPage() {
   const t = await getTranslations('comingSoon')
-
   return (
-    <main
-      className="flex flex-1 w-full max-w-3xl mx-auto flex-col gap-6 py-16 px-8"
-      data-testid="coming-soon"
-    >
-      <h1 className="text-4xl font-semibold leading-tight tracking-tight">
-        {t('title')}
-      </h1>
-      <p className="text-base text-zinc-700 dark:text-zinc-300 max-w-prose">
-        {t('body')}
-      </p>
-      <Link
-        href="/"
-        locale="en"
-        className="text-base font-medium underline underline-offset-4"
-      >
+    <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-8 py-16" data-testid="coming-soon">
+      <h1 className="text-headline font-medium text-ink">{t('title')}</h1>
+      <p className="max-w-prose text-body text-ash-600">{t('body')}</p>
+      <Link href="/" locale="en" className="text-body font-medium underline underline-offset-4">
         {t('switchToEn')}
       </Link>
     </main>

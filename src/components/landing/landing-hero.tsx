@@ -20,9 +20,16 @@ import { SAMPLE_SCAN_PHOTO_SRC, type LandingSampleScan } from '@/lib/landing/sam
 export async function LandingHero({
   sample,
   locale,
+  headingLevel = 'h1',
 }: {
   sample: LandingSampleScan
   locale: string
+  /**
+   * `h1` standalone, `h2` when §0's "Know what's in the cup." is above it.
+   * A page with two `h1`s gives a screen-reader user two competing answers to
+   * "what is this page", and the design has exactly one title.
+   */
+  headingLevel?: 'h1' | 'h2'
 }) {
   const t = await getTranslations('landing.hero')
 
@@ -36,18 +43,16 @@ export async function LandingHero({
     },
   })
 
+  const Heading = headingLevel
+
   return (
     <section className="flex flex-col gap-6" data-testid="landing-hero">
       <div className="flex flex-col gap-2">
-        <p className="text-sm font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-          {t('kicker')}
-        </p>
-        <h1 className="text-4xl font-semibold leading-tight tracking-tight">
+        <p className="text-section-label uppercase text-ash-600">{t('kicker')}</p>
+        <Heading className="text-headline font-medium text-ink">
           {t('heading')}
-        </h1>
-        <p className="max-w-prose text-base text-zinc-600 dark:text-zinc-400">
-          {t('subhead')}
-        </p>
+        </Heading>
+        <p className="max-w-prose text-body text-ash-600">{t('subhead')}</p>
       </div>
 
       {/*
@@ -71,7 +76,11 @@ export async function LandingHero({
 
       <Link
         href="/scan"
-        className="inline-flex w-fit items-center gap-1.5 rounded-lg bg-zinc-900 px-5 py-3 text-base font-medium text-white transition-colors hover:bg-zinc-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300 dark:focus-visible:outline-zinc-100"
+        // Ash, not the near-white `dark:bg-zinc-100` this used to carry: with
+        // the variant forced on (ADR-0023) that rendered a white slab on the
+        // Ginshu ground. The design keeps buttons on the neutral ramp anyway —
+        // "the accent never floods a surface".
+        className="inline-flex h-12 w-fit items-center gap-1.5 rounded-lg bg-ash-200 px-5 text-card-heading font-medium text-ink transition-colors hover:bg-ash-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
         data-testid="landing-hero-scan-cta"
       >
         {t('scanYourOwn')}
