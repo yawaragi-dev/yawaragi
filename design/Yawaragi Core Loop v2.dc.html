@@ -1,0 +1,1388 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/nocturne-9c99b1eb-b42d-45c4-9cc2-5ee7dbf09ad5/styles.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<style>
+:root{
+  --color-bg:#faf8f4; --color-surface:#fffefb; --color-text:#211e18;
+  --color-accent:#a5741f; --color-accent-2:#a5741f;
+  --color-divider:color-mix(in srgb,#211e18 13%,transparent);
+  --color-neutral-100:#faf8f4; --color-neutral-200:#f0ece4; --color-neutral-300:#e2dcd0;
+  --color-neutral-400:#c8c0b0; --color-neutral-500:#a89f8c; --color-neutral-600:#877e6c;
+  --color-neutral-700:#665e4f; --color-neutral-800:#453f34; --color-neutral-900:#24211b;
+  --color-accent-100:#fdf7ea; --color-accent-200:#f7e9cd; --color-accent-300:#eed3a2;
+  --color-accent-400:#ddb266; --color-accent-500:#c8912f; --color-accent-600:#a5741f;
+  --color-accent-700:#7e5714; --color-accent-800:#593d0e; --color-accent-900:#35250a;
+  --color-accent-2-100:#fdf7ea; --color-accent-2-200:#f7e9cd; --color-accent-2-300:#eed3a2;
+  --color-accent-2-400:#ddb266; --color-accent-2-500:#c8912f; --color-accent-2-600:#a5741f;
+  --color-accent-2-700:#7e5714; --color-accent-2-800:#593d0e; --color-accent-2-900:#35250a;
+  --shadow-sm:0 0 0 1px #e8e2d6;
+  --shadow-md:0 0 0 1px #e8e2d6, 0 6px 18px rgba(33,30,24,.07);
+  --shadow-lg:0 0 0 1px #ded7c8, 0 18px 44px rgba(33,30,24,.14);
+}
+body{margin:0;background:#efebe3;font-family:var(--font-body);color:var(--color-text)}
+a{color:var(--color-accent-700);text-decoration:none}
+a:hover{color:var(--color-accent-600)}
+.tag-neutral{background:var(--color-neutral-200);color:var(--color-neutral-800)}
+.tag-accent{background:var(--color-accent-100);color:var(--color-accent-700)}
+@keyframes yw-sweep{0%{transform:translateY(-100%)}100%{transform:translateY(340%)}}
+@keyframes yw-rise{0%{transform:translateY(14px);opacity:0}100%{transform:translateY(0);opacity:1}}
+@keyframes yw-fade{0%{opacity:0}100%{opacity:1}}
+@keyframes yw-pulse{0%,100%{opacity:.45}50%{opacity:1}}
+@keyframes yw-pop{0%{transform:scale(.86)}60%{transform:scale(1.06)}100%{transform:scale(1)}}
+textarea::placeholder,input::placeholder{font-style:italic}
+</style>
+</helmet>
+
+<section style="padding:30px 28px 40px;display:flex;flex-direction:column;gap:22px">
+
+  <div style="max-width:880px;display:flex;flex-direction:column;gap:9px">
+    <div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700)">Turn 6 · the decider</div>
+    <div style="font-family:var(--font-heading);font-weight:500;font-size:27px;letter-spacing:-.02em">2c and 4c, put under stress</div>
+    <div style="font-size:14px;color:var(--color-neutral-700);line-height:1.6;max-width:700px;text-wrap:pretty">On one card these two are a coin toss, which is why the card is the wrong place to decide. An accent fails in volume, at low brightness, and next to the colours it has to sit beside. Three tests below, same content, same treatment — the one that holds in all three is the answer.</div>
+  </div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start">
+    <sc-for list="{{ deciders }}" as="p" hint-placeholder-count="2">
+      <div style="width:400px;display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;align-items:flex-start;gap:9px">
+          <span style="font-family:var(--font-heading);font-weight:500;font-size:12px;letter-spacing:.06em;padding:4px 9px;border-radius:999px;background:var(--color-accent-700);color:#fffefb;flex:none">{{ p.id }}</span>
+          <div style="flex:1;min-width:0">
+            <div style="font-family:var(--font-heading);font-weight:500;font-size:16px;letter-spacing:-.01em">{{ p.name }}</div>
+            <div style="font-size:12px;color:var(--color-neutral-700)">{{ p.tagline }}</div>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-700)">Test 1 · in volume</div>
+          <div style="border-radius:18px;overflow:hidden;background:{{ p.bg }};box-shadow:var(--shadow-md);padding:14px 16px 0">
+            <div style="font-family:var(--font-heading);font-weight:500;font-size:19px;letter-spacing:-.02em;color:{{ p.text }};margin-bottom:10px">Journal</div>
+            <sc-for list="{{ journal }}" as="e" hint-placeholder-count="6">
+              <div style="display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid {{ p.divider }}">
+                <div style="width:30px;flex:none;text-align:center">
+                  <div style="font-family:var(--font-heading);font-size:15px;line-height:1;color:{{ p.text }}">{{ e.day }}</div>
+                  <div style="font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:{{ p.soft }};margin-top:2px">{{ e.mon }}</div>
+                </div>
+                <div style="flex:1;min-width:0">
+                  <div style="font-family:var(--font-heading);font-weight:500;font-size:14px;color:{{ p.text }}">{{ e.name }}</div>
+                  <div style="font-size:11px;color:{{ p.soft }};margin-top:1px">{{ e.brewery }}</div>
+                </div>
+                <div style="display:flex;gap:1px;color:{{ p.star }};font-size:12px;flex:none;margin-top:2px">
+                  <sc-for list="{{ e.stars }}" as="s" hint-placeholder-count="5"><i class="ph {{ s.cls }}"></i></sc-for>
+                </div>
+              </div>
+            </sc-for>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);padding:9px 0 14px;margin-top:6px;border-top:1px solid {{ p.divider }}">
+              <sc-for list="{{ p.tabs }}" as="t" hint-placeholder-count="4">
+                <div style="display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;color:{{ t.color }}">
+                  <i class="ph {{ t.icon }}" style="font-size:20px"></i>{{ t.label }}
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="font-size:12px;color:var(--color-neutral-700);line-height:1.55;text-wrap:pretty">{{ p.volumeNote }}</div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-700)">Test 2 · phone at 20% in a dark bar</div>
+          <div style="border-radius:18px;overflow:hidden;box-shadow:var(--shadow-md);filter:brightness(.42) saturate(.92)">
+            <div style="background:{{ p.bg }};padding:15px 16px;display:flex;flex-direction:column;gap:11px">
+              <div style="display:flex;gap:11px;align-items:center">
+                <div style="width:44px;height:58px;flex:none;border-radius:5px;background:repeating-linear-gradient(135deg,{{ p.ph1 }},{{ p.ph1 }} 5px,{{ p.ph2 }} 5px,{{ p.ph2 }} 10px)"></div>
+                <div style="flex:1;min-width:0">
+                  <div style="font-family:var(--font-heading);font-weight:500;font-size:17px;letter-spacing:-.02em;color:{{ p.text }}">Kidoizumi AFS</div>
+                  <div style="font-size:11px;color:{{ p.soft }};margin-top:2px">Kidoizumi Shuzō · Chiba</div>
+                </div>
+              </div>
+              <div style="border-radius:var(--radius-md);background:{{ p.logPanel }};padding:11px;display:flex;align-items:center;gap:10px">
+                <span style="width:2px;height:24px;background:{{ p.accent }};display:block;flex:none"></span>
+                <div style="display:flex;gap:3px;color:{{ p.star }}">
+                  <i class="ph-fill ph-star" style="font-size:24px"></i><i class="ph-fill ph-star" style="font-size:24px"></i><i class="ph-fill ph-star" style="font-size:24px"></i><i class="ph-fill ph-star" style="font-size:24px"></i><i class="ph-fill ph-star-half" style="font-size:24px"></i>
+                </div>
+                <span style="font-family:var(--font-heading);font-size:13px;color:{{ p.text }};white-space:nowrap">4.5</span>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:center;gap:7px;height:38px;border-radius:var(--radius-md);border:1px solid {{ p.accent }};color:{{ p.accentBtn }};font-size:13px">Add to cellar</div>
+            </div>
+          </div>
+          <div style="font-size:12px;color:var(--color-neutral-700);line-height:1.55;text-wrap:pretty">{{ p.dimNote }}</div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-700)">Test 3 · beside real label colours</div>
+          <div style="border-radius:18px;background:{{ p.bg }};box-shadow:var(--shadow-md);padding:16px;display:flex;flex-direction:column;gap:11px">
+            <div style="display:flex;align-items:center;gap:10px">
+              <sc-for list="{{ labelColors }}" as="c" hint-placeholder-count="5">
+                <div style="display:flex;flex-direction:column;align-items:center;gap:5px;flex:1">
+                  <span style="width:34px;height:34px;border-radius:50%;background:{{ c.hex }};display:block"></span>
+                  <span style="font-size:9px;color:{{ p.soft }};text-align:center;line-height:1.3">{{ c.label }}</span>
+                </div>
+              </sc-for>
+              <div style="display:flex;flex-direction:column;align-items:center;gap:5px;flex:1">
+                <span style="width:34px;height:34px;border-radius:50%;background:{{ p.accent }};display:block;box-shadow:0 0 0 3px {{ p.bg }}, 0 0 0 4px {{ p.accent }}"></span>
+                <span style="font-size:9px;color:{{ p.accentBtn }};text-align:center;line-height:1.3">the accent</span>
+              </div>
+            </div>
+          </div>
+          <div style="font-size:12px;color:var(--color-neutral-700);line-height:1.55;text-wrap:pretty">{{ p.labelNote }}</div>
+        </div>
+      </div>
+    </sc-for>
+
+    <div style="width:330px;display:flex;flex-direction:column;gap:12px;padding:18px;border-radius:var(--radius-lg);border:1px solid var(--color-divider);background:var(--color-surface)">
+      <div style="font-family:var(--font-heading);font-weight:500;font-size:17px;letter-spacing:-.01em">How to decide</div>
+      <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.6;text-wrap:pretty">Not by preference — both are good. Answer these three and the tie breaks itself.</div>
+      <sc-for list="{{ questions }}" as="q" hint-placeholder-count="3">
+        <div style="display:flex;flex-direction:column;gap:5px;padding-top:12px;border-top:1px solid var(--color-divider)">
+          <div style="font-family:var(--font-heading);font-weight:500;font-size:14px;text-wrap:pretty">{{ q.q }}</div>
+          <div style="font-size:12px;color:var(--color-neutral-700);line-height:1.55;text-wrap:pretty">{{ q.a }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+</section>
+
+<section style="padding:0 28px 40px;display:flex;flex-direction:column;gap:22px">
+
+  <div style="max-width:880px;display:flex;flex-direction:column;gap:9px">
+    <div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700)">Turn 5 · head to head</div>
+    <div style="font-family:var(--font-heading);font-weight:500;font-size:27px;letter-spacing:-.02em">Turn 2 and turn 4, same treatment</div>
+    <div style="font-size:14px;color:var(--color-neutral-700);line-height:1.6;max-width:700px;text-wrap:pretty">The earlier rounds were not comparable: turn 2 flooded the log panel with accent, turn 4 reduced it to a mark. Here all five — the three from turn 2, plus <a href="#4a">4a</a> and <a href="#4c">4c</a> — wear the quiet treatment, so the only variable left is the colour itself. Read the rating strip: that is where a palette either makes a five-star night feel like something or doesn’t.</div>
+  </div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start">
+    <sc-for list="{{ finals }}" as="p" hint-placeholder-count="5">
+      <div style="width:330px;display:flex;flex-direction:column;gap:11px">
+        <div style="display:flex;align-items:flex-start;gap:9px">
+          <span style="font-family:var(--font-heading);font-weight:500;font-size:12px;letter-spacing:.06em;padding:4px 9px;border-radius:999px;background:var(--color-accent-700);color:#fffefb;flex:none">{{ p.id }}</span>
+          <div style="flex:1;min-width:0">
+            <div style="font-family:var(--font-heading);font-weight:500;font-size:15px;letter-spacing:-.01em">{{ p.name }}</div>
+            <div style="font-size:12px;color:var(--color-neutral-700)">{{ p.tagline }}</div>
+          </div>
+        </div>
+
+        <div style="border-radius:22px;overflow:hidden;background:{{ p.bg }};box-shadow:var(--shadow-md);padding:16px 15px 18px;display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;gap:12px">
+            <div style="width:58px;height:78px;flex:none;border-radius:6px;background:repeating-linear-gradient(135deg,{{ p.ph1 }},{{ p.ph1 }} 5px,{{ p.ph2 }} 5px,{{ p.ph2 }} 10px)"></div>
+            <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px">
+              <div style="font-family:var(--font-heading);font-weight:500;font-size:18px;line-height:1.15;letter-spacing:-.02em;color:{{ p.text }}">Kidoizumi AFS</div>
+              <div style="font-size:11px;color:{{ p.soft }}">Kidoizumi Shuzō · Chiba</div>
+              <div style="display:flex;gap:5px;margin-top:4px">
+                <span style="font-size:11px;padding:3px 8px;border-radius:5px;background:{{ p.tagBg }};color:{{ p.tagInk }}">Junmai</span>
+                <span style="font-size:11px;padding:3px 8px;border-radius:5px;background:{{ p.tagBg }};color:{{ p.tagInk }}">Kimoto</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="border-radius:var(--radius-md);background:{{ p.logPanel }};padding:12px;display:flex;flex-direction:column;gap:9px">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="width:2px;height:13px;background:{{ p.accent }};display:block"></span>
+                <span style="font-family:var(--font-heading);font-weight:500;font-size:14px;color:{{ p.text }}">Logged tonight</span>
+              </div>
+              <span style="font-size:11px;color:{{ p.soft }}">21:40</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="display:flex;gap:3px;color:{{ p.star }}">
+                <i class="ph-fill ph-star" style="font-size:27px"></i><i class="ph-fill ph-star" style="font-size:27px"></i><i class="ph-fill ph-star" style="font-size:27px"></i><i class="ph-fill ph-star" style="font-size:27px"></i><i class="ph-fill ph-star-half" style="font-size:27px"></i>
+              </div>
+              <span style="font-family:var(--font-heading);font-size:13px;color:{{ p.text }};white-space:nowrap">4.5 · Outstanding</span>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <sc-for list="{{ p.rows }}" as="r" hint-placeholder-count="3">
+              <div style="display:flex;flex-direction:column;gap:4px">
+                <div style="display:flex;justify-content:space-between;font-size:11px;color:{{ p.soft }}"><span>{{ r.label }}</span><span>{{ r.pct }}</span></div>
+                <div style="height:4px;border-radius:2px;background:{{ p.track }};overflow:hidden">
+                  <div style="height:100%;border-radius:2px;background:{{ p.accent }};width:{{ r.pct }}"></div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:center;gap:7px;height:40px;border-radius:var(--radius-md);border:1px solid {{ p.accent }};color:{{ p.accentBtn }};font-size:13px"><i class="ph ph-stack-plus" style="font-size:16px"></i>Add to cellar</div>
+        </div>
+
+        <div style="font-size:12px;color:var(--color-neutral-700);line-height:1.6;text-wrap:pretty">{{ p.verdict }}</div>
+      </div>
+    </sc-for>
+  </div>
+</section>
+
+<section style="padding:0 28px 40px;display:flex;flex-direction:column;gap:22px">
+
+  <div style="max-width:880px;display:flex;flex-direction:column;gap:9px">
+    <div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700)">Turn 4 · colour, quieter</div>
+    <div style="font-family:var(--font-heading);font-weight:500;font-size:27px;letter-spacing:-.02em">One hue, almost no chroma</div>
+    <div style="font-size:14px;color:var(--color-neutral-700);line-height:1.6;max-width:700px;text-wrap:pretty">Your three notes are one note: the ground and the accent were arguing. So the rule changed — ground and accent now sit in the <em>same</em> hue family and only a few steps apart in value, at a fraction of the chroma. The amber panel is gone with them: colour appears as a 2px mark and the star row, never as a fill. That is closer to how a sake label actually works, and it is what the Edo greys were for.</div>
+    <div style="font-size:14px;color:var(--color-neutral-700);line-height:1.6;max-width:700px;text-wrap:pretty"><a href="#4a">4a</a> keeps your turquoise instinct but drops it into the ground's own family; <a href="#4b">4b</a> goes almost colourless — a tea-room grey-green; <a href="#4c">4c</a> keeps the seal idea from 3c with the heat taken out.</div>
+  </div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:26px;align-items:flex-start">
+    <sc-for list="{{ palettes4 }}" as="p" hint-placeholder-count="3">
+      <div id="{{ p.id }}" style="display:flex;flex-direction:column;gap:12px;width:390px">
+        <div style="display:flex;align-items:flex-start;gap:10px">
+          <span style="font-family:var(--font-heading);font-weight:500;font-size:12px;letter-spacing:.06em;padding:4px 9px;border-radius:999px;background:var(--color-accent-700);color:#fffefb;flex:none">{{ p.id }}</span>
+          <div style="flex:1;min-width:0">
+            <div style="font-family:var(--font-heading);font-weight:500;font-size:17px;letter-spacing:-.01em">{{ p.name }}</div>
+            <div style="font-size:12px;color:var(--color-neutral-700)">{{ p.tagline }}</div>
+          </div>
+          <div style="display:flex;gap:4px;flex:none;padding-top:3px">
+            <sc-for list="{{ p.swatches }}" as="w" hint-placeholder-count="4">
+              <span style="width:16px;height:16px;border-radius:4px;background:{{ w.hex }};box-shadow:inset 0 0 0 1px rgba(33,30,24,.15)"></span>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="width:390px;height:844px;position:relative;overflow:hidden;border-radius:38px;background:{{ p.bg }};box-shadow:var(--shadow-lg)">
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 22px 2px;font-size:12px;font-weight:500;color:{{ p.soft }};flex:none">
+              <span>21:40</span>
+              <span style="display:flex;gap:5px"><i class="ph ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span>
+            </div>
+
+            <div style="flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column">
+              <div style="display:flex;align-items:center;gap:6px;padding:10px 14px 6px;flex:none">
+                <button style="border:0;background:transparent;cursor:pointer;padding:4px;color:{{ p.text }}"><i class="ph ph-arrow-left" style="font-size:19px"></i></button>
+                <div style="font-size:12px;color:{{ p.soft }};flex:1">Matched from your photo</div>
+                <button style="border:0;background:transparent;cursor:pointer;font-family:var(--font-body);font-size:12px;color:{{ p.text }};display:flex;align-items:center;gap:5px;padding:4px"><i class="ph ph-arrow-counter-clockwise" style="font-size:13px"></i>Not this one</button>
+              </div>
+
+              <div style="padding:4px 18px 0">
+                <article style="border-radius:var(--radius-lg);background:{{ p.surface }};box-shadow:{{ p.shadow }};overflow:hidden">
+                  <div style="display:flex;gap:14px;padding:14px">
+                    <div style="width:92px;height:122px;flex:none;border-radius:8px;background:repeating-linear-gradient(135deg,{{ p.ph1 }},{{ p.ph1 }} 5px,{{ p.ph2 }} 5px,{{ p.ph2 }} 10px)"></div>
+                    <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">
+                      <div style="font-family:var(--font-heading);font-weight:500;font-size:21px;line-height:1.14;letter-spacing:-.02em;color:{{ p.text }}">Kidoizumi AFS</div>
+                      <div style="font-size:13px;color:{{ p.soft }}" lang="ja">木戸泉 AFS</div>
+                      <div style="font-size:12px;color:{{ p.soft }}">Kidoizumi Shuzō · Chiba</div>
+                      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px">
+                        <span style="font-size:11px;padding:3px 8px;border-radius:5px;background:{{ p.tagBg }};color:{{ p.tagInk }}">Junmai</span>
+                        <span style="font-size:11px;padding:3px 8px;border-radius:5px;background:{{ p.tagBg }};color:{{ p.tagInk }}">Kimoto</span>
+                        <span style="font-size:11px;padding:3px 8px;border-radius:5px;background:{{ p.accentTint }};color:{{ p.accentInk }};display:inline-flex;align-items:center;gap:4px"><i class="ph ph-check-circle" style="font-size:12px"></i>Sure match</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style="padding:14px;border-top:1px solid {{ p.divider }};background:{{ p.logBg }};display:flex;flex-direction:column;gap:11px">
+                    <div style="display:flex;align-items:baseline;justify-content:space-between">
+                      <div style="display:flex;align-items:center;gap:8px"><span style="width:2px;height:14px;background:{{ p.accent }};display:block"></span><div style="font-family:var(--font-heading);font-weight:500;font-size:15px;color:{{ p.text }}">Logged tonight</div></div>
+                      <span style="font-size:11px;color:{{ p.soft }}">21:40 · 2nd time</span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:11px">
+                      <div style="display:flex;gap:4px;color:{{ p.star }}">
+                        <i class="ph-fill ph-star" style="font-size:33px"></i><i class="ph-fill ph-star" style="font-size:33px"></i><i class="ph-fill ph-star" style="font-size:33px"></i><i class="ph-fill ph-star" style="font-size:33px"></i><i class="ph-fill ph-star-half" style="font-size:33px"></i>
+                      </div>
+                      <span style="font-family:var(--font-heading);font-size:14px;line-height:1.2;color:{{ p.text }};white-space:nowrap">4.5 · Outstanding</span>
+                    </div>
+                    <div style="padding:10px 12px;border-radius:var(--radius-md);background:{{ p.bg }};font-size:13px;color:{{ p.soft }};border:1px solid {{ p.divider }};font-style:italic">Add a note — what struck you?</div>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap">
+                      <span style="padding:6px 11px;border-radius:999px;background:{{ p.chipBg }};color:{{ p.onAccent }};font-size:12px">Sour apple</span>
+                      <span style="padding:6px 11px;border-radius:999px;border:1px solid {{ p.divider }};color:{{ p.soft }};font-size:12px">Cider-like</span>
+                      <span style="padding:6px 11px;border-radius:999px;border:1px solid {{ p.divider }};color:{{ p.soft }};font-size:12px">Warm</span>
+                    </div>
+                    <div style="display:flex;align-items:center;justify-content:center;gap:7px;height:42px;border-radius:var(--radius-md);border:1px solid {{ p.accent }};color:{{ p.accentBtn }};font-size:13px;margin-top:2px"><i class="ph ph-sliders-horizontal" style="font-size:16px"></i>Add detailed notes</div>
+                  </div>
+                </article>
+              </div>
+
+              <div style="padding:16px 18px 0;display:flex;flex-direction:column;gap:11px">
+                <div style="display:flex;align-items:baseline;justify-content:space-between">
+                  <h6 style="margin:0;font-size:11px;letter-spacing:.1em;color:{{ p.soft }}">Flavour chart</h6>
+                  <span style="font-size:11px;color:{{ p.soft }}">Sakenowa · 214 ratings</span>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px 16px">
+                  <sc-for list="{{ axes }}" as="a" hint-placeholder-count="6">
+                    <div style="display:flex;flex-direction:column;gap:4px">
+                      <div style="display:flex;justify-content:space-between;font-size:11px;color:{{ p.soft }}"><span>{{ a.label }}</span><span>{{ a.pct }}</span></div>
+                      <div style="height:4px;border-radius:2px;background:{{ p.track }};overflow:hidden">
+                        <div style="height:100%;border-radius:2px;background:{{ p.accent }};width:{{ a.pct }}"></div>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+
+                <div style="display:flex;align-items:center;gap:11px;margin-top:3px;padding:13px;border-radius:var(--radius-md);border:1px solid {{ p.divider }}">
+                  <i class="ph ph-book-open-text" style="font-size:20px;color:{{ p.accent }}"></i>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-family:var(--font-heading);font-weight:500;font-size:14px;color:{{ p.text }}">Full bottle page</div>
+                    <div style="font-size:11px;color:{{ p.soft }};margin-top:1px;text-wrap:pretty">Rice, polishing, yeast, SMV · brewery story, serving temperatures, where to buy</div>
+                  </div>
+                  <i class="ph ph-caret-right" style="font-size:15px;color:{{ p.soft }}"></i>
+                </div>
+              </div>
+
+              <div style="padding:14px 18px 26px;display:flex;gap:8px">
+                <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;height:44px;border-radius:var(--radius-md);border:1px solid {{ p.divider }};color:{{ p.text }};font-size:13px"><i class="ph ph-bookmark-simple" style="font-size:17px"></i>Wishlist</div>
+                <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;height:44px;border-radius:var(--radius-md);border:1px solid {{ p.divider }};color:{{ p.text }};font-size:13px"><i class="ph ph-stack-plus" style="font-size:17px"></i>Add to cellar</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="font-size:12px;color:var(--color-neutral-700);line-height:1.6;text-wrap:pretty">{{ p.note }}</div>
+      </div>
+    </sc-for>
+  </div>
+</section>
+
+<section style="padding:0 28px 40px;display:flex;flex-direction:column;gap:22px">
+
+  <div style="max-width:880px;display:flex;flex-direction:column;gap:9px">
+    <div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700)">Turn 3 · colour, properly</div>
+    <div style="font-family:var(--font-heading);font-weight:500;font-size:27px;letter-spacing:-.02em">Three answers out of the Japanese tradition</div>
+    <div style="font-size:14px;color:var(--color-neutral-700);line-height:1.6;max-width:700px;text-wrap:pretty">Every colour below is a named traditional colour, not an invented “Japanese-looking” hue. Edo sumptuary law pushed townspeople into indigo and into the greys and browns known as <em>forty-eight browns, a hundred greys</em> — restraint as taste, which is the same instinct the app needs. Indigo alone ran from pale <span lang="ja">浅葱</span> asagi to near-black <span lang="ja">褐色</span> kachi, so a blue-turquoise direction is not a modern affectation; it is the working colour of the period sake brewing belongs to.</div>
+    <div style="font-size:14px;color:var(--color-neutral-700);line-height:1.6;max-width:700px;text-wrap:pretty">All three are dark, because the room is dark. The question between them is how literal the water should be: <a href="#3a">3a</a> warm ground, cool accent — sake and its <span lang="ja">和らぎ水</span>; <a href="#3b">3b</a> fully in the water; <a href="#3c">3c</a> no water at all, ink and a single seal.</div>
+  </div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:26px;align-items:flex-start">
+    <sc-for list="{{ palettes3 }}" as="p" hint-placeholder-count="3">
+      <div id="{{ p.id }}" style="display:flex;flex-direction:column;gap:12px;width:390px">
+        <div style="display:flex;align-items:flex-start;gap:10px">
+          <span style="font-family:var(--font-heading);font-weight:500;font-size:12px;letter-spacing:.06em;padding:4px 9px;border-radius:999px;background:var(--color-accent-700);color:#fffefb;flex:none">{{ p.id }}</span>
+          <div style="flex:1;min-width:0">
+            <div style="font-family:var(--font-heading);font-weight:500;font-size:17px;letter-spacing:-.01em">{{ p.name }}</div>
+            <div style="font-size:12px;color:var(--color-neutral-700)">{{ p.tagline }}</div>
+          </div>
+          <div style="display:flex;gap:4px;flex:none;padding-top:3px">
+            <sc-for list="{{ p.swatches }}" as="w" hint-placeholder-count="4">
+              <span style="width:16px;height:16px;border-radius:4px;background:{{ w.hex }};box-shadow:inset 0 0 0 1px rgba(33,30,24,.15)"></span>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="width:390px;height:844px;position:relative;overflow:hidden;border-radius:38px;background:{{ p.bg }};box-shadow:var(--shadow-lg)">
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 22px 2px;font-size:12px;font-weight:500;color:{{ p.soft }};flex:none">
+              <span>21:40</span>
+              <span style="display:flex;gap:5px"><i class="ph ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span>
+            </div>
+
+            <div style="flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column">
+              <div style="display:flex;align-items:center;gap:6px;padding:10px 14px 6px;flex:none">
+                <button style="border:0;background:transparent;cursor:pointer;padding:4px;color:{{ p.text }}"><i class="ph ph-arrow-left" style="font-size:19px"></i></button>
+                <div style="font-size:12px;color:{{ p.soft }};flex:1">Matched from your photo</div>
+                <button style="border:0;background:transparent;cursor:pointer;font-family:var(--font-body);font-size:12px;color:{{ p.text }};display:flex;align-items:center;gap:5px;padding:4px"><i class="ph ph-arrow-counter-clockwise" style="font-size:13px"></i>Not this one</button>
+              </div>
+
+              <div style="padding:4px 18px 0">
+                <article style="border-radius:var(--radius-lg);background:{{ p.surface }};box-shadow:{{ p.shadow }};overflow:hidden">
+                  <div style="display:flex;gap:14px;padding:14px">
+                    <div style="width:92px;height:122px;flex:none;border-radius:8px;background:repeating-linear-gradient(135deg,{{ p.ph1 }},{{ p.ph1 }} 5px,{{ p.ph2 }} 5px,{{ p.ph2 }} 10px)"></div>
+                    <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">
+                      <div style="font-family:var(--font-heading);font-weight:500;font-size:21px;line-height:1.14;letter-spacing:-.02em;color:{{ p.text }}">Kidoizumi AFS</div>
+                      <div style="font-size:13px;color:{{ p.soft }}" lang="ja">木戸泉 AFS</div>
+                      <div style="font-size:12px;color:{{ p.soft }}">Kidoizumi Shuzō · Chiba</div>
+                      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px">
+                        <span style="font-size:11px;padding:3px 8px;border-radius:5px;background:{{ p.tagBg }};color:{{ p.tagInk }}">Junmai</span>
+                        <span style="font-size:11px;padding:3px 8px;border-radius:5px;background:{{ p.tagBg }};color:{{ p.tagInk }}">Kimoto</span>
+                        <span style="font-size:11px;padding:3px 8px;border-radius:5px;background:{{ p.accentTint }};color:{{ p.accentInk }};display:inline-flex;align-items:center;gap:4px"><i class="ph ph-check-circle" style="font-size:12px"></i>Sure match</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style="padding:14px;border-top:1px solid {{ p.divider }};background:{{ p.accentTint }};display:flex;flex-direction:column;gap:11px">
+                    <div style="display:flex;align-items:baseline;justify-content:space-between">
+                      <div style="font-family:var(--font-heading);font-weight:500;font-size:15px;color:{{ p.accentInk }}">Logged tonight</div>
+                      <span style="font-size:11px;color:{{ p.accentInk }};opacity:.8">21:40 · 2nd time</span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:11px">
+                      <div style="display:flex;gap:4px;color:{{ p.star }}">
+                        <i class="ph-fill ph-star" style="font-size:33px"></i><i class="ph-fill ph-star" style="font-size:33px"></i><i class="ph-fill ph-star" style="font-size:33px"></i><i class="ph-fill ph-star" style="font-size:33px"></i><i class="ph-fill ph-star-half" style="font-size:33px"></i>
+                      </div>
+                      <span style="font-family:var(--font-heading);font-size:14px;line-height:1.2;color:{{ p.accentInk }};white-space:nowrap">4.5 · Outstanding</span>
+                    </div>
+                    <div style="padding:10px 12px;border-radius:var(--radius-md);background:{{ p.surface }};font-size:13px;color:{{ p.soft }};border:1px solid {{ p.divider }};font-style:italic">Add a note — what struck you?</div>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap">
+                      <span style="padding:6px 11px;border-radius:999px;background:{{ p.chipBg }};color:{{ p.onAccent }};font-size:12px">Sour apple</span>
+                      <span style="padding:6px 11px;border-radius:999px;border:1px solid {{ p.divider }};color:{{ p.soft }};font-size:12px">Cider-like</span>
+                      <span style="padding:6px 11px;border-radius:999px;border:1px solid {{ p.divider }};color:{{ p.soft }};font-size:12px">Warm</span>
+                    </div>
+                    <div style="display:flex;align-items:center;justify-content:center;gap:7px;height:42px;border-radius:var(--radius-md);border:1px solid {{ p.accent }};color:{{ p.accentBtn }};font-size:13px;margin-top:2px"><i class="ph ph-sliders-horizontal" style="font-size:16px"></i>Add detailed notes</div>
+                  </div>
+                </article>
+              </div>
+
+              <div style="padding:16px 18px 0;display:flex;flex-direction:column;gap:11px">
+                <div style="display:flex;align-items:baseline;justify-content:space-between">
+                  <h6 style="margin:0;font-size:11px;letter-spacing:.1em;color:{{ p.soft }}">Flavour chart</h6>
+                  <span style="font-size:11px;color:{{ p.soft }}">Sakenowa · 214 ratings</span>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px 16px">
+                  <sc-for list="{{ axes }}" as="a" hint-placeholder-count="6">
+                    <div style="display:flex;flex-direction:column;gap:4px">
+                      <div style="display:flex;justify-content:space-between;font-size:11px;color:{{ p.soft }}"><span>{{ a.label }}</span><span>{{ a.pct }}</span></div>
+                      <div style="height:4px;border-radius:2px;background:{{ p.track }};overflow:hidden">
+                        <div style="height:100%;border-radius:2px;background:{{ p.accent }};width:{{ a.pct }}"></div>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+
+                <div style="display:flex;align-items:center;gap:11px;margin-top:3px;padding:13px;border-radius:var(--radius-md);border:1px solid {{ p.divider }}">
+                  <i class="ph ph-book-open-text" style="font-size:20px;color:{{ p.accent }}"></i>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-family:var(--font-heading);font-weight:500;font-size:14px;color:{{ p.text }}">Full bottle page</div>
+                    <div style="font-size:11px;color:{{ p.soft }};margin-top:1px;text-wrap:pretty">Rice, polishing, yeast, SMV · brewery story, serving temperatures, where to buy</div>
+                  </div>
+                  <i class="ph ph-caret-right" style="font-size:15px;color:{{ p.soft }}"></i>
+                </div>
+              </div>
+
+              <div style="padding:14px 18px 26px;display:flex;gap:8px">
+                <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;height:44px;border-radius:var(--radius-md);border:1px solid {{ p.divider }};color:{{ p.text }};font-size:13px"><i class="ph ph-bookmark-simple" style="font-size:17px"></i>Wishlist</div>
+                <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;height:44px;border-radius:var(--radius-md);border:1px solid {{ p.divider }};color:{{ p.text }};font-size:13px"><i class="ph ph-stack-plus" style="font-size:17px"></i>Add to cellar</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="font-size:12px;color:var(--color-neutral-700);line-height:1.6;text-wrap:pretty">{{ p.note }}</div>
+      </div>
+    </sc-for>
+  </div>
+</section>
+
+<section style="padding:0 28px 40px;display:flex;flex-direction:column;gap:22px">
+
+  <div style="max-width:880px;display:flex;flex-direction:column;gap:7px">
+    <div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700)">Turn 2 · colour</div>
+    <div style="font-family:var(--font-heading);font-weight:500;font-size:27px;letter-spacing:-.02em">Where does this app get used?</div>
+    <div style="font-size:14px;color:var(--color-neutral-700);line-height:1.55;max-width:680px;text-wrap:pretty">The amber-on-rice-paper ground was set in the first hour and never re-argued. The chosen card, unchanged, in three: <a href="#2a">2a</a> the current paper, <a href="#2b">2b</a> the Nocturne ground this project is bound to, <a href="#2c">2c</a> a warm dark. Most tasting happens in dim rooms with a phone at half brightness — that is the real argument against paper.</div>
+  </div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:26px;align-items:flex-start">
+    <sc-for list="{{ palettes }}" as="p" hint-placeholder-count="3">
+      <div id="{{ p.id }}" style="display:flex;flex-direction:column;gap:12px;width:390px">
+        <div style="display:flex;align-items:flex-start;gap:10px">
+          <span style="font-family:var(--font-heading);font-weight:500;font-size:12px;letter-spacing:.06em;padding:4px 9px;border-radius:999px;background:var(--color-accent-700);color:#fffefb;flex:none">{{ p.id }}</span>
+          <div style="flex:1;min-width:0">
+            <div style="font-family:var(--font-heading);font-weight:500;font-size:17px;letter-spacing:-.01em">{{ p.name }}</div>
+            <div style="font-size:12px;color:var(--color-neutral-700)">{{ p.tagline }}</div>
+          </div>
+          <div style="display:flex;gap:4px;flex:none;padding-top:3px">
+            <sc-for list="{{ p.swatches }}" as="w" hint-placeholder-count="4">
+              <span style="width:16px;height:16px;border-radius:4px;background:{{ w.hex }};box-shadow:inset 0 0 0 1px rgba(33,30,24,.15)"></span>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="width:390px;height:844px;position:relative;overflow:hidden;border-radius:38px;background:{{ p.bg }};box-shadow:var(--shadow-lg)">
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 22px 2px;font-size:12px;font-weight:500;color:{{ p.soft }};flex:none">
+              <span>21:40</span>
+              <span style="display:flex;gap:5px"><i class="ph ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span>
+            </div>
+
+            <div style="flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column">
+              <div style="display:flex;align-items:center;gap:6px;padding:10px 14px 6px;flex:none">
+                <button style="border:0;background:transparent;cursor:pointer;padding:4px;color:{{ p.text }}"><i class="ph ph-arrow-left" style="font-size:19px"></i></button>
+                <div style="font-size:12px;color:{{ p.soft }};flex:1">Matched from your photo</div>
+                <button style="border:0;background:transparent;cursor:pointer;font-family:var(--font-body);font-size:12px;color:{{ p.text }};display:flex;align-items:center;gap:5px;padding:4px"><i class="ph ph-arrow-counter-clockwise" style="font-size:13px"></i>Not this one</button>
+              </div>
+
+              <div style="padding:4px 18px 0">
+                <article style="border-radius:var(--radius-lg);background:{{ p.surface }};box-shadow:{{ p.shadow }};overflow:hidden">
+                  <div style="display:flex;gap:14px;padding:14px">
+                    <div style="width:92px;height:122px;flex:none;border-radius:8px;background:repeating-linear-gradient(135deg,{{ p.ph1 }},{{ p.ph1 }} 5px,{{ p.ph2 }} 5px,{{ p.ph2 }} 10px)"></div>
+                    <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">
+                      <div style="font-family:var(--font-heading);font-weight:500;font-size:21px;line-height:1.14;letter-spacing:-.02em;color:{{ p.text }}">Kidoizumi AFS</div>
+                      <div style="font-size:13px;color:{{ p.soft }}" lang="ja">木戸泉 AFS</div>
+                      <div style="font-size:12px;color:{{ p.soft }}">Kidoizumi Shuzō · Chiba</div>
+                      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px">
+                        <span style="font-size:11px;padding:3px 8px;border-radius:5px;background:{{ p.tagBg }};color:{{ p.tagInk }}">Junmai</span>
+                        <span style="font-size:11px;padding:3px 8px;border-radius:5px;background:{{ p.tagBg }};color:{{ p.tagInk }}">Kimoto</span>
+                        <span style="font-size:11px;padding:3px 8px;border-radius:5px;background:{{ p.accentTint }};color:{{ p.accentInk }};display:inline-flex;align-items:center;gap:4px"><i class="ph ph-check-circle" style="font-size:12px"></i>Sure match</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style="padding:14px;border-top:1px solid {{ p.divider }};background:{{ p.accentTint }};display:flex;flex-direction:column;gap:11px">
+                    <div style="display:flex;align-items:baseline;justify-content:space-between">
+                      <div style="font-family:var(--font-heading);font-weight:500;font-size:15px;color:{{ p.accentInk }}">Logged tonight</div>
+                      <span style="font-size:11px;color:{{ p.accentInk }};opacity:.8">21:40 · 2nd time</span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:11px">
+                      <div style="display:flex;gap:4px;color:{{ p.star }}">
+                        <i class="ph-fill ph-star" style="font-size:33px"></i><i class="ph-fill ph-star" style="font-size:33px"></i><i class="ph-fill ph-star" style="font-size:33px"></i><i class="ph-fill ph-star" style="font-size:33px"></i><i class="ph-fill ph-star-half" style="font-size:33px"></i>
+                      </div>
+                      <span style="font-family:var(--font-heading);font-size:14px;line-height:1.2;color:{{ p.accentInk }};white-space:nowrap">4.5 · Outstanding</span>
+                    </div>
+                    <div style="padding:10px 12px;border-radius:var(--radius-md);background:{{ p.surface }};font-size:13px;color:{{ p.soft }};border:1px solid {{ p.divider }};font-style:italic">Add a note — what struck you?</div>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap">
+                      <span style="padding:6px 11px;border-radius:999px;background:{{ p.chipBg }};color:{{ p.onAccent }};font-size:12px">Sour apple</span>
+                      <span style="padding:6px 11px;border-radius:999px;border:1px solid {{ p.divider }};color:{{ p.soft }};font-size:12px">Cider-like</span>
+                      <span style="padding:6px 11px;border-radius:999px;border:1px solid {{ p.divider }};color:{{ p.soft }};font-size:12px">Warm</span>
+                    </div>
+                    <div style="display:flex;align-items:center;justify-content:center;gap:7px;height:42px;border-radius:var(--radius-md);border:1px solid {{ p.accent }};color:{{ p.accentBtn }};font-size:13px;margin-top:2px"><i class="ph ph-sliders-horizontal" style="font-size:16px"></i>Add detailed notes</div>
+                  </div>
+                </article>
+              </div>
+
+              <div style="padding:16px 18px 0;display:flex;flex-direction:column;gap:11px">
+                <div style="display:flex;align-items:baseline;justify-content:space-between">
+                  <h6 style="margin:0;font-size:11px;letter-spacing:.1em;color:{{ p.soft }}">Flavour chart</h6>
+                  <span style="font-size:11px;color:{{ p.soft }}">Sakenowa · 214 ratings</span>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px 16px">
+                  <sc-for list="{{ axes }}" as="a" hint-placeholder-count="6">
+                    <div style="display:flex;flex-direction:column;gap:4px">
+                      <div style="display:flex;justify-content:space-between;font-size:11px;color:{{ p.soft }}"><span>{{ a.label }}</span><span>{{ a.pct }}</span></div>
+                      <div style="height:4px;border-radius:2px;background:{{ p.track }};overflow:hidden">
+                        <div style="height:100%;border-radius:2px;background:{{ p.accent }};width:{{ a.pct }}"></div>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+
+                <div style="display:flex;align-items:center;gap:11px;margin-top:3px;padding:13px;border-radius:var(--radius-md);border:1px solid {{ p.divider }}">
+                  <i class="ph ph-book-open-text" style="font-size:20px;color:{{ p.accent }}"></i>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-family:var(--font-heading);font-weight:500;font-size:14px;color:{{ p.text }}">Full bottle page</div>
+                    <div style="font-size:11px;color:{{ p.soft }};margin-top:1px;text-wrap:pretty">Rice, polishing, yeast, SMV · brewery story, serving temperatures, where to buy</div>
+                  </div>
+                  <i class="ph ph-caret-right" style="font-size:15px;color:{{ p.soft }}"></i>
+                </div>
+              </div>
+
+              <div style="padding:14px 18px 26px;display:flex;gap:8px">
+                <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;height:44px;border-radius:var(--radius-md);border:1px solid {{ p.divider }};color:{{ p.text }};font-size:13px"><i class="ph ph-bookmark-simple" style="font-size:17px"></i>Wishlist</div>
+                <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;height:44px;border-radius:var(--radius-md);border:1px solid {{ p.divider }};color:{{ p.text }};font-size:13px"><i class="ph ph-stack-plus" style="font-size:17px"></i>Add to cellar</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="font-size:12px;color:var(--color-neutral-700);line-height:1.6;text-wrap:pretty">{{ p.note }}</div>
+      </div>
+    </sc-for>
+  </div>
+</section>
+
+<section style="padding:0 28px 56px;display:flex;flex-direction:column;gap:22px">
+
+  <div style="max-width:880px;display:flex;flex-direction:column;gap:7px">
+    <div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700)">Turn 1 · core loop</div>
+    <div style="font-family:var(--font-heading);font-weight:500;font-size:27px;letter-spacing:-.02em">How much ceremony between “I’m drinking this” and “it’s recorded”?</div>
+    <div style="font-size:14px;color:var(--color-neutral-700);line-height:1.55;max-width:660px;text-wrap:pretty">Same scan, same catalogue, same data. <a href="#1a">1a</a> fuses identification and logging into one card — the rating <em>is</em> the save. <a href="#1b">1b</a> separates them — it asks how it tastes before it tells you what it is, then reveals the bottle as the payoff.</div>
+  </div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:30px;align-items:flex-start">
+
+    <div id="1a" style="display:flex;flex-direction:column;gap:12px;width:390px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-family:var(--font-heading);font-weight:500;font-size:12px;letter-spacing:.06em;padding:4px 9px;border-radius:999px;background:var(--color-accent-700);color:#fffefb">1a</span>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:7px">
+            <div style="font-family:var(--font-heading);font-weight:500;font-size:17px;letter-spacing:-.01em">Identify, assess, logged</div>
+            <span class="tag tag-accent" style="gap:4px"><i class="ph ph-check" style="font-size:11px"></i>Chosen</span>
+          </div>
+          <div style="font-size:12px;color:var(--color-neutral-700)">One screen · the star is the save · in 4c Ginshu</div>
+        </div>
+        <button class="btn btn-secondary" style="font-size:12px" onClick="{{ resetA }}">Reset</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:9px;margin-top:-4px">
+        <span style="font-size:11px;color:var(--color-neutral-700);letter-spacing:.04em">Bottle data</span>
+        <div style="display:inline-flex;border:1px solid var(--color-divider);border-radius:var(--radius-md);overflow:hidden">
+          <sc-for list="{{ aDataModes }}" as="d" hint-placeholder-count="2">
+            <button onClick="{{ d.pick }}" style="padding:6px 12px;font-size:12px;font-family:var(--font-heading);font-weight:500;border:0;cursor:pointer;background:{{ d.bg }};color:{{ d.fg }};box-shadow:{{ d.ring }}">{{ d.label }}</button>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="width:390px;height:844px;position:relative;overflow:hidden;border-radius:38px;--color-bg:#1b1a19;--color-surface:#232221;--color-text:#e8e4dd;--color-accent:#cf8a6e;--color-divider:rgba(232,228,221,.14);--color-neutral-100:#201f1e;--color-neutral-200:#2d2b29;--color-neutral-300:#383634;--color-neutral-400:#4a4744;--color-neutral-500:#8a867e;--color-neutral-600:#a8a49c;--color-neutral-700:#bdb9b1;--color-neutral-800:#d6d2ca;--color-neutral-900:#121110;--color-accent-100:#2a201c;--color-accent-200:#3a2a23;--color-accent-300:#e0a88f;--color-accent-400:#cf8a6e;--color-accent-500:#b8735a;--color-accent-600:#cf8a6e;--color-accent-700:#e0a88f;--color-accent-800:#eec2ae;--color-accent-900:#f6ddd1;--shadow-sm:0 0 0 1px #302e2c;--shadow-md:0 0 0 1px #302e2c, 0 10px 26px rgba(0,0,0,.42);color:var(--color-text);background:{{ aGround }};box-shadow:var(--shadow-lg)">
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 22px 2px;font-size:12px;font-weight:500;color:{{ aClockColor }};flex:none;z-index:2">
+            <span>21:40</span>
+            <span style="display:flex;gap:5px"><i class="ph ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span>
+          </div>
+
+          <sc-if value="{{ aScan }}" hint-placeholder-val="{{ true }}">
+            <div style="flex:1;min-height:0;display:flex;flex-direction:column;background:var(--color-neutral-900)">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 18px;flex:none">
+                <button class="btn" style="color:rgba(246,242,234,.8);padding-inline:4px" aria-label="Close"><i class="ph ph-x" style="font-size:20px"></i></button>
+                <div style="display:inline-flex;border-radius:var(--radius-md);overflow:hidden;border:1px solid rgba(255,255,255,.25)">
+                  <span style="padding:7px 14px;font-size:13px;background:rgba(207,138,110,.22);color:#eec2ae;font-family:var(--font-heading);font-weight:500">Label</span>
+                  <span style="padding:7px 14px;font-size:13px;color:rgba(246,242,234,.65);font-family:var(--font-heading);font-weight:500">Menu</span>
+                </div>
+                <button class="btn" style="color:rgba(246,242,234,.8);padding-inline:4px" aria-label="Help"><i class="ph ph-question" style="font-size:19px"></i></button>
+              </div>
+              <div style="flex:1;min-height:0;position:relative;display:flex;flex-direction:column;justify-content:center;align-items:center;overflow:hidden">
+                <div style="position:absolute;inset:0;background:repeating-linear-gradient(135deg,#24211b,#24211b 7px,#2c2822 7px,#2c2822 14px)"></div>
+                <div style="position:relative;width:212px;height:292px">
+                  <div style="position:absolute;inset:0;border-radius:10px;overflow:hidden;background:rgba(255,255,255,.04)">
+                    <sc-if value="{{ aWorking }}">
+                      <div style="position:absolute;left:0;right:0;height:30%;background:linear-gradient(to bottom,rgba(207,138,110,0),rgba(207,138,110,.4),rgba(207,138,110,0));animation:yw-sweep 1.5s ease-in-out infinite"></div>
+                    </sc-if>
+                  </div>
+                  <div style="position:absolute;left:-1px;top:-1px;width:30px;height:30px;border-left:2px solid var(--color-accent-400);border-top:2px solid var(--color-accent-400);border-radius:10px 0 0 0"></div>
+                  <div style="position:absolute;right:-1px;top:-1px;width:30px;height:30px;border-right:2px solid var(--color-accent-400);border-top:2px solid var(--color-accent-400);border-radius:0 10px 0 0"></div>
+                  <div style="position:absolute;left:-1px;bottom:-1px;width:30px;height:30px;border-left:2px solid var(--color-accent-400);border-bottom:2px solid var(--color-accent-400);border-radius:0 0 0 10px"></div>
+                  <div style="position:absolute;right:-1px;bottom:-1px;width:30px;height:30px;border-right:2px solid var(--color-accent-400);border-bottom:2px solid var(--color-accent-400);border-radius:0 0 10px 0"></div>
+                </div>
+                <div style="position:relative;margin-top:26px;text-align:center;padding:0 40px">
+                  <div style="font-family:var(--font-heading);font-weight:500;font-size:16px;color:#f6f2ea">{{ aScanTitle }}</div>
+                  <div style="font-size:12px;color:rgba(246,242,234,.6);margin-top:5px;text-wrap:pretty">{{ aScanHint }}</div>
+                </div>
+              </div>
+              <div style="flex:none;padding:18px 22px 28px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center">
+                <button class="btn" style="color:rgba(246,242,234,.75);font-size:12px;gap:6px;justify-self:start;padding-inline:0"><i class="ph ph-keyboard" style="font-size:16px"></i>Type it</button>
+                <button onClick="{{ aCapture }}" aria-label="Capture" style="justify-self:center;width:66px;height:66px;border-radius:50%;border:2px solid rgba(255,255,255,.6);background:transparent;display:grid;place-items:center;cursor:pointer">
+                  <span style="width:52px;height:52px;border-radius:50%;background:var(--color-accent-400);display:block;animation:{{ aShutter }}"></span>
+                </button>
+                <button class="btn" style="color:rgba(246,242,234,.75);justify-self:end;padding-inline:0" aria-label="Choose a photo"><i class="ph ph-images" style="font-size:22px"></i></button>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ aResult }}">
+            <div style="flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column">
+              <div style="display:flex;align-items:center;gap:6px;padding:10px 14px 6px;flex:none">
+                <button class="btn" style="padding-inline:4px" onClick="{{ resetA }}" aria-label="Back to camera"><i class="ph ph-arrow-left" style="font-size:19px"></i></button>
+                <div style="font-size:12px;color:var(--color-neutral-600);flex:1">{{ aKicker }}</div>
+                <button class="btn btn-ghost" style="font-size:12px;gap:5px" onClick="{{ resetA }}"><i class="ph ph-arrow-counter-clockwise" style="font-size:13px"></i>Not this one</button>
+              </div>
+
+              <div style="padding:4px 18px 0;animation:yw-rise .34s ease-out">
+                <article style="border-radius:var(--radius-lg);background:var(--color-surface);box-shadow:var(--shadow-md);overflow:hidden">
+                  <div style="display:flex;gap:14px;padding:14px">
+                    <div style="width:92px;height:122px;flex:none;border-radius:8px;background:repeating-linear-gradient(135deg,#2a2826,#2a2826 5px,#33302d 5px,#33302d 10px);display:grid;place-items:end center;padding-bottom:8px">
+                      <span style="font-family:ui-monospace,monospace;font-size:10px;color:var(--color-neutral-700)">your photo</span>
+                    </div>
+                    <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">
+                      <div style="font-family:var(--font-heading);font-weight:500;font-size:21px;line-height:1.14;letter-spacing:-.02em">{{ aName }}</div>
+                      <div style="font-size:13px;color:var(--color-neutral-600)" lang="ja">{{ aKana }}</div>
+                      <div style="font-size:12px;color:var(--color-neutral-600)">{{ aBrewery }}</div>
+                      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px">
+                        <sc-for list="{{ aTags }}" as="t" hint-placeholder-count="2">
+                          <span class="tag tag-neutral">{{ t.label }}</span>
+                        </sc-for>
+                        <span class="tag {{ aMatchTone }}" style="gap:4px"><i class="ph {{ aMatchIcon }}" style="font-size:12px"></i>{{ aMatchLabel }}</span>
+                      </div>
+                      <sc-if value="{{ aLowConfidence }}">
+                        <button class="btn btn-ghost" style="font-size:12px;gap:5px;justify-content:flex-start;padding:4px 0;margin-top:2px"><i class="ph ph-list-magnifying-glass" style="font-size:14px"></i>2 other candidates</button>
+                      </sc-if>
+                    </div>
+                  </div>
+
+                  <div style="padding:14px;border-top:1px solid var(--color-divider);background:{{ aLogBg }};display:flex;flex-direction:column;gap:11px">
+                    <div style="display:flex;align-items:baseline;justify-content:space-between">
+                      <div style="font-family:var(--font-heading);font-weight:500;font-size:15px">{{ aLogTitle }}</div>
+                      <span style="font-size:11px;color:var(--color-neutral-600)">{{ aLogMeta }}</span>
+                    </div>
+
+                    <div style="display:flex;align-items:center;gap:11px">
+                      <div style="display:flex;gap:4px">
+                        <sc-for list="{{ aStars }}" as="s" hint-placeholder-count="5">
+                          <span style="position:relative;display:inline-block;width:34px;height:34px">
+                            <i class="ph {{ s.cls }}" style="font-size:33px;color:{{ s.color }};animation:{{ s.anim }}"></i>
+                            <button onClick="{{ s.setHalf }}" aria-label="{{ s.halfLabel }}" style="position:absolute;left:0;top:0;width:50%;height:100%;border:0;background:transparent;cursor:pointer"></button>
+                            <button onClick="{{ s.setFull }}" aria-label="{{ s.fullLabel }}" style="position:absolute;right:0;top:0;width:50%;height:100%;border:0;background:transparent;cursor:pointer"></button>
+                          </span>
+                        </sc-for>
+                      </div>
+                      <span style="font-family:var(--font-heading);font-size:14px;line-height:1.2;color:{{ aRatingColor }};white-space:nowrap">{{ aRatingLabel }}</span>
+                    </div>
+
+                    <sc-if value="{{ aSaved }}">
+                      <div style="display:flex;flex-direction:column;gap:9px;animation:yw-fade .3s ease-out">
+                        <textarea class="input" placeholder="Add a note — what struck you?" value="{{ aNote }}" onChange="{{ aSetNote }}" style="min-height:62px;background:var(--color-surface)"></textarea>
+                        <div style="display:flex;gap:7px;flex-wrap:wrap">
+                          <sc-for list="{{ aQuickTags }}" as="t" hint-placeholder-count="4">
+                            <button onClick="{{ t.pick }}" style="padding:6px 11px;border-radius:999px;border:1px solid {{ t.border }};background:{{ t.bg }};color:{{ t.fg }};font-size:12px;font-family:var(--font-body);cursor:pointer">{{ t.label }}</button>
+                          </sc-for>
+                        </div>
+                        <button class="btn btn-secondary btn-block" style="height:42px;font-size:13px;gap:7px;margin:2px 0 0" onClick="{{ aOpenDetail }}"><i class="ph ph-sliders-horizontal" style="font-size:16px"></i>Add detailed notes</button>
+                      </div>
+                    </sc-if>
+                    <sc-if value="{{ aUnsaved }}">
+                      <div style="font-size:12px;color:var(--color-neutral-600);text-wrap:pretty">Tap a star and it’s logged — notes are optional and can wait.</div>
+                    </sc-if>
+                  </div>
+                </article>
+              </div>
+
+              <div style="padding:16px 18px 0;display:flex;flex-direction:column;gap:11px">
+                <sc-if value="{{ aHasChart }}">
+                  <div style="display:flex;flex-direction:column;gap:11px">
+                    <div style="display:flex;align-items:baseline;justify-content:space-between">
+                      <h6 style="margin:0;font-size:11px;letter-spacing:.1em;color:var(--color-neutral-600)">Flavour chart</h6>
+                      <span style="font-size:11px;color:var(--color-neutral-700)">Sakenowa · 214 ratings</span>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px 16px">
+                      <sc-for list="{{ aAxes }}" as="a" hint-placeholder-count="6">
+                        <div style="display:flex;flex-direction:column;gap:4px">
+                          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--color-neutral-700)"><span>{{ a.label }}</span><span style="color:var(--color-neutral-500)">{{ a.pct }}</span></div>
+                          <div style="height:4px;border-radius:2px;background:var(--color-neutral-200);overflow:hidden">
+                            <div style="height:100%;border-radius:2px;background:var(--color-accent-500);width:{{ a.pct }}"></div>
+                          </div>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-if>
+
+                <sc-if value="{{ aNoChart }}">
+                  <div style="padding:14px;border-radius:var(--radius-md);border:1px dashed var(--color-neutral-400);display:flex;flex-direction:column;gap:9px">
+                    <div style="display:flex;align-items:center;gap:8px">
+                      <i class="ph ph-hexagon" style="font-size:18px;color:var(--color-neutral-500)"></i>
+                      <div style="font-family:var(--font-heading);font-weight:500;font-size:14px">No flavour chart for this one</div>
+                    </div>
+                    <div style="font-size:12px;color:var(--color-neutral-700);line-height:1.5;text-wrap:pretty">Small brewery, nothing published. Four ratings build a chart — tap what you taste and yours is the first.</div>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap">
+                      <sc-for list="{{ aAxisChips }}" as="c" hint-placeholder-count="6">
+                        <button onClick="{{ c.pick }}" style="padding:6px 11px;border-radius:999px;border:1px solid {{ c.border }};background:{{ c.bg }};color:{{ c.fg }};font-size:12px;font-family:var(--font-body);cursor:pointer">{{ c.label }}</button>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-if>
+
+                <button style="display:flex;align-items:center;gap:11px;margin-top:3px;padding:13px;border-radius:var(--radius-md);border:1px solid var(--color-divider);background:transparent;cursor:pointer;text-align:left;width:100%;font-family:var(--font-body);color:var(--color-text)">
+                  <i class="ph ph-book-open-text" style="font-size:20px;color:var(--color-accent-600)"></i>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-family:var(--font-heading);font-weight:500;font-size:14px">Full bottle page</div>
+                    <div style="font-size:11px;color:var(--color-neutral-600);margin-top:1px;text-wrap:pretty">{{ aFullPageSub }}</div>
+                  </div>
+                  <i class="ph ph-caret-right" style="font-size:15px;color:var(--color-neutral-500)"></i>
+                </button>
+              </div>
+
+              <div style="padding:14px 18px 26px;display:flex;gap:8px">
+                <button class="btn btn-secondary" style="flex:1;height:44px;gap:7px;font-size:13px"><i class="ph ph-bookmark-simple" style="font-size:17px"></i>Wishlist</button>
+                <button class="btn btn-secondary" style="flex:1;height:44px;gap:7px;font-size:13px"><i class="ph ph-stack-plus" style="font-size:17px"></i>Add to cellar</button>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ aShowTabs }}">
+            <nav style="flex:none;display:grid;grid-template-columns:repeat(4,1fr);padding:9px 6px 24px;border-top:1px solid var(--color-divider);background:var(--color-surface)">
+              <sc-for list="{{ tabsScan }}" as="t" hint-placeholder-count="4">
+                <button style="display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;border:0;background:transparent;cursor:pointer;padding:6px 0;min-height:44px;font-family:var(--font-body);color:{{ t.color }}">
+                  <i class="ph {{ t.icon }}" style="font-size:22px"></i>{{ t.label }}
+                </button>
+              </sc-for>
+            </nav>
+          </sc-if>
+        </div>
+
+        <sc-if value="{{ aToast }}">
+          <div style="position:absolute;left:18px;right:18px;bottom:26px;padding:12px 14px;border-radius:var(--radius-md);background:var(--color-neutral-900);color:#f6f2ea;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow-lg);animation:yw-rise .24s ease-out">
+            <i class="ph-fill ph-check-circle" style="font-size:19px;color:var(--color-accent-400)"></i>
+            <div style="flex:1;font-size:13px">Logged · palate updated</div>
+            <button class="btn" style="color:var(--color-accent-300);font-size:12px;padding-inline:2px" onClick="{{ aUndo }}">Undo</button>
+          </div>
+        </sc-if>
+      </div>
+
+      <div style="font-size:12px;color:var(--color-neutral-700);line-height:1.6;text-wrap:pretty">
+        <strong style="font-weight:500">Why it works:</strong> the moment of recognition and the moment of judgement are the same moment. No sheet, no Save button — the star commits, an undo toast covers the mistake. Notes appear only once there is something to attach them to.
+        <br><strong style="font-weight:500">Risk:</strong> accidental logs, and the detail chart is pushed below the fold.
+      </div>
+    </div>
+
+    <div id="1b" style="display:flex;flex-direction:column;gap:12px;width:390px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-family:var(--font-heading);font-weight:500;font-size:12px;letter-spacing:.06em;padding:4px 9px;border-radius:999px;background:var(--color-accent-700);color:#fffefb">1b</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-family:var(--font-heading);font-weight:500;font-size:17px;letter-spacing:-.01em">Taste first, then look</div>
+          <div style="font-size:12px;color:var(--color-neutral-700)">Rating before reveal · 2 taps to logged</div>
+        </div>
+        <button class="btn btn-secondary" style="font-size:12px" onClick="{{ resetB }}">Reset</button>
+      </div>
+
+      <div style="width:390px;height:844px;position:relative;overflow:hidden;border-radius:38px;background:{{ bGround }};box-shadow:var(--shadow-lg)">
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 22px 2px;font-size:12px;font-weight:500;color:{{ bClockColor }};flex:none;z-index:2">
+            <span>21:40</span>
+            <span style="display:flex;gap:5px"><i class="ph ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span>
+          </div>
+
+          <sc-if value="{{ bScan }}">
+            <div style="flex:1;min-height:0;display:flex;flex-direction:column">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 18px;flex:none">
+                <button class="btn" style="color:var(--color-neutral-200);padding-inline:4px" aria-label="Close"><i class="ph ph-x" style="font-size:20px"></i></button>
+                <div style="display:inline-flex;border-radius:var(--radius-md);overflow:hidden;border:1px solid rgba(255,255,255,.25)">
+                  <span style="padding:7px 14px;font-size:13px;background:rgba(221,178,102,.22);color:#eed3a2;font-family:var(--font-heading);font-weight:500">Label</span>
+                  <span style="padding:7px 14px;font-size:13px;color:rgba(246,242,234,.65);font-family:var(--font-heading);font-weight:500">Menu</span>
+                </div>
+                <button class="btn" style="color:var(--color-neutral-200);padding-inline:4px" aria-label="Help"><i class="ph ph-question" style="font-size:19px"></i></button>
+              </div>
+              <div style="flex:1;min-height:0;position:relative;display:flex;flex-direction:column;justify-content:center;align-items:center;overflow:hidden">
+                <div style="position:absolute;inset:0;background:repeating-linear-gradient(135deg,#24211b,#24211b 7px,#2c2822 7px,#2c2822 14px)"></div>
+                <div style="position:relative;width:212px;height:292px">
+                  <div style="position:absolute;inset:0;border-radius:10px;overflow:hidden;background:rgba(255,255,255,.04)">
+                    <sc-if value="{{ bWorking }}">
+                      <div style="position:absolute;left:0;right:0;height:30%;background:linear-gradient(to bottom,rgba(200,145,47,0),rgba(200,145,47,.4),rgba(200,145,47,0));animation:yw-sweep 1.5s ease-in-out infinite"></div>
+                    </sc-if>
+                  </div>
+                  <div style="position:absolute;left:-1px;top:-1px;width:30px;height:30px;border-left:2px solid var(--color-accent-400);border-top:2px solid var(--color-accent-400);border-radius:10px 0 0 0"></div>
+                  <div style="position:absolute;right:-1px;top:-1px;width:30px;height:30px;border-right:2px solid var(--color-accent-400);border-top:2px solid var(--color-accent-400);border-radius:0 10px 0 0"></div>
+                  <div style="position:absolute;left:-1px;bottom:-1px;width:30px;height:30px;border-left:2px solid var(--color-accent-400);border-bottom:2px solid var(--color-accent-400);border-radius:0 0 0 10px"></div>
+                  <div style="position:absolute;right:-1px;bottom:-1px;width:30px;height:30px;border-right:2px solid var(--color-accent-400);border-bottom:2px solid var(--color-accent-400);border-radius:0 0 10px 0"></div>
+                </div>
+                <div style="position:relative;margin-top:26px;text-align:center;padding:0 40px">
+                  <div style="font-family:var(--font-heading);font-weight:500;font-size:16px;color:#f6f2ea">{{ bScanTitle }}</div>
+                  <div style="font-size:12px;color:rgba(246,242,234,.6);margin-top:5px;text-wrap:pretty">{{ bScanHint }}</div>
+                </div>
+              </div>
+              <div style="flex:none;padding:18px 22px 28px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center">
+                <button class="btn" style="color:rgba(246,242,234,.75);font-size:12px;gap:6px;justify-self:start;padding-inline:0"><i class="ph ph-keyboard" style="font-size:16px"></i>Type it</button>
+                <button onClick="{{ bCapture }}" aria-label="Capture" style="justify-self:center;width:66px;height:66px;border-radius:50%;border:2px solid rgba(255,255,255,.6);background:transparent;display:grid;place-items:center;cursor:pointer">
+                  <span style="width:52px;height:52px;border-radius:50%;background:var(--color-accent-400);display:block;animation:{{ bShutter }}"></span>
+                </button>
+                <button class="btn" style="color:rgba(246,242,234,.75);justify-self:end;padding-inline:0" aria-label="Choose a photo"><i class="ph ph-images" style="font-size:22px"></i></button>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ bRate }}">
+            <div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:0 26px 30px;animation:yw-fade .3s ease-out">
+              <div style="flex:none;padding:8px 0 0;display:flex;align-items:center;justify-content:space-between">
+                <button class="btn" style="padding-inline:4px" onClick="{{ resetB }}" aria-label="Back to camera"><i class="ph ph-arrow-left" style="font-size:19px"></i></button>
+                <span class="tag tag-neutral">1 of 2</span>
+              </div>
+
+              <div style="flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;gap:26px">
+                <div style="display:flex;flex-direction:column;gap:12px">
+                  <div style="display:flex;align-items:center;gap:11px">
+                    <div style="width:44px;height:58px;border-radius:5px;flex:none;background:repeating-linear-gradient(135deg,#f0ece4,#f0ece4 4px,#e2dcd0 4px,#e2dcd0 8px)"></div>
+                    <div style="flex:1;min-width:0">
+                      <div style="font-family:var(--font-heading);font-weight:500;font-size:16px;line-height:1.2">Kidoizumi AFS</div>
+                      <div style="font-size:12px;color:var(--color-neutral-600);margin-top:2px">Found it. Details after you rate.</div>
+                    </div>
+                  </div>
+                  <div style="font-family:var(--font-heading);font-weight:500;font-size:34px;line-height:1.1;letter-spacing:-.025em;text-wrap:pretty;margin-top:6px">How is it?</div>
+                  <div style="font-size:14px;color:var(--color-neutral-700);line-height:1.5;max-width:300px;text-wrap:pretty">Your own verdict first — the tasting notes and scores come next, so they can’t colour it.</div>
+                </div>
+
+                <div style="display:flex;flex-direction:column;gap:14px">
+                  <div style="display:flex;gap:7px;justify-content:space-between">
+                    <sc-for list="{{ bStars }}" as="s" hint-placeholder-count="5">
+                      <span style="position:relative;display:inline-block;width:56px;height:56px">
+                        <i class="ph {{ s.cls }}" style="font-size:55px;color:{{ s.color }};animation:{{ s.anim }}"></i>
+                        <button onClick="{{ s.setHalf }}" aria-label="{{ s.halfLabel }}" style="position:absolute;left:0;top:0;width:50%;height:100%;border:0;background:transparent;cursor:pointer"></button>
+                        <button onClick="{{ s.setFull }}" aria-label="{{ s.fullLabel }}" style="position:absolute;right:0;top:0;width:50%;height:100%;border:0;background:transparent;cursor:pointer"></button>
+                      </span>
+                    </sc-for>
+                  </div>
+                  <div style="font-family:var(--font-heading);font-size:17px;color:{{ bRatingColor }};min-height:24px">{{ bRatingLabel }}</div>
+                </div>
+              </div>
+
+              <div style="flex:none;display:flex;flex-direction:column;gap:10px">
+                <button class="btn btn-ghost btn-block" style="height:42px;font-size:13px;margin:0" onClick="{{ bSkip }}">Skip — just show me the bottle</button>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ bReveal }}">
+            <div style="flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;animation:yw-rise .3s ease-out">
+              <div style="display:flex;align-items:center;gap:6px;padding:10px 14px 4px;flex:none">
+                <button class="btn" style="padding-inline:4px" onClick="{{ bBackToRate }}" aria-label="Back"><i class="ph ph-arrow-left" style="font-size:19px"></i></button>
+                <div style="font-size:12px;color:var(--color-neutral-600);flex:1">{{ bRevealKicker }}</div>
+                <span class="tag tag-neutral">2 of 2</span>
+              </div>
+
+              <div style="padding:8px 22px 0;display:flex;flex-direction:column;gap:14px">
+                <div style="display:flex;gap:15px;align-items:flex-start">
+                  <div style="width:96px;height:128px;flex:none;border-radius:8px;background:repeating-linear-gradient(135deg,#f0ece4,#f0ece4 5px,#e2dcd0 5px,#e2dcd0 10px)"></div>
+                  <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:5px">
+                    <div style="font-family:var(--font-heading);font-weight:500;font-size:24px;line-height:1.1;letter-spacing:-.02em">Kidoizumi AFS</div>
+                    <div style="font-size:13px;color:var(--color-neutral-600)" lang="ja">木戸泉 AFS</div>
+                    <div style="font-size:12px;color:var(--color-neutral-600)">Kidoizumi Shuzō · Chiba</div>
+                    <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px">
+                      <span class="tag tag-neutral">Junmai</span>
+                      <span class="tag tag-neutral">Kimoto</span>
+                      <span class="tag tag-neutral">SMV +1</span>
+                    </div>
+                  </div>
+                </div>
+
+                <sc-if value="{{ bHasRating }}">
+                  <div style="padding:13px 14px;border-radius:var(--radius-md);background:var(--color-accent-100);display:flex;align-items:center;gap:13px">
+                    <div style="display:flex;flex-direction:column;gap:3px;flex:none">
+                      <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent-800);opacity:.75">You</div>
+                      <div style="display:flex;gap:1px;color:var(--color-accent-600);font-size:15px">
+                        <sc-for list="{{ bScoreStars }}" as="s" hint-placeholder-count="5"><i class="ph {{ s.cls }}"></i></sc-for>
+                      </div>
+                    </div>
+                    <div style="width:1px;align-self:stretch;background:color-mix(in srgb,#7e5714 22%,transparent)"></div>
+                    <div style="flex:1;min-width:0;font-size:12px;color:var(--color-accent-900);line-height:1.5;text-wrap:pretty">{{ bCompare }}</div>
+                    <button class="btn btn-ghost" style="font-size:12px;flex:none;color:var(--color-accent-800)" onClick="{{ bBackToRate }}">Edit</button>
+                  </div>
+                </sc-if>
+
+                <div style="display:flex;flex-direction:column;gap:10px">
+                  <div style="display:flex;align-items:baseline;justify-content:space-between">
+                    <h6 style="margin:0;font-size:11px;letter-spacing:.1em;color:var(--color-neutral-600)">Flavour chart</h6>
+                    <span style="font-size:11px;color:var(--color-neutral-700)">Sakenowa</span>
+                  </div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px 16px">
+                    <sc-for list="{{ axes }}" as="a" hint-placeholder-count="6">
+                      <div style="display:flex;flex-direction:column;gap:4px">
+                        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--color-neutral-700)"><span>{{ a.label }}</span><span style="color:var(--color-neutral-500)">{{ a.pct }}</span></div>
+                        <div style="height:4px;border-radius:2px;background:var(--color-neutral-200);overflow:hidden">
+                          <div style="height:100%;border-radius:2px;background:var(--color-accent-500);width:{{ a.pct }}"></div>
+                        </div>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+
+                <div style="padding:11px 12px;border-radius:var(--radius-md);border:1px solid var(--color-divider);display:flex;flex-direction:column;gap:3px">
+                  <div style="font-size:12px;font-family:var(--font-heading);font-weight:500">Interesting if you like Lagavulin 16</div>
+                  <div style="font-size:11px;color:var(--color-neutral-700)">Cross-beverage estimate, not a tasting note. <a href="#1b">Why?</a></div>
+                </div>
+
+                <textarea class="input" placeholder="Add a note — what struck you?" value="{{ bNote }}" onChange="{{ bSetNote }}" style="min-height:62px"></textarea>
+              </div>
+
+              <div style="padding:16px 22px 26px;display:flex;flex-direction:column;gap:9px">
+                <button class="btn btn-secondary btn-block" style="height:42px;font-size:13px;gap:7px;margin:0"><i class="ph ph-sliders-horizontal" style="font-size:16px"></i>Add detailed notes</button>
+                <div style="display:flex;gap:8px">
+                  <button class="btn btn-secondary" style="flex:1;height:42px;gap:7px;font-size:13px"><i class="ph ph-bookmark-simple" style="font-size:17px"></i>Wishlist</button>
+                  <button class="btn btn-secondary" style="flex:1;height:42px;gap:7px;font-size:13px"><i class="ph ph-stack" style="font-size:17px"></i>Cellar</button>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ bShowTabs }}">
+            <nav style="flex:none;display:grid;grid-template-columns:repeat(4,1fr);padding:9px 6px 24px;border-top:1px solid var(--color-divider);background:var(--color-surface)">
+              <sc-for list="{{ tabsScan }}" as="t" hint-placeholder-count="4">
+                <button style="display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;border:0;background:transparent;cursor:pointer;padding:6px 0;min-height:44px;font-family:var(--font-body);color:{{ t.color }}">
+                  <i class="ph {{ t.icon }}" style="font-size:22px"></i>{{ t.label }}
+                </button>
+              </sc-for>
+            </nav>
+          </sc-if>
+        </div>
+
+        <sc-if value="{{ bToast }}">
+          <div style="position:absolute;left:18px;right:18px;bottom:26px;padding:12px 14px;border-radius:var(--radius-md);background:var(--color-neutral-900);color:#f6f2ea;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow-lg);animation:yw-rise .24s ease-out">
+            <i class="ph-fill ph-check-circle" style="font-size:19px;color:var(--color-accent-400)"></i>
+            <div style="flex:1;font-size:13px">Logged · palate updated</div>
+            <button class="btn" style="color:var(--color-accent-300);font-size:12px;padding-inline:2px" onClick="{{ bUndo }}">Undo</button>
+          </div>
+        </sc-if>
+      </div>
+
+      <div style="font-size:12px;color:var(--color-neutral-700);line-height:1.6;text-wrap:pretty">
+        <strong style="font-weight:500">Why it works:</strong> the app asks for your verdict before it shows you the flavour chart or anyone else’s score, so the rating is yours. The reveal then pays it off — your stars sit against the average, and the bottle reads as a reward rather than a form.
+        <br><strong style="font-weight:500">Risk:</strong> one more screen, and people who scan purely to identify a bottle have to skip past a question.
+      </div>
+    </div>
+
+  </div>
+
+  <div style="max-width:660px;display:flex;gap:12px;padding:15px 16px;border-radius:var(--radius-md);border:1px solid var(--color-divider);background:var(--color-surface)">
+    <i class="ph ph-palette" style="font-size:21px;color:var(--color-accent-600);flex:none"></i>
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <div style="font-family:var(--font-heading);font-weight:500;font-size:15px">Next: question the colour scheme</div>
+      <div style="font-size:12px;color:var(--color-neutral-700);line-height:1.55;text-wrap:pretty">Amber-on-rice-paper was set in the first hour and has not been re-examined since. Worth testing against the Nocturne ground it was derived from, a darker “evening” mode for bars and restaurants, and a cooler neutral — the loop above is stable enough to carry a palette swap without redrawing it.</div>
+    </div>
+  </div>
+</section>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:900,&quot;height&quot;:1100}}">
+const AXES = [
+  { label: 'Floral', pct: '72%' }, { label: 'Mellow', pct: '48%' },
+  { label: 'Rich', pct: '86%' }, { label: 'Mild', pct: '34%' },
+  { label: 'Dry', pct: '61%' }, { label: 'Light', pct: '22%' },
+]
+const TAGS = ['Sour apple', 'Cider-like', 'Warm', 'With food']
+const AXIS_WORDS = ['Floral', 'Mellow', 'Rich', 'Mild', 'Dry', 'Light']
+
+const BOTTLES = {
+  rich: {
+    name: 'Kidoizumi AFS', kana: '木戸泉 AFS', brewery: 'Kidoizumi Shuzō · Chiba',
+    tags: ['Junmai', 'Kimoto'],
+    tone: 'tag-accent', icon: 'ph-check-circle', match: 'Sure match',
+    kicker: 'Matched from your photo', low: false, chart: true,
+    specSource: 'Brewery + Sakenowa',
+    history: 'Last logged 19 Sep · 4.5', historySaved: '21:40 · 2nd time',
+    specs: [
+      { k: 'Rice', v: 'Fusakogane' }, { k: 'Polishing', v: '65%' },
+      { k: 'Yeast', v: 'Not published', muted: true }, { k: 'SMV', v: '+1' },
+      { k: 'Acidity', v: '1.9' }, { k: 'Serve', v: 'Room temp — warm' },
+    ],
+    fullPage: 'Rice, polishing, yeast, SMV · brewery story, serving temperatures, where to buy, 14 notes from others',
+  },
+  thin: {
+    name: 'Terada Honke Katori 90', kana: '寺田本家 香取90', brewery: 'Terada Honke · Chiba',
+    tags: ['Junmai', 'Kimoto'],
+    tone: 'tag-neutral', icon: 'ph-question', match: 'Best guess',
+    kicker: 'Closest match from your photo', low: true, chart: false,
+    specSource: 'Label only',
+    history: 'First time you’ve logged this', historySaved: '21:40 · first time',
+    specs: [
+      { k: 'Rice', v: 'Not published', muted: true }, { k: 'Polishing', v: '90%' },
+      { k: 'Yeast', v: 'Wild / no addition' }, { k: 'SMV', v: 'Not published', muted: true },
+      { k: 'Acidity', v: 'Not published', muted: true }, { k: 'Serve', v: 'Not published', muted: true },
+    ],
+    fullPage: 'Polishing 90%, wild yeast — the rest unpublished · nobody has written about this bottle yet',
+  },
+}
+const MUTED = '#877e6c'
+
+const FINALS = ['2a', '2b', '2c', '4a', '4c']
+
+const JOURNAL = [
+  { day: '21', mon: 'Sep', name: 'Kidoizumi AFS', brewery: 'Kidoizumi Shuzō · Chiba', rating: 4.5 },
+  { day: '19', mon: 'Sep', name: 'Katori 90', brewery: 'Terada Honke · Chiba', rating: 4 },
+  { day: '14', mon: 'Sep', name: 'Kamoshibito Kuheiji', brewery: 'Banjō Jōzō · Aichi', rating: 5 },
+  { day: '09', mon: 'Sep', name: 'Akishika Okuharuka', brewery: 'Akishika Shuzō · Ōsaka', rating: 4 },
+  { day: '06', mon: 'Sep', name: 'Dassai 45', brewery: 'Asahi Shuzō · Yamaguchi', rating: 3 },
+  { day: '02', mon: 'Sep', name: 'Shinkame Kinoene', brewery: 'Shinkame Shuzō · Saitama', rating: 4.5 },
+]
+
+const LABEL_COLORS = [
+  { hex: '#c9a227', label: 'gold foil' },
+  { hex: '#b99a6b', label: 'kraft paper' },
+  { hex: '#f3efe4', label: 'washi' },
+  { hex: '#2b3a57', label: 'indigo' },
+  { hex: '#b7282e', label: 'seal red' },
+]
+
+const DECIDE_Q = [
+  { q: 'Is the accent the drink, or the note about the drink?', a: '2c’s amber is the sake itself — the app becomes the liquid. 4c’s ginshu is the seal on the label — the app becomes the notation. Yawaragi is a journal, and a journal is ink, not what is in the cup. If you read the product as a notebook, that is 4c.' },
+  { q: 'What does the accent have to survive sitting next to?', a: 'Test 3 is the cheap answer: gold foil and kraft paper are the two most common sake-label grounds, and 2c’s amber is a near-match for both — on a screen full of label photography it stops being UI. 4c collides only with seal red, which appears on labels as a small mark, not a field.' },
+  { q: 'How often will a five-star night actually happen?', a: 'If ratings are rare and deserve weight, 4c’s warmer mark gives them an event. If you log every glass, 2c’s gold across sixty journal rows starts to read like a warning colour. Count your own last month.' },
+]
+
+const DECIDERS = ['2c', '4c']
+
+const DECIDE_NOTES = {
+  '2c': {
+    volume: 'Six rows in and the gold has gone from accent to atmosphere — the star columns pull the eye down the list before the sake names do. At sixty entries this is a page of gold.',
+    dim: 'Holds well; amber is the most forgiving hue at low brightness and the outline button stays findable. This is 2c’s strongest test.',
+    label: 'The problem. Amber sits between gold foil and kraft paper — the two most common sake-label grounds — so on a screen of label photography the UI and the bottles fight for the same colour.',
+  },
+  '4c': {
+    volume: 'The star columns stay subordinate to the names: ginshu is warm but low-chroma, so it marks the rows instead of ranking them. A long journal still reads as a list.',
+    dim: 'Slightly weaker than 2c — the muted red loses more chroma when dimmed, and at 20% the outline button is quieter than it should be. Worth a brighter step for the accent used on controls.',
+    label: 'Clears the label palette: nothing on a sake bottle is this colour at field size. It rhymes with seal red without matching it, which is the relationship you want — related to the object, not camouflaged by it.',
+  },
+}
+
+const VERDICTS = {
+  '2a': 'Without the amber flood holding it together, the paper ground loses its argument — the accent has nothing to do and the card reads as a form. It also stays the brightest object in the room. Keep it only if the journal is meant to be read in daylight.',
+  '2b': 'Still the least sake-like of the five, and the blurple now has nowhere to hide: with no tinted panel it appears only in the stars, where it reads as a product accent rather than a judgement. Correct for the design system, wrong for the subject.',
+  '2c': 'The turn-2 warm dark, quieted. Closest thing to a control — it is the current identity with the flood removed, and it survives that removal better than 2a does. Against 4a and 4c it is simply less specific: amber is a choice anyone would make.',
+  '4a': 'The rating strip works here: the stars sit in the ground’s own hue, so they read as part of the room rather than an alert. It is the only one of the five where the palette states the product’s idea — warm room, cool water. Compared with 2c it gives up warmth in the accent and gains a reason to exist.',
+  '4c': 'The strongest star row of the five — ginshu is warm enough to feel like a verdict without the heat of 3c, and the warm neutral ground keeps bottle photography honest. Against 4a it is the safer, more familiar answer: it reads as a refined version of where the app already is, not as a new idea.',
+}
+
+const PALETTES4 = [
+  {
+    id: '4a', name: '納戸 · Nando', tagline: 'Blue-grey ground · the accent is the same hue, lifted',
+    bg: '#191d20', surface: '#212629', logBg: '#20272a', text: '#e3e2de', soft: '#9aa0a2',
+    divider: 'rgba(227,226,222,.14)', accent: '#6f9ba0', onAccent: '#101618',
+    accentTint: '#1e2a2c', accentInk: '#a8c6c9', accentBtn: '#a8c6c9', chipBg: '#6f9ba0',
+    tagBg: '#272d30', tagInk: '#cfd3d3', track: '#2a3033',
+    ph1: '#232a2d', ph2: '#2a3235', star: '#6f9ba0',
+    shadow: '0 0 0 1px #2a3134, 0 10px 26px rgba(0,0,0,.42)',
+    swatches: ['#191d20', '#212629', '#6f9ba0', '#e3e2de'],
+    note: 'Nando-iro — the colour of the storeroom off the kitchen, an Edo grey-blue. The ground is that colour at a tenth of the chroma and the accent is the same colour lifted, so nothing is complementary to anything: they are one hue at three values. Your turquoise survives, but as a tone of the room rather than a second colour fighting it.',
+  },
+  {
+    id: '4b', name: '利休鼠 · Rikyū-nezumi', tagline: 'Near-colourless · a grey with green in it',
+    bg: '#1c1d1a', surface: '#242520', logBg: '#23241f', text: '#e6e3d9', soft: '#a3a196',
+    divider: 'rgba(230,227,217,.14)', accent: '#8f9c86', onAccent: '#14160f',
+    accentTint: '#23281f', accentInk: '#c2cbb6', accentBtn: '#c2cbb6', chipBg: '#8f9c86',
+    tagBg: '#2a2b25', tagInk: '#d3d1c6', track: '#2d2e27',
+    ph1: '#26271f', ph2: '#2d2e26', star: '#8f9c86',
+    shadow: '0 0 0 1px #2f302a, 0 10px 26px rgba(0,0,0,.42)',
+    swatches: ['#1c1d1a', '#242520', '#8f9c86', '#e6e3d9'],
+    note: 'The tea master’s grey — named for Sen no Rikyū, and the most wabi answer available. There is effectively no colour here: the accent is a value change with a trace of green, the way matcha residue stains a grey bowl. It will never look dated because it was never in fashion. The risk is the opposite of 3c: a five-star rating may not feel like an event.',
+  },
+  {
+    id: '4c', name: '銀朱 · Ginshu on ash', tagline: 'The seal idea, desaturated · warm neutral ground',
+    bg: '#1b1a19', surface: '#232221', logBg: '#232120', text: '#e8e4dd', soft: '#a8a49c',
+    divider: 'rgba(232,228,221,.14)', accent: '#b8735a', onAccent: '#191110',
+    accentTint: '#2a201c', accentInk: '#d9a48f', accentBtn: '#d9a48f', chipBg: '#b8735a',
+    tagBg: '#2a2827', tagInk: '#d6d2ca', track: '#2d2b29',
+    ph1: '#262423', ph2: '#2d2b29', star: '#b8735a',
+    shadow: '0 0 0 1px #302e2c, 0 10px 26px rgba(0,0,0,.42)',
+    swatches: ['#1b1a19', '#232221', '#b8735a', '#e8e4dd'],
+    note: 'Ginshu — literally “silvered red”, vermilion knocked back with ash, which is exactly the note 3c was missing. The ground is warm neutral rather than ink-black, so the mark sits four steps from it instead of ten. Keeps the hanko association and the warmth of the drink; loses the water idea, and it is the closest of the three to where the app already is.',
+  },
+]
+
+const PALETTES3 = [
+  {
+    id: '3a', name: '和らぎ · Sake and its water', tagline: 'Warm sumi ground · 浅葱 asagi accent',
+    bg: '#17140f', surface: '#211d17', text: '#f2ede3', soft: '#b5aa97',
+    divider: 'rgba(242,237,227,.15)', accent: '#5fb3bc', onAccent: '#0d1c1e',
+    accentTint: '#15292c', accentInk: '#9fd6dd', accentBtn: '#9fd6dd', chipBg: '#5fb3bc',
+    tagBg: '#2b261e', tagInk: '#ded5c4', track: '#2f2920',
+    ph1: '#2c261d', ph2: '#352e23', star: '#5fb3bc',
+    shadow: '0 0 0 1px #322b22, 0 10px 26px rgba(0,0,0,.45)',
+    swatches: ['#17140f', '#211d17', '#5fb3bc', '#f2ede3'],
+    note: 'The concept made literal: the ground is the cedar and lamplight of the drink, the accent is the water beside it. Asagi (浅葱, the pale dip of the indigo vat) is the one blue with no corporate residue on it — it reads as dyed cloth, not as software. The warm ground also keeps the phone from becoming a blue lamp at a dark table, which a fully blue scheme cannot avoid.',
+  },
+  {
+    id: '3b', name: '水 · In the water', tagline: '褐色 kachi indigo ground · 水色 mizu accent',
+    bg: '#141a29', surface: '#1c2335', text: '#e8ecf2', soft: '#a3aec0',
+    divider: 'rgba(232,236,242,.15)', accent: '#7fc2d6', onAccent: '#0f1724',
+    accentTint: '#1b2c3c', accentInk: '#b3dbe8', accentBtn: '#b3dbe8', chipBg: '#7fc2d6',
+    tagBg: '#26304a', tagInk: '#ced5e2', track: '#2a3448',
+    ph1: '#1f2739', ph2: '#262f45', star: '#7fc2d6',
+    shadow: '0 0 0 1px #2a3248, 0 10px 26px rgba(0,0,0,.45)',
+    swatches: ['#141a29', '#1c2335', '#7fc2d6', '#e8ecf2'],
+    note: 'Kachi-iro, the near-black end of indigo, with mizuiro above it — you are looking into the vat rather than at it. The most beautiful of the three on a bright screen and the most coherent as an idea. Two honest costs: at 20% brightness in a bar it is still a cool light in your face, and blue is the one hue that makes a photographed bottle look refrigerated.',
+  },
+  {
+    id: '3c', name: '墨と朱 · Ink and seal', tagline: 'Neutral sumi · 朱 shu vermilion, used once',
+    bg: '#16161a', surface: '#1f1f23', text: '#f3f1ea', soft: '#aeaca5',
+    divider: 'rgba(243,241,234,.15)', accent: '#e8703a', onAccent: '#17110d',
+    accentTint: '#2c1c14', accentInk: '#f3a883', accentBtn: '#f3a883', chipBg: '#e8703a',
+    tagBg: '#282830', tagInk: '#dcdad3', track: '#2c2c33',
+    ph1: '#26262c', ph2: '#2e2e35', star: '#e8703a',
+    swatches: ['#16161a', '#1f1f23', '#e8703a', '#f3f1ea'],
+    shadow: '0 0 0 1px #2d2d34, 0 10px 26px rgba(0,0,0,.45)',
+    note: 'Sumi ink, kinari paper, and shu vermilion — the three colours of a sake label and of a signed hanko. The most laconic and the hardest to date: this is how bottles have looked for a century and will look for another. It abandons the water idea entirely, and vermilion is loud enough that it must appear once per screen or not at all.',
+  },
+]
+
+const PALETTES = [
+  {
+    id: '2a', name: 'Rice paper', tagline: 'Current · warm light ground',
+    bg: '#faf8f4', surface: '#fffefb', text: '#211e18', soft: '#665e4f',
+    divider: 'rgba(33,30,24,.14)', accent: '#a5741f', onAccent: '#fffefb',
+    accentTint: '#fdf7ea', accentInk: '#593d0e', accentBtn: '#7e5714', chipBg: '#7e5714',
+    tagBg: '#f0ece4', tagInk: '#453f34', track: '#f0ece4',
+    ph1: '#f0ece4', ph2: '#e2dcd0', star: '#c8912f',
+    shadow: '0 0 0 1px #e8e2d6, 0 6px 18px rgba(33,30,24,.07)',
+    swatches: ['#faf8f4', '#fffefb', '#a5741f', '#211e18'],
+    note: 'Reads like a paper notebook and photographs of bottles sit on it well. But it is the brightest thing in a dim izakaya — the screen becomes the light source at the table, and the amber tint fights the label photo it frames.',
+  },
+  {
+    id: '2b', name: 'Nocturne', tagline: 'The bound system · cool dark, blurple',
+    bg: '#161826', surface: '#1e2032', text: '#e9e9ed', soft: '#a9a8b8',
+    divider: 'rgba(233,233,237,.15)', accent: '#9184d9', onAccent: '#161826',
+    accentTint: '#282540', accentInk: '#c9c2ef', accentBtn: '#c9c2ef', chipBg: '#9184d9',
+    tagBg: '#2a2c3e', tagInk: '#d3d2dc', track: '#2f3145',
+    ph1: '#23253a', ph2: '#2b2d44', star: '#9184d9',
+    shadow: '0 0 0 1px #2b2d40, 0 10px 26px rgba(0,0,0,.4)',
+    swatches: ['#161826', '#1e2032', '#9184d9', '#e9e9ed'],
+    note: 'The system the project is actually bound to, applied honestly. Disappears in a dark room and the blurple keeps its distance from the drink — but that is the point against it too: nothing here says sake, and the cool cast makes bottle photography look refrigerated.',
+  },
+  {
+    id: '2c', name: 'Kura', tagline: 'Warm dark · amber kept, ground inverted',
+    bg: '#1a1714', surface: '#231f1a', text: '#f2ede4', soft: '#b3a894',
+    divider: 'rgba(242,237,228,.15)', accent: '#ddb266', onAccent: '#1a1714',
+    accentTint: '#302619', accentInk: '#eed3a2', accentBtn: '#eed3a2', chipBg: '#ddb266',
+    tagBg: '#2d2820', tagInk: '#ded5c6', track: '#332d24',
+    ph1: '#332c21', ph2: '#3d352a', star: '#ddb266',
+    shadow: '0 0 0 1px #322c24, 0 10px 26px rgba(0,0,0,.45)',
+    swatches: ['#1a1714', '#231f1a', '#ddb266', '#f2ede4'],
+    note: 'Keeps the amber identity and loses the glare — cedar and lamplight rather than paper. Labels and bottle photographs sit in it the way they sit on a bar. The cost is that the journal stops looking like a notebook, and long tasting notes are harder to read at length than on paper.',
+  },
+]
+
+class Component extends DCLogic {
+  state = {
+    a: { stage: 'scan', rating: 0, note: '', saved: false, toast: false, shutter: false, tags: [], pop: 0, data: 'rich', axis: [] },
+    b: { stage: 'scan', rating: 0, note: '', toast: false, shutter: false, pop: 0 },
+  }
+
+  setA(patch) { this.setState((s) => ({ a: { ...s.a, ...patch } })) }
+  setB(patch) { this.setState((s) => ({ b: { ...s.b, ...patch } })) }
+
+  componentWillUnmount() { [this._a1, this._a2, this._a3, this._b1, this._b2, this._b3, this._b4].forEach(clearTimeout) }
+
+  captureA = () => {
+    this.setA({ shutter: true })
+    clearTimeout(this._a1); clearTimeout(this._a2)
+    this._a1 = setTimeout(() => this.setA({ stage: 'working', shutter: false }), 220)
+    this._a2 = setTimeout(() => this.setA({ stage: 'result' }), 1700)
+  }
+
+  captureB = () => {
+    this.setB({ shutter: true })
+    clearTimeout(this._b1); clearTimeout(this._b2)
+    this._b1 = setTimeout(() => this.setB({ stage: 'working', shutter: false }), 220)
+    this._b2 = setTimeout(() => this.setB({ stage: 'rate' }), 1700)
+  }
+
+  rateA(v) {
+    this.setA({ rating: v, saved: true, toast: true, pop: Date.now() })
+    clearTimeout(this._a3)
+    this._a3 = setTimeout(() => this.setA({ toast: false }), 3400)
+  }
+
+  rateB(v) {
+    this.setB({ rating: v, pop: Date.now() })
+    clearTimeout(this._b3); clearTimeout(this._b4)
+    this._b3 = setTimeout(() => this.setB({ stage: 'reveal', toast: true }), 520)
+    this._b4 = setTimeout(() => this.setB({ toast: false }), 3900)
+  }
+
+  starRow(rating, pop, onPick, sized) {
+    return [1, 2, 3, 4, 5].map((i) => ({
+      cls: rating >= i ? 'ph-fill ph-star' : rating >= i - 0.5 ? 'ph-fill ph-star-half' : 'ph ph-star',
+      color: rating >= i - 0.5 ? (sized ? '#c8912f' : '#cf8a6e') : (sized ? '#c8c0b0' : '#4a4744'),
+      anim: pop && rating >= i - 0.5 ? 'yw-pop .3s ease-out ' + (i * 0.035) + 's both' : 'none',
+      halfLabel: 'Rate ' + (i - 0.5) + ' stars', fullLabel: 'Rate ' + i + ' stars',
+      setHalf: () => onPick(i - 0.5), setFull: () => onPick(i),
+      size: sized,
+    }))
+  }
+
+  plainStars(v) {
+    return [1, 2, 3, 4, 5].map((i) => ({
+      cls: v >= i ? 'ph-fill ph-star' : v >= i - 0.5 ? 'ph-fill ph-star-half' : 'ph ph-star',
+    }))
+  }
+
+  renderVals() {
+    const { a, b } = this.state
+    const bottle = BOTTLES[a.data] || BOTTLES.rich
+    const aWorking = a.stage === 'working'
+    const bWorking = b.stage === 'working'
+    const aDark = a.stage === 'scan' || aWorking
+    const bDark = b.stage === 'scan' || bWorking
+
+    const tabsScan = [
+      { label: 'Home', icon: 'ph ph-house' }, { label: 'Scan', icon: 'ph-fill ph-camera' },
+      { label: 'Collection', icon: 'ph ph-notebook' }, { label: 'Palate', icon: 'ph ph-hexagon' },
+    ].map((t, i) => ({ ...t, color: i === 1 ? '#a5741f' : MUTED }))
+
+    const label = (v) => {
+      if (!v) return ''
+      return v.toFixed(1) + ' · ' + (v >= 4.5 ? 'Outstanding' : v >= 3.5 ? 'Very good' : v >= 2.5 ? 'Solid' : v >= 1.5 ? 'Not for me' : 'Poured it out')
+    }
+
+    return {
+      axes: AXES,
+      tabsScan,
+      palettes: PALETTES.map((p) => ({ ...p, swatches: p.swatches.map((hex) => ({ hex })) })),
+      palettes3: PALETTES3.map((p) => ({ ...p, swatches: p.swatches.map((hex) => ({ hex })) })),
+      palettes4: PALETTES4.map((p) => ({ ...p, swatches: p.swatches.map((hex) => ({ hex })) })),
+      journal: JOURNAL.map((e) => ({ ...e, stars: this.plainStars(e.rating) })),
+      labelColors: LABEL_COLORS,
+      questions: DECIDE_Q,
+      deciders: DECIDERS.map((id) => {
+        const p = [...PALETTES, ...PALETTES4].find((x) => x.id === id)
+        const n = DECIDE_NOTES[id]
+        return {
+          ...p, logPanel: p.logBg || p.surface,
+          volumeNote: n.volume, dimNote: n.dim, labelNote: n.label,
+          tabs: [
+            { label: 'Home', icon: 'ph ph-house', color: p.soft },
+            { label: 'Scan', icon: 'ph-fill ph-camera', color: p.accent },
+            { label: 'Collection', icon: 'ph ph-notebook', color: p.soft },
+            { label: 'Palate', icon: 'ph ph-hexagon', color: p.soft },
+          ],
+        }
+      }),
+      finals: FINALS.map((id) => {
+        const p = [...PALETTES, ...PALETTES4].find((x) => x.id === id)
+        return { ...p, rows: AXES.slice(0, 3), logPanel: p.logBg || p.surface, verdict: VERDICTS[id] }
+      }),
+
+      resetA: () => { [this._a1, this._a2, this._a3].forEach(clearTimeout); this.setA({ stage: 'scan', rating: 0, note: '', saved: false, toast: false, tags: [], axis: [], pop: 0 }) },
+      aDataModes: [{ key: 'rich', label: 'Well documented' }, { key: 'thin', label: 'Thin data' }].map((d) => {
+        const on = a.data === d.key
+        return {
+          label: d.label, bg: on ? '#fdf7ea' : 'transparent', fg: on ? '#a5741f' : MUTED,
+          ring: on ? 'inset 0 0 0 1px #a5741f' : 'none',
+          pick: () => { [this._a1, this._a2, this._a3].forEach(clearTimeout); this.setA({ data: d.key, stage: 'scan', rating: 0, note: '', saved: false, toast: false, tags: [], axis: [], pop: 0 }) },
+        }
+      }),
+      aName: bottle.name, aKana: bottle.kana, aBrewery: bottle.brewery,
+      aTags: bottle.tags.map((label) => ({ label })),
+      aMatchTone: bottle.tone, aMatchIcon: bottle.icon, aMatchLabel: bottle.match,
+      aKicker: bottle.kicker, aLowConfidence: bottle.low,
+      aHasChart: bottle.chart, aNoChart: !bottle.chart,
+      aAxes: AXES, aSpecSource: bottle.specSource,
+      aSpecs: bottle.specs.map((s) => ({ ...s, color: s.muted ? '#665e4f' : '#211e18', style: s.muted ? 'italic' : 'normal' })),
+      aFullPageSub: bottle.fullPage,
+      aAxisChips: AXIS_WORDS.map((w) => {
+        const on = (a.axis || []).indexOf(w) >= 0
+        return {
+          label: w, bg: on ? '#cf8a6e' : 'transparent', fg: on ? '#1b1a19' : '#bdb9b1',
+          border: on ? '#cf8a6e' : 'var(--color-divider)',
+          pick: () => this.setA({ axis: on ? a.axis.filter((x) => x !== w) : [...(a.axis || []), w] }),
+        }
+      }),
+      aGround: aDark ? 'var(--color-neutral-900)' : 'var(--color-bg)',
+      aScan: aDark,
+      aWorking,
+      aResult: a.stage === 'result',
+      aShowTabs: false,
+      aClockColor: aDark ? 'rgba(246,242,234,.75)' : '#a8a49c',
+      aScanTitle: aWorking ? 'Reading the label…' : 'Frame the bottle label',
+      aScanHint: aWorking ? 'Matching against 12,400 catalogued sakes' : 'Kanji, romaji or barcode — whichever the bottle gives you.',
+      aShutter: a.shutter ? 'yw-pulse .22s ease-in-out' : 'none',
+      aCapture: this.captureA,
+      aStars: this.starRow(a.rating, a.pop, (v) => this.rateA(v)),
+      aRatingLabel: a.rating ? label(a.rating) : 'Tap to rate',
+      aRatingColor: a.rating ? '#e8e4dd' : '#a8a49c',
+      aSaved: a.saved,
+      aUnsaved: !a.saved,
+      aLogTitle: a.saved ? 'Logged tonight' : 'Your take',
+      aLogMeta: a.saved ? bottle.historySaved : bottle.history,
+      aLogBg: a.saved ? 'var(--color-accent-100)' : 'var(--color-neutral-100)',
+      aNote: a.note,
+      aSetNote: (ev) => this.setA({ note: ev.target.value }),
+      aQuickTags: TAGS.map((t) => {
+        const on = a.tags.indexOf(t) >= 0
+        return {
+          label: t,
+          bg: on ? '#cf8a6e' : 'transparent',
+          fg: on ? '#1b1a19' : '#bdb9b1',
+          border: on ? '#cf8a6e' : 'var(--color-divider)',
+          pick: () => this.setA({ tags: on ? a.tags.filter((x) => x !== t) : [...a.tags, t] }),
+        }
+      }),
+      aOpenDetail: () => {},
+      aToast: a.toast,
+      aUndo: () => this.setA({ rating: 0, saved: false, toast: false, tags: [], note: '' }),
+
+      resetB: () => { [this._b1, this._b2, this._b3, this._b4].forEach(clearTimeout); this.setB({ stage: 'scan', rating: 0, note: '', toast: false, pop: 0 }) },
+      bScan: bDark,
+      bWorking,
+      bRate: b.stage === 'rate',
+      bReveal: b.stage === 'reveal',
+      bShowTabs: false,
+      bGround: bDark ? 'var(--color-neutral-900)' : 'var(--color-bg)',
+      bClockColor: bDark ? 'rgba(246,242,234,.75)' : MUTED,
+      bScanTitle: bWorking ? 'Reading the label…' : 'Frame the bottle label',
+      bScanHint: bWorking ? 'Matching against 12,400 catalogued sakes' : 'Kanji, romaji or barcode — whichever the bottle gives you.',
+      bShutter: b.shutter ? 'yw-pulse .22s ease-in-out' : 'none',
+      bCapture: this.captureB,
+      bStars: this.starRow(b.rating, b.pop, (v) => this.rateB(v), true),
+      bRatingLabel: b.rating ? label(b.rating) : 'Half taps count',
+      bRatingColor: b.rating ? '#665e4f' : '#a89f8c',
+      bSkip: () => this.setB({ stage: 'reveal' }),
+      bBackToRate: () => this.setB({ stage: 'rate', toast: false }),
+      bHasRating: b.rating > 0,
+      bScoreStars: this.plainStars(b.rating),
+      bCompare: b.rating >= 4
+        ? 'Above the 3.9 average — and in line with the two kimoto you rated highest.'
+        : b.rating >= 3 ? 'Near the 3.9 average. Most people meet this one in the middle.'
+        : 'Well under the 3.9 average — noted, we will steer away from this style.',
+      bRevealKicker: b.rating ? 'Rated · here is what it is' : 'Identified from your photo',
+      bNote: b.note,
+      bSetNote: (ev) => this.setB({ note: ev.target.value }),
+      bToast: b.toast,
+      bUndo: () => this.setB({ stage: 'rate', rating: 0, toast: false, pop: 0 }),
+    }
+  }
+}
+</script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 # Yawaragi
 
-A sake companion — **Yawaragi** (和らぎ, "the water drunk between sake sips"; cf. *yawaragi-mizu*, 和らぎ水). Helps users recognise, discover, and track the sake they enjoy through three flagship surfaces: label scan, chat recommender, and taste profile. The adopted next direction (ADR-0020) reframes the taste profile around a **tasting journal** as the spine — with the **TasteMap** as its derived output view — and adds search (#234). The tasting journal now ships as a **maintainer-only private beta** (the public still sees the anonymous, ephemeral taste-profile example); the deterministic search (#234) is not yet shipped as its own surface.
+A sake companion — **Yawaragi** (和らぎ, "the water drunk between sake sips"; cf. *yawaragi-mizu*, 和らぎ水). Helps users recognise, discover, and track the sake they enjoy through three flagship surfaces: label scan, chat recommender, and taste profile. The adopted next direction (ADR-0020) reframes the taste profile around a **tasting journal** as the spine — with the **Palate** as its derived output view — and adds search (#234). The tasting journal now ships as a **maintainer-only private beta** (the public still sees the anonymous, ephemeral taste-profile example); the deterministic search (#234) is not yet shipped as its own surface.
 
 Previously named "Kanpai"; renamed to avoid collision with KANPAI London Craft Sake Brewery. See `## Naming` below and ADR-0004.
 
@@ -24,6 +24,7 @@ _Avoid_: FlavorChart, TasteVector, FlavorMap
 
 **FlavorAxis**:
 One of the six fixed axes of a FlavorProfile, identified by romaji name: `hanayaka` (華やか), `hojun` (芳醇), `juko` (重厚), `odayaka` (穏やか), `dry` (ドライ), `keikai` (軽快). Closed enum — never extended. English labels are *approximations only*, not canonical identifiers.
+Since ADR-0022 the **UI renders the locale's approximation** (EN: Floral, Mellow, Rich, Mild, Dry, Light — in `f1..f6` order), with the Japanese terms disclosed through the info sheet beside the chart heading. The romaji names above remain the canonical *domain* identifiers — used in this glossary, in `FLAVOR_AXIS_ROMAJI` and in LLM prompts. The TypeScript enum and the i18n keys are `f1..f6` (a storage detail that predates this change and is unaffected by it). Only the rendered label is English.
 _Avoid_: f1..f6 (storage detail only), flavor dimension, taste axis
 
 **FlavorTag**:
@@ -31,12 +32,13 @@ A discrete categorical tag attached to a Sake from Sakenowa's 117-tag vocabulary
 _Avoid_: Tag (too generic), FlavorLabel, FlavorAttribute
 
 **TasteProfile**:
-A *User*'s aggregated preference, derived from their **TasteEvents**. Lives in our own data, not Sakenowa. Mirrors the FlavorProfile shape (6 axes) plus a weighted set of preferred FlavorTags. Never stored as a snapshot — always recomputed from the TasteEvents, so it stays reproducible and erasable. Its user-facing rendering is the **TasteMap**.
-_Avoid_: UserProfile (collides with auth), FlavorProfile (that's the Sake's, not the User's), Preference, TasteVector (that's the derived 6-axis result, not the profile), "taste profile" as a *user-facing* label (retired per ADR-0020 — users see the "taste map")
+A *User*'s aggregated preference, derived from their **TasteEvents**. Lives in our own data, not Sakenowa. Mirrors the FlavorProfile shape (6 axes) plus a weighted set of preferred FlavorTags. Never stored as a snapshot — always recomputed from the TasteEvents, so it stays reproducible and erasable. Its user-facing rendering is the **Palate**.
+_Avoid_: UserProfile (collides with auth), FlavorProfile (that's the Sake's, not the User's), Preference, TasteVector (that's the derived 6-axis result, not the profile), "taste profile" as a *user-facing* label (retired per ADR-0020 — users see the **Palate**)
 
-**TasteMap**:
-The user-facing name for the six-axis radar view of a *User*'s **TasteProfile** — the picture of their palate. A *derived output view* of the **TastingJournal**, not its own surface. Distinct from the journal (a list of what you tried) and from a Sake's **FlavorProfile** (the sake's own axes). Retires the earlier interchangeable "taste profile" / "taste map" copy.
-_Avoid_: taste profile (that's the internal TasteProfile object), flavor map, palate chart
+**Palate**:
+The user-facing name for the six-axis view of a *User*'s **TasteProfile** — the picture of what they like. A *derived output view* of the **TastingJournal**, not its own store. Distinct from the journal (a list of what you tried) and from a Sake's **FlavorProfile** (the sake's own axes). It is also the name of the fourth tab. Shows "Not yet" at 0 tastings, "Taking shape" at 1–2, and a named lean ("Rich, umami-forward") from 3; confidence is `min(n/10, 1)`.
+Supersedes **TasteMap**, which superseded the user-facing "taste profile" (ADR-0020). Adopted with design v1.4, which names the tab Palate. Code comments and `messages/*.json` still say "taste map" in places; they are corrected as each surface is ported, not in a sweep.
+_Avoid_: TasteMap (retired), taste profile (that's the internal TasteProfile object), flavor map, palate chart, radar
 
 **TasteEvent**:
 A single dated interaction that feeds a *User*'s **TasteProfile**: a Sake rating, an accepted scan result, or a cross-beverage seed. Each carries a *signed strength* — a direction (toward or away from a FlavorProfile position) and a magnitude. A User has zero or more TasteEvents; the TasteProfile is the combination of them. A **JournalEntry** is a TasteEvent plus richer fields (see **TastingJournal**).
@@ -44,7 +46,23 @@ _Avoid_: Interaction (too generic), Rating (only one of the three kinds), Signal
 
 **TastingJournal**:
 A *User*'s durable, ordered record of Sakes they have tried — the **spine surface** everything else hangs off (per ADR-0020). A **JournalEntry** *is* a **TasteEvent** plus richer fields: free-text `notes`, an explicit `tried_at`, the denormalised sake display name (kanji + romaji, captured at log time so the record survives a catalogue change), and (later) a scan reference. The **TasteMap** and recommender are *downstream outputs* of the journal. Persistence is auth-gated and maintainer-only in v1; the public sees an interactive-but-ephemeral example (ADR-0020). EN "tasting journal" / DE "Verkostungsjournal".
-_Avoid_: Log (clinical), Diary (personal-emotional), Cellar / Shelf (implies owning bottles, not tastings), History (too generic)
+_Avoid_: Log (clinical), Diary (personal-emotional), History (too generic), **Cellar** — no longer a banned synonym but a distinct sibling concept (bottles you own, not tastings you had); see **Cellar** below
+
+**Collection**:
+The user-facing container for everything a *User* has accumulated, and the third tab. Three segments: **TastingJournal** (what you drank), **Cellar** (what you own), **Wishlist** (what you want). A grouping in the UI only — there is no Collection record; each segment is its own store. Introduced by design v1.4 §11.
+_Avoid_: Library, My sakes, Shelf (that reads as the Cellar), Inventory (commercial)
+
+**Cellar**:
+The Sakes a *User* physically **owns**, with a count per Sake and an optional `openedAt`. Distinct from the **TastingJournal**, which records what they *drank* — you can own a bottle you have never tasted, and you will have tasted many you never owned. A Cellar row tracks freshness: unopened keeps indefinitely, open is dated, and a bottle past the threshold (10 days, or 5 for *nama*) is surfaced as "drink soon". "Bought it" moves a **Wishlist** row here; "Pour & rate" creates a **JournalEntry**; "Finished" decrements or removes. Thresholds are an open decision in the design handoff.
+_Avoid_: Inventory, Stock, Shelf, Storage, TastingJournal (that's tastings, not bottles)
+
+**Wishlist**:
+The Sakes a *User* wants to try but has not. Each row records **where the want came from** (`scan`, `page`, or `ask`) plus a short context string, so the UI can say "Scanned at …" or "Saved from its bottle page". A row **leaves the Wishlist automatically** once that Sake is logged to the **TastingJournal** — the want is satisfied by the tasting, not by a separate dismissal. "Bought it" moves it to the **Cellar**.
+_Avoid_: Saved, Favourites (that implies having tried and liked them), Watchlist, To-try list
+
+**Nama** (生):
+Unpasteurised sake. Relevant to the domain only because it shortens **Cellar** freshness: a *nama* bottle hits "drink soon" at 5 days open rather than 10. Stored as a boolean on the Cellar row.
+_Avoid_: Fresh, Raw, Unpasteurised (correct, but *nama* is the term on the bottle)
 
 **Ranking**:
 A single Sake's position-and-score within a popularity list, for a specific month. Scope is either *overall* (global top 100) or a single Prefecture (regional top N). A Sake has zero or more Rankings: it may appear in overall, in its Brewery's Prefecture, in both, or in neither. The `year_month` records which monthly snapshot the position came from. We store only the latest snapshot — never historical.
@@ -72,6 +90,9 @@ _Avoid_: Anchor (overloaded — the research doc's raw exemplars are also "ancho
 - A **User** has zero or more **TasteEvents**
 - A **User** has exactly one **TasteProfile**, derived from their **TasteEvents** (never stored as a snapshot)
 - A **Sake** has zero or more **Rankings** (at most one *overall*, at most one per its Brewery's Prefecture, both for the current month only)
+- A **User** has zero or more **Cellar** rows; a Cellar row refers to exactly one **Sake**
+- A **User** has zero or more **Wishlist** rows; a Wishlist row refers to exactly one **Sake** and disappears when that Sake is logged
+- **Collection** is the UI grouping of a User's **TastingJournal**, **Cellar** and **Wishlist**; it stores nothing itself
 - Every displayed record carries a **Provenance** (source + optional confidence)
 
 ## 6-axis vocabulary
