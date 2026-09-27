@@ -5,12 +5,11 @@ import { JournalLogForm } from '@/components/profile/journal/journal-log-form'
 import type { FlavorProfile } from '@/lib/schemas/flavor-profile'
 import type { JournalEntry } from '@/lib/schemas/journal-entry'
 import { groupJournalByMonth } from '@/lib/taste/group-journal-by-month'
+import { ratingStars } from '@/lib/taste/rating-stars'
 
 // A faded illustrative map shown behind the empty state (no data, no Sakenowa
 // attribution — same posture as the anonymous cold-start sample).
 const EMPTY_SAMPLE: FlavorProfile = { f1: 0.62, f2: 0.55, f3: 0.4, f4: 0.48, f5: 0.3, f6: 0.58 }
-
-const stars = (rating: number) => '★'.repeat(rating) + '☆'.repeat(5 - rating)
 
 interface JournalViewProps {
   entries: readonly JournalEntry[]
@@ -97,7 +96,7 @@ export async function JournalView({ entries, profile, locale }: JournalViewProps
                           </div>
                         </div>
                         <span className="whitespace-nowrap text-amber-500" aria-label={t('ratingStars', { rating: ratingOf(entry) })}>
-                          {stars(ratingOf(entry))}
+                          {ratingStars(ratingOf(entry))}
                         </span>
                       </div>
                       {entry.notes && (

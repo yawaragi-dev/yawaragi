@@ -18,6 +18,7 @@ import {
 } from '@/lib/taste/journal-search-action'
 import { logSakeToJournal } from '@/lib/taste/journal-actions'
 import type { JournalActionState } from '@/lib/taste/journal-action-state'
+import { MIN_RATING } from '@/lib/taste/taste-action-state'
 
 /** 'YYYY-MM-DD' → UTC-midnight epoch ms (matches the timeline's UTC grouping). */
 function dateToEpoch(value: string): number | undefined {
@@ -79,7 +80,11 @@ export function JournalLogForm() {
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!picked || rating < 1) return // Save is disabled in this state; belt.
+    // `MIN_RATING`, not a literal 1: the scale runs from 0.5 since design
+    // v1.4 §5, and a hardcoded floor here would silently swallow the
+    // lowest rating once the picker offers halves. `rating` is 0 while
+    // nothing is picked, which is below the floor either way.
+    if (!picked || rating < MIN_RATING) return // Save is disabled here too; belt.
     startSaving(async () => {
       const next = await logSakeToJournal({
         brandId: picked.brandId,
@@ -97,7 +102,7 @@ export function JournalLogForm() {
     })
   }
 
-  const canSave = picked !== null && rating >= 1 && !isSaving
+  const canSave = picked !== null && rating >= MIN_RATING && !isSaving
 
   return (
     <Sheet
