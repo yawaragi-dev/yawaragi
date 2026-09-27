@@ -19,12 +19,10 @@ import { getLandingSampleScan } from '@/lib/landing/sample-scan'
  * Sakenowa credit.
  *
  * **Where the real example sits.** §0 puts a phone placeholder in the hero's
- * right column and tells us to "replace with a real app screenshot". We have
- * something better than a screenshot — `<LandingHero />` renders an actual
- * scan result from the Sakenowa mirror (UX-E #166) — so rather than mock a
- * phone, it gets its own section directly under the hero. Its heading drops
- * from `h1` to `h2`, because §0's "Know what's in the cup." is the page's one
- * `h1`.
+ * right column and tells us to "replace with a real app screenshot", so that
+ * is where `<LandingHero />` goes — an actual scan result from the Sakenowa
+ * mirror (UX-E #166), framed as the device. Two columns above ~700px, stacked
+ * below, per §0.
  *
  * It renders **only after the 18+ gate is accepted**, and is fetched lazily
  * for the same reason: it is Sakenowa flavor data, and JMStV allows none of
@@ -50,43 +48,48 @@ export default async function LandingPage({
     <>
       <LandingHeader />
       <main className="mx-auto w-full max-w-[1120px] px-5 pb-16 sm:px-[clamp(20px,5vw,56px)]">
-        <section className="flex flex-col gap-5 py-14" data-testid="landing-intro">
-          <p className="flex items-center gap-2.5 text-section-label uppercase text-ash-600">
-            {/* The design's accent "mark": a 2px × 14px rule before a heading. */}
-            <span className="h-3.5 w-0.5 bg-ginshu-500" aria-hidden="true" />
-            {t('kicker')}
-          </p>
-          <h1 className="max-w-[16ch] text-[clamp(36px,7vw,58px)] font-medium leading-[1.05] tracking-[-0.03em] text-balance text-ink">
-            {t('heading')}
-          </h1>
-          <p className="max-w-[54ch] text-md-alt text-ash-600">{t('lead')}</p>
-          <div className="flex flex-wrap items-center gap-3 pt-1">
-            <Link
-              href="/scan"
-              className="inline-flex h-12 items-center gap-2 rounded-lg bg-ash-200 px-5 text-card-heading font-medium text-ink transition-colors hover:bg-ash-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
-              data-testid="landing-scan-cta"
-            >
-              <Camera size={17} aria-hidden="true" />
-              {t('ctaScan')}
-            </Link>
-            {/* An in-page anchor, so it is a real destination rather than a
-                promise: it scrolls to the three feature cards below. */}
-            <a
-              href="#how"
-              className="inline-flex h-12 items-center rounded-lg px-4 text-card-heading text-ash-600 transition-colors hover:text-ash-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
-              data-testid="landing-how-cta"
-            >
-              {t('ctaHow')}
-            </a>
+        <section
+          className="grid items-center gap-10 py-14 min-[700px]:grid-cols-2"
+          data-testid="landing-intro"
+        >
+          <div className="flex flex-col gap-5">
+            <p className="flex items-center gap-2.5 text-section-label uppercase text-ash-600">
+              {/* The design's accent "mark": a 2px × 14px rule before a heading. */}
+              <span className="h-3.5 w-0.5 bg-ginshu-500" aria-hidden="true" />
+              {t('kicker')}
+            </p>
+            <h1 className="max-w-[16ch] text-[clamp(36px,7vw,58px)] font-medium leading-[1.05] tracking-[-0.03em] text-balance text-ink">
+              {t('heading')}
+            </h1>
+            <p className="max-w-[54ch] text-md-alt text-ash-600">{t('lead')}</p>
+            <div className="flex flex-wrap items-center gap-3 pt-1">
+              <Link
+                href="/scan"
+                className="inline-flex h-12 items-center gap-2 rounded-lg bg-ash-200 px-5 text-card-heading font-medium text-ink transition-colors hover:bg-ash-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+                data-testid="landing-scan-cta"
+              >
+                <Camera size={17} aria-hidden="true" />
+                {t('ctaScan')}
+              </Link>
+              {/* An in-page anchor, so it is a real destination rather than a
+                  promise: it scrolls to the three feature cards below. */}
+              <a
+                href="#how"
+                className="inline-flex h-12 items-center rounded-lg px-4 text-card-heading text-ash-600 transition-colors hover:text-ash-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+                data-testid="landing-how-cta"
+              >
+                {t('ctaHow')}
+              </a>
           </div>
           <p className="text-meta text-ash-500">{t('smallPrint')}</p>
-        </section>
+          </div>
 
-        {sample && (
-          <section className="pb-14" data-testid="landing-example">
-            <LandingHero sample={sample} locale={locale} headingLevel="h2" />
-          </section>
-        )}
+          {/* §0's right column. Absent until the 18+ gate is accepted — it is
+              Sakenowa flavour data, and JMStV allows none before acceptance —
+              so the hero is single-column for a visitor who has not confirmed.
+              That predates this port and is unchanged by it. */}
+          {sample && <LandingHero sample={sample} locale={locale} />}
+        </section>
 
         <section id="how" className="flex scroll-mt-6 flex-col gap-6 pb-14">
           <h2 className="text-headline font-medium text-ink">{t('featuresHeading')}</h2>

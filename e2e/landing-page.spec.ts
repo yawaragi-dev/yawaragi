@@ -100,7 +100,7 @@ test.describe('landing hero (UX-E)', () => {
     await context.close()
   })
 
-  test('post-acceptance: "Scan your own" CTA routes into the scan flow', async ({
+  test('post-acceptance: the landing CTA routes into the scan flow', async ({
     browser,
   }, testInfo) => {
     testInfo.skip(
@@ -113,7 +113,11 @@ test.describe('landing hero (UX-E)', () => {
     const page = await context.newPage()
     await page.goto('/en')
 
-    await page.getByTestId('landing-hero-scan-cta').click()
+    // #166's AC is that the landing's CTA routes into the scan flow. The hero
+    // used to carry a second "Scan your own →" button of its own; collapsing
+    // the example into §0's right column left one route in, which is what §0
+    // specifies.
+    await page.getByTestId('landing-scan-cta').click()
     await expect(page).toHaveURL(/\/en\/scan$/)
 
     await context.close()

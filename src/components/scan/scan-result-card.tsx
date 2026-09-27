@@ -147,7 +147,14 @@ export function ScanResultCard({
       // card. The article stays a plain `relative` box (no stacking
       // context), so a tooltip's `z-10` still floats above whatever sits
       // below the card (the CTA, the surface legend).
-      className="relative flex flex-col rounded-3xl bg-stone-50 shadow-[0_24px_70px_-32px_rgba(0,0,0,0.4)] ring-1 ring-black/5 dark:bg-zinc-950 dark:ring-white/10"
+      // `w-full` is load-bearing since the layout below became a query
+      // container: `container-type: inline-size` stops an element contributing
+      // its intrinsic width, and `<ScanForm />` lays this out with
+      // `items-start`, i.e. shrink-to-fit — so without a definite width the
+      // card collapsed to 0 and Playwright reported it "hidden". It is not a
+      // visual change: measured at 1280, the card already filled the form
+      // exactly (704px of 704px).
+      className="relative flex w-full flex-col rounded-3xl bg-stone-50 shadow-[0_24px_70px_-32px_rgba(0,0,0,0.4)] ring-1 ring-black/5 dark:bg-zinc-950 dark:ring-white/10"
       data-testid="scan-result-card"
       aria-busy={isStale || undefined}
     >
@@ -160,203 +167,215 @@ export function ScanResultCard({
         </span>
       )}
 
-      <div
-        className={cn(
-          'grid gap-0',
-          photoUrl && 'sm:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]',
-        )}
-      >
-        {photoUrl && (
-          // The photo keeps its true 3:4 aspect (matches the asset, so no
-          // crop); on desktop it's vertically centered in the column so a
-          // taller content side doesn't leave the photo stranded at the top.
-          <div className="p-4 sm:flex sm:items-center sm:p-5">
-            <div
-              className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl bg-zinc-100 shadow-lg ring-1 ring-black/5 dark:bg-zinc-900"
-              data-testid="scan-result-photo-frame"
-            >
-              {/*
-                Native <img> rather than next/image: in the scan flow the
-                src is a blob: URL (client-only object URL, ADR-0015) which
-                next/image can't accept; the hero passes a static path.
-                Kept as one <img> path so both callers share it. The photo
-                stays at full opacity across rescans (#190).
-              */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={photoUrl}
-                alt={photoAlt}
-                className="h-full w-full object-cover"
-                data-testid="scan-result-photo"
-              />
-            </div>
-          </div>
-        )}
-
+      {/*
+        Container queries, not viewport ones. This card is rendered both
+        full-width on `/scan` and inside the landing hero's 390px phone frame
+        (§0's "real app screenshot"), and a `sm:` breakpoint asks the wrong
+        question in the second case: the viewport is 1280 while the card has
+        390 to work with, so it took the two-column desktop layout and wrapped
+        "Powered by / Sakenowa" down the side. `@md` is 448px of CONTAINER, so
+        the card now answers "how much room do I have" instead of "how big is
+        the screen" — which is what it always meant.
+      */}
+      <div className="@container">
         <div
           className={cn(
-            'flex flex-col gap-5 p-6 sm:py-8 sm:pr-8',
-            photoUrl && 'sm:pl-2',
-            staleClass,
+            'grid gap-0',
+            photoUrl && '@md:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]',
           )}
         >
-          <div className="flex items-center justify-end">
-            <SakenowaAttributionView
-              placement="inline"
-              poweredBy={tAttribution('poweredBy')}
-              linkLabel={tAttribution('linkLabel')}
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-              <span
-                className="text-3xl font-semibold tracking-tight text-stone-900 dark:text-zinc-50"
-                lang="ja"
-                data-testid="scan-result-name-kanji"
+          {photoUrl && (
+            // The photo keeps its true 3:4 aspect (matches the asset, so no
+            // crop); on desktop it's vertically centered in the column so a
+            // taller content side doesn't leave the photo stranded at the top.
+            <div className="p-4 @md:flex @md:items-center @md:p-5">
+              <div
+                className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl bg-zinc-100 shadow-lg ring-1 ring-black/5 dark:bg-zinc-900"
+                data-testid="scan-result-photo-frame"
               >
-                {sakeKanji}
-              </span>
-              {sakeRomaji && (
-                <span
-                  className="text-lg text-stone-400 dark:text-zinc-500"
-                  data-testid="scan-result-name-romaji"
-                >
-                  {sakeRomaji}
-                </span>
-              )}
-              {typeof extractionConfidence === 'number' && (
-                <ProvenanceBadgeView
-                  kind={resolveBadgeKind('llm_extracted')}
-                  label={tBadge('label')}
-                  tooltip={tBadge('tooltip')}
-                  confidence={extractionConfidence}
-                />
-              )}
-            </div>
-            <div
-              className="flex flex-wrap items-baseline gap-1.5 text-sm text-stone-500 dark:text-zinc-400"
-              data-testid="scan-result-brewery"
-            >
-              <span className="text-xs uppercase tracking-wide text-stone-400 dark:text-zinc-500">
-                {tSake('breweryLabel')}
-              </span>
-              <span lang="ja">{breweryKanji}</span>
-              {breweryRomaji && <span>({breweryRomaji})</span>}
-            </div>
-          </div>
-
-          {flavorChart ? (
-            <FlavorGridForCard chart={flavorChart} />
-          ) : (
-            // ADR-0016 / #202: the brand is confidently recognised but
-            // Sakenowa has no `flavor_charts` row for it (~half the
-            // catalogue). Rather than silently dropping the chart region
-            // (which read as a lesser / broken match), the empty branch is
-            // a calm, discovery-framed "profile coming soon" panel. It
-            // echoes the reverse-exemplar section's amber/stone bone-card
-            // vocabulary so it feels intentional in BOTH the scan flow and
-            // the UX-E landing hero. No Sakenowa attribution here — this
-            // copy is our own UI chrome, not Sakenowa data (the card's
-            // brand/brewery facts keep their inline attribution above).
-            // Onward paths stay ON-TOPIC for this sake: "See full details →"
-            // (the card's deep-dive link below) + rescan (the persistent
-            // scan form), so the state is not a dead end. We deliberately do
-            // NOT bridge to /suggest here — it's a cold, general recommender
-            // that doesn't take the scanned sake as input, so it would
-            // divert the visitor away from the bottle they just scanned
-            // rather than continue exploring it.
-            <section
-              className="flex flex-col gap-2 rounded-2xl bg-amber-50 p-4 dark:bg-amber-950/20"
-              data-testid="flavor-coming-soon"
-              aria-labelledby="flavor-coming-soon-heading"
-            >
-              <h3
-                id="flavor-coming-soon-heading"
-                className="text-sm font-medium text-stone-800 dark:text-zinc-200"
-              >
-                {t('flavorComingSoonHeading')}
-              </h3>
-              <p className="text-sm text-stone-700 dark:text-zinc-300">
-                {t('flavorComingSoonBody')}
-              </p>
-            </section>
-          )}
-
-          {reverseResult && (
-            // UX-C reverse hook (#164). 'match' → 1–2 Western exemplars
-            // within the honesty threshold; 'no-close-analog' → the
-            // discovery-framed "distinctly Japanese profile" line. BOTH
-            // carry the disclaimer + crossBeverageMap badge (CLAUDE.md):
-            // even "no analog" is a claim from the cross-beverage table.
-            // The panel inherits the content column's stale fade, so no
-            // per-section opacity knob is needed here.
-            <section
-              className="flex flex-col gap-2 rounded-2xl bg-amber-50 p-4 dark:bg-amber-950/20"
-              data-testid="scan-result-reverse-exemplar"
-              aria-labelledby="scan-result-reverse-exemplar-heading"
-            >
-              <div className="flex flex-wrap items-center gap-2">
-                <h3
-                  id="scan-result-reverse-exemplar-heading"
-                  className="text-sm font-medium text-stone-800 dark:text-zinc-200"
-                >
-                  {t('reverseExemplarHeading')}
-                </h3>
-                <ProvenanceBadgeView
-                  kind={resolveBadgeKind(reverseExemplarSource)}
-                  label={tCrossBevBadge('label')}
-                  tooltip={tCrossBevBadge('tooltip')}
+                {/*
+                  Native <img> rather than next/image: in the scan flow the
+                  src is a blob: URL (client-only object URL, ADR-0015) which
+                  next/image can't accept; the hero passes a static path.
+                  Kept as one <img> path so both callers share it. The photo
+                  stays at full opacity across rescans (#190).
+                */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={photoUrl}
+                  alt={photoAlt}
+                  className="h-full w-full object-cover"
+                  data-testid="scan-result-photo"
                 />
               </div>
-              {reverseResult.kind === 'match' ? (
-                <p
-                  className="text-sm text-stone-700 dark:text-zinc-300"
-                  data-testid="scan-result-reverse-exemplar-match"
-                >
-                  {reverseResult.hits.length === 1
-                    ? t('reverseExemplarSingle', {
-                        name: reverseResult.hits[0]!.exemplar.name,
-                      })
-                    : t('reverseExemplarPair', {
-                        first: reverseResult.hits[0]!.exemplar.name,
-                        second: reverseResult.hits[1]!.exemplar.name,
-                      })}
-                </p>
-              ) : (
-                <p
-                  className="text-sm text-stone-700 dark:text-zinc-300"
-                  data-testid="scan-result-reverse-exemplar-no-analog"
-                >
-                  {t('reverseNoAnalog')}
-                </p>
-              )}
-              {shouldRenderHeuristicDisclaimer(reverseExemplarSource) && (
-                <HeuristicDisclaimerView
-                  title={tDisclaimer('title')}
-                  body={tDisclaimer('body')}
-                />
-              )}
-            </section>
+            </div>
           )}
 
-          {/*
-            Native `<a>` rather than next-intl's typed `<Link>` — `sakeHref`
-            is a pre-resolved locale-aware path from scan-action, already
-            locale-prefixed and segment-substituted; `<Link>` would fight
-            the typed-route union. `markArrivedViaScan` sets the per-tab
-            marker that lights the "Not this one?" affordance on the target
-            (#109).
-          */}
-          <a
-            href={sakeHref}
-            onClick={markArrivedViaScan}
-            className="inline-flex w-fit items-center gap-1.5 text-sm font-medium text-amber-800 underline-offset-2 hover:underline dark:text-amber-300"
-            data-testid="scan-result-open-detail"
+          <div
+            className={cn(
+              'flex flex-col gap-5 p-6 @md:py-8 @md:pr-8',
+              photoUrl && '@md:pl-2',
+              staleClass,
+            )}
           >
-            {t('openDetail')}
-            <span aria-hidden>→</span>
-          </a>
+            <div className="flex items-center justify-end">
+              <SakenowaAttributionView
+                placement="inline"
+                poweredBy={tAttribution('poweredBy')}
+                linkLabel={tAttribution('linkLabel')}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                <span
+                  className="text-3xl font-semibold tracking-tight text-stone-900 dark:text-zinc-50"
+                  lang="ja"
+                  data-testid="scan-result-name-kanji"
+                >
+                  {sakeKanji}
+                </span>
+                {sakeRomaji && (
+                  <span
+                    className="text-lg text-stone-400 dark:text-zinc-500"
+                    data-testid="scan-result-name-romaji"
+                  >
+                    {sakeRomaji}
+                  </span>
+                )}
+                {typeof extractionConfidence === 'number' && (
+                  <ProvenanceBadgeView
+                    kind={resolveBadgeKind('llm_extracted')}
+                    label={tBadge('label')}
+                    tooltip={tBadge('tooltip')}
+                    confidence={extractionConfidence}
+                  />
+                )}
+              </div>
+              <div
+                className="flex flex-wrap items-baseline gap-1.5 text-sm text-stone-500 dark:text-zinc-400"
+                data-testid="scan-result-brewery"
+              >
+                <span className="text-xs uppercase tracking-wide text-stone-400 dark:text-zinc-500">
+                  {tSake('breweryLabel')}
+                </span>
+                <span lang="ja">{breweryKanji}</span>
+                {breweryRomaji && <span>({breweryRomaji})</span>}
+              </div>
+            </div>
+
+            {flavorChart ? (
+              <FlavorGridForCard chart={flavorChart} />
+            ) : (
+              // ADR-0016 / #202: the brand is confidently recognised but
+              // Sakenowa has no `flavor_charts` row for it (~half the
+              // catalogue). Rather than silently dropping the chart region
+              // (which read as a lesser / broken match), the empty branch is
+              // a calm, discovery-framed "profile coming soon" panel. It
+              // echoes the reverse-exemplar section's amber/stone bone-card
+              // vocabulary so it feels intentional in BOTH the scan flow and
+              // the UX-E landing hero. No Sakenowa attribution here — this
+              // copy is our own UI chrome, not Sakenowa data (the card's
+              // brand/brewery facts keep their inline attribution above).
+              // Onward paths stay ON-TOPIC for this sake: "See full details →"
+              // (the card's deep-dive link below) + rescan (the persistent
+              // scan form), so the state is not a dead end. We deliberately do
+              // NOT bridge to /suggest here — it's a cold, general recommender
+              // that doesn't take the scanned sake as input, so it would
+              // divert the visitor away from the bottle they just scanned
+              // rather than continue exploring it.
+              <section
+                className="flex flex-col gap-2 rounded-2xl bg-amber-50 p-4 dark:bg-amber-950/20"
+                data-testid="flavor-coming-soon"
+                aria-labelledby="flavor-coming-soon-heading"
+              >
+                <h3
+                  id="flavor-coming-soon-heading"
+                  className="text-sm font-medium text-stone-800 dark:text-zinc-200"
+                >
+                  {t('flavorComingSoonHeading')}
+                </h3>
+                <p className="text-sm text-stone-700 dark:text-zinc-300">
+                  {t('flavorComingSoonBody')}
+                </p>
+              </section>
+            )}
+
+            {reverseResult && (
+              // UX-C reverse hook (#164). 'match' → 1–2 Western exemplars
+              // within the honesty threshold; 'no-close-analog' → the
+              // discovery-framed "distinctly Japanese profile" line. BOTH
+              // carry the disclaimer + crossBeverageMap badge (CLAUDE.md):
+              // even "no analog" is a claim from the cross-beverage table.
+              // The panel inherits the content column's stale fade, so no
+              // per-section opacity knob is needed here.
+              <section
+                className="flex flex-col gap-2 rounded-2xl bg-amber-50 p-4 dark:bg-amber-950/20"
+                data-testid="scan-result-reverse-exemplar"
+                aria-labelledby="scan-result-reverse-exemplar-heading"
+              >
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3
+                    id="scan-result-reverse-exemplar-heading"
+                    className="text-sm font-medium text-stone-800 dark:text-zinc-200"
+                  >
+                    {t('reverseExemplarHeading')}
+                  </h3>
+                  <ProvenanceBadgeView
+                    kind={resolveBadgeKind(reverseExemplarSource)}
+                    label={tCrossBevBadge('label')}
+                    tooltip={tCrossBevBadge('tooltip')}
+                  />
+                </div>
+                {reverseResult.kind === 'match' ? (
+                  <p
+                    className="text-sm text-stone-700 dark:text-zinc-300"
+                    data-testid="scan-result-reverse-exemplar-match"
+                  >
+                    {reverseResult.hits.length === 1
+                      ? t('reverseExemplarSingle', {
+                          name: reverseResult.hits[0]!.exemplar.name,
+                        })
+                      : t('reverseExemplarPair', {
+                          first: reverseResult.hits[0]!.exemplar.name,
+                          second: reverseResult.hits[1]!.exemplar.name,
+                        })}
+                  </p>
+                ) : (
+                  <p
+                    className="text-sm text-stone-700 dark:text-zinc-300"
+                    data-testid="scan-result-reverse-exemplar-no-analog"
+                  >
+                    {t('reverseNoAnalog')}
+                  </p>
+                )}
+                {shouldRenderHeuristicDisclaimer(reverseExemplarSource) && (
+                  <HeuristicDisclaimerView
+                    title={tDisclaimer('title')}
+                    body={tDisclaimer('body')}
+                  />
+                )}
+              </section>
+            )}
+
+            {/*
+              Native `<a>` rather than next-intl's typed `<Link>` — `sakeHref`
+              is a pre-resolved locale-aware path from scan-action, already
+              locale-prefixed and segment-substituted; `<Link>` would fight
+              the typed-route union. `markArrivedViaScan` sets the per-tab
+              marker that lights the "Not this one?" affordance on the target
+              (#109).
+            */}
+            <a
+              href={sakeHref}
+              onClick={markArrivedViaScan}
+              className="inline-flex w-fit items-center gap-1.5 text-sm font-medium text-amber-800 underline-offset-2 hover:underline dark:text-amber-300"
+              data-testid="scan-result-open-detail"
+            >
+              {t('openDetail')}
+              <span aria-hidden>→</span>
+            </a>
+          </div>
         </div>
       </div>
     </article>
