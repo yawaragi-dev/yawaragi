@@ -264,34 +264,41 @@
   },
   "flavorAxis": {
     "f1": {
-      "label": "duftig / blumig",
+      "label": "Blumig",
       "kanji": "華やか",
-      "caveat": "Nicht 'parfümiert' — aromatische Ester. Brauer-Begriff; die deutsche Bezeichnung ist eine Annäherung."
+      "caveat": "Auffällig und aromatisch — Frucht und Blüte in der Nase."
     },
     "f2": {
-      "label": "vollmundig / reich",
+      "label": "Vollmundig",
       "kanji": "芳醇",
-      "caveat": "Nicht 'cremig' — Tiefe aus Umami und Aroma. Brauer-Begriff; die deutsche Bezeichnung ist eine Annäherung."
+      "caveat": "Tiefe aus Umami und Aroma, nicht Cremigkeit."
     },
     "f3": {
-      "label": "schwer / körperreich",
+      "label": "Kräftig",
       "kanji": "重厚",
-      "caveat": "Nicht 'tanninhaltig' — Körper plus Aminosäuren. Brauer-Begriff; die deutsche Bezeichnung ist eine Annäherung."
+      "caveat": "Körper und Aminosäuren — Gewicht, kein Tannin."
     },
     "f4": {
-      "label": "mild / sanft",
+      "label": "Mild",
       "kanji": "穏やか",
-      "caveat": "Zurückhaltendes Aroma, nicht 'neutral'. Brauer-Begriff; die deutsche Bezeichnung ist eine Annäherung."
+      "caveat": "Zurückhaltendes Aroma. Ruhig, nicht neutral."
     },
     "f5": {
-      "label": "trocken",
+      "label": "Trocken",
       "kanji": "ドライ",
-      "caveat": "Engste 1:1-Entsprechung; folgt grob dem SMV."
+      "caveat": "Von den sechs die engste westliche Entsprechung; folgt grob dem SMV."
     },
     "f6": {
-      "label": "leicht / spritzig",
+      "label": "Leicht",
       "kanji": "軽快",
-      "caveat": "Erfrischender Abgang, geringer Restzucker. Brauer-Begriff; die deutsche Bezeichnung ist eine Annäherung."
+      "caveat": "Erfrischender Abgang, es bleibt wenig zurück."
+    },
+    "disclosure": {
+      "caveat": "Brauer-Begriffe, frei übersetzt.",
+      "triggerLabel": "Über diese Geschmacksbegriffe",
+      "title": "Über diese Geschmacksbegriffe",
+      "intro": "Diese sechs sind japanische Brauer-Begriffe. Die deutschen Wörter sind Annäherungen, keine Übersetzungen — sie treffen die Richtung, aber nicht den genauen Sinn.",
+      "closeLabel": "Schließen"
     }
   },
   "privacy": {

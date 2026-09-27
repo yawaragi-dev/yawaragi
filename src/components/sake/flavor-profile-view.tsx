@@ -1,10 +1,7 @@
-import {
-  FLAVOR_AXES,
-  FLAVOR_AXIS_ROMAJI,
-  type FlavorAxis,
-} from '@/lib/schemas/flavor-chart'
+import { FLAVOR_AXES, type FlavorAxis } from '@/lib/schemas/flavor-chart'
 import type { FlavorProfile } from '@/lib/schemas/flavor-profile'
 import { FlavorAxisLabelView } from './flavor-axis-label'
+import { FlavorTermsSheet, type FlavorTermsStrings } from './flavor-terms-sheet'
 
 /**
  * The one FlavorProfile renderer.
@@ -68,15 +65,38 @@ interface FlavorProfileViewProps {
   chartLabel: string
   /** Layout:
    *  - `row`    — full-width labelled bars, one per line (sake detail page)
-   *  - `grid`   — 2-col compact bars, amber (scan result card)
+   *  - `grid`   — 2-col compact bars (scan result card)
    *  - `cluster`— label + value chips, no bars (suggest card) */
   variant: FlavorProfileVariant
+  /** Strings for the ADR-0022 disclosure. Required, not optional: the axes
+   *  render as English approximations ONLY because this sheet is reachable,
+   *  so a caller must not be able to omit it. */
+  termsStrings: FlavorTermsStrings
+  /** Disambiguates the disclosure's element ids when a page renders several
+   *  charts — `/suggest` shows up to five. */
+  instanceId: string
 }
 
 // Per-variant presentation. Testids are preserved verbatim from the four
 // original renderers so the e2e contracts (sake-page, landing, scan,
 // suggest) keep passing: both bar variants share `brand-flavor-chart`; the
 // cluster keeps `suggest-card-flavor-cluster`.
+// Still the pre-Ginshu palette, deliberately.
+//
+// Design v1.4 §17 wants a 4px bar, ginshu-500 on ash-200, under an 11px
+// uppercase section label — and an earlier revision of this PR shipped that.
+// It was wrong: these pages are still light-themed, and Ginshu's text steps
+// are built for a #1b1a19 ground. `ash-700` on white measures **1.96:1** and
+// `ash-600` **2.48:1**, against a 4.5:1 floor. The chart was legible in the
+// design and near-invisible in the app.
+//
+// So the rule this file follows: **a component adopts Ginshu when the page
+// under it does, not before.** The tokens in globals.css are additive for
+// exactly that reason; re-theming a component ahead of its surface throws
+// the benefit away. The §17 treatment lands with the surface port.
+//
+// (The terms sheet below is the exception, and a principled one: it paints
+// its own dark ground, so it is not borrowing this page's.)
 const VARIANT = {
   row: {
     containerTestId: 'brand-flavor-chart',
@@ -99,11 +119,25 @@ export function FlavorProfileView({
   axisStrings,
   chartLabel,
   variant,
+  termsStrings,
+  instanceId,
 }: FlavorProfileViewProps) {
+  const disclosure = (
+    <FlavorTermsSheet
+      strings={termsStrings}
+      axisStrings={axisStrings}
+      instanceId={instanceId}
+    />
+  )
+
   if (variant === 'cluster') {
+    // The cluster has no visible heading (its name is the aria-label), so
+    // the disclosure trails the chips rather than sitting beside a header.
+    // It still has to be here — ADR-0022 binds the sheet to the axis words,
+    // not to any one layout.
     return (
       <section
-        className="flex flex-wrap gap-3 pt-1"
+        className="flex flex-wrap items-center gap-3 pt-1"
         data-testid="suggest-card-flavor-cluster"
         aria-label={chartLabel}
       >
@@ -113,6 +147,7 @@ export function FlavorProfileView({
             <ValueText axis={axis} value={profile[axis]} />
           </div>
         ))}
+        {disclosure}
       </section>
     )
   }
@@ -126,7 +161,10 @@ export function FlavorProfileView({
       data-testid={style.containerTestId}
       aria-label={chartLabel}
     >
-      <p className={style.headerClass}>{chartLabel}</p>
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+        <p className={style.headerClass}>{chartLabel}</p>
+        {disclosure}
+      </div>
       <ul
         className={isGrid ? 'grid grid-cols-2 gap-x-6 gap-y-3' : 'flex flex-col gap-3'}
         role="list"
@@ -167,15 +205,7 @@ function AxisLabel({
   axis: FlavorAxis
   strings: FlavorAxisStrings
 }) {
-  return (
-    <FlavorAxisLabelView
-      axis={axis}
-      romaji={FLAVOR_AXIS_ROMAJI[axis]}
-      kanji={strings.kanji}
-      approximation={strings.approximation}
-      caveat={strings.caveat}
-    />
-  )
+  return <FlavorAxisLabelView axis={axis} approximation={strings.approximation} />
 }
 
 function ValueText({
@@ -218,7 +248,7 @@ function Bar({
       aria-valuemin={0}
       aria-valuemax={1}
       aria-valuenow={value}
-      aria-labelledby={`flavor-axis-${axis}-romaji`}
+      aria-labelledby={`flavor-axis-${axis}-label`}
       className={
         isGrid
           ? `h-1.5 w-full overflow-hidden rounded-full ${style.trackClass}`

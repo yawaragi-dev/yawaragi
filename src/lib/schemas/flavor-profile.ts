@@ -6,7 +6,8 @@ import { z } from 'zod'
 // axes"). Each axis is a float in [0, 1]. The axes are brewers' terms —
 // see the 6-axis vocabulary table in CONTEXT.md and the <FlavorAxisLabel />
 // component. Storage keeps the f1..f6 names verbatim; UI translates to
-// romaji + kanji.
+// the locale approximation, with the brewers' terms disclosed via
+// <FlavorTermsSheet /> (ADR-0022).
 //
 // Why this lives in its own module rather than inside `flavor-chart.ts`:
 // three record schemas carry the same 6-tuple — the stored FlavorChart

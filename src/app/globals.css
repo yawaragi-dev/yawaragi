@@ -120,3 +120,163 @@ body {
     content: "...";
   }
 }
+
+/* ===========================================================================
+ * Ginshu — the design-system theme (design v1.4, README § "Design tokens")
+ *
+ * Warm-ash dark ground with a ginshu (銀朱, "silvered red") accent. Structure,
+ * spacing, radii and type come from Nocturne; only the colours are overridden.
+ *
+ * ADDITIVE ON PURPOSE. The shadcn semantic tokens above (--background,
+ * --card, --primary …) are deliberately left alone: 39 components still
+ * render `bg-white dark:bg-zinc-900`, and repointing the semantic layer here
+ * would leave the app half-ported and visibly wrong between PRs. Surfaces opt
+ * into Ginshu as they are ported; the final port PR repoints the semantic
+ * tokens at these ramps and deletes the greyscale block above.
+ *
+ * Ginshu is DARK-ONLY. There is no light variant, so these values sit on bare
+ * `:root` with no `prefers-color-scheme` or `[data-theme]` branch — the
+ * product is used in dim rooms and the palette was chosen against that.
+ * =========================================================================== */
+@theme {
+  /* -- Ground, surfaces, text ---------------------------------------- */
+  --color-ground: #1b1a19;
+  --color-surface: #232221;
+  --color-ink: #e8e4dd;
+  --color-divider: rgba(232, 228, 221, 0.14);
+  /* The camera/overlay ground sits BELOW the ramp — fixed, not a ramp step. */
+  --color-camera: #121110;
+  --color-camera-ink: #f6f2ea;
+
+  /* -- Warm-ash neutral ramp (counts outward from the ground) --------- */
+  --color-ash-100: #201f1e;
+  --color-ash-200: #2d2b29;
+  --color-ash-300: #383634;
+  --color-ash-400: #4a4744;
+  --color-ash-500: #8a867e;
+  --color-ash-600: #a8a49c;
+  --color-ash-700: #bdb9b1;
+  --color-ash-800: #d6d2ca;
+  --color-ash-900: #ece8e1;
+
+  /* -- Ginshu accent ramp --------------------------------------------
+   * 500 = marks, bars, toggles. 600 = stars, outlines, selected chips,
+   * icons — brighter on purpose so it survives a phone at 20% brightness.
+   * 700 = accent text at body size (500/600 fail contrast on this ground).
+   * The accent never floods a surface; the sole tinted surface is the
+   * logged panel at 100. */
+  --color-ginshu-100: #2a201c;
+  --color-ginshu-200: #3a2a23;
+  --color-ginshu-300: #5c3b2f;
+  --color-ginshu-400: #8a5642;
+  --color-ginshu-500: #b8735a;
+  --color-ginshu-600: #cf8a6e;
+  --color-ginshu-700: #e0a88f;
+  --color-ginshu-800: #eec2ae;
+  --color-ginshu-900: #f6ddd1;
+
+  /* -- Elevation ------------------------------------------------------
+   * On a dark ground elevation is an edge plus ambient darkness, never a
+   * stacked drop shadow. Prefixed `yw-` so they don't collide with
+   * Tailwind's own shadow scale while both exist. */
+  --shadow-yw-sm: 0 0 0 1px #302e2c;
+  --shadow-yw-md: 0 0 0 1px #302e2c, 0 10px 26px rgb(0 0 0 / 0.42);
+  --shadow-yw-lg: 0 0 0 1px #363431, 0 18px 44px rgb(0 0 0 / 0.55);
+
+  /* -- Type scale -----------------------------------------------------
+   * Fixed px steps from the spec, named by role. Letter-spacing is baked
+   * in per the rule "−0.02em at 21px and up, −0.01em at 15–19px" so no
+   * callsite has to remember it. Headings are weight 500, never bolder. */
+  --text-onboarding: 36px;
+  --text-onboarding--letter-spacing: -0.02em;
+  --text-hero: 34px;
+  --text-hero--letter-spacing: -0.02em;
+  --text-axis-title: 28px;
+  --text-axis-title--letter-spacing: -0.02em;
+  --text-tab-title: 26px;
+  --text-tab-title--letter-spacing: -0.02em;
+  --text-bottle-name: 25px;
+  --text-bottle-name--letter-spacing: -0.02em;
+  --text-headline: 24px;
+  --text-headline--letter-spacing: -0.02em;
+  --text-title: 21px;
+  --text-title--letter-spacing: -0.02em;
+  --text-lg-alt: 19px;
+  --text-lg-alt--letter-spacing: -0.01em;
+  --text-md-alt: 17px;
+  --text-md-alt--letter-spacing: -0.01em;
+  --text-card-heading: 15px;
+  --text-card-heading--letter-spacing: -0.01em;
+  --text-body: 14px;
+  --text-secondary: 13px;
+  --text-meta: 12px;
+  --text-section-label: 11px;
+  --text-section-label--letter-spacing: 0.1em;
+  --text-micro: 10px;
+
+  /* -- Motion ---------------------------------------------------------
+   * Durations are the midpoint of each range in the spec. `yw-sweep` is
+   * the repeating band on the camera frame while a label is being read. */
+  --animate-yw-rise: yw-rise 0.28s ease-out;
+  --animate-yw-fade: yw-fade 0.25s ease-out;
+  --animate-yw-sheet: yw-sheet 0.27s ease-out;
+  --animate-yw-pop: yw-pop 0.3s ease-out;
+  --animate-yw-sweep: yw-sweep 1.5s ease-in-out infinite;
+
+  @keyframes yw-rise {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes yw-fade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes yw-sheet {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: none;
+    }
+  }
+  @keyframes yw-pop {
+    0% {
+      transform: scale(0.72);
+    }
+    60% {
+      transform: scale(1.12);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+  @keyframes yw-sweep {
+    0% {
+      transform: translateY(-100%);
+    }
+    100% {
+      transform: translateY(100%);
+    }
+  }
+}
+
+/*
+ * Every Ginshu animation is decorative — it communicates nothing a static
+ * frame doesn't. Honour the OS preference globally rather than per callsite,
+ * so a new component can't forget to.
+ */
+@media (prefers-reduced-motion: reduce) {
+  [class*="animate-yw-"] {
+    animation: none !important;
+  }
+}

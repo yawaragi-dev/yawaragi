@@ -108,7 +108,7 @@ test.describe('sake brand page', () => {
     await context.close()
   })
 
-  test('/en/sake/<brand-with-chart> renders the 6-axis flavor chart with romaji + kanji', async ({
+  test('/en/sake/<brand-with-chart> renders the 6-axis flavor chart with a reachable brewers-term disclosure', async ({
     browser,
   }, testInfo) => {
     testInfo.skip(
@@ -125,28 +125,38 @@ test.describe('sake brand page', () => {
     const chart = page.getByTestId('brand-flavor-chart')
     await expect(chart).toBeVisible()
 
-    // f1 (hanayaka / 華やか) is enough to prove the romaji + kanji rule.
-    const romaji = page.getByTestId('flavor-axis-f1-romaji')
-    const kanji = page.getByTestId('flavor-axis-f1-kanji')
-    await expect(romaji).toBeVisible()
-    await expect(romaji).toHaveText('hanayaka')
-    await expect(kanji).toBeVisible()
-    await expect(kanji).toHaveText('華やか')
-    await expect(kanji).toHaveAttribute('lang', 'ja')
+    // ADR-0022: the axis reads as the locale word, and the Japanese term is
+    // one tap away rather than inline. Both halves are asserted here — the
+    // English label alone would be the regression the ADR forbids.
+    const label = page.getByTestId('flavor-axis-f1')
+    await expect(label).toBeVisible()
+    await expect(label).toHaveText('Floral')
 
-    // Tooltip text is in the DOM and reachable via aria-describedby; visual
-    // visibility is hover/focus-driven (CSS-only, no JS handler).
-    const tooltip = page.getByTestId('flavor-axis-f1-tooltip')
-    await expect(tooltip).toHaveText(/fragrant \/ floral/)
-    await expect(tooltip).toHaveText(/brewer's term/i)
+    // The instance id carries the brand id, so match on the prefix rather
+    // than pinning a testid that changes with the fixture.
+    const caveat = page
+      .locator('[data-testid^="info-sheet-flavor-terms-"][data-testid$="-caveat"]')
+      .first()
+    await expect(caveat).toBeVisible()
+    await expect(caveat).toHaveText(/brewers' terms/i)
 
-    const root = page.getByTestId('flavor-axis-f1')
-    await expect(root).toHaveAttribute('aria-describedby', 'flavor-axis-f1-tooltip')
+    // Wired, not merely present: this is what a screen reader announces on
+    // reaching the button, with the sheet never opened.
+    const trigger = page
+      .locator('[data-testid^="info-sheet-flavor-terms-"][data-testid$="-trigger"]')
+      .first()
+    await expect(trigger).toHaveAttribute(
+      'aria-describedby',
+      (await caveat.getAttribute('id')) ?? '',
+    )
 
-    // Focusing makes the tooltip visually appear (group-focus-visible toggles
-    // opacity on the role=tooltip span).
-    await root.focus()
-    await expect(tooltip).toBeVisible()
+    // Opening it names the brewer's term the English word approximates.
+    await trigger.click()
+    const terms = page.getByTestId('flavor-terms-list')
+    await expect(terms).toBeVisible()
+    await expect(terms).toContainText('華やか')
+    await expect(terms).toContainText('hanayaka')
+    await expect(page.getByText(/approximations, not translations/i)).toBeVisible()
 
     await context.close()
   })

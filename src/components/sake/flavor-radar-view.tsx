@@ -1,18 +1,12 @@
 import { FLAVOR_AXES, type FlavorAxis } from '@/lib/schemas/flavor-chart'
 import type { FlavorProfile } from '@/lib/schemas/flavor-profile'
-import { FlavorAxisLabel, type TooltipAlign } from './flavor-axis-label'
+import { FlavorAxisLabel } from './flavor-axis-label'
+import { FlavorTermsDisclosure } from './flavor-terms-disclosure'
 
-// Open each axis label's tooltip toward the centre of the chart so a label at
-// the hexagon's right/left edge doesn't push its tooltip off-screen (the
-// reported overflow). Right-side axes open leftward; top/bottom stay centred.
-const AXIS_TOOLTIP_ALIGN: Readonly<Record<FlavorAxis, TooltipAlign>> = {
-  f1: 'center',
-  f2: 'right',
-  f3: 'right',
-  f4: 'center',
-  f5: 'left',
-  f6: 'left',
-}
+// The per-axis tooltip-alignment table that used to live here is gone with
+// ADR-0022: the labels no longer carry tooltips, so nothing can overflow the
+// hexagon's edges. The brewers'-term disclosure moved to one sheet below the
+// chart.
 
 /**
  * Radar / hexagon visualisation of a FlavorProfile over the six Sakenowa
@@ -85,9 +79,12 @@ export function flavorRadarPolygonPoints(profile: FlavorProfile): string {
 
 interface FlavorRadarViewProps {
   profile: FlavorProfile
+  /** Disambiguates the disclosure's element ids. A page can show more than
+   *  one radar (the profile page's cold-start sample and the live profile). */
+  instanceId: string
 }
 
-export function FlavorRadarView({ profile }: FlavorRadarViewProps) {
+export function FlavorRadarView({ profile, instanceId }: FlavorRadarViewProps) {
   return (
     <div
       className="relative aspect-square w-full max-w-md"
@@ -145,19 +142,25 @@ export function FlavorRadarView({ profile }: FlavorRadarViewProps) {
         return (
           <div
             key={axis}
-            // Each anchor uses `transform` to centre on its vertex, which
-            // creates a stacking context per label — so a later label's box
-            // would otherwise paint over an earlier label's open tooltip (the
-            // tooltip's own z-10 is trapped inside its anchor's context). Lift
-            // the hovered/focused anchor above its siblings so its tooltip wins.
-            className="absolute -translate-x-1/2 -translate-y-1/2 hover:z-20 focus-within:z-20"
+            // Centred on its vertex via `transform`. The per-anchor z-index
+            // juggling this used to need is gone with the tooltips (ADR-0022)
+            // — nothing opens out of an anchor any more.
+            className="absolute -translate-x-1/2 -translate-y-1/2"
             style={{ left: anchor.left, top: anchor.top }}
             data-testid={`taste-profile-axis-anchor-${axis}`}
           >
-            <FlavorAxisLabel axis={axis} tooltipAlign={AXIS_TOOLTIP_ALIGN[axis]} />
+            <FlavorAxisLabel axis={axis} />
           </div>
         )
       })}
+      {/*
+        ADR-0022: the radar renders the six English approximations, so it owes
+        the brewers'-term disclosure just as the bar charts do. It does not go
+        through `<FlavorProfileView />`, so it mounts its own.
+      */}
+      <div className="absolute inset-x-0 -bottom-1 flex justify-center">
+        <FlavorTermsDisclosure instanceId={`radar-${instanceId}`} />
+      </div>
     </div>
   )
 }

@@ -7,6 +7,7 @@ import {
   FlavorProfileView,
   buildFlavorAxisStrings,
 } from '@/components/sake/flavor-profile-view'
+import { buildFlavorTermsStrings } from '@/components/sake/flavor-terms-sheet'
 import {
   SakenowaAttribution,
   requiresSakenowaAttribution,
@@ -148,7 +149,10 @@ async function SuggestCard({ suggestion }: SuggestCardProps) {
         </div>
       )}
       {suggestion.flavor_profile !== undefined && (
-        <FlavorAxisCluster profile={suggestion.flavor_profile} />
+        <FlavorAxisCluster
+          profile={suggestion.flavor_profile}
+          instanceId={`suggest-${suggestion.brandId.value}`}
+        />
       )}
     </li>
   )
@@ -167,16 +171,18 @@ async function SuggestCard({ suggestion }: SuggestCardProps) {
  * cluster is a glance-scale summary of the axis names + values so a
  * visitor learning the vocabulary sees the labels reinforced.
  *
- * Every visible number stays behind the axis label so the CLAUDE.md
- * "never English-only" rule holds: romaji + kanji are primary, the
- * numeric value is supporting context, the English approximation
- * arrives via the label's tooltip on hover / focus.
+ * Since ADR-0022 the axis labels are the locale's approximation (Floral,
+ * Mellow, …) rather than romaji + kanji, and the brewers'-term disclosure
+ * rides along as the `<FlavorTermsSheet />` the shared view appends after
+ * the chips. The cluster has no visible heading to hang it from, which is
+ * why the sheet trails the row instead.
  */
 interface FlavorAxisClusterProps {
   profile: NonNullable<Suggestion['flavor_profile']>
+  instanceId: string
 }
 
-async function FlavorAxisCluster({ profile }: FlavorAxisClusterProps) {
+async function FlavorAxisCluster({ profile, instanceId }: FlavorAxisClusterProps) {
   const t = await getTranslations('sake.brand')
   const tAxis = await getTranslations('flavorAxis')
   return (
@@ -185,6 +191,8 @@ async function FlavorAxisCluster({ profile }: FlavorAxisClusterProps) {
       variant="cluster"
       chartLabel={t('flavorChartLabel')}
       axisStrings={buildFlavorAxisStrings((axis, field) => tAxis(`${axis}.${field}`))}
+      termsStrings={buildFlavorTermsStrings((key) => tAxis(`disclosure.${key}`))}
+      instanceId={instanceId}
     />
   )
 }

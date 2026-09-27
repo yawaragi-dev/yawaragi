@@ -1,118 +1,75 @@
 import { getTranslations } from 'next-intl/server'
-import { FLAVOR_AXIS_ROMAJI, type FlavorAxis } from '@/lib/schemas/flavor-chart'
+import type { FlavorAxis } from '@/lib/schemas/flavor-chart'
 import { cn } from '@/lib/utils'
 
 /**
- * Renders one of the six Sakenowa flavor-chart axes with romaji + kanji
- * always visible and the locale's approximation + brewer's-term caveat
- * available via tooltip.
+ * One of the six Sakenowa flavor axes, rendered as the locale's English (or
+ * German) approximation: Floral, Mellow, Rich, Mild, Dry, Light.
  *
- * Why both romaji and kanji are forced visible: the project's "never
- * English-only" rule (CLAUDE.md) — Japanese brewer's terms have no exact
- * Western equivalent, so the canonical labels stay primary and the
- * locale approximation is supporting context, not a replacement.
+ * This used to show romaji + kanji inline with the approximation in a
+ * per-axis tooltip, under an absolute "never English-only" rule. **ADR-0022
+ * moved that disclosure rather than deleting it**: the info button beside the
+ * chart heading opens `<FlavorTermsSheet />`, which names all six brewers'
+ * terms at once and states plainly that the English words are approximations,
+ * not translations. One sheet beats six tooltips — six rows × three lines,
+ * twice per screen, lost more to legibility than the inline Japanese bought
+ * in accuracy at 390px in a dim room.
  *
- * Split into a sync presentational view + async i18n wrapper because
- * Vitest can't render async RSCs (CLAUDE.md). The view takes resolved
- * strings; unit tests assert on it. The wrapper does the locale work.
+ * So this component is deliberately thin, and the compliance weight sits on
+ * the chart container. **A chart that renders these labels without also
+ * rendering the disclosure is a regression against ADR-0022** — that is what
+ * `flavor-profile-view.test.tsx` pins, not anything in this file.
+ *
+ * Romaji is untouched below the presentation layer: `FLAVOR_AXIS_ROMAJI`
+ * still maps the axes, the enum is still `f1..f6`, and LLM prompts still
+ * speak romaji + kanji.
+ *
+ * Split into a sync view + async i18n wrapper because Vitest can't render
+ * async RSCs (CLAUDE.md).
  */
-/**
- * Which way the tooltip opens, so a label near a container/viewport edge
- * doesn't push its tooltip off-screen. `left` (the default) anchors the
- * tooltip's left edge and opens rightward — correct for a left-aligned label.
- * The radar positions labels around a hexagon and passes `right` for its
- * right-side axes and `center` for top/bottom so no tooltip overflows.
- */
-export type TooltipAlign = 'left' | 'center' | 'right'
-
-const TOOLTIP_ALIGN_CLASS: Record<TooltipAlign, string> = {
-  left: 'left-0',
-  center: 'left-1/2 -translate-x-1/2',
-  right: 'right-0',
-}
 
 interface FlavorAxisLabelProps {
   axis: FlavorAxis
   className?: string
-  tooltipAlign?: TooltipAlign
 }
 
-export async function FlavorAxisLabel({ axis, className, tooltipAlign }: FlavorAxisLabelProps) {
+export async function FlavorAxisLabel({ axis, className }: FlavorAxisLabelProps) {
   const t = await getTranslations('flavorAxis')
   return (
     <FlavorAxisLabelView
       axis={axis}
-      romaji={FLAVOR_AXIS_ROMAJI[axis]}
-      kanji={t(`${axis}.kanji`)}
       approximation={t(`${axis}.label`)}
-      caveat={t(`${axis}.caveat`)}
       className={className}
-      tooltipAlign={tooltipAlign}
     />
   )
 }
 
 interface FlavorAxisLabelViewProps {
   axis: FlavorAxis
-  romaji: string
-  kanji: string
   approximation: string
-  caveat: string
   className?: string
-  tooltipAlign?: TooltipAlign
 }
 
-// The tooltip body is always present in the DOM (referenced via
-// `aria-describedby`) so screen readers reach it without JS. CSS toggles
-// visual visibility on focus/hover; SR announces the description either
-// way. `tabIndex={0}` makes the label keyboard-reachable.
 export function FlavorAxisLabelView({
   axis,
-  romaji,
-  kanji,
   approximation,
-  caveat,
   className,
-  tooltipAlign = 'left',
 }: FlavorAxisLabelViewProps) {
-  const tooltipId = `flavor-axis-${axis}-tooltip`
-
   return (
     <span
-      className={cn('group relative inline-flex flex-col items-start gap-0.5', className)}
-      tabIndex={0}
-      aria-describedby={tooltipId}
+      // The id is load-bearing: each axis bar points its `aria-labelledby`
+      // here, so this is the bar's accessible name. Renaming it without
+      // updating `<Bar />` silently unlabels all six progressbars.
+      id={`flavor-axis-${axis}-label`}
+      // Page palette, not Ginshu — see the note on `VARIANT` in
+      // flavor-profile-view.tsx. Ginshu's text steps need their own ground.
+      className={cn(
+        'text-sm font-medium text-zinc-700 dark:text-zinc-300',
+        className,
+      )}
       data-testid={`flavor-axis-${axis}`}
     >
-      <span
-        className="text-xs font-medium uppercase tracking-wide text-zinc-700 dark:text-zinc-300"
-        data-testid={`flavor-axis-${axis}-romaji`}
-      >
-        {romaji}
-      </span>
-      <span
-        className="text-sm font-semibold"
-        lang="ja"
-        data-testid={`flavor-axis-${axis}-kanji`}
-      >
-        {kanji}
-      </span>
-      <span
-        id={tooltipId}
-        role="tooltip"
-        className={cn(
-          'pointer-events-none absolute top-full z-10 mt-1 w-max max-w-[min(16rem,80vw)]',
-          TOOLTIP_ALIGN_CLASS[tooltipAlign],
-          'rounded-md border border-zinc-200 bg-white px-3 py-2 text-xs leading-snug shadow-md',
-          'opacity-0 transition-opacity duration-150',
-          'group-hover:opacity-100 group-focus-visible:opacity-100 group-focus-within:opacity-100',
-          'dark:border-zinc-700 dark:bg-zinc-900',
-        )}
-        data-testid={`flavor-axis-${axis}-tooltip`}
-      >
-        <span className="font-medium">{approximation}</span>
-        <span className="mt-1 block text-zinc-600 dark:text-zinc-400">{caveat}</span>
-      </span>
+      {approximation}
     </span>
   )
 }
