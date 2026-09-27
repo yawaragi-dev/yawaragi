@@ -3,47 +3,49 @@ import { Show } from '@clerk/nextjs'
 import { Link } from '@/i18n/navigation'
 import { HeaderAuth } from '@/components/auth/header-auth'
 import { LocaleSwitcher } from '@/components/layout/locale-switcher'
-import { HeaderNav, type HeaderNavMessages } from '@/components/layout/header-nav'
 
 /**
- * Persistent global header (UX-A / #162). Rendered by the locale layout
- * above `{children}` on every `[locale]` route.
+ * The top edge — design v1.4 rule 11: "the **top edge** is 'where am I / go
+ * back', the **bottom edge** is the tab bar."
  *
- * Server component: the label strings resolve at render time via
- * `getTranslations`, then hand off to `<HeaderNav />` (client, needs
- * `usePathname` for active-state indication + the mobile sheet toggle).
- * `<LocaleSwitcher />` stays a sibling — it already owns its own client
- * boundary and its position doesn't need to know about pathname.
+ * This used to carry the three-item nav backbone from #162 (Scan · Chat ·
+ * Taste Profile, plus a mobile sheet). `<TabBar />` is that backbone now, so
+ * the nav items and the sheet are gone — two navigation systems on one screen
+ * is worse than either alone, and the design gives the bottom edge the job.
+ *
+ * What stays, and why it isn't yet the design's per-screen header:
+ *
+ * - The **locale switch**, because ADR-0007 requires one in the header and its
+ *   designed home is §15 Account, which is not built. It moves there with §15.
+ * - The **wordmark**, as the route back out of a screen. The design replaces
+ *   this with a per-screen back arrow driven by the history stack rule 11
+ *   describes; that lands with the screens themselves, since each one supplies
+ *   its own title.
+ * - **Sign-out**, the only Clerk surface besides `/sign-in` (ADR-0020).
+ *
+ * Both deviations are deliberate and tracked on #300. Removing the switch to
+ * chase the design sooner would breach ADR-0007; removing the wordmark before
+ * back arrows exist would leave screens with no way out but the tabs.
  */
 export async function Header() {
   const t = await getTranslations('header')
   const tCommon = await getTranslations('common')
   const tSignIn = await getTranslations('signIn')
 
-  const navMessages: HeaderNavMessages = {
-    navScan: t('navScan'),
-    navChat: t('navChat'),
-    navProfile: t('navProfile'),
-    profileBadge: t('profileBadge'),
-    menuOpen: t('menuOpen'),
-    primaryLabel: t('primaryLabel'),
-  }
-
   return (
     <header
-      className="border-b border-zinc-200 bg-white/70 backdrop-blur-sm dark:border-zinc-800 dark:bg-black/70"
+      className="flex-none border-b border-divider bg-surface"
       data-testid="site-header"
     >
-      <div className="flex items-center gap-3 sm:gap-4 px-4 sm:px-6 py-3">
+      <div className="flex items-center gap-3 px-5 py-3 sm:gap-4">
         <Link
           href="/"
-          className="text-base font-semibold tracking-tight text-zinc-900 hover:text-zinc-700 dark:text-zinc-50 dark:hover:text-zinc-300"
+          className="text-card-heading font-medium text-ink hover:text-ash-800"
           data-testid="header-wordmark"
           aria-label={t('wordmarkLabel')}
         >
           {tCommon('siteName')}
         </Link>
-        <HeaderNav messages={navMessages} />
         <div className="ml-auto flex items-center gap-2">
           {/* Clerk v7 replaced <SignedIn> with <Show when="signed-in">; it is
               a server component, so the gate lives here and only the button

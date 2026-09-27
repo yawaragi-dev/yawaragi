@@ -128,6 +128,16 @@ describe('isGatedPath', () => {
     // route sits behind the age gate.
     '/en/scan',
     '/de/scan',
+    // The two tab routes added with the app shell. They render placeholders
+    // today, so nothing here is JMStV-relevant *yet* — but §3 Home opens with
+    // recent tastings and §11 Collection is the journal, and both arrive in a
+    // PR that will be about layout, not gating. `UNGATED_LOCALE_PATHS` is
+    // deny-by-default so they are already gated; this pins it so a future
+    // allowlist edit cannot quietly expose them.
+    '/en/home',
+    '/de/home',
+    '/en/collection',
+    '/de/collection',
   ])('treats %s as gated', (path) => {
     expect(isGatedPath(path)).toBe(true)
   })
