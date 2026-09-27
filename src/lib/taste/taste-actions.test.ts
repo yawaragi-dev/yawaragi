@@ -78,9 +78,36 @@ describe('rateSake', () => {
   })
 
   it('rejects invalid input before rate-limiting or any lookup', async () => {
-    const result = await rateSake(123, 9) // rating out of 1–5
+    const result = await rateSake(123, 9) // rating out of 0.5–5
     expect(result.status).toBe('invalid_input')
     expect(enforceRateLimit).not.toHaveBeenCalled()
+    expect(lookupFlavorChart).not.toHaveBeenCalled()
+  })
+
+  it('accepts a half star and lets it move the vector by half as much', async () => {
+    // Design v1.4 §5 split every star into halves. A half step has to reach
+    // the derivation intact, not get floored to an integer on the way: the
+    // weight is (rating − 3) / 5, so 3.5 is +0.1 where 4 would be +0.2.
+    vi.mocked(lookupFlavorChart).mockResolvedValue(CHART)
+    const result = await rateSake(123, 3.5)
+    expect(result.status).toBe('ok')
+    if (result.status !== 'ok') return
+    expect(result.profile.f1).toBeCloseTo(0.55, 5)
+  })
+
+  it('rejects a rating between the half-star steps', async () => {
+    // 3.7 is inside the range but off the scale, so the star row could not
+    // have produced it. Accepting it would persist a taste event no UI can
+    // render back — the reason the schema says multipleOf(0.5) rather than
+    // just min/max.
+    const result = await rateSake(123, 3.7)
+    expect(result.status).toBe('invalid_input')
+    expect(lookupFlavorChart).not.toHaveBeenCalled()
+  })
+
+  it('rejects zero, which is "not rated" rather than the lowest rating', async () => {
+    const result = await rateSake(123, 0)
+    expect(result.status).toBe('invalid_input')
     expect(lookupFlavorChart).not.toHaveBeenCalled()
   })
 
