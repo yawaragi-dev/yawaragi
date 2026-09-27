@@ -1,6 +1,6 @@
 # Milestone progress (detail)
 
-_Snapshot generated 2026-09-27T06:53:38.446Z (UTC). Regenerate with `pnpm progress`._
+_Snapshot generated 2026-09-27T07:08:28.987Z (UTC). Regenerate with `pnpm progress`._
 
 ## TL;DR
 
@@ -42,7 +42,7 @@ Sakenowa Postgres mirror, Zod schemas with provenance, attribution UI, flavor ch
 - **Median:**     2026-09-28
 - **Pessimistic:** 2026-09-29
 
-_Based on 14 PR(s) merged over the last 14 days (~1042 LoC/day)._
+_Based on 15 PR(s) merged over the last 14 days (~1067 LoC/day)._
 
 ### M3 — Flagship surfaces (Phases 3–5)
 
@@ -60,14 +60,14 @@ Label scan (vision LLM), chat recommender (AI SDK tools + MCP), taste profile + 
 - **Median:**     2026-09-28
 - **Pessimistic:** 2026-09-29
 
-_Based on 14 PR(s) merged over the last 14 days (~1042 LoC/day)._
+_Based on 15 PR(s) merged over the last 14 days (~1067 LoC/day)._
 
 ## Methodology
 
 - **Milestones** map to project phases: M1 = Phase 0, M2 = Phase 2, M3 = Phases 3–5. Phase 6+ (evals, polish, community, launch) is excluded — it gates the launch but isn't product surface.
 - **Weight per issue** is the sum of `additions + deletions` of the merged PR(s) that closed it (matched by `closes #N` in the PR title). LoC is a blunt instrument but it is measurable, reproducible, and immune to retroactive sizing.
 - **Open issues** inherit the median measured slice weight as a prior; the dashboard labels this fall-back so it isn't confused with measured data.
-- **Velocity** is total LoC merged in the trailing 14 days divided by the window length in days. Idle days count against velocity: `14583` LoC across `14` PR(s) ⇒ `1041.6` LoC/day.
+- **Velocity** is total LoC merged in the trailing 14 days divided by the window length in days. Idle days count against velocity: `14934` LoC across `15` PR(s) ⇒ `1066.7` LoC/day.
 - **ETA band** is `remaining_weight / velocity` scaled by 1.5x (optimistic), 1x (median), and 0.5x (pessimistic). The 0.5x/1.5x band is wide on purpose — it is not a binomial confidence interval (we lack the ≥8 sprints of history that would justify one), it is a sanity-check window.
 
 ## What is NOT measured
