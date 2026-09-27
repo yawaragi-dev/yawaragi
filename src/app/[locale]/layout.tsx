@@ -7,10 +7,8 @@ import type { Metadata } from 'next'
 import { ClerkProvider } from '@clerk/nextjs'
 import { routing } from '@/i18n/routing'
 import { DebugPanelMount } from '@/components/debug/debug-panel-mount'
-import { CookieBanner } from '@/components/legal/cookie-banner'
 import { buildClerkLocalization } from '@/lib/auth/clerk-localization'
 import { isDebugEnabledFromCookies } from '@/lib/debug/debug-mode'
-import { getComplianceState } from '@/lib/legal/compliance-state'
 import '../globals.css'
 
 // Inter, per the design's type section. `--font-inter` is what `--font-sans`
@@ -39,10 +37,6 @@ export default async function LocaleLayout({
   setRequestLocale(locale)
 
   const cookieJar = await cookies()
-  // Only the GDPR `consent` field is needed here (the cookie banner is GDPR,
-  // not JMStV). The age-gate / JMStV check lives in `src/proxy.ts`. The two
-  // regimes stay distinct; only the cookie read is shared via the seam.
-  const { consent } = getComplianceState(cookieJar)
   // ADR-0013: every feature exposes a per-request trace to the operator
   // when the `yawaragi_debug` cookie is set. The mount lives at layout
   // level so the panel persists across page navigations and reloads —
@@ -120,7 +114,6 @@ export default async function LocaleLayout({
         >
           <NextIntlClientProvider>
             {children}
-            <CookieBanner initialDecision={consent} />
             <DebugPanelMount debugMode={debugMode} />
           </NextIntlClientProvider>
         </body>

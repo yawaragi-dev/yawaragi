@@ -1,3 +1,6 @@
+import { cookies } from 'next/headers'
+import { CookieBanner } from '@/components/legal/cookie-banner'
+import { getComplianceState } from '@/lib/legal/compliance-state'
 import { Header } from '@/components/layout/header'
 import { LegalFooter } from '@/components/layout/legal-footer'
 
@@ -15,12 +18,17 @@ import { LegalFooter } from '@/components/layout/legal-footer'
  * locale switch, "Open the app"; a five-link footer with the Sakenowa credit).
  * That is the landing MR's job — this is the shared chrome until then.
  */
-export default function SiteLayout({ children }: { children: React.ReactNode }) {
+export default async function SiteLayout({ children }: { children: React.ReactNode }) {
+  // Only the GDPR `consent` field: the banner is GDPR, the age gate is
+  // JMStV, and the two regimes stay distinct (ADR-0006, ADR-0009).
+  const { consent } = getComplianceState(await cookies())
+
   return (
     <>
       <Header />
       {children}
       <LegalFooter />
+      <CookieBanner initialDecision={consent} placement="site" />
     </>
   )
 }
