@@ -44,8 +44,12 @@ _Avoid_: TasteMap (retired), taste profile (that's the internal TasteProfile obj
 A single dated interaction that feeds a *User*'s **TasteProfile**: a Sake rating, an accepted scan result, or a cross-beverage seed. Each carries a *signed strength* — a direction (toward or away from a FlavorProfile position) and a magnitude. A User has zero or more TasteEvents; the TasteProfile is the combination of them. A **JournalEntry** is a TasteEvent plus richer fields (see **TastingJournal**).
 _Avoid_: Interaction (too generic), Rating (only one of the three kinds), Signal, PreferenceEvent
 
+**RatingBand**:
+The word shown beside a star row — "4.5 · Outstanding". Ratings run **0.5–5 in half-star steps** (design v1.4 §5), and the ten possible values group into five bands: *Outstanding* (≥4.5), *Very good* (≥3.5), *Solid* (≥2.5), *Not for me* (≥1.5), *Poured it out* (below). The thresholds are deliberately asymmetric — the top of the scale is where a drinker is choosing between good bottles. A band is a *reading* of a rating, never stored: it is derived on render, so re-banding is a copy change and not a migration.
+_Avoid_: Verdict, Score, Grade (all imply we are judging the sake rather than reporting the User's own rating), Label (overloaded — that's the bottle)
+
 **TastingJournal**:
-A *User*'s durable, ordered record of Sakes they have tried — the **spine surface** everything else hangs off (per ADR-0020). A **JournalEntry** *is* a **TasteEvent** plus richer fields: free-text `notes`, an explicit `tried_at`, the denormalised sake display name (kanji + romaji, captured at log time so the record survives a catalogue change), and (later) a scan reference. The **TasteMap** and recommender are *downstream outputs* of the journal. Persistence is auth-gated and maintainer-only in v1; the public sees an interactive-but-ephemeral example (ADR-0020). EN "tasting journal" / DE "Verkostungsjournal".
+A *User*'s durable, ordered record of Sakes they have tried — the **spine surface** everything else hangs off (per ADR-0020). A **JournalEntry** *is* a **TasteEvent** plus richer fields: free-text `notes`, an explicit `tried_at`, the denormalised sake display name (kanji + romaji, captured at log time so the record survives a catalogue change), and (later) a scan reference. The **Palate** and recommender are *downstream outputs* of the journal. Persistence is auth-gated and maintainer-only in v1; the public sees an interactive-but-ephemeral example (ADR-0020). EN "tasting journal" / DE "Verkostungsjournal".
 _Avoid_: Log (clinical), Diary (personal-emotional), History (too generic), **Cellar** — no longer a banned synonym but a distinct sibling concept (bottles you own, not tastings you had); see **Cellar** below
 
 **Collection**:
