@@ -45,10 +45,14 @@ export function LocaleSwitcher() {
             disabled={isActive || isPending}
             aria-current={isActive ? 'true' : undefined}
             data-locale={code}
+            // Ginshu ramp, not zinc: `text-zinc-50` is a cool #fafafa and read
+            // as plain white against the warm #1b1a19 ground. The light-mode
+            // halves were dead on arrival — ADR-0023 makes `dark:` always
+            // match — so they go rather than getting a second colour.
             className={
               isActive
-                ? 'px-2 py-1 font-semibold text-zinc-900 dark:text-zinc-50'
-                : 'px-2 py-1 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-50 cursor-pointer'
+                ? 'px-2 py-1 font-semibold text-ink'
+                : 'px-2 py-1 text-ash-600 hover:text-ash-800 cursor-pointer'
             }
           >
             {code === 'en' ? t('english') : t('german')}

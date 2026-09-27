@@ -26,10 +26,14 @@ export function TabPlaceholder({ title, body, link }: TabPlaceholderProps) {
   return (
     <div className="px-5 py-8" data-testid="tab-placeholder">
       <div className="flex flex-col gap-3 rounded-xl bg-surface p-5 shadow-yw-sm">
-        {/* The design's accent "mark": a 2px × 14px rule before a heading,
-            one per surface. */}
-        <span className="h-3.5 w-0.5 bg-ginshu-500" aria-hidden="true" />
-        <h1 className="text-title font-medium text-ink">{title}</h1>
+        {/* The design's accent "mark": a 2px × 14px rule BESIDE the heading,
+            never above it. Every occurrence in the prototype is
+            `display:flex; align-items:center; gap:8px` around the mark and its
+            title — a stacked mark reads as a stray line, not as a mark. */}
+        <div className="flex items-center gap-2">
+          <span className="h-3.5 w-0.5 shrink-0 bg-ginshu-500" aria-hidden="true" />
+          <h1 className="text-title font-medium text-ink">{title}</h1>
+        </div>
         <p className="text-body text-ash-600">{body}</p>
         <Link
           href={link.href}
