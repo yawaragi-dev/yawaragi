@@ -5,7 +5,9 @@ import { BASE_URL } from './_base-url'
 // rests on, so it is the one worth pinning. Design v1.4 §1.
 const GATE_COPY_EN = 'Under German youth-protection law (JMStV)'
 const GATE_COPY_DE = 'Jugendmedienschutz-Staatsvertrag'
-const LANDING_BODY_EN = 'A companion for discovering sake.'
+// §0's heading — the landing copy that must be visible behind the gate,
+// proving the gate is an overlay on a real page rather than a redirect.
+const LANDING_BODY_EN = "Know what's in the cup."
 
 test.describe('age gate enforcement', () => {
   test('a direct request to a gated path without the cookie shows the gate landing', async ({

@@ -57,9 +57,8 @@ test.describe('locale routing', () => {
     const page = await context.newPage()
     await page.goto('/en/')
     await expect(page.locator('html')).toHaveAttribute('lang', 'en')
-    await expect(
-      page.getByText('A companion for discovering sake.'),
-    ).toBeVisible()
+    // §0's heading replaced the old tagline as the landing's identifying copy.
+    await expect(page.getByText("Know what's in the cup.")).toBeVisible()
     await context.close()
   })
 })

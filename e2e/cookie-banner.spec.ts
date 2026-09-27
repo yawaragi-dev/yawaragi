@@ -252,12 +252,26 @@ test.describe('reopening preferences after a decision', () => {
     await context.close()
   })
 
-  test('settings link is visible even on first visit (before any decision)', async ({
+  test('withdrawal becomes reachable as soon as the gate is out of the way', async ({
     browser,
   }) => {
-    const context = await browser.newContext({ locale: 'de-DE' })
+    // This used to assert the settings link was visible on the very first
+    // visit. Design v1.4 §1 made the age gate a full-screen surface and §2
+    // says the banner "appears AFTER the age gate, never with it" — so on a
+    // first visit there is no consent yet to withdraw, and nothing to reach.
+    //
+    // What still has to hold, and what this now pins, is that withdrawal is
+    // never further away than giving: the moment the gate is answered, the
+    // settings link is on the page.
+    const context = await browser.newContext({ locale: 'en-US' })
     const page = await context.newPage()
-    await page.goto('/de/')
+
+    await page.goto('/en/')
+    await expect(page.getByTestId('age-gate')).toBeVisible()
+
+    await page.getByTestId('age-gate-accept').click()
+    await expect(page.getByTestId('age-gate')).toBeHidden()
+
     await expect(page.getByTestId('cookie-settings-link')).toBeVisible()
     await context.close()
   })
