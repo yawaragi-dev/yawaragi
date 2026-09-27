@@ -31,7 +31,10 @@ const GINSHU_TEXT_SIZES = [
   'md-alt',
   'card-heading',
   'body',
-  'secondary',
+  // `subtle`, not `secondary` — see the note on `--text-subtle` in
+  // `globals.css`: a scale name that matches a `--color-*` name collides and
+  // loses to the colour utility.
+  'subtle',
   'meta',
   'section-label',
   'micro',

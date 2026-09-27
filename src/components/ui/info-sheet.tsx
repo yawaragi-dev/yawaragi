@@ -132,7 +132,7 @@ export function InfoSheet({
               <X size={18} aria-hidden="true" />
             </SheetClose>
           </div>
-          <div className="px-5 pb-8 text-secondary leading-relaxed text-ash-700">
+          <div className="px-5 pb-8 text-subtle leading-relaxed text-ash-700">
             {children}
           </div>
         </SheetContent>
