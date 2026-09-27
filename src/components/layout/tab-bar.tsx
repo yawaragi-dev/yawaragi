@@ -1,6 +1,8 @@
 'use client'
 
+import type { Icon } from '@phosphor-icons/react'
 import { Camera, Hexagon, House, Notebook } from '@phosphor-icons/react/dist/ssr'
+import { useLinkStatus } from 'next/link'
 import { Link, usePathname } from '@/i18n/navigation'
 import { cn } from '@/lib/utils'
 
@@ -65,33 +67,67 @@ export function TabBar({ messages }: TabBarProps) {
       className="flex-none grid grid-cols-4 border-t border-divider bg-surface px-1.5 pt-2.5 pb-6"
       data-testid="tab-bar"
     >
-      {TABS.map(({ href, icon: Icon, labelKey, testId }) => {
-        const active = isTabActive(pathname, href)
-        return (
-          <Link
-            key={href}
-            href={href}
-            aria-current={active ? 'page' : undefined}
-            data-testid={testId}
-            data-active={active ? 'true' : undefined}
-            // min-h-11 is the design's 44px floor for a touch target.
-            className={cn(
-              'flex min-h-11 flex-col items-center gap-1 py-1.5 text-micro transition-colors',
-              active ? 'text-ginshu-600' : 'text-ash-600 hover:text-ash-800',
-            )}
-          >
-            <Icon
-              size={22}
-              // Fill weight reads as "you are here" at 22px far better than a
-              // colour change alone, which is the whole reason the design
-              // specifies two weights rather than one.
-              weight={active ? 'fill' : 'regular'}
-              aria-hidden="true"
-            />
-            {messages[labelKey]}
-          </Link>
-        )
-      })}
+      {TABS.map(({ href, icon, labelKey, testId }) => (
+        <Link
+          key={href}
+          href={href}
+          aria-current={isTabActive(pathname, href) ? 'page' : undefined}
+          data-testid={testId}
+          className="flex min-h-11 flex-col items-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+        >
+          <TabContents
+            icon={icon}
+            label={messages[labelKey]}
+            active={isTabActive(pathname, href)}
+          />
+        </Link>
+      ))}
     </nav>
+  )
+}
+
+interface TabContentsProps {
+  icon: Icon
+  label: string
+  active: boolean
+}
+
+/**
+ * The icon and label, inside the `<Link>` so it can read `useLinkStatus()`.
+ *
+ * **A tab lights up the moment it is tapped, not when the route arrives.**
+ * `/profile` does database work and neither placeholder route is prefetched
+ * on a cold tap, so without this a visitor taps Collection and nothing at all
+ * happens for as long as the server takes — the exact no-feedback failure
+ * #184 was filed for, and question 1 of the UX pre-flight checklist.
+ *
+ * The acknowledgement is the accent colour arriving early rather than a
+ * spinner: it is what a native tab bar does, it needs no string (so nothing
+ * to translate, nothing to mistime), and if the navigation is instant the
+ * visitor cannot tell the difference. `aria-current` still only appears once
+ * the visitor is genuinely there — a pending tab must not announce itself as
+ * the current page.
+ */
+function TabContents({ icon: Icon, label, active }: TabContentsProps) {
+  const { pending } = useLinkStatus()
+  const lit = active || pending
+
+  return (
+    <span
+      className={cn(
+        'flex flex-col items-center gap-1 py-1.5 text-micro transition-colors',
+        lit ? 'text-ginshu-600' : 'text-ash-600 hover:text-ash-800',
+      )}
+      data-active={lit ? 'true' : undefined}
+    >
+      <Icon
+        size={22}
+        // Fill weight reads as "you are here" at 22px far better than a colour
+        // change alone, which is why the design specifies two weights.
+        weight={lit ? 'fill' : 'regular'}
+        aria-hidden="true"
+      />
+      {label}
+    </span>
   )
 }

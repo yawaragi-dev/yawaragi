@@ -33,7 +33,7 @@ export function TabPlaceholder({ title, body, link }: TabPlaceholderProps) {
         <p className="text-body text-ash-600">{body}</p>
         <Link
           href={link.href}
-          className="text-body font-medium text-ginshu-700 underline underline-offset-4 hover:text-ginshu-800"
+          className="self-start rounded-sm text-body font-medium text-ginshu-700 underline underline-offset-4 hover:text-ginshu-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
           data-testid="tab-placeholder-link"
         >
           {link.label}
