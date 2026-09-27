@@ -25,8 +25,8 @@ const axisStrings = buildFlavorAxisStrings((axis, field) => `${axis}:${field}`)
 // cost on every render — which is the point.
 const termsStrings = {
   caveat: "Brewers' terms, translated loosely.",
-  triggerLabel: 'About these flavour words',
-  title: 'About these flavour words',
+  triggerLabel: 'About these flavor words',
+  title: 'About these flavor words',
   intro: 'These six are Japanese brewers\' terms.',
   closeLabel: 'Close',
 }
@@ -130,12 +130,12 @@ describe('FlavorProfileView', () => {
         />,
       )
 
-      const caveat = screen.getByTestId('info-sheet-flavour-terms-test-caveat')
+      const caveat = screen.getByTestId('info-sheet-flavor-terms-test-caveat')
       expect(caveat.textContent).toBe("Brewers' terms, translated loosely.")
 
       // The caveat must be wired to the trigger, not merely present: that is
       // what gets it announced without opening the sheet.
-      const trigger = screen.getByTestId('info-sheet-flavour-terms-test-trigger')
+      const trigger = screen.getByTestId('info-sheet-flavor-terms-test-trigger')
       expect(trigger.getAttribute('aria-describedby')).toBe(caveat.id)
     },
   )
@@ -164,8 +164,8 @@ describe('FlavorProfileView', () => {
       </>,
     )
 
-    const a = screen.getByTestId('info-sheet-flavour-terms-one-trigger')
-    const b = screen.getByTestId('info-sheet-flavour-terms-two-trigger')
+    const a = screen.getByTestId('info-sheet-flavor-terms-one-trigger')
+    const b = screen.getByTestId('info-sheet-flavor-terms-two-trigger')
     expect(a.getAttribute('aria-describedby')).not.toBe(
       b.getAttribute('aria-describedby'),
     )

@@ -21,8 +21,8 @@ const EN: Record<string, { approximation: string; kanji: string; caveat: string 
 
 const strings = {
   caveat: "Brewers' terms, translated loosely.",
-  triggerLabel: 'About these flavour words',
-  title: 'About these flavour words',
+  triggerLabel: 'About these flavor words',
+  title: 'About these flavor words',
   intro:
     "These six are Japanese brewers' terms. The English words are approximations, not translations.",
   closeLabel: 'Close',
@@ -39,8 +39,8 @@ function renderSheet() {
 }
 
 async function openSheet() {
-  fireEvent.click(screen.getByTestId('info-sheet-flavour-terms-x-trigger'))
-  await waitFor(() => expect(screen.getByTestId('flavour-terms-list')).toBeTruthy())
+  fireEvent.click(screen.getByTestId('info-sheet-flavor-terms-x-trigger'))
+  await waitFor(() => expect(screen.getByTestId('flavor-terms-list')).toBeTruthy())
 }
 
 describe('FlavorTermsSheet', () => {
@@ -50,10 +50,10 @@ describe('FlavorTermsSheet', () => {
     // what the trigger's aria-describedby resolves to.
     renderSheet()
 
-    const caveat = screen.getByTestId('info-sheet-flavour-terms-x-caveat')
+    const caveat = screen.getByTestId('info-sheet-flavor-terms-x-caveat')
     expect(caveat.textContent).toBe("Brewers' terms, translated loosely.")
     expect(
-      screen.getByTestId('info-sheet-flavour-terms-x-trigger').getAttribute('aria-describedby'),
+      screen.getByTestId('info-sheet-flavor-terms-x-trigger').getAttribute('aria-describedby'),
     ).toBe(caveat.id)
   })
 
@@ -62,7 +62,7 @@ describe('FlavorTermsSheet', () => {
     await openSheet()
 
     for (const axis of FLAVOR_AXES) {
-      const row = screen.getByTestId(`flavour-term-${axis}`)
+      const row = screen.getByTestId(`flavor-term-${axis}`)
       expect(row.textContent).toContain(EN[axis].approximation)
       expect(row.textContent).toContain(EN[axis].kanji)
       expect(row.textContent).toContain(FLAVOR_AXIS_ROMAJI[axis])
@@ -74,7 +74,7 @@ describe('FlavorTermsSheet', () => {
     await openSheet()
 
     const kanji = screen
-      .getByTestId('flavour-term-f1')
+      .getByTestId('flavor-term-f1')
       .querySelector('[lang="ja"]')
     expect(kanji?.textContent).toBe('華やか')
   })
@@ -97,9 +97,9 @@ describe('FlavorTermsSheet', () => {
     await openSheet()
 
     const rendered = Array.from(
-      screen.getByTestId('flavour-terms-list').querySelectorAll('[data-testid^="flavour-term-"]'),
+      screen.getByTestId('flavor-terms-list').querySelectorAll('[data-testid^="flavor-term-"]'),
     ).map((el) => el.getAttribute('data-testid'))
 
-    expect(rendered).toEqual(FLAVOR_AXES.map((a) => `flavour-term-${a}`))
+    expect(rendered).toEqual(FLAVOR_AXES.map((a) => `flavor-term-${a}`))
   })
 })

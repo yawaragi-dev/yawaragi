@@ -81,22 +81,36 @@ interface FlavorProfileViewProps {
 // original renderers so the e2e contracts (sake-page, landing, scan,
 // suggest) keep passing: both bar variants share `brand-flavor-chart`; the
 // cluster keeps `suggest-card-flavor-cluster`.
-// Ginshu (design v1.4 SS17): 4px bar, ginshu-500 on ash-200, 11px uppercase
-// section label at 0.1em. Both bar variants share the treatment now — the
-// scan card's amber grid and the detail page's zinc rows were two different
-// answers to the same question, which the design settles.
+// Still the pre-Ginshu palette, deliberately.
+//
+// Design v1.4 §17 wants a 4px bar, ginshu-500 on ash-200, under an 11px
+// uppercase section label — and an earlier revision of this PR shipped that.
+// It was wrong: these pages are still light-themed, and Ginshu's text steps
+// are built for a #1b1a19 ground. `ash-700` on white measures **1.96:1** and
+// `ash-600` **2.48:1**, against a 4.5:1 floor. The chart was legible in the
+// design and near-invisible in the app.
+//
+// So the rule this file follows: **a component adopts Ginshu when the page
+// under it does, not before.** The tokens in globals.css are additive for
+// exactly that reason; re-theming a component ahead of its surface throws
+// the benefit away. The §17 treatment lands with the surface port.
+//
+// (The terms sheet below is the exception, and a principled one: it paints
+// its own dark ground, so it is not borrowing this page's.)
 const VARIANT = {
   row: {
     containerTestId: 'brand-flavor-chart',
-    headerClass: 'text-section-label uppercase text-ash-600',
-    trackClass: 'bg-ash-200',
-    fillClass: 'bg-ginshu-500',
+    headerClass:
+      'text-sm uppercase tracking-wide text-zinc-500 dark:text-zinc-400',
+    trackClass: 'bg-zinc-200 dark:bg-zinc-800',
+    fillClass: 'bg-zinc-700 dark:bg-zinc-200',
   },
   grid: {
     containerTestId: 'brand-flavor-chart',
-    headerClass: 'text-section-label uppercase text-ash-600',
-    trackClass: 'bg-ash-200',
-    fillClass: 'bg-ginshu-500',
+    headerClass:
+      'text-xs uppercase tracking-wide text-stone-400 dark:text-zinc-500',
+    trackClass: 'bg-stone-200 dark:bg-zinc-800',
+    fillClass: 'bg-amber-500/90',
   },
 } as const
 

@@ -3,7 +3,7 @@ import type { FlavorAxis } from '@/lib/schemas/flavor-chart'
 import { cn } from '@/lib/utils'
 
 /**
- * One of the six Sakenowa flavour axes, rendered as the locale's English (or
+ * One of the six Sakenowa flavor axes, rendered as the locale's English (or
  * German) approximation: Floral, Mellow, Rich, Mild, Dry, Light.
  *
  * This used to show romaji + kanji inline with the approximation in a
@@ -61,7 +61,12 @@ export function FlavorAxisLabelView({
       // here, so this is the bar's accessible name. Renaming it without
       // updating `<Bar />` silently unlabels all six progressbars.
       id={`flavor-axis-${axis}-label`}
-      className={cn('text-section-label text-ash-700', className)}
+      // Page palette, not Ginshu — see the note on `VARIANT` in
+      // flavor-profile-view.tsx. Ginshu's text steps need their own ground.
+      className={cn(
+        'text-sm font-medium text-zinc-700 dark:text-zinc-300',
+        className,
+      )}
       data-testid={`flavor-axis-${axis}`}
     >
       {approximation}
