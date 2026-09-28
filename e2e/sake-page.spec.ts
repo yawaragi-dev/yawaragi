@@ -108,6 +108,38 @@ test.describe('sake brand page', () => {
     await context.close()
   })
 
+  test('a provenance badge explains itself in a sheet that fits the screen', async ({
+    browser,
+  }, testInfo) => {
+    testInfo.skip(anyBrandId === null, 'DB-bound spec')
+
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([AGE_GATE_COOKIE])
+    const page = await context.newPage()
+    await page.setViewportSize({ width: 390, height: 844 })
+
+    await page.goto(`/en/sake/${anyBrandId}`)
+
+    const badge = page.getByTestId('provenance-badge').first()
+    await expect(badge).toBeVisible()
+
+    // The bug this replaced: the explanation was an `absolute left-0 w-max`
+    // tooltip, and at 390px a badge at x=141 put a 320px panel at x=462 — 72px
+    // off-screen, reported as text cut mid-sentence. A width clamp cannot fix
+    // it, because the box is anchored to the badge.
+    await badge.click()
+
+    const panel = page.locator('[data-testid^="info-sheet-provenance-"][data-testid$="-panel"]')
+    await expect(panel).toBeVisible()
+
+    const box = await panel.boundingBox()
+    expect(box).not.toBeNull()
+    expect(box!.x).toBeGreaterThanOrEqual(0)
+    expect(box!.x + box!.width).toBeLessThanOrEqual(390 + 1)
+
+    await context.close()
+  })
+
   test('/en/sake/<brand-with-chart> renders the 6-axis flavor chart with a reachable brewers-term disclosure', async ({
     browser,
   }, testInfo) => {

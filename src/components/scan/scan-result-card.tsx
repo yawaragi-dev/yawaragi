@@ -118,6 +118,7 @@ export function ScanResultCard({
   const t = useTranslations('scan.resultCard')
   const tBadge = useTranslations('provenance.badge.llmExtracted')
   const tCrossBevBadge = useTranslations('provenance.badge.crossBeverageMap')
+  const tProvenanceSheet = useTranslations('provenance.sheet')
   const tDisclaimer = useTranslations('heuristicDisclaimer')
   const tAttribution = useTranslations('sakenowaAttribution')
   const tSake = useTranslations('sake.brand')
@@ -255,8 +256,11 @@ export function ScanResultCard({
                   <ProvenanceBadgeView
                     kind={resolveBadgeKind('llm_extracted')}
                     label={tBadge('label')}
-                    tooltip={tBadge('tooltip')}
+                    explanation={tBadge('tooltip')}
+                    sheetTitle={tBadge('sheetTitle')}
+                    closeLabel={tProvenanceSheet('closeLabel')}
                     confidence={extractionConfidence}
+                    id="scan-result-extraction"
                   />
                 )}
               </div>
@@ -332,7 +336,10 @@ export function ScanResultCard({
                   <ProvenanceBadgeView
                     kind={resolveBadgeKind(reverseExemplarSource)}
                     label={tCrossBevBadge('label')}
-                    tooltip={tCrossBevBadge('tooltip')}
+                    explanation={tCrossBevBadge('tooltip')}
+                    sheetTitle={tCrossBevBadge('sheetTitle')}
+                    closeLabel={tProvenanceSheet('closeLabel')}
+                    id="scan-result-cross-beverage"
                   />
                 </div>
                 {reverseResult.kind === 'match' ? (

@@ -108,35 +108,62 @@ export function InfoSheet({
         >
           <Info size={16} aria-hidden="true" />
         </SheetTrigger>
-        <SheetContent
-          side="bottom"
-          showCloseButton={false}
-          overlayClassName="bg-black/55 supports-backdrop-filter:backdrop-blur-none"
-          className="max-h-[90dvh] gap-0 overflow-y-auto rounded-t-[20px] border-0 bg-surface p-0 text-ink shadow-yw-lg"
-          data-testid={`info-sheet-${id}-panel`}
-        >
-          <div className="flex items-start justify-between gap-3 px-5 pt-5 pb-3">
-            <SheetTitle className="text-lg-alt font-medium text-ink">
-              {title}
-            </SheetTitle>
-            <SheetClose
-              render={
-                <button
-                  type="button"
-                  aria-label={closeLabel}
-                  className="-mt-2 -mr-2 inline-flex size-11 shrink-0 items-center justify-center rounded-full text-ash-600 transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ginshu-600"
-                  data-testid={`info-sheet-${id}-close`}
-                />
-              }
-            >
-              <X size={18} aria-hidden="true" />
-            </SheetClose>
-          </div>
-          <div className="px-5 pb-8 text-subtle leading-relaxed text-ash-700">
-            {children}
-          </div>
-        </SheetContent>
+        <InfoSheetPanel title={title} closeLabel={closeLabel} id={id}>
+          {children}
+        </InfoSheetPanel>
       </Sheet>
     </span>
+  )
+}
+
+/**
+ * §16's bottom sheet: the panel, without the caveat line or the info button.
+ *
+ * Extracted so a second kind of trigger can open the same panel. The
+ * provenance badge is one — it *is* its own caveat, so it wants the sheet but
+ * not a second control beside it — and §16 is explicit that this is one
+ * pattern ("the canonical pattern for **every** inferred or approximate
+ * claim"), so it must not become two implementations that drift.
+ *
+ * The caller owns the surrounding `<Sheet>`, which is what lets the trigger be
+ * anything.
+ */
+export function InfoSheetPanel({
+  title,
+  closeLabel,
+  children,
+  id,
+}: {
+  title: string
+  closeLabel: string
+  children: ReactNode
+  /** Distinguishes this panel's testids from any other on the page. */
+  id: string
+}) {
+  return (
+    <SheetContent
+      side="bottom"
+      showCloseButton={false}
+      overlayClassName="bg-black/55 supports-backdrop-filter:backdrop-blur-none"
+      className="max-h-[90dvh] gap-0 overflow-y-auto rounded-t-[20px] border-0 bg-surface p-0 text-ink shadow-yw-lg"
+      data-testid={`info-sheet-${id}-panel`}
+    >
+      <div className="flex items-start justify-between gap-3 px-5 pt-5 pb-3">
+        <SheetTitle className="text-lg-alt font-medium text-ink">{title}</SheetTitle>
+        <SheetClose
+          render={
+            <button
+              type="button"
+              aria-label={closeLabel}
+              className="-mt-2 -mr-2 inline-flex size-11 shrink-0 items-center justify-center rounded-full text-ash-600 transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ginshu-600"
+              data-testid={`info-sheet-${id}-close`}
+            />
+          }
+        >
+          <X size={18} aria-hidden="true" />
+        </SheetClose>
+      </div>
+      <div className="px-5 pb-8 text-subtle leading-relaxed text-ash-700">{children}</div>
+    </SheetContent>
   )
 }

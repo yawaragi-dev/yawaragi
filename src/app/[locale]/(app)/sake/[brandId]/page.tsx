@@ -131,7 +131,11 @@ export default async function SakeBrandPage({ params }: PageProps) {
             renders nothing. The import is intentional — Phase 3+ data
             attached to the brand (LLM tasting notes, cross-beverage
             mappings) will flow through this same attachment point. */}
-        <ProvenanceBadge source={brand.source} confidence={brand.confidence} />
+        <ProvenanceBadge
+          source={brand.source}
+          confidence={brand.confidence}
+          id={`brand-${brandId}-source`}
+        />
       </div>
       {showBrandRomaji && (
         // ProvenanceBadge with source='llm_inferred' is load-bearing
@@ -149,7 +153,7 @@ export default async function SakeBrandPage({ params }: PageProps) {
           data-testid="brand-name-romaji"
         >
           <span lang="en">{brand.nameRomaji}</span>
-          <ProvenanceBadge source="llm_inferred" />
+          <ProvenanceBadge source="llm_inferred" id={`brand-${brandId}-romaji`} />
         </p>
       )}
       {showBrewery && (
@@ -176,7 +180,7 @@ export default async function SakeBrandPage({ params }: PageProps) {
               data-testid="brewery-name-romaji"
             >
               <span lang="en">{brewery.nameRomaji}</span>
-              <ProvenanceBadge source="llm_inferred" />
+              <ProvenanceBadge source="llm_inferred" id={`brand-${brandId}-brewery-romaji`} />
             </p>
           )}
         </section>

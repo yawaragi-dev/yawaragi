@@ -4,7 +4,10 @@ import { ProvenanceBadge, ProvenanceBadgeView } from './provenance-badge'
 
 const baseViewProps = {
   label: 'AI-extracted',
-  tooltip: 'This value was read from an image or document by an AI model.',
+  explanation: 'This value was read from an image or document by an AI model.',
+  sheetTitle: 'Read by an AI model',
+  closeLabel: 'Close',
+  id: 'test-badge',
 } as const
 
 describe('ProvenanceBadgeView', () => {
@@ -15,20 +18,55 @@ describe('ProvenanceBadgeView', () => {
     )
   })
 
-  it('exposes the explanation via aria-describedby so screen readers reach it without hover', () => {
+  it('exposes the explanation via aria-describedby so screen readers reach it with no interaction', () => {
     render(<ProvenanceBadgeView kind="llmExtracted" {...baseViewProps} />)
     const root = screen.getByTestId('provenance-badge')
-    const tooltipId = root.getAttribute('aria-describedby')
-    expect(tooltipId).toBe('provenance-badge-llmExtracted-tooltip')
-    const tooltip = document.getElementById(tooltipId!)
-    expect(tooltip).not.toBeNull()
-    expect(tooltip!.getAttribute('role')).toBe('tooltip')
-    expect(tooltip!.textContent).toBe(baseViewProps.tooltip)
+
+    // The id itself is deliberately NOT asserted. The previous version of this
+    // test pinned the literal string `provenance-badge-llmExtracted-tooltip`,
+    // which encoded a bug: that id is per-KIND, so two badges of the same kind
+    // on one card — the scan result card has exactly that, one on the sake and
+    // one on the brewery — emitted duplicate ids and `aria-describedby`
+    // resolved to whichever came first. What matters is that the reference
+    // resolves to an element carrying the explanation.
+    const describedBy = root.getAttribute('aria-describedby')
+    expect(describedBy).toBeTruthy()
+    const description = document.getElementById(describedBy!)
+    expect(description).not.toBeNull()
+    expect(description!.textContent).toBe(baseViewProps.explanation)
   })
 
-  it('is keyboard-reachable so the tooltip can fire on focus', () => {
+  it('gives two badges of the same kind different description ids', () => {
+    // The collision the old per-kind id produced. `aria-describedby` pointing
+    // at a duplicated id makes the second badge describe the first one's text.
+    render(
+      <>
+        <ProvenanceBadgeView kind="llmExtracted" {...baseViewProps} id="sake-name" />
+        <ProvenanceBadgeView kind="llmExtracted" {...baseViewProps} id="brewery-name" />
+      </>,
+    )
+
+    const [first, second] = screen.getAllByTestId('provenance-badge')
+    const firstId = first.getAttribute('aria-describedby')
+    const secondId = second.getAttribute('aria-describedby')
+
+    expect(firstId).not.toBe(secondId)
+    expect(document.querySelectorAll(`#${firstId}`)).toHaveLength(1)
+    expect(document.querySelectorAll(`#${secondId}`)).toHaveLength(1)
+  })
+
+  it('is a real button, so the explanation is reachable by tap and keyboard alike', () => {
+    // It used to be a focusable `<span>` with a hover tooltip. The tooltip was
+    // `absolute left-0 w-max` and ran off-screen for any badge right of
+    // centre — reported as text cut mid-sentence. §16's sheet is
+    // viewport-sized, so it cannot be clipped, and CLAUDE.md names that
+    // pattern the canonical one "for every inferred claim".
     render(<ProvenanceBadgeView kind="llmExtracted" {...baseViewProps} />)
-    expect(screen.getByTestId('provenance-badge').getAttribute('tabindex')).toBe('0')
+    const root = screen.getByTestId('provenance-badge')
+
+    expect(root.tagName).toBe('BUTTON')
+    // No tooltip element left to overflow.
+    expect(screen.queryByTestId('provenance-badge-tooltip')).toBeNull()
   })
 
   it('distinguishes the three badged kinds via a data-kind attribute so they are not visually identical', () => {
@@ -84,11 +122,14 @@ describe('ProvenanceBadgeView', () => {
       <ProvenanceBadgeView
         kind="llmExtracted"
         label="KI-erkannt"
-        tooltip="Dieser Wert wurde von einem KI-Modell abgelesen."
+        explanation="Dieser Wert wurde von einem KI-Modell abgelesen."
+        sheetTitle="Von einem KI-Modell abgelesen"
+        closeLabel="Schließen"
+        id="de-badge"
       />,
     )
     expect(screen.getByTestId('provenance-badge-label').textContent).toBe('KI-erkannt')
-    expect(screen.getByTestId('provenance-badge-tooltip').textContent).toBe(
+    expect(screen.getByTestId('provenance-badge-description').textContent).toBe(
       'Dieser Wert wurde von einem KI-Modell abgelesen.',
     )
   })
@@ -102,9 +143,11 @@ describe('ProvenanceBadgeView', () => {
 // in Phase 2.
 describe('ProvenanceBadge (async wrapper)', () => {
   it('returns null for every canonical source so callers never need a conditional', async () => {
-    expect(await ProvenanceBadge({ source: 'sakenowa' })).toBeNull()
-    expect(await ProvenanceBadge({ source: 'sakenowa_inferred' })).toBeNull()
-    expect(await ProvenanceBadge({ source: 'user_corrected' })).toBeNull()
-    expect(await ProvenanceBadge({ source: 'manual_curation' })).toBeNull()
+    // `id` is required now — badges must be unique per instance — but it is
+    // irrelevant to this contract: the policy decides before any id is used.
+    expect(await ProvenanceBadge({ source: 'sakenowa', id: 'x' })).toBeNull()
+    expect(await ProvenanceBadge({ source: 'sakenowa_inferred', id: 'x' })).toBeNull()
+    expect(await ProvenanceBadge({ source: 'user_corrected', id: 'x' })).toBeNull()
+    expect(await ProvenanceBadge({ source: 'manual_curation', id: 'x' })).toBeNull()
   })
 })

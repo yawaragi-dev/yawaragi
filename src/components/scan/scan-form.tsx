@@ -92,6 +92,7 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
   // sources) is enforced by the action's tagged state — it only attaches when
   // the extraction came back with source: 'llm_extracted'.
   const tBadge = useTranslations('provenance.badge.llmExtracted')
+  const tProvenanceSheet = useTranslations('provenance.sheet')
   const tAttribution = useTranslations('sakenowaAttribution')
   // Reused for the brewery label on the enriched no_match state (the
   // same label the sake detail page and result card render).
@@ -595,8 +596,11 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
               <ProvenanceBadgeView
                 kind={resolveBadgeKind('llm_extracted')}
                 label={tBadge('label')}
-                tooltip={tBadge('tooltip')}
+                explanation={tBadge('tooltip')}
+                sheetTitle={tBadge('sheetTitle')}
+                closeLabel={tProvenanceSheet('closeLabel')}
                 confidence={state.extraction.confidence}
+                id="scan-result-consensus-badge"
               />
             </div>
             <div
@@ -832,8 +836,11 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
             <ProvenanceBadgeView
               kind={resolveBadgeKind('llm_extracted')}
               label={tBadge('label')}
-              tooltip={tBadge('tooltip')}
+              explanation={tBadge('tooltip')}
+              sheetTitle={tBadge('sheetTitle')}
+              closeLabel={tProvenanceSheet('closeLabel')}
               confidence={state.extraction.confidence}
+                id="scan-result-no-match-badge"
             />
           </div>
           <p className="text-sm text-zinc-700 dark:text-zinc-300">
@@ -906,8 +913,11 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
             <ProvenanceBadgeView
               kind={resolveBadgeKind('llm_extracted')}
               label={tBadge('label')}
-              tooltip={tBadge('tooltip')}
+              explanation={tBadge('tooltip')}
+              sheetTitle={tBadge('sheetTitle')}
+              closeLabel={tProvenanceSheet('closeLabel')}
               confidence={state.extraction.confidence}
+                id="scan-result-ambiguous-badge"
             />
           </div>
           {state.breweryRomaji && (
