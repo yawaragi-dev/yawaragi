@@ -100,6 +100,29 @@ test.describe('landing hero (UX-E)', () => {
     await context.close()
   })
 
+  test('the "Open the app" buttons land on a built screen, not scaffolding', async ({
+    browser,
+  }) => {
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([AGE_GATE_COOKIE])
+    const page = await context.newPage()
+
+    // §0 aims these at the app's front door, which is §3 Home — and §3 is not
+    // ported, so `/home` still renders `<TabPlaceholder />`. The rule worth
+    // pinning is not the destination but the outcome: the landing's way into
+    // the app must reach something finished. When §3 lands this keeps passing
+    // with the destination back at `/home`.
+    for (const testId of ['landing-open-app', 'landing-privacy-cta']) {
+      await page.goto('/en')
+      await page.getByTestId(testId).click()
+
+      await expect(page.getByTestId('tab-bar')).toBeVisible()
+      await expect(page.getByTestId('tab-placeholder')).toHaveCount(0)
+    }
+
+    await context.close()
+  })
+
   test('post-acceptance: the landing CTA routes into the scan flow', async ({
     browser,
   }, testInfo) => {

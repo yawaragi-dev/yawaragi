@@ -31,8 +31,18 @@ export async function LandingHeader() {
       </Link>
       <div className="ml-auto flex items-center gap-4">
         <LocaleSwitcher />
+        {/*
+          §0 sends this at the app, and the app's front door is §3 Home — but
+          §3 is not ported, so `/home` renders `<TabPlaceholder />`: "Your home
+          screen is on its way… the camera is the place to start". Pointing the
+          landing's only returning-visitor affordance at scaffolding that
+          immediately redirects you is worse than pointing it one step further
+          on. `/scan` is the app's one finished screen.
+
+          Reverts to `/home` when §3 lands. Tracked on #300.
+        */}
         <Link
-          href="/home"
+          href="/scan"
           className="inline-flex h-[38px] items-center rounded-lg bg-ash-200 px-4 text-body font-medium text-ink transition-colors hover:bg-ash-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
           data-testid="landing-open-app"
         >
