@@ -34,7 +34,8 @@
     "privacyLink": "Privacy"
   },
   "header": {
-    "wordmarkLabel": "Yawaragi home"
+    "wordmarkLabel": "Yawaragi home",
+    "backLabel": "Back"
   },
   "profile": {
     "title": "Your taste profile",

@@ -2,6 +2,7 @@ import { getTranslations } from 'next-intl/server'
 import { Show } from '@clerk/nextjs'
 import { Link } from '@/i18n/navigation'
 import { HeaderAuth } from '@/components/auth/header-auth'
+import { BackLink } from '@/components/layout/back-link'
 import { LocaleSwitcher } from '@/components/layout/locale-switcher'
 
 /**
@@ -21,13 +22,28 @@ import { LocaleSwitcher } from '@/components/layout/locale-switcher'
  *   this with a per-screen back arrow driven by the history stack rule 11
  *   describes; that lands with the screens themselves, since each one supplies
  *   its own title.
+ *
+ * `showBack` is the first step of that arrow, opted into per route group. The
+ * legal documents need it most: they sit in `(site)`, so they have no tab bar,
+ * and once #303 emptied this header of its nav the wordmark was the only way
+ * out — which pointed at the landing, not back. Reaching an app screen again
+ * took three hops. App screens keep the tabs and do not opt in yet, because
+ * rule 11's arrow is per-screen and each screen supplies its own title.
  * - **Sign-out**, the only Clerk surface besides `/sign-in` (ADR-0020).
  *
  * Both deviations are deliberate and tracked on #300. Removing the switch to
  * chase the design sooner would breach ADR-0007; removing the wordmark before
  * back arrows exist would leave screens with no way out but the tabs.
  */
-export async function Header() {
+export async function Header({
+  showBack = false,
+  backFallbackHref,
+}: {
+  /** Render rule 11's back arrow left of the wordmark. */
+  showBack?: boolean
+  /** Resolved path the arrow falls back to with no history to pop. */
+  backFallbackHref?: string
+} = {}) {
   const t = await getTranslations('header')
   const tCommon = await getTranslations('common')
   const tSignIn = await getTranslations('signIn')
@@ -38,6 +54,14 @@ export async function Header() {
       data-testid="site-header"
     >
       <div className="flex items-center gap-3 px-5 py-3 sm:gap-4">
+        {showBack && backFallbackHref && (
+          // `-ml-3` pulls the 44px touch target back by its own padding so the
+          // arrow's glyph — not the edge of its hit area — lines up with the
+          // 20px gutter the wordmark uses. The target itself stays 44px.
+          <span className="-ml-3 flex">
+            <BackLink fallbackHref={backFallbackHref} label={t('backLabel')} />
+          </span>
+        )}
         <Link
           href="/"
           className="text-card-heading font-medium text-ink hover:text-ash-800"

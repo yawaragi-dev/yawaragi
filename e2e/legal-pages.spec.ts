@@ -11,6 +11,65 @@ const LEGAL_PATHS = {
 
 const LOCALES = ['en', 'de'] as const
 
+test.describe('the legal pages are not a one-way door', () => {
+  // Reported in review: from an app screen, tapping "Imprint" in the legal
+  // footer left the visitor with no way back. These pages live in `(site)`, so
+  // they have no tab bar, and once #303 moved the nav to the tab bar the
+  // header's only affordance was the wordmark — which goes to the landing, not
+  // back. Returning to an app screen took landing → "Open the app" → /home, a
+  // placeholder. Rule 11 gives the top edge to "where am I / go back".
+
+  test('a visitor who arrived from an app screen can get back to it', async ({ browser }) => {
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([
+      {
+        name: 'yawaragi_age_gate',
+        value: JSON.stringify({ v: 1, ts: Date.now() }),
+        url: 'http://localhost:3000',
+      },
+      {
+        name: 'yawaragi_consent',
+        value: JSON.stringify({ version: 1, analytics: false, marketing: false }),
+        url: 'http://localhost:3000',
+      },
+    ])
+    const page = await context.newPage()
+
+    await page.goto('/en/scan')
+    await page.getByTestId('footer-imprint-link').click()
+    await expect(page).toHaveURL(/\/en\/imprint$/)
+
+    // The arrow is present on a page with no tab bar…
+    await expect(page.getByTestId('tab-bar')).toHaveCount(0)
+    await expect(page.getByTestId('back-link')).toBeVisible()
+
+    // …and it returns to where the visitor actually was, not to the landing.
+    await page.getByTestId('back-link').click()
+    await expect(page).toHaveURL(/\/en\/scan$/)
+
+    await context.close()
+  })
+
+  test('a cold deep-link still has somewhere to go', async ({ browser }) => {
+    const context = await browser.newContext({ locale: 'en-US' })
+    const page = await context.newPage()
+
+    // No history to pop, and no age-gate cookie either — these pages are
+    // legally reachable before the 18+ confirmation.
+    await page.goto('/en/imprint')
+
+    const back = page.getByTestId('back-link')
+    await expect(back).toBeVisible()
+    // A real anchor, so it works with JS off and for a stripped referrer.
+    await expect(back).toHaveAttribute('href', '/en')
+
+    await back.click()
+    await expect(page).toHaveURL(/\/en$/)
+
+    await context.close()
+  })
+})
+
 test.describe('imprint page (§5 TMG)', () => {
   for (const locale of LOCALES) {
     const path = LEGAL_PATHS.imprint[locale]
