@@ -155,6 +155,31 @@
       "breweryLabel": "Brewery",
       "prefectureLabel": "Prefecture",
       "flavorChartLabel": "Flavor Chart (Sakenowa)"
+    },
+    "similar": {
+      "title": "Similar to {name}",
+      "intro": "Ranked by how close their flavour charts sit to this one. No recommendations, no guessing — just the six axes.",
+      "percentSimilar": "{percent}% similar",
+      "axisPair": "{first} and {second}",
+      "reasonSharedAndMore": "Just as {shared}, more {axis}.",
+      "reasonSharedAndLess": "Just as {shared}, less {axis}.",
+      "reasonSharedOnly": "Just as {shared}.",
+      "reasonMoreOnly": "More {axis}.",
+      "reasonLessOnly": "Less {axis}.",
+      "emptyTitle": "No flavour chart for this sake yet",
+      "emptyBody": "Similar sakes are worked out from the six axes, and this bottle has none published yet. Everything else we know about it is on its page.",
+      "emptyLink": "Back to the bottle",
+      "noMatchesTitle": "Nothing close enough to list",
+      "noMatchesBody": "This profile sits on its own in the catalogue. Explore the flavour chart on its page instead.",
+      "axes": {
+        "f1": "floral",
+        "f2": "mellow",
+        "f3": "rich",
+        "f4": "mild",
+        "f5": "dry",
+        "f6": "light"
+      },
+      "cta": "Similar sakes"
     }
   },
   "debug": {
@@ -217,7 +242,8 @@
       "reverseNoAnalog": "This is a distinctly Japanese profile — no close Western analog.",
       "flavorComingSoonHeading": "Flavor profile coming soon",
       "flavorComingSoonBody": "We've recognised this sake — we're still building its flavor profile. You can still explore everything we know about it so far.",
-      "openDetailSubtitle": "Rice, polishing, yeast, SMV · brewery story, serving temperatures"
+      "openDetailSubtitle": "Rice, polishing, yeast, SMV · brewery story, serving temperatures",
+      "similarCta": "Similar sakes"
     },
     "returnHint": {
       "notThisOne": "Not the bottle you scanned?",

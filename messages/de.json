@@ -155,6 +155,31 @@
       "breweryLabel": "Brauerei",
       "prefectureLabel": "Präfektur",
       "flavorChartLabel": "Flavor Chart (Sakenowa)"
+    },
+    "similar": {
+      "title": "Ähnlich wie {name}",
+      "intro": "Sortiert danach, wie nah ihre Geschmacksprofile an diesem liegen. Keine Empfehlungen, kein Raten — nur die sechs Achsen.",
+      "percentSimilar": "{percent}% ähnlich",
+      "axisPair": "{first} und {second}",
+      "reasonSharedAndMore": "Genauso {shared}, dafür mehr {axis}.",
+      "reasonSharedAndLess": "Genauso {shared}, dafür weniger {axis}.",
+      "reasonSharedOnly": "Genauso {shared}.",
+      "reasonMoreOnly": "Mehr {axis}.",
+      "reasonLessOnly": "Weniger {axis}.",
+      "emptyTitle": "Für diesen Sake gibt es noch kein Geschmacksprofil",
+      "emptyBody": "Ähnliche Sake werden aus den sechs Achsen berechnet, und für diese Flasche ist noch keine veröffentlicht. Alles andere, was wir wissen, steht auf ihrer Seite.",
+      "emptyLink": "Zurück zur Flasche",
+      "noMatchesTitle": "Nichts ausreichend Ähnliches",
+      "noMatchesBody": "Dieses Profil steht im Katalog für sich. Sieh dir stattdessen das Geschmacksprofil auf seiner Seite an.",
+      "axes": {
+        "f1": "blumig",
+        "f2": "vollmundig",
+        "f3": "kräftig",
+        "f4": "mild",
+        "f5": "trocken",
+        "f6": "leicht"
+      },
+      "cta": "Ähnliche Sake"
     }
   },
   "debug": {
@@ -217,7 +242,8 @@
       "reverseNoAnalog": "Dieses Profil ist ausgesprochen japanisch — es gibt keine nahe westliche Entsprechung.",
       "flavorComingSoonHeading": "Geschmacksprofil folgt in Kürze",
       "flavorComingSoonBody": "Wir haben diesen Sake erkannt — das Geschmacksprofil erstellen wir noch. Alles, was wir bisher darüber wissen, kannst du dir trotzdem ansehen.",
-      "openDetailSubtitle": "Reis, Polierrate, Hefe, SMV · Brauereigeschichte, Serviertemperaturen"
+      "openDetailSubtitle": "Reis, Polierrate, Hefe, SMV · Brauereigeschichte, Serviertemperaturen",
+      "similarCta": "Ähnliche Sake"
     },
     "returnHint": {
       "notThisOne": "Nicht die Flasche, die du gescannt hast?",

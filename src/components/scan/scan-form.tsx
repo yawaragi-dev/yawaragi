@@ -10,7 +10,7 @@ import { startTransition, useActionState, useEffect, useRef, useState } from 're
 import type { FormEvent } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
-import { Link } from '@/i18n/navigation'
+import { getPathname, Link } from '@/i18n/navigation'
 import { Button } from '@/components/ui/button'
 import { ProvenanceBadgeView } from '@/components/sake/provenance-badge'
 import { resolveBadgeKind } from '@/lib/provenance/policy'
@@ -775,6 +775,17 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
           breweryKanji={state.extraction.brewery_ja}
           breweryRomaji={state.breweryRomaji}
           sakeHref={state.sakeHref}
+          // Resolved through the typed pathnames manifest rather than
+          // appending "/similar" to `sakeHref`: the two routes happen to
+          // share a spelling in both locales today, and a string append
+          // would break silently the day one of them is localised.
+          similarHref={getPathname({
+            locale,
+            href: {
+              pathname: '/sake/[brandId]/similar',
+              params: { brandId: String(state.brandId) },
+            },
+          })}
           flavorChart={state.flavorChart}
           extractionConfidence={state.extraction.confidence}
           // Rescan-in-flight fade: `isPending` covers both the browser-

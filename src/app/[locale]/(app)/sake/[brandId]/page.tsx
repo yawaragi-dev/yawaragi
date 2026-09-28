@@ -209,14 +209,18 @@ export default async function SakeBrandPage({ params }: PageProps) {
       )}
       {flavorChart && <FlavorChartView chart={flavorChart} />}
       {/*
-        Phase 4 / S5 (#143): "Find similar" affordance. Routes to
-        /[locale]/suggest?seed=<brandId>, which runs the AI SDK tool
-        loop and renders LLM-generated similar-sake cards. Uses the
-        next-intl `Link` from `@/i18n/navigation` so locale is
-        preserved automatically. The `?seed=` search param is passed
-        via the `query` field of next-intl's typed href.
+        §6 Similar sakes. This used to route to `/suggest?seed=<brandId>`
+        (Phase 4 / S5, #143), which runs the AI SDK tool loop — a paid model
+        call, on a browse action, to answer a question six numbers already
+        answer. §6 is the deterministic version: L2 distance over the axes we
+        already mirror, ranked in Postgres, no model involved.
+
+        This also closes one of `/suggest`'s three remaining doors (the
+        bottle-page `?seed=`), which is progress toward #299 without forcing
+        its flag-vs-tier decision — the landing card and the profile's "Ask
+        for one" are still open.
       */}
-      <SuggestCta brandId={brand.brandId} />
+      <SimilarSakesCta brandId={brand.brandId} />
       <Link
         href="/"
         className="text-base font-medium underline underline-offset-4"
@@ -227,15 +231,15 @@ export default async function SakeBrandPage({ params }: PageProps) {
   )
 }
 
-async function SuggestCta({ brandId }: { brandId: number }) {
-  const tResults = await getTranslations('suggest.results')
+async function SimilarSakesCta({ brandId }: { brandId: number }) {
+  const t = await getTranslations('sake.similar')
   return (
     <Link
-      href={{ pathname: '/suggest', query: { seed: String(brandId) } }}
+      href={{ pathname: '/sake/[brandId]/similar', params: { brandId: String(brandId) } }}
       className="text-base font-medium underline underline-offset-4"
-      data-testid="find-similar-link"
+      data-testid="similar-sakes-link"
     >
-      {tResults('findSimilarCta')}
+      {t('cta')}
     </Link>
   )
 }

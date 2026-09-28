@@ -32,6 +32,7 @@ export const routing = defineRouting({
     // through next-intl (see `sign-in-card.tsx`), not through the URL.
     '/sign-in': '/sign-in',
     '/sake/[brandId]': '/sake/[brandId]',
+    '/sake/[brandId]/similar': '/sake/[brandId]/similar',
     '/scan': '/scan',
     '/suggest': '/suggest',
     '/profile': '/profile',
