@@ -1,3 +1,4 @@
+import { UserCircle } from '@phosphor-icons/react/dist/ssr'
 import { getTranslations } from 'next-intl/server'
 import { Show } from '@clerk/nextjs'
 import { Link } from '@/i18n/navigation'
@@ -45,14 +46,24 @@ interface HeaderCommonProps {
    * above); where it is not one, it is text.
    */
   linkWordmark?: boolean
+  /**
+   * Render §15's Account entry. App screens only: §15 puts it "at the top
+   * right of Home, Collection and Palate", and it is what makes the design's
+   * "avatar → Impressum is 2 taps" true.
+   */
+  showAccount?: boolean
 }
 
 /**
  * A union, not two optional props: `<BackLink />` is an anchor first, so it
  * cannot render without a destination — and an earlier draft that took both
  * as optional rendered NOTHING when given `showBack` alone. A control that
- * silently does nothing is the defect this whole change exists to remove, so
- * the pairing is a type error rather than a runtime shrug.
+ * silently does nothing is the defect that arrow exists to remove, so the
+ * pairing is a type error rather than a runtime shrug.
+ *
+ * `showAccount` is NOT in the union: it needs no companion, and §15's entry
+ * and rule 11's arrow are independent — a screen can want either, both or
+ * neither.
  */
 type HeaderProps = HeaderCommonProps &
   (
@@ -66,7 +77,7 @@ type HeaderProps = HeaderCommonProps &
   )
 
 export async function Header(props: HeaderProps = {}) {
-  const { linkWordmark = true } = props
+  const { linkWordmark = true, showAccount = false } = props
   const t = await getTranslations('header')
   const tCommon = await getTranslations('common')
   const tSignIn = await getTranslations('signIn')
@@ -113,6 +124,19 @@ export async function Header(props: HeaderProps = {}) {
             />
           </Show>
           <LocaleSwitcher />
+          {showAccount && (
+            <Link
+              href="/account"
+              aria-label={t('accountLabel')}
+              data-testid="header-account-link"
+              className="inline-flex size-11 items-center justify-center rounded-md text-ash-600 transition-colors hover:text-ash-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+            >
+              {/* §15 draws an avatar. There is no avatar to draw for a visitor
+                  with no account — which is most of them, by design — so the
+                  glyph stands in until identity exists to show. */}
+              <UserCircle size={24} aria-hidden="true" />
+            </Link>
+          )}
         </div>
       </div>
     </header>

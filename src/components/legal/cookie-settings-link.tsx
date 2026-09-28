@@ -15,7 +15,12 @@ export function CookieSettingsLink() {
       type="button"
       onClick={open}
       data-testid="cookie-settings-link"
-      className="text-sm text-zinc-500 underline underline-offset-4 hover:text-zinc-900 dark:hover:text-zinc-50 cursor-pointer"
+      // Ginshu ramp, matching the Impressum and Privacy links it sits beside:
+      // this rendered a cooler, lighter grey than both, which made the one
+      // control in the footer look like the least important thing in it. The
+      // light-mode half was dead on arrival (ADR-0023 makes `dark:` always
+      // match), so it goes rather than getting a second colour.
+      className="text-meta text-ash-600 underline underline-offset-4 hover:text-ash-800 cursor-pointer"
     >
       {t('settingsLink')}
     </button>

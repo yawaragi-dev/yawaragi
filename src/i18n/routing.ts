@@ -31,6 +31,7 @@ export const routing = defineRouting({
     // Same external path in both locales — the widget's own copy is localised
     // through next-intl (see `sign-in-card.tsx`), not through the URL.
     '/sign-in': '/sign-in',
+    '/account': '/account',
     '/sake/[brandId]': '/sake/[brandId]',
     '/sake/[brandId]/similar': '/sake/[brandId]/similar',
     '/scan': '/scan',

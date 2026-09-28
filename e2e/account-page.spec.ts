@@ -1,0 +1,142 @@
+// E2E coverage for §15 Account — the first slice.
+//
+// §15 makes one navigational promise in plain words: "From any tab: avatar →
+// Impressum is 2 taps." That is not decoration — German Impressumspflicht
+// (§5 TMG / §18 MStV) wants the Impressum "leicht erkennbar, unmittelbar
+// erreichbar" from every page, and #303 left the app header with nothing but a
+// wordmark. So the tap count is the spec here.
+//
+// The other pinned behaviour is the consent withdrawal path. ADR-0009 requires
+// withdrawal to be "as easy as giving", and Account is where §15 puts it.
+import { expect, test } from '@playwright/test'
+import { BASE_URL } from './_base-url'
+
+const AGE_GATE_COOKIE = {
+  name: 'yawaragi_age_gate',
+  value: JSON.stringify({ v: 1, ts: Date.now() }),
+  url: BASE_URL,
+}
+
+const CONSENT_COOKIE = {
+  name: 'yawaragi_consent',
+  value: JSON.stringify({ version: 1, analytics: false, marketing: false }),
+  url: BASE_URL,
+}
+
+async function appPage(browser: import('@playwright/test').Browser) {
+  const context = await browser.newContext({ locale: 'en-US' })
+  await context.addCookies([AGE_GATE_COOKIE, CONSENT_COOKIE])
+  return { context, page: await context.newPage() }
+}
+
+test.describe('§15 account', () => {
+  test('Impressum is two taps from any tab', async ({ browser }) => {
+    const { context, page } = await appPage(browser)
+
+    // Tap one: the Account entry in the header, from a tab screen.
+    await page.goto('/en/scan')
+    await page.getByTestId('header-account-link').click()
+    await expect(page).toHaveURL(/\/en\/account$/)
+
+    // Tap two: the Impressum link on Account.
+    await page.getByTestId('account-imprint-link').click()
+    await expect(page).toHaveURL(/\/en\/imprint$/)
+    await expect(page.getByTestId('imprint-page')).toBeVisible()
+
+    await context.close()
+  })
+
+  test('the Account entry is on every tab screen', async ({ browser }) => {
+    const { context, page } = await appPage(browser)
+
+    for (const path of ['/en/home', '/en/scan', '/en/collection', '/en/profile']) {
+      await page.goto(path)
+      await expect(page.getByTestId('header-account-link')).toBeVisible()
+    }
+
+    await context.close()
+  })
+
+  test('cookie settings reopens the banner, so consent can be withdrawn here', async ({
+    browser,
+  }) => {
+    const { context, page } = await appPage(browser)
+
+    await page.goto('/en/account')
+    // The banner is closed: the consent cookie above already records a
+    // decision.
+    await expect(page.getByTestId('cookie-banner')).toHaveCount(0)
+
+    await page.getByTestId('account-cookie-settings').click()
+
+    // Reopened, and in Customise — ADR-0009's "withdraw as easily as give"
+    // means landing on the choices, not on a fresh accept/reject prompt.
+    await expect(page.getByTestId('cookie-banner')).toBeVisible()
+    await expect(page.getByTestId('cookie-banner-save')).toBeVisible()
+
+    await context.close()
+  })
+
+  test('says plainly that a signed-out journal lives on this phone', async ({ browser }) => {
+    const { context, page } = await appPage(browser)
+
+    await page.goto('/en/account')
+
+    // ADR-0020 keeps sign-up shut to everyone but maintainers, so signed out
+    // is the designed default. The copy explains the trade rather than nagging.
+    await expect(page.getByTestId('account-not-signed-in')).toBeVisible()
+    await expect(page.getByTestId('account-sign-in-link')).toBeVisible()
+    // And no sign-out control, which would be nonsense here.
+    await expect(page.getByTestId('account-group-account')).toHaveCount(0)
+
+    await context.close()
+  })
+
+  test('the Language row states the current language and does not pretend to switch', async ({
+    browser,
+  }) => {
+    const { context, page } = await appPage(browser)
+
+    await page.goto('/en/account')
+
+    const row = page.getByTestId('account-language')
+    await expect(row).toContainText('English')
+    // §15: "not tappable until DACH launch". ADR-0008 gates the German app, so
+    // a control here would lead to the coming-soon page, which is not a
+    // language. Inert means no link and no button inside the row.
+    await expect(row.getByRole('link')).toHaveCount(0)
+    await expect(row.getByRole('button')).toHaveCount(0)
+
+    await context.close()
+  })
+
+  test('does not print the legal links twice', async ({ browser }) => {
+    const { context, page } = await appPage(browser)
+
+    // Account carries §15's own footer. The in-pane `<LegalFooter />` shows
+    // the same links on every other app screen and would duplicate them here.
+    await page.goto('/en/account')
+    await expect(page.getByTestId('account-footer')).toBeVisible()
+    await expect(page.getByTestId('site-footer')).toHaveCount(0)
+
+    // …and it is still there everywhere else, which is the Impressumspflicht
+    // reachability this slice deliberately does not trade away.
+    await page.goto('/en/scan')
+    await expect(page.getByTestId('site-footer')).toBeVisible()
+
+    await context.close()
+  })
+
+  test('/de/account is gated to coming-soon (ADR-0008)', async ({ browser }) => {
+    const context = await browser.newContext({ locale: 'de-DE' })
+    await context.addCookies([AGE_GATE_COOKIE, CONSENT_COOKIE])
+    const page = await context.newPage()
+
+    await page.goto('/de/account')
+
+    await expect(page.getByTestId('coming-soon')).toBeVisible()
+    await expect(page.getByTestId('account-page')).toHaveCount(0)
+
+    await context.close()
+  })
+})

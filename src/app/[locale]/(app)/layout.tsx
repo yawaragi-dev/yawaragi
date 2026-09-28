@@ -63,7 +63,7 @@ export default async function AppShellLayout({
       {/* The header is INSIDE the locked column, not above it: a sibling in
           the parent layout would add its height to `100dvh` and the page
           itself would scroll — the one thing rule 10 forbids. */}
-      <Header />
+      <Header showAccount />
       <main className="min-h-0 flex-1 overflow-y-auto overflow-x-clip overscroll-contain">
         {children}
         {/* Inside the scrolling pane, so the Impressum stays reachable from
