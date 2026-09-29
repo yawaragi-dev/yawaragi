@@ -1,8 +1,9 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import { useLocale } from 'next-intl'
 import { usePathname } from '@/i18n/navigation'
-import { recordClientNavigation } from '@/lib/navigation/client-history'
+import { noteLocale, recordClientNavigation } from '@/lib/navigation/client-history'
 
 /**
  * Counts this session's client-side navigations so `<BackLink />` knows
@@ -20,18 +21,25 @@ import { recordClientNavigation } from '@/lib/navigation/client-history'
  * `client-history.ts` for why an in-memory count beats `document.referrer` and
  * `window.history.length`.
  *
- * **A locale switch is not counted, and should not be.** Two things make that
- * so. The ref is per-mount and a locale change re-mounts the `[locale]`
- * layout, so the new locale's first pathname reads as an entry point; and
- * `<LocaleSwitcher />` navigates with `router.replace`, so there is no entry
- * behind it either way — measured: `history.length` is unchanged across a
- * switch, while module state survives it (a soft navigation). `<BackLink />`'s
- * fallback is what serves that visitor, which is why it has to be a real
- * destination rather than a no-op.
+ * **A locale switch does not add to the count — it CLEARS it.** Reported in
+ * review: from `/en`, tap Imprint, switch to Deutsch, tap back, and you landed
+ * on `/en` right after choosing German. The switch uses `router.replace`, so
+ * `/de/Impressum` took `/en/imprint`'s slot and the entry behind it is the
+ * document-load page — honest history, wrong answer, because every page
+ * behind the visitor is now in the locale they just left. `noteLocale` clears
+ * the count so `<BackLink />`'s fallback, which resolves in the new locale,
+ * takes over. Two effects rather than one because the pathname effect cannot
+ * see it: the layout re-mounts across a locale change, so its ref reads the
+ * new locale's first pathname as an entry point.
  */
 export function ClientHistoryTracker() {
+  const locale = useLocale()
   const pathname = usePathname()
   const previousPathname = useRef<string | null>(null)
+
+  useEffect(() => {
+    noteLocale(locale)
+  }, [locale])
 
   useEffect(() => {
     if (previousPathname.current === null) {

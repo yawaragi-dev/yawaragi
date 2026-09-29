@@ -37,10 +37,41 @@
  * the contract `<BackLink />` is built on.
  */
 let clientNavigations = 0
+let lastLocale: string | null = null
 
 /** Called by `<ClientHistoryTracker />` on each client-side navigation. */
 export function recordClientNavigation(): void {
   clientNavigations += 1
+}
+
+/**
+ * Called by `<ClientHistoryTracker />` with the active locale. A change
+ * clears the count.
+ *
+ * Reported in review, and the reason this function exists: from `/en`, tap
+ * Imprint, switch to Deutsch, tap back — and you landed on `/en`, the English
+ * landing, right after choosing German. Nothing was broken; that IS the entry
+ * behind you. `<LocaleSwitcher />` navigates with `router.replace`, so
+ * `/de/Impressum` took `/en/imprint`'s slot and the entry before it is the
+ * page you opened the document on. Popping it is honest history and the wrong
+ * answer: the arrow undid the locale choice the visitor had just made.
+ *
+ * The count means "is there a page of ours behind me that I can pop INTO".
+ * After a locale switch, every such page is in the locale the visitor just
+ * left, so the honest answer is no — and `<BackLink />`'s fallback, which
+ * resolves in the new locale, takes over.
+ *
+ * Note this is not reachable by the `usePathname` route: a locale change
+ * re-mounts the `[locale]` layout, so the tracker's per-mount ref sees the new
+ * locale's first pathname as an entry point and records nothing. It is the
+ * count from BEFORE the switch that survives (module state outlives a soft
+ * navigation — measured), which is what has to be cleared.
+ */
+export function noteLocale(locale: string): void {
+  if (lastLocale !== null && lastLocale !== locale) {
+    clientNavigations = 0
+  }
+  lastLocale = locale
 }
 
 /** True when `router.back()` will land on a page this session rendered. */
@@ -51,4 +82,5 @@ export function hasClientHistory(): boolean {
 /** Test-only: module state outlives a single `render()`. */
 export function resetClientHistory(): void {
   clientNavigations = 0
+  lastLocale = null
 }

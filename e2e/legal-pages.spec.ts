@@ -69,33 +69,54 @@ test.describe('the legal pages are not a one-way door', () => {
     await context.close()
   })
 
-  test('after a locale switch the arrow still lands somewhere, in the new locale', async ({
-    browser,
-  }) => {
-    const context = await browser.newContext({ locale: 'en-US' })
-    const page = await context.newPage()
+  // Reported in review, and an earlier version of this spec passed while the
+  // behaviour was wrong — because it only covered the COLD arrival. Both
+  // arrivals show `href="/de"`, so only following the arrow separates them:
+  // on the clicked path the count from before the switch survives it (module
+  // state outlives a soft navigation), `router.back()` wins over the href,
+  // and `router.replace` means the entry it pops is the English page the
+  // visitor opened the document on. Landing on `/en` right after choosing
+  // German undoes the choice they just made.
+  //
+  // So both paths are asserted, and the assertion that matters is where the
+  // click ENDS UP, not what the href says.
+  for (const arrival of ['cold', 'clicked'] as const) {
+    test(`a locale switch after a ${arrival} arrival keeps back in the new locale`, async ({
+      browser,
+    }) => {
+      const context = await browser.newContext({ locale: 'en-US' })
+      await context.addCookies([
+        {
+          name: 'yawaragi_age_gate',
+          value: JSON.stringify({ v: 1, ts: Date.now() }),
+          url: 'http://localhost:3000',
+        },
+        {
+          name: 'yawaragi_consent',
+          value: JSON.stringify({ version: 1, analytics: false, marketing: false }),
+          url: 'http://localhost:3000',
+        },
+      ])
+      const page = await context.newPage()
 
-    // A locale switch is the case the fallback exists for, and self-review got
-    // it wrong twice before measuring. `<LocaleSwitcher />` uses
-    // `router.replace`, so `history.length` does not grow — the page you
-    // switched away from is not behind you. It is also a soft navigation, and
-    // it re-mounts the `[locale]` layout, so the tracker reads the new
-    // locale's first pathname as an entry point and counts nothing.
-    //
-    // Both point the same way: there is nothing to pop, so the arrow must be
-    // a real link. It resolves in the NEW locale — the DE landing — not back
-    // to English.
-    await page.goto('/en/imprint')
-    await page.getByTestId('locale-switcher').locator('[data-locale="de"]').click()
-    await expect(page).toHaveURL(/\/de\/Impressum$/)
+      if (arrival === 'cold') {
+        await page.goto('/en/imprint')
+      } else {
+        // The common path: one recorded client navigation before the switch.
+        await page.goto('/en')
+        await page.getByTestId('footer-imprint-link').click()
+        await expect(page).toHaveURL(/\/en\/imprint$/)
+      }
 
-    const back = page.getByTestId('back-link')
-    await expect(back).toHaveAttribute('href', '/de')
-    await back.click()
-    await expect(page).toHaveURL(/\/de$/)
+      await page.getByTestId('locale-switcher').locator('[data-locale="de"]').click()
+      await expect(page).toHaveURL(/\/de\/Impressum$/)
 
-    await context.close()
-  })
+      await page.getByTestId('back-link').click()
+      await expect(page).toHaveURL(/\/de$/)
+
+      await context.close()
+    })
+  }
 
   // Caught in review of the same change: the non-launched-locale page was the
   // one page in `(site)` with no chrome at all, which made it the one page
