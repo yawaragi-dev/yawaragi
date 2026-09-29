@@ -290,8 +290,9 @@ export function ScanResultCard({
               // copy is our own UI chrome, not Sakenowa data (the card's
               // brand/brewery facts keep their inline attribution above).
               // Onward paths stay ON-TOPIC for this sake: "Full bottle page"
-              // (the card's deep-dive link below) + rescan (the persistent
-              // scan form), so the state is not a dead end. We deliberately do
+              // (the card's deep-dive link below) + rescan (the "Scan again"
+              // row the form renders under every match), so the state is not a
+              // dead end. We deliberately do
               // NOT bridge to /suggest here — it's a cold, general recommender
               // that doesn't take the scanned sake as input, so it would
               // divert the visitor away from the bottle they just scanned

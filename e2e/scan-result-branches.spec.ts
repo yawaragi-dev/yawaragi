@@ -99,6 +99,41 @@ test.describe('scan result branches (#109 PR B)', () => {
     await context.close()
   })
 
+  test('a match replaces the entry pickers with one "Scan again" that still rescans', async ({
+    browser,
+  }, testInfo) => {
+    testInfo.skip(!dbReady, 'Sakenowa mirror not available — DB-bound spec')
+    // The entry pair ("Take photo" / "Upload photo") is how a visitor
+    // with an empty screen starts. Once the card is up it is noise above
+    // the answer — the card's own row is the way back to the camera. This
+    // pins the swap AND that the replacement still works, so hiding the
+    // pair cannot strand a visitor on a wrong match.
+    const { context, page } = await scanPageWith(browser, [
+      injectionCookie({ name_ja: '獺祭', brewery_ja: '旭酒造', confidence: 0.95 }),
+    ])
+    await page.goto('/en/scan')
+    await expect(page.getByTestId('scan-pick-button')).toBeVisible()
+
+    await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
+    await expect(page.getByTestId('scan-result-card')).toBeVisible()
+
+    await expect(page.getByTestId('scan-pick-button')).toHaveCount(0)
+    await expect(page.getByTestId('scan-camera-button')).toHaveCount(0)
+    const rescan = page.getByTestId('scan-result-match-rescan')
+    await expect(rescan).toBeVisible()
+
+    // Rescan into the retry tier: the card goes, the retry copy arrives,
+    // and that state brings its own rescan rather than the entry pair.
+    await context.addCookies([
+      injectionCookie({ name_ja: '獺祭', brewery_ja: '旭酒造', confidence: 0.3 }),
+    ])
+    await rescan.click()
+    await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
+    await expect(page.getByTestId('scan-result-low-confidence')).toBeVisible()
+    await expect(page.getByTestId('scan-result-retry-rescan')).toBeVisible()
+    await context.close()
+  })
+
   test('retry (low confidence) offers a rescan that resolves to a match', async ({
     browser,
   }, testInfo) => {
@@ -113,6 +148,11 @@ test.describe('scan result branches (#109 PR B)', () => {
 
     await expect(page.getByTestId('scan-result-low-confidence')).toBeVisible()
     await expect(page.getByTestId('scan-result-retry-rescan')).toBeVisible()
+    // The entry pair steps aside once the result owns the rescan: two
+    // ways to re-pick a photo stacked above the answer is what the
+    // maintainer caught on this exact screen.
+    await expect(page.getByTestId('scan-pick-button')).toHaveCount(0)
+    await expect(page.getByTestId('scan-camera-button')).toHaveCount(0)
 
     // Rescan: swap the injection to a confident Dassai and re-pick. The
     // retry state is replaced by the in-place result card.
@@ -152,9 +192,11 @@ test.describe('scan result branches (#109 PR B)', () => {
         .getByTestId('scan-result-no-match')
         .locator('[data-testid="provenance-badge"][data-kind="llmExtracted"]'),
     ).toBeVisible()
-    // Dead-end recovery: rescan + explore bridge both present.
+    // Dead-end recovery: rescan + explore bridge both present, and the
+    // entry pair is gone because this state carries its own rescan.
     await expect(page.getByTestId('scan-result-no-match-rescan')).toBeVisible()
     await expect(page.getByTestId('scan-result-no-match-explore')).toBeVisible()
+    await expect(page.getByTestId('scan-pick-button')).toHaveCount(0)
     await context.close()
   })
 
