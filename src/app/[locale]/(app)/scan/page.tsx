@@ -6,11 +6,9 @@ import { isDebugEnabledFromCookies } from '@/lib/debug/debug-mode'
 // `DebugPanelMount` lives at the layout level (renders persistently
 // across navigations). This page only sources the boolean prop the
 // form uses to gate its per-step pushes into the app-level store.
-import { isLaunched } from '@/i18n/launch-state'
 import { hasLocale } from 'next-intl'
 import { routing } from '@/i18n/routing'
 import { notFound } from 'next/navigation'
-import { Link } from '@/i18n/navigation'
 
 /**
  * Scan entry route — `/[locale]/scan`.
@@ -51,34 +49,16 @@ export default async function ScanEntryPage({ params }: PageProps) {
 
   setRequestLocale(locale)
 
-  // ADR-0008: non-launched locales (`de` today) serve coming-soon for
-  // every gated path via the proxy. The scan route is ungated so the
-  // proxy doesn't intercept; we render the coming-soon copy directly
-  // here for the German visitor so the launch state still gates content.
-  if (!isLaunched(locale)) {
-    const tComingSoon = await getTranslations({ locale, namespace: 'comingSoon' })
-    return (
-      <main
-        className="flex flex-1 w-full max-w-3xl mx-auto flex-col gap-6 py-16 px-8"
-        data-testid="coming-soon"
-      >
-        <h1 className="text-4xl font-semibold leading-tight tracking-tight">
-          {tComingSoon('title')}
-        </h1>
-        <p className="text-base text-zinc-700 dark:text-zinc-300 max-w-prose">
-          {tComingSoon('body')}
-        </p>
-        <Link
-          href="/"
-          locale="en"
-          className="text-base font-medium underline underline-offset-4"
-        >
-          {tComingSoon('switchToEn')}
-        </Link>
-      </main>
-    )
-  }
-
+  // No launch-state branch here. `/scan` is a GATED path
+  // (`UNGATED_LOCALE_PATHS` lists only `/`, the legal documents,
+  // `/under-18` and `/sign-in`), so for a non-launched locale the proxy
+  // rewrites `/de/scan` to `/de` before this component is reached and
+  // `(site)/page.tsx` serves ADR-0008's coming-soon — now with the
+  // header, the back arrow and the legal footer. This page used to carry
+  // its own copy of that screen, under a comment claiming the route was
+  // ungated; it was unreachable, and because both used
+  // `data-testid="coming-soon"` the e2e that covers `/de/scan` was
+  // passing against the other one.
   const t = await getTranslations({ locale, namespace: 'scan.entry' })
   const cookieJar = await cookies()
   // Server-rendered: the debug cookie is HttpOnly, so the form can't
