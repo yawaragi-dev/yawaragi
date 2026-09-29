@@ -1,7 +1,7 @@
 /**
  * Client-side marker recording that the current tab reached a
  * `/sake/[brandId]` page by tapping a scan result (the matched result
- * card's "See full details" link, a disambiguation row, a divergence
+ * card's "Full bottle page" row, a disambiguation row, a divergence
  * link, or the consensus accept) rather than by direct navigation.
  *
  * Read by `<ScanReturnHint />` on the sake detail page to offer a

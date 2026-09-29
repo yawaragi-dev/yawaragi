@@ -1,6 +1,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
+import { BookOpenText, CaretRight } from '@phosphor-icons/react/dist/ssr'
 import { HeuristicDisclaimerView } from '@/components/legal/heuristic-disclaimer'
 import { ProvenanceBadgeView } from '@/components/sake/provenance-badge'
 import {
@@ -19,7 +20,6 @@ import {
   type ReverseExemplarResult,
 } from '@/lib/cross-beverage/reverse-lookup'
 import { type FlavorChart } from '@/lib/schemas/flavor-chart'
-import { BookOpen, CaretRight } from '@phosphor-icons/react/dist/ssr'
 import { cn } from '@/lib/utils'
 
 /**
@@ -35,7 +35,7 @@ import { cn } from '@/lib/utils'
  * - `next-intl/server`'s `getTranslations` doesn't exist on the client;
  *   `useTranslations` is the equivalent hook.
  *
- * "See full details →" points at `sakeHref` (locale-aware) — the deep-dive
+ * §5's "Full bottle page" row points at `sakeHref` (locale-aware) — the deep-dive
  * permalink and the source of truth for provenance, brewery info, and
  * cross-brand navigation.
  */
@@ -59,7 +59,7 @@ export interface ScanResultCardProps {
   breweryRomaji: string | null
   /**
    * Locale-aware pathname to `/sake/[brandId]`. Rendered as the
-   * "See full details →" affordance.
+   * "Full bottle page" affordance.
    */
   sakeHref: string
   /**
@@ -278,7 +278,7 @@ export function ScanResultCard({
               // the UX-E landing hero. No Sakenowa attribution here — this
               // copy is our own UI chrome, not Sakenowa data (the card's
               // brand/brewery facts keep their inline attribution above).
-              // Onward paths stay ON-TOPIC for this sake: "See full details →"
+              // Onward paths stay ON-TOPIC for this sake: "Full bottle page"
               // (the card's deep-dive link below) + rescan (the persistent
               // scan form), so the state is not a dead end. We deliberately do
               // NOT bridge to /suggest here — it's a cold, general recommender
@@ -286,7 +286,7 @@ export function ScanResultCard({
               // divert the visitor away from the bottle they just scanned
               // rather than continue exploring it.
               <section
-                className="flex flex-col gap-2 rounded-xl bg-ash-100 p-3.5"
+                className="flex flex-col gap-2 rounded-md border border-divider p-3.5"
                 data-testid="flavor-coming-soon"
                 aria-labelledby="flavor-coming-soon-heading"
               >
@@ -311,7 +311,7 @@ export function ScanResultCard({
               // The panel inherits the content column's stale fade, so no
               // per-section opacity knob is needed here.
               <section
-                className="flex flex-col gap-2 rounded-xl bg-ash-100 p-3.5"
+                className="flex flex-col gap-2 rounded-md border border-divider p-3.5"
                 data-testid="scan-result-reverse-exemplar"
                 aria-labelledby="scan-result-reverse-exemplar-heading"
               >
@@ -370,16 +370,35 @@ export function ScanResultCard({
             {/* §5's "Full bottle page" row: book icon, title, a line naming
                 what is actually behind it, and a caret. The old inline "See
                 full details →" link gave no idea what the page held, so it
-                read as a footnote rather than the main way deeper in. */}
+                read as a footnote rather than the main way deeper in.
+
+                Every panel INSIDE §5's card is a 1px divider border on a
+                transparent ground at radius-md — the prototype does it for the
+                cross-beverage panel, the "Similar sakes" button and this row
+                alike. A filled `bg-ash-100` at radius-lg reads as a second
+                card stacked inside the first; the border keeps it a section of
+                this one. Same reason the two panels above are bordered.
+
+                The subtitle copy drops the prototype's trailing "where to
+                buy". That is a JMStV call, not a typo: §6(5) is why every CTA
+                in this product is discovery-framed, and a purchase pointer on
+                a scan result is the one thing we may not put there. Do not add
+                it back — if commerce ever lands it is a Phase-8 decision with
+                an AVS attached (ADR-0006).
+
+                11px would match the prototype's subtitle exactly, but the only
+                11px step in the scale is `--text-section-label`, which bakes in
+                0.1em tracking for uppercase labels and reads wrong as prose.
+                `text-meta` (12px) is the nearest step that is prose. */}
             <a
               href={sakeHref}
               onClick={markArrivedViaScan}
-              className="flex items-center gap-3.5 rounded-xl bg-ash-100 p-3.5 transition-colors hover:bg-ash-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+              className="flex items-center gap-3 rounded-md border border-divider p-3.5 transition-colors hover:bg-ash-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
               data-testid="scan-result-open-detail"
             >
-              <BookOpen size={20} className="shrink-0 text-ginshu-600" aria-hidden="true" />
+              <BookOpenText size={20} className="shrink-0 text-ginshu-600" aria-hidden="true" />
               <span className="flex min-w-0 flex-col gap-0.5">
-                <span className="text-card-heading font-medium text-ink">{t('openDetail')}</span>
+                <span className="text-body font-medium text-ink">{t('openDetail')}</span>
                 <span className="text-meta text-ash-600">{t('openDetailSubtitle')}</span>
               </span>
               <CaretRight size={16} className="ml-auto shrink-0 text-ash-500" aria-hidden="true" />
@@ -394,7 +413,9 @@ export function ScanResultCard({
 /**
  * The card's flavor grid (UX-F #167): the six axes in a compact 2-column
  * grid. The bars are ginshu-500 on ash-200 since §17 landed on the shared
- * component; this wrapper has never owned their colour. Thin client wrapper over the shared
+ * component; this wrapper has never owned their colour.
+ *
+ * A thin client wrapper over the shared
  * `<FlavorProfileView variant="grid" />` — it resolves the i18n strings via
  * `useTranslations` (this card is a client component, ADR-0015) and hands
  * them to the same sync view the sake-detail page and suggest cluster use.
