@@ -69,6 +69,34 @@ test.describe('the legal pages are not a one-way door', () => {
     await context.close()
   })
 
+  test('after a locale switch the arrow still lands somewhere, in the new locale', async ({
+    browser,
+  }) => {
+    const context = await browser.newContext({ locale: 'en-US' })
+    const page = await context.newPage()
+
+    // A locale switch is the case the fallback exists for, and self-review got
+    // it wrong twice before measuring. `<LocaleSwitcher />` uses
+    // `router.replace`, so `history.length` does not grow — the page you
+    // switched away from is not behind you. It is also a soft navigation, and
+    // it re-mounts the `[locale]` layout, so the tracker reads the new
+    // locale's first pathname as an entry point and counts nothing.
+    //
+    // Both point the same way: there is nothing to pop, so the arrow must be
+    // a real link. It resolves in the NEW locale — the DE landing — not back
+    // to English.
+    await page.goto('/en/imprint')
+    await page.getByTestId('locale-switcher').locator('[data-locale="de"]').click()
+    await expect(page).toHaveURL(/\/de\/Impressum$/)
+
+    const back = page.getByTestId('back-link')
+    await expect(back).toHaveAttribute('href', '/de')
+    await back.click()
+    await expect(page).toHaveURL(/\/de$/)
+
+    await context.close()
+  })
+
   // Caught in review of the same change: the non-launched-locale page was the
   // one page in `(site)` with no chrome at all, which made it the one page
   // with no Impressum link. There IS a German Impressum — it was unreachable

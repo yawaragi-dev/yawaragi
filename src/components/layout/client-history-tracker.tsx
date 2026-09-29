@@ -19,6 +19,15 @@ import { recordClientNavigation } from '@/lib/navigation/client-history'
  * started would read as "no move" and lose a real history entry. See
  * `client-history.ts` for why an in-memory count beats `document.referrer` and
  * `window.history.length`.
+ *
+ * **A locale switch is not counted, and should not be.** Two things make that
+ * so. The ref is per-mount and a locale change re-mounts the `[locale]`
+ * layout, so the new locale's first pathname reads as an entry point; and
+ * `<LocaleSwitcher />` navigates with `router.replace`, so there is no entry
+ * behind it either way — measured: `history.length` is unchanged across a
+ * switch, while module state survives it (a soft navigation). `<BackLink />`'s
+ * fallback is what serves that visitor, which is why it has to be a real
+ * destination rather than a no-op.
  */
 export function ClientHistoryTracker() {
   const pathname = usePathname()

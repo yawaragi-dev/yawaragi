@@ -1,3 +1,11 @@
+'use client'
+
+// `'use client'` is not about hooks — there are none here. It keeps the module
+// on the client side of the boundary, so the mutable counter below cannot be
+// reached from a server component. Module state in a server module is shared
+// by every request the process serves, and a per-visitor navigation count
+// leaking across visitors would be both wrong and a privacy problem.
+
 /**
  * How many client-side navigations this page session has made.
  *

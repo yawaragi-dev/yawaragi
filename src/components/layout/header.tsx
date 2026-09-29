@@ -22,6 +22,11 @@ import { LocaleSwitcher } from '@/components/layout/locale-switcher'
  *   this with a per-screen back arrow driven by the history stack rule 11
  *   describes; that lands with the screens themselves, since each one supplies
  *   its own title.
+ * - **Sign-out**, the only Clerk surface besides `/sign-in` (ADR-0020).
+ *
+ * Both deviations are deliberate and tracked on #300. Removing the switch to
+ * chase the design sooner would breach ADR-0007; removing the wordmark before
+ * back arrows exist would leave screens with no way out but the tabs.
  *
  * `showBack` is the first step of that arrow, opted into per route group. The
  * legal documents need it most: they sit in `(site)`, so they have no tab bar,
@@ -29,21 +34,8 @@ import { LocaleSwitcher } from '@/components/layout/locale-switcher'
  * out — which pointed at the landing, not back. Reaching an app screen again
  * took three hops. App screens keep the tabs and do not opt in yet, because
  * rule 11's arrow is per-screen and each screen supplies its own title.
- * - **Sign-out**, the only Clerk surface besides `/sign-in` (ADR-0020).
- *
- * Both deviations are deliberate and tracked on #300. Removing the switch to
- * chase the design sooner would breach ADR-0007; removing the wordmark before
- * back arrows exist would leave screens with no way out but the tabs.
  */
-export async function Header({
-  showBack = false,
-  backFallbackHref,
-  linkWordmark = true,
-}: {
-  /** Render rule 11's back arrow left of the wordmark. */
-  showBack?: boolean
-  /** Resolved path the arrow falls back to with no history to pop. */
-  backFallbackHref?: string
+interface HeaderCommonProps {
   /**
    * Whether the wordmark is a link. Pass `false` on a page the wordmark's
    * own destination already IS — with `localePrefix: 'always'`, `/` resolves
@@ -53,7 +45,28 @@ export async function Header({
    * above); where it is not one, it is text.
    */
   linkWordmark?: boolean
-} = {}) {
+}
+
+/**
+ * A union, not two optional props: `<BackLink />` is an anchor first, so it
+ * cannot render without a destination — and an earlier draft that took both
+ * as optional rendered NOTHING when given `showBack` alone. A control that
+ * silently does nothing is the defect this whole change exists to remove, so
+ * the pairing is a type error rather than a runtime shrug.
+ */
+type HeaderProps = HeaderCommonProps &
+  (
+    | {
+        /** Render rule 11's back arrow left of the wordmark. */
+        showBack: true
+        /** Resolved path the arrow falls back to with no history to pop. */
+        backFallbackHref: string
+      }
+    | { showBack?: false; backFallbackHref?: never }
+  )
+
+export async function Header(props: HeaderProps = {}) {
+  const { linkWordmark = true } = props
   const t = await getTranslations('header')
   const tCommon = await getTranslations('common')
   const tSignIn = await getTranslations('signIn')
@@ -64,12 +77,12 @@ export async function Header({
       data-testid="site-header"
     >
       <div className="flex items-center gap-3 px-5 py-3 sm:gap-4">
-        {showBack && backFallbackHref && (
+        {props.showBack && (
           // `-ml-3` pulls the 44px touch target back by its own padding so the
           // arrow's glyph — not the edge of its hit area — lines up with the
           // 20px gutter the wordmark uses. The target itself stays 44px.
           <span className="-ml-3 flex">
-            <BackLink fallbackHref={backFallbackHref} label={t('backLabel')} />
+            <BackLink fallbackHref={props.backFallbackHref} label={t('backLabel')} />
           </span>
         )}
         {linkWordmark ? (
