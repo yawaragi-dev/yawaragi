@@ -38,11 +38,21 @@ import { LocaleSwitcher } from '@/components/layout/locale-switcher'
 export async function Header({
   showBack = false,
   backFallbackHref,
+  linkWordmark = true,
 }: {
   /** Render rule 11's back arrow left of the wordmark. */
   showBack?: boolean
   /** Resolved path the arrow falls back to with no history to pop. */
   backFallbackHref?: string
+  /**
+   * Whether the wordmark is a link. Pass `false` on a page the wordmark's
+   * own destination already IS — with `localePrefix: 'always'`, `/` resolves
+   * against the current locale, so on a locale root the link points at the
+   * page you are reading. A focus stop whose activation reloads the current
+   * page is not navigation, and this wordmark exists only as a way out (see
+   * above); where it is not one, it is text.
+   */
+  linkWordmark?: boolean
 } = {}) {
   const t = await getTranslations('header')
   const tCommon = await getTranslations('common')
@@ -62,14 +72,23 @@ export async function Header({
             <BackLink fallbackHref={backFallbackHref} label={t('backLabel')} />
           </span>
         )}
-        <Link
-          href="/"
-          className="text-card-heading font-medium text-ink hover:text-ash-800"
-          data-testid="header-wordmark"
-          aria-label={t('wordmarkLabel')}
-        >
-          {tCommon('siteName')}
-        </Link>
+        {linkWordmark ? (
+          <Link
+            href="/"
+            className="text-card-heading font-medium text-ink hover:text-ash-800"
+            data-testid="header-wordmark"
+            aria-label={t('wordmarkLabel')}
+          >
+            {tCommon('siteName')}
+          </Link>
+        ) : (
+          <span
+            className="text-card-heading font-medium text-ink"
+            data-testid="header-wordmark"
+          >
+            {tCommon('siteName')}
+          </span>
+        )}
         <div className="ml-auto flex items-center gap-2">
           {/* Clerk v7 replaced <SignedIn> with <Show when="signed-in">; it is
               a server component, so the gate lives here and only the button

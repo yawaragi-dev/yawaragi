@@ -68,6 +68,44 @@ test.describe('the legal pages are not a one-way door', () => {
 
     await context.close()
   })
+
+  // Caught in review of the same change: the non-launched-locale page was the
+  // one page in `(site)` with no chrome at all, which made it the one page
+  // with no Impressum link. There IS a German Impressum — it was unreachable
+  // from the page a German visitor actually lands on. The Cookie-settings link
+  // went with it, so an accepting visitor had no way to withdraw.
+  for (const path of ['/de', '/de/scan'] as const) {
+    test(`${path} (coming soon) reaches the Impressum, and back out`, async ({ browser }) => {
+      const context = await browser.newContext({ locale: 'de-DE' })
+      const page = await context.newPage()
+
+      // `/de/scan` is a gated path, so the proxy rewrites it to this same
+      // page (ADR-0008) — the URL keeps `/scan`, which is why the arrow's
+      // fallback cannot be `/`.
+      await page.goto(path)
+      await expect(page.getByTestId('coming-soon')).toBeVisible()
+
+      // §5 TMG / §18 MStV: leicht erkennbar, unmittelbar erreichbar.
+      await expect(page.getByTestId('footer-imprint-link')).toBeVisible()
+      // ADR-0009: withdrawal as easy as giving.
+      await expect(page.getByTestId('cookie-settings-link')).toBeVisible()
+
+      // The wordmark is text here, not a link: its destination IS this page,
+      // so linking it would spend a focus stop on reloading what you are
+      // reading. The arrow and the body link are the ways out.
+      await expect(page.getByTestId('header-wordmark')).toBeVisible()
+      await expect(page.locator('a[data-testid="header-wordmark"]')).toHaveCount(0)
+
+      // The arrow falls back to the DEFAULT locale's landing. `/` would
+      // resolve against the current locale and reload this same page.
+      const back = page.getByTestId('back-link')
+      await expect(back).toHaveAttribute('href', '/en')
+      await back.click()
+      await expect(page).toHaveURL(/\/en$/)
+
+      await context.close()
+    })
+  }
 })
 
 test.describe('imprint page (§5 TMG)', () => {
