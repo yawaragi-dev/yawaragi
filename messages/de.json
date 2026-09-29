@@ -34,7 +34,8 @@
     "privacyLink": "Datenschutz"
   },
   "header": {
-    "wordmarkLabel": "Yawaragi Startseite"
+    "wordmarkLabel": "Yawaragi Startseite",
+    "backLabel": "Zurück"
   },
   "profile": {
     "title": "Dein Geschmacksprofil",

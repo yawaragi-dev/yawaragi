@@ -11,6 +11,152 @@ const LEGAL_PATHS = {
 
 const LOCALES = ['en', 'de'] as const
 
+test.describe('the legal pages are not a one-way door', () => {
+  // Reported in review: from an app screen, tapping "Imprint" in the legal
+  // footer left the visitor with no way back. These pages live in `(site)`, so
+  // they have no tab bar, and once #303 moved the nav to the tab bar the
+  // header's only affordance was the wordmark — which goes to the landing, not
+  // back. Returning to an app screen took landing → "Open the app" → /home, a
+  // placeholder. Rule 11 gives the top edge to "where am I / go back".
+
+  test('a visitor who arrived from an app screen can get back to it', async ({ browser }) => {
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([
+      {
+        name: 'yawaragi_age_gate',
+        value: JSON.stringify({ v: 1, ts: Date.now() }),
+        url: 'http://localhost:3000',
+      },
+      {
+        name: 'yawaragi_consent',
+        value: JSON.stringify({ version: 1, analytics: false, marketing: false }),
+        url: 'http://localhost:3000',
+      },
+    ])
+    const page = await context.newPage()
+
+    await page.goto('/en/scan')
+    await page.getByTestId('footer-imprint-link').click()
+    await expect(page).toHaveURL(/\/en\/imprint$/)
+
+    // The arrow is present on a page with no tab bar…
+    await expect(page.getByTestId('tab-bar')).toHaveCount(0)
+    await expect(page.getByTestId('back-link')).toBeVisible()
+
+    // …and it returns to where the visitor actually was, not to the landing.
+    await page.getByTestId('back-link').click()
+    await expect(page).toHaveURL(/\/en\/scan$/)
+
+    await context.close()
+  })
+
+  test('a cold deep-link still has somewhere to go', async ({ browser }) => {
+    const context = await browser.newContext({ locale: 'en-US' })
+    const page = await context.newPage()
+
+    // No history to pop, and no age-gate cookie either — these pages are
+    // legally reachable before the 18+ confirmation.
+    await page.goto('/en/imprint')
+
+    const back = page.getByTestId('back-link')
+    await expect(back).toBeVisible()
+    // A real anchor, so it works with JS off and for a stripped referrer.
+    await expect(back).toHaveAttribute('href', '/en')
+
+    await back.click()
+    await expect(page).toHaveURL(/\/en$/)
+
+    await context.close()
+  })
+
+  // Reported in review, and an earlier version of this spec passed while the
+  // behaviour was wrong — because it only covered the COLD arrival. Both
+  // arrivals show `href="/de"`, so only following the arrow separates them:
+  // on the clicked path the count from before the switch survives it (module
+  // state outlives a soft navigation), `router.back()` wins over the href,
+  // and `router.replace` means the entry it pops is the English page the
+  // visitor opened the document on. Landing on `/en` right after choosing
+  // German undoes the choice they just made.
+  //
+  // So both paths are asserted, and the assertion that matters is where the
+  // click ENDS UP, not what the href says.
+  for (const arrival of ['cold', 'clicked'] as const) {
+    test(`a locale switch after a ${arrival} arrival keeps back in the new locale`, async ({
+      browser,
+    }) => {
+      const context = await browser.newContext({ locale: 'en-US' })
+      await context.addCookies([
+        {
+          name: 'yawaragi_age_gate',
+          value: JSON.stringify({ v: 1, ts: Date.now() }),
+          url: 'http://localhost:3000',
+        },
+        {
+          name: 'yawaragi_consent',
+          value: JSON.stringify({ version: 1, analytics: false, marketing: false }),
+          url: 'http://localhost:3000',
+        },
+      ])
+      const page = await context.newPage()
+
+      if (arrival === 'cold') {
+        await page.goto('/en/imprint')
+      } else {
+        // The common path: one recorded client navigation before the switch.
+        await page.goto('/en')
+        await page.getByTestId('footer-imprint-link').click()
+        await expect(page).toHaveURL(/\/en\/imprint$/)
+      }
+
+      await page.getByTestId('locale-switcher').locator('[data-locale="de"]').click()
+      await expect(page).toHaveURL(/\/de\/Impressum$/)
+
+      await page.getByTestId('back-link').click()
+      await expect(page).toHaveURL(/\/de$/)
+
+      await context.close()
+    })
+  }
+
+  // Caught in review of the same change: the non-launched-locale page was the
+  // one page in `(site)` with no chrome at all, which made it the one page
+  // with no Impressum link. There IS a German Impressum — it was unreachable
+  // from the page a German visitor actually lands on. The Cookie-settings link
+  // went with it, so an accepting visitor had no way to withdraw.
+  for (const path of ['/de', '/de/scan'] as const) {
+    test(`${path} (coming soon) reaches the Impressum, and back out`, async ({ browser }) => {
+      const context = await browser.newContext({ locale: 'de-DE' })
+      const page = await context.newPage()
+
+      // `/de/scan` is a gated path, so the proxy rewrites it to this same
+      // page (ADR-0008) — the URL keeps `/scan`, which is why the arrow's
+      // fallback cannot be `/`.
+      await page.goto(path)
+      await expect(page.getByTestId('coming-soon')).toBeVisible()
+
+      // §5 TMG / §18 MStV: leicht erkennbar, unmittelbar erreichbar.
+      await expect(page.getByTestId('footer-imprint-link')).toBeVisible()
+      // ADR-0009: withdrawal as easy as giving.
+      await expect(page.getByTestId('cookie-settings-link')).toBeVisible()
+
+      // The wordmark is text here, not a link: its destination IS this page,
+      // so linking it would spend a focus stop on reloading what you are
+      // reading. The arrow and the body link are the ways out.
+      await expect(page.getByTestId('header-wordmark')).toBeVisible()
+      await expect(page.locator('a[data-testid="header-wordmark"]')).toHaveCount(0)
+
+      // The arrow falls back to the DEFAULT locale's landing. `/` would
+      // resolve against the current locale and reload this same page.
+      const back = page.getByTestId('back-link')
+      await expect(back).toHaveAttribute('href', '/en')
+      await back.click()
+      await expect(page).toHaveURL(/\/en$/)
+
+      await context.close()
+    })
+  }
+})
+
 test.describe('imprint page (§5 TMG)', () => {
   for (const locale of LOCALES) {
     const path = LEGAL_PATHS.imprint[locale]

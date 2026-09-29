@@ -69,7 +69,7 @@ test.describe('scan entry route', () => {
     await context.close()
   })
 
-  test('/de/scan renders coming-soon (DE locale gated, ADR-0008)', async ({
+  test('/de/scan is rewritten to the coming-soon page (DE locale gated, ADR-0008)', async ({
     browser,
   }) => {
     const context = await browser.newContext({ locale: 'de-DE' })
@@ -80,6 +80,14 @@ test.describe('scan entry route', () => {
 
     await expect(page.getByTestId('coming-soon')).toBeVisible()
     await expect(page.getByTestId('scan-entry-page')).toHaveCount(0)
+    // Names WHICH coming-soon page this is. `/scan` is a gated path, so the
+    // proxy rewrites to `/de` and `(site)/page.tsx` serves it — the scan
+    // route no longer carries its own copy. Both used to answer to
+    // `data-testid="coming-soon"`, so this assertion was ambiguous and would
+    // have passed either way; `site-footer` belongs only to the `(site)` one.
+    await expect(page.getByTestId('site-footer')).toBeVisible()
+    // Still `/de/scan` in the address bar — a rewrite, not a redirect.
+    await expect(page).toHaveURL(/\/de\/scan$/)
 
     await context.close()
   })

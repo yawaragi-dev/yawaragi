@@ -2,12 +2,15 @@ import { Camera, Hexagon, Star } from '@phosphor-icons/react/dist/ssr'
 import type { Icon } from '@phosphor-icons/react'
 import { cookies } from 'next/headers'
 import { getTranslations } from 'next-intl/server'
-import { Link } from '@/i18n/navigation'
+import { Link, getPathname } from '@/i18n/navigation'
 import { isLaunched } from '@/i18n/launch-state'
+import { routing } from '@/i18n/routing'
 import { AgeGate } from '@/components/legal/age-gate'
 import { LandingFooter } from '@/components/landing/landing-footer'
 import { LandingHeader } from '@/components/landing/landing-header'
 import { LandingHero } from '@/components/landing/landing-hero'
+import { Header } from '@/components/layout/header'
+import { LegalFooter } from '@/components/layout/legal-footer'
 import { hasAcceptedAgeGate } from '@/lib/legal/age-gate-cookie'
 import { getLandingSampleScan } from '@/lib/landing/sample-scan'
 
@@ -153,15 +156,43 @@ function FeatureCard({ icon: Icon, title, body, testId }: FeatureCardProps) {
   )
 }
 
+/**
+ * What a non-launched locale serves at `/{locale}/` — and, via the proxy's
+ * rewrite, at every gated path under it (ADR-0008).
+ *
+ * **It had no chrome at all**, which made it the one page in `(site)` with no
+ * Impressum link. There is a German Impressum, at `/de/impressum`; it was just
+ * unreachable from the page a German visitor actually lands on, and §5 TMG /
+ * §18 MStV want it "leicht erkennbar, unmittelbar erreichbar". The same
+ * omission cost the visitor the persistent Cookie-settings link, so a German
+ * visitor who accepted the banner had no way to withdraw — ADR-0009 requires
+ * withdrawal to be as easy as giving. `<LegalFooter />` carries all three.
+ *
+ * The back arrow's fallback is the DEFAULT locale's landing, not `/`. With
+ * `localePrefix: 'always'`, `/` resolves against the current locale, so on
+ * `/de` it would resolve to `/de` — an arrow that reloads the page you are
+ * already on. `/en` is somewhere: the English preview this page offers in its
+ * body. The arrow matters most on the rewritten paths, where a visitor who
+ * switched locale on `/en/scan` lands on `/de/scan` and pops straight back.
+ */
 async function ComingSoonPage() {
   const t = await getTranslations('comingSoon')
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-8 py-16" data-testid="coming-soon">
-      <h1 className="text-headline font-medium text-ink">{t('title')}</h1>
-      <p className="max-w-prose text-body text-ash-600">{t('body')}</p>
-      <Link href="/" locale="en" className="text-body font-medium underline underline-offset-4">
-        {t('switchToEn')}
-      </Link>
-    </main>
+    <>
+      <Header
+        showBack
+        backFallbackHref={getPathname({ locale: routing.defaultLocale, href: '/' })}
+        // This IS the locale root, so a linked wordmark would point here.
+        linkWordmark={false}
+      />
+      <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-8 py-16" data-testid="coming-soon">
+        <h1 className="text-headline font-medium text-ink">{t('title')}</h1>
+        <p className="max-w-prose text-body text-ash-600">{t('body')}</p>
+        <Link href="/" locale="en" className="text-body font-medium underline underline-offset-4">
+          {t('switchToEn')}
+        </Link>
+      </main>
+      <LegalFooter />
+    </>
   )
 }
