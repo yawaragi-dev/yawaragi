@@ -208,14 +208,15 @@
       "sessionMissing": "Deine Browser-Sitzung konnte nicht vorbereitet werden. Bitte lade die Seite neu und versuche es erneut."
     },
     "resultCard": {
-      "openDetail": "Alle Details ansehen",
+      "openDetail": "Zur Flaschenseite",
       "exploreAnotherWay": "Sake auf andere Weise entdecken",
       "reverseExemplarHeading": "Ein vertrauter Bezugspunkt",
       "reverseExemplarSingle": "Interessant für alle, die {name} kennen",
       "reverseExemplarPair": "Interessant für alle, die {first} oder {second} kennen",
       "reverseNoAnalog": "Dieses Profil ist ausgesprochen japanisch — es gibt keine nahe westliche Entsprechung.",
       "flavorComingSoonHeading": "Geschmacksprofil folgt in Kürze",
-      "flavorComingSoonBody": "Wir haben diesen Sake erkannt — das Geschmacksprofil erstellen wir noch. Alles, was wir bisher darüber wissen, kannst du dir trotzdem ansehen."
+      "flavorComingSoonBody": "Wir haben diesen Sake erkannt — das Geschmacksprofil erstellen wir noch. Alles, was wir bisher darüber wissen, kannst du dir trotzdem ansehen.",
+      "openDetailSubtitle": "Reis, Polierrate, Hefe, SMV · Brauereigeschichte, Serviertemperaturen"
     },
     "returnHint": {
       "notThisOne": "Nicht die Flasche, die du gescannt hast?",

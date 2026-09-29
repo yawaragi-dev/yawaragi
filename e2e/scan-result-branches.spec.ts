@@ -187,7 +187,7 @@ test.describe('scan result branches (#109 PR B)', () => {
     await expect(page.getByTestId('brand-flavor-chart')).toHaveCount(0)
     // …and the reassuring coming-soon panel takes its place.
     await expect(page.getByTestId('flavor-coming-soon')).toBeVisible()
-    // The panel is not a dead end: the on-topic "See full details →"
+    // The panel is not a dead end: the on-topic "Full bottle page"
     // deep-dive link for THIS sake stays reachable. (We deliberately do NOT
     // bridge to /suggest here — a cold general recommender would divert the
     // visitor away from the sake they just scanned.)
@@ -290,7 +290,7 @@ test.describe('scan result branches (#109 PR B)', () => {
     const brandId = await findScanS1FixtureBrandId()
     if (brandId === null) return
 
-    // Arrive via scan: match → tap "See full details" → the hint renders.
+    // Arrive via scan: match → tap "Full bottle page" → the hint renders.
     const { context, page } = await scanPageWith(browser, [
       injectionCookie({ name_ja: '獺祭', brewery_ja: '旭酒造', confidence: 0.95 }),
     ])

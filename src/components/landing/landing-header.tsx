@@ -25,7 +25,7 @@ export async function LandingHeader() {
       >
         <span className="text-md-alt font-medium text-ink">{tCommon('siteName')}</span>
         {/* Part of the name, not a translated string — verbatim in every locale. */}
-        <span className="text-secondary text-ash-600" lang="ja">
+        <span className="text-subtle text-ash-600" lang="ja">
           和らぎ
         </span>
       </Link>

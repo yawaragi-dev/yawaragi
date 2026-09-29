@@ -74,7 +74,7 @@ interface ScanFormProps {
  *   3. We submit a `FormData` carrying the downscaled JPEG to the
  *      `scanAction` Server Action via `useActionState`.
  *   4. On a `matched` result we render `<ScanResultCard />` IN PLACE —
- *      photo + name + flavor chart + "See full details →" link. The
+ *      photo + name + flavor chart + a "Full bottle page" row. The
  *      previous S1/S3 behaviour of `router.push`ing to `/sake/[brandId]`
  *      is gone (see ADR-0015).
  *
@@ -762,7 +762,7 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
         // and rendered a text-only confirm card on the confirm tier).
         // Both confidence tiers now share the same rich `<ScanResultCard />`
         // — photo + kanji + romaji + provenance badge + flavor chart +
-        // an explicit "See full details →" link. The tier information
+        // an explicit "Full bottle page" row. The tier information
         // survives inside `state.extraction.confidence`, which the
         // provenance badge renders as its confidence sub-label — that's
         // where a curious visitor can see how sure the system is about

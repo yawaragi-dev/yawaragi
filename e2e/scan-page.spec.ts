@@ -10,7 +10,7 @@
 // 3. /en/scan → upload → matched result renders IN PLACE (no more auto-
 //    navigate to /sake/[brandId]). The rich result card shows the
 //    visitor's photo, the sake kanji + romaji, the flavor chart, and a
-//    "See full details →" link back to the deep-dive page. Requires
+//    "Full bottle page" row back to the deep-dive page. Requires
 //    DATABASE_URL + a Sakenowa-published Dassai row; the vision provider
 //    is `e2e-stub` under Playwright.
 import { expect, test } from '@playwright/test'
@@ -134,7 +134,7 @@ test.describe('scan entry route', () => {
       }
     }
 
-    // The "See full details →" link points at the deep-dive page but is
+    // The "Full bottle page" row points at the deep-dive page but is
     // NOT auto-followed — it's an explicit affordance.
     const openLink = page.getByTestId('scan-result-open-detail')
     await expect(openLink).toHaveAttribute(

@@ -208,14 +208,15 @@
       "sessionMissing": "Your browser session couldn't be prepared. Please refresh the page and try again."
     },
     "resultCard": {
-      "openDetail": "See full details",
+      "openDetail": "Full bottle page",
       "exploreAnotherWay": "Explore sake another way",
       "reverseExemplarHeading": "A familiar reference point",
       "reverseExemplarSingle": "Interesting for those who like {name}",
       "reverseExemplarPair": "Interesting for those who like {first} or {second}",
       "reverseNoAnalog": "This is a distinctly Japanese profile — no close Western analog.",
       "flavorComingSoonHeading": "Flavor profile coming soon",
-      "flavorComingSoonBody": "We've recognised this sake — we're still building its flavor profile. You can still explore everything we know about it so far."
+      "flavorComingSoonBody": "We've recognised this sake — we're still building its flavor profile. You can still explore everything we know about it so far.",
+      "openDetailSubtitle": "Rice, polishing, yeast, SMV · brewery story, serving temperatures"
     },
     "returnHint": {
       "notThisOne": "Not the bottle you scanned?",
