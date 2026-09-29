@@ -34,10 +34,11 @@ export async function LandingHeader() {
         {/*
           §0 sends this at the app, and the app's front door is §3 Home — but
           §3 is not ported, so `/home` renders `<TabPlaceholder />`: "Your home
-          screen is on its way… the camera is the place to start". Pointing the
-          landing's only returning-visitor affordance at scaffolding that
-          immediately redirects you is worse than pointing it one step further
-          on. `/scan` is the app's one finished screen.
+          screen is on its way… the camera is the place to start", above a
+          "Scan a label" link. Pointing the landing's only returning-visitor
+          affordance at a screen whose own content is an apology and a link
+          onward is worse than sending them where that link goes. `/scan` is
+          the app's one finished screen.
 
           Reverts to `/home` when §3 lands. Tracked on #300.
         */}
