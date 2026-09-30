@@ -421,6 +421,24 @@ if any answer is "no" or "unsure", do not open the PR. Cross-referenced by
     flavor axis label, radar / bar chart) rendered from its one shared
     component — not a hand-rolled inline copy? (See "Single source of visual
     truth". A second copy silently drifts out of sync.)
+14. **Works on the first tap, not the first tap after hydration**: if the
+    control's effect is delivered to a *different* client component — a
+    `window` event, a callback registered in that component's effect, a
+    context it has to be mounted to receive — does it still work when the tap
+    lands before that component hydrates? The button is in the SSR HTML and
+    clickable immediately; a listener registered in an effect is not there
+    yet, and a dispatch into that gap reaches nobody. Prefer state the reader
+    can pull **during render** (`useSyncExternalStore` over an event bus) to a
+    message the reader has to be awake to hear. (Test by throttling CPU to 6×
+    and clicking the moment the markup paints.)
+
+    This is how the cookie-withdrawal path broke: §15's "Cookie settings" row
+    dispatched a `window` event that `<CookieBanner />` only listened for from
+    an effect. The tap did nothing inside the hydration window — and that tap
+    is the only way to WITHDRAW consent, which ADR-0009 requires to be as easy
+    as giving. It passed every local run and failed on CI's slower runner,
+    which is the same race with the timing dial turned up. A green local e2e is
+    not evidence here.
 
 If your slice touched a state, a click, or a copy string, run the checklist.
 Green means every question answered "yes"; anything else is a merge block.

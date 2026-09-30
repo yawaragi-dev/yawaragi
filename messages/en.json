@@ -31,11 +31,13 @@
   },
   "footer": {
     "imprintLink": "Imprint",
-    "privacyLink": "Privacy"
+    "privacyLink": "Privacy",
+    "drinkResponsibly": "Drink responsibly"
   },
   "header": {
     "wordmarkLabel": "Yawaragi home",
-    "backLabel": "Back"
+    "backLabel": "Back",
+    "accountLabel": "Account"
   },
   "profile": {
     "title": "Your taste profile",
@@ -439,5 +441,19 @@
       "body": "Three things will live here together: the sakes you have tasted, the bottles you own, and the ones you want to try. Your tasting journal is on the Palate tab for now.",
       "linkLabel": "Open your journal"
     }
+  },
+  "account": {
+    "title": "Account",
+    "notSignedInTitle": "Not signed in",
+    "notSignedInBody": "Your tastings live only on this phone. Sign in and they are backed up, and your palate follows you to any device.",
+    "signInCta": "Sign in",
+    "groupDisplay": "Display",
+    "groupPrivacy": "Privacy",
+    "groupAccount": "Account",
+    "languageLabel": "Language",
+    "languageValue": "English",
+    "languageSub": "Deutsch — coming soon",
+    "cookieSettingsLabel": "Cookie settings",
+    "cookieSettingsSub": "Choose what we store"
   }
 }

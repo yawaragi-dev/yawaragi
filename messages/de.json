@@ -31,11 +31,13 @@
   },
   "footer": {
     "imprintLink": "Impressum",
-    "privacyLink": "Datenschutz"
+    "privacyLink": "Datenschutz",
+    "drinkResponsibly": "Trinke verantwortungsvoll"
   },
   "header": {
     "wordmarkLabel": "Yawaragi Startseite",
-    "backLabel": "Zurück"
+    "backLabel": "Zurück",
+    "accountLabel": "Konto"
   },
   "profile": {
     "title": "Dein Geschmacksprofil",
@@ -439,5 +441,19 @@
       "body": "Drei Dinge kommen hier zusammen: die Sake, die du verkostet hast, die Flaschen, die du besitzt, und die, die du kennenlernen möchtest. Dein Verkostungsjournal findest du vorläufig im Bereich Palate.",
       "linkLabel": "Journal öffnen"
     }
+  },
+  "account": {
+    "title": "Konto",
+    "notSignedInTitle": "Nicht angemeldet",
+    "notSignedInBody": "Deine Tastings liegen nur auf diesem Telefon. Melde dich an, dann sind sie gesichert und dein Geschmacksprofil begleitet dich auf jedes Gerät.",
+    "signInCta": "Anmelden",
+    "groupDisplay": "Anzeige",
+    "groupPrivacy": "Datenschutz",
+    "groupAccount": "Konto",
+    "languageLabel": "Sprache",
+    "languageValue": "English",
+    "languageSub": "Deutsch — folgt in Kürze",
+    "cookieSettingsLabel": "Cookie-Einstellungen",
+    "cookieSettingsSub": "Wähle, was wir speichern"
   }
 }
