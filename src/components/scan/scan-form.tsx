@@ -109,6 +109,8 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
   // Reused for the brewery label on the enriched no_match state (the
   // same label the sake detail page and result card render).
   const tSake = useTranslations('sake.brand')
+  // §8's "Type it": the bridge the non-match states offer.
+  const tSearch = useTranslations('search')
   const router = useRouter()
   // One file input: the photo library.
   //
@@ -468,7 +470,7 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
           isWorking={isPending}
           onCapture={(file) => void handleFile(file)}
           onChoosePhoto={onUploadClick}
-          typeItHref={null}
+          typeItHref="/search"
           stillUrl={photoUrl}
           notice={notice}
         />
@@ -585,6 +587,13 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
                 {t('retryRescan')}
               </Button>
               <Link
+                href="/search"
+                className="text-sm font-medium underline underline-offset-4"
+                data-testid="scan-result-type-it"
+              >
+                {tSearch('cta')}
+              </Link>
+              <Link
                 href="/suggest"
                 className="text-sm font-medium underline underline-offset-4"
                 data-testid="scan-result-explore-sample"
@@ -668,6 +677,13 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
               >
                 {t('retryRescan')}
               </Button>
+              <Link
+                href="/search"
+                className="text-sm font-medium underline underline-offset-4"
+                data-testid="scan-result-no-match-type-it"
+              >
+                {tSearch('cta')}
+              </Link>
               <Link
                 href="/suggest"
                 className="text-sm font-medium underline underline-offset-4"
@@ -787,6 +803,13 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
                 >
                   {t('ambiguousRescan')}
                 </Button>
+                <Link
+                  href="/search"
+                  className="text-sm font-medium underline underline-offset-4"
+                  data-testid="scan-result-ambiguous-type-it"
+                >
+                  {tSearch('cta')}
+                </Link>
                 <Link
                   href="/suggest"
                   className="text-sm font-medium underline underline-offset-4"

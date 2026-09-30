@@ -325,6 +325,23 @@
       "scanAgain": "Scan again"
     }
   },
+  "search": {
+    "title": "Find a sake",
+    "fieldLabel": "Search the catalogue",
+    "placeholder": "Name, brewery or kanji",
+    "submit": "Search",
+    "clear": "Clear",
+    "emptyTitle": "Type a name",
+    "emptyBody": "Kanji, romaji or the brewery — whichever the bottle gives you. {count} sakes are in the catalogue.",
+    "tooShort": "One more letter, and we will look.",
+    "matches": "{count, plural, one {# match} other {# matches}}",
+    "matchesCapped": "First {count} matches — type more to narrow it",
+    "noMatchTitle": "Nothing in the catalogue matches",
+    "noMatchBody": "The catalogue follows Sakenowa, so limited editions and collaborations are often missing. Try the brewery name, or read a label instead.",
+    "noMatchScanCta": "Read a label",
+    "breweryUnknown": "Brewery not recorded",
+    "cta": "Type it"
+  },
   "suggest": {
     "entry": {
       "title": "Discover similar sake",

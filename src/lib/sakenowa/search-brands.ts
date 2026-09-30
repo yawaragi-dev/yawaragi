@@ -63,3 +63,200 @@ export async function searchBrandsFromPool(
 export async function searchBrands(query: string, limit?: number): Promise<Brand[]> {
   return searchBrandsFromPool(query, getServerDbPool(), limit)
 }
+
+/**
+ * ─────────────────────────────────────────────────────────────────────────
+ * §8 Search ("Type it") — the visitor-facing surface
+ * ─────────────────────────────────────────────────────────────────────────
+ *
+ * The helpers above are the journal's picker (#244): charted brands only,
+ * name fields only, ten rows, behind a maintainer gate. §8 is the public
+ * search, and it wants three things that picker deliberately does not:
+ *
+ * - **Brewery in the match.** §8 "searches name, kana, brewery"; a visitor who
+ *   remembers 旭酒造 but not 獺祭 has to be able to get there.
+ * - **Chartless brands included.** The picker's INNER JOIN on `flavor_charts`
+ *   is load-bearing for it — `logSakeToJournal` cannot place a chartless sake
+ *   in axis space, so offering one would be a dead end. §8's rows go to the
+ *   bottle page, which renders a "no chart yet" state perfectly well, and
+ *   ADR-0016 records that about half the catalogue has no chart. Applying the
+ *   picker's filter here would hide half the catalogue from search, which is
+ *   the opposite of the point.
+ * - **Twenty rows, not ten**, and the brewery columns the row renders.
+ *
+ * So: two queries over one table, each honest about its own contract, sharing
+ * {@link escapeLikePattern}. Merging them behind a flag would make the
+ * picker's dead-end guarantee a runtime argument instead of a property of the
+ * query.
+ *
+ * Deterministic and model-free throughout, which is also what makes §8 the
+ * cheap alternative to `/suggest` — that surface runs the AI SDK tool loop and
+ * costs a paid call per question.
+ *
+ * ## No full-text index, and why that is not an oversight
+ *
+ * The mirror holds 3,315 brands and 1,764 breweries. An infix `ILIKE` across
+ * the four searchable columns cannot use a B-tree, so it is a sequential
+ * scan — measured at **27 ms** against the live mirror, well inside the budget
+ * for a server-rendered page and cheaper than carrying the `pg_trgm`
+ * extension plus a GIN index. If the catalogue grows an order of magnitude, or
+ * if §8 gains as-you-type results (it has none: the page is a GET form),
+ * re-measure and add the index then.
+ *
+ * ## What §8 asks for that the data cannot answer yet
+ *
+ * - **A thumb per row.** Sakenowa's Data API publishes no images, the same
+ *   reason §6's rows have none. #308 §7 asks the designers whether it survives.
+ * - **A "Tasted" tag, and "Recently tasted" as the empty state.** Both need
+ *   the journal, which per ADR-0020 persists for maintainers only. An
+ *   anonymous visitor — most of them, by design — has nothing to show, so the
+ *   empty state says what the field is for rather than promising a list that
+ *   would always be blank.
+ * - **The dashed "Add {query} yourself" row.** Manual entry is §5's
+ *   "Added by you", which is Phase 2. #162 forbids advertising a surface that
+ *   does not exist, so the row is absent rather than inert.
+ */
+
+/**
+ * How many rows §8 returns.
+ *
+ * §8 gives no number. Twenty is where a phone-height list stops being
+ * scannable, and a visitor whose query was specific finds it in the first
+ * few — the ranking puts exact and prefix matches there. Someone who typed 山
+ * and got 20 of 300 is better served by typing more than by scrolling.
+ */
+export const MAX_CATALOGUE_SEARCH_RESULTS = 20
+
+/**
+ * Shortest query §8 will run.
+ *
+ * One character of kanji is a real query — 山 is a word — but one Latin letter
+ * is not: "a" matches a large fraction of the romaji column and tells the
+ * visitor nothing. So the floor is one character of non-ASCII input and two of
+ * ASCII. Below it the page renders its empty state instead of a list.
+ */
+export function isCatalogueQuerySpecific(query: string): boolean {
+  const trimmed = query.trim()
+  if (trimmed.length === 0) return false
+  // Anything outside printable ASCII is kanji, kana or a macron'd vowel — any
+  // one of those is specific enough on its own.
+  if (/[^\x20-\x7e]/.test(trimmed)) return true
+  return trimmed.length >= 2
+}
+
+export interface CatalogueSearchResult {
+  readonly brandId: number
+  readonly nameKanji: string
+  readonly nameRomaji: string | null
+  readonly breweryKanji: string | null
+  readonly breweryRomaji: string | null
+}
+
+interface CatalogueSearchRow {
+  brand_id: number
+  name_kanji: string
+  name_romaji: string | null
+  brewery_kanji: string | null
+  brewery_romaji: string | null
+}
+
+// The brewery join is LEFT, matching §6's: ~48 brands point at placeholder
+// brewery rows, and a sake with an unknown brewery is still findable by its
+// own name. `superseded_at IS NULL` on both per ADR-0014.
+//
+// `brands.name` is deliberately not searched. On every Sakenowa-sourced row it
+// is byte-equal to `name_kanji` (verified against the mirror), so including it
+// would widen the scan for no extra match. The picker above does search it,
+// from before that was known; harmless there, not worth copying.
+const SEARCH_CATALOGUE = `
+  SELECT
+    b.brand_id,
+    b.name_kanji,
+    b.name_romaji,
+    br.name_kanji  AS brewery_kanji,
+    br.name_romaji AS brewery_romaji
+  FROM brands b
+  LEFT JOIN breweries br
+    ON br.brewery_id = b.brewery_id
+   AND br.superseded_at IS NULL
+  WHERE b.superseded_at IS NULL
+    AND (
+         b.name_kanji   ILIKE $1
+      OR b.name_romaji  ILIKE $1
+      OR br.name_kanji  ILIKE $1
+      OR br.name_romaji ILIKE $1
+    )
+  ORDER BY char_length(b.name_kanji) ASC, b.name_kanji ASC, b.brand_id ASC
+  LIMIT $2
+`
+
+/**
+ * §8's matches, best first. Empty for a query too short to be specific — see
+ * {@link isCatalogueQuerySpecific}.
+ */
+export async function searchCatalogueFromPool(
+  query: string,
+  pool: Pool,
+  limit: number = MAX_CATALOGUE_SEARCH_RESULTS,
+): Promise<CatalogueSearchResult[]> {
+  if (!isCatalogueQuerySpecific(query)) return []
+
+  const pattern = `%${escapeLikePattern(query.trim())}%`
+  const capped = Math.min(Math.max(1, Math.trunc(limit)), MAX_CATALOGUE_SEARCH_RESULTS)
+  const { rows } = await publicQuery<CatalogueSearchRow>(
+    'brands',
+    SEARCH_CATALOGUE,
+    [pattern, capped],
+    pool,
+  )
+
+  return rankCatalogueMatches(query, rows.map(toCatalogueResult))
+}
+
+/** Server-component entry point. Tests pass their own pool instead. */
+export async function searchCatalogue(
+  query: string,
+  limit?: number,
+): Promise<CatalogueSearchResult[]> {
+  return searchCatalogueFromPool(query, getServerDbPool(), limit)
+}
+
+/**
+ * Order matches so the row the visitor meant is at the top.
+ *
+ * SQL filters and JS ranks, the same split §6 uses and for the same reason:
+ * the comparison is a product decision that wants unit tests, and a SQL `CASE`
+ * would put it where no test can reach without a database.
+ *
+ * Tiers: the name IS the query, then starts with it, then contains it, then
+ * only the brewery matched — someone searching a maker rather than a sake
+ * still gets their sakes, below the ones whose own name matched.
+ *
+ * Within a tier the SQL order survives, because `Array.prototype.sort` is
+ * stable, so one query always produces one list.
+ */
+export function rankCatalogueMatches(
+  query: string,
+  matches: readonly CatalogueSearchResult[],
+): CatalogueSearchResult[] {
+  const needle = query.trim().toLowerCase()
+  return [...matches].sort((a, b) => catalogueTier(a, needle) - catalogueTier(b, needle))
+}
+
+function catalogueTier(result: CatalogueSearchResult, needle: string): number {
+  const names = [result.nameKanji, result.nameRomaji ?? ''].map((value) => value.toLowerCase())
+  if (names.some((value) => value === needle)) return 0
+  if (names.some((value) => value.startsWith(needle))) return 1
+  if (names.some((value) => value.includes(needle))) return 2
+  return 3
+}
+
+function toCatalogueResult(row: CatalogueSearchRow): CatalogueSearchResult {
+  return {
+    brandId: row.brand_id,
+    nameKanji: row.name_kanji,
+    nameRomaji: row.name_romaji,
+    breweryKanji: row.brewery_kanji,
+    breweryRomaji: row.brewery_romaji,
+  }
+}

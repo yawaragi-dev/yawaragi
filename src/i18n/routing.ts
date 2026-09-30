@@ -35,6 +35,10 @@ export const routing = defineRouting({
     '/sake/[brandId]': '/sake/[brandId]',
     '/sake/[brandId]/similar': '/sake/[brandId]/similar',
     '/scan': '/scan',
+    // §8 "Type it". Shares its spelling across locales: "search" is not the
+    // visitor-facing word (the field's label is), and a localised path would
+    // break every link the scan surfaces hand it without warning.
+    '/search': '/search',
     '/suggest': '/suggest',
     '/profile': '/profile',
     // The four tab destinations. `/` stays the landing page (§0, outside the

@@ -325,6 +325,23 @@
       "scanAgain": "Erneut scannen"
     }
   },
+  "search": {
+    "title": "Sake finden",
+    "fieldLabel": "Katalog durchsuchen",
+    "placeholder": "Name, Brauerei oder Kanji",
+    "submit": "Suchen",
+    "clear": "Zurücksetzen",
+    "emptyTitle": "Gib einen Namen ein",
+    "emptyBody": "Kanji, Romaji oder die Brauerei — was die Flasche hergibt. Im Katalog stehen {count} Sake.",
+    "tooShort": "Noch ein Zeichen, dann suchen wir.",
+    "matches": "{count, plural, one {# Treffer} other {# Treffer}}",
+    "matchesCapped": "Die ersten {count} Treffer — tippe mehr, um einzugrenzen",
+    "noMatchTitle": "Im Katalog gibt es keinen Treffer",
+    "noMatchBody": "Der Katalog folgt Sakenowa, deshalb fehlen Limited Editions und Kollaborationen oft. Versuche den Namen der Brauerei — oder lies stattdessen ein Etikett.",
+    "noMatchScanCta": "Etikett lesen",
+    "breweryUnknown": "Brauerei nicht erfasst",
+    "cta": "Eintippen"
+  },
   "suggest": {
     "entry": {
       "title": "Ähnliche Sake entdecken",
