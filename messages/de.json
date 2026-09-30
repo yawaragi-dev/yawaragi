@@ -31,7 +31,8 @@
   },
   "footer": {
     "imprintLink": "Impressum",
-    "privacyLink": "Datenschutz"
+    "privacyLink": "Datenschutz",
+    "drinkResponsibly": "Trinke verantwortungsvoll"
   },
   "header": {
     "wordmarkLabel": "Yawaragi Startseite",
@@ -453,7 +454,6 @@
     "languageValue": "English",
     "languageSub": "Deutsch — folgt in Kürze",
     "cookieSettingsLabel": "Cookie-Einstellungen",
-    "cookieSettingsSub": "Wähle, was wir speichern",
-    "footerDrinkResponsibly": "Trinke verantwortungsvoll"
+    "cookieSettingsSub": "Wähle, was wir speichern"
   }
 }

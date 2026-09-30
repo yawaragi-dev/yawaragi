@@ -31,7 +31,8 @@
   },
   "footer": {
     "imprintLink": "Imprint",
-    "privacyLink": "Privacy"
+    "privacyLink": "Privacy",
+    "drinkResponsibly": "Drink responsibly"
   },
   "header": {
     "wordmarkLabel": "Yawaragi home",
@@ -453,7 +454,6 @@
     "languageValue": "English",
     "languageSub": "Deutsch — coming soon",
     "cookieSettingsLabel": "Cookie settings",
-    "cookieSettingsSub": "Choose what we store",
-    "footerDrinkResponsibly": "Drink responsibly"
+    "cookieSettingsSub": "Choose what we store"
   }
 }

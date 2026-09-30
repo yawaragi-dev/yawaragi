@@ -127,8 +127,12 @@ test.describe('§15 account', () => {
     await expect(page.getByTestId('footer-privacy-link')).toHaveCount(1)
     await expect(page.getByTestId('cookie-settings-link')).toHaveCount(1)
 
-    // §15 adds "Drink responsibly" on top of them.
-    await expect(page.getByTestId('account-footer')).toContainText('Drink responsibly')
+    // §15's row is one row. An earlier draft kept "Drink responsibly" on the
+    // page while these links came from the layout, which produced two footers
+    // — one left-aligned, one right, with a gap between. The line belongs to
+    // the footer itself now, so Account has no footer of its own.
+    await expect(page.getByTestId('account-footer')).toHaveCount(0)
+    await expect(page.getByTestId('site-footer')).toContainText('Drink responsibly')
 
     // Still there everywhere else, which is the Impressumspflicht
     // reachability this slice deliberately does not trade away.

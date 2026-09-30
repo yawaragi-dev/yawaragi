@@ -36,9 +36,12 @@ import { routing } from '@/i18n/routing'
  * decision. Both paths exist until someone with standing to decide says
  * otherwise. Tracked on #300.
  *
- * On THIS screen there is no duplication to resolve: `<LegalFooter />` renders
- * inside the same pane, so it is §15's footer, and the `<footer>` below adds
- * only the "Drink responsibly" line §15 has on top of it.
+ * On THIS screen there is no footer of its own: `<LegalFooter />` renders
+ * inside the same pane and IS §15's footer. It carries the
+ * responsible-drinking line too — an earlier draft kept that line here, which
+ * produced two footers, one left-aligned and one right, with a gap between.
+ * "Terms" is specified and has no route or copy yet; linking a stub would be
+ * worse than the honest gap. Tracked on #300.
  *
  * The **Language row is inert**, per §15 ("not tappable until DACH launch"),
  * and the header keeps its locale switch: ADR-0007 requires one in the header,
@@ -128,23 +131,6 @@ export default async function AccountPage({ params }: PageProps) {
         </SettingsGroup>
       </Show>
 
-      {/* §15's footer, minus the three links `<LegalFooter />` already renders
-          in this pane — printing them twice on one screen is worse than
-          either. This contributes only what §15 adds on top.
-
-          The first draft duplicated them here as plain `<a href>`, which is a
-          document load: it resets the navigation count rule 11's back arrow
-          reads, so Account → Imprint → back fell out to the landing instead of
-          returning here.
-
-          "Terms" is specified and does not exist yet — no route, no copy — and
-          linking a stub would be worse than the honest gap. Tracked on #300. */}
-      <footer
-        className="flex flex-wrap items-center gap-4 px-1 pt-2"
-        data-testid="account-footer"
-      >
-        <span className="text-meta text-ash-600">{t('footerDrinkResponsibly')}</span>
-      </footer>
     </main>
   )
 }

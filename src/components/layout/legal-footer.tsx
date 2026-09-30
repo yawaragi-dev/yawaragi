@@ -18,16 +18,33 @@ import { CookieSettingsLink } from '@/components/legal/cookie-settings-link'
  * being fixed, so rule 11's "never put a second bar on the bottom edge" still
  * holds.
  *
- * **On Account this IS §15's footer.** §15 lists the same three links, so
- * rather than printing them twice — or making this a client component to hide
- * itself on one route, which would ship the footer and its messages to the
- * browser on every app screen to answer one boolean — the Account page
- * contributes only what §15 adds: its "Drink responsibly" line. This stays the
- * single home for the links on every app screen, Account included.
+ * **On Account this IS §15's footer.** §15 lists the same links, so rather
+ * than printing them twice — or making this a client component to hide itself
+ * on one route, which would ship the footer and its messages to the browser on
+ * every app screen to answer one boolean — the Account page passes what §15
+ * adds through `trailing`. This stays the single home for the links on every
+ * app screen, Account included.
+ *
+ * **"Drink responsibly" lives here, not on the Account page.** The first
+ * attempt put it there and the result was two footers: §15's line
+ * left-aligned in the page, these links right-aligned below it, a gap
+ * between. The maintainer called it out on sight — an orphaned line, not a
+ * footer. A slot on this component would have fixed the row but not the
+ * ownership, since `(app)/layout.tsx` renders the footer and a page cannot
+ * pass anything into it. So the line is simply part of the footer: it is a
+ * responsible-drinking statement on an alcohol-information product, and no
+ * app screen's spec argues against showing it. §0 keeps its own copy, because
+ * the landing footer is a separate component.
+ *
+ * Still not §15's row: the prototype makes it a left-aligned 11px line with
+ * `·` separators, and "Terms" has no route yet. Restyling the app-wide footer
+ * to one screen's spec is the §15 full port's job, not this slice's — the
+ * whole reason this component still exists on app screens is that it is
+ * interim chrome. Tracked on #300.
  *
  * Retiring it from the *other* screens is a separate question: it trades a
  * link in the pane for two taps through the avatar, which is a judgement about
- * "unmittelbar erreichbar" and not a port decision. Tracked on #300.
+ * "unmittelbar erreichbar" and not a port decision. Also #300.
  */
 export async function LegalFooter() {
   const t = await getTranslations('footer')
@@ -52,6 +69,10 @@ export async function LegalFooter() {
         {t('privacyLink')}
       </Link>
       <CookieSettingsLink />
+      {/* Not a link: it is a statement, and #162 forbids a dead destination. */}
+      <span className="text-meta text-ash-600" data-testid="footer-drink-responsibly">
+        {t('drinkResponsibly')}
+      </span>
     </footer>
   )
 }
