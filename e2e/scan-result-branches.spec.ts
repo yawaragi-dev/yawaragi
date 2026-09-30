@@ -134,6 +134,48 @@ test.describe('scan result branches (#109 PR B)', () => {
     await context.close()
   })
 
+  test('the recent-scans consensus card carries its own rescan, so hiding the pickers is safe', async ({
+    browser,
+  }, testInfo) => {
+    testInfo.skip(!dbUp, 'Sakenowa mirror not available — DB-bound spec')
+    const brandId = await findAnyBrandId()
+    if (brandId === null) return
+
+    // The fifth state `hasResult` hides the entry pair for, and the only one
+    // whose rendering had no coverage at all. It needs two things at once: a
+    // retry-tier extraction (confidence < 0.60, so no lookup runs) AND a
+    // per-tab history with a strict majority. Seeding `sessionStorage`
+    // directly beats scanning three times — `getConsensusFromHistory` reads
+    // exactly this key, and two identical entries are 2 of 2, a majority.
+    const { context, page } = await scanPageWith(browser, [
+      injectionCookie({ name_ja: '獺祭', brewery_ja: '旭酒造', confidence: 0.3 }),
+    ])
+    const entry = {
+      brandId,
+      sakeHref: `/en/sake/${brandId}`,
+      nameKanji: '獺祭',
+      nameRomaji: 'Dassai',
+      tMs: Date.now(),
+    }
+    await page.addInitScript(
+      ([key, value]) => window.sessionStorage.setItem(key, value),
+      ['yawaragi_scan_history', JSON.stringify([entry, { ...entry, tMs: Date.now() + 1 }])],
+    )
+
+    await page.goto('/en/scan')
+    await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
+
+    await expect(page.getByTestId('scan-result-consensus')).toBeVisible()
+    await expect(page.getByTestId('scan-result-consensus-kanji')).toContainText('獺祭')
+    // The point of the test: the pickers are gone, and this state still has
+    // both a way forward (accept) and a way back to the camera (rescan).
+    await expect(page.getByTestId('scan-pick-button')).toHaveCount(0)
+    await expect(page.getByTestId('scan-camera-button')).toHaveCount(0)
+    await expect(page.getByTestId('scan-result-consensus-accept')).toBeVisible()
+    await expect(page.getByTestId('scan-result-consensus-rescan')).toBeVisible()
+    await context.close()
+  })
+
   test('retry (low confidence) offers a rescan that resolves to a match', async ({
     browser,
   }, testInfo) => {
@@ -266,6 +308,10 @@ test.describe('scan result branches (#109 PR B)', () => {
     await expect(page.getByTestId('scan-result-ambiguous-list')).toBeVisible()
     const candidate = page.getByTestId(`scan-result-ambiguous-candidate-${firstBrandId}`)
     await expect(candidate).toBeVisible()
+    // This state is in `hasResult`, so the entry pair is hidden — which is
+    // only safe because the candidate list carries its own rescan.
+    await expect(page.getByTestId('scan-pick-button')).toHaveCount(0)
+    await expect(page.getByTestId('scan-result-ambiguous-rescan')).toBeVisible()
 
     await candidate.click()
     await page.waitForURL(new RegExp(`/en/sake/${firstBrandId}$`))
