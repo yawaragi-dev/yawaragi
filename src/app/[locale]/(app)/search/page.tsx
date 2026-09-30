@@ -76,7 +76,12 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
   const tHeader = await getTranslations('header')
 
   const specific = isCatalogueQuerySpecific(query)
-  const matches = specific ? await searchCatalogue(query) : []
+  // `searchCatalogue` never throws — a mirror failure comes back as
+  // `unavailable` rather than 500ing a screen whose field, empty state and
+  // camera bridge all still work. See its docstring for why this surface
+  // degrades where `/sake/*` does not.
+  const outcome = specific ? await searchCatalogue(query) : ({ kind: 'ok', matches: [] } as const)
+  const matches = outcome.kind === 'ok' ? outcome.matches : []
 
   // Back goes to the scan screen for a cold deep-link: §8 is reached from
   // there ("Type it"), so that is where a visitor with no history came from in
@@ -165,6 +170,21 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
         <p className="text-body text-ash-600" data-testid="search-too-short">
           {t('tooShort')}
         </p>
+      ) : outcome.kind === 'unavailable' ? (
+        <section className="flex flex-col gap-2" data-testid="search-unavailable">
+          <h1 className="text-card-heading font-medium text-ink">{t('unavailableTitle')}</h1>
+          {/* Distinct from "nothing matches" on purpose: that would be a lie,
+              and the one a visitor acts on by retyping their query. Says whose
+              fault it is, and still offers the other way in (#162). */}
+          <p className="text-body text-ash-600">{t('unavailableBody')}</p>
+          <Link
+            href="/scan"
+            className="w-fit rounded-sm text-body font-medium text-ginshu-700 underline underline-offset-4 hover:text-ginshu-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+            data-testid="search-unavailable-scan"
+          >
+            {t('noMatchScanCta')}
+          </Link>
+        </section>
       ) : matches.length === 0 ? (
         <section className="flex flex-col gap-2" data-testid="search-no-match">
           <h1 className="text-card-heading font-medium text-ink">{t('noMatchTitle')}</h1>

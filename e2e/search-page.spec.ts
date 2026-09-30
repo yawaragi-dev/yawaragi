@@ -1,10 +1,19 @@
 // E2E for §8 Search ("Type it") — `/[locale]/search`.
 //
-// DB-bound: the results list needs a populated Sakenowa mirror. Specs resolve a
-// live fixture via `_db-fixtures` and skip when the mirror lacks a qualifying
-// row, the same discipline `scan-page.spec.ts` uses. CI without `DATABASE_URL`
-// skips those; the gate, empty-state and no-match cases need no data and always
-// run.
+// Split by whether the case needs the mirror, and every path runs in one
+// environment or the other:
+//
+// - **Always**: the age gate, the autofocused empty field, the too-short
+//   query, and the `/scan` entry — none of them reads a row.
+// - **`!dbUp` skip**: anything that navigates with `?q=`, because that reads
+//   the mirror. Locally these run; on CI, which has no `DATABASE_URL`, they
+//   skip. Same discipline as `scan-page.spec.ts`.
+// - **`dbUp` skip** — the inverse, and the only spec that WANTS no database:
+//   "says the catalogue is unreachable". It runs on CI and skips locally.
+//
+// That last one exists because CI caught a missing guard here: the clear-field
+// case was the one `?q=` navigation not marked DB-bound, and without
+// `DATABASE_URL` the page 500d rather than degrading.
 import { expect, test } from '@playwright/test'
 import { BASE_URL } from './_base-url'
 import { findAnyBrandId } from './_db-fixtures'
@@ -124,9 +133,16 @@ test.describe('§8 search', () => {
     await context.close()
   })
 
-  test('clearing returns to the empty field, keeping the screen', async ({ browser }) => {
+  test('clearing returns to the empty field, keeping the screen', async ({
+    browser,
+  }, testInfo) => {
+    testInfo.skip(!dbUp, 'Sakenowa mirror not populated — DB-bound spec')
     const { context, page } = await searchPage(browser)
 
+    // DB-bound because the ✕ only renders with a query, and a query reads the
+    // mirror. This case is how CI found the missing guard: it was the one
+    // `?q=` navigation not marked DB-bound, so on a runner with no
+    // `DATABASE_URL` the page 500d instead of rendering.
     await page.goto('/en/search?q=yama')
     await page.getByTestId('search-clear').click()
 
@@ -168,6 +184,29 @@ test.describe('§8 search', () => {
     // reserves the badge for LLM-derived or mapped ones. The absence is the
     // assertion.
     await expect(page.getByTestId('provenance-badge')).toHaveCount(0)
+
+    await context.close()
+  })
+
+  test('says the catalogue is unreachable rather than "nothing matches"', async ({
+    browser,
+  }, testInfo) => {
+    testInfo.skip(dbUp, 'Needs a run with no reachable mirror — the inverse of the DB-bound specs')
+    const { context, page } = await searchPage(browser)
+
+    // The one spec that WANTS no database. `searchCatalogue` turns a mirror
+    // failure into `unavailable`, and the page says whose fault it is — saying
+    // "nothing in the catalogue matches" would be a lie, and the one a visitor
+    // acts on by retyping. The field, this copy and the camera bridge all work
+    // without the mirror, which is why this surface degrades where `/sake/*`
+    // legitimately does not.
+    await page.goto('/en/search?q=yama')
+
+    await expect(page.getByTestId('search-page')).toBeVisible()
+    await expect(page.getByTestId('search-unavailable')).toBeVisible()
+    await expect(page.getByTestId('search-no-match')).toHaveCount(0)
+    await expect(page.getByTestId('search-input')).toBeVisible()
+    await expect(page.getByTestId('search-unavailable-scan')).toBeVisible()
 
     await context.close()
   })

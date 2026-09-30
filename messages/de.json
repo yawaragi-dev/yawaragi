@@ -266,6 +266,8 @@
     "noMatchTitle": "Im Katalog gibt es keinen Treffer",
     "noMatchBody": "Der Katalog folgt Sakenowa, deshalb fehlen Limited Editions und Kollaborationen oft. Versuche den Namen der Brauerei — oder lies stattdessen ein Etikett.",
     "noMatchScanCta": "Etikett lesen",
+    "unavailableTitle": "Der Katalog ist gerade nicht erreichbar",
+    "unavailableBody": "Das liegt an uns, nicht an dir — der Suchindex ist kurz nicht verfügbar. Versuche es gleich noch einmal, oder lies stattdessen ein Etikett.",
     "breweryUnknown": "Brauerei nicht erfasst",
     "cta": "Eintippen"
   },

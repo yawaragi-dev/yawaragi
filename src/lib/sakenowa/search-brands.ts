@@ -191,8 +191,23 @@ const SEARCH_CATALOGUE = `
 `
 
 /**
- * §8's matches, best first. Empty for a query too short to be specific — see
- * {@link isCatalogueQuerySpecific}.
+ * The outcome of a §8 search.
+ *
+ * Tagged, rather than "an empty array means nothing matched", because those
+ * are different facts and the page says different things about them. Telling a
+ * visitor "nothing in the catalogue matches" while the catalogue is
+ * unreachable is a lie, and the one they would act on by retyping.
+ */
+export type CatalogueSearchOutcome =
+  | { readonly kind: 'ok'; readonly matches: readonly CatalogueSearchResult[] }
+  | { readonly kind: 'unavailable' }
+
+/**
+ * §8's matches, best first. `ok` with an empty list for a query too short to
+ * be specific — see {@link isCatalogueQuerySpecific}.
+ *
+ * Throws on a database failure. The caller decides what that means;
+ * {@link searchCatalogue} turns it into `unavailable`.
  */
 export async function searchCatalogueFromPool(
   query: string,
@@ -213,12 +228,32 @@ export async function searchCatalogueFromPool(
   return rankCatalogueMatches(query, rows.map(toCatalogueResult))
 }
 
-/** Server-component entry point. Tests pass their own pool instead. */
+/**
+ * Server-component entry point. Tests pass their own pool to
+ * {@link searchCatalogueFromPool} instead.
+ *
+ * **Never throws**, which is the difference between this surface and the
+ * `/sake/*` detail routes. Those are nothing without their row, so they 500 or
+ * 404 and every spec that touches them is DB-bound. §8 still has a field, an
+ * empty state and a bridge to the camera when the mirror is unreachable — so a
+ * database failure degrades to `unavailable` and the page says so.
+ *
+ * `getServerDbPool()` THROWS when `DATABASE_URL` is unset, which is CI's
+ * Playwright webServer, so this catch is load-bearing in the same way
+ * `getLandingSampleScan`'s is: without it every spec that loads `/search` with
+ * a query fails and the suite slows to a crawl retrying. That is exactly the
+ * regression this guard prevents — and it is how CI caught the missing guard
+ * in the first place.
+ */
 export async function searchCatalogue(
   query: string,
   limit?: number,
-): Promise<CatalogueSearchResult[]> {
-  return searchCatalogueFromPool(query, getServerDbPool(), limit)
+): Promise<CatalogueSearchOutcome> {
+  try {
+    return { kind: 'ok', matches: await searchCatalogueFromPool(query, getServerDbPool(), limit) }
+  } catch {
+    return { kind: 'unavailable' }
+  }
 }
 
 /**
