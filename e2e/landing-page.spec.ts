@@ -24,6 +24,16 @@ const AGE_GATE_COOKIE = {
   url: BASE_URL,
 }
 
+// The consent banner is fixed above the bottom edge, so it sits over anything
+// low on the page. Specs that CLICK something down there decide the banner
+// out of the way rather than relying on the viewport being tall enough — the
+// same interception that bit the age gate.
+const CONSENT_COOKIE = {
+  name: 'yawaragi_consent',
+  value: JSON.stringify({ version: 1, analytics: false, marketing: false }),
+  url: BASE_URL,
+}
+
 let sampleBrandId: number | null = null
 
 test.beforeAll(async () => {
@@ -100,28 +110,29 @@ test.describe('landing hero (UX-E)', () => {
     await context.close()
   })
 
-  test('the "Open the app" buttons land on a built screen, not scaffolding', async ({
-    browser,
-  }) => {
-    const context = await browser.newContext({ locale: 'en-US' })
-    await context.addCookies([AGE_GATE_COOKIE])
-    const page = await context.newPage()
+  // §0 aims both "Open the app" buttons at the app's front door, which is §3
+  // Home — and §3 is not ported, so `/home` still renders
+  // `<TabPlaceholder />`. The rule worth pinning is not the destination but
+  // the outcome: the landing's way into the app must reach something
+  // finished. When §3 lands and these revert to `/home`, this keeps passing.
+  //
+  // One test per button rather than a loop inside one, so a failure names
+  // which of the two broke instead of reporting the first one it reached.
+  for (const testId of ['landing-open-app', 'landing-privacy-cta'] as const) {
+    test(`"${testId}" lands on a built screen, not scaffolding`, async ({ browser }) => {
+      const context = await browser.newContext({ locale: 'en-US' })
+      await context.addCookies([AGE_GATE_COOKIE, CONSENT_COOKIE])
+      const page = await context.newPage()
 
-    // §0 aims these at the app's front door, which is §3 Home — and §3 is not
-    // ported, so `/home` still renders `<TabPlaceholder />`. The rule worth
-    // pinning is not the destination but the outcome: the landing's way into
-    // the app must reach something finished. When §3 lands this keeps passing
-    // with the destination back at `/home`.
-    for (const testId of ['landing-open-app', 'landing-privacy-cta']) {
       await page.goto('/en')
       await page.getByTestId(testId).click()
 
       await expect(page.getByTestId('tab-bar')).toBeVisible()
       await expect(page.getByTestId('tab-placeholder')).toHaveCount(0)
-    }
 
-    await context.close()
-  })
+      await context.close()
+    })
+  }
 
   test('post-acceptance: the landing CTA routes into the scan flow', async ({
     browser,

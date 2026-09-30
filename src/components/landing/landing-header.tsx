@@ -40,6 +40,12 @@ export async function LandingHeader() {
           onward is worse than sending them where that link goes. `/scan` is
           the app's one finished screen.
 
+          This makes §0's three CTAs share one destination: the hero's "Scan
+          your first label" already went here. That is not a collision to
+          resolve — the header and the privacy card carry the SAME label
+          ("Open the app") and are one affordance placed twice, and the thing
+          that would distinguish them from the hero is §3 itself.
+
           Reverts to `/home` when §3 lands. Tracked on #300.
         */}
         <Link
