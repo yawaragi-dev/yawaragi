@@ -25,10 +25,10 @@ describe('ProvenanceBadgeView', () => {
     // The id itself is deliberately NOT asserted. The previous version of this
     // test pinned the literal string `provenance-badge-llmExtracted-tooltip`,
     // which encoded a bug: that id is per-KIND, so two badges of the same kind
-    // on one card — the scan result card has exactly that, one on the sake and
-    // one on the brewery — emitted duplicate ids and `aria-describedby`
-    // resolved to whichever came first. What matters is that the reference
-    // resolves to an element carrying the explanation.
+    // on one screen — the sake page has exactly that, one on the brand romaji
+    // and one on the brewery romaji — emitted duplicate ids and
+    // `aria-describedby` resolved to whichever came first. What matters is
+    // that the reference resolves to an element carrying the explanation.
     const describedBy = root.getAttribute('aria-describedby')
     expect(describedBy).toBeTruthy()
     const description = document.getElementById(describedBy!)
@@ -41,8 +41,8 @@ describe('ProvenanceBadgeView', () => {
     // at a duplicated id makes the second badge describe the first one's text.
     render(
       <>
-        <ProvenanceBadgeView kind="llmExtracted" {...baseViewProps} id="sake-name" />
-        <ProvenanceBadgeView kind="llmExtracted" {...baseViewProps} id="brewery-name" />
+        <ProvenanceBadgeView kind="llmInferred" {...baseViewProps} id="brand-romaji" />
+        <ProvenanceBadgeView kind="llmInferred" {...baseViewProps} id="brewery-romaji" />
       </>,
     )
 

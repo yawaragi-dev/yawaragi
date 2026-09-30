@@ -596,11 +596,11 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
               <ProvenanceBadgeView
                 kind={resolveBadgeKind('llm_extracted')}
                 label={tBadge('label')}
-                explanation={tBadge('tooltip')}
+                explanation={tBadge('explanation')}
                 sheetTitle={tBadge('sheetTitle')}
                 closeLabel={tProvenanceSheet('closeLabel')}
                 confidence={state.extraction.confidence}
-                id="scan-result-consensus-badge"
+                id="scan-result-no-match-badge"
               />
             </div>
             <div
@@ -836,11 +836,11 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
             <ProvenanceBadgeView
               kind={resolveBadgeKind('llm_extracted')}
               label={tBadge('label')}
-              explanation={tBadge('tooltip')}
+              explanation={tBadge('explanation')}
               sheetTitle={tBadge('sheetTitle')}
               closeLabel={tProvenanceSheet('closeLabel')}
               confidence={state.extraction.confidence}
-                id="scan-result-no-match-badge"
+              id="scan-result-matched-brand-only-badge"
             />
           </div>
           <p className="text-sm text-zinc-700 dark:text-zinc-300">
@@ -913,11 +913,11 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
             <ProvenanceBadgeView
               kind={resolveBadgeKind('llm_extracted')}
               label={tBadge('label')}
-              explanation={tBadge('tooltip')}
+              explanation={tBadge('explanation')}
               sheetTitle={tBadge('sheetTitle')}
               closeLabel={tProvenanceSheet('closeLabel')}
               confidence={state.extraction.confidence}
-                id="scan-result-ambiguous-badge"
+              id="scan-result-matched-brewery-only-badge"
             />
           </div>
           {state.breweryRomaji && (

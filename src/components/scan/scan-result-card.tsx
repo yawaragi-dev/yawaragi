@@ -256,7 +256,7 @@ export function ScanResultCard({
                   <ProvenanceBadgeView
                     kind={resolveBadgeKind('llm_extracted')}
                     label={tBadge('label')}
-                    explanation={tBadge('tooltip')}
+                    explanation={tBadge('explanation')}
                     sheetTitle={tBadge('sheetTitle')}
                     closeLabel={tProvenanceSheet('closeLabel')}
                     confidence={extractionConfidence}
@@ -336,7 +336,7 @@ export function ScanResultCard({
                   <ProvenanceBadgeView
                     kind={resolveBadgeKind(reverseExemplarSource)}
                     label={tCrossBevBadge('label')}
-                    explanation={tCrossBevBadge('tooltip')}
+                    explanation={tCrossBevBadge('explanation')}
                     sheetTitle={tCrossBevBadge('sheetTitle')}
                     closeLabel={tProvenanceSheet('closeLabel')}
                     id="scan-result-cross-beverage"

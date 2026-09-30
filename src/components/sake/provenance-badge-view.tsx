@@ -52,11 +52,13 @@ interface ProvenanceBadgeViewProps {
    * Unique per badge **instance**, not per kind.
    *
    * The previous id was `provenance-badge-${kind}-tooltip`, which collides the
-   * moment one card carries two badges of the same kind — and the scan result
-   * card carries exactly that, one on the sake name and one on the brewery.
-   * Two elements shared an id and `aria-describedby` resolved to whichever
-   * came first. `<InfoSheet />` requires an explicit `id` for this same reason
-   * and says so in its own docs; this now matches.
+   * moment one screen carries two badges of the same kind. Two do: the sake
+   * page renders an `llm_inferred` badge on the brand romaji AND on the
+   * brewery romaji, and a suggest list renders one per card. Those elements
+   * shared an id, so `aria-describedby` resolved to whichever came first —
+   * the second badge described the first one's text. `<InfoSheet />` requires
+   * an explicit `id` for this same reason and says so in its own docs; this
+   * now matches.
    */
   id: string
   className?: string

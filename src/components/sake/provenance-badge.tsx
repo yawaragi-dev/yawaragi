@@ -60,7 +60,7 @@ export async function ProvenanceBadge({
     <ProvenanceBadgeView
       kind={kind}
       label={t('label')}
-      explanation={t('tooltip')}
+      explanation={t('explanation')}
       sheetTitle={t('sheetTitle')}
       closeLabel={tSheet('closeLabel')}
       confidence={confidence}
