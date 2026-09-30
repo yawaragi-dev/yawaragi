@@ -295,16 +295,22 @@
     "badge": {
       "llmExtracted": {
         "label": "AI-extracted",
-        "tooltip": "This value was read from an image or document by an AI model — treat it as a starting point, not a verified fact."
+        "explanation": "This value was read from an image or document by an AI model — treat it as a starting point, not a verified fact.",
+        "sheetTitle": "Read by an AI model"
       },
       "llmInferred": {
         "label": "AI-inferred",
-        "tooltip": "An AI model reasoned over reference data to produce this value. The underlying numbers are canonical; the interpretation is not."
+        "explanation": "An AI model reasoned over reference data to produce this value. The underlying numbers are canonical; the interpretation is not.",
+        "sheetTitle": "Reasoned by an AI model"
       },
       "crossBeverageMap": {
         "label": "Cross-beverage",
-        "tooltip": "Mapped from a non-sake reference (whisky, wine, beer) using a hand-curated approximation. Western descriptors do not translate exactly to sake."
+        "explanation": "Mapped from a non-sake reference (whisky, wine, beer) using a hand-curated approximation. Western descriptors do not translate exactly to sake.",
+        "sheetTitle": "Mapped from another drink"
       }
+    },
+    "sheet": {
+      "closeLabel": "Close"
     }
   },
   "flavorAxis": {

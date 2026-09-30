@@ -146,8 +146,10 @@ test.describe('app shell — tab bar', () => {
     // `<main>`, the pane became pannable — and the `overflow-x-clip` that
     // `[locale]/layout.tsx` carries on <html>/<body> no longer covered it,
     // because the scrolling box now sits INSIDE that defence. A popover near
-    // the right edge is the realistic trigger: the provenance badge's tooltip
-    // is `w-max max-w-xs` and overhangs by ~72px on a 390px screen.
+    // the right edge is the realistic trigger: the provenance badge USED to
+    // carry a `w-max max-w-xs` tooltip that overhung by ~72px on a 390px
+    // screen (#313 replaced it with §16's sheet), and
+    // `<HeuristicDisclaimer />` still carries one, clamped to 80vw.
     //
     // Asserted as "is the pane a horizontal scroll container", not as a
     // gesture or a `scrollWidth` reading: under overlay scrollbars a

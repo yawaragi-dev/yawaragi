@@ -85,6 +85,10 @@ interface SuggestCardProps {
 
 async function SuggestCard({ suggestion }: SuggestCardProps) {
   const t = await getTranslations('suggest.results')
+  // Badge ids must be unique per instance, not per kind: a results list is
+  // several cards each carrying an `llm_inferred` badge, which is precisely
+  // the collision the old per-kind id produced.
+  const badgeScope = `suggestion-${suggestion.brandId.value}`
 
   return (
     <li
@@ -122,7 +126,7 @@ async function SuggestCard({ suggestion }: SuggestCardProps) {
           data-testid="suggest-card-reason"
         >
           <span>{suggestion.reason.value}</span>
-          <ProvenanceBadge source={suggestion.reason.source} />
+          <ProvenanceBadge source={suggestion.reason.source} id={`${badgeScope}-reason`} />
         </p>
       </div>
       {suggestion.cross_beverage_descriptor !== undefined && (
@@ -134,7 +138,10 @@ async function SuggestCard({ suggestion }: SuggestCardProps) {
             <span lang="en">
               {suggestion.cross_beverage_descriptor.value}
             </span>
-            <ProvenanceBadge source={suggestion.cross_beverage_descriptor.source} />
+            <ProvenanceBadge
+              source={suggestion.cross_beverage_descriptor.source}
+              id={`${badgeScope}-cross-beverage`}
+            />
           </p>
           {/*
             The disclaimer obligation is driven by the SAME policy seam as

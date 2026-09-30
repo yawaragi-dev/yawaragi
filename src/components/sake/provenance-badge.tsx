@@ -1,7 +1,12 @@
 import { getTranslations } from 'next-intl/server'
 import type { ProvenanceSource } from '@/lib/schemas/with-provenance'
-import { type BadgeKind, resolveBadgeKind } from '@/lib/provenance/policy'
-import { cn } from '@/lib/utils'
+import { resolveBadgeKind } from '@/lib/provenance/policy'
+import { ProvenanceBadgeView } from './provenance-badge-view'
+
+// Re-exported so the five client callers keep importing from one path. The
+// view had to move to its own `'use client'` file once it opened a sheet, and
+// this file's async server wrapper cannot live in a client module.
+export { ProvenanceBadgeView } from './provenance-badge-view'
 
 /**
  * Renders a small badge advertising that a displayed value did not come
@@ -27,6 +32,8 @@ import { cn } from '@/lib/utils'
 interface ProvenanceBadgeProps {
   source: ProvenanceSource
   confidence?: number
+  /** Unique per badge instance — see the view's `id` for why per-kind broke. */
+  id: string
   className?: string
 }
 
@@ -38,6 +45,7 @@ interface ProvenanceBadgeProps {
 export async function ProvenanceBadge({
   source,
   confidence,
+  id,
   className,
 }: ProvenanceBadgeProps) {
   const kind = resolveBadgeKind(source)
@@ -47,86 +55,17 @@ export async function ProvenanceBadge({
   if (!kind) return null
 
   const t = await getTranslations(`provenance.badge.${kind}`)
+  const tSheet = await getTranslations('provenance.sheet')
   return (
     <ProvenanceBadgeView
       kind={kind}
       label={t('label')}
-      tooltip={t('tooltip')}
+      explanation={t('explanation')}
+      sheetTitle={t('sheetTitle')}
+      closeLabel={tSheet('closeLabel')}
       confidence={confidence}
+      id={id}
       className={className}
     />
-  )
-}
-
-interface ProvenanceBadgeViewProps {
-  kind: BadgeKind
-  label: string
-  tooltip: string
-  confidence?: number
-  className?: string
-}
-
-// Per-kind Tailwind palette. Distinct enough at a glance, but all stay
-// subtle (this is a metadata chip on a content surface, not a CTA).
-const KIND_STYLES: Record<BadgeKind, string> = {
-  llmExtracted:
-    'border-violet-300 bg-violet-50 text-violet-900 dark:border-violet-700 dark:bg-violet-950 dark:text-violet-100',
-  llmInferred:
-    'border-sky-300 bg-sky-50 text-sky-900 dark:border-sky-700 dark:bg-sky-950 dark:text-sky-100',
-  crossBeverageMap:
-    'border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100',
-}
-
-export function ProvenanceBadgeView({
-  kind,
-  label,
-  tooltip,
-  confidence,
-  className,
-}: ProvenanceBadgeViewProps) {
-  const tooltipId = `provenance-badge-${kind}-tooltip`
-  // Clamp + percentage formatting in the view so a caller passing a
-  // sloppy value (e.g. 1.0001 from a softmax) still renders cleanly.
-  const confidencePct =
-    typeof confidence === 'number'
-      ? Math.round(Math.max(0, Math.min(1, confidence)) * 100)
-      : undefined
-
-  return (
-    <span
-      className={cn(
-        'group relative inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium',
-        KIND_STYLES[kind],
-        className,
-      )}
-      tabIndex={0}
-      aria-describedby={tooltipId}
-      data-testid="provenance-badge"
-      data-kind={kind}
-    >
-      <span data-testid="provenance-badge-label">{label}</span>
-      {confidencePct !== undefined && (
-        <span
-          className="text-[0.65rem] tabular-nums opacity-75"
-          data-testid="provenance-badge-confidence"
-        >
-          {confidencePct}%
-        </span>
-      )}
-      <span
-        id={tooltipId}
-        role="tooltip"
-        className={cn(
-          'pointer-events-none absolute left-0 top-full z-10 mt-1 w-max max-w-xs',
-          'rounded-md border border-zinc-200 bg-white px-3 py-2 text-xs font-normal leading-snug text-zinc-800 shadow-md',
-          'opacity-0 transition-opacity duration-150',
-          'group-hover:opacity-100 group-focus-visible:opacity-100 group-focus-within:opacity-100',
-          'dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100',
-        )}
-        data-testid="provenance-badge-tooltip"
-      >
-        {tooltip}
-      </span>
-    </span>
   )
 }

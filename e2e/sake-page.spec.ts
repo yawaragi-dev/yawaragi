@@ -34,6 +34,22 @@ test.beforeAll(async () => {
   brandWithChartId = await findBrandWithFlavorChartId()
 })
 
+/**
+ * The bounding box of an element that has stopped animating. Polls until two
+ * consecutive reads agree, so callers measure the resting position rather
+ * than wherever a transition happened to be when `toBeVisible()` resolved.
+ */
+async function settledBox(locator: import('@playwright/test').Locator): Promise<string> {
+  let previous = ''
+  for (let i = 0; i < 40; i++) {
+    const current = JSON.stringify(await locator.boundingBox())
+    if (current === previous) return current
+    previous = current
+    await locator.page().waitForTimeout(50)
+  }
+  return previous
+}
+
 test.describe('sake brand page', () => {
   test('/de/sake/<brandId> rewrites to coming-soon (DE locale gated, ADR-0008)', async ({
     browser,
@@ -99,11 +115,85 @@ test.describe('sake brand page', () => {
     })
     expect(isAttributionBeforeKanji).toBe(true)
 
-    // Slice 8: <ProvenanceBadge /> is imported on this page but renders
-    // null for canonical sources. All Phase 2 brand rows are
-    // source: 'sakenowa', so no badge should appear. The absence is the
-    // test — Phase 3+ will assert the inverse on LLM-sourced surfaces.
-    await expect(page.getByTestId('provenance-badge')).toHaveCount(0)
+    // Slice 8: <ProvenanceBadge /> renders null for canonical sources, so the
+    // brand RECORD (source: 'sakenowa') carries no badge. The romaji FIELDS
+    // are a different story — they are Hepburn romanisations produced by an
+    // LLM, so CLAUDE.md requires a badge on each.
+    //
+    // This used to assert `toHaveCount(0)` outright, on the premise that
+    // "Sakenowa-sourced rows have name === nameKanji so the romaji <p> is
+    // omitted". That premise expired when the romaji backfill populated the
+    // mirror: locally the page now renders two `llm_inferred` badges and the
+    // assertion failed on every run, while staying green on CI only because
+    // CI has no DATABASE_URL and skips the whole spec. A test that can only
+    // pass where it never runs is not a test.
+    //
+    // Asserted as a relationship instead of a count, so it holds whether or
+    // not a given row has romaji: every badge on this page belongs to a
+    // romaji field, and none sits beside the canonical kanji.
+    // Stated in both directions so deleting the badges cannot make this pass:
+    // every romaji field that IS rendered must carry exactly one
+    // `llm_inferred` badge, and no badge may sit anywhere else on the page.
+    for (const field of ['brand-name-romaji', 'brewery-name-romaji']) {
+      const romaji = page.getByTestId(field)
+      if ((await romaji.count()) === 0) continue
+      const badge = romaji.getByTestId('provenance-badge')
+      await expect(badge).toHaveCount(1)
+      await expect(badge).toHaveAttribute('data-kind', 'llmInferred')
+    }
+
+    const badgesOutsideRomaji = await page.evaluate(
+      () =>
+        [...document.querySelectorAll('[data-testid="provenance-badge"]')].filter(
+          (b) =>
+            !b.closest(
+              '[data-testid="brand-name-romaji"], [data-testid="brewery-name-romaji"]',
+            ),
+        ).length,
+    )
+    // The part the old assertion was reaching for: the canonical brand
+    // heading, and every other Sakenowa-sourced value, carries no badge.
+    expect(badgesOutsideRomaji).toBe(0)
+
+    await context.close()
+  })
+
+  test('a provenance badge explains itself in a sheet that fits the screen', async ({
+    browser,
+  }, testInfo) => {
+    testInfo.skip(anyBrandId === null, 'DB-bound spec')
+
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([AGE_GATE_COOKIE])
+    const page = await context.newPage()
+    await page.setViewportSize({ width: 390, height: 844 })
+
+    await page.goto(`/en/sake/${anyBrandId}`)
+
+    const badge = page.getByTestId('provenance-badge').first()
+    await expect(badge).toBeVisible()
+
+    // The bug this replaced: the explanation was an `absolute left-0 w-max`
+    // tooltip, and at 390px a badge at x=141 put a 320px panel at x=462 — 72px
+    // off-screen, reported as text cut mid-sentence. A width clamp cannot fix
+    // it, because the box is anchored to the badge.
+    await badge.click()
+
+    const panel = page.locator('[data-testid^="info-sheet-provenance-"][data-testid$="-panel"]')
+    await expect(panel).toBeVisible()
+
+    // The sheet slides in, so the first box after `visible` is mid-transition.
+    // A vertical slide leaves the x-axis stable, which is what this asserts —
+    // but measure the settled box anyway, so the assertion stays honest if the
+    // animation ever gains a horizontal component.
+    await expect
+      .poll(async () => JSON.stringify(await panel.boundingBox()))
+      .toBe(await settledBox(panel))
+
+    const box = await panel.boundingBox()
+    expect(box).not.toBeNull()
+    expect(box!.x).toBeGreaterThanOrEqual(0)
+    expect(box!.x + box!.width).toBeLessThanOrEqual(390 + 1)
 
     await context.close()
   })
