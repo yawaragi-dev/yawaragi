@@ -82,6 +82,12 @@ interface ScanFormProps {
  * divergence variants) also stays on `/scan` and renders discovery-
  * framed copy — never "error" tone. The route as a whole is age-gated
  * upstream by the proxy so no flavor data reaches an unaccepted visitor.
+ *
+ * The two entry buttons from step 1 are hidden once any result is on
+ * screen (`hasResult`): each result state carries its own "Scan again",
+ * so leaving the pair above the answer just stacked a second way to do
+ * the same thing. The message-only states keep them — see the comment
+ * on `hasResult` for which those are and why.
  */
 export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
   const t = useTranslations('scan.form')
@@ -312,6 +318,29 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
 
   const isPending = isDownscaling || isActionPending
 
+  // The two pickers are the ENTRY affordance: they are how a visitor with
+  // nothing on screen starts a scan. Once a result is on screen, the
+  // result owns the rescan — every non-match state renders its own "scan
+  // again" button next to its copy, and the match states get the shared
+  // row below. Keeping the entry pair at the top as well left two ways to
+  // do the same thing stacked above the answer the visitor asked for,
+  // which is what the maintainer caught on the low-confidence screen.
+  //
+  // The message-only states are deliberately NOT in here
+  // (`invalid_input`, `session_missing`, `rate_limited`,
+  // `extraction_failed`, and the client-side `downscaleFailed`): they
+  // render a line of copy and nothing else, so the entry pair is their
+  // only way forward and must stay.
+  const isMatch =
+    state.status === 'matched' ||
+    state.status === 'matched_brand_only' ||
+    state.status === 'matched_brewery_only'
+  const hasResult =
+    isMatch ||
+    state.status === 'low_confidence' ||
+    state.status === 'no_match' ||
+    state.status === 'ambiguous'
+
   // The form is JS-only: there is no no-JS submit path because the canvas
   // downscale runs in the browser before we ever build the FormData. The
   // `onSubmit` handler exists so the Enter key on the button doesn't fall
@@ -347,33 +376,35 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
         data-testid="scan-camera-input"
         aria-label={t('cameraAriaLabel')}
       />
-      <div className="flex flex-wrap items-center gap-2">
-        {/*
-          Take-photo button is gated on `(any-pointer: coarse)` —
-          shows on phones / tablets / touchscreen laptops, hides on
-          desktops without touch. On desktop the camera input would
-          just fall back to a file picker, duplicating the upload
-          button below.
-        */}
-        <Button
-          type="button"
-          onClick={onCameraClick}
-          disabled={isPending}
-          data-testid="scan-camera-button"
-          className="hidden [@media(any-pointer:coarse)]:inline-flex"
-        >
-          {isPending ? t('pending') : t('takePhoto')}
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onUploadClick}
-          disabled={isPending}
-          data-testid="scan-pick-button"
-        >
-          {isPending ? t('pending') : t('uploadPhoto')}
-        </Button>
-      </div>
+      {!hasResult && (
+        <div className="flex flex-wrap items-center gap-2">
+          {/*
+            Take-photo button is gated on `(any-pointer: coarse)` —
+            shows on phones / tablets / touchscreen laptops, hides on
+            desktops without touch. On desktop the camera input would
+            just fall back to a file picker, duplicating the upload
+            button below.
+          */}
+          <Button
+            type="button"
+            onClick={onCameraClick}
+            disabled={isPending}
+            data-testid="scan-camera-button"
+            className="hidden [@media(any-pointer:coarse)]:inline-flex"
+          >
+            {isPending ? t('pending') : t('takePhoto')}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onUploadClick}
+            disabled={isPending}
+            data-testid="scan-pick-button"
+          >
+            {isPending ? t('pending') : t('uploadPhoto')}
+          </Button>
+        </div>
+      )}
 
       {state.status === 'invalid_input' && (
         <p
@@ -959,6 +990,37 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
           >
             {t('matchedBreweryOnlyOpen')}
           </a>
+        </div>
+      )}
+      {isMatch && (
+        // The three match states are the only results that carried no
+        // rescan of their own — they leaned on the entry pair above,
+        // which is now hidden while a result is on screen. One shared
+        // row serves all three: the same "Scan again" wording the
+        // non-match states use, so the escape hatch reads identically
+        // wherever the visitor lands. §5 puts this in a top bar as a
+        // ghost "Not this one"; that bar arrives with the §4 camera
+        // port, and until then the affordance lives under the card
+        // rather than not existing.
+        //
+        // It opens the photo library, not the camera — `onPickClick`
+        // is the upload input, matching every other in-result rescan
+        // in this form. Routing rescans to the camera on coarse
+        // pointers is a one-line change but it belongs with §4, where
+        // the camera becomes the surface rather than a hidden input.
+        <div
+          className="mt-1 flex flex-wrap items-center gap-3"
+          data-testid="scan-result-match-rescan-row"
+        >
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onPickClick}
+            disabled={isPending}
+            data-testid="scan-result-match-rescan"
+          >
+            {isPending ? t('pending') : t('retryRescan')}
+          </Button>
         </div>
       )}
     </form>
