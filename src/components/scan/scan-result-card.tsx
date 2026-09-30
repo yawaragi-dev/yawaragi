@@ -1,7 +1,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { BookOpenText, CaretRight } from '@phosphor-icons/react/dist/ssr'
+import { ArrowsSplit, BookOpenText, CaretRight } from '@phosphor-icons/react/dist/ssr'
 import { HeuristicDisclaimerView } from '@/components/legal/heuristic-disclaimer'
 import { ProvenanceBadgeView } from '@/components/sake/provenance-badge'
 import {
@@ -63,6 +63,12 @@ export interface ScanResultCardProps {
    */
   sakeHref: string
   /**
+   * Pre-resolved path to §6's "Similar sakes" list. Optional: the landing's
+   * example card omits it, because "browse five more like this" is an in-app
+   * action and the landing's job is to get you into the app first.
+   */
+  similarHref?: string
+  /**
    * The six-axis flavor chart for the matched brand. `null` when the
    * brand exists but Sakenowa has no `flavor_charts` row for it — the
    * card still renders (photo + name + link) without the chart rather
@@ -103,6 +109,7 @@ export function ScanResultCard({
   breweryKanji,
   breweryRomaji,
   sakeHref,
+  similarHref,
   flavorChart,
   extractionConfidence,
   exampleLabel,
@@ -403,6 +410,29 @@ export function ScanResultCard({
               </span>
               <CaretRight size={16} className="ml-auto shrink-0 text-ash-500" aria-hidden="true" />
             </a>
+
+            {/*
+              §5's "Similar sakes" button → §6. Deterministic: L2 distance
+              over the six axes, ranked in Postgres, no model call. It sits
+              below the bottle-page row because the bottle you just scanned is
+              the more likely next step than five others like it.
+
+              Smaller than that row, and no caret, because the prototype makes
+              it a button rather than a list item: `ph-arrows-split` at 17px,
+              13px label, 11px/12px padding, in the slot that also holds "What
+              goes with it" when Ask is on. The bottle-page row is the one that
+              gets a caret and a subtitle.
+            */}
+            {similarHref && (
+              <a
+                href={similarHref}
+                className="flex items-center gap-2 rounded-md border border-divider px-3 py-2.5 text-subtle transition-colors hover:bg-ash-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+                data-testid="scan-result-similar"
+              >
+                <ArrowsSplit size={17} className="shrink-0 text-ginshu-600" aria-hidden="true" />
+                <span className="font-medium text-ink">{t('similarCta')}</span>
+              </a>
+            )}
           </div>
         </div>
       </div>

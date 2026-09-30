@@ -155,6 +155,31 @@
       "breweryLabel": "Brauerei",
       "prefectureLabel": "Präfektur",
       "flavorChartLabel": "Flavor Chart (Sakenowa)"
+    },
+    "similar": {
+      "title": "Wie {name}",
+      "intro": "Am nächsten dran über alle sechs Achsen. Nicht verkostet — nur die Form des Charts.",
+      "percentSimilar": "{percent}% ähnlich",
+      "axisPair": "{first} und {second}",
+      "reasonSharedAndMore": "Genauso {shared}, dafür mehr {axis}.",
+      "reasonSharedAndLess": "Genauso {shared}, dafür weniger {axis}.",
+      "reasonSharedOnly": "Genauso {shared}.",
+      "reasonMoreOnly": "Mehr {axis}.",
+      "reasonLessOnly": "Weniger {axis}.",
+      "emptyTitle": "Für diesen Sake gibt es noch kein Flavor Chart",
+      "emptyBody": "Für diesen Sake gibt es noch kein Flavor Chart, also lässt er sich mit nichts vergleichen. Alles andere, was wir über ihn wissen, steht auf seiner Seite.",
+      "emptyLink": "Zurück zur Flasche",
+      "noMatchesTitle": "Nichts ausreichend Ähnliches",
+      "noMatchesBody": "Dieses Profil steht im Katalog für sich allein. Sieh dir stattdessen das Flavor Chart auf seiner Seite an.",
+      "axes": {
+        "f1": "blumig",
+        "f2": "vollmundig",
+        "f3": "kräftig",
+        "f4": "mild",
+        "f5": "trocken",
+        "f6": "leicht"
+      },
+      "cta": "Ähnliche Sake"
     }
   },
   "debug": {
@@ -217,7 +242,8 @@
       "reverseNoAnalog": "Dieses Profil ist ausgesprochen japanisch — es gibt keine nahe westliche Entsprechung.",
       "flavorComingSoonHeading": "Geschmacksprofil folgt in Kürze",
       "flavorComingSoonBody": "Wir haben diesen Sake erkannt — das Geschmacksprofil erstellen wir noch. Alles, was wir bisher darüber wissen, kannst du dir trotzdem ansehen.",
-      "openDetailSubtitle": "Reis, Polierrate, Hefe, SMV · Brauereigeschichte, Serviertemperaturen"
+      "openDetailSubtitle": "Reis, Polierrate, Hefe, SMV · Brauereigeschichte, Serviertemperaturen",
+      "similarCta": "Ähnliche Sake"
     },
     "returnHint": {
       "notThisOne": "Nicht die Flasche, die du gescannt hast?",
@@ -256,8 +282,7 @@
       "serviceUnavailable": "Unsere Sake-Datenbank ist gerade nicht erreichbar. Bitte versuche es in ein paar Minuten erneut.",
       "error": "Beim Vorbereiten deiner Vorschläge ist etwas schiefgelaufen. Bitte versuche es in ein paar Minuten erneut.",
       "sessionMissing": "Deine Browser-Sitzung konnte nicht vorbereitet werden. Bitte lade die Seite neu und versuche es erneut.",
-      "backToSeed": "Zurück zum Ausgangs-Sake",
-      "findSimilarCta": "Ähnliche finden"
+      "backToSeed": "Zurück zum Ausgangs-Sake"
     }
   },
   "sakenowaAttribution": {
