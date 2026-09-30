@@ -1,11 +1,16 @@
 'use client'
 
-import { useEffect, useRef, useState, useTransition } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore, useTransition } from 'react'
 import { useTranslations } from 'next-intl'
 import { cn } from '@/lib/utils'
 import { setConsent } from '@/lib/legal/consent-actions'
 import type { ConsentDecision } from '@/lib/legal/consent'
-import { COOKIE_BANNER_OPEN_EVENT } from './cookie-banner-events'
+import {
+  clearCookiePreferencesRequest,
+  isCookiePreferencesRequested,
+  isCookiePreferencesRequestedOnServer,
+  subscribeCookiePreferences,
+} from './cookie-banner-events'
 
 /**
  * CSS custom property the banner publishes on `<html>` so other
@@ -36,20 +41,27 @@ export function CookieBanner({
 }) {
   const t = useTranslations('cookieBanner')
   const [isPending, startTransition] = useTransition()
-  const [open, setOpen] = useState(initialDecision === null)
-  const [customizing, setCustomizing] = useState(initialDecision !== null)
+  // Read during render, not heard in an effect: a reopen request made before
+  // this component's first client render is already in the snapshot that
+  // render reads, so the banner comes up open instead of one render late — or
+  // never, if the request predated the old `window` listener. See
+  // `cookie-banner-events.ts`.
+  const reopenRequested = useSyncExternalStore(
+    subscribeCookiePreferences,
+    isCookiePreferencesRequested,
+    isCookiePreferencesRequestedOnServer,
+  )
+  const [dismissed, setDismissed] = useState(initialDecision !== null)
+  const [customizingChoice, setCustomizingChoice] = useState(initialDecision !== null)
+
+  // A request forces both: §15 says the row "reopens the cookie banner in
+  // Customise", and ADR-0009's "withdraw as easily as give" means landing on
+  // the choices rather than a fresh accept/reject prompt.
+  const open = reopenRequested || !dismissed
+  const customizing = reopenRequested || customizingChoice
   const [analytics, setAnalytics] = useState(initialDecision?.analytics ?? false)
   const [marketing, setMarketing] = useState(initialDecision?.marketing ?? false)
   const bannerRef = useRef<HTMLElement | null>(null)
-
-  useEffect(() => {
-    function handleOpen() {
-      setOpen(true)
-      setCustomizing(true)
-    }
-    window.addEventListener(COOKIE_BANNER_OPEN_EVENT, handleOpen)
-    return () => window.removeEventListener(COOKIE_BANNER_OPEN_EVENT, handleOpen)
-  }, [])
 
   // Publish the banner's rendered height so other fixed bottom
   // overlays can stack above it. Falls back to 0 (no offset needed)
@@ -83,7 +95,10 @@ export function CookieBanner({
       await setConsent(choice)
       setAnalytics(choice.analytics)
       setMarketing(choice.marketing)
-      setOpen(false)
+      setDismissed(true)
+      // Without this the request would hold the banner open against the
+      // visitor's own save.
+      clearCookiePreferencesRequest()
     })
   }
 
@@ -176,7 +191,7 @@ export function CookieBanner({
                 label={t('rejectNonEssential')}
               />
               <ConsentButton
-                onClick={() => setCustomizing(true)}
+                onClick={() => setCustomizingChoice(true)}
                 disabled={isPending}
                 testId="cookie-banner-customize"
                 label={t('customize')}

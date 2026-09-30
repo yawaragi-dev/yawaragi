@@ -1,7 +1,7 @@
 'use client'
 
 import { Cookie } from '@phosphor-icons/react/dist/ssr'
-import { COOKIE_BANNER_OPEN_EVENT } from '@/components/legal/cookie-banner-events'
+import { requestCookiePreferences } from '@/components/legal/cookie-banner-events'
 import { cn } from '@/lib/utils'
 
 /**
@@ -26,7 +26,7 @@ export function CookieSettingsRow({
   return (
     <button
       type="button"
-      onClick={() => window.dispatchEvent(new Event(COOKIE_BANNER_OPEN_EVENT))}
+      onClick={requestCookiePreferences}
       className={cn(
         'flex w-full min-h-[50px] items-center gap-3.5 px-4 py-2.5 text-left transition-colors',
         'border-b border-divider last:border-b-0 cursor-pointer',

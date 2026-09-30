@@ -1,19 +1,15 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { COOKIE_BANNER_OPEN_EVENT } from './cookie-banner-events'
+import { requestCookiePreferences } from './cookie-banner-events'
 
 export function CookieSettingsLink() {
   const t = useTranslations('cookieBanner')
 
-  function open() {
-    window.dispatchEvent(new Event(COOKIE_BANNER_OPEN_EVENT))
-  }
-
   return (
     <button
       type="button"
-      onClick={open}
+      onClick={requestCookiePreferences}
       data-testid="cookie-settings-link"
       // Ginshu ramp, matching the Impressum and Privacy links it sits beside:
       // this rendered a cooler, lighter grey than both, which made the one
