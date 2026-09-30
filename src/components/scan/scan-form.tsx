@@ -10,6 +10,7 @@ import { startTransition, useActionState, useEffect, useRef, useState } from 're
 import type { FormEvent } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
+import { Keyboard } from '@phosphor-icons/react/dist/ssr'
 import { getPathname, Link } from '@/i18n/navigation'
 import { Button } from '@/components/ui/button'
 import { ProvenanceBadgeView } from '@/components/sake/provenance-badge'
@@ -103,6 +104,8 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
   // Reused for the brewery label on the enriched no_match state (the
   // same label the sake detail page and result card render).
   const tSake = useTranslations('sake.brand')
+  // §8's entry label, and the bridge the non-match states offer.
+  const tSearch = useTranslations('search')
   const router = useRouter()
   // Two distinct file inputs so the visitor gets a deterministic
   // choice between the camera and the photo library on mobile —
@@ -403,6 +406,20 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
           >
             {isPending ? t('pending') : t('uploadPhoto')}
           </Button>
+          {/*
+            §8's "Type it". §4 puts it beside the shutter; there is no shutter
+            until the camera port, so it sits beside the pickers — which is
+            where a visitor holding a bottle whose label will not read is
+            standing. A real `<Link>`, not a button: it is a route.
+          */}
+          <Link
+            href="/search"
+            className="inline-flex h-9 items-center gap-1.5 rounded-md px-2 text-subtle text-ash-600 transition-colors hover:text-ash-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+            data-testid="scan-type-it"
+          >
+            <Keyboard size={16} aria-hidden="true" />
+            {tSearch('cta')}
+          </Link>
         </div>
       )}
 
@@ -577,6 +594,13 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
               {t('retryRescan')}
             </Button>
             <Link
+              href="/search"
+              className="text-sm font-medium underline underline-offset-4"
+              data-testid="scan-result-type-it"
+            >
+              {tSearch('cta')}
+            </Link>
+            <Link
               href="/suggest"
               className="text-sm font-medium underline underline-offset-4"
               data-testid="scan-result-explore-sample"
@@ -660,6 +684,13 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
             >
               {t('retryRescan')}
             </Button>
+            <Link
+              href="/search"
+              className="text-sm font-medium underline underline-offset-4"
+              data-testid="scan-result-no-match-type-it"
+            >
+              {tSearch('cta')}
+            </Link>
             <Link
               href="/suggest"
               className="text-sm font-medium underline underline-offset-4"
@@ -780,6 +811,13 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
               >
                 {t('ambiguousRescan')}
               </Button>
+              <Link
+                href="/search"
+                className="text-sm font-medium underline underline-offset-4"
+                data-testid="scan-result-ambiguous-type-it"
+              >
+                {tSearch('cta')}
+              </Link>
               <Link
                 href="/suggest"
                 className="text-sm font-medium underline underline-offset-4"
