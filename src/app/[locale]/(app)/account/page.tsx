@@ -7,8 +7,7 @@ import type { Metadata } from 'next'
 import { HeaderAuth } from '@/components/auth/header-auth'
 import { CookieSettingsRow } from '@/components/account/cookie-settings-row'
 import { SettingsGroup, SettingsRow } from '@/components/account/settings-row'
-import { getPathname, Link } from '@/i18n/navigation'
-import { isLaunched } from '@/i18n/launch-state'
+import { Link } from '@/i18n/navigation'
 import { routing } from '@/i18n/routing'
 
 /**
@@ -30,11 +29,16 @@ import { routing } from '@/i18n/routing'
  * home for the withdrawal path that ADR-0009 wants as easy as giving.
  *
  * **What it deliberately does not do yet:** remove the app-side
- * `<LegalFooter />`. `legal-footer.tsx` says the app copy goes "when §15
- * lands", and this is §15 landing — but Impressumspflicht (§5 TMG / §18 MStV)
- * wants the Impressum "unmittelbar erreichbar", and trading a link in the pane
- * for two taps is a legal judgement, not a port decision. Both paths exist
- * until someone with standing to decide says otherwise. Tracked on #300.
+ * `<LegalFooter />` from the *other* screens. `legal-footer.tsx` says the app
+ * copy goes "when §15 lands", and this is §15 landing — but Impressumspflicht
+ * (§5 TMG / §18 MStV) wants the Impressum "unmittelbar erreichbar", and
+ * trading a link in the pane for two taps is a legal judgement, not a port
+ * decision. Both paths exist until someone with standing to decide says
+ * otherwise. Tracked on #300.
+ *
+ * On THIS screen there is no duplication to resolve: `<LegalFooter />` renders
+ * inside the same pane, so it is §15's footer, and the `<footer>` below adds
+ * only the "Drink responsibly" line §15 has on top of it.
  *
  * The **Language row is inert**, per §15 ("not tappable until DACH launch"),
  * and the header keeps its locale switch: ADR-0007 requires one in the header,
@@ -57,34 +61,13 @@ export default async function AccountPage({ params }: PageProps) {
   if (!hasLocale(routing.locales, locale)) notFound()
   setRequestLocale(locale)
 
-  // ADR-0008: the German surface is not launched, so a deep link gets the same
-  // coming-soon block every other gated route does.
-  if (!isLaunched(locale)) {
-    const tComingSoon = await getTranslations({ locale, namespace: 'comingSoon' })
-    return (
-      <div
-        className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-8 py-16"
-        data-testid="coming-soon"
-      >
-        <h1 className="text-headline font-medium text-ink">{tComingSoon('title')}</h1>
-        <p className="max-w-prose text-body text-ash-600">{tComingSoon('body')}</p>
-        <Link
-          href="/"
-          locale="en"
-          className="text-body font-medium underline underline-offset-4"
-        >
-          {tComingSoon('switchToEn')}
-        </Link>
-      </div>
-    )
-  }
-
+  // No launch-state branch. `/account` is absent from `UNGATED_LOCALE_PATHS`,
+  // which is deny-by-default, so for a non-launched locale the proxy rewrites
+  // `/de/account` to `/de` and `(site)/page.tsx` serves ADR-0008's
+  // coming-soon before this component runs. #309 removed the same unreachable
+  // copy from `/scan`; this one would have been its twin.
   const t = await getTranslations('account')
-  const tFooter = await getTranslations('footer')
   const tSignIn = await getTranslations('signIn')
-
-  const imprintHref = getPathname({ locale, href: '/imprint' })
-  const privacyHref = getPathname({ locale, href: '/privacy' })
 
   return (
     <main
@@ -145,27 +128,21 @@ export default async function AccountPage({ params }: PageProps) {
         </SettingsGroup>
       </Show>
 
-      {/* §15's footer. "Terms" is specified and does not exist yet — there is
-          no /terms route and no copy for one, and linking a stub would be
-          worse than the honest gap. Tracked on #300. */}
+      {/* §15's footer, minus the three links `<LegalFooter />` already renders
+          in this pane — printing them twice on one screen is worse than
+          either. This contributes only what §15 adds on top.
+
+          The first draft duplicated them here as plain `<a href>`, which is a
+          document load: it resets the navigation count rule 11's back arrow
+          reads, so Account → Imprint → back fell out to the landing instead of
+          returning here.
+
+          "Terms" is specified and does not exist yet — no route, no copy — and
+          linking a stub would be worse than the honest gap. Tracked on #300. */}
       <footer
         className="flex flex-wrap items-center gap-4 px-1 pt-2"
         data-testid="account-footer"
       >
-        <a
-          href={imprintHref}
-          className="text-meta text-ash-600 underline underline-offset-4 hover:text-ash-800"
-          data-testid="account-imprint-link"
-        >
-          {tFooter('imprintLink')}
-        </a>
-        <a
-          href={privacyHref}
-          className="text-meta text-ash-600 underline underline-offset-4 hover:text-ash-800"
-          data-testid="account-privacy-footer-link"
-        >
-          {tFooter('privacyLink')}
-        </a>
         <span className="text-meta text-ash-600">{t('footerDrinkResponsibly')}</span>
       </footer>
     </main>

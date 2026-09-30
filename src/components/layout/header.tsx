@@ -1,8 +1,8 @@
-import { UserCircle } from '@phosphor-icons/react/dist/ssr'
 import { getTranslations } from 'next-intl/server'
 import { Show } from '@clerk/nextjs'
 import { Link } from '@/i18n/navigation'
 import { HeaderAuth } from '@/components/auth/header-auth'
+import { AccountLink } from '@/components/layout/account-link'
 import { BackLink } from '@/components/layout/back-link'
 import { LocaleSwitcher } from '@/components/layout/locale-switcher'
 
@@ -124,19 +124,7 @@ export async function Header(props: HeaderProps = {}) {
             />
           </Show>
           <LocaleSwitcher />
-          {showAccount && (
-            <Link
-              href="/account"
-              aria-label={t('accountLabel')}
-              data-testid="header-account-link"
-              className="inline-flex size-11 items-center justify-center rounded-md text-ash-600 transition-colors hover:text-ash-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
-            >
-              {/* §15 draws an avatar. There is no avatar to draw for a visitor
-                  with no account — which is most of them, by design — so the
-                  glyph stands in until identity exists to show. */}
-              <UserCircle size={24} aria-hidden="true" />
-            </Link>
-          )}
+          {showAccount && <AccountLink label={t('accountLabel')} />}
         </div>
       </div>
     </header>

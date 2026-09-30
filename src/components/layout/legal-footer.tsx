@@ -1,7 +1,5 @@
-'use client'
-
-import { useTranslations } from 'next-intl'
-import { Link, usePathname } from '@/i18n/navigation'
+import { getTranslations } from 'next-intl/server'
+import { Link } from '@/i18n/navigation'
 import { CookieSettingsLink } from '@/components/legal/cookie-settings-link'
 
 /**
@@ -20,22 +18,19 @@ import { CookieSettingsLink } from '@/components/legal/cookie-settings-link'
  * being fixed, so rule 11's "never put a second bar on the bottom edge" still
  * holds.
  *
- * **Except on Account**, which carries §15's own footer — the same links, one
- * screen, printed twice. §15 is where these belong and where they will
- * eventually live alone; removing the in-pane copy from every *other* screen
- * is a legal judgement about whether two taps still counts as "unmittelbar
- * erreichbar", and not one a port PR should make. Hiding it on the one screen
- * that demonstrably duplicates it costs no reachability at all.
+ * **On Account this IS §15's footer.** §15 lists the same three links, so
+ * rather than printing them twice — or making this a client component to hide
+ * itself on one route, which would ship the footer and its messages to the
+ * browser on every app screen to answer one boolean — the Account page
+ * contributes only what §15 adds: its "Drink responsibly" line. This stays the
+ * single home for the links on every app screen, Account included.
  *
- * Client component only for that check. It renders nothing else dynamic, and
- * `usePathname` resolves during SSR, so the markup is correct on first paint
- * rather than flashing a second footer and removing it.
+ * Retiring it from the *other* screens is a separate question: it trades a
+ * link in the pane for two taps through the avatar, which is a judgement about
+ * "unmittelbar erreichbar" and not a port decision. Tracked on #300.
  */
-export function LegalFooter() {
-  const t = useTranslations('footer')
-  const pathname = usePathname()
-
-  if (pathname === '/account') return null
+export async function LegalFooter() {
+  const t = await getTranslations('footer')
 
   return (
     <footer

@@ -38,8 +38,10 @@ test.describe('§15 account', () => {
     await page.getByTestId('header-account-link').click()
     await expect(page).toHaveURL(/\/en\/account$/)
 
-    // Tap two: the Impressum link on Account.
-    await page.getByTestId('account-imprint-link').click()
+    // Tap two: the Impressum link on Account — `<LegalFooter />`'s, which is
+    // the only copy of it on this screen now that §15's footer no longer
+    // reprints the same three links.
+    await page.getByTestId('footer-imprint-link').click()
     await expect(page).toHaveURL(/\/en\/imprint$/)
     await expect(page.getByTestId('imprint-page')).toBeVisible()
 
@@ -110,16 +112,25 @@ test.describe('§15 account', () => {
     await context.close()
   })
 
-  test('does not print the legal links twice', async ({ browser }) => {
+  test('prints the legal links exactly once', async ({ browser }) => {
     const { context, page } = await appPage(browser)
 
-    // Account carries §15's own footer. The in-pane `<LegalFooter />` shows
-    // the same links on every other app screen and would duplicate them here.
+    // Self-review catch: §15's footer had reprinted `<LegalFooter />`'s three
+    // links, and the first fix hid `<LegalFooter />` on this route — which
+    // turned it into a client component, shipping the footer and its messages
+    // to the browser on every app screen to answer one boolean. So §15's
+    // footer contributes only the line it adds, and `<LegalFooter />` stays
+    // the single home for the links here as everywhere.
     await page.goto('/en/account')
-    await expect(page.getByTestId('account-footer')).toBeVisible()
-    await expect(page.getByTestId('site-footer')).toHaveCount(0)
+    await expect(page.getByTestId('site-footer')).toBeVisible()
+    await expect(page.getByTestId('footer-imprint-link')).toHaveCount(1)
+    await expect(page.getByTestId('footer-privacy-link')).toHaveCount(1)
+    await expect(page.getByTestId('cookie-settings-link')).toHaveCount(1)
 
-    // …and it is still there everywhere else, which is the Impressumspflicht
+    // §15 adds "Drink responsibly" on top of them.
+    await expect(page.getByTestId('account-footer')).toContainText('Drink responsibly')
+
+    // Still there everywhere else, which is the Impressumspflicht
     // reachability this slice deliberately does not trade away.
     await page.goto('/en/scan')
     await expect(page.getByTestId('site-footer')).toBeVisible()
@@ -127,7 +138,26 @@ test.describe('§15 account', () => {
     await context.close()
   })
 
-  test('/de/account is gated to coming-soon (ADR-0008)', async ({ browser }) => {
+  test('the Account entry says so when you are already on Account', async ({ browser }) => {
+    const { context, page } = await appPage(browser)
+
+    // A nav item, so it stays a link on its own route — unlike the wordmark,
+    // whose whole job is to be an exit. What it must not do is claim to lead
+    // somewhere else, which is what `aria-current` is for. `<TabBar />` marks
+    // its active item the same way.
+    await page.goto('/en/scan')
+    await expect(page.getByTestId('header-account-link')).not.toHaveAttribute('aria-current')
+
+    await page.goto('/en/account')
+    await expect(page.getByTestId('header-account-link')).toHaveAttribute(
+      'aria-current',
+      'page',
+    )
+
+    await context.close()
+  })
+
+  test('/de/account is rewritten to coming-soon (ADR-0008)', async ({ browser }) => {
     const context = await browser.newContext({ locale: 'de-DE' })
     await context.addCookies([AGE_GATE_COOKIE, CONSENT_COOKIE])
     const page = await context.newPage()
@@ -136,6 +166,11 @@ test.describe('§15 account', () => {
 
     await expect(page.getByTestId('coming-soon')).toBeVisible()
     await expect(page.getByTestId('account-page')).toHaveCount(0)
+    // Names WHICH coming-soon page. `/account` is gated, so the proxy rewrites
+    // to `/de` and `(site)/page.tsx` serves it — this route no longer carries
+    // its own unreachable copy, the way `/scan` did before #309.
+    await expect(page.getByTestId('site-header')).toBeVisible()
+    await expect(page).toHaveURL(/\/de\/account$/)
 
     await context.close()
   })
