@@ -110,6 +110,37 @@ test.describe('landing hero (UX-E)', () => {
     await context.close()
   })
 
+  test('the feature cards have an edge, not just a lift off the ground', async ({
+    browser,
+  }) => {
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([AGE_GATE_COOKIE, CONSENT_COOKIE])
+    const page = await context.newPage()
+
+    await page.goto('/en')
+
+    // Reported on sight, and the reason the icon looked loose on its own line:
+    // the cards were ported without the prototype's `shadow-sm`, which on this
+    // ground is a 1px hairline rather than a drop shadow. `bg-surface` alone is
+    // a 9% lift off `bg-ground`, with nothing marking where the card ends.
+    //
+    // Asserted as "has a shadow at all" rather than the exact value: the hue is
+    // still #308's question for the designers, and pinning `0 0 0 1px #302e2c`
+    // would fail on an answer we asked for. Removing the class fails this.
+    for (const testId of [
+      'landing-feature-identify',
+      'landing-feature-rate',
+      'landing-feature-palate',
+    ]) {
+      const shadow = await page
+        .getByTestId(testId)
+        .evaluate((el) => getComputedStyle(el).boxShadow)
+      expect(shadow, `${testId} should have an edge`).not.toBe('none')
+    }
+
+    await context.close()
+  })
+
   // §0 aims both "Open the app" buttons at the app's front door, which is §3
   // Home — and §3 is not ported, so `/home` still renders
   // `<TabPlaceholder />`. The rule worth pinning is not the destination but
