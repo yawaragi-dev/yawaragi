@@ -178,11 +178,14 @@ test.describe('§15 account', () => {
     await expect(page.getByTestId('account-language')).toBeVisible()
 
     // Step 1 of the amendment's sequencing: the header still carries a working
-    // switch, because the row above is not one yet. When `de` launches these
-    // two assertions swap — the row becomes the control and this goes — and
-    // the two taps above stay.
+    // switch, because the row above is not one yet. When `de` launches this
+    // assertion inverts — `toHaveCount(0)` — and the two taps above stay.
+    //
+    // A first draft also asserted the row had no `href`, which was vacuous:
+    // `<SettingsRow />` renders a `<div>`, so it can never have one. The row's
+    // inertness is pinned properly one test above, by role.
     await expect(page.getByTestId('locale-switcher')).toBeVisible()
-    await expect(page.getByTestId('account-language')).not.toHaveAttribute('href')
+    await expect(page.getByTestId('locale-switcher').locator('[data-locale="de"]')).toBeEnabled()
 
     await context.close()
   })
