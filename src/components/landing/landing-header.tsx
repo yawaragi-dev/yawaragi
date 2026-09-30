@@ -31,8 +31,25 @@ export async function LandingHeader() {
       </Link>
       <div className="ml-auto flex items-center gap-4">
         <LocaleSwitcher />
+        {/*
+          §0 sends this at the app, and the app's front door is §3 Home — but
+          §3 is not ported, so `/home` renders `<TabPlaceholder />`: "Your home
+          screen is on its way… the camera is the place to start", above a
+          "Scan a label" link. Pointing the landing's only returning-visitor
+          affordance at a screen whose own content is an apology and a link
+          onward is worse than sending them where that link goes. `/scan` is
+          the app's one finished screen.
+
+          This makes §0's three CTAs share one destination: the hero's "Scan
+          your first label" already went here. That is not a collision to
+          resolve — the header and the privacy card carry the SAME label
+          ("Open the app") and are one affordance placed twice, and the thing
+          that would distinguish them from the hero is §3 itself.
+
+          Reverts to `/home` when §3 lands. Tracked on #300.
+        */}
         <Link
-          href="/home"
+          href="/scan"
           className="inline-flex h-[38px] items-center rounded-lg bg-ash-200 px-4 text-body font-medium text-ink transition-colors hover:bg-ash-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
           data-testid="landing-open-app"
         >
