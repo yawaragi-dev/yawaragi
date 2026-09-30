@@ -160,6 +160,25 @@ interface CatalogueSearchRow {
   brewery_romaji: string | null
 }
 
+/**
+ * How many rows the query fetches before {@link rankCatalogueMatches} orders
+ * them and the caller's limit slices.
+ *
+ * **The window exists because `LIMIT` runs before any JS can rank.** Ordering
+ * the SQL by `char_length(name_kanji)` — inherited from the picker above — and
+ * taking 20 chooses the twenty shortest-named matches, which has nothing to do
+ * with whether they are what the visitor typed. Measured against the live
+ * mirror, that dropped almost every good row: `山` matched 275 brands of which
+ * 37 begin with 山, and **none of those 37 were in the twenty** the ranking
+ * ever saw. `yama` kept 2 of 47. The ranker cannot promote a row the query
+ * never returned.
+ *
+ * 200 is comfortably above the number of exact-or-prefix matches any real
+ * query produces (the worst measured is 47), and five narrow columns at that
+ * count is a negligible transfer on a scan that already costs ~27 ms.
+ */
+const CATALOGUE_CANDIDATE_WINDOW = 200
+
 // The brewery join is LEFT, matching §6's: ~48 brands point at placeholder
 // brewery rows, and a sake with an unknown brewery is still findable by its
 // own name. `superseded_at IS NULL` on both per ADR-0014.
@@ -168,6 +187,14 @@ interface CatalogueSearchRow {
 // is byte-equal to `name_kanji` (verified against the mirror), so including it
 // would widen the scan for no extra match. The picker above does search it,
 // from before that was known; harmless there, not worth copying.
+//
+// `ORDER BY` carries a coarse copy of the tiers {@link catalogueTier} applies
+// in JS. The duplication is deliberate and the two do NOT have to agree
+// exactly: SQL's job is only to make sure the window cannot exclude a row JS
+// would rank highly, and JS remains the single definition of the final order —
+// the one with unit tests, because a `CASE` is unreachable without a database.
+// Ties still fall back to the picker's shortest-name-first, so one query
+// always produces one list.
 const SEARCH_CATALOGUE = `
   SELECT
     b.brand_id,
@@ -186,8 +213,17 @@ const SEARCH_CATALOGUE = `
       OR br.name_kanji  ILIKE $1
       OR br.name_romaji ILIKE $1
     )
-  ORDER BY char_length(b.name_kanji) ASC, b.name_kanji ASC, b.brand_id ASC
-  LIMIT $2
+  ORDER BY
+    CASE
+      WHEN lower(b.name_kanji) = $2 OR lower(b.name_romaji) = $2 THEN 0
+      WHEN lower(b.name_kanji) LIKE $3 OR lower(b.name_romaji) LIKE $3 THEN 1
+      WHEN b.name_kanji ILIKE $1 OR b.name_romaji ILIKE $1 THEN 2
+      ELSE 3
+    END ASC,
+    char_length(b.name_kanji) ASC,
+    b.name_kanji ASC,
+    b.brand_id ASC
+  LIMIT $4
 `
 
 /**
@@ -216,16 +252,20 @@ export async function searchCatalogueFromPool(
 ): Promise<CatalogueSearchResult[]> {
   if (!isCatalogueQuerySpecific(query)) return []
 
-  const pattern = `%${escapeLikePattern(query.trim())}%`
+  const trimmed = query.trim()
+  const escaped = escapeLikePattern(trimmed)
   const capped = Math.min(Math.max(1, Math.trunc(limit)), MAX_CATALOGUE_SEARCH_RESULTS)
   const { rows } = await publicQuery<CatalogueSearchRow>(
     'brands',
     SEARCH_CATALOGUE,
-    [pattern, capped],
+    [`%${escaped}%`, trimmed.toLowerCase(), `${escaped.toLowerCase()}%`, CATALOGUE_CANDIDATE_WINDOW],
     pool,
   )
 
-  return rankCatalogueMatches(query, rows.map(toCatalogueResult))
+  // Fetch a window, rank it, then cut. Ranking after the cut would only
+  // reorder rows the database had already chosen for an unrelated reason —
+  // see `CATALOGUE_CANDIDATE_WINDOW`.
+  return rankCatalogueMatches(query, rows.map(toCatalogueResult)).slice(0, capped)
 }
 
 /**

@@ -219,6 +219,9 @@ test.describe('scan result branches (#109 PR B)', () => {
     await expect(page.getByTestId('scan-result-consensus-accept')).toBeVisible()
     const rescan = page.getByTestId('scan-result-consensus-rescan')
     await expect(rescan).toBeVisible()
+    // And a third way out. This card is a guess made BECAUSE the label would
+    // not read, so "rescan" re-runs the same bad photo; §8 is the escape.
+    await expect(page.getByTestId('scan-result-consensus-type-it')).toBeVisible()
 
     // §4's model: a rescan RETURNS TO THE CAMERA. It used to open the OS photo
     // library, because there was no camera screen to return to — the entry
@@ -246,6 +249,7 @@ test.describe('scan result branches (#109 PR B)', () => {
 
     await expect(page.getByTestId('scan-result-low-confidence')).toBeVisible()
     await expect(page.getByTestId('scan-result-retry-rescan')).toBeVisible()
+    await expect(page.getByTestId('scan-result-retry-type-it')).toBeVisible()
     // The camera steps aside once the result owns the rescan: two
     // ways to re-pick a photo stacked above the answer is what the
     // maintainer caught on this exact screen.
@@ -293,6 +297,7 @@ test.describe('scan result branches (#109 PR B)', () => {
     // camera is gone because this state carries its own rescan.
     await expect(page.getByTestId('scan-result-no-match-rescan')).toBeVisible()
     await expect(page.getByTestId('scan-result-no-match-explore')).toBeVisible()
+    await expect(page.getByTestId('scan-result-no-match-type-it')).toBeVisible()
     await expect(page.getByTestId('scan-camera')).toHaveCount(0)
     await context.close()
   })
@@ -367,6 +372,7 @@ test.describe('scan result branches (#109 PR B)', () => {
     // only safe because the candidate list carries its own rescan.
     await expect(page.getByTestId('scan-camera')).toHaveCount(0)
     await expect(page.getByTestId('scan-result-ambiguous-rescan')).toBeVisible()
+    await expect(page.getByTestId('scan-result-ambiguous-type-it')).toBeVisible()
 
     await candidate.click()
     await page.waitForURL(new RegExp(`/en/sake/${firstBrandId}\\?from=scan$`))

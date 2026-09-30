@@ -409,6 +409,12 @@
     },
     "sheet": {
       "closeLabel": "Schließen"
+    },
+    "romajiDisclosure": {
+      "caveat": "Romaji-Lesungen sind KI-generiert.",
+      "triggerLabel": "Warum?",
+      "title": "Über die Romaji-Lesungen",
+      "body": "Sakenowa veröffentlicht Sake- und Brauereinamen nur auf Japanisch. Die lateinischen Schreibweisen hier sind Hepburn-Lesungen, die ein KI-Modell beim Katalogabgleich erzeugt — eine Lesehilfe, kein Bestandteil der Sakenowa-Daten. Ein ungewöhnlicher Name lässt sich oft mehr als einmal lesen; maßgeblich ist der japanische Name daneben."
     }
   },
   "flavorAxis": {
