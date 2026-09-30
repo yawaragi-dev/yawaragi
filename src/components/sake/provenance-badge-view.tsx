@@ -64,15 +64,18 @@ interface ProvenanceBadgeViewProps {
 
 // Per-kind palette. Distinct at a glance — CLAUDE.md's "never blend sources
 // silently" — but subtle: this is a metadata chip on a content surface, not a
-// CTA. The palette itself is still pre-Ginshu and is #308's question for the
+// CTA. The hues are still pre-Ginshu and are #308's question for the
 // designers; this change is the interaction, not the colour.
+//
+// One set of values, no `dark:`. ADR-0023 redefines the variant as `&`, so it
+// always matches — the light halves this used to carry rendered for nobody
+// while the `dark:` halves were the only live values. Keeping both in a NEW
+// component is what CLAUDE.md forbids, and the dead siblings go as each
+// surface is ported; this PR ports this one. The rendered result is unchanged.
 const KIND_STYLES: Record<BadgeKind, string> = {
-  llmExtracted:
-    'border-violet-300 bg-violet-50 text-violet-900 dark:border-violet-700 dark:bg-violet-950 dark:text-violet-100',
-  llmInferred:
-    'border-sky-300 bg-sky-50 text-sky-900 dark:border-sky-700 dark:bg-sky-950 dark:text-sky-100',
-  crossBeverageMap:
-    'border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100',
+  llmExtracted: 'border-violet-700 bg-violet-950 text-violet-100',
+  llmInferred: 'border-sky-700 bg-sky-950 text-sky-100',
+  crossBeverageMap: 'border-amber-700 bg-amber-950 text-amber-100',
 }
 
 export function ProvenanceBadgeView({
@@ -102,7 +105,7 @@ export function ProvenanceBadgeView({
               type="button"
               aria-describedby={descriptionId}
               className={cn(
-                'inline-flex cursor-pointer items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium',
+                'inline-flex cursor-pointer items-center gap-1 rounded-full border px-2 py-0.5 text-meta font-medium',
                 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ginshu-600',
                 KIND_STYLES[kind],
                 className,
@@ -115,7 +118,7 @@ export function ProvenanceBadgeView({
           <span data-testid="provenance-badge-label">{label}</span>
           {confidencePct !== undefined && (
             <span
-              className="text-[0.65rem] tabular-nums opacity-75"
+              className="text-micro tabular-nums opacity-75"
               data-testid="provenance-badge-confidence"
             >
               {confidencePct}%
