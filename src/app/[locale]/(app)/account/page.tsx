@@ -44,9 +44,13 @@ import { routing } from '@/i18n/routing'
  * worse than the honest gap. Tracked on #300.
  *
  * The **Language row is inert**, per §15 ("not tappable until DACH launch"),
- * and the header keeps its locale switch: ADR-0007 requires one in the header,
- * and §15's row cannot replace it while it is not a control. Retiring the
- * header switch needs ADR-0007 amended, which is not this PR's call.
+ * and the header keeps its locale switch alongside it. That duplication is
+ * deliberate and its end condition is written down: ADR-0007's 2026-09-30
+ * amendment makes this row the switcher's canonical home, and the header
+ * control interim until `de` joins `LAUNCHED_LOCALES` — at which point this
+ * row becomes a real switch and the header's goes, in the same PR. Removing
+ * the header switch while this row is inert would leave the app with no way
+ * to change locale, which is the requirement ADR-0007 protects.
  */
 interface PageProps {
   params: Promise<{ locale: string }>
