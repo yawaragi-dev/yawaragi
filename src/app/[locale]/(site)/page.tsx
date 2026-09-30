@@ -150,7 +150,17 @@ interface FeatureCardProps {
 
 function FeatureCard({ icon: Icon, title, body, testId }: FeatureCardProps) {
   return (
-    <div className="flex flex-col gap-2.5 rounded-xl bg-surface p-5" data-testid={testId}>
+    // `shadow-yw-sm` is the prototype's `shadow-sm` — a 1px #302e2c
+    // hairline, not a drop shadow. On the dark ground `bg-surface`
+    // alone is a 9% lift off `bg-ground`, which reads as a soft blob
+    // rather than a card; the hairline is what gives the three of them
+    // an edge. It is the only shadow §0 asks for (the prototype's two
+    // `shadow-md` uses are the phone placeholder, which `<LandingHero />`
+    // replaces with its own `ring-divider`, and the cookie banner).
+    <div
+      className="flex flex-col gap-2.5 rounded-xl bg-surface p-5 shadow-yw-sm"
+      data-testid={testId}
+    >
       <Icon size={24} className="text-ginshu-600" aria-hidden="true" />
       <h3 className="text-md-alt font-medium text-ink">{title}</h3>
       <p className="text-body text-ash-600">{body}</p>
