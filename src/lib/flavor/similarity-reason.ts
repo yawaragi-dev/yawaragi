@@ -70,9 +70,9 @@ const SIMILARITY_DECAY = 0.08 / -Math.log(0.9)
  * "cosine similarity", and `flavor-similarity.ts` argues at length that cosine
  * is wrong for these axes — magnitude carries the signal, so `f3 = 0.85` and
  * `f3 = 0.15` are opposite poles rather than the same direction at different
- * lengths. We follow the code's reasoning and have raised the wording with the
- * designers rather than silently switching metrics; ordering is what a visitor
- * sees, and L2 orders these vectors the way the domain means.
+ * lengths. We follow the code's reasoning and raised the wording with the
+ * designers (#308 §6) rather than silently switching metrics; ordering is what
+ * a visitor sees, and L2 orders these vectors the way the domain means.
  */
 export function similarityPercent(distance: number): number {
   if (!Number.isFinite(distance) || distance < 0) return 0
@@ -99,6 +99,15 @@ export interface FlavorDifference {
  *
  * Ties break by the canonical `f1..f6` order so the same two sakes always
  * produce the same sentence. Pure: no IO, no module state, no randomness.
+ *
+ * **In practice `divergentAxis` is usually `null` on §6's page**, so every row
+ * reads "Just as {x} and {y}." and none carries the contrast clause §6's
+ * example shows ("…less floral"). That is the data, not a bug: a top-5
+ * neighbour sits ~0.05 of total L2 distance away, which bounds every single
+ * axis below {@link SHARED_AXIS_TOLERANCE}, so there is honestly no axis worth
+ * calling different. The clause earns its keep on a thin-catalogue subject
+ * whose nearest neighbour is far — and it must stay correct for the day the
+ * caller is not a top-5 list.
  */
 export function describeFlavorDifference(
   target: FlavorAxes,

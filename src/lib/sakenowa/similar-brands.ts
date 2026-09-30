@@ -36,7 +36,16 @@ import { getServerDbPool } from '@/lib/supabase/server-client'
 /** How many rows the SQL shortlist returns for JS to re-rank. */
 const CANDIDATE_POOL_SIZE = 200
 
-/** §6: "Cosine similarity over the six axes, **top 5**." */
+/**
+ * §6: "**top 5**."
+ *
+ * §6's same sentence says "cosine similarity", and this path uses L2. That is
+ * deliberate and pre-dates v1.4 — `flavor-similarity.ts` argues it at length
+ * (these axes carry magnitude, so cosine reads a restrained profile and an
+ * intense one as identical) — and the wording is with the designers as #308
+ * §6. Quoting only the part this constant is about, so the next reader does
+ * not take "cosine" for a description of the code below.
+ */
 export const SIMILAR_SAKES_LIMIT = 5
 
 export interface SimilarBrand extends FlavorAxes {

@@ -157,8 +157,8 @@
       "flavorChartLabel": "Flavor Chart (Sakenowa)"
     },
     "similar": {
-      "title": "Similar to {name}",
-      "intro": "Ranked by how close their flavour charts sit to this one. No recommendations, no guessing — just the six axes.",
+      "title": "Like {name}",
+      "intro": "Closest by flavor profile across all six axes. No tasting involved — just the shape of the chart.",
       "percentSimilar": "{percent}% similar",
       "axisPair": "{first} and {second}",
       "reasonSharedAndMore": "Just as {shared}, more {axis}.",
@@ -166,11 +166,11 @@
       "reasonSharedOnly": "Just as {shared}.",
       "reasonMoreOnly": "More {axis}.",
       "reasonLessOnly": "Less {axis}.",
-      "emptyTitle": "No flavour chart for this sake yet",
-      "emptyBody": "Similar sakes are worked out from the six axes, and this bottle has none published yet. Everything else we know about it is on its page.",
+      "emptyTitle": "No flavor chart for this sake yet",
+      "emptyBody": "This sake has no flavor chart yet, so there is nothing to compare it with. Everything else we know about it is on its page.",
       "emptyLink": "Back to the bottle",
       "noMatchesTitle": "Nothing close enough to list",
-      "noMatchesBody": "This profile sits on its own in the catalogue. Explore the flavour chart on its page instead.",
+      "noMatchesBody": "This profile sits on its own in the catalogue. Explore the flavor chart on its page instead.",
       "axes": {
         "f1": "floral",
         "f2": "mellow",
@@ -282,8 +282,7 @@
       "serviceUnavailable": "Our sake database is temporarily unreachable. Please try again in a few minutes.",
       "error": "Something went wrong while preparing your suggestions. Please try again in a few minutes.",
       "sessionMissing": "Your browser session couldn't be prepared. Please refresh the page and try again.",
-      "backToSeed": "Back to the sake you started from",
-      "findSimilarCta": "Find similar"
+      "backToSeed": "Back to the sake you started from"
     }
   },
   "sakenowaAttribution": {

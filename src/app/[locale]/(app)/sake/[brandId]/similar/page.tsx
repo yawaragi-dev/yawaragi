@@ -140,7 +140,8 @@ export default async function SimilarSakesPage({ params }: PageProps) {
       ) : (
         <>
           <p className="text-body text-ash-600">{t('intro')}</p>
-          <ol className="flex flex-col gap-1" data-testid="similar-sakes-list">
+          {/* No gap: each row carries the prototype's bottom divider. */}
+          <ol className="flex flex-col" data-testid="similar-sakes-list">
             {similar.matches.map(({ brand: match }) => {
               const { percent, ...difference } = describeSimilarity(similar.target, match)
               return (

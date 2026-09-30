@@ -157,8 +157,8 @@
       "flavorChartLabel": "Flavor Chart (Sakenowa)"
     },
     "similar": {
-      "title": "Ähnlich wie {name}",
-      "intro": "Sortiert danach, wie nah ihre Geschmacksprofile an diesem liegen. Keine Empfehlungen, kein Raten — nur die sechs Achsen.",
+      "title": "Wie {name}",
+      "intro": "Am nächsten dran über alle sechs Achsen. Nicht verkostet — nur die Form des Charts.",
       "percentSimilar": "{percent}% ähnlich",
       "axisPair": "{first} und {second}",
       "reasonSharedAndMore": "Genauso {shared}, dafür mehr {axis}.",
@@ -166,11 +166,11 @@
       "reasonSharedOnly": "Genauso {shared}.",
       "reasonMoreOnly": "Mehr {axis}.",
       "reasonLessOnly": "Weniger {axis}.",
-      "emptyTitle": "Für diesen Sake gibt es noch kein Geschmacksprofil",
-      "emptyBody": "Ähnliche Sake werden aus den sechs Achsen berechnet, und für diese Flasche ist noch keine veröffentlicht. Alles andere, was wir wissen, steht auf ihrer Seite.",
+      "emptyTitle": "Für diesen Sake gibt es noch kein Flavor Chart",
+      "emptyBody": "Für diesen Sake gibt es noch kein Flavor Chart, also lässt er sich mit nichts vergleichen. Alles andere, was wir über ihn wissen, steht auf seiner Seite.",
       "emptyLink": "Zurück zur Flasche",
       "noMatchesTitle": "Nichts ausreichend Ähnliches",
-      "noMatchesBody": "Dieses Profil steht im Katalog für sich. Sieh dir stattdessen das Geschmacksprofil auf seiner Seite an.",
+      "noMatchesBody": "Dieses Profil steht im Katalog für sich allein. Sieh dir stattdessen das Flavor Chart auf seiner Seite an.",
       "axes": {
         "f1": "blumig",
         "f2": "vollmundig",
@@ -282,8 +282,7 @@
       "serviceUnavailable": "Unsere Sake-Datenbank ist gerade nicht erreichbar. Bitte versuche es in ein paar Minuten erneut.",
       "error": "Beim Vorbereiten deiner Vorschläge ist etwas schiefgelaufen. Bitte versuche es in ein paar Minuten erneut.",
       "sessionMissing": "Deine Browser-Sitzung konnte nicht vorbereitet werden. Bitte lade die Seite neu und versuche es erneut.",
-      "backToSeed": "Zurück zum Ausgangs-Sake",
-      "findSimilarCta": "Ähnliche finden"
+      "backToSeed": "Zurück zum Ausgangs-Sake"
     }
   },
   "sakenowaAttribution": {

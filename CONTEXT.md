@@ -121,7 +121,7 @@ Two transcription errors had been circulating across earlier drafts of this repo
 Every record displayed to a user carries a `source` field. Values:
 
 - **`sakenowa`** — fetched directly from the Sakenowa Data API. Canonical, attribution required.
-- **`sakenowa_inferred`** — derived from Sakenowa data via deterministic math (e.g. cosine similarity over FlavorProfile vectors). Still trustworthy; the derivation is reproducible.
+- **`sakenowa_inferred`** — derived from Sakenowa data via deterministic math (e.g. L2 distance over FlavorProfile vectors, as §6 "Similar sakes" ranks by). Still trustworthy; the derivation is reproducible. The metric is L2, not cosine: `src/lib/flavor/flavor-similarity.ts` is its one home and explains why (these axes carry magnitude). The single cosine implementation lives apart, in `@yawaragi/sakenowa-mcp` SQL.
 - **`llm_extracted`** — produced by a vision LLM from a user-uploaded label image. Always has a confidence score. Renders with `<ProvenanceBadge />` and an "improve / report" affordance.
 - **`llm_inferred`** — LLM reasoning over Sakenowa tool results (e.g. a chat answer citing a tool call). Renders with `<ProvenanceBadge />`.
 - **`cross_beverage_map`** — produced by the hand-curated CrossBeverageMap. Renders with **both** `<ProvenanceBadge />` (identifies the source kind) **and** `<HeuristicDisclaimer />` (carries the "Western descriptors don't translate exactly" failure-mode caveat). See ADR-0005 §"deterministic-but-heuristic source" for the rationale.

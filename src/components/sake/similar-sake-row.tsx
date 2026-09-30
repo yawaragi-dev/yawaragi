@@ -54,9 +54,24 @@ export function SimilarSakeRow({
 
   return (
     <li>
+      {/*
+        A divider-bottom row, not a rounded card: that is the prototype's list
+        vocabulary here (`border-bottom: 1px solid divider`, 13px vertical
+        padding, no radius, no fill). The hover fill stays, because unlike the
+        prototype's static rows these are real links and UX-F wants a tap to
+        say something.
+
+        **No thumb.** §6 lists one first and the prototype draws a 36×50
+        striped placeholder, in the same vocabulary as §5's photo slot. §5
+        fills its slot with the visitor's own capture; a catalogue row has no
+        equivalent, and Sakenowa's Data API ships no images, so the placeholder
+        here could never become a picture. Five permanently-empty rectangles is
+        noise, so the rows are text-only and the question is with the designers
+        as #308 §7.
+      */}
       <Link
         href={{ pathname: '/sake/[brandId]', params: { brandId: String(brandId) } }}
-        className="flex flex-col gap-1 rounded-xl px-4 py-3.5 transition-colors hover:bg-ash-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+        className="flex flex-col gap-0.5 border-b border-divider px-1 py-3.5 transition-colors hover:bg-ash-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
         data-testid="similar-sake-row"
       >
         <span className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
@@ -85,7 +100,10 @@ export function SimilarSakeRow({
         )}
 
         {reason && (
-          <span className="text-meta text-ash-600" data-testid="similar-sake-reason">
+          // 13px ash-700, per the prototype — a step up from the brewery line
+          // above it, because the reason is the row's content and the brewery
+          // is its metadata.
+          <span className="mt-0.5 text-subtle leading-snug text-ash-700" data-testid="similar-sake-reason">
             {reason}
           </span>
         )}
