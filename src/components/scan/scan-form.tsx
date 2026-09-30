@@ -554,6 +554,21 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
             >
               {t('consensusRescan')}
             </Button>
+            {/*
+              This card is a guess from the visitor's own history after a
+              label we could NOT read. If the guess is wrong, rescanning
+              re-runs the same bad photo in the same bad light — typing the
+              name is the way out, and it is the reason §8 exists. Every
+              other non-match state offers it; leaving this one without it
+              made the accept button the only forward path.
+            */}
+            <Link
+              href="/search"
+              className="inline-flex items-center text-sm font-medium underline underline-offset-4"
+              data-testid="scan-result-consensus-type-it"
+            >
+              {tSearch('cta')}
+            </Link>
           </div>
         </div>
       )}
@@ -596,7 +611,7 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
             <Link
               href="/search"
               className="text-sm font-medium underline underline-offset-4"
-              data-testid="scan-result-type-it"
+              data-testid="scan-result-retry-type-it"
             >
               {tSearch('cta')}
             </Link>

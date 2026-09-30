@@ -2,10 +2,12 @@ import { describe, expect, it, vi } from 'vitest'
 import type { Pool } from 'pg'
 import {
   MAX_BRAND_SEARCH_RESULTS,
+  MAX_CATALOGUE_SEARCH_RESULTS,
   escapeLikePattern,
   isCatalogueQuerySpecific,
   rankCatalogueMatches,
   searchBrandsFromPool,
+  searchCatalogueFromPool,
 } from '@/lib/sakenowa/search-brands'
 
 /**
@@ -52,6 +54,90 @@ describe('searchBrandsFromPool', () => {
 // The SQL is integration-tested; these cover the two decisions that are
 // product judgement rather than a query: how short a query is too short to be
 // worth running, and which of several matches the visitor probably meant.
+
+describe('searchCatalogueFromPool', () => {
+  function poolReturning(rows: unknown[]) {
+    const query = vi.fn<(sql: string, params: unknown[]) => Promise<{ rows: unknown[] }>>(
+      async () => ({ rows }),
+    )
+    return { query, pool: { query } as unknown as Pool }
+  }
+
+  it('does not run a query the page would not show results for', async () => {
+    const { query, pool } = poolReturning([])
+    expect(await searchCatalogueFromPool('a', pool)).toEqual([])
+    expect(query).not.toHaveBeenCalled()
+  })
+
+  it('fetches a window wider than it returns, so ranking has something to rank', async () => {
+    // The bug this pins: `LIMIT` runs in the database, before any JS can
+    // reorder. Fetching exactly 20 rows ordered by name length meant the
+    // ranker only ever reordered the twenty shortest-named matches —
+    // measured against the live mirror, a search for 山 returned 275 brands,
+    // 37 of them beginning with 山, and NONE of those 37 reached the ranker.
+    const { query, pool } = poolReturning([])
+    await searchCatalogueFromPool('yama', pool)
+    const [, params] = query.mock.calls[0]!
+    const fetched = (params as unknown[])[3] as number
+    expect(fetched).toBeGreaterThan(MAX_CATALOGUE_SEARCH_RESULTS)
+  })
+
+  it('asks the database to put exact and prefix matches first, so the window holds them', async () => {
+    const { query, pool } = poolReturning([])
+    await searchCatalogueFromPool('  Yama ', pool)
+    const [, params] = query.mock.calls[0]!
+    // Infix pattern, the lowercased needle for the equality tier, and the
+    // prefix pattern for the starts-with tier. Trimmed and lowercased,
+    // because the column is display-cased.
+    expect(params).toEqual(['%Yama%', 'yama', 'yama%', expect.any(Number)])
+  })
+
+  it('escapes LIKE metacharacters in every pattern it builds, not just the first', async () => {
+    const { query, pool } = poolReturning([])
+    await searchCatalogueFromPool('50%', pool)
+    const [, params] = query.mock.calls[0]!
+    expect(params[0]).toBe('%50\\%%')
+    expect(params[2]).toBe('50\\%%')
+  })
+
+  it('returns at most the caller\'s limit after ranking the wider window', async () => {
+    const rows = Array.from({ length: 60 }, (_, i) => ({
+      brand_id: i + 1,
+      name_kanji: `酒${i}`,
+      name_romaji: `sake${i}`,
+      brewery_kanji: null,
+      brewery_romaji: null,
+    }))
+    const { pool } = poolReturning(rows)
+    expect(await searchCatalogueFromPool('sake', pool, 5)).toHaveLength(5)
+    expect(await searchCatalogueFromPool('sake', pool)).toHaveLength(
+      MAX_CATALOGUE_SEARCH_RESULTS,
+    )
+  })
+
+  it('ranks across the whole window before cutting, not within the visible rows', async () => {
+    // The exact match arrives last from the database. If the cut happened
+    // before the rank it would be dropped; it must come back first.
+    const filler = Array.from({ length: 20 }, (_, i) => ({
+      brand_id: i + 1,
+      name_kanji: `山田錦${i}`,
+      name_romaji: `yamadanishiki${i}`,
+      brewery_kanji: null,
+      brewery_romaji: null,
+    }))
+    const exact = {
+      brand_id: 999,
+      name_kanji: '山',
+      name_romaji: 'yama',
+      brewery_kanji: null,
+      brewery_romaji: null,
+    }
+    const { pool } = poolReturning([...filler, exact])
+    const matches = await searchCatalogueFromPool('yama', pool, 3)
+    expect(matches).toHaveLength(3)
+    expect(matches[0]!.brandId).toBe(999)
+  })
+})
 
 describe('isCatalogueQuerySpecific', () => {
   it('runs a single kanji, because one kanji is a word', () => {
