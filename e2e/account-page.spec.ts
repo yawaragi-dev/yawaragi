@@ -161,6 +161,32 @@ test.describe('§15 account', () => {
     await context.close()
   })
 
+  test('locale is reachable in two taps, from the header until the row is real', async ({
+    browser,
+  }) => {
+    const { context, page } = await appPage(browser)
+
+    // ADR-0007's 2026-09-30 amendment replaced "a locale switcher lives in the
+    // header" with "reachable in at most two taps from every screen", and made
+    // §15's Language row its canonical home. Both controls exist today because
+    // §15 marks the row "not tappable until DACH launch" and `de` is not in
+    // `LAUNCHED_LOCALES` — so this pins the GUARANTEE rather than either
+    // control, and keeps passing when the header switch goes.
+    await page.goto('/en/scan')
+    await page.getByTestId('header-account-link').click()
+    await expect(page).toHaveURL(/\/en\/account$/)
+    await expect(page.getByTestId('account-language')).toBeVisible()
+
+    // Step 1 of the amendment's sequencing: the header still carries a working
+    // switch, because the row above is not one yet. When `de` launches these
+    // two assertions swap — the row becomes the control and this goes — and
+    // the two taps above stay.
+    await expect(page.getByTestId('locale-switcher')).toBeVisible()
+    await expect(page.getByTestId('account-language')).not.toHaveAttribute('href')
+
+    await context.close()
+  })
+
   test('/de/account is rewritten to coming-soon (ADR-0008)', async ({ browser }) => {
     const context = await browser.newContext({ locale: 'de-DE' })
     await context.addCookies([AGE_GATE_COOKIE, CONSENT_COOKIE])
