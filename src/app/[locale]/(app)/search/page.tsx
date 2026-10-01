@@ -134,11 +134,30 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
               inputMode="search"
               name="q"
               defaultValue={query}
-              // §8 specifies autofocus, and the field is the entire purpose of
-              // this screen — focus is not being taken from anything the
-              // visitor was using. No lint suppression needed: the repo's
-              // config does not enable `jsx-a11y/no-autofocus`.
-              autoFocus
+              // §8 specifies autofocus — for the EMPTY field, which is the
+              // entry state this screen opens in. Not once a query has run,
+              // and that distinction is a bug report, not a nicety.
+              //
+              // `autofocus` focuses the element but says nothing about the
+              // caret, so a browser is free to park it at offset 0. Firefox
+              // does: measured on `/en/search?q=yama`, the field is focused
+              // with `selectionStart === 0` — the caret sits at the far left,
+              // tucked against the magnifying glass, which is what was
+              // reported as "my cursor disappears". Worse than invisible, it
+              // is wrong: typing `45` after submitting `yama` produced
+              // `45yama`, silently corrupting the next query. Chromium parks
+              // it at 0 too; Firefox just makes it visible.
+              //
+              // Fixing the caret position needs JavaScript on a page that
+              // deliberately ships none, and it would also keep a phone
+              // keyboard over the results the visitor just asked for and trap
+              // a screen reader in the field. So the field claims focus only
+              // when there is nothing in it. Tapping it still works normally,
+              // and the caret lands where the tap did.
+              //
+              // No lint suppression needed: the repo's config does not enable
+              // `jsx-a11y/no-autofocus`.
+              autoFocus={query.length === 0}
               maxLength={80}
               enterKeyHint="search"
               autoComplete="off"
@@ -209,6 +228,14 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
         </section>
       ) : (
         <>
+          {outcome.kind === 'ok' && outcome.searchedInstead !== undefined && (
+            // The visitor's own words found nothing and a narrowed query did,
+            // so say so. A silent substitution would leave them believing the
+            // catalogue has a row for the exact bottle they typed.
+            <p className="text-body text-ash-600" data-testid="search-searched-instead">
+              {t('searchedInstead', { typed: query, used: outcome.searchedInstead })}
+            </p>
+          )}
           {/* `MAX_CATALOGUE_SEARCH_RESULTS` rows back means there may be
               more — reporting the cap as a total would be false. Said as
               "first N" rather than spending a COUNT round-trip to render a

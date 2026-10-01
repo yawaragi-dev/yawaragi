@@ -92,6 +92,13 @@ test.describe('§8 search', () => {
 
     await expect(page).toHaveURL(/\/en\/search\?q=yama$/)
     await expect(page.getByTestId('search-count')).toBeVisible()
+
+    // Reported on Firefox as "my cursor disappears". `autofocus` focuses the
+    // element but says nothing about the caret, and Firefox parks it at offset
+    // 0 — so the caret sat at the far left behind the search icon, and typing
+    // `45` after submitting `yama` produced `45yama`. The field now claims
+    // focus only while it is empty.
+    await expect(page.getByTestId('search-input')).not.toBeFocused()
     const rows = page.getByTestId('search-result-row')
     expect(await rows.count()).toBeGreaterThan(0)
 
@@ -113,6 +120,48 @@ test.describe('§8 search', () => {
 
     await expect(page.getByTestId('search-too-short')).toBeVisible()
     await expect(page.getByTestId('search-results')).toHaveCount(0)
+
+    await context.close()
+  })
+
+  test('a bottle name finds its sake, instead of nothing at all', async ({
+    browser,
+  }, testInfo) => {
+    testInfo.skip(!dbUp, 'Sakenowa mirror not populated — DB-bound spec')
+    const { context, page } = await searchPage(browser)
+
+    // The reported dead end. Sakenowa's unit is the LINE — 獺祭 is one row —
+    // while the bottle in the visitor's hand says "Dassai 23", where 23 is the
+    // polishing ratio. No row will ever carry it, so the query is retried
+    // without the parts of a label that are not a name.
+    await page.goto('/en/search?q=dassai%2023')
+
+    await expect(page.getByTestId('search-no-match')).toHaveCount(0)
+    const rows = page.getByTestId('search-result-row')
+    expect(await rows.count()).toBeGreaterThan(0)
+    await expect(rows.first()).toContainText('獺祭')
+
+    // Never silent: a substitution the visitor cannot see would leave them
+    // believing the catalogue holds a row for the exact bottle they typed.
+    const note = page.getByTestId('search-searched-instead')
+    await expect(note).toBeVisible()
+    await expect(note).toContainText('dassai 23')
+    await expect(note).toContainText('dassai')
+
+    await context.close()
+  })
+
+  test('narrowing only rescues a query that could be rescued', async ({ browser }, testInfo) => {
+    testInfo.skip(!dbUp, 'Sakenowa mirror not populated — DB-bound spec')
+    const { context, page } = await searchPage(browser)
+
+    // A number alongside a name that is genuinely absent still ends in the
+    // empty state — the fallback must not manufacture results by widening
+    // until something matches.
+    await page.goto('/en/search?q=zzzqqqnotasake%2045')
+
+    await expect(page.getByTestId('search-no-match')).toBeVisible()
+    await expect(page.getByTestId('search-searched-instead')).toHaveCount(0)
 
     await context.close()
   })
