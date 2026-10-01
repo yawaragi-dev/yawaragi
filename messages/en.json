@@ -264,7 +264,7 @@
     "matches": "{count, plural, one {# match} other {# matches}}",
     "matchesCapped": "First {count} matches — type more to narrow it",
     "noMatchTitle": "Nothing in the catalogue matches",
-    "noMatchBody": "The catalogue follows Sakenowa, so limited editions and collaborations are often missing. Try the brewery name, or read a label instead.",
+    "noMatchBody": "We list sake by name, not bottle by bottle — a grade or number from the label is usually worth dropping. The brewery name works too, and a few small releases aren't listed at all.",
     "noMatchScanCta": "Read a label",
     "unavailableTitle": "The catalogue is not reachable right now",
     "unavailableBody": "This is on our side, not yours — the search index is briefly unavailable. Try again in a moment, or read a label instead.",

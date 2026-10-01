@@ -264,7 +264,7 @@
     "matches": "{count, plural, one {# Treffer} other {# Treffer}}",
     "matchesCapped": "Die ersten {count} Treffer — tippe mehr, um einzugrenzen",
     "noMatchTitle": "Im Katalog gibt es keinen Treffer",
-    "noMatchBody": "Der Katalog folgt Sakenowa, deshalb fehlen Limited Editions und Kollaborationen oft. Versuche den Namen der Brauerei — oder lies stattdessen ein Etikett.",
+    "noMatchBody": "Im Katalog stehen Sake-Namen, keine einzelnen Flaschen — eine Güteklasse oder Zahl vom Etikett lässt du besser weg. Der Name der Brauerei funktioniert auch, und einige kleine Abfüllungen fehlen ganz.",
     "noMatchScanCta": "Etikett lesen",
     "unavailableTitle": "Der Katalog ist gerade nicht erreichbar",
     "unavailableBody": "Das liegt an uns, nicht an dir — der Suchindex ist kurz nicht verfügbar. Versuche es gleich noch einmal, oder lies stattdessen ein Etikett.",
