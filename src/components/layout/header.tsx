@@ -17,8 +17,13 @@ import { LocaleSwitcher } from '@/components/layout/locale-switcher'
  *
  * What stays, and why it isn't yet the design's per-screen header:
  *
- * - The **locale switch**, because ADR-0007 requires one in the header and its
- *   designed home is §15 Account, which is not built. It moves there with §15.
+ * - The **locale switch**, and only until `de` launches. ADR-0007's
+ *   2026-09-30 amendment makes §15 Account's Language row its canonical home
+ *   and this one interim: §15 marks that row "not tappable until DACH
+ *   launch", so removing this before the row is a control would leave the app
+ *   with no locale affordance at all. When `de` joins `LAUNCHED_LOCALES` the
+ *   row becomes real and this goes, in the same PR. Do not tidy it away
+ *   sooner.
  * - The **wordmark**, as the route back out of a screen. The design replaces
  *   this with a per-screen back arrow driven by the history stack rule 11
  *   describes; that lands with the screens themselves, since each one supplies
@@ -26,7 +31,8 @@ import { LocaleSwitcher } from '@/components/layout/locale-switcher'
  * - **Sign-out**, the only Clerk surface besides `/sign-in` (ADR-0020).
  *
  * Both deviations are deliberate and tracked on #300. Removing the switch to
- * chase the design sooner would breach ADR-0007; removing the wordmark before
+ * chase the design sooner would leave no locale affordance; removing the
+ * wordmark before
  * back arrows exist would leave screens with no way out but the tabs.
  *
  * `showBack` is the first step of that arrow, opted into per route group. The

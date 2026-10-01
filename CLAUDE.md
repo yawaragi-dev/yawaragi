@@ -148,7 +148,7 @@ See ADR-0009 §"Per-PR GDPR review questions" for the canonical list. The Record
 - All user-facing strings go through `next-intl`. No inline literals in JSX.
 - Default locale: `en`. Second locale: `de`.
 - Japanese kanji is preserved verbatim alongside both locales (it's not a "translatable" string — it's part of the data).
-- A locale switcher lives in the header. Default detection uses `Accept-Language`; user choice persists in a cookie.
+- A locale switcher is reachable in **at most two taps from every screen**. Its canonical home is §15 Account's Language row; the app header carries it only while that row is inert (`de` not in `LAUNCHED_LOCALES`). When `de` launches, the row becomes a real control and the header switch is removed **in the same PR** — not before, or the app has no locale affordance at all. The landing keeps its own switch (§0 specifies it, and the landing has no tab bar or avatar). Default detection uses `Accept-Language`; user choice persists in a cookie. See ADR-0007's 2026-09-30 amendment.
 - New components without German translations DO NOT MERGE. The PR template has an "i18n" checkbox.
 
 See `docs/adr/0007-i18n-en-de.md`.
