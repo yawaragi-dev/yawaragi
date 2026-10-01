@@ -46,31 +46,32 @@ import { CookieSettingsLink } from '@/components/legal/cookie-settings-link'
  * link in the pane for two taps through the avatar, which is a judgement about
  * "unmittelbar erreichbar" and not a port decision. Also #300.
  */
+// 11px, as §15's footer line is in the prototype, and inherited by every item
+// so the four stay one size. 12px plus the German labels was ~400px of text
+// for a 350px row: "Trinke verantwortungsvoll" wrapped onto a line of its own.
+// At 11px, with the German cookie link shortened to "Cookies", both locales
+// fit one row at 390px. `whitespace-nowrap` keeps an item whole if a narrower
+// screen does force a wrap.
+const LINK_CLASS_NAME =
+  'whitespace-nowrap text-ash-600 underline underline-offset-4 hover:text-ash-800'
+
 export async function LegalFooter() {
   const t = await getTranslations('footer')
 
   return (
     <footer
-      className="flex flex-wrap items-center justify-end gap-4 px-5 py-4"
+      className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1 px-5 py-4 text-[11px] leading-normal"
       data-testid="site-footer"
     >
-      <Link
-        href="/imprint"
-        data-testid="footer-imprint-link"
-        className="text-meta text-ash-600 underline underline-offset-4 hover:text-ash-800"
-      >
+      <Link href="/imprint" data-testid="footer-imprint-link" className={LINK_CLASS_NAME}>
         {t('imprintLink')}
       </Link>
-      <Link
-        href="/privacy"
-        data-testid="footer-privacy-link"
-        className="text-meta text-ash-600 underline underline-offset-4 hover:text-ash-800"
-      >
+      <Link href="/privacy" data-testid="footer-privacy-link" className={LINK_CLASS_NAME}>
         {t('privacyLink')}
       </Link>
-      <CookieSettingsLink />
+      <CookieSettingsLink className={`${LINK_CLASS_NAME} cursor-pointer`} />
       {/* Not a link: it is a statement, and #162 forbids a dead destination. */}
-      <span className="text-meta text-ash-600" data-testid="footer-drink-responsibly">
+      <span className="whitespace-nowrap text-ash-600" data-testid="footer-drink-responsibly">
         {t('drinkResponsibly')}
       </span>
     </footer>

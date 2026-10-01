@@ -110,7 +110,15 @@ export function SakenowaAttributionView({
     return (
       <aside
         className={cn(
-          'flex w-full items-center justify-between gap-3 rounded-md border border-zinc-200 bg-zinc-50 px-4 py-2 text-sm dark:border-zinc-800 dark:bg-zinc-900',
+          // Ginshu (design v1.4): a surface panel with the hairline the
+          // design calls `shadow-sm`, not a bordered zinc box. The pre-Ginshu
+          // treatment rendered its `dark:` branch for everyone once #303
+          // forced the variant, which put a cold `zinc-900` slab on the warm
+          // `#1b1a19` ground — the "this page isn't in our colour scheme"
+          // report. Placement is a separate question and is open with the
+          // designers (#308): ADR-0014 wants attribution above the fold on a
+          // detail page, §17 draws it as a caption under the chart.
+          'flex w-full items-center justify-between gap-3 rounded-xl bg-surface px-4 py-2 text-subtle text-ash-600 shadow-yw-sm',
           className,
         )}
         data-testid="sakenowa-attribution-above-fold"
@@ -123,7 +131,7 @@ export function SakenowaAttributionView({
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 text-xs text-zinc-600 dark:text-zinc-400',
+        'inline-flex items-center gap-1 text-meta text-ash-600',
         className,
       )}
       data-testid="sakenowa-attribution-inline"

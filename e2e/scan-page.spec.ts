@@ -147,7 +147,7 @@ test.describe('scan entry route', () => {
     const openLink = page.getByTestId('scan-result-open-detail')
     await expect(openLink).toHaveAttribute(
       'href',
-      new RegExp(`/en/sake/${dassaiBrandId}$`),
+      new RegExp(`/en/sake/${dassaiBrandId}\\?from=scan$`),
     )
 
     // UX-C reverse cross-beverage hook (#164). When the brand has a

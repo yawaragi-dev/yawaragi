@@ -10,25 +10,65 @@ import {
   lookupFlavorChart,
 } from '@/lib/sakenowa/lookup'
 import { getPrefectureNames } from '@/lib/sakenowa/prefecture'
+import { BottleSection, NotPublished } from '@/components/sake/bottle-section'
+import { BottleSlot } from '@/components/sake/bottle-slot'
+import { BreweryOtherSakes, listSiblingBrandsSafe } from '@/components/sake/brewery-other-sakes'
 import { FlavorChartView } from '@/components/sake/flavor-chart'
-import { ProvenanceBadge } from '@/components/sake/provenance-badge'
+import { RomajiDisclosure } from '@/components/sake/romaji-disclosure'
 import { ScanReturnHint } from '@/components/scan/scan-return-hint'
 import {
   SakenowaAttribution,
   requiresSakenowaAttribution,
 } from '@/components/sake/sakenowa-attribution'
+import { FEATURES } from '@/lib/features'
+import { hasArrivedViaScan } from '@/lib/scan/arrived-via-scan'
 
 /**
- * Phase 2's smoke-test surface. Renders a single sake brand from the
- * Postgres mirror. The proxy rewrites `/de/sake/*` to coming-soon per
- * ADR-0008 (EN-first launch), so this page in practice only renders on
- * `/en/`. Slice 6 (#49) adds the 6-axis FlavorChart, slice 7 (#50) the
- * above-fold SakenowaAttribution, slice 8 (#51) the ProvenanceBadge
- * (renders nothing for Phase 2's sakenowa-sourced data; wired up so
- * Phase 3+ LLM-derived attachments slot in without page churn).
+ * §9 Bottle page — one screen per sake. Reference screenshots 16 and 17.
+ *
+ * §9 orders the page "personal to general": who you are to this bottle first,
+ * then how to serve it, then what it is, then what other people think, then
+ * where to buy it. The order is the spec's.
+ *
+ * **Which empty sections show.** Rule 4, "Missing data is stated, not hidden",
+ * is about data a bottle might lack: about half the catalogue has no flavor
+ * chart (ADR-0016), so a chartless bottle says so, and that tells the visitor
+ * something true about this sake. A section that no bottle can fill is a
+ * different case. The Sakenowa mirror carries names, brewery, prefecture and
+ * the six axes, and nothing else: no brewing specs, no serving temperatures,
+ * no pairings, no notes, no shops. An empty sentence there reads the same on
+ * all ~3,000 pages, says nothing about the sake, and only advertises features
+ * we have not built. Those sections sit behind `FEATURES`
+ * (`src/lib/features.ts`), each with its issue, and return with their data.
+ *
+ * The same goes for caveats. An info button explains something on screen; over
+ * an empty section there is nothing for it to explain.
+ *
+ * **What this port deliberately leaves out, and why:**
+ *
+ * - **§9's own header** (back · sake name · wishlist and cellar buttons). The
+ *   back arrow lands here — rule 11, via `<ShellBackLink />` in the shell —
+ *   but the shell header still shows the wordmark rather than a per-screen
+ *   title, and wishlist/cellar are Phase 2 domain concepts with no table
+ *   behind them (ADR-0011 gates the migration). An icon that saves nothing is
+ *   the dead affordance #162 forbids.
+ * - **§9.3 "You and this sake".** It reads the visitor's journal, which is
+ *   maintainer-only until the local-first rewrite (ADR-0020, gated on
+ *   ADR-0011). Rendering "Not tasted yet." to everyone, with no way to change
+ *   it, would be a dead end dressed as an empty state.
+ * - **§9.2's primary "Rate a new tasting".** Same gate: the star IS the save
+ *   (rule 1), and the star row is Phase 2 — #307 shipped §5's surface without
+ *   it for the same reason. "Similar" is the action that is real today.
+ * - **§9.4 Serve it, §9.5 The sake, §9.7 Goes with, §9.8 What others
+ *   noticed, §9.10 Where to find it.** No source for any bottle; behind
+ *   `FEATURES` until #340, #339, #336, #337 and #338.
+ *
+ * Tracked on #300. What this port DOES add beyond styling is §9.9's row of the
+ * brewery's other sakes, which closes the dead end in #325.
  */
 interface PageProps {
   params: Promise<{ locale: string; brandId: string }>
+  searchParams: Promise<Record<string, string | string[] | undefined>>
 }
 
 // `cache()` dedupes lookups across the same request — `generateMetadata`
@@ -59,8 +99,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return { title }
 }
 
-export default async function SakeBrandPage({ params }: PageProps) {
+export default async function SakeBrandPage({ params, searchParams }: PageProps) {
   const { locale, brandId: brandIdParam } = await params
+  const arrivedViaScan = hasArrivedViaScan(await searchParams)
   setRequestLocale(locale)
 
   const brandId = parseBrandIdParam(brandIdParam)
@@ -68,39 +109,48 @@ export default async function SakeBrandPage({ params }: PageProps) {
     notFound()
   }
 
-  const [brand, brewery, flavorChart] = await Promise.all([
+  const [brand, brewery, flavorChart, siblings] = await Promise.all([
     lookupBrandCached(brandId),
     lookupBreweryCached(brandId),
     lookupFlavorChartCached(brandId),
+    listSiblingBrandsSafe(brandId),
   ])
   if (!brand) {
     notFound()
   }
 
   const t = await getTranslations('sake.brand')
-  // Render the romaji line when the ingest pipeline populated it
-  // (issue #121). NULL means "transliteration hasn't run yet on this
-  // row" — the operator runs `pnpm ingest` to fill the column.
-  const showBrandRomaji = brand.nameRomaji !== null
-  // Hide the brewery section entirely for Sakenowa placeholder rows
-  // (~48 in the dataset). Showing "Brewery:" with no name reads worse
-  // than not showing the section at all.
-  const showBrewery = brewery !== null && !isPlaceholderBrewery(brewery)
-  const showBreweryRomaji = showBrewery && brewery.nameRomaji !== null
-  // Prefecture is editorially mapped (manual_curation per ADR-0005)
-  // because Sakenowa's /areas endpoint publishes Japanese names only.
-  // For the in-Japan brewery rows the lookup always returns a value;
-  // for placeholder + foreign-producer rows it can be null or the
-  // "International" sentinel — we still show the sentinel because
-  // "International" is more useful than a hidden field.
-  const prefecture = showBrewery ? getPrefectureNames(brewery.areaId) : null
+  const tScan = await getTranslations('scan.form')
 
-  // ADR-0014: render Sakenowa attribution only when at least one
-  // rendered record on the page is Sakenowa-sourced. For manual_-
-  // curation brands (UMAMI, etc.) whose brewery FK points at a
-  // Sakenowa-sourced row, the brewery info IS Sakenowa data and
-  // attribution still renders. For a fully manual sake (manual
-  // brand + manual brewery — possible future case) it wouldn't.
+  // §9.1 draws the Latin name large with the Japanese beneath it — "Kidoizumi
+  // AFS" over "木戸泉 AFS". That is §15's default name display (Romaji + kanji)
+  // for an EN visitor, and the setting that would flip it is not built. Where
+  // the ingest pipeline has not produced a transliteration (#121) the kanji is
+  // the only name there is, so it takes the heading instead of leaving one
+  // blank.
+  const romaji = brand.nameRomaji
+  // Hide the brewery entirely for Sakenowa placeholder rows (~48 in the
+  // dataset). "Brewery:" with no name reads worse than no section.
+  const showBrewery = brewery !== null && !isPlaceholderBrewery(brewery)
+  // Prefecture is editorially mapped (manual_curation per ADR-0005) because
+  // Sakenowa's /areas endpoint publishes Japanese names only.
+  const prefecture = showBrewery ? getPrefectureNames(brewery.areaId) : null
+  const breweryRomaji = showBrewery ? brewery.nameRomaji : null
+  const showBrewerySection = showBrewery && siblings.length > 0
+  const showRomajiDisclosure =
+    romaji !== null ||
+    breweryRomaji !== null ||
+    (showBrewerySection && siblings.some((sibling) => sibling.nameRomaji !== null))
+
+  // §9.1's "Little published" outline tag. The design attaches it to a bottle
+  // whose data is thin; the flavour chart is the bulk of what the mirror
+  // carries, so its absence is the honest proxy — and ADR-0016 records that
+  // roughly half the catalogue has none. The tag is a statement about our
+  // knowledge, not about the sake.
+  const littlePublished = flavorChart === null
+
+  // ADR-0014: render Sakenowa attribution only when at least one rendered
+  // record on the page is Sakenowa-sourced.
   const renderedSources = new Set<string>([brand.source])
   if (showBrewery) renderedSources.add(brewery.source)
   if (flavorChart) renderedSources.add(flavorChart.source)
@@ -108,142 +158,271 @@ export default async function SakeBrandPage({ params }: PageProps) {
 
   return (
     <main
-      className="flex flex-1 w-full max-w-3xl mx-auto flex-col gap-6 py-16 px-8"
+      className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-5 py-5"
       data-testid="sake-brand-page"
     >
       {showSakenowaAttribution && <SakenowaAttribution placement="above-fold" />}
       {/*
-        "Not the bottle you scanned? Scan again" — shown only when the
-        visitor reached this page from a scan result (issue #109 PR B).
-        Client component: reads a per-tab sessionStorage marker, renders
-        nothing for direct navigators.
+        "Not the bottle you scanned? Scan again" — only when the link that
+        brought the visitor was a scan result's (#109). Decided here, on the
+        server, so it is in the first paint and nothing jumps.
       */}
-      <ScanReturnHint />
-      <div className="flex flex-wrap items-baseline gap-3">
-        <h1
-          className="text-4xl font-semibold leading-tight tracking-tight"
-          lang="ja"
-          data-testid="brand-name-kanji"
-        >
-          {brand.nameKanji}
-        </h1>
-        {/* Phase 2: brand.source is always 'sakenowa', so the badge
-            renders nothing. The import is intentional — Phase 3+ data
-            attached to the brand (LLM tasting notes, cross-beverage
-            mappings) will flow through this same attachment point. */}
-        <ProvenanceBadge
-          source={brand.source}
-          confidence={brand.confidence}
-          id={`brand-${brandId}-source`}
+      {arrivedViaScan && <ScanReturnHint />}
+
+      {/* -- §9.1 Identity ------------------------------------------------ */}
+      <section className="flex items-start gap-4" data-testid="bottle-identity">
+        <BottleSlot
+          showScannedPhoto={arrivedViaScan}
+          placeholderLabel={t('bottleSlotLabel')}
+          photoAlt={tScan('photoAlt')}
         />
-      </div>
-      {showBrandRomaji && (
-        // ProvenanceBadge with source='llm_inferred' is load-bearing
-        // here per CLAUDE.md anti-pattern "Do NOT show LLM-extracted
-        // data without a ProvenanceBadge". The brand RECORD itself is
-        // Sakenowa-sourced (the badge attached to the kanji above
-        // renders nothing for that source); the romaji FIELD is LLM-
-        // derived (Hepburn romanisation of the kanji by Anthropic
-        // Haiku — see src/lib/sakenowa/romaji.ts). ADR-0005's
-        // taxonomy is per-record, not per-field, so we render the
-        // badge on the displayed field rather than re-architect the
-        // schema for per-field provenance.
-        <p
-          className="flex items-baseline gap-2 text-xl text-zinc-700 dark:text-zinc-300"
-          data-testid="brand-name-romaji"
-        >
-          <span lang="en">{brand.nameRomaji}</span>
-          <ProvenanceBadge source="llm_inferred" id={`brand-${brandId}-romaji`} />
-        </p>
-      )}
-      {showBrewery && (
-        <section
-          className="flex flex-col gap-1"
-          data-testid="brand-brewery"
-          aria-label={t('breweryLabel')}
-        >
-          <p className="text-sm uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-            {t('breweryLabel')}
-          </p>
-          <p
-            className="text-2xl font-medium"
-            lang="ja"
-            data-testid="brewery-name-kanji"
-          >
-            {brewery.nameKanji}
-          </p>
-          {showBreweryRomaji && (
-            // Same LLM-derived-romaji-on-a-Sakenowa-record story as
-            // the brand romaji above.
-            <p
-              className="flex items-baseline gap-2 text-base text-zinc-700 dark:text-zinc-300"
-              data-testid="brewery-name-romaji"
+        <div className="flex min-w-0 flex-col gap-1">
+          {romaji !== null ? (
+            <>
+              {/*
+                Both Latin names on this block — the sake's and the brewery's —
+                are LLM transliterations of Sakenowa-sourced records
+                (`src/lib/sakenowa/romaji.ts`), so CLAUDE.md requires that
+                neither appears without a provenance affordance. The affordance
+                is ONE §16 disclosure under the block rather than a
+                `<ProvenanceBadge />` on each.
+                
+                Why: at 390px the identity column is ~270px wide and the name
+                is 25px type, so a chip beside it never fits — it wraps to its
+                own line, every time, and the page's most important element
+                arrives as name / chip / kana / brewery / chip. §16 is the
+                design's pattern for exactly this (CLAUDE.md: "reuse it for
+                every inferred claim"), and the compliance property is the same
+                one `<HeuristicDisclaimer />`'s density pass relies on: the
+                caveat text stays in the DOM, wired to the info button by
+                `aria-describedby`, so a screen-reader user reaches the full
+                explanation with no interaction.
+                
+                `data-romaji-field` marks the fields themselves, which is what
+                the e2e uses to check that no badge has drifted onto a
+                canonical Sakenowa value.
+              */}
+              <h1
+                className="text-bottle-name font-medium text-ink"
+                lang="en"
+                data-testid="brand-name-romaji"
+                data-romaji-field=""
+              >
+                {romaji}
+              </h1>
+              <p className="text-md-alt text-ash-700" lang="ja" data-testid="brand-name-kanji">
+                {brand.nameKanji}
+              </p>
+            </>
+          ) : (
+            <h1
+              className="text-bottle-name font-medium text-ink"
+              lang="ja"
+              data-testid="brand-name-kanji"
             >
-              <span lang="en">{brewery.nameRomaji}</span>
-              <ProvenanceBadge source="llm_inferred" id={`brand-${brandId}-brewery-romaji`} />
+              {brand.nameKanji}
+            </h1>
+          )}
+          {showBrewery && (
+            <p className="text-body text-ash-600" data-testid="bottle-brewery-line">
+              {breweryRomaji !== null ? (
+                <span lang="en" data-testid="brewery-name-romaji" data-romaji-field="">
+                  {breweryRomaji}
+                </span>
+              ) : (
+                <span lang="ja">{brewery.nameKanji}</span>
+              )}
+              {prefecture && (
+                <>
+                  <span className="mx-1.5 text-ash-500" aria-hidden="true">
+                    ·
+                  </span>
+                  <span lang="en" data-testid="prefecture-name-en">
+                    {prefecture.nameEn}
+                  </span>
+                </>
+              )}
             </p>
           )}
-        </section>
-      )}
-      {prefecture && (
-        // Prefecture name in both languages. The English form is
-        // editorially-mapped (Hepburn romanisation, suffix stripped
-        // per English geography convention) — see
-        // `src/lib/sakenowa/prefecture.ts`. The Sakenowa-sourced
-        // kanji form is the source of truth for matching; the EN
-        // form is the supplementary display per the operator ask.
-        <section
-          className="flex flex-col gap-1"
-          data-testid="brand-prefecture"
-          aria-label={t('prefectureLabel')}
-        >
-          <p className="text-sm uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-            {t('prefectureLabel')}
-          </p>
-          <p className="text-base">
-            <span lang="en" data-testid="prefecture-name-en">
-              {prefecture.nameEn}
-            </span>
-            <span className="mx-2 text-zinc-400 dark:text-zinc-600">·</span>
-            <span lang="ja" data-testid="prefecture-name-ja">
-              {prefecture.nameJa}
-            </span>
-          </p>
-        </section>
-      )}
-      {flavorChart && <FlavorChartView chart={flavorChart} />}
+          {/*
+            The page's ONE transliteration caveat. It covers every Latin name
+            on the page — this bottle's, its brewery's, and the other sakes'
+            chips in §9.9 — so it shows when any of them does. Two copies of
+            the same sentence on one screen read as noise (maintainer review).
+          */}
+          {showRomajiDisclosure && (
+            <RomajiDisclosure id={`brand-${brandId}-identity-romaji`} />
+          )}
+          {littlePublished && (
+            <p className="mt-1">
+              {/*
+                Rule 9, "one accent tag per row": this is the app's own claim
+                about its knowledge, so it takes the accent outline. Facts
+                about the sake (Junmai, Kimoto) would be neutral — none of them
+                are in the mirror yet.
+              */}
+              <span
+                className="inline-flex min-h-7 items-center rounded-full border border-ginshu-400 px-2.5 text-meta text-ginshu-700"
+                data-testid="bottle-little-published"
+              >
+                {t('littlePublished')}
+              </span>
+            </p>
+          )}
+        </div>
+      </section>
+
+      {/* -- §9.2 Action row ---------------------------------------------- */}
       {/*
-        §6 Similar sakes. This used to route to `/suggest?seed=<brandId>`
-        (Phase 4 / S5, #143), which runs the AI SDK tool loop — a paid model
-        call, on a browse action, to answer a question six numbers already
-        answer. §6 is the deterministic version: L2 distance over the axes we
-        already mirror, ranked in Postgres, no model involved.
-
-        This also closes one of `/suggest`'s three remaining doors (the
-        bottle-page `?seed=`), which is progress toward #299 without forcing
-        its flag-vs-tier decision — the landing card and the profile's "Ask
-        for one" are still open.
+        "Similar" ranks by distance over the six flavour axes, so a bottle with
+        no chart has nothing to be similar BY — §6 would open on its "no chart
+        yet" empty state. The page already knows, so it does not offer the
+        tap. With "Rate a new tasting" still Phase 2, that leaves the row empty,
+        and an empty row is not rendered.
       */}
-      <SimilarSakesCta brandId={brand.brandId} />
-      <Link
-        href="/"
-        className="text-base font-medium underline underline-offset-4"
-      >
-        {t('backToHome')}
-      </Link>
-    </main>
-  )
-}
+      {flavorChart && (
+        <div className="flex gap-2" data-testid="bottle-actions">
+          <Link
+            href={{ pathname: '/sake/[brandId]/similar', params: { brandId: String(brandId) } }}
+            className="flex min-h-11 flex-1 items-center justify-center rounded-xl border border-ginshu-400 px-4 text-card-heading font-medium text-ginshu-700 transition-colors hover:bg-ginshu-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+            data-testid="similar-sakes-link"
+          >
+            {t('similarAction')}
+          </Link>
+        </div>
+      )}
 
-async function SimilarSakesCta({ brandId }: { brandId: number }) {
-  const t = await getTranslations('sake.similar')
-  return (
-    <Link
-      href={{ pathname: '/sake/[brandId]/similar', params: { brandId: String(brandId) } }}
-      className="text-base font-medium underline underline-offset-4"
-      data-testid="similar-sakes-link"
-    >
-      {t('cta')}
-    </Link>
+      {/* -- §9.4 Serve it ------------------------------------------------ */}
+      {FEATURES.bottleServing && (
+        <BottleSection label={t('serveLabel')} testId="bottle-serve">
+          <p className="text-body text-ash-600">{t('serveEmpty')}</p>
+        </BottleSection>
+      )}
+
+      {/* -- §9.5 The sake ------------------------------------------------ */}
+      {FEATURES.bottleSpecs && (
+        <BottleSection label={t('specsLabel')} testId="bottle-specs">
+          <dl className="grid grid-cols-2 gap-x-6 gap-y-3">
+            {(['specRice', 'specPolishing', 'specYeast', 'specSmv'] as const).map((key) => (
+              <div key={key} className="flex flex-col gap-0.5">
+                <dt className="text-section-label uppercase text-ash-600">{t(key)}</dt>
+                <dd className="text-body">
+                  <NotPublished label={t('notPublished')} />
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </BottleSection>
+      )}
+
+      {/* -- §9.6 Flavour chart (§17) ------------------------------------- */}
+      {flavorChart ? (
+        <FlavorChartView chart={flavorChart} />
+      ) : (
+        <BottleSection label={t('flavorChartLabel')} testId="bottle-flavor-chart-empty">
+          {/*
+            Rule 4 proper: about half the catalogue has a chart, so its
+            absence is a fact about this bottle, and the page states it.
+
+            Only the first sentence of §17's EU string ("…Yawaragi users build
+            one with four ratings — you can join in Account → Privacy"). There
+            is no such setting in Account, and rating is maintainer-only until
+            ADR-0020's rewrite, so the rest sent visitors to a dead end. The
+            deviation is logged for the designers on #308; restore the full
+            string when the sharing setting exists.
+
+            No info button. The terms sheet explains the six axis labels, and
+            with no chart there are no labels on screen to explain. ADR-0022
+            makes the disclosure load-bearing wherever the axes render, which
+            is `<FlavorChartView />`, and it is still there.
+          */}
+          <p className="text-body text-ash-600">{t('flavorChartEmpty')}</p>
+        </BottleSection>
+      )}
+
+      {/* -- §9.7 Goes with ----------------------------------------------- */}
+      {FEATURES.bottlePairings && (
+        <BottleSection label={t('pairingsLabel')} testId="bottle-pairings">
+          <p className="text-body text-ash-600">{t('pairingsEmpty')}</p>
+        </BottleSection>
+      )}
+
+      {/* -- §9.8 What others noticed ------------------------------------- */}
+      {FEATURES.bottleCommunityNotes && (
+        <BottleSection label={t('communityLabel')} testId="bottle-community">
+          <p className="text-body text-ash-600">{t('communityEmpty')}</p>
+        </BottleSection>
+      )}
+
+      {/* -- §9.9 The brewery --------------------------------------------- */}
+      {/*
+        §9.9 is "story plus a row of its other sakes. Hidden without data." We
+        have no story, so the row is the section: a brewery with no other
+        brand in the mirror gets no section, rather than one that repeats the
+        name and prefecture §9.1 already shows.
+
+        The name reads like §9.1's: romaji large, kanji under it, so a visitor
+        reading down the page does not meet two conventions. The romaji here
+        is covered by the page's one transliteration caveat, in §9.1.
+      */}
+      {showBrewerySection && (
+        <BottleSection label={t('theBreweryLabel')} testId="brand-brewery">
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-0.5">
+              {breweryRomaji !== null ? (
+                <>
+                  <p
+                    className="text-card-heading font-medium text-ink"
+                    lang="en"
+                    data-testid="brewery-section-name-romaji"
+                    data-romaji-field=""
+                  >
+                    {breweryRomaji}
+                  </p>
+                  <p className="text-meta text-ash-600">
+                    <span lang="ja" data-testid="brewery-name-kanji">
+                      {brewery.nameKanji}
+                    </span>
+                    {prefecture && (
+                      <>
+                        <span className="mx-1.5 text-ash-500" aria-hidden="true">
+                          ·
+                        </span>
+                        <span lang="ja" data-testid="prefecture-name-ja">
+                          {prefecture.nameJa}
+                        </span>
+                      </>
+                    )}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p
+                    className="text-card-heading font-medium text-ink"
+                    lang="ja"
+                    data-testid="brewery-name-kanji"
+                  >
+                    {brewery.nameKanji}
+                  </p>
+                  {prefecture && (
+                    <p className="text-meta text-ash-600" lang="ja" data-testid="prefecture-name-ja">
+                      {prefecture.nameJa}
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
+            <BreweryOtherSakes siblings={siblings} intro={t('otherSakesIntro')} />
+          </div>
+        </BottleSection>
+      )}
+
+      {/* -- §9.10 Where to find it --------------------------------------- */}
+      {FEATURES.bottleShops && (
+        <BottleSection label={t('shopsLabel')} testId="bottle-shops">
+          <p className="text-body text-ash-600">{t('shopsEmpty')}</p>
+        </BottleSection>
+      )}
+    </main>
   )
 }

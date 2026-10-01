@@ -2,6 +2,7 @@
 
 import { cookies } from 'next/headers'
 import { getPathname } from '@/i18n/navigation'
+import { ARRIVED_VIA_SCAN_QUERY } from '@/lib/scan/arrived-via-scan'
 import type { Locale } from '@/i18n/routing'
 import { routing } from '@/i18n/routing'
 import {
@@ -125,10 +126,7 @@ function ambiguousCandidateFromLookup(
 } {
   return {
     brandId: c.sake.brandId,
-    sakeHref: getPathname({
-      locale,
-      href: { pathname: '/sake/[brandId]', params: { brandId: String(c.sake.brandId) } },
-    }),
+    sakeHref: sakeHrefFor(c.sake.brandId, locale),
     nameKanji: c.sake.nameKanji,
     nameRomaji: bestRomaji(c.sake),
     breweryKanji: c.brewery.nameKanji,
@@ -369,14 +367,20 @@ async function extractAndLookupWithProvider(
 }
 
 /**
- * Locale-aware `/sake/[brandId]` pathname. Every matched arm links to
- * the same detail route; centralising the `getPathname` call keeps the
- * render-mapping arms uniform.
+ * Locale-aware `/sake/[brandId]` pathname. Every matched arm — and every
+ * ambiguous candidate — links to the same detail route; centralising the
+ * `getPathname` call keeps the arms uniform. The `?from=scan` query is what
+ * lets the bottle page offer "Not the bottle you scanned?" and show the
+ * visitor's photo (see `arrived-via-scan.ts`).
  */
 function sakeHrefFor(brandId: number, locale: Locale): string {
   return getPathname({
     locale,
-    href: { pathname: '/sake/[brandId]', params: { brandId: String(brandId) } },
+    href: {
+      pathname: '/sake/[brandId]',
+      params: { brandId: String(brandId) },
+      query: ARRIVED_VIA_SCAN_QUERY,
+    },
   })
 }
 

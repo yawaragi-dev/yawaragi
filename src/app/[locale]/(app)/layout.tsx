@@ -5,6 +5,9 @@ import { getTranslations } from 'next-intl/server'
 import { Header } from '@/components/layout/header'
 import { LegalFooter } from '@/components/layout/legal-footer'
 import { TabBar, type TabBarMessages } from '@/components/layout/tab-bar'
+import { getPathname } from '@/i18n/navigation'
+import { hasLocale } from 'next-intl'
+import { routing } from '@/i18n/routing'
 
 /**
  * The app shell — design v1.4 § "App structure" and rule 11.
@@ -41,9 +44,12 @@ import { TabBar, type TabBarMessages } from '@/components/layout/tab-bar'
  */
 export default async function AppShellLayout({
   children,
+  params,
 }: {
   children: React.ReactNode
+  params: Promise<{ locale: string }>
 }) {
+  const { locale } = await params
   const t = await getTranslations('tabs')
   const { consent } = getComplianceState(await cookies())
 
@@ -63,7 +69,19 @@ export default async function AppShellLayout({
       {/* The header is INSIDE the locked column, not above it: a sibling in
           the parent layout would add its height to `100dvh` and the page
           itself would scroll — the one thing rule 10 forbids. */}
-      <Header showAccount />
+      {/* Rule 11's back arrow, on every screen but the four tab main ones —
+          `<ShellBackLink />` applies the exception, because a layout cannot
+          read the pathname. Home is the fallback for a cold deep link with no
+          history to pop: it is the app's front door, and rule 11 makes a tab
+          main screen the one place that never needs a way out of its own. */}
+      <Header
+        showAccount
+        showBack="auto"
+        backFallbackHref={getPathname({
+          locale: hasLocale(routing.locales, locale) ? locale : routing.defaultLocale,
+          href: '/home',
+        })}
+      />
       <main className="min-h-0 flex-1 overflow-y-auto overflow-x-clip overscroll-contain">
         {children}
         {/* Inside the scrolling pane, so the Impressum stays reachable from

@@ -1,6 +1,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
+import NextLink from 'next/link'
 import { ArrowsSplit, BookOpenText, CaretRight } from '@phosphor-icons/react/dist/ssr'
 import { HeuristicDisclaimerView } from '@/components/legal/heuristic-disclaimer'
 import { ProvenanceBadgeView } from '@/components/sake/provenance-badge'
@@ -9,7 +10,6 @@ import {
   buildFlavorAxisStrings,
 } from '@/components/sake/flavor-profile-view'
 import { buildFlavorTermsStrings } from '@/components/sake/flavor-terms-sheet'
-import { markArrivedViaScan } from '@/lib/scan/arrived-via-scan'
 import {
   resolveBadgeKind,
   shouldRenderHeuristicDisclaimer,
@@ -375,12 +375,14 @@ export function ScanResultCard({
             )}
 
             {/*
-              Native `<a>` rather than next-intl's typed `<Link>` — `sakeHref`
+              `next/link` rather than next-intl's typed `<Link>` — `sakeHref`
               is a pre-resolved locale-aware path from scan-action, already
-              locale-prefixed and segment-substituted; `<Link>` would fight
-              the typed-route union. `markArrivedViaScan` sets the per-tab
-              marker that lights the "Not this one?" affordance on the target
-              (#109).
+              locale-prefixed and segment-substituted; the typed `<Link>` would
+              fight the typed-route union. It must be a client-side navigation,
+              not a native `<a>`: the visitor's photo rides to the bottle page
+              in this document's memory (`scanned-photo.ts`), and a full page
+              load would drop it. The `?from=scan` already in `sakeHref` is
+              what lights "Not this one?" there (#109).
             */}
             {/* §5's "Full bottle page" row: book icon, title, a line naming
                 what is actually behind it, and a caret. The old inline "See
@@ -405,9 +407,8 @@ export function ScanResultCard({
                 11px step in the scale is `--text-section-label`, which bakes in
                 0.1em tracking for uppercase labels and reads wrong as prose.
                 `text-meta` (12px) is the nearest step that is prose. */}
-            <a
+            <NextLink
               href={sakeHref}
-              onClick={markArrivedViaScan}
               className="flex items-center gap-3 rounded-md border border-divider p-3.5 transition-colors hover:bg-ash-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
               data-testid="scan-result-open-detail"
             >
@@ -417,7 +418,7 @@ export function ScanResultCard({
                 <span className="text-meta text-ash-600">{t('openDetailSubtitle')}</span>
               </span>
               <CaretRight size={16} className="ml-auto shrink-0 text-ash-500" aria-hidden="true" />
-            </a>
+            </NextLink>
 
             {/*
               §5's "Similar sakes" button → §6. Deterministic: L2 distance
