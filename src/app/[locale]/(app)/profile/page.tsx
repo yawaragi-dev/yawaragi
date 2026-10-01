@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers'
+import { auth } from '@clerk/nextjs/server'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import type { Metadata } from 'next'
 import { Link } from '@/i18n/navigation'
@@ -13,6 +14,7 @@ import { FlavorRadarView } from '@/components/sake/flavor-radar-view'
 import { SakenowaAttribution } from '@/components/sake/sakenowa-attribution'
 import { coldStartChips } from '@/lib/cross-beverage/cold-start-chips'
 import { resolveCrossBeverageTarget } from '@/lib/cross-beverage/forward-lookup'
+import { currentUserIsMaintainer } from '@/lib/auth/maintainer'
 import { isDebugEnabledFromCookies } from '@/lib/debug/debug-mode'
 import { hasAcceptedAgeGate } from '@/lib/legal/age-gate-cookie'
 import { readAnonymousSessionCookie } from '@/lib/legal/anonymous-session-cookie'
@@ -20,7 +22,11 @@ import type { FlavorAxis } from '@/lib/schemas/flavor-chart'
 import type { FlavorProfile } from '@/lib/schemas/flavor-profile'
 import type { TasteEvent } from '@/lib/schemas/taste-event'
 import { lookupBrand } from '@/lib/sakenowa/lookup'
+import { journalEntriesToTasteEvents } from '@/lib/schemas/journal-entry'
 import { catalogueMeanProfile } from '@/lib/taste/catalogue-mean'
+import { getJournalStore } from '@/lib/taste/get-journal-store'
+import { resolveJournalStub } from '@/lib/taste/journal-stub'
+import { resolveMaintainerJournal } from '@/lib/taste/resolve-maintainer-journal'
 import { getFlavorCandidatePool } from '@/lib/taste/flavor-candidate-pool'
 import { getTasteEventStore } from '@/lib/taste/get-taste-event-store'
 import {
@@ -78,7 +84,12 @@ import { env } from '@/env'
  *   daiginjō / kimoto) that the Sakenowa mirror does not carry at all.
  * The maintainer journal used to be rendered here, from an early return ahead
  * of everything else, which made one route serve two screens — and meant a
- * maintainer could never see this one. It lives at §11 Collection now.
+ * maintainer could never see this one. It lives at §11 Collection now, and
+ * this screen reads it as *data* instead of rendering it: CONTEXT.md makes the
+ * Palate "a derived output view of the TastingJournal", so the journal is the
+ * primary source where there is one and the anonymous session store is the
+ * fallback. Moving the journal without this would have left a maintainer with
+ * a permanently empty Palate — every tasting they have, and no read of them.
  *
  * Two things §12 does not list are kept on purpose: `<TasteProvenanceSummary />`
  * (ADR-0013's debuggability — §12 puts "the tastings behind it" on the
@@ -98,6 +109,43 @@ const tp = (
   f5: number,
   f6: number,
 ): FlavorProfile => ({ f1, f2, f3, f4, f5, f6 })
+
+/**
+ * The journal, as a taste profile — the Palate's primary source.
+ *
+ * A JournalEntry embeds the TasteEvent it emits, so the same
+ * `deriveTasteProfile` fold the anonymous stream uses reads it unchanged (see
+ * `resolve-maintainer-journal.ts`: "one derivation path, two sources"). What
+ * this adds is the *second* caller of that path, now that §11 owns the
+ * rendering.
+ *
+ * Returns `null` when there is no journal to read — not a maintainer, no
+ * store, or no entries — so the caller falls through to the anonymous session.
+ */
+async function resolveJournalTasteProfile(
+  cookieJar: CookieJar,
+): Promise<SessionTasteProfile | null> {
+  const journalStub =
+    process.env.NODE_ENV !== 'production'
+      ? cookieJar.get('yawaragi_journal_stub')?.value
+      : undefined
+  const journal =
+    journalStub != null
+      ? resolveJournalStub(journalStub)
+      : (await currentUserIsMaintainer())
+        ? await resolveMaintainerJournal({
+            store: getJournalStore(),
+            userId: (await auth()).userId,
+            now: Date.now(),
+          })
+        : null
+  if (journal === null || journal.kind !== 'journal') return null
+  return {
+    kind: 'profile',
+    profile: journal.profile,
+    events: journalEntriesToTasteEvents(journal.entries),
+  }
+}
 
 /**
  * Read the session's taste profile, with a non-production stub seam
@@ -253,7 +301,11 @@ export default async function PalatePage({
   const t = await getTranslations('palate')
   const tAxis = await getTranslations('flavorAxis')
   const debugMode = isDebugEnabledFromCookies(cookieJar)
-  const session = await resolveSessionTasteProfile(cookieJar)
+  // The journal first, the anonymous session second. A maintainer's tastings
+  // are the real thing; the session store is what an anonymous visitor builds
+  // from scans and cross-beverage seeds.
+  const session =
+    (await resolveJournalTasteProfile(cookieJar)) ?? (await resolveSessionTasteProfile(cookieJar))
   const events = session.kind === 'profile' ? session.events : []
   const profile = session.kind === 'profile' ? session.profile : null
   const ratingCount = countRatings(events)

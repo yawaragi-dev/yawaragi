@@ -12,9 +12,8 @@ import { SakenowaAttribution } from '@/components/sake/sakenowa-attribution'
 import { currentUserIsMaintainer } from '@/lib/auth/maintainer'
 import { isLaunched } from '@/i18n/launch-state'
 import { routing } from '@/i18n/routing'
-import type { JournalEntry } from '@/lib/schemas/journal-entry'
-import type { FlavorProfile } from '@/lib/schemas/flavor-profile'
 import { getJournalStore } from '@/lib/taste/get-journal-store'
+import { resolveJournalStub } from '@/lib/taste/journal-stub'
 import {
   type MaintainerJournalState,
   resolveMaintainerJournal,
@@ -57,49 +56,6 @@ interface PageProps {
 }
 
 type CookieJar = Awaited<ReturnType<typeof cookies>>
-
-const STUB_JOURNAL_MAP: FlavorProfile = { f1: 0.62, f2: 0.55, f3: 0.4, f4: 0.48, f5: 0.3, f6: 0.58 }
-
-// Canned journal for the non-production E2E stub (`yawaragi_journal_stub`).
-// Two entries in two different months, so the date blocks are exercised across
-// a boundary without a live Upstash.
-const STUB_JOURNAL_ENTRIES: readonly JournalEntry[] = [
-  {
-    id: 's1',
-    event: {
-      kind: 'rating',
-      rating: 5,
-      brandId: 1,
-      target: STUB_JOURNAL_MAP,
-      occurredAt: Date.UTC(2026, 6, 18),
-    },
-    sake: { nameKanji: '而今', nameRomaji: 'Jikon' },
-    notes: 'Melon and white peach, gone in a clean line.',
-    triedAt: Date.UTC(2026, 6, 18),
-    createdAt: Date.UTC(2026, 6, 18),
-  },
-  {
-    id: 's2',
-    event: {
-      kind: 'rating',
-      rating: 4,
-      brandId: 2,
-      target: STUB_JOURNAL_MAP,
-      occurredAt: Date.UTC(2026, 5, 24),
-    },
-    sake: { nameKanji: '田酒', nameRomaji: 'Denshu' },
-    triedAt: Date.UTC(2026, 5, 24),
-    createdAt: Date.UTC(2026, 5, 24),
-  },
-]
-
-function resolveJournalStub(stub: string): MaintainerJournalState {
-  if (stub === 'unavailable') return { kind: 'unavailable' }
-  if (stub === 'populated') {
-    return { kind: 'journal', entries: STUB_JOURNAL_ENTRIES, profile: STUB_JOURNAL_MAP }
-  }
-  return { kind: 'empty' }
-}
 
 /**
  * Decide the maintainer branch. Kept out of the component body so the impure
