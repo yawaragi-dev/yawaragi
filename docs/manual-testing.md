@@ -137,10 +137,6 @@ The landing hero renders a real catalogued sake (木戸泉 / Kidoizumi, `brand_i
 
 All stub selectors fail closed on `NODE_ENV=production`, which includes Vercel Preview.
 
-## Not our bugs (checked, so you don't have to)
-
-- **The mouse pointer vanishes while testing in Firefox on Linux.** `ui.hideCursorWhileTyping` is on by default: Firefox hides the pointer on a keypress while a text field has focus, and restores it on real mouse *movement* — not merely on the pointer sitting over something. So typing a search, pressing Enter and finding no pointer over the results looks like a rendering bug in the list, and isn't. Verified 2026-10-01 against `/en/search`: in real Firefox the rows compute `cursor: pointer`, nothing overlays them, and `mousemove` / `pointermove` / `mouseover` all deliver. Loading the same URL directly, without typing in the page, shows the pointer normally — **that is the test**. Turn it off at `about:config` → `ui.hideCursorWhileTyping` → `0`.
-
 ## Automated equivalent
 
 The same branches are covered deterministically in Playwright — run headed to watch them:
