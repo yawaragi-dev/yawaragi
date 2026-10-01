@@ -1,12 +1,5 @@
 {
   "journal": {
-    "title": "Dein Verkostungsjournal",
-    "intro": "Jeder Sake, den du einträgst, formt deine Geschmackskarte.",
-    "mapHeading": "Deine Geschmackskarte",
-    "shapedBy": "Geformt aus {count, plural, one {# Verkostung} other {# Verkostungen}}",
-    "emptyMapCaption": "Eine Beispielkarte — deine entsteht, während du einträgst.",
-    "emptyHeading": "Beginne dein Journal",
-    "emptyBody": "Trag den ersten Sake ein, den du probiert hast, und deine Geschmackskarte beginnt.",
     "ratingStars": "{rating, plural, one {# Stern} other {# Sterne}}",
     "logCta": "Sake eintragen",
     "logTitle": "Sake eintragen",
@@ -22,8 +15,13 @@
     "save": "Ins Journal speichern",
     "saving": "Speichern…",
     "errorNoProfile": "Dieser Sake hat noch keine Geschmacksdaten und kann daher nicht in deine Karte aufgenommen werden.",
-    "errorGeneric": "Konnte gerade nicht gespeichert werden — versuch es noch einmal.",
-    "unavailableBody": "Dein Journal ist gerade nicht verfügbar — bitte schau bald wieder vorbei."
+    "errorGeneric": "Konnte gerade nicht gespeichert werden — versuch es noch einmal."
+  },
+  "collection": {
+    "title": "Sammlung",
+    "emptyHeading": "Hier ist noch nichts",
+    "emptyBody": "Trage den ersten Sake ein, den du probierst — er erscheint hier, der neueste zuerst.",
+    "unavailableBody": "Deine Sammlung ist gerade nicht verfügbar — schau bitte später wieder vorbei."
   },
   "common": {
     "siteName": "Yawaragi",

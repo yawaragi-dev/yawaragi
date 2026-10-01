@@ -5,14 +5,6 @@ import type { Metadata } from 'next'
 import { Link } from '@/i18n/navigation'
 import { isLaunched } from '@/i18n/launch-state'
 import { AgeGate } from '@/components/legal/age-gate'
-import { JournalView } from '@/components/profile/journal/journal-view'
-import { currentUserIsMaintainer } from '@/lib/auth/maintainer'
-import type { JournalEntry } from '@/lib/schemas/journal-entry'
-import { getJournalStore } from '@/lib/taste/get-journal-store'
-import {
-  type MaintainerJournalState,
-  resolveMaintainerJournal,
-} from '@/lib/taste/resolve-maintainer-journal'
 import { ColdStartChips, type ColdStartChipView } from '@/components/palate/cold-start-chips'
 import { PalateAxisRows, type PalateAxisStrings } from '@/components/palate/palate-axis-rows'
 import { PalateConfidence } from '@/components/palate/palate-confidence'
@@ -22,6 +14,7 @@ import { FlavorRadarView } from '@/components/sake/flavor-radar-view'
 import { SakenowaAttribution } from '@/components/sake/sakenowa-attribution'
 import { coldStartChips } from '@/lib/cross-beverage/cold-start-chips'
 import { resolveCrossBeverageTarget } from '@/lib/cross-beverage/forward-lookup'
+import { currentUserIsMaintainer } from '@/lib/auth/maintainer'
 import { isDebugEnabledFromCookies } from '@/lib/debug/debug-mode'
 import { hasAcceptedAgeGate } from '@/lib/legal/age-gate-cookie'
 import { readAnonymousSessionCookie } from '@/lib/legal/anonymous-session-cookie'
@@ -29,7 +22,11 @@ import type { FlavorAxis } from '@/lib/schemas/flavor-chart'
 import type { FlavorProfile } from '@/lib/schemas/flavor-profile'
 import type { TasteEvent } from '@/lib/schemas/taste-event'
 import { lookupBrand } from '@/lib/sakenowa/lookup'
+import { journalEntriesToTasteEvents } from '@/lib/schemas/journal-entry'
 import { catalogueMeanProfile } from '@/lib/taste/catalogue-mean'
+import { getJournalStore } from '@/lib/taste/get-journal-store'
+import { resolveJournalStub } from '@/lib/taste/journal-stub'
+import { resolveMaintainerJournal } from '@/lib/taste/resolve-maintainer-journal'
 import { getFlavorCandidatePool } from '@/lib/taste/flavor-candidate-pool'
 import { getTasteEventStore } from '@/lib/taste/get-taste-event-store'
 import {
@@ -85,10 +82,14 @@ import { env } from '@/env'
  *   the defect #184 was filed for.
  * - **"Styles you rate highest"** needs a style classification (junmai /
  *   daiginjō / kimoto) that the Sakenowa mirror does not carry at all.
- * - **The maintainer journal branch stays.** §12 is the Palate; the journal is
- *   §11 Collection, whose route is still a placeholder. It moves there in the
- *   §11 port, and this early return goes with it. Until then a maintainer
- *   lands on the journal here exactly as before.
+ * The maintainer journal used to be rendered here, from an early return ahead
+ * of everything else, which made one route serve two screens — and meant a
+ * maintainer could never see this one. It lives at §11 Collection now, and
+ * this screen reads it as *data* instead of rendering it: CONTEXT.md makes the
+ * Palate "a derived output view of the TastingJournal", so the journal is the
+ * primary source where there is one and the anonymous session store is the
+ * fallback. Moving the journal without this would have left a maintainer with
+ * a permanently empty Palate — every tasting they have, and no read of them.
  *
  * Two things §12 does not list are kept on purpose: `<TasteProvenanceSummary />`
  * (ADR-0013's debuggability — §12 puts "the tastings behind it" on the
@@ -109,63 +110,41 @@ const tp = (
   f6: number,
 ): FlavorProfile => ({ f1, f2, f3, f4, f5, f6 })
 
-// --- Maintainer tasting journal (ADR-0020, P5.5-C) ---------------------------
-
-const STUB_JOURNAL_MAP: FlavorProfile = tp(0.62, 0.55, 0.4, 0.48, 0.3, 0.58)
-
-// Canned journal for the non-production E2E stub (`yawaragi_journal_stub`),
-// mirroring the anonymous `yawaragi_taste_stub` seam. Two entries across two
-// months so the timeline's month grouping is exercised without a live Upstash.
-const STUB_JOURNAL_ENTRIES: readonly JournalEntry[] = [
-  {
-    id: 's1',
-    event: { kind: 'rating', rating: 5, brandId: 1, target: STUB_JOURNAL_MAP, occurredAt: Date.UTC(2026, 6, 18) },
-    sake: { nameKanji: '而今', nameRomaji: 'Jikon' },
-    notes: 'Melon and white peach, gone in a clean line.',
-    triedAt: Date.UTC(2026, 6, 18),
-    createdAt: Date.UTC(2026, 6, 18),
-  },
-  {
-    id: 's2',
-    event: { kind: 'rating', rating: 4, brandId: 2, target: STUB_JOURNAL_MAP, occurredAt: Date.UTC(2026, 5, 24) },
-    sake: { nameKanji: '田酒', nameRomaji: 'Denshu' },
-    triedAt: Date.UTC(2026, 5, 24),
-    createdAt: Date.UTC(2026, 5, 24),
-  },
-]
-
-function resolveJournalStub(stub: string): MaintainerJournalState {
-  if (stub === 'unavailable') return { kind: 'unavailable' }
-  if (stub === 'populated') {
-    return { kind: 'journal', entries: STUB_JOURNAL_ENTRIES, profile: STUB_JOURNAL_MAP }
-  }
-  return { kind: 'empty' }
-}
-
 /**
- * Decide the maintainer branch. Kept out of the component body (like
- * `resolveSessionTasteProfile`) so the impure `Date.now()` read isn't in the
- * render path — the non-prod `yawaragi_journal_stub` seam also stands in for the
- * maintainer check + store so the E2E needs no Clerk/Upstash.
+ * The journal, as a taste profile — the Palate's primary source.
+ *
+ * A JournalEntry embeds the TasteEvent it emits, so the same
+ * `deriveTasteProfile` fold the anonymous stream uses reads it unchanged (see
+ * `resolve-maintainer-journal.ts`: "one derivation path, two sources"). What
+ * this adds is the *second* caller of that path, now that §11 owns the
+ * rendering.
+ *
+ * Returns `null` when there is no journal to read — not a maintainer, no
+ * store, or no entries — so the caller falls through to the anonymous session.
  */
-async function resolveMaintainerJournalView(
+async function resolveJournalTasteProfile(
   cookieJar: CookieJar,
-): Promise<{ isMaintainer: boolean; journal: MaintainerJournalState | null }> {
+): Promise<SessionTasteProfile | null> {
   const journalStub =
-    process.env.NODE_ENV !== 'production' ? cookieJar.get('yawaragi_journal_stub')?.value : undefined
-  if (journalStub != null) {
-    return { isMaintainer: true, journal: resolveJournalStub(journalStub) }
+    process.env.NODE_ENV !== 'production'
+      ? cookieJar.get('yawaragi_journal_stub')?.value
+      : undefined
+  const journal =
+    journalStub != null
+      ? resolveJournalStub(journalStub)
+      : (await currentUserIsMaintainer())
+        ? await resolveMaintainerJournal({
+            store: getJournalStore(),
+            userId: (await auth()).userId,
+            now: Date.now(),
+          })
+        : null
+  if (journal === null || journal.kind !== 'journal') return null
+  return {
+    kind: 'profile',
+    profile: journal.profile,
+    events: journalEntriesToTasteEvents(journal.entries),
   }
-  if (!(await currentUserIsMaintainer())) {
-    return { isMaintainer: false, journal: null }
-  }
-  const { userId } = await auth()
-  const journal = await resolveMaintainerJournal({
-    store: getJournalStore(),
-    userId,
-    now: Date.now(),
-  })
-  return { isMaintainer: true, journal }
 }
 
 /**
@@ -319,41 +298,14 @@ export default async function PalatePage({
     return <AgeGate />
   }
 
-  // Maintainer branch (ADR-0020): an allowlisted maintainer gets the REAL
-  // persistent tasting journal. This is §11 Collection's content, not §12's,
-  // and moves there with that port — see the file docstring.
-  const maintainerView = await resolveMaintainerJournalView(cookieJar)
-  if (maintainerView.isMaintainer && maintainerView.journal) {
-    const journal = maintainerView.journal
-    const tJournal = await getTranslations('journal')
-    return (
-      <main
-        className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-5 py-6"
-        data-testid="profile-journal-page"
-      >
-        <section className="flex flex-col gap-2">
-          <h1 className="text-tab-title font-medium text-ink">{tJournal('title')}</h1>
-          <p className="max-w-prose text-body text-ash-600">{tJournal('intro')}</p>
-        </section>
-        {journal.kind === 'unavailable' ? (
-          <section data-testid="journal-unavailable" className="flex flex-col gap-3">
-            <p className="max-w-prose text-body text-ash-600">{tJournal('unavailableBody')}</p>
-          </section>
-        ) : (
-          <JournalView
-            entries={journal.kind === 'journal' ? journal.entries : []}
-            profile={journal.kind === 'journal' ? journal.profile : null}
-            locale={locale}
-          />
-        )}
-      </main>
-    )
-  }
-
   const t = await getTranslations('palate')
   const tAxis = await getTranslations('flavorAxis')
   const debugMode = isDebugEnabledFromCookies(cookieJar)
-  const session = await resolveSessionTasteProfile(cookieJar)
+  // The journal first, the anonymous session second. A maintainer's tastings
+  // are the real thing; the session store is what an anonymous visitor builds
+  // from scans and cross-beverage seeds.
+  const session =
+    (await resolveJournalTasteProfile(cookieJar)) ?? (await resolveSessionTasteProfile(cookieJar))
   const events = session.kind === 'profile' ? session.events : []
   const profile = session.kind === 'profile' ? session.profile : null
   const ratingCount = countRatings(events)

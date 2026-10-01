@@ -120,7 +120,7 @@ export function JournalLogForm() {
         // Interim: rule 11 gives the bottom edge to the tab bar alone and puts
         // screen-level actions in the content. This button moves there when
         // §12 ports the Palate. Tracked on #300.
-        className="fixed bottom-[calc(var(--tab-bar-h)+1.5rem)] right-6 z-40 rounded-full bg-zinc-900 px-5 py-3 text-sm font-medium text-white shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 dark:bg-white dark:text-zinc-900"
+        className="fixed bottom-[calc(var(--tab-bar-h)+1.5rem)] right-6 z-40 rounded-full bg-ginshu-600 px-5 py-3 text-body font-medium text-ground shadow-yw-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
         data-testid="journal-log-open"
       >
         ＋ {t('logCta')}
@@ -135,15 +135,15 @@ export function JournalLogForm() {
           <div className="flex flex-col gap-1">
             <Label htmlFor="journal-search">{t('searchLabel')}</Label>
             {picked ? (
-              <div className="flex items-center justify-between rounded-md border border-zinc-300 px-3 py-2 dark:border-zinc-700">
+              <div className="flex items-center justify-between rounded-md border border-divider px-3 py-2">
                 <span>
                   <span className="text-base" lang="ja">{picked.nameKanji}</span>{' '}
-                  {picked.nameRomaji && <span className="text-sm text-zinc-500">{picked.nameRomaji}</span>}
+                  {picked.nameRomaji && <span className="text-body text-ash-600">{picked.nameRomaji}</span>}
                 </span>
                 <button
                   type="button"
                   onClick={() => setPicked(null)}
-                  className="rounded text-xs text-zinc-500 underline underline-offset-2 hover:text-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 dark:hover:text-zinc-300"
+                  className="rounded text-meta text-ash-600 underline underline-offset-2 hover:text-ash-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
                 >
                   {t('searchChange')}
                 </button>
@@ -160,11 +160,11 @@ export function JournalLogForm() {
                   data-testid="journal-search"
                 />
                 {query.trim().length > 0 && (
-                  <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-md border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
+                  <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-xl bg-surface shadow-yw-lg">
                     {searching ? (
-                      <p className="px-3 py-2 text-sm text-zinc-500" role="status">{t('searching')}</p>
+                      <p className="px-3 py-2 text-body text-ash-600" role="status">{t('searching')}</p>
                     ) : results.length === 0 ? (
-                      <p className="px-3 py-2 text-sm text-zinc-500">{t('searchNoResults')}</p>
+                      <p className="px-3 py-2 text-body text-ash-600">{t('searchNoResults')}</p>
                     ) : (
                       <ul>
                         {results.map((r) => (
@@ -178,10 +178,10 @@ export function JournalLogForm() {
                                 setSearching(false)
                                 clearTimeout(timerRef.current)
                               }}
-                              className="flex w-full items-baseline gap-2 px-3 py-2 text-left hover:bg-zinc-100 focus-visible:bg-zinc-100 focus-visible:outline-none dark:hover:bg-zinc-800 dark:focus-visible:bg-zinc-800"
+                              className="flex w-full items-baseline gap-2 px-3 py-2 text-left hover:bg-ash-200 focus-visible:bg-ash-200 focus-visible:outline-none"
                             >
                               <span className="text-base" lang="ja">{r.nameKanji}</span>
-                              {r.nameRomaji && <span className="text-sm text-zinc-500">{r.nameRomaji}</span>}
+                              {r.nameRomaji && <span className="text-body text-ash-600">{r.nameRomaji}</span>}
                             </button>
                           </li>
                         ))}
@@ -196,7 +196,7 @@ export function JournalLogForm() {
           {/* Rating */}
           <div className="flex flex-col gap-1">
             <Label>{t('ratingLabel')}</Label>
-            <div className="flex text-2xl text-amber-500" role="radiogroup" aria-label={t('ratingLabel')}>
+            <div className="flex text-headline text-ginshu-600" role="radiogroup" aria-label={t('ratingLabel')}>
               {[1, 2, 3, 4, 5].map((n) => (
                 <button
                   key={n}
@@ -205,7 +205,7 @@ export function JournalLogForm() {
                   aria-checked={rating === n}
                   aria-label={t('ratingStars', { rating: n })}
                   onClick={() => setRating(n)}
-                  className="rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                  className="rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
                 >
                   {n <= rating ? '★' : '☆'}
                 </button>
@@ -239,7 +239,7 @@ export function JournalLogForm() {
           </div>
 
           {error && (
-            <p role="alert" data-testid="journal-log-error" className="text-sm text-amber-700 dark:text-amber-300">
+            <p role="alert" data-testid="journal-log-error" className="text-body text-ginshu-700">
               {error === 'skipped_no_profile' ? t('errorNoProfile') : t('errorGeneric')}
             </p>
           )}
