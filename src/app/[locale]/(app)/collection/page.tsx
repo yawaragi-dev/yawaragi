@@ -1,32 +1,138 @@
 import type { Metadata } from 'next'
+import { cookies } from 'next/headers'
+import { auth } from '@clerk/nextjs/server'
 import { hasLocale } from 'next-intl'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { notFound } from 'next/navigation'
 import { Link } from '@/i18n/navigation'
+import { JournalList } from '@/components/collection/journal-list'
+import { JournalLogForm } from '@/components/profile/journal/journal-log-form'
 import { TabPlaceholder } from '@/components/layout/tab-placeholder'
+import { SakenowaAttribution } from '@/components/sake/sakenowa-attribution'
+import { currentUserIsMaintainer } from '@/lib/auth/maintainer'
 import { isLaunched } from '@/i18n/launch-state'
 import { routing } from '@/i18n/routing'
+import type { JournalEntry } from '@/lib/schemas/journal-entry'
+import type { FlavorProfile } from '@/lib/schemas/flavor-profile'
+import { getJournalStore } from '@/lib/taste/get-journal-store'
+import {
+  type MaintainerJournalState,
+  resolveMaintainerJournal,
+} from '@/lib/taste/resolve-maintainer-journal'
 
 /**
- * The Collection tab — design v1.4 §11, not yet ported.
+ * §11 Collection — the Journal tab. Reference screenshot 19.
  *
- * The route exists so the tab bar has a real destination (#162: advertised
- * surfaces are navigable, never dead). See `<TabPlaceholder />` for why this
- * is scaffolding rather than a design state, and #300 for the port.
+ * **This is where the journal was always supposed to live.** It was rendered by
+ * `/profile`, from an early return ahead of everything else, which made one
+ * route serve two screens: a maintainer got the journal and could therefore
+ * never see §12's Palate at all — the only visitor with real tastings was the
+ * one visitor shut out of the view derived from them. Moving it here fixes the
+ * information architecture and, incidentally, makes §12 reachable.
+ *
+ * §11 is three tabs — Journal · Cellar · Wishlist. **Only Journal ships**, and
+ * the segmented control is not rendered:
+ *
+ * - Cellar and Wishlist are new domain concepts with no tables behind them,
+ *   and ADR-0011 blocks any migration adding a `user_id` table while
+ *   Production and Preview share one Supabase project. Cellar additionally
+ *   overlaps #243.
+ * - A three-way control where two options lead nowhere is worse than one
+ *   screen that is honest about being one screen (#162). The control arrives
+ *   with the second tab that has something in it.
+ *
+ * Who sees what: the journal is maintainer-only until the local-first rewrite
+ * (ADR-0020, gated on ADR-0011), so everyone else still gets
+ * `<TabPlaceholder />` — unchanged from before, and still the honest answer
+ * while a visitor cannot have a journal at all.
  *
  * Age gating is the proxy's job: `/collection` is absent from
- * `UNGATED_LOCALE_PATHS`, and that list is deny-by-default, so a visitor who
- * has not accepted the 18+ gate never reaches this component.
+ * `UNGATED_LOCALE_PATHS`, which is deny-by-default, so a visitor who has not
+ * accepted the 18+ gate never reaches this component. That matters more here
+ * than on a placeholder — the list names sakes and shows ratings.
  */
 
 interface PageProps {
   params: Promise<{ locale: string }>
 }
 
+type CookieJar = Awaited<ReturnType<typeof cookies>>
+
+const STUB_JOURNAL_MAP: FlavorProfile = { f1: 0.62, f2: 0.55, f3: 0.4, f4: 0.48, f5: 0.3, f6: 0.58 }
+
+// Canned journal for the non-production E2E stub (`yawaragi_journal_stub`).
+// Two entries in two different months, so the date blocks are exercised across
+// a boundary without a live Upstash.
+const STUB_JOURNAL_ENTRIES: readonly JournalEntry[] = [
+  {
+    id: 's1',
+    event: {
+      kind: 'rating',
+      rating: 5,
+      brandId: 1,
+      target: STUB_JOURNAL_MAP,
+      occurredAt: Date.UTC(2026, 6, 18),
+    },
+    sake: { nameKanji: '而今', nameRomaji: 'Jikon' },
+    notes: 'Melon and white peach, gone in a clean line.',
+    triedAt: Date.UTC(2026, 6, 18),
+    createdAt: Date.UTC(2026, 6, 18),
+  },
+  {
+    id: 's2',
+    event: {
+      kind: 'rating',
+      rating: 4,
+      brandId: 2,
+      target: STUB_JOURNAL_MAP,
+      occurredAt: Date.UTC(2026, 5, 24),
+    },
+    sake: { nameKanji: '田酒', nameRomaji: 'Denshu' },
+    triedAt: Date.UTC(2026, 5, 24),
+    createdAt: Date.UTC(2026, 5, 24),
+  },
+]
+
+function resolveJournalStub(stub: string): MaintainerJournalState {
+  if (stub === 'unavailable') return { kind: 'unavailable' }
+  if (stub === 'populated') {
+    return { kind: 'journal', entries: STUB_JOURNAL_ENTRIES, profile: STUB_JOURNAL_MAP }
+  }
+  return { kind: 'empty' }
+}
+
+/**
+ * Decide the maintainer branch. Kept out of the component body so the impure
+ * `Date.now()` read isn't in the render path — the non-prod
+ * `yawaragi_journal_stub` seam also stands in for the maintainer check + store
+ * so the E2E needs no Clerk session and no Upstash.
+ */
+async function resolveJournalView(
+  cookieJar: CookieJar,
+): Promise<{ isMaintainer: boolean; journal: MaintainerJournalState | null }> {
+  const journalStub =
+    process.env.NODE_ENV !== 'production'
+      ? cookieJar.get('yawaragi_journal_stub')?.value
+      : undefined
+  if (journalStub != null) {
+    return { isMaintainer: true, journal: resolveJournalStub(journalStub) }
+  }
+  if (!(await currentUserIsMaintainer())) {
+    return { isMaintainer: false, journal: null }
+  }
+  const { userId } = await auth()
+  const journal = await resolveMaintainerJournal({
+    store: getJournalStore(),
+    userId,
+    now: Date.now(),
+  })
+  return { isMaintainer: true, journal }
+}
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { locale } = await params
   if (!hasLocale(routing.locales, locale)) return {}
-  const t = await getTranslations({ locale, namespace: 'tabPlaceholder.collection' })
+  const t = await getTranslations({ locale, namespace: 'collection' })
   return { title: `${t('title')} | Yawaragi` }
 }
 
@@ -44,23 +150,72 @@ export default async function CollectionTabPage({ params }: PageProps) {
   if (!isLaunched(locale)) {
     const tComingSoon = await getTranslations({ locale, namespace: 'comingSoon' })
     return (
-      <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-8 py-16" data-testid="coming-soon">
-        <h1 className="text-headline font-medium text-ink">{tComingSoon('title')}</h1>
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-5 py-6" data-testid="coming-soon">
+        <h1 className="text-title font-medium text-ink">{tComingSoon('title')}</h1>
         <p className="max-w-prose text-body text-ash-600">{tComingSoon('body')}</p>
-        <Link href="/" locale="en" className="text-body font-medium underline underline-offset-4">
+        <Link
+          href="/"
+          locale="en"
+          className="w-fit text-body font-medium text-ginshu-700 underline underline-offset-4"
+        >
           {tComingSoon('switchToEn')}
         </Link>
       </div>
     )
   }
 
-  const t = await getTranslations({ locale, namespace: 'tabPlaceholder.collection' })
+  const cookieJar = await cookies()
+  const view = await resolveJournalView(cookieJar)
+
+  if (!view.isMaintainer || !view.journal) {
+    // Still scaffolding, still honest: ADR-0020 keeps the journal
+    // maintainer-only, so there is nothing of the visitor's to list yet.
+    const tPlaceholder = await getTranslations({ locale, namespace: 'tabPlaceholder.collection' })
+    return (
+      <TabPlaceholder
+        title={tPlaceholder('title')}
+        body={tPlaceholder('body')}
+        link={{ href: '/profile', label: tPlaceholder('linkLabel') }}
+      />
+    )
+  }
+
+  const t = await getTranslations('collection')
+  const journal = view.journal
 
   return (
-    <TabPlaceholder
-      title={t('title')}
-      body={t('body')}
-      link={{ href: '/profile', label: t('linkLabel') }}
-    />
+    <main
+      className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-5 py-6"
+      data-testid="collection-page"
+    >
+      {/* §11's title is the tab's name at 26px — the screen says where you are
+          rather than what it contains, because the list below does that. */}
+      <h1 className="text-tab-title font-medium text-ink">{t('title')}</h1>
+
+      {journal.kind === 'unavailable' ? (
+        <section data-testid="journal-unavailable">
+          <p className="max-w-prose text-body text-ash-600">{t('unavailableBody')}</p>
+        </section>
+      ) : journal.kind === 'empty' ? (
+        <section className="flex flex-col gap-2" data-testid="journal-empty">
+          <h2 className="text-card-heading font-medium text-ink">{t('emptyHeading')}</h2>
+          <p className="max-w-prose text-body text-ash-600">{t('emptyBody')}</p>
+        </section>
+      ) : (
+        <>
+          <JournalList entries={journal.entries} locale={locale} />
+          {/* ADR-0014: the list renders Sakenowa brand names, so the credit
+              rides on this surface. Inline, because Sakenowa is one source
+              among the visitor's own notes and ratings. */}
+          <SakenowaAttribution placement="inline" />
+        </>
+      )}
+
+      {/* The log form stays in both states. §5's star IS the save (rule 1) and
+          the star row is Phase 2, so this floating action is the only way a
+          maintainer can add an entry at all — removing it to match §11's
+          screenshot would remove the feature, not port it. */}
+      {journal.kind !== 'unavailable' && <JournalLogForm />}
+    </main>
   )
 }
