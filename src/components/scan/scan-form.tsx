@@ -13,6 +13,7 @@ import NextLink from 'next/link'
 import { useRouter } from 'next/navigation'
 import { getPathname, Link } from '@/i18n/navigation'
 import { Button } from '@/components/ui/button'
+import { CameraCapture } from '@/components/scan/camera-capture'
 import { ProvenanceBadgeView } from '@/components/sake/provenance-badge'
 import { resolveBadgeKind } from '@/lib/provenance/policy'
 // Per ADR-0014, attribution should render conditionally on the
@@ -61,13 +62,15 @@ interface ScanFormProps {
 /**
  * `<ScanForm />` — the client-side capture surface.
  *
- * Flow (post-ADR-0015 / #163):
- *   1. Visitor sees two buttons: "Take photo" (mobile / touchscreen
- *      only — `(any-pointer: coarse)`) and "Upload photo" (always
- *      visible). Each is wired to its own hidden `<input type="file">`:
- *      the camera input pins `capture="environment"` and always opens
- *      the back camera; the upload input has no `capture` and always
- *      opens the photo-library / file picker.
+ * Flow (post-ADR-0015 / #163, and §4 for step 1):
+ *   1. Visitor sees `<CameraCapture />` — §4's viewfinder, with the shutter
+ *      capturing from a live stream and a gallery button opening the photo
+ *      library. It used to be two text buttons ("Take photo", gated on
+ *      `(any-pointer: coarse)`, and "Upload photo"), each wired to its own
+ *      hidden file input. The library input is still here and is still the
+ *      path ADR-0012 guarantees; the `capture="environment"` one is gone,
+ *      replaced by the live stream where it works and by screenshot 07's
+ *      panel where it does not.
  *   2. On change, we hold onto the raw file (for a client-only
  *      `URL.createObjectURL` preview that never leaves the browser)
  *      AND downscale it via `<canvas>.toBlob` +
@@ -84,11 +87,12 @@ interface ScanFormProps {
  * framed copy — never "error" tone. The route as a whole is age-gated
  * upstream by the proxy so no flavor data reaches an unaccepted visitor.
  *
- * The two entry buttons from step 1 are hidden once any result is on
- * screen (`hasResult`): each result state carries its own "Scan again",
- * so leaving the pair above the answer just stacked a second way to do
- * the same thing. The message-only states keep them — see the comment
- * on `hasResult` for which those are and why.
+ * The camera is hidden once any result is on screen (`hasResult`): each
+ * result state carries its own "Scan again", so leaving a viewfinder above
+ * the answer just stacks a second way to do the same thing. The message-only
+ * states keep it — see the comment on `hasResult` for which those are and
+ * why. A "Scan again" dismisses the result and the viewfinder returns; see
+ * `view` for why that is one value rather than five conditions.
  */
 export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
   const t = useTranslations('scan.form')
@@ -105,18 +109,16 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
   // same label the sake detail page and result card render).
   const tSake = useTranslations('sake.brand')
   const router = useRouter()
-  // Two distinct file inputs so the visitor gets a deterministic
-  // choice between the camera and the photo library on mobile —
-  // without depending on the OS to show its (browser- and
-  // version-dependent) "Photo Library / Take Photo / Choose File"
-  // sheet. The upload input has no `capture` attribute and always
-  // opens the picker; the camera input pins `capture="environment"`
-  // and always opens the back camera. The camera button itself is
-  // hidden on devices without a coarse pointer (desktop without a
-  // touchscreen), so the dual layout only shows up where it adds
-  // value.
+  // One file input: the photo library.
+  //
+  // There used to be two, so the visitor got a deterministic choice between
+  // the camera and the library without depending on the OS sheet — the second
+  // pinned `capture="environment"`. §4 replaces it with a live viewfinder,
+  // which is the same choice made better: the shutter captures from the
+  // stream, and where the stream cannot open, screenshot 07's panel routes to
+  // this input. Keeping a hidden `capture` input beside the camera would be a
+  // third capture path with no affordance pointing at it.
   const uploadInputRef = useRef<HTMLInputElement | null>(null)
-  const cameraInputRef = useRef<HTMLInputElement | null>(null)
   const [state, formAction, isActionPending] = useActionState<ScanActionState, FormData>(
     scanAction,
     INITIAL_SCAN_ACTION_STATE,
@@ -126,6 +128,14 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
   // discovery-framed i18n string ('errorDownscale'), not the raw browser
   // exception, to keep DACH copy on-brand.
   const [downscaleFailed, setDownscaleFailed] = useState(false)
+  /**
+   * The visitor tapped "Scan again" and is back at the viewfinder.
+   *
+   * Local, because `useActionState` has no reset: the action's last result is
+   * still in `state` and will be until a new submission replaces it. This is
+   * what makes `hasResult` false again so §4's camera screen returns.
+   */
+  const [resultDismissed, setResultDismissed] = useState(false)
   // ADR-0015 / #163: the in-place result card shows the visitor's own
   // label photo. The URL is created from the ORIGINAL File the visitor
   // picked (pre-downscale — displays the friendliest quality). It never
@@ -253,22 +263,42 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
     uploadInputRef.current?.click()
   }
 
-  function onCameraClick() {
+  /**
+   * Every in-result "Scan again" — §4's model is camera-first.
+   *
+   * It used to open the photo library, because there was no camera screen to
+   * return to: the entry affordance was two buttons, and reopening the picker
+   * was the shortest path. §4 makes the camera the Scan tab's screen, so a
+   * rescan dismisses the result and the viewfinder is simply there again. One
+   * tap to the camera, then the shutter — rather than one tap into an OS file
+   * browser the visitor did not ask for.
+   *
+   * `useActionState` has no reset, so dismissal is local state that
+   * `hasResult` reads. `handleFile` clears it, so the next result shows.
+   */
+  function onPickClick() {
+    setResultDismissed(true)
+    setPhotoUrl(null)
     setDownscaleFailed(false)
-    cameraInputRef.current?.click()
   }
-
-  // Both buttons share the same handler when the existing UI calls
-  // `onPickClick` (rescan paths inside the result branches). Pick the
-  // upload one as the default — it works on every device, including
-  // desktops without a camera, where the camera input would just
-  // fall back to a file picker anyway.
-  const onPickClick = onUploadClick
 
   async function onFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
     if (!file) return
+    await handleFile(file)
+  }
+
+  /**
+   * One pipeline, two sources. The live camera hands a captured frame in here
+   * as a `File`, exactly as the OS picker does through `onFileChange` — which
+   * is what keeps the gallery a true fallback rather than a parallel
+   * implementation (ADR-0012: "a build where the OS picker is unreachable
+   * violates this ADR").
+   */
+  async function handleFile(file: File) {
     setDownscaleFailed(false)
+    // A new attempt supersedes whatever the visitor dismissed to get here.
+    setResultDismissed(false)
     setIsDownscaling(true)
     // New scan attempt — reset the relative-time origin so subsequent
     // events show time since pick. Events accumulate in the app-level
@@ -312,12 +342,10 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
       pushClientEvent('downscale failed; surfaced localized error', undefined)
     } finally {
       setIsDownscaling(false)
-      // Reset both inputs so picking the same file again still fires
-      // onChange (browsers suppress duplicate-value events). We don't
-      // know which of the two inputs triggered the change handler, so
-      // clear both — they're cheap.
+      // Reset the input so picking the same file again still fires onChange
+      // (browsers suppress duplicate-value events). A camera capture never
+      // goes through the input, so there is nothing to clear for that path.
       if (uploadInputRef.current) uploadInputRef.current.value = ''
-      if (cameraInputRef.current) cameraInputRef.current.value = ''
     }
   }
 
@@ -336,15 +364,31 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
   // `extraction_failed`, and the client-side `downscaleFailed`): they
   // render a line of copy and nothing else, so the entry pair is their
   // only way forward and must stay.
+  /**
+   * What the screen shows, as opposed to what the action last returned.
+   *
+   * They diverge for exactly one reason: the visitor tapped "Scan again" and
+   * is back at the viewfinder. `useActionState` has no reset, so `state` still
+   * holds the dismissed result — and an earlier draft gated only the camera on
+   * that flag, which put the viewfinder back UNDERNEATH the card it was meant
+   * to replace. Deriving the whole view from one value makes that class of
+   * half-dismissal impossible rather than fixing it five times.
+   *
+   * Message-only states are unaffected: nothing in them calls the dismisser,
+   * so a rate-limit line cannot be tapped away while the limit still applies.
+   */
+  const view = resultDismissed ? INITIAL_SCAN_ACTION_STATE : state
+
+
   const isMatch =
-    state.status === 'matched' ||
-    state.status === 'matched_brand_only' ||
-    state.status === 'matched_brewery_only'
+    view.status === 'matched' ||
+    view.status === 'matched_brand_only' ||
+    view.status === 'matched_brewery_only'
   const hasResult =
     isMatch ||
-    state.status === 'low_confidence' ||
-    state.status === 'no_match' ||
-    state.status === 'ambiguous'
+    view.status === 'low_confidence' ||
+    view.status === 'no_match' ||
+    view.status === 'ambiguous'
 
   // The form is JS-only: there is no no-JS submit path because the canvas
   // downscale runs in the browser before we ever build the FormData. The
@@ -370,48 +414,29 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
         data-testid="scan-file-input"
         aria-label={t('uploadAriaLabel')}
       />
-      <input
-        ref={cameraInputRef}
-        type="file"
-        name="image-picker-camera"
-        accept="image/*"
-        capture="environment"
-        onChange={onFileChange}
-        className="sr-only"
-        data-testid="scan-camera-input"
-        aria-label={t('cameraAriaLabel')}
-      />
       {!hasResult && (
-        <div className="flex flex-wrap items-center gap-2">
-          {/*
-            Take-photo button is gated on `(any-pointer: coarse)` —
-            shows on phones / tablets / touchscreen laptops, hides on
-            desktops without touch. On desktop the camera input would
-            just fall back to a file picker, duplicating the upload
-            button below.
-          */}
-          <Button
-            type="button"
-            onClick={onCameraClick}
-            disabled={isPending}
-            data-testid="scan-camera-button"
-            className="hidden [@media(any-pointer:coarse)]:inline-flex"
-          >
-            {isPending ? t('pending') : t('takePhoto')}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onUploadClick}
-            disabled={isPending}
-            data-testid="scan-pick-button"
-          >
-            {isPending ? t('pending') : t('uploadPhoto')}
-          </Button>
-        </div>
+        /*
+          §4 Camera. This used to be two text buttons — "Take photo", gated on
+          `(any-pointer: coarse)`, and "Upload photo" — which is what the Scan
+          tab's main screen was: a heading, a paragraph and two buttons. The
+          design gives the tab a viewfinder.
+          
+          Both of those buttons survive inside it: the shutter captures from
+          the live stream, and the gallery button opens the same photo-library
+          input the "Upload photo" button did. The native `capture="environment"`
+          input is no longer surfaced — the live camera replaces it where it
+          works, and where it does not, screenshot 07's panel offers the photo
+          library instead, which is the path ADR-0012 guarantees.
+        */
+        <CameraCapture
+          isWorking={isPending}
+          onCapture={(file) => void handleFile(file)}
+          onChoosePhoto={onUploadClick}
+          typeItHref={null}
+        />
       )}
 
-      {state.status === 'invalid_input' && (
+      {view.status === 'invalid_input' && (
         <p
           role="alert"
           className="text-sm text-amber-700 dark:text-amber-300"
@@ -420,7 +445,7 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
           {t('errorInvalidInput')}
         </p>
       )}
-      {state.status === 'session_missing' && (
+      {view.status === 'session_missing' && (
         // Post-#161 defensive state: the middleware (src/proxy.ts) is
         // the sole writer of `yawaragi_session`, and the /scan route is
         // in the middleware matcher, so this branch should not surface
@@ -435,7 +460,7 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
           {t('sessionMissing')}
         </p>
       )}
-      {state.status === 'rate_limited' && (
+      {view.status === 'rate_limited' && (
         // PRD #105 §"Rate-limit policy v1" + issue #107: discovery /
         // learning copy with the human-friendly retry time. The
         // numeric retryAfterSec is rendered as a rounded-up hours
@@ -448,7 +473,7 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
           data-testid="scan-error-rate-limited"
         >
           {t('rateLimited', {
-            hours: Math.max(1, Math.ceil(state.retryAfterSec / 3600)),
+            hours: Math.max(1, Math.ceil(view.retryAfterSec / 3600)),
           })}
         </p>
       )}
@@ -461,7 +486,7 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
           {t('errorDownscale')}
         </p>
       )}
-      {state.status === 'extraction_failed' && (
+      {view.status === 'extraction_failed' && (
         // The action wraps the vision call + Sakenowa lookup in a
         // try/catch (see scan-action.ts). Random non-sake images
         // routinely bottom out the AI SDK's schema-validation retries
@@ -478,7 +503,7 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
           {t('extractionFailed')}
         </p>
       )}
-      {state.status === 'low_confidence' && consensus && (
+      {view.status === 'low_confidence' && consensus && (
         // Retry / low_confidence tier AND the per-tab history has a
         // strict-majority consensus on a brand from earlier successful
         // scans. Surface the consensus as a soft-match: "based on
@@ -544,7 +569,7 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
           </div>
         </div>
       )}
-      {state.status === 'low_confidence' && !consensus && (
+      {view.status === 'low_confidence' && !consensus && (
         // Retry tier (confidence < 0.60). No lookup attempted upstream
         // — the model isn't confident enough about the (name, brewery)
         // pair to be worth checking against Sakenowa. Per #163 this
@@ -590,7 +615,7 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
           </div>
         </div>
       )}
-      {state.status === 'no_match' && (
+      {view.status === 'no_match' && (
         // Bottle wasn't found in the catalogue. Sometimes this is
         // genuine (limited edition, collaboration product — covered
         // by §22/§23) and sometimes the model fabricated a
@@ -626,7 +651,7 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
                 lang="ja"
                 data-testid="scan-result-no-match-name-ja"
               >
-                {state.extraction.name_ja}
+                {view.extraction.name_ja}
               </span>
               <ProvenanceBadgeView
                 kind={resolveBadgeKind('llm_extracted')}
@@ -634,7 +659,7 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
                 explanation={tBadge('explanation')}
                 sheetTitle={tBadge('sheetTitle')}
                 closeLabel={tProvenanceSheet('closeLabel')}
-                confidence={state.extraction.confidence}
+                confidence={view.extraction.confidence}
                 id="scan-result-no-match-badge"
               />
             </div>
@@ -645,7 +670,7 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
               <span className="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
                 {tSake('breweryLabel')}
               </span>
-              <span lang="ja">{state.extraction.brewery_ja}</span>
+              <span lang="ja">{view.extraction.brewery_ja}</span>
             </div>
           </div>
           <p className="text-sm text-zinc-700 dark:text-zinc-300">{t('noMatch')}</p>
@@ -674,7 +699,7 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
           </div>
         </div>
       )}
-      {state.status === 'ambiguous' && (() => {
+      {view.status === 'ambiguous' && (() => {
         // Disambiguation list. Each candidate carries its brand
         // kanji + romaji and its brewery info; if every candidate
         // shares the same brewery (common shape from brewery-only
@@ -691,7 +716,7 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
         // field. Treat missing/non-array as empty and fall through
         // to the no-match copy rather than crashing the whole
         // page into Next.js's "This page couldn't load" overlay.
-        const candidates = Array.isArray(state.candidates) ? state.candidates : []
+        const candidates = Array.isArray(view.candidates) ? view.candidates : []
         const breweryKanjis = new Set(candidates.map((c) => c.breweryKanji))
         const sharedBrewery = breweryKanjis.size === 1 ? candidates[0] : null
         // Compose the "romaji, prefecture" parenthetical shown next to
@@ -794,25 +819,25 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
           </div>
         )
       })()}
-      {state.status === 'matched' && (
+      {view.status === 'matched' && (
         // ADR-0015 / #163: the matched result renders IN PLACE on /scan
         // (previously auto-navigated to /sake/[brandId] on the auto tier
         // and rendered a text-only confirm card on the confirm tier).
         // Both confidence tiers now share the same rich `<ScanResultCard />`
         // — photo + kanji + romaji + provenance badge + flavor chart +
         // an explicit "Full bottle page" row. The tier information
-        // survives inside `state.extraction.confidence`, which the
+        // survives inside `view.extraction.confidence`, which the
         // provenance badge renders as its confidence sub-label — that's
         // where a curious visitor can see how sure the system is about
         // its read.
         <ScanResultCard
           photoUrl={photoUrl}
           photoAlt={t('photoAlt')}
-          sakeKanji={state.extraction.name_ja}
-          sakeRomaji={state.sakeRomaji}
-          breweryKanji={state.extraction.brewery_ja}
-          breweryRomaji={state.breweryRomaji}
-          sakeHref={state.sakeHref}
+          sakeKanji={view.extraction.name_ja}
+          sakeRomaji={view.sakeRomaji}
+          breweryKanji={view.extraction.brewery_ja}
+          breweryRomaji={view.breweryRomaji}
+          sakeHref={view.sakeHref}
           // Resolved through the typed pathnames manifest rather than
           // appending "/similar" to `sakeHref`: the two routes happen to
           // share a spelling in both locales today, and a string append
@@ -821,11 +846,11 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
             locale,
             href: {
               pathname: '/sake/[brandId]/similar',
-              params: { brandId: String(state.brandId) },
+              params: { brandId: String(view.brandId) },
             },
           })}
-          flavorChart={state.flavorChart}
-          extractionConfidence={state.extraction.confidence}
+          flavorChart={view.flavorChart}
+          extractionConfidence={view.extraction.confidence}
           // Rescan-in-flight fade: `isPending` covers both the browser-
           // side downscale AND the server round-trip. While either is
           // running, the visitor's fresh photo is already displayed
@@ -835,7 +860,7 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
           isStale={isPending}
         />
       )}
-      {state.status === 'matched_brand_only' && (
+      {view.status === 'matched_brand_only' && (
         // Phase 3 / #123: brand-only fallback succeeded but the
         // brewery on the label diverged from the catalogue. NO
         // auto-navigate — the visitor must make a conscious tap so
@@ -857,14 +882,14 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
               lang="ja"
               data-testid="scan-result-name-ja"
             >
-              {state.sakeKanji}
+              {view.sakeKanji}
             </span>
-            {state.sakeRomaji && (
+            {view.sakeRomaji && (
               <span
                 className="text-sm text-zinc-600 dark:text-zinc-400"
                 data-testid="scan-result-matched-brand-only-sake-romaji"
               >
-                ({state.sakeRomaji})
+                ({view.sakeRomaji})
               </span>
             )}
             <ProvenanceBadgeView
@@ -873,7 +898,7 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
               explanation={tBadge('explanation')}
               sheetTitle={tBadge('sheetTitle')}
               closeLabel={tProvenanceSheet('closeLabel')}
-              confidence={state.extraction.confidence}
+              confidence={view.extraction.confidence}
               id="scan-result-matched-brand-only-badge"
             />
           </div>
@@ -886,21 +911,21 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
           >
             <span lang="ja">
               {t('matchedBrandOnlyDivergence', {
-                extracted: state.breweryDivergence.extracted,
-                stored: state.breweryDivergence.stored,
+                extracted: view.breweryDivergence.extracted,
+                stored: view.breweryDivergence.stored,
               })}
             </span>
-            {state.breweryDivergence.storedRomaji && (
+            {view.breweryDivergence.storedRomaji && (
               <>
                 {' '}
                 <span data-testid="scan-result-brewery-divergence-romaji">
-                  ({state.breweryDivergence.storedRomaji})
+                  ({view.breweryDivergence.storedRomaji})
                 </span>
               </>
             )}
           </p>
           <NextLink
-            href={state.sakeHref}
+            href={view.sakeHref}
             className="text-sm font-medium text-blue-700 underline-offset-2 hover:underline dark:text-blue-300"
             data-testid="scan-result-matched-brand-only-link"
           >
@@ -908,7 +933,7 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
           </NextLink>
         </div>
       )}
-      {state.status === 'matched_brewery_only' && (
+      {view.status === 'matched_brewery_only' && (
         // Structural dual of `matched_brand_only` (#123). The
         // brand-only fallback also missed, but brewery-only found a
         // mono-brand brewery: the brewery is identified, the brand
@@ -933,14 +958,14 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
               lang="ja"
               data-testid="scan-result-name-ja"
             >
-              {state.brandDivergence.stored}
+              {view.brandDivergence.stored}
             </span>
-            {state.brandDivergence.storedRomaji && (
+            {view.brandDivergence.storedRomaji && (
               <span
                 className="text-sm text-zinc-600 dark:text-zinc-400"
                 data-testid="scan-result-matched-brewery-only-sake-romaji"
               >
-                ({state.brandDivergence.storedRomaji})
+                ({view.brandDivergence.storedRomaji})
               </span>
             )}
             <ProvenanceBadgeView
@@ -949,17 +974,17 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
               explanation={tBadge('explanation')}
               sheetTitle={tBadge('sheetTitle')}
               closeLabel={tProvenanceSheet('closeLabel')}
-              confidence={state.extraction.confidence}
+              confidence={view.extraction.confidence}
               id="scan-result-matched-brewery-only-badge"
             />
           </div>
-          {state.breweryRomaji && (
+          {view.breweryRomaji && (
             <span
               className="text-sm text-zinc-600 dark:text-zinc-400 flex items-baseline gap-2 flex-wrap"
               data-testid="scan-result-matched-brewery-only-brewery"
             >
-              <span lang="ja">{state.extraction.brewery_ja}</span>
-              <span>({state.breweryRomaji})</span>
+              <span lang="ja">{view.extraction.brewery_ja}</span>
+              <span>({view.breweryRomaji})</span>
             </span>
           )}
           <p className="text-sm text-zinc-700 dark:text-zinc-300">
@@ -971,21 +996,21 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
           >
             <span lang="ja">
               {t('matchedBreweryOnlyDivergence', {
-                extracted: state.brandDivergence.extracted,
-                stored: state.brandDivergence.stored,
+                extracted: view.brandDivergence.extracted,
+                stored: view.brandDivergence.stored,
               })}
             </span>
-            {state.brandDivergence.storedRomaji && (
+            {view.brandDivergence.storedRomaji && (
               <>
                 {' '}
                 <span data-testid="scan-result-brand-divergence-romaji">
-                  ({state.brandDivergence.storedRomaji})
+                  ({view.brandDivergence.storedRomaji})
                 </span>
               </>
             )}
           </p>
           <NextLink
-            href={state.sakeHref}
+            href={view.sakeHref}
             className="text-sm font-medium text-blue-700 underline-offset-2 hover:underline dark:text-blue-300"
             data-testid="scan-result-matched-brewery-only-link"
           >
@@ -1004,11 +1029,10 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
         // port, and until then the affordance lives under the card
         // rather than not existing.
         //
-        // It opens the photo library, not the camera — `onPickClick`
-        // is the upload input, matching every other in-result rescan
-        // in this form. Routing rescans to the camera on coarse
-        // pointers is a one-line change but it belongs with §4, where
-        // the camera becomes the surface rather than a hidden input.
+        // It returns to the camera, which is what this comment used to say
+        // belonged with §4 — this is §4. It opened the photo library before,
+        // because the camera was a hidden input and there was no screen to go
+        // back to.
         <div
           className="mt-1 flex flex-wrap items-center gap-3"
           data-testid="scan-result-match-rescan-row"
