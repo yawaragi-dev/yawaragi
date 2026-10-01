@@ -194,10 +194,18 @@ test.describe('/en/profile — §12 Palate', () => {
     // The journal used to be rendered from an early return ahead of
     // everything else, so the only visitor with real tastings was the one
     // visitor who could never see the view derived from them. It lives at §11
-    // Collection now.
+    // Collection now — and this screen reads it as DATA.
     await expect(page.getByTestId('profile-page')).toBeVisible()
     await expect(page.getByTestId('journal-list')).toHaveCount(0)
     await expect(page.getByTestId('journal-log-open')).toHaveCount(0)
+
+    // Three journal entries is a read, so the Palate must be one — not "Not
+    // yet". Moving the journal WITHOUT this would have left a maintainer with
+    // every tasting they own and no reading of them, which is the regression
+    // this assertion exists to catch.
+    await expect(page.getByTestId('palate-read')).toBeVisible()
+    await expect(page.getByTestId('palate-title')).not.toHaveText('Not yet')
+    await expect(page.getByTestId('palate-confidence')).toContainText('3 of 10')
 
     await context.close()
   })
