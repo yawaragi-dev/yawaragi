@@ -202,6 +202,18 @@ See `docs/adr/0007-i18n-en-de.md`.
 - Do NOT merge a Phase 2.5+ slice that adds or modifies a table containing `user_id` (or any per-user identifier) while `Production` and `Preview` still share one Supabase project. Per [ADR-0011](./docs/adr/0011-per-env-data-isolation.md), the Supabase Pro upgrade + Branches enablement PR must merge first (or in the same train).
 - Do NOT declare an interactive-UI slice done without running the pre-flight checklist in [`docs/agents/ux-design-playbook.md`](./docs/agents/ux-design-playbook.md). Every recent UX miss (#163 auto-navigate, #184 click-no-feedback) violated one of its rules; the ACs on the issue did not catch them, so the human maintainer did.
 
+## Every PR opens with a plain-language TL;DR
+
+**One sentence, no jargon, first thing in the body** — and the same sentence when you describe the PR in chat. `.github/pull_request_template.md` has a `## TL;DR` section for it.
+
+It is written for someone who has not read the code: no component names, no `§` section numbers, no "provenance / RSC / i18n / primitive / port". Say what a person using the app would notice changing.
+
+- Good: *"Making the little 'AI-inferred' tags tappable, so they open a short explanation instead of a tooltip that got cut off at the screen edge."*
+- Good: *"A new screen for typing a sake's name when the camera can't read the label."*
+- Bad: *"Ports `ProvenanceBadgeView` onto the §16 `InfoSheetPanel` primitive."*
+
+Everything technical still belongs in the body — the TL;DR is in addition to it, never instead of it. Related: the `## Manual testing` section (copy-pasteable steps) is also expected on every PR.
+
 ## Test review checklist
 Before merging any test Claude wrote, ask:
 1. Would this test fail if I deleted the implementation? (If no, it tests the mock.)

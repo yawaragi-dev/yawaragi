@@ -1,6 +1,21 @@
+## TL;DR
+
+<!--
+ONE sentence, plain language, no jargon — what a non-engineer would understand
+this PR does. No component names, no section numbers, no provenance/i18n/RSC
+vocabulary. Write what the visitor sees change.
+
+Good: "Making the little 'AI-inferred' tags tappable, so they open a short
+       explanation instead of a tooltip that got cut off at the screen edge."
+Bad:  "Ports ProvenanceBadgeView onto the §16 InfoSheetPanel primitive."
+
+This line is required, and it goes first.
+-->
+
 ## Summary
 
-<!-- One paragraph or short bullet list of what this PR changes and why. -->
+<!-- One paragraph or short bullet list of what this PR changes and why. The
+     place for section numbers, component names and the technical reasoning. -->
 
 ## Closes
 
