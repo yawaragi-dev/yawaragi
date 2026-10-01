@@ -5,6 +5,7 @@ import { HeaderAuth } from '@/components/auth/header-auth'
 import { AccountLink } from '@/components/layout/account-link'
 import { BackLink } from '@/components/layout/back-link'
 import { LocaleSwitcher } from '@/components/layout/locale-switcher'
+import { ShellBackLink } from '@/components/layout/shell-back-link'
 
 /**
  * The top edge — design v1.4 rule 11: "the **top edge** is 'where am I / go
@@ -29,12 +30,16 @@ import { LocaleSwitcher } from '@/components/layout/locale-switcher'
  * chase the design sooner would breach ADR-0007; removing the wordmark before
  * back arrows exist would leave screens with no way out but the tabs.
  *
- * `showBack` is the first step of that arrow, opted into per route group. The
- * legal documents need it most: they sit in `(site)`, so they have no tab bar,
- * and once #303 emptied this header of its nav the wordmark was the only way
- * out — which pointed at the landing, not back. Reaching an app screen again
- * took three hops. App screens keep the tabs and do not opt in yet, because
- * rule 11's arrow is per-screen and each screen supplies its own title.
+ * `showBack` carries that arrow. `true` renders it unconditionally, which is
+ * what `(site)` wants: the legal documents have no tab bar, so once #303
+ * emptied this header of its nav the wordmark was the only way out — and it
+ * pointed at the landing, not back.
+ *
+ * `'auto'` is rule 11 itself, and is what the app shell passes: an arrow on
+ * every screen except the four tab main screens. It is a separate mode rather
+ * than the default because `(site)` has no tabs for the rule to except, and
+ * because a `(site)` page asking for an arrow is stating a fact about itself,
+ * not delegating to the pathname. See `<ShellBackLink />`.
  */
 interface HeaderCommonProps {
   /**
@@ -68,8 +73,11 @@ interface HeaderCommonProps {
 type HeaderProps = HeaderCommonProps &
   (
     | {
-        /** Render rule 11's back arrow left of the wordmark. */
-        showBack: true
+        /**
+         * Render rule 11's back arrow left of the wordmark. `true` always;
+         * `'auto'` on every screen but the four tab main screens.
+         */
+        showBack: true | 'auto'
         /** Resolved path the arrow falls back to with no history to pop. */
         backFallbackHref: string
       }
@@ -88,13 +96,17 @@ export async function Header(props: HeaderProps = {}) {
       data-testid="site-header"
     >
       <div className="flex items-center gap-3 px-5 py-3 sm:gap-4">
-        {props.showBack && (
-          // `-ml-3` pulls the 44px touch target back by its own padding so the
-          // arrow's glyph — not the edge of its hit area — lines up with the
-          // 20px gutter the wordmark uses. The target itself stays 44px.
-          <span className="-ml-3 flex">
-            <BackLink fallbackHref={props.backFallbackHref} label={t('backLabel')} />
-          </span>
+        {props.showBack === 'auto' ? (
+          <ShellBackLink fallbackHref={props.backFallbackHref} label={t('backLabel')} />
+        ) : (
+          props.showBack && (
+            // `-ml-3` pulls the 44px touch target back by its own padding so
+            // the arrow's glyph — not the edge of its hit area — lines up with
+            // the 20px gutter the wordmark uses. The target stays 44px.
+            <span className="-ml-3 flex">
+              <BackLink fallbackHref={props.backFallbackHref} label={t('backLabel')} />
+            </span>
+          )
         )}
         {linkWordmark ? (
           <Link

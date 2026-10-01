@@ -115,50 +115,56 @@ test.describe('sake brand page', () => {
     })
     expect(isAttributionBeforeKanji).toBe(true)
 
-    // Slice 8: <ProvenanceBadge /> renders null for canonical sources, so the
-    // brand RECORD (source: 'sakenowa') carries no badge. The romaji FIELDS
-    // are a different story — they are Hepburn romanisations produced by an
-    // LLM, so CLAUDE.md requires a badge on each.
+    // Romaji provenance. The brand RECORD is Sakenowa-sourced and carries no
+    // affordance; the romaji FIELDS are Hepburn romanisations produced by an
+    // LLM, so CLAUDE.md requires that neither appears without one.
     //
-    // This used to assert `toHaveCount(0)` outright, on the premise that
-    // "Sakenowa-sourced rows have name === nameKanji so the romaji <p> is
-    // omitted". That premise expired when the romaji backfill populated the
-    // mirror: locally the page now renders two `llm_inferred` badges and the
-    // assertion failed on every run, while staying green on CI only because
-    // CI has no DATABASE_URL and skips the whole spec. A test that can only
-    // pass where it never runs is not a test.
+    // §9 serves that with ONE §16 disclosure for the identity block rather
+    // than a `<ProvenanceBadge />` per field: at 390px a chip never fits
+    // beside 25px type, so it wrapped to its own line and split the page's
+    // most important element into name / chip / kana / brewery / chip. The
+    // compliance property is unchanged and is the one CLAUDE.md spells out for
+    // `<HeuristicDisclaimer />` — the caveat is in the DOM and
+    // `aria-describedby` reaches it with no interaction.
     //
-    // Asserted as a relationship instead of a count, so it holds whether or
-    // not a given row has romaji: every badge on this page belongs to a
-    // romaji field, and none sits beside the canonical kanji.
-    // Stated in both directions so deleting the badges cannot make this pass:
-    // every romaji field that IS rendered must carry exactly one
-    // `llm_inferred` badge, and no badge may sit anywhere else on the page.
+    // Three things are asserted, so no single deletion can make this pass:
+    // the romaji fields are marked, the caveat is present and non-empty, and
+    // the sheet that explains it is reachable.
+    const romajiFields = page.locator('[data-romaji-field]')
+    expect(await romajiFields.count()).toBeGreaterThan(0)
     for (const field of ['brand-name-romaji', 'brewery-name-romaji']) {
       const romaji = page.getByTestId(field)
       if ((await romaji.count()) === 0) continue
-      const badge = romaji.getByTestId('provenance-badge')
-      await expect(badge).toHaveCount(1)
-      await expect(badge).toHaveAttribute('data-kind', 'llmInferred')
+      await expect(romaji).toHaveAttribute('data-romaji-field', '')
     }
 
+    const disclosure = page
+      .locator('[data-testid^="info-sheet-brand-"][data-testid$="-identity-romaji"]')
+      .first()
+    await expect(disclosure).toBeVisible()
+    const caveat = disclosure.locator('[data-testid$="-caveat"]')
+    await expect(caveat).toBeVisible()
+    expect((await caveat.innerText()).trim().length).toBeGreaterThan(0)
+    // `aria-describedby` points at that caveat — the part a screen reader
+    // follows without opening anything.
+    const trigger = disclosure.getByRole('button')
+    await expect(trigger).toHaveAttribute('aria-describedby', (await caveat.getAttribute('id'))!)
+
+    // And nothing carries a badge beside a canonical Sakenowa value. This is
+    // the half the old assertion was reaching for, kept: the brand heading,
+    // the brewery kanji and the chart values are canonical and must stay bare.
     const badgesOutsideRomaji = await page.evaluate(
       () =>
         [...document.querySelectorAll('[data-testid="provenance-badge"]')].filter(
-          (b) =>
-            !b.closest(
-              '[data-testid="brand-name-romaji"], [data-testid="brewery-name-romaji"]',
-            ),
+          (b) => !b.closest('[data-romaji-field]'),
         ).length,
     )
-    // The part the old assertion was reaching for: the canonical brand
-    // heading, and every other Sakenowa-sourced value, carries no badge.
     expect(badgesOutsideRomaji).toBe(0)
 
     await context.close()
   })
 
-  test('a provenance badge explains itself in a sheet that fits the screen', async ({
+  test('states what the catalogue does not carry, rather than hiding it', async ({
     browser,
   }, testInfo) => {
     testInfo.skip(anyBrandId === null, 'DB-bound spec')
@@ -170,16 +176,99 @@ test.describe('sake brand page', () => {
 
     await page.goto(`/en/sake/${anyBrandId}`)
 
-    const badge = page.getByTestId('provenance-badge').first()
-    await expect(badge).toBeVisible()
+    // Design v1.4 rule 4: "Missing data is stated, not hidden." §9 keeps every
+    // section in its fixed order and fills the ones it cannot answer with a
+    // sentence — screenshot 17 is that page drawn deliberately. The mirror
+    // carries no brewing specs, serving temperatures, pairings or shops for
+    // ANY bottle, so these four must render on every one of them.
+    for (const section of [
+      'bottle-serve',
+      'bottle-specs',
+      'bottle-pairings',
+      'bottle-community',
+      'bottle-shops',
+    ]) {
+      await expect(page.getByTestId(section)).toBeVisible()
+    }
 
-    // The bug this replaced: the explanation was an `absolute left-0 w-max`
-    // tooltip, and at 390px a badge at x=141 put a 320px panel at x=462 — 72px
-    // off-screen, reported as text cut mid-sentence. A width clamp cannot fix
-    // it, because the box is anchored to the badge.
-    await badge.click()
+    // The spec grid names its unknown fields rather than dropping the rows.
+    const specs = page.getByTestId('bottle-specs')
+    await expect(specs.getByText('Not published').first()).toBeVisible()
 
-    const panel = page.locator('[data-testid^="info-sheet-provenance-"][data-testid$="-panel"]')
+    // §9 orders the page personal-to-general. Asserted as an ordering rather
+    // than per-section positions, so adding a section between two of these
+    // does not break it but reordering them does.
+    const order = await page.evaluate(() =>
+      [...document.querySelectorAll('[data-testid^="bottle-"]')].map((el) =>
+        el.getAttribute('data-testid'),
+      ),
+    )
+    const rank = (id: string) => order.indexOf(id)
+    expect(rank('bottle-identity')).toBeLessThan(rank('bottle-serve'))
+    expect(rank('bottle-serve')).toBeLessThan(rank('bottle-specs'))
+    expect(rank('bottle-pairings')).toBeLessThan(rank('bottle-community'))
+    expect(rank('bottle-community')).toBeLessThan(rank('bottle-shops'))
+
+    await context.close()
+  })
+
+  test('offers a way back out, which the bottle page had none of', async ({
+    browser,
+  }, testInfo) => {
+    testInfo.skip(anyBrandId === null, 'DB-bound spec')
+
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([AGE_GATE_COOKIE])
+    const page = await context.newPage()
+
+    // Rule 11: every screen that is not a tab main screen carries the arrow.
+    // The bottle page is reached from scan, search and similar-sakes and had
+    // no back affordance at all until §9 — a visitor's only exit was a tab,
+    // which clears the history they came through.
+    await page.goto('/en/scan')
+    await expect(page.getByTestId('back-link')).toHaveCount(0)
+
+    await page.goto(`/en/sake/${anyBrandId}`)
+    const back = page.getByTestId('back-link')
+    await expect(back).toBeVisible()
+
+    // A cold deep link has no history to pop, so the arrow must still be a
+    // real anchor rather than a control that does nothing.
+    await expect(back).toHaveAttribute('href', '/en/home')
+
+    await context.close()
+  })
+
+  test('an inferred-claim sheet fits the screen it opens on', async ({
+    browser,
+  }, testInfo) => {
+    testInfo.skip(anyBrandId === null, 'DB-bound spec')
+
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([AGE_GATE_COOKIE])
+    const page = await context.newPage()
+    await page.setViewportSize({ width: 390, height: 844 })
+
+    await page.goto(`/en/sake/${anyBrandId}`)
+
+    // The subject is `<InfoSheetPanel />`, the primitive every §16 disclosure
+    // and the provenance badge share. On this page it is reached through the
+    // romaji disclosure; the badge, which renders on the scan card, opens the
+    // same panel.
+    //
+    // The bug this guards: the explanation used to be an `absolute left-0
+    // w-max` tooltip, and at 390px a trigger at x=141 put a 320px panel at
+    // x=462 — 72px off-screen, reported as text cut mid-sentence. A width
+    // clamp cannot fix it, because the box is anchored to the trigger. A
+    // bottom sheet is viewport-sized by construction, and this asserts it.
+    const openSheet = page
+      .locator('[data-testid^="info-sheet-brand-"][data-testid$="-identity-romaji"]')
+      .first()
+      .getByRole('button')
+    await expect(openSheet).toBeVisible()
+    await openSheet.click()
+
+    const panel = page.locator('[data-testid$="-panel"]').first()
     await expect(panel).toBeVisible()
 
     // The sheet slides in, so the first box after `visible` is mid-transition.

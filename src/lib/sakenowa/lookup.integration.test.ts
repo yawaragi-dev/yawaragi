@@ -19,6 +19,7 @@ import {
   findSakeByBreweryOnlyFromPool,
   findSakeByExtractionFromPool,
   listRankingFromPool,
+  listSiblingBrandsFromPool,
   lookupBrandFromPool,
   lookupBreweryByBrandFromPool,
   lookupFlavorChartFromPool,
@@ -994,5 +995,78 @@ describe('findSakeByBreweryOnlyFromPool', () => {
       extracted: '斗',
       stored: '高清水',
     })
+  })
+})
+
+/**
+ * §9.9's row of the brewery's other sakes (#325).
+ *
+ * The behaviour worth pinning is not "it returns rows" — it is the three ways
+ * the row can be wrong in a way nobody would notice on a page: the sake you
+ * are already reading appearing in its own siblings list, a superseded manual
+ * row reappearing after Sakenowa republished it, and `LIMIT` cutting before
+ * the ordering has run (which is the defect that made §8's ranking decorative
+ * — see `search-brands.ts`).
+ */
+describe('listSiblingBrandsFromPool', () => {
+  async function seedBrand(
+    brandId: number,
+    breweryId: number,
+    nameKanji: string,
+  ): Promise<void> {
+    await pool.query(
+      `INSERT INTO brands
+         (brand_id, name, name_kanji, brewery_id, source, confidence, content_hash)
+       VALUES ($1, $2, $3, $4, 'sakenowa', NULL, $5)`,
+      [brandId, nameKanji, nameKanji, breweryId, `hash-sibling-${brandId}`],
+    )
+  }
+
+  it('returns nothing when the brewery publishes only this sake', async () => {
+    await seedBrewery({ breweryId: 9501 })
+    await seedBrand(9001, 9501, '麗人')
+
+    expect(await listSiblingBrandsFromPool(9001, pool)).toEqual([])
+  })
+
+  it('returns the brewery\'s other sakes and never the one being read', async () => {
+    await seedBrewery({ breweryId: 9501 })
+    await seedBrand(9001, 9501, '麗人')
+    await seedBrand(9002, 9501, '諏訪美人')
+
+    const siblings = await listSiblingBrandsFromPool(9001, pool)
+
+    expect(siblings.map((b) => b.brandId)).toEqual([9002])
+  })
+
+  it('leaves out sakes from a different brewery', async () => {
+    await seedBrewery({ breweryId: 9501 })
+    await seedBrewery({ breweryId: 9502 })
+    await seedBrand(9001, 9501, '麗人')
+    await seedBrand(9002, 9502, '別の蔵')
+
+    expect(await listSiblingBrandsFromPool(9001, pool)).toEqual([])
+  })
+
+  it('leaves out a row a later Sakenowa publish superseded', async () => {
+    await seedBrewery({ breweryId: 9501 })
+    await seedBrand(9001, 9501, '麗人')
+    await seedBrand(9002, 9501, '諏訪美人')
+    await pool.query('UPDATE brands SET superseded_at = NOW() WHERE brand_id = $1', [9002])
+
+    expect(await listSiblingBrandsFromPool(9001, pool)).toEqual([])
+  })
+
+  it('puts the shortest name first, so a limit keeps the plainest ones', async () => {
+    await seedBrewery({ breweryId: 9501 })
+    await seedBrand(9001, 9501, '麗人')
+    await seedBrand(9002, 9501, '麗人 純米大吟醸 山田錦')
+    await seedBrand(9003, 9501, '諏訪美人')
+
+    const all = await listSiblingBrandsFromPool(9001, pool)
+    expect(all.map((b) => b.nameKanji)).toEqual(['諏訪美人', '麗人 純米大吟醸 山田錦'])
+
+    const limited = await listSiblingBrandsFromPool(9001, pool, 1)
+    expect(limited.map((b) => b.nameKanji)).toEqual(['諏訪美人'])
   })
 })

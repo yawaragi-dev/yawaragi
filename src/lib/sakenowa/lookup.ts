@@ -100,6 +100,58 @@ export async function lookupFlavorChart(brandId: number): Promise<FlavorChart | 
   return lookupFlavorChartFromPool(brandId, getServerDbPool())
 }
 
+/**
+ * The brewery's OTHER sakes — design v1.4 §9.9, "The brewery: story plus a
+ * row of its other sakes."
+ *
+ * Why this exists at all: a visitor who searches "dassai" lands on one brand
+ * and has no route to the other ones the same brewery makes (#325). 781 of
+ * the catalogue's 1,354 breweries publish more than one brand, so for most
+ * bottles this row is populated — and the missing link was a genuine dead end,
+ * not a nice-to-have.
+ *
+ * Brewery-keyed via the brand, like `lookupBreweryByBrand` above, so the
+ * caller still only needs the brandId it already has. The current brand is
+ * excluded in SQL rather than filtered in JS, so `LIMIT` counts the rows the
+ * page will actually show.
+ *
+ * Ordering is the same shortest-name-first rule `searchCatalogue` uses: with
+ * no popularity signal in the mirror, the shortest name is the closest thing
+ * to "the one they mean" — 獺祭 before 獺祭 磨き二割三分.
+ */
+const SELECT_SIBLING_BRANDS = `
+  SELECT brand_id, name, name_kanji, name_romaji, brewery_id, source, confidence
+  FROM brands
+  WHERE brewery_id = (
+      SELECT brewery_id FROM brands WHERE brand_id = $1 AND superseded_at IS NULL
+    )
+    AND brand_id <> $1
+    AND superseded_at IS NULL
+  ORDER BY char_length(name_kanji) ASC, name_kanji ASC, brand_id ASC
+  LIMIT $2
+`
+
+export async function listSiblingBrandsFromPool(
+  brandId: number,
+  pool: Pool,
+  limit = 8,
+): Promise<readonly Brand[]> {
+  const { rows } = await publicQuery<BrandRow>(
+    'brands',
+    SELECT_SIBLING_BRANDS,
+    [brandId, limit],
+    pool,
+  )
+  return rows.map(rowToBrand)
+}
+
+export async function listSiblingBrands(
+  brandId: number,
+  limit?: number,
+): Promise<readonly Brand[]> {
+  return listSiblingBrandsFromPool(brandId, getServerDbPool(), limit)
+}
+
 // listRanking returns the top-N rows for a single ranking scope. For
 // kind='area' the caller must pass `areaId`; for kind='overall' the
 // scope is implicit (one global list per ADR-0002).

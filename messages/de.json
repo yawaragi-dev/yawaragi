@@ -153,10 +153,28 @@
   },
   "sake": {
     "brand": {
-      "backToHome": "Zurück zur Startseite",
       "breweryLabel": "Brauerei",
-      "prefectureLabel": "Präfektur",
-      "flavorChartLabel": "Flavor Chart (Sakenowa)"
+      "bottleSlotLabel": "Flasche",
+      "littlePublished": "Wenig veröffentlicht",
+      "similarAction": "Ähnliche",
+      "serveLabel": "Serviertemperatur",
+      "serveEmpty": "Die Brauerei hat sich nicht festgelegt. Trage ein, bei welcher Temperatur du ihn trinkst, dann erscheint sie hier.",
+      "specsLabel": "Der Sake",
+      "specRice": "Reis",
+      "specPolishing": "Polierrate",
+      "specYeast": "Hefe",
+      "specSmv": "SMV",
+      "notPublished": "Nicht veröffentlicht",
+      "flavorChartLabel": "Flavor Chart (Sakenowa)",
+      "flavorChartEmpty": "Noch kein Flavor Chart. Yawaragi-Nutzer bauen eines aus vier Bewertungen auf — mitmachen kannst du unter Konto → Datenschutz.",
+      "pairingsLabel": "Passt zu",
+      "pairingsEmpty": "Für diesen Sake gibt es noch keine Empfehlungen. Dem Stil nach passt er zu Gegrilltem oder herzhaften Gerichten.",
+      "communityLabel": "Was anderen aufgefallen ist",
+      "communityEmpty": "Über diese Flasche hat noch niemand etwas geschrieben.",
+      "theBreweryLabel": "Die Brauerei",
+      "otherSakesIntro": "Ebenfalls aus dieser Brauerei",
+      "shopsLabel": "Wo du ihn findest",
+      "shopsEmpty": "Noch in keinem Shop erfasst."
     },
     "similar": {
       "title": "Wie {name}",
@@ -308,6 +326,12 @@
         "explanation": "Aus einer Nicht-Sake-Quelle (Whisky, Wein, Bier) mit einer handgepflegten Näherung übertragen. Westliche Begriffe entsprechen nicht exakt einer Sake-Eigenschaft.",
         "sheetTitle": "Von einem anderen Getränk übertragen"
       }
+    },
+    "romajiDisclosure": {
+      "caveat": "Lateinische Schreibweisen sind maschinell übertragen.",
+      "triggerLabel": "Wie diese Namen geschrieben werden",
+      "title": "Maschinell übertragen",
+      "body": "Sakenowa veröffentlicht den Namen jedes Sake auf Japanisch. Die lateinische Schreibweise daneben stammt von einem KI-Modell, das das Japanische gelesen hat — sie ist eine Annäherung an den Klang des Namens, kein zweiter offizieller Name. Das Japanische ist der Name, den die Brauerei verwendet, und danach gleichen wir ab."
     },
     "sheet": {
       "closeLabel": "Schließen"

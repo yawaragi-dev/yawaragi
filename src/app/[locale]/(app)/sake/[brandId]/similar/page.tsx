@@ -3,13 +3,12 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { hasLocale } from 'next-intl'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
-import { BackLink } from '@/components/layout/back-link'
 import { SakenowaAttribution } from '@/components/sake/sakenowa-attribution'
 import {
   SimilarSakeRow,
   type SimilarSakeRowStrings,
 } from '@/components/sake/similar-sake-row'
-import { getPathname, Link } from '@/i18n/navigation'
+import { Link } from '@/i18n/navigation'
 import { routing } from '@/i18n/routing'
 import { describeSimilarity } from '@/lib/flavor/similarity-reason'
 import { lookupBrand } from '@/lib/sakenowa/lookup'
@@ -77,14 +76,6 @@ export default async function SimilarSakesPage({ params }: PageProps) {
   if (!brand) notFound()
 
   const t = await getTranslations('sake.similar')
-  const tHeader = await getTranslations('header')
-
-  // The bottle page is where back goes when there is no history to pop — a
-  // visitor who deep-links here wants the sake this list is about.
-  const bottleHref = getPathname({
-    locale,
-    href: { pathname: '/sake/[brandId]', params: { brandId: String(brandId) } },
-  })
 
   const similar = await findSimilarBrands(brandId)
 
@@ -109,12 +100,11 @@ export default async function SimilarSakesPage({ params }: PageProps) {
       className="mx-auto flex w-full max-w-3xl flex-col gap-5 px-5 py-6"
       data-testid="similar-sakes-page"
     >
-      {/* §6's header: back · "Similar to {name}". `-ml-3` pulls the 44px
-          target back so the glyph lines up with the page gutter. */}
+      {/* §6's header is back · "Similar to {name}". The arrow is the SHELL's
+          now — rule 11 gives it to every screen that is not a tab main screen,
+          so a second one here would put two on the same top edge. What stays
+          is the title, which is the half §6 supplies. */}
       <div className="flex items-center gap-1">
-        <span className="-ml-3 flex">
-          <BackLink fallbackHref={bottleHref} label={tHeader('backLabel')} />
-        </span>
         <h1 className="min-w-0 truncate text-title font-medium text-ink">
           {t('title', { name: brand.nameKanji })}
         </h1>

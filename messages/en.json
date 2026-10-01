@@ -153,10 +153,28 @@
   },
   "sake": {
     "brand": {
-      "backToHome": "Back to home",
       "breweryLabel": "Brewery",
-      "prefectureLabel": "Prefecture",
-      "flavorChartLabel": "Flavor Chart (Sakenowa)"
+      "bottleSlotLabel": "bottle",
+      "littlePublished": "Little published",
+      "similarAction": "Similar",
+      "serveLabel": "Serve it",
+      "serveEmpty": "The brewery hasn't said. Log the temperature you drink it at and it will show here.",
+      "specsLabel": "The sake",
+      "specRice": "Rice",
+      "specPolishing": "Polishing",
+      "specYeast": "Yeast",
+      "specSmv": "SMV",
+      "notPublished": "Not published",
+      "flavorChartLabel": "Flavor Chart (Sakenowa)",
+      "flavorChartEmpty": "No flavor chart yet. Yawaragi users build one with four ratings — you can join in Account → Privacy.",
+      "pairingsLabel": "Goes with",
+      "pairingsEmpty": "No pairings for this one yet. By its style, try it with grilled or savory dishes.",
+      "communityLabel": "What others noticed",
+      "communityEmpty": "Nobody has written about this bottle yet.",
+      "theBreweryLabel": "The brewery",
+      "otherSakesIntro": "Also from this brewery",
+      "shopsLabel": "Where to find it",
+      "shopsEmpty": "Not tracked in any shop yet."
     },
     "similar": {
       "title": "Like {name}",
@@ -308,6 +326,12 @@
         "explanation": "Mapped from a non-sake reference (whisky, wine, beer) using a hand-curated approximation. Western descriptors do not translate exactly to sake.",
         "sheetTitle": "Mapped from another drink"
       }
+    },
+    "romajiDisclosure": {
+      "caveat": "Latin spellings are machine transliterations.",
+      "triggerLabel": "How these names are spelled",
+      "title": "Spelled by a machine",
+      "body": "Sakenowa publishes each sake's name in Japanese. The Latin spelling beside it was produced by an AI model reading the Japanese, so it is an approximation of how the name sounds — not a second official name. The Japanese is the one the brewery uses, and it is what we match on."
     },
     "sheet": {
       "closeLabel": "Close"
