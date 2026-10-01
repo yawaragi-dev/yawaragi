@@ -1,7 +1,6 @@
-import { getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
 import { listSiblingBrands } from '@/lib/sakenowa/lookup'
-import { RomajiDisclosure } from '@/components/sake/romaji-disclosure'
+import type { Brand } from '@/lib/schemas/brand'
 
 /**
  * The brewery's other sakes — design v1.4 §9.9.
@@ -11,32 +10,28 @@ import { RomajiDisclosure } from '@/components/sake/romaji-disclosure'
  * same brewery makes. 781 of the catalogue's 1,354 breweries publish more than
  * one brand, so the missing link affected most bottles.
  *
- * Renders nothing when the brewery publishes only this one — §9.9's "Hidden
- * without data". An empty "other sakes" heading would be worse than silence,
- * because unlike §9's other sections there is no fact to state: the brewery
- * has not withheld anything.
+ * The page fetches the siblings (`listSiblingBrandsSafe`) rather than this
+ * component, because the page needs them first: with none, §9.9 is "Hidden
+ * without data" as a whole section, and whether the section's one romaji
+ * disclosure is needed depends on the chips as well as the brewery name.
  *
  * A horizontal row, as the design draws it, not a list: these are siblings to
  * glance across, and a vertical list of eight would push the sections below it
  * off a 390px screen. The row scrolls on overflow and each chip is a 44px
  * touch target.
  */
-export async function BreweryOtherSakes({
-  brandId,
-  instanceId,
+export function BreweryOtherSakes({
+  siblings,
+  intro,
 }: {
-  /** The brand whose siblings to show. Excluded from its own row. */
-  brandId: number
-  /** Disambiguates the disclosure's element ids on a page with several. */
-  instanceId: string
+  /** The brewery's other brands, this one excluded. Never empty. */
+  siblings: readonly Brand[]
+  /** "Also from this brewery". */
+  intro: string
 }) {
-  const t = await getTranslations('sake.brand')
-  const siblings = await safeListSiblingBrands(brandId)
-  if (siblings.length === 0) return null
-
   return (
     <div className="flex flex-col gap-2" data-testid="brewery-other-sakes">
-      <p className="text-body text-ash-600">{t('otherSakesIntro')}</p>
+      <p className="text-body text-ash-600">{intro}</p>
       {/*
         `-mx-5 px-5` lets the row bleed to the screen edge while keeping its
         first and last chip on the page's gutter, so a half-visible chip at the
@@ -59,8 +54,8 @@ export async function BreweryOtherSakes({
                 down the page does not meet two conventions.
 
                 `data-romaji-field` marks these as romaji for the e2e's
-                badge-placement check. There is no badge inside: the row's
-                single `<RomajiDisclosure />` below covers all of them, which
+                badge-placement check. There is no badge inside: the section's
+                single `<RomajiDisclosure />` covers all of them, which
                 is why the attribute is on the span that holds the name rather
                 than on one that holds a chip.
               */}
@@ -86,15 +81,6 @@ export async function BreweryOtherSakes({
           </li>
         ))}
       </ul>
-      {/*
-        One disclosure for the row, not one badge per chip — see
-        `<RomajiDisclosure />`. Rendered only when at least one chip actually
-        shows a romaji name, so a brewery whose siblings have no
-        transliteration yet does not carry a caveat about something absent.
-      */}
-      {siblings.some((sibling) => sibling.nameRomaji !== null) && (
-        <RomajiDisclosure id={`${instanceId}-other-sakes-romaji`} />
-      )}
     </div>
   )
 }
@@ -106,7 +92,7 @@ export async function BreweryOtherSakes({
  * this one degrades to "the brewery publishes nothing else", which is also
  * what a brewery with one brand looks like.
  */
-async function safeListSiblingBrands(brandId: number) {
+export async function listSiblingBrandsSafe(brandId: number): Promise<readonly Brand[]> {
   try {
     return await listSiblingBrands(brandId)
   } catch {

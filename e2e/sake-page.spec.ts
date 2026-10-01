@@ -95,10 +95,17 @@ test.describe('sake brand page', () => {
     await expect(page.getByTestId('brand-name-kanji')).toBeVisible()
     await expect(page.getByTestId('brand-name-kanji')).toHaveAttribute('lang', 'ja')
 
-    // Slice 5: brewery section renders below the brand.
-    await expect(page.getByTestId('brand-brewery')).toBeVisible()
-    await expect(page.getByTestId('brewery-name-kanji')).toBeVisible()
-    await expect(page.getByTestId('brewery-name-kanji')).toHaveAttribute('lang', 'ja')
+    // Slice 5: the brewery section. §9.9 is "hidden without data" and its
+    // data is the row of other sakes, so the section and the row come and go
+    // together — whichever this fixture's brewery happens to have.
+    const brewerySection = page.getByTestId('brand-brewery')
+    const hasBrewerySection = (await brewerySection.count()) > 0
+    await expect(brewerySection.getByTestId('brewery-other-sakes')).toHaveCount(
+      hasBrewerySection ? 1 : 0,
+    )
+    if (hasBrewerySection) {
+      await expect(brewerySection.getByTestId('brewery-name-kanji')).toHaveAttribute('lang', 'ja')
+    }
 
     // Slice 7: Sakenowa attribution appears above the fold (above the brand
     // kanji <h1>) — Sakenowa's licence forbids footer-only attribution.
@@ -170,50 +177,42 @@ test.describe('sake brand page', () => {
     await context.close()
   })
 
-  test('states what the catalogue does not carry, rather than hiding it', async ({
+  test('states what this bottle lacks, and shows nothing no bottle has', async ({
     browser,
   }, testInfo) => {
-    testInfo.skip(anyBrandId === null, 'DB-bound spec')
+    testInfo.skip(brandWithoutChartId === null, 'DB-bound spec')
 
     const context = await browser.newContext({ locale: 'en-US' })
     await context.addCookies([AGE_GATE_COOKIE])
     const page = await context.newPage()
     await page.setViewportSize({ width: 390, height: 844 })
 
-    await page.goto(`/en/sake/${anyBrandId}`)
+    await page.goto(`/en/sake/${brandWithoutChartId}`)
+    await expect(page.getByTestId('sake-brand-page')).toBeVisible()
 
-    // Design v1.4 rule 4: "Missing data is stated, not hidden." §9 keeps every
-    // section in its fixed order and fills the ones it cannot answer with a
-    // sentence — screenshot 17 is that page drawn deliberately. The mirror
-    // carries no brewing specs or serving temperatures for ANY bottle, so
-    // these must render on every one of them.
-    for (const section of ['bottle-serve', 'bottle-specs']) {
-      await expect(page.getByTestId(section)).toBeVisible()
-    }
+    // Design v1.4 rule 4: "Missing data is stated, not hidden." About half the
+    // catalogue has a flavor chart, so its absence is a fact about THIS
+    // bottle, and the page says so.
+    const emptyChart = page.getByTestId('bottle-flavor-chart-empty')
+    await expect(emptyChart).toBeVisible()
+    // ...without the axis-terms info button: with no chart there are no axis
+    // labels on screen for it to explain.
+    await expect(
+      emptyChart.locator('[data-testid^="info-sheet-flavor-terms-"]'),
+    ).toHaveCount(0)
 
-    // Pairings, community notes and shops have no source at all yet, so they
-    // are switched off (`FEATURES`, #336–#338) rather than shown empty on
-    // every page. When one lands, its issue restores it to the lists above
-    // and to the order check below.
-    for (const section of ['bottle-pairings', 'bottle-community', 'bottle-shops']) {
+    // Sections with no source for ANY bottle are switched off (`FEATURES`,
+    // #336–#340) rather than shown empty on all ~3,000 pages. When one lands,
+    // its issue flips the flag and moves it out of this list.
+    for (const section of [
+      'bottle-serve',
+      'bottle-specs',
+      'bottle-pairings',
+      'bottle-community',
+      'bottle-shops',
+    ]) {
       await expect(page.getByTestId(section)).toHaveCount(0)
     }
-
-    // The spec grid names its unknown fields rather than dropping the rows.
-    const specs = page.getByTestId('bottle-specs')
-    await expect(specs.getByText('Not published').first()).toBeVisible()
-
-    // §9 orders the page personal-to-general. Asserted as an ordering rather
-    // than per-section positions, so adding a section between two of these
-    // does not break it but reordering them does.
-    const order = await page.evaluate(() =>
-      [...document.querySelectorAll('[data-testid^="bottle-"]')].map((el) =>
-        el.getAttribute('data-testid'),
-      ),
-    )
-    const rank = (id: string) => order.indexOf(id)
-    expect(rank('bottle-identity')).toBeLessThan(rank('bottle-serve'))
-    expect(rank('bottle-serve')).toBeLessThan(rank('bottle-specs'))
 
     await context.close()
   })

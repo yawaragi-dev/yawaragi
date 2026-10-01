@@ -13,6 +13,10 @@
  * not a way to preview it.
  */
 export const FEATURES = {
+  /** §9.4 "Serve it" — serving temperatures on the bottle page. #340 */
+  bottleServing: false,
+  /** §9.5 "The sake" — brewing specs (rice, polishing, yeast, SMV). #339 */
+  bottleSpecs: false,
   /** §9.7 "Goes with" — food pairings on the bottle page. #336 */
   bottlePairings: false,
   /** §9.8 "What others noticed" — community tasting notes. #337 */
