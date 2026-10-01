@@ -23,6 +23,37 @@
     "emptyBody": "Log the first sake you try and it appears here, newest first.",
     "unavailableBody": "Your collection isn't available right now — please check back soon."
   },
+  "home": {
+    "title": "Home",
+    "greeting": {
+      "morning": "Good morning",
+      "afternoon": "Good afternoon",
+      "evening": "Good evening",
+      "night": "Still up?"
+    },
+    "tileScan": "Scan a label",
+    "recentHeading": "Recent tastings",
+    "recentAll": "All {count}",
+    "age": {
+      "today": "today",
+      "day": "{count}d",
+      "week": "{count}w",
+      "month": "{count}mo",
+      "year": "{count}y"
+    },
+    "palateLeans": "Your palate leans",
+    "derivedFrom": "Derived from {count, plural, one {# tasting} other {# tastings}}",
+    "firstRun": {
+      "heading": "Start with the glass in front of you",
+      "body": "Point the camera at a label and we'll tell you what the catalogue knows about it. No account needed.",
+      "step": {
+        "scan": "Scan the label",
+        "learn": "See what's known",
+        "palate": "Or start from a drink you know"
+      },
+      "cta": "Scan a label"
+    }
+  },
   "common": {
     "siteName": "Yawaragi",
     "skipToContent": "Skip to content"
@@ -450,11 +481,6 @@
     "palate": "Palate"
   },
   "tabPlaceholder": {
-    "home": {
-      "title": "Your home screen is on its way",
-      "body": "It will open with your recent tastings and the fastest way to read a new label. Until then, the camera is the place to start.",
-      "linkLabel": "Scan a label"
-    },
     "collection": {
       "title": "Your collection is on its way",
       "body": "Three things will live here together: the sakes you have tasted, the bottles you own, and the ones you want to try. Your tasting journal is on the Palate tab for now.",

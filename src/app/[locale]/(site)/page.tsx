@@ -124,10 +124,10 @@ export default async function LandingPage({
         >
           <h2 className="text-title font-medium text-ink">{t('privacyTitle')}</h2>
           <p className="max-w-[62ch] text-body text-ash-600">{t('privacyBody')}</p>
-          {/* Same interim destination as the header's button — see the note
-              there. `/home` is a placeholder until §3 is ported. */}
+          {/* Same destination as the header's button — one affordance placed
+              twice, so they must agree. */}
           <Link
-            href="/scan"
+            href="/home"
             className="mt-1 inline-flex h-11 items-center rounded-lg bg-ash-200 px-4 text-body font-medium text-ink transition-colors hover:bg-ash-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
             data-testid="landing-privacy-cta"
           >

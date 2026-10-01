@@ -3,23 +3,26 @@ import { Link } from '@/i18n/navigation'
 /**
  * What a tab shows before its screen is built.
  *
- * The shell ships all four tabs at once because two of them would otherwise
- * point nowhere, and #162 settled how this project handles that: an advertised
- * surface is "visibly marked but navigable" — never a dead link. So Home and
- * Collection are real routes that say plainly what will be here and hand the
- * visitor a working alternative, rather than 404ing or silently doing nothing.
+ * The shell ships all four tabs at once, and #162 settled how this project
+ * handles a tab whose screen is not ready: an advertised surface is "visibly
+ * marked but navigable" — never a dead link.
+ *
+ * **One callsite left.** §3 Home and §11 Collection are both ported, but §11's
+ * journal is maintainer-only until the local-first rewrite (ADR-0020, gated on
+ * ADR-0011), so everyone else still has nothing of their own to list there.
+ * That is the remaining case: not an unbuilt screen, but a built one a visitor
+ * cannot yet have data in. This file goes with that gate.
  *
  * Deliberately quiet. This is scaffolding, so it uses the design's plainest
  * shapes — one surface card, the accent mark, no illustration — and no
  * screenshot in `design/screenshots/` shows it, because the design has no
- * placeholder state. When §3 Home and §11 Collection are ported, both
- * callsites go and so does this file.
+ * placeholder state.
  */
 interface TabPlaceholderProps {
   title: string
   body: string
   /** Where the visitor can actually go instead. */
-  link: { href: '/scan' | '/profile'; label: string }
+  link: { href: '/profile'; label: string }
 }
 
 export function TabPlaceholder({ title, body, link }: TabPlaceholderProps) {
