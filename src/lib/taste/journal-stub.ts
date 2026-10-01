@@ -5,12 +5,12 @@ import type { MaintainerJournalState } from '@/lib/taste/resolve-maintainer-jour
 /**
  * The non-production `yawaragi_journal_stub` fixture, in one place.
  *
- * Two surfaces read the journal: §11 Collection lists it, and §12's Palate
- * derives from it (CONTEXT.md — the Palate is the journal's output view). Each
- * had its own copy of these entries while there was only one reader. Two
- * copies is where a stub starts lying: a spec that passes against one fixture
- * and a spec that passes against the other can both be green while the
- * surfaces disagree about the data they claim to share.
+ * Three surfaces read the journal: §11 Collection lists it, §12's Palate
+ * derives from it (CONTEXT.md — the Palate is the journal's output view), and
+ * §3 Home shows the three most recent. Each had its own copy of these entries
+ * while there was only one reader. Two copies is where a stub starts lying: a
+ * spec green against one fixture and a spec green against another can both
+ * pass while the surfaces disagree about data they claim to share.
  *
  * The cookie also stands in for the maintainer check (ADR-0020), so an E2E
  * driving these states needs no Clerk session and no Upstash. It is read only
