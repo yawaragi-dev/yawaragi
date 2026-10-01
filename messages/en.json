@@ -252,6 +252,26 @@
       "scanAgain": "Scan again"
     }
   },
+  "search": {
+    "title": "Find a sake",
+    "fieldLabel": "Search the catalogue",
+    "placeholder": "Name, brewery or kanji",
+    "submit": "Search",
+    "clear": "Clear",
+    "emptyTitle": "Type a name",
+    "emptyBody": "Kanji, romaji or the brewery — whichever the bottle gives you. {count} sakes are in the catalogue.",
+    "tooShort": "One more letter, and we will look.",
+    "matches": "{count, plural, one {# match} other {# matches}}",
+    "matchesCapped": "First {count} matches — type more to narrow it",
+    "noMatchTitle": "Nothing in the catalogue matches",
+    "noMatchBody": "We list sake by name, not bottle by bottle — a grade or number from the label is usually worth dropping. The brewery name works too, and a few small releases aren't listed at all.",
+    "noMatchScanCta": "Read a label",
+    "unavailableTitle": "The catalogue is not reachable right now",
+    "unavailableBody": "This is on our side, not yours — the search index is briefly unavailable. Try again in a moment, or read a label instead.",
+    "breweryUnknown": "Brewery not recorded",
+    "cta": "Type it",
+    "searchedInstead": "Nothing for “{typed}”. Showing matches for “{used}” — the catalogue lists the sake, not each bottle."
+  },
   "suggest": {
     "entry": {
       "title": "Discover similar sake",
@@ -311,6 +331,12 @@
     },
     "sheet": {
       "closeLabel": "Close"
+    },
+    "romajiDisclosure": {
+      "caveat": "Romaji readings are AI-generated.",
+      "triggerLabel": "Why?",
+      "title": "About the romaji readings",
+      "body": "Sakenowa publishes sake and brewery names in Japanese only. The Latin spellings here are Hepburn readings produced by an AI model when we sync the catalogue — a reading aid, not part of Sakenowa's data. An unusual name can be read more than one way, so treat these as a guide; the Japanese name beside each one is the canonical form."
     }
   },
   "flavorAxis": {

@@ -4,6 +4,7 @@ import type { Metadata } from 'next'
 import { hasLocale } from 'next-intl'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { BackLink } from '@/components/layout/back-link'
+import { RomajiDisclosure } from '@/components/sake/romaji-disclosure'
 import { SakenowaAttribution } from '@/components/sake/sakenowa-attribution'
 import {
   SimilarSakeRow,
@@ -161,8 +162,14 @@ export default async function SimilarSakesPage({ params }: PageProps) {
           </ol>
           {/* Every row is Sakenowa flavour data, so attribution is not
               optional (ADR-0014 / the licence). Inline, because the list is
-              the subject rather than any single record. */}
-          <SakenowaAttribution placement="inline" />
+              the subject rather than any single record.
+              `<RomajiDisclosure />` beside it because each row's Latin
+              spelling is NOT Sakenowa's — it is an LLM-generated Hepburn
+              reading, and §8's list had the same gap. */}
+          <div className="flex flex-col gap-1.5">
+            <SakenowaAttribution placement="inline" />
+            <RomajiDisclosure id="similar-romaji" />
+          </div>
         </>
       )}
     </main>

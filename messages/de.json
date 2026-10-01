@@ -252,6 +252,26 @@
       "scanAgain": "Erneut scannen"
     }
   },
+  "search": {
+    "title": "Sake finden",
+    "fieldLabel": "Katalog durchsuchen",
+    "placeholder": "Name, Brauerei oder Kanji",
+    "submit": "Suchen",
+    "clear": "Zurücksetzen",
+    "emptyTitle": "Gib einen Namen ein",
+    "emptyBody": "Kanji, Romaji oder die Brauerei — was die Flasche hergibt. Im Katalog stehen {count} Sake.",
+    "tooShort": "Noch ein Zeichen, dann suchen wir.",
+    "matches": "{count, plural, one {# Treffer} other {# Treffer}}",
+    "matchesCapped": "Die ersten {count} Treffer — tippe mehr, um einzugrenzen",
+    "noMatchTitle": "Im Katalog gibt es keinen Treffer",
+    "noMatchBody": "Im Katalog stehen Sake-Namen, keine einzelnen Flaschen — eine Güteklasse oder Zahl vom Etikett lässt du besser weg. Der Name der Brauerei funktioniert auch, und einige kleine Abfüllungen fehlen ganz.",
+    "noMatchScanCta": "Etikett lesen",
+    "unavailableTitle": "Der Katalog ist gerade nicht erreichbar",
+    "unavailableBody": "Das liegt an uns, nicht an dir — der Suchindex ist kurz nicht verfügbar. Versuche es gleich noch einmal, oder lies stattdessen ein Etikett.",
+    "breweryUnknown": "Brauerei nicht erfasst",
+    "cta": "Eintippen",
+    "searchedInstead": "Keine Treffer für „{typed}“. Hier sind die zu „{used}“ — im Katalog steht der Sake, nicht jede Flasche."
+  },
   "suggest": {
     "entry": {
       "title": "Ähnliche Sake entdecken",
@@ -311,6 +331,12 @@
     },
     "sheet": {
       "closeLabel": "Schließen"
+    },
+    "romajiDisclosure": {
+      "caveat": "Romaji-Lesungen sind KI-generiert.",
+      "triggerLabel": "Warum?",
+      "title": "Über die Romaji-Lesungen",
+      "body": "Sakenowa veröffentlicht Sake- und Brauereinamen nur auf Japanisch. Die lateinischen Schreibweisen hier sind Hepburn-Lesungen, die ein KI-Modell beim Katalogabgleich erzeugt — eine Lesehilfe, kein Bestandteil der Sakenowa-Daten. Ein ungewöhnlicher Name lässt sich oft mehr als einmal lesen; maßgeblich ist der japanische Name daneben."
     }
   },
   "flavorAxis": {
