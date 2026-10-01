@@ -23,6 +23,37 @@
     "emptyBody": "Trage den ersten Sake ein, den du probierst — er erscheint hier, der neueste zuerst.",
     "unavailableBody": "Deine Sammlung ist gerade nicht verfügbar — schau bitte später wieder vorbei."
   },
+  "home": {
+    "title": "Start",
+    "greeting": {
+      "morning": "Guten Morgen",
+      "afternoon": "Guten Tag",
+      "evening": "Guten Abend",
+      "night": "Noch wach?"
+    },
+    "tileScan": "Etikett scannen",
+    "recentHeading": "Zuletzt verkostet",
+    "recentAll": "Alle {count}",
+    "age": {
+      "today": "heute",
+      "day": "{count} T",
+      "week": "{count} W",
+      "month": "{count} Mon",
+      "year": "{count} J"
+    },
+    "palateLeans": "Dein Palate tendiert zu",
+    "derivedFrom": "Aus {count, plural, one {# Verkostung} other {# Verkostungen}} abgeleitet",
+    "firstRun": {
+      "heading": "Beginne mit dem Glas vor dir",
+      "body": "Richte die Kamera auf ein Etikett und wir sagen dir, was der Katalog darüber weiß. Kein Konto nötig.",
+      "step": {
+        "scan": "Etikett scannen",
+        "learn": "Sehen, was bekannt ist",
+        "palate": "Oder mit einem bekannten Getränk beginnen"
+      },
+      "cta": "Etikett scannen"
+    }
+  },
   "common": {
     "siteName": "Yawaragi",
     "skipToContent": "Zum Inhalt springen"
@@ -450,11 +481,6 @@
     "palate": "Palate"
   },
   "tabPlaceholder": {
-    "home": {
-      "title": "Dein Startbildschirm entsteht noch",
-      "body": "Hier erscheinen später deine letzten Verkostungen und der schnellste Weg zu einem neuen Etikett. Bis dahin beginnst du am besten mit der Kamera.",
-      "linkLabel": "Etikett scannen"
-    },
     "collection": {
       "title": "Deine Sammlung entsteht noch",
       "body": "Drei Dinge kommen hier zusammen: die Sake, die du verkostet hast, die Flaschen, die du besitzt, und die, die du kennenlernen möchtest. Dein Verkostungsjournal findest du vorläufig im Bereich Palate.",
