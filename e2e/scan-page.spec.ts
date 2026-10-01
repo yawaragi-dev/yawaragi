@@ -62,12 +62,13 @@ test.describe('scan entry route', () => {
     await page.goto('/en/scan')
 
     await expect(page.getByTestId('scan-entry-page')).toBeVisible()
-    // §4: the Scan tab's screen IS the viewfinder. Headless Chromium grants
-    // no camera, so `getUserMedia` rejects with NotAllowedError and the
-    // screen settles on "Camera is off" — which is why this asserts the
-    // screen's container and its title rather than the frame. The screen
-    // renders, and it renders a state with a way forward, whatever the
-    // device can do. The two failure panels get their own specs below.
+    // §4: the Scan tab's screen IS the viewfinder. Which state it settles on
+    // depends on the machine — a laptop with a camera and no permission gets
+    // "Camera is off", a CI container with no video device gets "No camera
+    // here" — so this asserts the screen's container and its title, which
+    // hold in every case. The screen renders, and it renders a state with a
+    // way forward whatever the hardware is. The two failure panels get their
+    // own specs below, each forcing its cause rather than hoping for it.
     const camera = page.getByTestId('scan-camera')
     await expect(camera).toBeVisible()
     await expect(camera.getByText('Scan a label')).toBeVisible()
@@ -83,8 +84,23 @@ test.describe('scan entry route', () => {
     const page = await context.newPage()
     await page.setViewportSize({ width: 390, height: 844 })
 
-    // No `grantPermissions`, so `getUserMedia` rejects with NotAllowedError —
-    // screenshot 07. The visitor said no (or the browser said no for them).
+    // The rejection is stubbed, not left to the browser. Locally a refused
+    // camera raises NotAllowedError because the machine HAS a camera and no
+    // permission; on CI the container has no video device at all, so the same
+    // page settles on "No camera here" instead — the spec passed on a laptop
+    // and failed in Actions for a reason that had nothing to do with the code.
+    //
+    // Stubbing the error names the case directly: this is the panel a visitor
+    // who said no must get, whatever hardware is underneath.
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, 'mediaDevices', {
+        configurable: true,
+        value: {
+          getUserMedia: () =>
+            Promise.reject(Object.assign(new Error('denied'), { name: 'NotAllowedError' })),
+        },
+      })
+    })
     await page.goto('/en/scan')
 
     const denied = page.getByTestId('scan-camera-denied')
@@ -115,8 +131,10 @@ test.describe('scan entry route', () => {
     const page = await context.newPage()
     await page.setViewportSize({ width: 390, height: 844 })
 
-    // Screenshot 08. A desktop browser without `mediaDevices` must land on the
-    // panel that offers a file instead of the one that offers a permission.
+    // Screenshot 08. A browser without `mediaDevices` must land on the panel
+    // that offers a file instead of the one that offers a permission. Paired
+    // with the spec above, the two prove the routing in `classifyCameraError`
+    // end to end: the same screen, two causes, two different first actions.
     //
     // What this asserts is the visible outcome. That the feature detect
     // answers BEFORE any prompt is raised — so nobody gets a dialog about a
