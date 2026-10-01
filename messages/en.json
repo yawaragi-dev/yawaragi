@@ -342,7 +342,8 @@
     "unavailableTitle": "The catalogue is not reachable right now",
     "unavailableBody": "This is on our side, not yours — the search index is briefly unavailable. Try again in a moment, or read a label instead.",
     "breweryUnknown": "Brewery not recorded",
-    "cta": "Type it"
+    "cta": "Type it",
+    "searchedInstead": "Nothing for “{typed}”. Showing matches for “{used}” — the catalogue lists the sake, not each bottle."
   },
   "suggest": {
     "entry": {

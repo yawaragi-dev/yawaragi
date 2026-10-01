@@ -342,7 +342,8 @@
     "unavailableTitle": "Der Katalog ist gerade nicht erreichbar",
     "unavailableBody": "Das liegt an uns, nicht an dir — der Suchindex ist kurz nicht verfügbar. Versuche es gleich noch einmal, oder lies stattdessen ein Etikett.",
     "breweryUnknown": "Brauerei nicht erfasst",
-    "cta": "Eintippen"
+    "cta": "Eintippen",
+    "searchedInstead": "Keine Treffer für „{typed}“. Hier sind die zu „{used}“ — im Katalog steht der Sake, nicht jede Flasche."
   },
   "suggest": {
     "entry": {

@@ -8,6 +8,7 @@ import {
   rankCatalogueMatches,
   searchBrandsFromPool,
   searchCatalogueFromPool,
+  stripLabelQualifiers,
 } from '@/lib/sakenowa/search-brands'
 
 /**
@@ -136,6 +137,55 @@ describe('searchCatalogueFromPool', () => {
     const matches = await searchCatalogueFromPool('yama', pool, 3)
     expect(matches).toHaveLength(3)
     expect(matches[0]!.brandId).toBe(999)
+  })
+})
+
+describe('stripLabelQualifiers', () => {
+  // The reported dead end: a visitor holding a bottle types what the label
+  // says, and the label says far more than the catalogue holds. Sakenowa's
+  // unit is the LINE (獺祭); "23" and "45" are polishing ratios of individual
+  // bottles within it, and no row will ever carry them.
+  it('drops a polishing ratio, which is the bottle and not the sake', () => {
+    expect(stripLabelQualifiers('dassai 23')).toBe('dassai')
+    expect(stripLabelQualifiers('獺祭 45')).toBe('獺祭')
+  })
+
+  it('drops a grade, in romaji or kanji', () => {
+    expect(stripLabelQualifiers('kubota junmai daiginjo')).toBe('kubota')
+    expect(stripLabelQualifiers('獺祭 純米大吟醸')).toBe('獺祭')
+  })
+
+  it('removes the longest grade whole, so 純米大吟醸 leaves no 大 behind', () => {
+    expect(stripLabelQualifiers('獺祭 純米大吟醸 45')).toBe('獺祭')
+  })
+
+  it('keeps a digit that is part of the name, because some names have one', () => {
+    // 25 of 3,315 brand names contain a digit — `NEXT5`, `GOZENSHU9`. Those
+    // are names, not grades, and stripping them would break an exact match.
+    expect(stripLabelQualifiers('NEXT5')).toBeNull()
+    expect(stripLabelQualifiers('GOZENSHU9')).toBeNull()
+  })
+
+  it('drops a bottle size, which is also not the sake', () => {
+    expect(stripLabelQualifiers('獺祭 720ml')).toBe('獺祭')
+  })
+
+  it('returns null when there was nothing to strip, so no second query runs', () => {
+    expect(stripLabelQualifiers('dassai')).toBeNull()
+    expect(stripLabelQualifiers('獺祭')).toBeNull()
+  })
+
+  it('returns null rather than an empty query when the label was ALL qualifier', () => {
+    // "junmai daiginjo" on its own is a category, not a sake. Narrowing it to
+    // nothing and searching that would match the whole catalogue.
+    expect(stripLabelQualifiers('junmai daiginjo')).toBeNull()
+    expect(stripLabelQualifiers('純米大吟醸')).toBeNull()
+    expect(stripLabelQualifiers('45')).toBeNull()
+  })
+
+  it('does not strip a qualifier glued inside a longer word', () => {
+    // `junmai` must not come out of a name that merely contains those letters.
+    expect(stripLabelQualifiers('junmaiya')).toBeNull()
   })
 })
 

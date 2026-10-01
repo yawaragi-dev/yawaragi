@@ -144,6 +144,108 @@ export function isCatalogueQuerySpecific(query: string): boolean {
   return trimmed.length >= 2
 }
 
+/**
+ * Label words that narrow a bottle but are not part of the sake's NAME.
+ *
+ * Sakenowa's unit is the brand — the line, like 獺祭 — and a label carries far
+ * more than that: a polishing ratio (`45`, `23`), a grade (純米大吟醸), a
+ * process (無濾過生原酒), a rice (山田錦), a volume (720ml). A visitor holding
+ * the bottle types what they can read, which is all of it, and the catalogue
+ * has none of it. "Dassai 23" is the reported case and it is the common one,
+ * not an edge: it is what the shop shelf and the label both say.
+ *
+ * Longest first, so 純米大吟醸 is removed whole rather than leaving 大 behind
+ * once 純米 goes. Romaji forms are matched on word boundaries; Japanese forms
+ * are not, because Japanese does not space its words.
+ */
+const LABEL_QUALIFIERS_JA = [
+  '特別純米吟醸',
+  '無濾過生原酒',
+  '純米大吟醸',
+  '特別本醸造',
+  '純米吟醸',
+  '特別純米',
+  'しぼりたて',
+  'ひやおろし',
+  '大吟醸',
+  '本醸造',
+  '生原酒',
+  '五百万石',
+  '山田錦',
+  '無濾過',
+  '荒走り',
+  '中取り',
+  'あらばしり',
+  'にごり',
+  '純米',
+  '吟醸',
+  '生酒',
+  '原酒',
+  '雄町',
+  '生詰',
+  '生貯',
+  '新酒',
+  '古酒',
+  '辛口',
+  '甘口',
+] as const
+
+const LABEL_QUALIFIERS_ROMAJI = [
+  'junmai daiginjo',
+  'tokubetsu junmai',
+  'junmai ginjo',
+  'honjozo',
+  'daiginjo',
+  'muroka',
+  'nakadori',
+  'arabashiri',
+  'shiboritate',
+  'hiyaoroshi',
+  'yamadanishiki',
+  'junmai',
+  'ginjo',
+  'genshu',
+  'nigori',
+  'nama',
+  'omachi',
+  'karakuchi',
+  'amakuchi',
+] as const
+
+/**
+ * Strip the label noise from a query, or return `null` if there was none to
+ * strip (or if stripping would leave nothing to search for).
+ *
+ * **Used only as a fallback, never to narrow a query that worked.** A search
+ * that found rows is answered; this runs when the visitor's query matched
+ * nothing, so the alternative to a narrowed retry is a dead end. The page says
+ * which query it ended up running, so the substitution is never silent.
+ *
+ * Numbers go too. On a label a bare number is a polishing ratio or a volume,
+ * and neither identifies a line — 25 of 3,315 brand names contain a digit, and
+ * those are names like `NEXT5`, which survive because stripping a digit that
+ * is glued to a letter is not done here: only free-standing numbers go.
+ */
+export function stripLabelQualifiers(query: string): string | null {
+  let out = query.trim()
+  if (out.length === 0) return null
+
+  for (const word of LABEL_QUALIFIERS_JA) {
+    out = out.split(word).join(' ')
+  }
+  for (const word of LABEL_QUALIFIERS_ROMAJI) {
+    out = out.replace(new RegExp(`\\b${word.replace(/ /g, '\\s+')}\\b`, 'gi'), ' ')
+  }
+  // Free-standing numbers only: `23`, `７２０`, `720ml`. `NEXT5` keeps its 5,
+  // because the digit is part of the word.
+  out = out.replace(/(?<![\p{L}\p{N}])[\d０-９]+\s*(?:ml|ML|㎖|ミリ|合|%|％|度)?(?![\p{L}\p{N}])/gu, ' ')
+  out = out.replace(/\s+/g, ' ').trim()
+
+  if (out.length === 0) return null
+  if (out === query.trim()) return null
+  return out
+}
+
 export interface CatalogueSearchResult {
   readonly brandId: number
   readonly nameKanji: string
@@ -235,7 +337,16 @@ const SEARCH_CATALOGUE = `
  * unreachable is a lie, and the one they would act on by retyping.
  */
 export type CatalogueSearchOutcome =
-  | { readonly kind: 'ok'; readonly matches: readonly CatalogueSearchResult[] }
+  | {
+      readonly kind: 'ok'
+      readonly matches: readonly CatalogueSearchResult[]
+      /**
+       * Set when the visitor's own query matched nothing and a narrowed one
+       * did. The page must say so — a substitution the visitor cannot see is
+       * worse than the dead end it replaced.
+       */
+      readonly searchedInstead?: string
+    }
   | { readonly kind: 'unavailable' }
 
 /**
@@ -290,7 +401,22 @@ export async function searchCatalogue(
   limit?: number,
 ): Promise<CatalogueSearchOutcome> {
   try {
-    return { kind: 'ok', matches: await searchCatalogueFromPool(query, getServerDbPool(), limit) }
+    const pool = getServerDbPool()
+    const matches = await searchCatalogueFromPool(query, pool, limit)
+    if (matches.length > 0) return { kind: 'ok', matches }
+
+    // Nothing matched. Before calling it a dead end, try the query without
+    // the parts of a label that are not a sake's name — see
+    // `stripLabelQualifiers`. "Dassai 23" is the reported case: the bottle
+    // exists, the line is in the catalogue, and only the polishing ratio
+    // stood between them.
+    const narrowed = stripLabelQualifiers(query)
+    if (narrowed === null || !isCatalogueQuerySpecific(narrowed)) {
+      return { kind: 'ok', matches }
+    }
+    const fallback = await searchCatalogueFromPool(narrowed, pool, limit)
+    if (fallback.length === 0) return { kind: 'ok', matches }
+    return { kind: 'ok', matches: fallback, searchedInstead: narrowed }
   } catch {
     return { kind: 'unavailable' }
   }
