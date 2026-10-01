@@ -9,7 +9,7 @@ import { summarizeTasteEvents } from '@/lib/taste/summarize-taste-events'
  * the visitor to see where their map came from.
  */
 export async function TasteProvenanceSummary({ events }: { events: readonly TasteEvent[] }) {
-  const t = await getTranslations('profile')
+  const t = await getTranslations('palate')
   const { ratings, scans, seedDescriptors } = summarizeTasteEvents(events)
 
   const parts = [
@@ -20,11 +20,14 @@ export async function TasteProvenanceSummary({ events }: { events: readonly Tast
 
   return (
     <div className="flex flex-col gap-1" data-testid="taste-provenance-summary">
-      <h2 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{t('shapedByHeading')}</h2>
-      <p className="text-sm text-zinc-600 dark:text-zinc-400">{parts.join(' · ')}</p>
+      {/* Ginshu, as of §12's port: the zinc `dark:` halves rendered for
+          everyone once #303 forced the variant, and zinc is a cool grey on a
+          warm ground (ADR-0023). */}
+      <h2 className="text-section-label uppercase text-ash-600">{t('shapedByHeading')}</h2>
+      <p className="text-body text-ash-600">{parts.join(' · ')}</p>
       {seedDescriptors.length > 0 && (
         <p
-          className="text-xs text-zinc-500 dark:text-zinc-500"
+          className="text-meta text-ash-700"
           data-testid="taste-provenance-seeds"
         >
           {t('shapedBySeedList', { descriptors: seedDescriptors.join(', ') })}

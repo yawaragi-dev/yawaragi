@@ -1,14 +1,15 @@
 /**
- * E2E coverage for /[locale]/profile — the real Taste Profile (Phase 5 / #220,
- * P5-04b).
+ * E2E coverage for /[locale]/profile — §12 Palate.
  *
- * Radar-first: the visitor's derived TasteProfile as a radar, with the
- * cross-beverage seed form as the cheap build path (/suggest is only a quiet
- * secondary link). The page reads a session-keyed store; in non-production the
- * `yawaragi_taste_stub` cookie drives each state without a live Upstash
- * (mirrors scan's e2e-stub / suggest's stub cookie).
+ * §12 is two screens, and the threshold between them is the product's:
+ * under three tastings it says how far off a reading is and offers a way to
+ * start; from three it gives the reading, how firm it is, and which axes drive
+ * it. The `yawaragi_taste_stub` cookie drives each state without a live
+ * Upstash (mirrors scan's e2e-stub / suggest's stub cookie) — including the
+ * new `taking_shape` value, because the 1–2 tasting screen had no stub that
+ * could reach it before.
  *
- * Age-gate still applies (the radar is flavor data → gated content). The six
+ * Age-gate still applies (the palate is flavor data → gated content). The six
  * axes use <FlavorAxisLabel /> and the radar carries its own brewers'-term
  * disclosure, so the Japanese vocabulary stays reachable (ADR-0022).
  */
@@ -29,7 +30,7 @@ const CONSENT_COOKIE = {
   url: BASE_URL,
 }
 
-const tasteStub = (mode: 'populated' | 'cold_start' | 'unavailable') => ({
+const tasteStub = (mode: 'populated' | 'taking_shape' | 'cold_start' | 'unavailable') => ({
   name: 'yawaragi_taste_stub',
   value: mode,
   url: BASE_URL,
@@ -43,8 +44,8 @@ const journalStub = (mode: 'populated' | 'empty' | 'unavailable') => ({
   url: BASE_URL,
 })
 
-test.describe('/en/profile — taste profile', () => {
-  test('populated: renders the derived radar with all six axis labels + provenance', async ({
+test.describe('/en/profile — §12 Palate', () => {
+  test('three tastings in, it names the palate and says which axes drive it', async ({
     browser,
   }) => {
     const context = await browser.newContext({ locale: 'en-US' })
@@ -54,7 +55,16 @@ test.describe('/en/profile — taste profile', () => {
     await page.goto('/en/profile')
 
     await expect(page.getByTestId('profile-page')).toBeVisible()
-    await expect(page.getByTestId('profile-populated')).toBeVisible()
+    await expect(page.getByTestId('palate-read')).toBeVisible()
+    // §12's title at a read names the strongest axis and a lean — never the
+    // placeholder words the earlier screens use.
+    const title = page.getByTestId('palate-title')
+    await expect(title).toBeVisible()
+    await expect(title).not.toHaveText('Taking shape')
+    await expect(title).not.toHaveText('Not yet')
+    // Confidence, because a reading off three tastings and one off forty look
+    // identical on a chart and the only honest difference is stated here.
+    await expect(page.getByTestId('palate-confidence')).toContainText('3 of 10')
     await expect(page.getByTestId('taste-profile-radar')).toBeVisible()
     await expect(page.getByTestId('taste-profile-sample-polygon')).toBeAttached()
     for (const axis of ['f1', 'f2', 'f3', 'f4', 'f5', 'f6'] as const) {
@@ -63,6 +73,27 @@ test.describe('/en/profile — taste profile', () => {
     // The radar does not go through the shared chart view, so it mounts its
     // own disclosure (ADR-0022). Easy to drop when the radar is next touched.
     await expect(page.getByText(/brewers' terms/i).first()).toBeVisible()
+
+    // §12's "What shapes it": six rows, each with a bar AND a word. The word
+    // is the row's point — a bar and a tick close together is a picture of
+    // "about the same", and a picture is not reachable at a glance or by a
+    // screen reader.
+    await expect(page.getByTestId('palate-axis-rows')).toBeVisible()
+    for (const axis of ['f1', 'f2', 'f3', 'f4', 'f5', 'f6'] as const) {
+      await expect(page.getByTestId(`palate-axis-${axis}`)).toBeVisible()
+    }
+    // And something on the screen says what "most" means. The reference is the
+    // catalogue's mean sake, not §12's "typical drinker" — that needs an
+    // aggregation with no lawful basis yet (#297) — so the note has to name
+    // the catalogue, or six rows of "More than most" would be read as a claim
+    // about other drinkers. DB-dependent: with no mirror there is no reference
+    // and the tick, the word and the note are all correctly absent.
+    const note = page.getByTestId('palate-comparison-note')
+    if ((await note.count()) > 0) {
+      await expect(note).toContainText('catalogue')
+      await expect(page.getByTestId('palate-axis-f1-word')).toBeVisible()
+      await expect(page.getByTestId('palate-axis-f1-tick')).toBeAttached()
+    }
     // "What shaped this" is present, and lists the seeded descriptor.
     await expect(page.getByTestId('taste-provenance-summary')).toBeVisible()
     await expect(page.getByTestId('taste-provenance-seeds')).toContainText('smoky')
@@ -74,44 +105,73 @@ test.describe('/en/profile — taste profile', () => {
     const firstRec = page.getByTestId('recommendation-101')
     await expect(firstRec).toBeVisible()
     await expect(firstRec).toHaveAttribute('href', '/en/sake/101')
-    // No "coming soon" badge — this is real now.
-    await expect(page.getByTestId('profile-coming-soon-badge')).toHaveCount(0)
+
+    // The early screen's furniture is gone — a palate that still showed "2
+    // more tastings and your first read appears" beside its own read would be
+    // telling the visitor two different things.
+    await expect(page.getByTestId('palate-early')).toHaveCount(0)
+    await expect(page.getByTestId('palate-cold-start')).toHaveCount(0)
 
     await context.close()
   })
 
-  test('cold start: leads with a faded sample radar + the cross-beverage seed form', async ({
+  test('one tasting in, it says how far off a read is rather than guessing', async ({
     browser,
   }) => {
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([AGE_GATE_COOKIE, CONSENT_COOKIE, tasteStub('taking_shape')])
+    const page = await context.newPage()
+
+    await page.goto('/en/profile')
+
+    // §12: "Taking shape" at 1–2 tastings. The threshold is three, and the
+    // screen's job is to say so rather than render a six-axis reading off one
+    // data point.
+    await expect(page.getByTestId('palate-title')).toHaveText('Taking shape')
+    await expect(page.getByTestId('palate-early')).toBeVisible()
+    await expect(page.getByTestId('palate-more-needed')).toContainText('2 more tastings')
+    await expect(page.getByTestId('palate-progress')).toHaveAttribute('aria-valuenow', '1')
+    // No reading, and nothing that implies one.
+    await expect(page.getByTestId('palate-read')).toHaveCount(0)
+    await expect(page.getByTestId('palate-axis-rows')).toHaveCount(0)
+    await expect(page.getByTestId('palate-confidence')).toHaveCount(0)
+
+    await context.close()
+  })
+
+  test('with nothing rated, it offers five drinks you might know', async ({ browser }) => {
     const context = await browser.newContext({ locale: 'en-US' })
     await context.addCookies([AGE_GATE_COOKIE, CONSENT_COOKIE, tasteStub('cold_start')])
     const page = await context.newPage()
 
     await page.goto('/en/profile')
 
-    await expect(page.getByTestId('profile-cold-start')).toBeVisible()
-    // The illustrative radar is unmistakably tagged "Example" (not the
-    // visitor's data).
-    await expect(page.getByTestId('profile-example-badge')).toBeVisible()
-    // The seed form (the cheap hero) is present with both selects + submit.
-    await expect(page.getByTestId('cross-beverage-seed-form')).toBeVisible()
+    await expect(page.getByTestId('palate-title')).toHaveText('Not yet')
+    await expect(page.getByTestId('palate-cold-start')).toBeVisible()
+
+    // §12 names bottles, not descriptors. This replaced two <select>s offering
+    // the cross-beverage table's internal words ("peated", "off-dry",
+    // "roasty") — a visitor knows what Guinness is; "roasty" is our word for
+    // it. The chip still seeds from the same row, so only the vocabulary
+    // changed.
+    const chips = page.getByTestId('palate-cold-start').getByRole('button')
+    expect(await chips.count()).toBeGreaterThanOrEqual(5)
+    await expect(page.getByText('Lagavulin 16')).toBeVisible()
+    await expect(page.getByText('Guinness')).toBeVisible()
+
     // CLAUDE.md: the cross-beverage mapping is heuristic → the disclaimer must
-    // ride on this surface (title visible, body in the info-button tooltip).
+    // ride on this surface (title visible, body in the info-button tooltip,
+    // and in the DOM either way).
     await expect(page.getByTestId('heuristic-disclaimer-title')).toBeVisible()
     await expect(page.getByTestId('heuristic-disclaimer-body')).toBeAttached()
-    await expect(page.getByTestId('seed-beverage')).toBeVisible()
-    await expect(page.getByTestId('seed-descriptor')).toBeVisible()
-    await expect(page.getByTestId('seed-submit')).toBeVisible()
-    // Changing the beverage re-populates the descriptor options (they're a
-    // deterministic function of the category) — proves the two selects are
-    // wired together.
-    await page.getByTestId('seed-beverage').selectOption('beer')
-    await expect(page.getByTestId('seed-descriptor')).toBeVisible()
-    // /suggest is only a quiet secondary link, not a hero CTA. (The seed
-    // submit → radar-refresh reward depends on a live store; it's exercised by
-    // the applyCrossBeverage unit tests + manual testing, not asserted here
-    // where the outcome would be environment-dependent and flaky.)
-    await expect(page.getByTestId('profile-suggest-quiet-link')).toBeVisible()
+
+    // Picking one acknowledges the tap immediately (#184) and states what it
+    // sketched. The action itself needs a live store, so what is asserted is
+    // the feedback — which is the half that was missing from the old form.
+    const lagavulin = page.getByTestId('palate-cold-start-chip-peated')
+    await lagavulin.click()
+    await expect(lagavulin).toHaveAttribute('aria-pressed', 'true')
+    await expect(page.getByTestId('palate-cold-start-seed-line')).toContainText('Lagavulin 16')
 
     await context.close()
   })
@@ -152,9 +212,12 @@ test.describe('/en/profile — maintainer tasting journal (ADR-0020)', () => {
 
     await page.goto('/en/profile')
 
-    // The maintainer journal replaces the anonymous example.
+    // The maintainer journal replaces the anonymous example. It is §11
+    // Collection's content and moves there with that port; until then this
+    // early return is what a maintainer gets at /profile.
     await expect(page.getByTestId('profile-journal-page')).toBeVisible()
-    await expect(page.getByTestId('profile-populated')).toHaveCount(0)
+    await expect(page.getByTestId('palate-read')).toHaveCount(0)
+    await expect(page.getByTestId('palate-early')).toHaveCount(0)
     // Map hero (the real radar, six axis labels) + timeline with entries.
     await expect(page.getByTestId('taste-profile-radar')).toBeVisible()
     await expect(page.getByTestId('flavor-axis-f1')).toBeVisible()
