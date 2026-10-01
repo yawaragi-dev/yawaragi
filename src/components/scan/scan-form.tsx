@@ -9,6 +9,7 @@
 import { startTransition, useActionState, useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useTranslations } from 'next-intl'
+import NextLink from 'next/link'
 import { useRouter } from 'next/navigation'
 import { getPathname, Link } from '@/i18n/navigation'
 import { Button } from '@/components/ui/button'
@@ -38,8 +39,8 @@ import {
   INITIAL_SCAN_ACTION_STATE,
   type ScanActionState,
 } from '@/lib/scan/scan-action-state'
-import { markArrivedViaScan } from '@/lib/scan/arrived-via-scan'
 import { appendMatchToHistory } from '@/lib/scan/scan-history'
+import { rememberScannedPhoto } from '@/lib/scan/scanned-photo'
 import { useScanHistoryConsensus } from '@/lib/scan/use-scan-history-consensus'
 import type { Locale } from '@/i18n/routing'
 
@@ -279,6 +280,10 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
     // downscale kicks off. The effect below revokes the previous URL
     // when this state change lands.
     setPhotoUrl(URL.createObjectURL(file))
+    // And hold it for the bottle page, which shows it in §9's bottle slot
+    // when the visitor taps through from the result. Memory only — see
+    // `scanned-photo.ts`.
+    rememberScannedPhoto(file)
     try {
       const downscaleStart = Date.now()
       const downscaled = await downscaleImage(file, {
@@ -522,7 +527,6 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
             <Button
               type="button"
               onClick={() => {
-                markArrivedViaScan()
                 router.push(consensus.sakeHref)
               }}
               data-testid="scan-result-consensus-accept"
@@ -732,9 +736,8 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
             <ul className="flex flex-col gap-1.5" data-testid="scan-result-ambiguous-list">
               {candidates.map((c) => (
                 <li key={c.brandId}>
-                  <a
+                  <NextLink
                     href={c.sakeHref}
-                    onClick={markArrivedViaScan}
                     className="flex flex-col gap-0.5 rounded border border-zinc-200 px-3 py-2 transition-colors hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 dark:border-zinc-800 dark:hover:bg-zinc-900"
                     data-testid={`scan-result-ambiguous-candidate-${c.brandId}`}
                   >
@@ -761,7 +764,7 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
                         </span>
                       )
                     })()}
-                  </a>
+                  </NextLink>
                 </li>
               ))}
             </ul>
@@ -896,14 +899,13 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
               </>
             )}
           </p>
-          <a
+          <NextLink
             href={state.sakeHref}
-            onClick={markArrivedViaScan}
             className="text-sm font-medium text-blue-700 underline-offset-2 hover:underline dark:text-blue-300"
             data-testid="scan-result-matched-brand-only-link"
           >
             {t('matchedBrandOnlyOpen')}
-          </a>
+          </NextLink>
         </div>
       )}
       {state.status === 'matched_brewery_only' && (
@@ -982,14 +984,13 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
               </>
             )}
           </p>
-          <a
+          <NextLink
             href={state.sakeHref}
-            onClick={markArrivedViaScan}
             className="text-sm font-medium text-blue-700 underline-offset-2 hover:underline dark:text-blue-300"
             data-testid="scan-result-matched-brewery-only-link"
           >
             {t('matchedBreweryOnlyOpen')}
-          </a>
+          </NextLink>
         </div>
       )}
       {isMatch && (

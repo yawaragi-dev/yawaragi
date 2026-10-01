@@ -1,41 +1,28 @@
 /**
- * Client-side marker recording that the current tab reached a
- * `/sake/[brandId]` page by tapping a scan result (the matched result
- * card's "Full bottle page" row, a disambiguation row, a divergence
- * link, or the consensus accept) rather than by direct navigation.
+ * Records that a visitor reached `/sake/[brandId]` by tapping a scan result
+ * (the matched card's "Full bottle page" row, a disambiguation row, a
+ * divergence link, or the consensus accept) rather than by any other route.
  *
- * Read by `<ScanReturnHint />` on the sake detail page to offer a
- * "Not the bottle you scanned? Scan again" affordance back to `/scan`
- * — a dead-end escape hatch for the visitor who matched the wrong
- * sake (issue #109 PR B).
+ * The bottle page uses it twice: to offer "Not the bottle you scanned? Scan
+ * again" (#109), and to put the visitor's own photo in the bottle slot.
  *
- * Deliberately a `sessionStorage` flag, NOT a cookie:
- *   - It is a pure client-side navigation signal that never needs to
- *     reach the server, so it carries no cookie/GDPR surface.
- *   - CLAUDE.md forbids mutating cookies from an action reached during
- *     an RSC render; sessionStorage sidesteps that entirely.
- *   - Per-tab + cleared on tab close is exactly the lifetime we want:
- *     "did THIS browsing session arrive here via scan?".
+ * **Why a query parameter, not the per-tab sessionStorage flag it replaced.**
+ * The flag had two faults the maintainer saw on sight:
  *
- * No personal data — a single boolean-ish flag, so no lawful-basis
- * documentation is required (ADR-0009 privacy-by-default: nothing is
- * collected).
+ * - It was never cleared. One scan, and every bottle page for the rest of the
+ *   tab — reached from similar sakes, the brewery's other sakes, anywhere —
+ *   asked "Not the bottle you scanned?".
+ * - The server cannot read sessionStorage, so the hint could only appear after
+ *   hydration, and the page shifted down under the visitor's eyes.
+ *
+ * A query parameter belongs to the one link that carries it, and the server
+ * renders from it — so the hint is in the first paint or not at all. It is
+ * not personal data: it says which kind of link was tapped, nothing about who.
  */
-export const ARRIVED_VIA_SCAN_KEY = 'yawaragi_arrived_via_scan'
+export const ARRIVED_VIA_SCAN_QUERY = { from: 'scan' } as const
 
-export function markArrivedViaScan(): void {
-  try {
-    sessionStorage.setItem(ARRIVED_VIA_SCAN_KEY, '1')
-  } catch {
-    // Private mode / storage disabled: the return hint simply won't
-    // show. It is a progressive enhancement, not load-bearing.
-  }
-}
-
-export function hasArrivedViaScan(): boolean {
-  try {
-    return sessionStorage.getItem(ARRIVED_VIA_SCAN_KEY) === '1'
-  } catch {
-    return false
-  }
+export function hasArrivedViaScan(
+  searchParams: Record<string, string | string[] | undefined>,
+): boolean {
+  return searchParams.from === ARRIVED_VIA_SCAN_QUERY.from
 }

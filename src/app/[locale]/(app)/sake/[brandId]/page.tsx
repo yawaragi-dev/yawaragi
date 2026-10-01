@@ -11,6 +11,7 @@ import {
 } from '@/lib/sakenowa/lookup'
 import { getPrefectureNames } from '@/lib/sakenowa/prefecture'
 import { BottleSection, NotPublished } from '@/components/sake/bottle-section'
+import { BottleSlot } from '@/components/sake/bottle-slot'
 import { BreweryOtherSakes } from '@/components/sake/brewery-other-sakes'
 import { FlavorChartView } from '@/components/sake/flavor-chart'
 import { FlavorTermsDisclosure } from '@/components/sake/flavor-terms-disclosure'
@@ -20,6 +21,8 @@ import {
   SakenowaAttribution,
   requiresSakenowaAttribution,
 } from '@/components/sake/sakenowa-attribution'
+import { FEATURES } from '@/lib/features'
+import { hasArrivedViaScan } from '@/lib/scan/arrived-via-scan'
 
 /**
  * §9 Bottle page — one screen per sake. Reference screenshots 16 and 17.
@@ -55,12 +58,19 @@ import {
  * - **§9.4's six-temperature row.** Screenshot 17 shows the row absent and
  *   only the sentence when nobody has said — which is every bottle we have.
  *   The row arrives with the data that fills it.
+ * - **§9.7 Goes with, §9.8 What others noticed, §9.10 Where to find it.**
+ *   Rule 4 ("missing data is stated, not hidden") is about data a bottle
+ *   might lack. Nothing at all stands behind these three yet, so their empty
+ *   sentence said nothing about the sake on any page — it only advertised
+ *   features we have not built. They sit behind `FEATURES` until they are
+ *   real (#336, #337, #338).
  *
  * Tracked on #300. What this port DOES add beyond styling is §9.9's row of the
  * brewery's other sakes, which closes the dead end in #325.
  */
 interface PageProps {
   params: Promise<{ locale: string; brandId: string }>
+  searchParams: Promise<Record<string, string | string[] | undefined>>
 }
 
 // `cache()` dedupes lookups across the same request — `generateMetadata`
@@ -91,8 +101,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return { title }
 }
 
-export default async function SakeBrandPage({ params }: PageProps) {
+export default async function SakeBrandPage({ params, searchParams }: PageProps) {
   const { locale, brandId: brandIdParam } = await params
+  const arrivedViaScan = hasArrivedViaScan(await searchParams)
   setRequestLocale(locale)
 
   const brandId = parseBrandIdParam(brandIdParam)
@@ -110,6 +121,7 @@ export default async function SakeBrandPage({ params }: PageProps) {
   }
 
   const t = await getTranslations('sake.brand')
+  const tScan = await getTranslations('scan.form')
 
   // §9.1 draws the Latin name large with the Japanese beneath it — "Kidoizumi
   // AFS" over "木戸泉 AFS". That is §15's default name display (Romaji + kanji)
@@ -147,29 +159,19 @@ export default async function SakeBrandPage({ params }: PageProps) {
     >
       {showSakenowaAttribution && <SakenowaAttribution placement="above-fold" />}
       {/*
-        "Not the bottle you scanned? Scan again" — shown only when the visitor
-        reached this page from a scan result (#109). Client component: reads a
-        per-tab sessionStorage marker, renders nothing for direct navigators.
+        "Not the bottle you scanned? Scan again" — only when the link that
+        brought the visitor was a scan result's (#109). Decided here, on the
+        server, so it is in the first paint and nothing jumps.
       */}
-      <ScanReturnHint />
+      {arrivedViaScan && <ScanReturnHint />}
 
       {/* -- §9.1 Identity ------------------------------------------------ */}
       <section className="flex items-start gap-4" data-testid="bottle-identity">
-        {/*
-          §9's 88×128 bottle slot. We have no bottle photography and the
-          catalogue carries none, so this is the design's own placeholder
-          rather than an empty box: a labelled slot says "a picture goes here",
-          where a blank one says "something failed to load". `aria-hidden`
-          because it carries no information a screen-reader user needs — the
-          name beside it is the content.
-        */}
-        <div
-          className="flex h-32 w-22 shrink-0 items-end justify-center rounded-xl bg-ash-200 pb-2 shadow-yw-sm"
-          aria-hidden="true"
-          data-testid="bottle-slot"
-        >
-          <span className="text-micro uppercase text-ash-500">{t('bottleSlotLabel')}</span>
-        </div>
+        <BottleSlot
+          showScannedPhoto={arrivedViaScan}
+          placeholderLabel={t('bottleSlotLabel')}
+          photoAlt={tScan('photoAlt')}
+        />
         <div className="flex min-w-0 flex-col gap-1">
           {romaji !== null ? (
             <>
@@ -261,15 +263,24 @@ export default async function SakeBrandPage({ params }: PageProps) {
       </section>
 
       {/* -- §9.2 Action row ---------------------------------------------- */}
-      <div className="flex gap-2" data-testid="bottle-actions">
-        <Link
-          href={{ pathname: '/sake/[brandId]/similar', params: { brandId: String(brandId) } }}
-          className="flex min-h-11 flex-1 items-center justify-center rounded-xl border border-ginshu-400 px-4 text-card-heading font-medium text-ginshu-700 transition-colors hover:bg-ginshu-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
-          data-testid="similar-sakes-link"
-        >
-          {t('similarAction')}
-        </Link>
-      </div>
+      {/*
+        "Similar" ranks by distance over the six flavour axes, so a bottle with
+        no chart has nothing to be similar BY — §6 would open on its "no chart
+        yet" empty state. The page already knows, so it does not offer the
+        tap. With "Rate a new tasting" still Phase 2, that leaves the row empty,
+        and an empty row is not rendered.
+      */}
+      {flavorChart && (
+        <div className="flex gap-2" data-testid="bottle-actions">
+          <Link
+            href={{ pathname: '/sake/[brandId]/similar', params: { brandId: String(brandId) } }}
+            className="flex min-h-11 flex-1 items-center justify-center rounded-xl border border-ginshu-400 px-4 text-card-heading font-medium text-ginshu-700 transition-colors hover:bg-ginshu-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+            data-testid="similar-sakes-link"
+          >
+            {t('similarAction')}
+          </Link>
+        </div>
+      )}
 
       {/* -- §9.4 Serve it ------------------------------------------------ */}
       <BottleSection label={t('serveLabel')} testId="bottle-serve">
@@ -317,14 +328,18 @@ export default async function SakeBrandPage({ params }: PageProps) {
       )}
 
       {/* -- §9.7 Goes with ----------------------------------------------- */}
-      <BottleSection label={t('pairingsLabel')} testId="bottle-pairings">
-        <p className="text-body text-ash-600">{t('pairingsEmpty')}</p>
-      </BottleSection>
+      {FEATURES.bottlePairings && (
+        <BottleSection label={t('pairingsLabel')} testId="bottle-pairings">
+          <p className="text-body text-ash-600">{t('pairingsEmpty')}</p>
+        </BottleSection>
+      )}
 
       {/* -- §9.8 What others noticed ------------------------------------- */}
-      <BottleSection label={t('communityLabel')} testId="bottle-community">
-        <p className="text-body text-ash-600">{t('communityEmpty')}</p>
-      </BottleSection>
+      {FEATURES.bottleCommunityNotes && (
+        <BottleSection label={t('communityLabel')} testId="bottle-community">
+          <p className="text-body text-ash-600">{t('communityEmpty')}</p>
+        </BottleSection>
+      )}
 
       {/* -- §9.9 The brewery --------------------------------------------- */}
       {showBrewery && (
@@ -346,9 +361,11 @@ export default async function SakeBrandPage({ params }: PageProps) {
       )}
 
       {/* -- §9.10 Where to find it --------------------------------------- */}
-      <BottleSection label={t('shopsLabel')} testId="bottle-shops">
-        <p className="text-body text-ash-600">{t('shopsEmpty')}</p>
-      </BottleSection>
+      {FEATURES.bottleShops && (
+        <BottleSection label={t('shopsLabel')} testId="bottle-shops">
+          <p className="text-body text-ash-600">{t('shopsEmpty')}</p>
+        </BottleSection>
+      )}
     </main>
   )
 }

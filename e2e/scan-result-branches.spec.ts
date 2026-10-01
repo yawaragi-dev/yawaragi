@@ -277,7 +277,7 @@ test.describe('scan result branches (#109 PR B)', () => {
     // visitor away from the sake they just scanned.)
     await expect(page.getByTestId('scan-result-open-detail')).toHaveAttribute(
       'href',
-      new RegExp(`/en/sake/${fixture.brandId}$`),
+      new RegExp(`/en/sake/${fixture.brandId}\\?from=scan$`),
     )
     await context.close()
   })
@@ -314,7 +314,7 @@ test.describe('scan result branches (#109 PR B)', () => {
     await expect(page.getByTestId('scan-result-ambiguous-rescan')).toBeVisible()
 
     await candidate.click()
-    await page.waitForURL(new RegExp(`/en/sake/${firstBrandId}$`))
+    await page.waitForURL(new RegExp(`/en/sake/${firstBrandId}\\?from=scan$`))
     await expect(page.getByTestId('sake-brand-page')).toBeVisible()
     // Arrived via scan → the "Not this one? Scan again" affordance shows.
     await expect(page.getByTestId('scan-return-hint')).toBeVisible()
@@ -342,7 +342,7 @@ test.describe('scan result branches (#109 PR B)', () => {
     await expect(page.getByTestId('scan-result-matched-brand-only')).toBeVisible()
     await expect(page.getByTestId('scan-result-brewery-divergence')).toBeVisible()
     const link = page.getByTestId('scan-result-matched-brand-only-link')
-    await expect(link).toHaveAttribute('href', new RegExp(`/en/sake/${fixture.brandId}$`))
+    await expect(link).toHaveAttribute('href', new RegExp(`/en/sake/${fixture.brandId}\\?from=scan$`))
     await context.close()
   })
 
@@ -367,7 +367,7 @@ test.describe('scan result branches (#109 PR B)', () => {
     await expect(page.getByTestId('scan-result-matched-brewery-only')).toBeVisible()
     await expect(page.getByTestId('scan-result-brand-divergence')).toBeVisible()
     const link = page.getByTestId('scan-result-matched-brewery-only-link')
-    await expect(link).toHaveAttribute('href', new RegExp(`/en/sake/${fixture.brandId}$`))
+    await expect(link).toHaveAttribute('href', new RegExp(`/en/sake/${fixture.brandId}\\?from=scan$`))
     await context.close()
   })
 
@@ -386,15 +386,26 @@ test.describe('scan result branches (#109 PR B)', () => {
     await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
     await expect(page.getByTestId('scan-result-card')).toBeVisible()
     await page.getByTestId('scan-result-open-detail').click()
-    await page.waitForURL(new RegExp(`/en/sake/${brandId}$`))
+    await page.waitForURL(new RegExp(`/en/sake/${brandId}\\?from=scan$`))
     await expect(page.getByTestId('scan-return-hint')).toBeVisible()
     await expect(page.getByTestId('scan-return-hint-link')).toHaveAttribute(
       'href',
       /\/en\/scan$/,
     )
+    // The bottle slot shows the photo the visitor just scanned, carried over
+    // in memory by the client-side navigation.
+    await expect(page.getByTestId('bottle-scanned-photo')).toHaveAttribute('src', /^blob:/)
+
+    // Leaving the scanned bottle for any other page in the same tab drops
+    // both: the old sessionStorage flag stayed set for the whole tab and put
+    // "Not the bottle you scanned?" on every bottle page after one scan.
+    await page.goto(`/en/sake/${brandId}`)
+    await expect(page.getByTestId('sake-brand-page')).toBeVisible()
+    await expect(page.getByTestId('scan-return-hint')).toHaveCount(0)
+    await expect(page.getByTestId('bottle-scanned-photo')).toHaveCount(0)
     await context.close()
 
-    // Direct navigation (fresh tab, no marker): the hint stays hidden.
+    // Direct navigation (fresh tab): the hint stays hidden.
     const direct = await scanPageWith(browser, [])
     await direct.page.goto(`/en/sake/${brandId}`)
     await expect(direct.page.getByTestId('sake-brand-page')).toBeVisible()

@@ -18,7 +18,11 @@
 //    contract.
 import { expect, test } from '@playwright/test'
 import { BASE_URL } from './_base-url'
-import { findAnyBrandId, findBrandWithFlavorChartId } from './_db-fixtures'
+import {
+  findAnyBrandId,
+  findBrandWithFlavorChartId,
+  findMatchedNoChartFixture,
+} from './_db-fixtures'
 
 const AGE_GATE_COOKIE = {
   name: 'yawaragi_age_gate',
@@ -28,10 +32,12 @@ const AGE_GATE_COOKIE = {
 
 let anyBrandId: number | null = null
 let brandWithChartId: number | null = null
+let brandWithoutChartId: number | null = null
 
 test.beforeAll(async () => {
   anyBrandId = await findAnyBrandId()
   brandWithChartId = await findBrandWithFlavorChartId()
+  brandWithoutChartId = (await findMatchedNoChartFixture())?.brandId ?? null
 })
 
 /**
@@ -179,16 +185,18 @@ test.describe('sake brand page', () => {
     // Design v1.4 rule 4: "Missing data is stated, not hidden." §9 keeps every
     // section in its fixed order and fills the ones it cannot answer with a
     // sentence — screenshot 17 is that page drawn deliberately. The mirror
-    // carries no brewing specs, serving temperatures, pairings or shops for
-    // ANY bottle, so these four must render on every one of them.
-    for (const section of [
-      'bottle-serve',
-      'bottle-specs',
-      'bottle-pairings',
-      'bottle-community',
-      'bottle-shops',
-    ]) {
+    // carries no brewing specs or serving temperatures for ANY bottle, so
+    // these must render on every one of them.
+    for (const section of ['bottle-serve', 'bottle-specs']) {
       await expect(page.getByTestId(section)).toBeVisible()
+    }
+
+    // Pairings, community notes and shops have no source at all yet, so they
+    // are switched off (`FEATURES`, #336–#338) rather than shown empty on
+    // every page. When one lands, its issue restores it to the lists above
+    // and to the order check below.
+    for (const section of ['bottle-pairings', 'bottle-community', 'bottle-shops']) {
+      await expect(page.getByTestId(section)).toHaveCount(0)
     }
 
     // The spec grid names its unknown fields rather than dropping the rows.
@@ -206,8 +214,29 @@ test.describe('sake brand page', () => {
     const rank = (id: string) => order.indexOf(id)
     expect(rank('bottle-identity')).toBeLessThan(rank('bottle-serve'))
     expect(rank('bottle-serve')).toBeLessThan(rank('bottle-specs'))
-    expect(rank('bottle-pairings')).toBeLessThan(rank('bottle-community'))
-    expect(rank('bottle-community')).toBeLessThan(rank('bottle-shops'))
+
+    await context.close()
+  })
+
+  test('offers "Similar" only for a bottle that has a flavor chart to compare by', async ({
+    browser,
+  }, testInfo) => {
+    testInfo.skip(brandWithChartId === null || brandWithoutChartId === null, 'DB-bound spec')
+
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([AGE_GATE_COOKIE])
+    const page = await context.newPage()
+
+    // Similarity is distance over the six axes, so without a chart §6 can
+    // only say "no chart yet". The page knows up front and does not offer
+    // a tap that leads nowhere.
+    await page.goto(`/en/sake/${brandWithChartId}`)
+    await expect(page.getByTestId('similar-sakes-link')).toBeVisible()
+
+    await page.goto(`/en/sake/${brandWithoutChartId}`)
+    await expect(page.getByTestId('sake-brand-page')).toBeVisible()
+    await expect(page.getByTestId('similar-sakes-link')).toHaveCount(0)
+    await expect(page.getByTestId('bottle-actions')).toHaveCount(0)
 
     await context.close()
   })

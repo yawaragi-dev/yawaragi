@@ -39,8 +39,12 @@ vi.mock('next/headers', () => ({
 // next-intl formatter.
 vi.mock('@/i18n/navigation', () => ({
   getPathname: vi.fn(
-    (arg: { locale: string; href: { pathname: string; params: { brandId: string } } }) =>
-      `/${arg.locale}/sake/${arg.href.params.brandId}`,
+    (arg: {
+      locale: string
+      href: { pathname: string; params: { brandId: string }; query?: Record<string, string> }
+    }) =>
+      `/${arg.locale}/sake/${arg.href.params.brandId}` +
+      (arg.href.query ? `?${new URLSearchParams(arg.href.query)}` : ''),
   ),
 }))
 
@@ -465,7 +469,7 @@ describe('scanAction — Sakenowa lookup states', () => {
     expect(state.status).toBe('matched')
     if (state.status === 'matched') {
       expect(state.brandId).toBe(DASSAI_BRAND.brandId)
-      expect(state.sakeHref).toBe(`/en/sake/${DASSAI_BRAND.brandId}`)
+      expect(state.sakeHref).toBe(`/en/sake/${DASSAI_BRAND.brandId}?from=scan`)
       expect(state.sakeRomaji).toBe('Dassai')
       expect(state.breweryRomaji).toBe('Asahi Shuzo')
     }
@@ -519,7 +523,7 @@ describe('scanAction — Sakenowa lookup states', () => {
     expect(state.status).toBe('matched_brand_only')
     if (state.status === 'matched_brand_only') {
       expect(state.brandId).toBe(DASSAI_BRAND.brandId)
-      expect(state.sakeHref).toBe(`/en/sake/${DASSAI_BRAND.brandId}`)
+      expect(state.sakeHref).toBe(`/en/sake/${DASSAI_BRAND.brandId}?from=scan`)
       expect(state.breweryDivergence.extracted).toBe('別の蔵')
       expect(state.breweryDivergence.stored).toBe('旭酒造')
       expect(state.breweryDivergence.storedRomaji).toBe('Asahi Shuzo')
@@ -601,8 +605,8 @@ describe('scanAction — Sakenowa lookup states', () => {
       expect(state.candidates).toHaveLength(2)
       // Locale routing: German visitor gets /de/-prefixed hrefs on
       // every candidate row.
-      expect(state.candidates[0].sakeHref).toBe(`/de/sake/${DASSAI_BRAND.brandId}`)
-      expect(state.candidates[1].sakeHref).toBe(`/de/sake/${KIKU_BRAND.brandId}`)
+      expect(state.candidates[0].sakeHref).toBe(`/de/sake/${DASSAI_BRAND.brandId}?from=scan`)
+      expect(state.candidates[1].sakeHref).toBe(`/de/sake/${KIKU_BRAND.brandId}?from=scan`)
       expect(state.candidates[0].nameKanji).toBe('獺祭')
       expect(state.candidates[1].breweryKanji).toBe('菊正宗酒造')
       // #109 PR B: each candidate carries its brewery's prefecture name
