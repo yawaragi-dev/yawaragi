@@ -85,19 +85,29 @@ export function supportsTorch(track: MediaStreamTrack | null | undefined): boole
 }
 
 /**
- * Whether a live preview is even possible here.
+ * Whether to open a live preview here at all.
  *
  * Separate from `classifyCameraError` because it is answerable before asking:
  * a browser with no `mediaDevices` must render the "No camera here" panel
  * rather than a frame that will never fill, and must not raise a permission
  * prompt to find that out.
+ *
+ * A desktop gets the same answer even with a webcam (maintainer review on
+ * #329). Holding a bottle up to a laptop's front camera is not how anyone
+ * scans a label, so the permission prompt is a cost with no payoff, and §4's
+ * screenshot 08 is literally titled "Desktop or no camera". "Desktop" means no
+ * coarse pointer: a phone or tablet has a touchscreen as its primary input, a
+ * laptop with a touchscreen still reports a fine primary pointer.
  */
 export function canUseLiveCamera(
   mediaDevices: MediaDevices | undefined = typeof navigator === 'undefined'
     ? undefined
     : navigator.mediaDevices,
+  touchPrimary: boolean = typeof window !== 'undefined' &&
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(pointer: coarse)').matches,
 ): boolean {
-  return typeof mediaDevices?.getUserMedia === 'function'
+  return touchPrimary && typeof mediaDevices?.getUserMedia === 'function'
 }
 
 /** Stop every track, so the device indicator light goes out. */

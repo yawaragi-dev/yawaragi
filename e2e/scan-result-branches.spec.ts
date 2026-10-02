@@ -99,6 +99,48 @@ test.describe('scan result branches (#109 PR B)', () => {
     await context.close()
   })
 
+  test('a rescan shows the camera reading, not the old result, while it works', async ({
+    browser,
+  }, testInfo) => {
+    const fixture = await findMatchedNoChartFixture()
+    testInfo.skip(fixture === null, 'Sakenowa mirror not available — DB-bound spec')
+    if (!fixture) return
+    // §4: capture → working → result. The working state used to appear only on
+    // a first scan: a rescan put the PREVIOUS result back on screen, faded, for
+    // the whole read, because starting the read cleared the dismissal.
+    const { context, page } = await scanPageWith(browser, [
+      injectionCookie({ name_ja: fixture.nameJa, brewery_ja: fixture.breweryJa, confidence: 0.95 }),
+      // A settled consent, so the cookie banner is not covering "Scan again".
+      {
+        name: 'yawaragi_consent',
+        value: JSON.stringify({ version: 1, analytics: false, marketing: false }),
+        url: BASE_URL,
+      },
+    ])
+    await page.goto('/en/scan')
+    await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
+    await expect(page.getByTestId('scan-result-card')).toBeVisible()
+
+    await page.getByTestId('scan-result-match-rescan').click()
+    await expect(page.getByTestId('scan-camera')).toBeVisible()
+
+    // Hold the read open long enough to look at it.
+    let release: () => void = () => {}
+    const held = new Promise<void>((resolve) => (release = resolve))
+    await page.route('**/en/scan', async (route) => {
+      if (route.request().method() === 'POST') await held
+      await route.continue()
+    })
+    await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
+
+    await expect(page.getByTestId('scan-camera-hint')).toContainText('Reading the label')
+    await expect(page.getByTestId('scan-result-card')).toHaveCount(0)
+
+    release()
+    await expect(page.getByTestId('scan-result-card')).toBeVisible()
+    await context.close()
+  })
+
   test('a match replaces the entry pickers with one "Scan again" that still rescans', async ({
     browser,
   }, testInfo) => {

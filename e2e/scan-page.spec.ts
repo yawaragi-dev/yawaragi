@@ -79,10 +79,16 @@ test.describe('scan entry route', () => {
   })
 
   test('a refused camera still leaves a way to finish the scan', async ({ browser }) => {
-    const context = await browser.newContext({ locale: 'en-US' })
+    // A phone: touch is the primary input. A desktop never asks for the camera
+    // at all (next spec), so there would be nothing to refuse.
+    const context = await browser.newContext({
+      locale: 'en-US',
+      viewport: { width: 390, height: 844 },
+      hasTouch: true,
+      isMobile: true,
+    })
     await context.addCookies([AGE_GATE_COOKIE])
     const page = await context.newPage()
-    await page.setViewportSize({ width: 390, height: 844 })
 
     // The rejection is stubbed, not left to the browser. Locally a refused
     // camera raises NotAllowedError because the machine HAS a camera and no
@@ -117,6 +123,46 @@ test.describe('scan entry route', () => {
     const [chooser] = await Promise.all([
       page.waitForEvent('filechooser'),
       page.getByTestId('scan-camera-choose-photo').click(),
+    ])
+    expect(chooser).toBeTruthy()
+
+    await context.close()
+  })
+
+  test('a desktop goes straight to "add a photo", without asking for its webcam', async ({
+    browser,
+  }) => {
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([AGE_GATE_COOKIE])
+    const page = await context.newPage()
+    await page.setViewportSize({ width: 1280, height: 800 })
+
+    // The webcam exists and would say yes. Nobody scans a label by holding a
+    // bottle up to a laptop, so the permission prompt is a cost with no
+    // payoff: the page must not even call getUserMedia.
+    await page.addInitScript(() => {
+      ;(window as unknown as { __gumCalls: number }).__gumCalls = 0
+      Object.defineProperty(navigator, 'mediaDevices', {
+        configurable: true,
+        value: {
+          getUserMedia: () => {
+            ;(window as unknown as { __gumCalls: number }).__gumCalls++
+            return Promise.reject(new Error('should not be called'))
+          },
+        },
+      })
+    })
+    await page.goto('/en/scan')
+
+    await expect(page.getByTestId('scan-camera-unavailable')).toBeVisible()
+    await expect(page.getByTestId('scan-camera-shutter')).toHaveCount(0)
+    expect(
+      await page.evaluate(() => (window as unknown as { __gumCalls: number }).__gumCalls),
+    ).toBe(0)
+
+    const [chooser] = await Promise.all([
+      page.waitForEvent('filechooser'),
+      page.getByTestId('scan-camera-drop-zone').click(),
     ])
     expect(chooser).toBeTruthy()
 

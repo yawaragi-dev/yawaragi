@@ -71,12 +71,23 @@ describe('deciding before asking', () => {
     // Answerable without a permission prompt, which is the point: a browser
     // that cannot stream must render the fallback panel rather than raise a
     // dialog to discover it.
-    expect(canUseLiveCamera(undefined)).toBe(false)
-    expect(canUseLiveCamera({} as MediaDevices)).toBe(false)
+    expect(canUseLiveCamera(undefined, true)).toBe(false)
+    expect(canUseLiveCamera({} as MediaDevices, true)).toBe(false)
   })
 
-  it('reports a live camera when getUserMedia exists', () => {
-    expect(canUseLiveCamera({ getUserMedia: () => {} } as unknown as MediaDevices)).toBe(true)
+  it('reports a live camera on a phone whose browser can stream', () => {
+    expect(
+      canUseLiveCamera({ getUserMedia: () => {} } as unknown as MediaDevices, true),
+    ).toBe(true)
+  })
+
+  it('does not open the camera on a desktop, even one with a webcam', () => {
+    // Holding a bottle up to a laptop's front camera is not a way anyone
+    // scans a label, and the permission prompt is a cost with no payoff. A
+    // desktop goes straight to screenshot 08's "add a photo" panel.
+    expect(
+      canUseLiveCamera({ getUserMedia: () => {} } as unknown as MediaDevices, false),
+    ).toBe(false)
   })
 })
 

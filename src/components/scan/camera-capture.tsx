@@ -66,6 +66,12 @@ interface CameraCaptureProps {
    * the shutter centred, which is the only thing the slot is load-bearing for.
    */
   typeItHref: string | null
+  /**
+   * The frame just captured, while it is being read. Shown in the viewfinder
+   * in place of the live video, so the visitor sees the picture that is being
+   * read rather than whatever the camera points at now.
+   */
+  stillUrl: string | null
 }
 
 type CameraState = 'starting' | 'live' | 'denied' | 'unavailable'
@@ -75,6 +81,7 @@ export function CameraCapture({
   onCapture,
   onChoosePhoto,
   typeItHref,
+  stillUrl,
 }: CameraCaptureProps) {
   const t = useTranslations('scan.camera')
   const videoRef = useRef<HTMLVideoElement | null>(null)
@@ -161,13 +168,26 @@ export function CameraCapture({
   }
 
   const isLive = state === 'live'
-  const showFrame = state === 'starting' || isLive
+  // A read in flight takes the frame whatever the camera's state: a photo
+  // chosen from the "Camera is off" or "No camera here" panel (every desktop)
+  // is read with the same still, sweep and "Reading the label…" as a capture.
+  // Without this the panel just sat there for the whole read, with no sign
+  // that the tap had done anything.
+  const showFrame = isWorking || state === 'starting' || isLive
+  // The shutter row only where there is (or is about to be) a stream to shoot.
+  const showControls = state === 'starting' || isLive
 
   return (
     <section
       // The camera ground is fixed and sits below the Ginshu ramp — it is not
       // a ramp step, which is why it has its own token.
-      className="flex flex-col bg-camera text-camera-ink"
+      // Exactly the visible pane: `100cqh` is the height of the app shell's
+      // scrolling pane (a size container, see `(app)/layout.tsx`), i.e. the
+      // space between the header and the tab bar on THIS device, after the
+      // browser's own toolbars. §4's ground runs edge to edge down to the tab
+      // bar, and the shutter must never need a scroll to reach. The floor keeps
+      // a landscape phone from squashing the controls; it scrolls instead.
+      className="flex h-[100cqh] min-h-[440px] w-full flex-col bg-camera text-camera-ink"
       data-testid="scan-camera"
       data-camera-state={state}
     >
@@ -205,43 +225,62 @@ export function CameraCapture({
       </div>
 
       {showFrame ? (
-        <div className="flex flex-col items-center gap-6 px-5 py-6">
+        <div className="flex min-h-0 flex-1 flex-col items-center gap-5 px-5 py-4">
           {/* -- Frame: 212×292, 30px brackets, reading sweep ----------- */}
-          <div
-            className={cn(
-              'relative h-[292px] w-[212px] overflow-hidden rounded-[10px] transition-colors duration-300',
-              // §4's frame fill, and what the torch brightens it to. The fill
-              // is what makes the frame readable before the stream arrives.
-              torchOn ? 'bg-[rgba(255,240,225,0.14)]' : 'bg-[rgba(255,255,255,0.04)]',
-            )}
-            data-testid="scan-camera-frame"
-          >
-            <video
-              ref={videoRef}
-              autoPlay
-              muted
-              playsInline
-              // Decorative: the frame is a viewfinder, and everything a screen
-              // reader needs is in the hint below it.
-              aria-hidden="true"
-              className={cn('h-full w-full object-cover', isLive ? 'opacity-100' : 'opacity-0')}
-            />
-            <CornerBrackets />
-            {isWorking && (
-              // The reading sweep. `animate-yw-sweep` is globally neutered
-              // under `prefers-reduced-motion`, so this is decoration only —
-              // the hint text below is what actually says "reading".
-              <span
+          {/*
+            §4's 212×292, as a ceiling. On a short screen the frame gives up
+            height (keeping its 212:292 shape) so the hint and the shutter stay
+            on screen; the wrapper takes whatever the column has left.
+          */}
+          <div className="flex min-h-0 w-full flex-1 items-center justify-center">
+            <div
+              className={cn(
+                'relative aspect-[212/292] h-full max-h-[292px] overflow-hidden rounded-[10px] transition-colors duration-300',
+                // §4's frame fill, and what the torch brightens it to. The fill
+                // is what makes the frame readable before the stream arrives.
+                torchOn ? 'bg-[rgba(255,240,225,0.14)]' : 'bg-[rgba(255,255,255,0.04)]',
+              )}
+              data-testid="scan-camera-frame"
+            >
+              <video
+                ref={videoRef}
+                autoPlay
+                muted
+                playsInline
+                // Decorative: the frame is a viewfinder, and everything a screen
+                // reader needs is in the hint below it.
                 aria-hidden="true"
-                className="absolute inset-x-0 top-0 h-1/3 animate-yw-sweep bg-gradient-to-b from-transparent via-ginshu-500/35 to-transparent"
-                data-testid="scan-camera-sweep"
+                className={cn('h-full w-full object-cover', isLive ? 'opacity-100' : 'opacity-0')}
               />
-            )}
+              {isWorking && stillUrl && (
+                // The captured frame, frozen while it is read. A blob: URL from
+                // the scan form, which next/image cannot take.
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={stillUrl}
+                  alt=""
+                  aria-hidden="true"
+                  className="absolute inset-0 h-full w-full object-cover"
+                  data-testid="scan-camera-still"
+                />
+              )}
+              <CornerBrackets />
+              {isWorking && (
+                // The reading sweep. `animate-yw-sweep` is globally neutered
+                // under `prefers-reduced-motion`, so this is decoration only —
+                // the hint text below is what actually says "reading".
+                <span
+                  aria-hidden="true"
+                  className="absolute inset-x-0 top-0 h-1/3 animate-yw-sweep bg-gradient-to-b from-transparent via-ginshu-500/35 to-transparent"
+                  data-testid="scan-camera-sweep"
+                />
+              )}
+            </div>
           </div>
 
           {/* -- Hint: 58px minimum, may grow to three lines for German -- */}
           <div
-            className="flex min-h-[58px] flex-col items-center gap-1 text-center text-pretty"
+            className="flex min-h-[58px] flex-none flex-col items-center gap-1 text-center text-balance"
             data-testid="scan-camera-hint"
             // Announced, because this is where "reading the label" is said.
             aria-live="polite"
@@ -264,9 +303,9 @@ export function CameraCapture({
       )}
 
       {/* -- Bottom controls: 1fr · shutter · 1fr --------------------- */}
-      {showFrame && (
+      {showControls && (
         <div
-          className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-5 pb-4 pt-2"
+          className="grid flex-none grid-cols-[1fr_auto_1fr] items-center gap-2 px-5 pb-4 pt-2"
           data-testid="scan-camera-controls"
         >
           <div className="flex justify-start">
@@ -360,7 +399,7 @@ function FallbackPanel({
 
   return (
     <div
-      className="flex flex-col gap-3 px-5 py-8"
+      className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-5 py-8"
       data-testid={`scan-camera-${kind}`}
     >
       <Icon size={32} aria-hidden="true" className="text-camera-ink/70" />

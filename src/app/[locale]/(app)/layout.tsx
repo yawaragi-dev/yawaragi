@@ -82,7 +82,12 @@ export default async function AppShellLayout({
           href: '/home',
         })}
       />
-      <main className="min-h-0 flex-1 overflow-y-auto overflow-x-clip overscroll-contain">
+      {/* A size container, so a screen can size itself to exactly the pane
+          with `cqh` — the space left between the header and the tab bar on
+          this device, browser toolbars included. §4's camera does. Size
+          containment is safe here: the pane's own size comes from the flex
+          column, never from its content. */}
+      <main className="min-h-0 flex-1 overflow-y-auto overflow-x-clip overscroll-contain [container-type:size]">
         {children}
         {/* Inside the scrolling pane, so the Impressum stays reachable from
             every app screen without a second fixed bar. See <LegalFooter />. */}
