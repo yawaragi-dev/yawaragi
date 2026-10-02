@@ -34,7 +34,6 @@ import { getFlavorCandidatePool } from '@/lib/taste/flavor-candidate-pool'
 import { getTasteEventStore } from '@/lib/taste/get-taste-event-store'
 import {
   PALATE_FIRM_THRESHOLD,
-  PALATE_READ_THRESHOLD,
   palateLean,
   palateStage,
 } from '@/lib/taste/palate-read'
@@ -429,30 +428,24 @@ export default async function PalatePage({
       {stage !== 'read' && (
         <div className="flex flex-col gap-5" data-testid="palate-early">
           <PalateProgress ratingCount={ratingCount} label={t('progressLabel')} />
-          <p className="text-body text-ash-600" data-testid="palate-more-needed">
-            {t('moreNeeded', { count: PALATE_READ_THRESHOLD - ratingCount })}
-            {lastRated !== null && (
-              <>
-                {' '}
-                {t('soFar', { name: lastRated.name, rating: lastRated.rating })}
-              </>
-            )}
-          </p>
+          {/*
+            The last tasting, when there is one — a fact about this visitor.
+
+            Not here, on purpose (maintainer review on #330): §12's "N more
+            tastings and your first read appears", its "Rate a few different
+            styles" tip and its "Scan a label" button. A visitor has nowhere to
+            rate a sake yet — `rateSake` has no screen until the bottle → Cellar
+            → tasting-notes work lands, and a scan does not feed the palate —
+            so all three pointed at a step that does not exist. The cold-start
+            chips are the one input that works today, so they are the screen.
+            The three return with rating.
+          */}
+          {lastRated !== null && (
+            <p className="text-body text-ash-600" data-testid="palate-so-far">
+              {t('soFar', { name: lastRated.name, rating: lastRated.rating })}
+            </p>
+          )}
           <ColdStartChips chips={chips} debugMode={debugMode} />
-          <section
-            className="flex flex-col gap-1 rounded-xl bg-surface p-4 shadow-yw-sm"
-            data-testid="palate-tip"
-          >
-            <h2 className="text-card-heading font-medium text-ink">{t('tipHeading')}</h2>
-            <p className="text-body text-ash-600">{t('tipBody')}</p>
-          </section>
-          <Link
-            href="/scan"
-            className="flex min-h-12 items-center justify-center rounded-xl border border-ginshu-400 px-4 text-card-heading font-medium text-ginshu-700 transition-colors hover:bg-ginshu-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
-            data-testid="palate-scan-cta"
-          >
-            {t('scanCta')}
-          </Link>
         </div>
       )}
 
@@ -485,7 +478,6 @@ export default async function PalatePage({
       {recommendations.length > 0 && (
         <section className="flex flex-col gap-2" data-testid="profile-recommendations">
           <h2 className="text-section-label uppercase text-ash-600">{t('recommendedHeading')}</h2>
-          <p className="text-body text-ash-600">{t('recommendedSubhead')}</p>
           <SakenowaAttribution placement="inline" />
           <ul className="flex flex-col gap-2" role="list">
             {recommendations.map((rec) => (
@@ -496,16 +488,22 @@ export default async function PalatePage({
                     params: { brandId: String(rec.brandId) },
                   }}
                   data-testid={`recommendation-${rec.brandId}`}
-                  className="flex min-h-12 items-baseline gap-2 rounded-xl bg-surface px-4 shadow-yw-sm transition-colors hover:bg-ash-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+                  // Centred in its 48px row, not baseline-aligned to the top of
+                  // it: `items-baseline` on the row left the names sitting on
+                  // the card's top edge with empty space under them. The
+                  // kanji and romaji still share a baseline, inside.
+                  className="flex min-h-12 items-center rounded-xl bg-surface px-4 py-2 shadow-yw-sm transition-colors hover:bg-ash-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
                 >
-                  <span className="text-card-heading font-medium text-ink" lang="ja">
-                    {rec.nameJa}
-                  </span>
-                  {rec.nameRomaji && (
-                    <span className="text-meta text-ash-600" lang="en">
-                      {rec.nameRomaji}
+                  <span className="flex items-baseline gap-2">
+                    <span className="text-card-heading font-medium text-ink" lang="ja">
+                      {rec.nameJa}
                     </span>
-                  )}
+                    {rec.nameRomaji && (
+                      <span className="text-meta text-ash-600" lang="en">
+                        {rec.nameRomaji}
+                      </span>
+                    )}
+                  </span>
                 </Link>
               </li>
             ))}

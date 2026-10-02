@@ -129,7 +129,14 @@ test.describe('/en/profile — §12 Palate', () => {
     // data point.
     await expect(page.getByTestId('palate-title')).toHaveText('Taking shape')
     await expect(page.getByTestId('palate-early')).toBeVisible()
-    await expect(page.getByTestId('palate-more-needed')).toContainText('2 more tastings')
+    // The last tasting is named — a fact about this visitor...
+    await expect(page.getByTestId('palate-so-far')).toBeVisible()
+    // ...and nothing points at a rating step that does not exist yet: no "N
+    // more tastings", no "rate a few styles" tip, no "Scan a label" (a scan
+    // does not feed the palate). They return when rating ships.
+    await expect(page.getByText(/more tastings/)).toHaveCount(0)
+    await expect(page.getByText('Rate a few different styles')).toHaveCount(0)
+    await expect(page.getByRole('link', { name: 'Scan a label' })).toHaveCount(0)
     await expect(page.getByTestId('palate-progress')).toHaveAttribute('aria-valuenow', '1')
     // No reading, and nothing that implies one.
     await expect(page.getByTestId('palate-read')).toHaveCount(0)
