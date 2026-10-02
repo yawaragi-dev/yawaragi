@@ -59,24 +59,25 @@ export default async function ScanEntryPage({ params }: PageProps) {
   // ungated; it was unreachable, and because both used
   // `data-testid="coming-soon"` the e2e that covers `/de/scan` was
   // passing against the other one.
-  const t = await getTranslations({ locale, namespace: 'scan.entry' })
   const cookieJar = await cookies()
   // Server-rendered: the debug cookie is HttpOnly, so the form can't
   // read it from client JS. We pass the boolean down as a prop and the
   // form skips the panel + per-step accumulation when it's false.
   const debugMode = isDebugEnabledFromCookies(cookieJar)
 
+  // §4 gives the Scan tab a viewfinder, so the screen has no heading and no
+  // intro paragraph of its own: the camera carries its own one-line title
+  // ("Scan a label") in its top row, and a second heading above it would push
+  // the frame down and say the same thing twice. `scan.entry.title` and
+  // `.intro` are still the route's metadata — that is where a sentence
+  // describing the screen belongs.
+  //
+  // No `max-w-3xl mx-auto` either: §4 is edge-to-edge. The wide-viewport pass
+  // is #322 and deliberately out of scope here (v1.4 is mobile-only on
+  // purpose), so this is full-bleed at every width rather than a centred
+  // column with a camera in it.
   return (
-    <main
-      className="flex flex-1 w-full max-w-3xl mx-auto flex-col gap-6 py-16 px-8"
-      data-testid="scan-entry-page"
-    >
-      <h1 className="text-4xl font-semibold leading-tight tracking-tight">
-        {t('title')}
-      </h1>
-      <p className="text-base text-zinc-700 dark:text-zinc-300 max-w-prose">
-        {t('intro')}
-      </p>
+    <main className="flex w-full flex-col" data-testid="scan-entry-page">
       <ScanForm locale={locale} debugMode={debugMode} />
     </main>
   )

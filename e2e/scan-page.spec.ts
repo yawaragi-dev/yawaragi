@@ -47,12 +47,12 @@ test.describe('scan entry route', () => {
     // URL. The gate dialog is present; the scan form is not.
     await expect(page.getByTestId('age-gate')).toBeVisible()
     await expect(page.getByTestId('scan-entry-page')).toHaveCount(0)
-    await expect(page.getByTestId('scan-pick-button')).toHaveCount(0)
+    await expect(page.getByTestId('scan-camera')).toHaveCount(0)
 
     await context.close()
   })
 
-  test('/en/scan renders the entry CTA when the gate cookie is set', async ({
+  test('/en/scan renders the camera when the gate cookie is set', async ({
     browser,
   }) => {
     const context = await browser.newContext({ locale: 'en-US' })
@@ -62,9 +62,153 @@ test.describe('scan entry route', () => {
     await page.goto('/en/scan')
 
     await expect(page.getByTestId('scan-entry-page')).toBeVisible()
-    await expect(page.getByTestId('scan-pick-button')).toBeVisible()
+    // §4: the Scan tab's screen IS the viewfinder. Which state it settles on
+    // depends on the machine — a laptop with a camera and no permission gets
+    // "Camera is off", a CI container with no video device gets "No camera
+    // here" — so this asserts the screen's container and its title, which
+    // hold in every case. The screen renders, and it renders a state with a
+    // way forward whatever the hardware is. The two failure panels get their
+    // own specs below, each forcing its cause rather than hoping for it.
+    const camera = page.getByTestId('scan-camera')
+    await expect(camera).toBeVisible()
+    await expect(camera.getByText('Scan a label')).toBeVisible()
     // The gate dialog does NOT render — we already accepted.
     await expect(page.getByTestId('age-gate')).toHaveCount(0)
+
+    await context.close()
+  })
+
+  test('a refused camera still leaves a way to finish the scan', async ({ browser }) => {
+    // A phone: touch is the primary input. A desktop never asks for the camera
+    // at all (next spec), so there would be nothing to refuse.
+    const context = await browser.newContext({
+      locale: 'en-US',
+      viewport: { width: 390, height: 844 },
+      hasTouch: true,
+      isMobile: true,
+    })
+    await context.addCookies([AGE_GATE_COOKIE])
+    const page = await context.newPage()
+
+    // The rejection is stubbed, not left to the browser. Locally a refused
+    // camera raises NotAllowedError because the machine HAS a camera and no
+    // permission; on CI the container has no video device at all, so the same
+    // page settles on "No camera here" instead — the spec passed on a laptop
+    // and failed in Actions for a reason that had nothing to do with the code.
+    //
+    // Stubbing the error names the case directly: this is the panel a visitor
+    // who said no must get, whatever hardware is underneath.
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, 'mediaDevices', {
+        configurable: true,
+        value: {
+          getUserMedia: () =>
+            Promise.reject(Object.assign(new Error('denied'), { name: 'NotAllowedError' })),
+        },
+      })
+    })
+    await page.goto('/en/scan')
+
+    const denied = page.getByTestId('scan-camera-denied')
+    await expect(denied).toBeVisible()
+    // Discovery framing, not error tone: "Camera is off", never "Camera error".
+    await expect(denied).toContainText('Camera is off')
+    // They can change their mind...
+    await expect(page.getByTestId('scan-camera-allow')).toBeVisible()
+
+    // ...but the photo path is the one that definitely works, and ADR-0012
+    // requires it stay reachable: "a build where the OS picker is unreachable
+    // violates this ADR". Proven by the file chooser actually opening, not by
+    // the button merely existing.
+    const [chooser] = await Promise.all([
+      page.waitForEvent('filechooser'),
+      page.getByTestId('scan-camera-choose-photo').click(),
+    ])
+    expect(chooser).toBeTruthy()
+
+    await context.close()
+  })
+
+  test('a desktop goes straight to "add a photo", without asking for its webcam', async ({
+    browser,
+  }) => {
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([AGE_GATE_COOKIE])
+    const page = await context.newPage()
+    await page.setViewportSize({ width: 1280, height: 800 })
+
+    // The webcam exists and would say yes. Nobody scans a label by holding a
+    // bottle up to a laptop, so the permission prompt is a cost with no
+    // payoff: the page must not even call getUserMedia.
+    await page.addInitScript(() => {
+      ;(window as unknown as { __gumCalls: number }).__gumCalls = 0
+      Object.defineProperty(navigator, 'mediaDevices', {
+        configurable: true,
+        value: {
+          getUserMedia: () => {
+            ;(window as unknown as { __gumCalls: number }).__gumCalls++
+            return Promise.reject(new Error('should not be called'))
+          },
+        },
+      })
+    })
+    await page.goto('/en/scan')
+
+    await expect(page.getByTestId('scan-camera-unavailable')).toBeVisible()
+    await expect(page.getByTestId('scan-camera-shutter')).toHaveCount(0)
+    expect(
+      await page.evaluate(() => (window as unknown as { __gumCalls: number }).__gumCalls),
+    ).toBe(0)
+
+    const [chooser] = await Promise.all([
+      page.waitForEvent('filechooser'),
+      page.getByTestId('scan-camera-drop-zone').click(),
+    ])
+    expect(chooser).toBeTruthy()
+
+    await context.close()
+  })
+
+  test('a browser with no camera at all gets the drop zone, not a permission prompt', async ({
+    browser,
+  }) => {
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([AGE_GATE_COOKIE])
+    const page = await context.newPage()
+    await page.setViewportSize({ width: 390, height: 844 })
+
+    // Screenshot 08. A browser without `mediaDevices` must land on the panel
+    // that offers a file instead of the one that offers a permission. Paired
+    // with the spec above, the two prove the routing in `classifyCameraError`
+    // end to end: the same screen, two causes, two different first actions.
+    //
+    // What this asserts is the visible outcome. That the feature detect
+    // answers BEFORE any prompt is raised — so nobody gets a dialog about a
+    // device they do not have — is `canUseLiveCamera`'s own contract and is
+    // pinned in `camera.test.ts`; verified here that mutating the detect to
+    // `return true` does NOT fail this spec, because the subsequent throw
+    // lands on the same panel. Two tests, two properties.
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, 'mediaDevices', {
+        value: undefined,
+        configurable: true,
+      })
+    })
+    await page.goto('/en/scan')
+
+    const unavailable = page.getByTestId('scan-camera-unavailable')
+    await expect(unavailable).toBeVisible()
+    await expect(unavailable).toContainText('No camera here')
+    // And NOT the other panel — routing a missing device to "Camera is off"
+    // would tell this visitor to grant a permission that changes nothing.
+    await expect(page.getByTestId('scan-camera-denied')).toHaveCount(0)
+    await expect(page.getByTestId('scan-camera-allow')).toHaveCount(0)
+
+    const [chooser] = await Promise.all([
+      page.waitForEvent('filechooser'),
+      page.getByTestId('scan-camera-drop-zone').click(),
+    ])
+    expect(chooser).toBeTruthy()
 
     await context.close()
   })

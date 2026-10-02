@@ -99,49 +99,95 @@ test.describe('scan result branches (#109 PR B)', () => {
     await context.close()
   })
 
+  test('a rescan shows the camera reading, not the old result, while it works', async ({
+    browser,
+  }, testInfo) => {
+    const fixture = await findMatchedNoChartFixture()
+    testInfo.skip(fixture === null, 'Sakenowa mirror not available — DB-bound spec')
+    if (!fixture) return
+    // §4: capture → working → result. The working state used to appear only on
+    // a first scan: a rescan put the PREVIOUS result back on screen, faded, for
+    // the whole read, because starting the read cleared the dismissal.
+    const { context, page } = await scanPageWith(browser, [
+      injectionCookie({ name_ja: fixture.nameJa, brewery_ja: fixture.breweryJa, confidence: 0.95 }),
+      // A settled consent, so the cookie banner is not covering "Scan again".
+      {
+        name: 'yawaragi_consent',
+        value: JSON.stringify({ version: 1, analytics: false, marketing: false }),
+        url: BASE_URL,
+      },
+    ])
+    await page.goto('/en/scan')
+    await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
+    await expect(page.getByTestId('scan-result-card')).toBeVisible()
+
+    await page.getByTestId('scan-result-match-rescan').click()
+    await expect(page.getByTestId('scan-camera')).toBeVisible()
+
+    // Hold the read open long enough to look at it.
+    let release: () => void = () => {}
+    const held = new Promise<void>((resolve) => (release = resolve))
+    await page.route('**/en/scan', async (route) => {
+      if (route.request().method() === 'POST') await held
+      await route.continue()
+    })
+    await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
+
+    await expect(page.getByTestId('scan-camera-hint')).toContainText('Reading the label')
+    await expect(page.getByTestId('scan-result-card')).toHaveCount(0)
+
+    release()
+    await expect(page.getByTestId('scan-result-card')).toBeVisible()
+    await context.close()
+  })
+
   test('a match replaces the entry pickers with one "Scan again" that still rescans', async ({
     browser,
   }, testInfo) => {
     testInfo.skip(!dbReady, 'Sakenowa mirror not available — DB-bound spec')
-    // The entry pair ("Take photo" / "Upload photo") is how a visitor
-    // with an empty screen starts. Once the card is up it is noise above
-    // the answer — the card's own row is the way back to the camera. This
-    // pins the swap AND that the replacement still works, so hiding the
-    // pair cannot strand a visitor on a wrong match.
+    // The camera is how a visitor with an empty screen starts. Once the card
+    // is up it is noise above the answer — the card's own row is the way back
+    // to it. This pins the swap AND that the replacement still works, so
+    // hiding the camera cannot strand a visitor on a wrong match.
     const { context, page } = await scanPageWith(browser, [
       injectionCookie({ name_ja: '獺祭', brewery_ja: '旭酒造', confidence: 0.95 }),
     ])
     await page.goto('/en/scan')
-    await expect(page.getByTestId('scan-pick-button')).toBeVisible()
+    await expect(page.getByTestId('scan-camera')).toBeVisible()
 
     await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
     await expect(page.getByTestId('scan-result-card')).toBeVisible()
 
-    await expect(page.getByTestId('scan-pick-button')).toHaveCount(0)
-    await expect(page.getByTestId('scan-camera-button')).toHaveCount(0)
+    await expect(page.getByTestId('scan-camera')).toHaveCount(0)
     const rescan = page.getByTestId('scan-result-match-rescan')
     await expect(rescan).toBeVisible()
 
     // Rescan into the retry tier: the card goes, the retry copy arrives,
-    // and that state brings its own rescan rather than the entry pair.
+    // and that state brings its own rescan rather than the camera's shutter.
     await context.addCookies([
       injectionCookie({ name_ja: '獺祭', brewery_ja: '旭酒造', confidence: 0.3 }),
     ])
     await rescan.click()
+    // §4's model: a rescan RETURNS TO THE CAMERA. It used to open the OS photo
+    // library, because there was no camera screen to return to. Asserted here
+    // because it is the half of the rescan contract that has no other home —
+    // the tap is observable, but "and then the viewfinder is back" is not,
+    // unless something says so.
+    await expect(page.getByTestId('scan-camera')).toBeVisible()
     await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
     await expect(page.getByTestId('scan-result-low-confidence')).toBeVisible()
     await expect(page.getByTestId('scan-result-retry-rescan')).toBeVisible()
     await context.close()
   })
 
-  test('the recent-scans consensus card carries its own rescan, so hiding the pickers is safe', async ({
+  test('the recent-scans consensus card carries its own rescan, so hiding the camera is safe', async ({
     browser,
   }, testInfo) => {
     testInfo.skip(!dbUp, 'Sakenowa mirror not available — DB-bound spec')
     const brandId = await findAnyBrandId()
     if (brandId === null) return
 
-    // The fifth state `hasResult` hides the entry pair for, and the only one
+    // The fifth state `hasResult` hides the camera for, and the only one
     // whose rendering had no coverage at all. It needs two things at once: a
     // retry-tier extraction (confidence < 0.60, so no lookup runs) AND a
     // per-tab history with a strict majority. Seeding `sessionStorage`
@@ -167,12 +213,22 @@ test.describe('scan result branches (#109 PR B)', () => {
 
     await expect(page.getByTestId('scan-result-consensus')).toBeVisible()
     await expect(page.getByTestId('scan-result-consensus-kanji')).toContainText('獺祭')
-    // The point of the test: the pickers are gone, and this state still has
+    // The point of the test: the camera has stepped aside, and this state still has
     // both a way forward (accept) and a way back to the camera (rescan).
-    await expect(page.getByTestId('scan-pick-button')).toHaveCount(0)
-    await expect(page.getByTestId('scan-camera-button')).toHaveCount(0)
+    await expect(page.getByTestId('scan-camera')).toHaveCount(0)
     await expect(page.getByTestId('scan-result-consensus-accept')).toBeVisible()
-    await expect(page.getByTestId('scan-result-consensus-rescan')).toBeVisible()
+    const rescan = page.getByTestId('scan-result-consensus-rescan')
+    await expect(rescan).toBeVisible()
+
+    // §4's model: a rescan RETURNS TO THE CAMERA. It used to open the OS photo
+    // library, because there was no camera screen to return to — the entry
+    // affordance was two text buttons. Asserted on this branch because it is
+    // the one of the five that runs without the Dassai-under-Asahi fixture,
+    // and "and then the viewfinder is back" has no other home: the tap is
+    // observable, the thing it reveals is not unless something says so.
+    await rescan.click()
+    await expect(page.getByTestId('scan-camera')).toBeVisible()
+    await expect(page.getByTestId('scan-result-consensus')).toHaveCount(0)
     await context.close()
   })
 
@@ -190,11 +246,10 @@ test.describe('scan result branches (#109 PR B)', () => {
 
     await expect(page.getByTestId('scan-result-low-confidence')).toBeVisible()
     await expect(page.getByTestId('scan-result-retry-rescan')).toBeVisible()
-    // The entry pair steps aside once the result owns the rescan: two
+    // The camera steps aside once the result owns the rescan: two
     // ways to re-pick a photo stacked above the answer is what the
     // maintainer caught on this exact screen.
-    await expect(page.getByTestId('scan-pick-button')).toHaveCount(0)
-    await expect(page.getByTestId('scan-camera-button')).toHaveCount(0)
+    await expect(page.getByTestId('scan-camera')).toHaveCount(0)
 
     // Rescan: swap the injection to a confident Dassai and re-pick. The
     // retry state is replaced by the in-place result card.
@@ -235,10 +290,10 @@ test.describe('scan result branches (#109 PR B)', () => {
         .locator('[data-testid="provenance-badge"][data-kind="llmExtracted"]'),
     ).toBeVisible()
     // Dead-end recovery: rescan + explore bridge both present, and the
-    // entry pair is gone because this state carries its own rescan.
+    // camera is gone because this state carries its own rescan.
     await expect(page.getByTestId('scan-result-no-match-rescan')).toBeVisible()
     await expect(page.getByTestId('scan-result-no-match-explore')).toBeVisible()
-    await expect(page.getByTestId('scan-pick-button')).toHaveCount(0)
+    await expect(page.getByTestId('scan-camera')).toHaveCount(0)
     await context.close()
   })
 
@@ -308,9 +363,9 @@ test.describe('scan result branches (#109 PR B)', () => {
     await expect(page.getByTestId('scan-result-ambiguous-list')).toBeVisible()
     const candidate = page.getByTestId(`scan-result-ambiguous-candidate-${firstBrandId}`)
     await expect(candidate).toBeVisible()
-    // This state is in `hasResult`, so the entry pair is hidden — which is
+    // This state is in `hasResult`, so the camera is hidden — which is
     // only safe because the candidate list carries its own rescan.
-    await expect(page.getByTestId('scan-pick-button')).toHaveCount(0)
+    await expect(page.getByTestId('scan-camera')).toHaveCount(0)
     await expect(page.getByTestId('scan-result-ambiguous-rescan')).toBeVisible()
 
     await candidate.click()
