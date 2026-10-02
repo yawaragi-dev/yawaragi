@@ -37,7 +37,7 @@ _Avoid_: UserProfile (collides with auth), FlavorProfile (that's the Sake's, not
 
 **Palate**:
 The user-facing name for the six-axis view of a *User*'s **TasteProfile** — the picture of what they like. A *derived output view* of the **TastingJournal**, not its own store. Distinct from the journal (a list of what you tried) and from a Sake's **FlavorProfile** (the sake's own axes). It is also the name of the fourth tab. Shows "Not yet" at 0 tastings, "Taking shape" at 1–2, and a named lean ("Rich, umami-forward") from 3; confidence is `min(n/10, 1)`.
-Supersedes **TasteMap**, which superseded the user-facing "taste profile" (ADR-0020). Adopted with design v1.4, which names the tab Palate. Code comments and `messages/*.json` still say "taste map" in places; they are corrected as each surface is ported, not in a sweep.
+Supersedes **TasteMap**, which superseded the user-facing "taste profile" (ADR-0020). Adopted with design v1.4, which names the tab Palate. EN "Palate" / DE "Geschmack" (tab and heading alike, "Dein Geschmack"). The everyday German word, chosen by the maintainer over an untranslated "Palate" and the anatomical "Gaumen". Code comments and `messages/*.json` still say "taste map" in places; they are corrected as each surface is ported, not in a sweep.
 _Avoid_: TasteMap (retired), taste profile (that's the internal TasteProfile object), flavor map, palate chart, radar
 
 **TasteEvent**:
