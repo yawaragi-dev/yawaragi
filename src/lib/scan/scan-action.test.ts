@@ -25,6 +25,12 @@ import { MockLanguageModelV3 } from 'ai/test'
 // headers() behaviour fails loudly when the branch under test tries to
 // reach for them (a positive proof that the input-validation branches
 // short-circuit BEFORE I/O).
+// The rate limit now lets a signed-in maintainer through. These tests are
+// about anonymous visitors, and Clerk's auth() has no request to read here.
+vi.mock('@/lib/auth/maintainer', () => ({
+  currentUserIsMaintainer: async () => false,
+}))
+
 vi.mock('next/headers', () => ({
   cookies: vi.fn(),
   headers: vi.fn(),
