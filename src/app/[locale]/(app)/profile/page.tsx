@@ -478,7 +478,6 @@ export default async function PalatePage({
       {recommendations.length > 0 && (
         <section className="flex flex-col gap-2" data-testid="profile-recommendations">
           <h2 className="text-section-label uppercase text-ash-600">{t('recommendedHeading')}</h2>
-          <SakenowaAttribution placement="inline" />
           <ul className="flex flex-col gap-2" role="list">
             {recommendations.map((rec) => (
               <li key={rec.brandId}>
@@ -508,6 +507,14 @@ export default async function PalatePage({
               </li>
             ))}
           </ul>
+          {/*
+            Under the list, not above it (maintainer review on #330): above,
+            it sat between the heading and the sakes it credits and read as
+            one more line of furniture. Directly under the list it is still
+            "inline near the data", which is what ADR-0014 asks of a page
+            where Sakenowa is one source among several.
+          */}
+          <SakenowaAttribution placement="inline" />
         </section>
       )}
     </main>
