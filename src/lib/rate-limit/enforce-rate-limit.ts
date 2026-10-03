@@ -2,6 +2,7 @@ import 'server-only'
 
 import { cookies, headers } from 'next/headers'
 import { env } from '@/env'
+import { currentUserIsMaintainer } from '@/lib/auth/maintainer'
 import { readAnonymousSessionCookie } from '@/lib/legal/anonymous-session-cookie'
 import type { debugAdd } from '@/lib/debug/debug-log'
 import { anonymousRateLimit, type RateLimitBucket } from '@/lib/rate-limit/anonymous-rate-limit'
@@ -69,6 +70,18 @@ export async function enforceRateLimit({
     console.warn(
       `${logPrefix} RATE_LIMIT_BYPASS=1 — rate limit skipped. Do NOT ship this in Production.`,
     )
+    return { kind: 'allowed', allowed: true, retryAfterSec: 0 }
+  }
+
+  // A signed-in maintainer (Clerk user on `MAINTAINER_USER_IDS`) is not an
+  // anonymous visitor, so the anonymous budget does not apply. This is the
+  // escape hatch for testing on a phone against Preview or Production without
+  // `RATE_LIMIT_BYPASS`, which unmeters EVERY visitor and is forbidden on
+  // Production for that reason. This one is scoped to named accounts, so it
+  // is safe there. Fail-closed: no session or an empty allowlist means "not a
+  // maintainer" and the limit applies as usual.
+  if (await currentUserIsMaintainer()) {
+    debug?.('RateLimit', 'signed-in maintainer → anonymous limit not applied')
     return { kind: 'allowed', allowed: true, retryAfterSec: 0 }
   }
 

@@ -16,6 +16,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 // scripting to simulate, and the exercise wouldn't tell us anything the
 // underlying AI SDK's own tests don't.
 
+// The rate limit now lets a signed-in maintainer through. These tests are
+// about anonymous visitors, and Clerk's auth() has no request to read here.
+vi.mock('@/lib/auth/maintainer', () => ({
+  currentUserIsMaintainer: async () => false,
+}))
+
 vi.mock('next/headers', () => ({
   // For the invalid_input tests these mocks must fail loudly if reached
   // (proving the branch short-circuited); for the service_unavailable
