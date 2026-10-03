@@ -23,10 +23,17 @@ import { SignIn } from '@clerk/nextjs'
  * catch-all `[[...sign-in]]` route would need every Clerk sub-path mirrored
  * in both. One route, one entry in each list.
  */
-export function SignInCard() {
+export function SignInCard({ fallbackRedirectUrl }: { fallbackRedirectUrl: string }) {
   return (
     <SignIn
       routing="hash"
+      // Where a signed-in visitor lands when the URL carries no
+      // `redirect_url` (Clerk honours one when present, and checks it against
+      // the instance's allowed origins). Without this Clerk sends them to "/",
+      // which the locale routing turns into Home — so signing in from Account
+      // dropped the visitor on a different tab. Most visible with Google: the
+      // round trip through Google's pages leaves nothing to go "back" to.
+      fallbackRedirectUrl={fallbackRedirectUrl}
       appearance={{
         elements: {
           // No public sign-up (ADR-0020) — hide the footer that links to it.
