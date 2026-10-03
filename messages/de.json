@@ -39,41 +39,51 @@
     "backLabel": "Zurück",
     "accountLabel": "Konto"
   },
-  "profile": {
-    "title": "Dein Geschmacksprofil",
-    "intro": "Deine Aromakarte wächst, während du entdeckst — beginne mit einem Getränk, das du magst, oder bewerte Sakes unterwegs.",
-    "coldStartHeading": "Deine Aromakarte ist noch leer",
-    "coldStartBody": "Beginne mit einem Getränk, das du schon kennst. Yawaragi überträgt es auf die sechs Sakenowa-Aromaachsen — ganz ohne Konto.",
-    "sampleCaption": "Eine Beispielkarte — deine entsteht, sobald du sie füllst.",
-    "exampleBadge": "Beispiel",
-    "shapedByHeading": "Was sie geformt hat",
+  "palate": {
+    "title": "Dein Geschmack",
+    "sectionLabel": "Dein Geschmack",
+    "titleNone": "Noch nicht",
+    "titleTakingShape": "Nimmt Form an",
+    "titleRead": "{top}, {lean}",
+    "lean": {
+      "f1": "blumig betont",
+      "f2": "umami-betont",
+      "f3": "körperbetont",
+      "f4": "zurückhaltend",
+      "f5": "trocken tendierend",
+      "f6": "klar im Abgang"
+    },
+    "derivedFrom": "Aus {count, plural, one {# Verkostung} other {# Verkostungen}} abgeleitet · wächst mit jedem Eintrag",
+    "derivedFromNone": "Noch nichts bewertet · es beginnt mit deiner ersten Verkostung",
+    "progressLabel": "Verkostungen bis zur ersten Auswertung",
+    "soFar": "Bisher: {name} {rating}.",
+    "confidenceEarly": "Erste Auswertung · {count} von {of} Verkostungen bis zu einem festen Profil",
+    "confidenceFirm": "Fest · basiert auf {count, plural, one {# Verkostung} other {# Verkostungen}}",
+    "axisHeading": "Was es prägt",
+    "axisRowLabel": "{axis}, {percent} von 100",
+    "comparison": {
+      "more": "Mehr als die meisten",
+      "same": "Etwa durchschnittlich",
+      "less": "Weniger als die meisten"
+    },
+    "comparisonNote": "Jede Markierung zeigt, wo der durchschnittliche Sake des Katalogs auf dieser Achse liegt.",
+    "recommendedHeading": "Sake für den nächsten Schluck",
+    "shapedByHeading": "Was das geprägt hat",
     "shapedByRatings": "{count, plural, one {# Bewertung} other {# Bewertungen}}",
     "shapedByScans": "{count, plural, one {# Scan} other {# Scans}}",
     "shapedBySeeds": "{count, plural, one {# Getränk, das du magst} other {# Getränke, die du magst}}",
-    "shapedBySeedList": "Ausgehend von: {descriptors}",
-    "refineHeading": "Karte verfeinern",
-    "refineBody": "Füge ein weiteres Getränk hinzu, das du magst.",
-    "recommendedHeading": "Für dich empfohlen",
-    "recommendedSubhead": "Sakes, die zu deiner Aromakarte passen.",
-    "seedHeading": "Beginne mit einem Getränk, das du magst",
-    "seedBeverageLabel": "Art des Getränks",
-    "seedDescriptorLabel": "Was dir daran gefällt",
-    "seedSubmit": "Geschmack abbilden",
-    "seedPending": "Wird abgebildet…",
-    "seedUnknownDescriptor": "Diese Kombination haben wir noch nicht — probier eine andere.",
-    "seedRateLimited": "Du hast heute schon viel abgebildet. Versuch es in etwa {hours, plural, one {# Stunde} other {# Stunden}} erneut.",
-    "seedUnavailable": "Die Geschmacksabbildung ist gerade nicht verfügbar.",
-    "seedInvalid": "Wähle zuerst ein Getränk und einen Geschmack.",
-    "beverage": {
-      "whisky": "Whisky",
-      "wine": "Wein",
-      "beer": "Bier",
-      "spirit": "Spirituose",
-      "fortified": "Likörwein",
-      "cider": "Cidre"
-    },
-    "suggestQuietLink": "Oder per Chat entdecken",
-    "unavailableBody": "Deine Aromakarte ist gerade nicht verfügbar — schau bald wieder vorbei."
+    "shapedBySeedList": "Ausgangspunkt: {descriptors}",
+    "unavailableBody": "Dein Geschmack ist gerade nicht verfügbar — schau bitte später wieder vorbei.",
+    "coldStart": {
+      "heading": "Beginne mit einem Getränk, das du kennst",
+      "body": "Wähle etwas, das du schon magst, und wir skizzieren sofort einen ersten Eindruck deines Geschmacks.",
+      "seedLine": "{name} — du magst wahrscheinlich {first} und {second} Sake.",
+      "seedLineUnknown": "{name} — daraus skizzieren wir einen ersten Eindruck deines Geschmacks.",
+      "errorUnknown": "Dieses Getränk haben wir noch nicht zugeordnet — probiere ein anderes.",
+      "errorRateLimited": "Du hast heute schon viel skizziert. Versuche es in etwa {hours, plural, one {# Stunde} other {# Stunden}} erneut.",
+      "errorInvalid": "Wähle zuerst ein Getränk.",
+      "errorUnavailable": "Das ist gerade nicht verfügbar."
+    }
   },
   "landing": {
     "title": "Yawaragi",
@@ -102,8 +112,8 @@
     "featureIdentifyBody": "Kanji oder Romaji — die Kamera liest, was die Flasche hergibt. Keine Kamera? Nimm ein Foto.",
     "featureRateTitle": "Mit einem Tipp bewerten",
     "featureRateBody": "Der Stern ist das Speichern. Füge eine Notiz hinzu, wenn du magst, oder später ausführliche Verkostungsnotizen.",
-    "featurePalateTitle": "Deine Palate kennenlernen",
-    "featurePalateBody": "Nach drei Verkostungen zeigt sie dir, was dir schmeckt — und warum. Du kennst dich mit Whisky oder Wein aus? Beginne bei einem Getränk, das du magst.",
+    "featurePalateTitle": "Deinen Geschmack kennenlernen",
+    "featurePalateBody": "Nach drei Verkostungen zeigt Yawaragi dir, was dir schmeckt — und warum. Du kennst dich mit Whisky oder Wein aus? Beginne bei einem Getränk, das du magst.",
     "privacyTitle": "Dein Journal bleibt deins",
     "privacyBody": "Alles funktioniert auf deinem Handy, ganz ohne Konto. Nichts wird öffentlich gepostet, und deine Bewertungen werden nur geteilt — anonym — wenn du es möchtest.",
     "footer": {
@@ -119,7 +129,7 @@
   },
   "ageGate": {
     "hero": "Das Wasser zwischen den Schlucken.",
-    "lead": "Scanne ein Etikett, führe ein Verkostungsjournal und sieh zu, wie deine Palate Gestalt annimmt.",
+    "lead": "Scanne ein Etikett, führe ein Verkostungsjournal und sieh zu, wie dein Geschmack Gestalt annimmt.",
     "lawLine": "Nach dem Jugendmedienschutz-Staatsvertrag (JMStV) richtet sich Yawaragi an Erwachsene ab 18 Jahren.",
     "accept": "Ich bin 18 oder älter",
     "decline": "Bin ich nicht",
@@ -474,7 +484,7 @@
     "home": "Start",
     "scan": "Scannen",
     "collection": "Sammlung",
-    "palate": "Palate"
+    "palate": "Geschmack"
   },
   "tabPlaceholder": {
     "home": {
@@ -484,7 +494,7 @@
     },
     "collection": {
       "title": "Deine Sammlung entsteht noch",
-      "body": "Drei Dinge kommen hier zusammen: die Sake, die du verkostet hast, die Flaschen, die du besitzt, und die, die du kennenlernen möchtest. Dein Verkostungsjournal findest du vorläufig im Bereich Palate.",
+      "body": "Drei Dinge kommen hier zusammen: die Sake, die du verkostet hast, die Flaschen, die du besitzt, und die, die du kennenlernen möchtest. Dein Verkostungsjournal findest du vorläufig im Bereich Geschmack.",
       "linkLabel": "Journal öffnen"
     }
   },
