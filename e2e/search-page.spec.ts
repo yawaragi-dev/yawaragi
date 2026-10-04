@@ -204,11 +204,11 @@ test.describe('§8 search', () => {
   test('is reachable from the scan screen, which is what §8 is for', async ({ browser }) => {
     const { context, page } = await searchPage(browser)
 
-    // §4 puts "Type it" beside the shutter. There is no shutter until the
-    // camera port, so it sits beside the pickers — where a visitor whose label
-    // will not read is standing.
+    // §4 puts "Type it" beside the shutter. A desktop has no viewfinder and
+    // goes straight to the "add a photo" panel, which carries the same link —
+    // where a visitor whose label will not read is standing.
     await page.goto('/en/scan')
-    await page.getByTestId('scan-type-it').click()
+    await page.getByTestId('scan-camera-fallback-type-it').click()
 
     await expect(page).toHaveURL(/\/en\/search$/)
     await expect(page.getByTestId('search-input')).toBeFocused()
@@ -248,7 +248,7 @@ test.describe('§8 search', () => {
     await trigger.click()
     const panel = page.getByTestId('info-sheet-search-romaji-panel')
     await expect(panel).toBeVisible()
-    await expect(panel).toContainText('Hepburn')
+    await expect(panel).toContainText('AI model')
 
     await context.close()
   })
