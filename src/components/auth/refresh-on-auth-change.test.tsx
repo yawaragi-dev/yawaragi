@@ -19,6 +19,12 @@ vi.mock('@/lib/auth/sign-in-pending', () => ({
   clearSignInPending: () => clearSignInPending(),
 }))
 
+let signingOut = false
+vi.mock('@/lib/auth/auth-transition', () => ({
+  isAuthTransitionActive: () => signingOut,
+  subscribeAuthTransition: () => () => {},
+}))
+
 const { RefreshOnAuthChange } = await import('./refresh-on-auth-change')
 
 const wall = () => screen.queryByTestId('auth-transition-wall')
@@ -28,6 +34,7 @@ describe('keeping the server-rendered page in step with who is signed in', () =>
     refresh.mockClear()
     clearSignInPending.mockClear()
     window.location.hash = ''
+    signingOut = false
   })
   afterEach(() => vi.useRealTimers())
 
@@ -97,5 +104,13 @@ describe('keeping the server-rendered page in step with who is signed in', () =>
     expect(el.getAttribute('role')).toBe('status')
     expect(el.getAttribute('aria-busy')).toBe('true')
     expect(el.className).toContain('fixed')
+  })
+  it('holds one wall through a sign-out and leaves the refresh to its reload', () => {
+    // Clerk has already forgotten the user; the server has not.
+    signingOut = true
+    auth = { isLoaded: true, userId: null }
+    render(<RefreshOnAuthChange serverUserId="user_123" signInPending={false} label="Signing you in" />)
+    expect(wall()).not.toBeNull()
+    expect(refresh).not.toHaveBeenCalled()
   })
 })

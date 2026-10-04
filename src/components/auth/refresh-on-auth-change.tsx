@@ -7,6 +7,10 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { useAuth } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
+import {
+  isAuthTransitionActive,
+  subscribeAuthTransition,
+} from '@/lib/auth/auth-transition'
 import { clearSignInPending } from '@/lib/auth/sign-in-pending'
 
 const noopSubscribe = () => () => {}
@@ -58,6 +62,13 @@ export function RefreshOnAuthChange({
   const hydrated = useSyncExternalStore(noopSubscribe, () => true, () => false)
   const lastAskedFor = useRef<string | null>(null)
   const [timedOut, setTimedOut] = useState(false)
+  // A sign-out is in flight: it ends in a full reload, so hold the wall and
+  // leave the refreshing to that reload rather than racing it.
+  const signingOut = useSyncExternalStore(
+    subscribeAuthTransition,
+    isAuthTransitionActive,
+    () => false,
+  )
 
   const clientUserId = userId ?? null
   // Clerk's answer only counts in the browser: during SSR and the hydration
@@ -69,9 +80,11 @@ export function RefreshOnAuthChange({
     signInPending &&
     clientUserId === null &&
     window.location.hash.includes('sso-callback')
-  const covering = !timedOut && (known ? mismatch || callbackInProgress : signInPending)
+  const covering =
+    !timedOut && (signingOut || (known ? mismatch || callbackInProgress : signInPending))
 
   useEffect(() => {
+    if (signingOut) return
     if (!mismatch) {
       lastAskedFor.current = null
       return
@@ -80,7 +93,7 @@ export function RefreshOnAuthChange({
     if (lastAskedFor.current === key) return
     lastAskedFor.current = key
     router.refresh()
-  }, [mismatch, serverUserId, clientUserId, router])
+  }, [signingOut, mismatch, serverUserId, clientUserId, router])
 
   useEffect(() => {
     // The page is right and nothing is in flight: the hint has done its job.

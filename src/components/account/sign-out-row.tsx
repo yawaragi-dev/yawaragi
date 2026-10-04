@@ -3,7 +3,12 @@
 import { useState } from 'react'
 import { useClerk } from '@clerk/nextjs'
 import { SignOut } from '@phosphor-icons/react/dist/ssr'
+import { beginAuthTransition, endAuthTransition } from '@/lib/auth/auth-transition'
 import { cn } from '@/lib/utils'
+
+function hardReload(path: string): void {
+  window.location.replace(path)
+}
 
 /**
  * §15's sign-out row: the whole 50px row is the button, like "Cookie
@@ -15,8 +20,8 @@ import { cn } from '@/lib/utils'
  *
  * `redirectUrl` is the page the visitor is on, so signing out keeps them where
  * they were instead of Clerk's default "/", which the locale routing turns
- * into Home. `<RefreshOnAuthChange />` then re-renders the page for the
- * signed-out visitor behind its wall.
+ * into Home. The sign-out then ends in one full reload of that page, behind
+ * `<RefreshOnAuthChange />`'s wall from the tap onwards.
  *
  * Deliberately NOT Clerk's `<SignOutButton>` or `<UserButton />`: the first
  * hands its child no pending state, so the row sat dead between tap and
@@ -25,7 +30,16 @@ import { cn } from '@/lib/utils'
  * frame (`disabled` + `aria-busy` + a localised pending label), per the UX
  * playbook's 100 ms rule.
  */
-export function SignOutRow({ label, pendingLabel }: { label: string; pendingLabel: string }) {
+export function SignOutRow({
+  label,
+  pendingLabel,
+  reload = hardReload,
+}: {
+  label: string
+  pendingLabel: string
+  /** How the sign-out finishes. A full page load in the app; a spy in tests. */
+  reload?: (path: string) => void
+}) {
   const { signOut } = useClerk()
   const [isSigningOut, setIsSigningOut] = useState(false)
 
@@ -38,9 +52,18 @@ export function SignOutRow({ label, pendingLabel }: { label: string; pendingLabe
         // No `finally` reset: a successful sign-out navigates, so the pending
         // state should hold until the page changes rather than flicker back.
         setIsSigningOut(true)
-        void signOut({ redirectUrl: window.location.pathname }).catch(() =>
-          setIsSigningOut(false),
-        )
+        // One wall, start to finish: up before Clerk forgets the user, down
+        // only when the fresh, signed-out page loads. See `auth-transition.ts`
+        // for the double flash this replaces.
+        const path = window.location.pathname
+        beginAuthTransition()
+        void signOut({ redirectUrl: path })
+          .then(() => reload(path))
+          .catch(() => {
+            // Still signed in: take the wall down and let them try again.
+            endAuthTransition()
+            setIsSigningOut(false)
+          })
       }}
       className={cn(
         'flex w-full min-h-[50px] items-center gap-3.5 px-4 py-2.5 text-left transition-colors',
