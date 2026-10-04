@@ -13,50 +13,91 @@ import {
   type MaintainerJournalState,
   resolveMaintainerJournal,
 } from '@/lib/taste/resolve-maintainer-journal'
-import { CrossBeverageSeedForm } from '@/components/profile/cross-beverage-seed-form'
+import { ColdStartChips, type ColdStartChipView } from '@/components/palate/cold-start-chips'
+import { PalateAxisRows, type PalateAxisStrings } from '@/components/palate/palate-axis-rows'
+import { PalateConfidence } from '@/components/palate/palate-confidence'
+import { PalateProgress } from '@/components/palate/palate-progress'
 import { TasteProvenanceSummary } from '@/components/profile/taste-provenance-summary'
 import { FlavorRadarView } from '@/components/sake/flavor-radar-view'
 import { SakenowaAttribution } from '@/components/sake/sakenowa-attribution'
-import { knownCrossBeverageDescriptors } from '@/lib/cross-beverage/forward-lookup'
+import { coldStartChips } from '@/lib/cross-beverage/cold-start-chips'
+import { resolveCrossBeverageTarget } from '@/lib/cross-beverage/forward-lookup'
 import { isDebugEnabledFromCookies } from '@/lib/debug/debug-mode'
 import { hasAcceptedAgeGate } from '@/lib/legal/age-gate-cookie'
 import { readAnonymousSessionCookie } from '@/lib/legal/anonymous-session-cookie'
+import type { FlavorAxis } from '@/lib/schemas/flavor-chart'
 import type { FlavorProfile } from '@/lib/schemas/flavor-profile'
 import type { TasteEvent } from '@/lib/schemas/taste-event'
+import { lookupBrand } from '@/lib/sakenowa/lookup'
+import { catalogueMeanProfile } from '@/lib/taste/catalogue-mean'
 import { getFlavorCandidatePool } from '@/lib/taste/flavor-candidate-pool'
 import { getTasteEventStore } from '@/lib/taste/get-taste-event-store'
+import {
+  PALATE_FIRM_THRESHOLD,
+  palateLean,
+  palateStage,
+} from '@/lib/taste/palate-read'
 import {
   type SessionTasteProfile,
   readSessionTasteProfile,
 } from '@/lib/taste/read-session-taste-profile'
 import { recommendFromTasteEvents } from '@/lib/taste/taste-recommender'
-import type { CrossBeverageSeedInput } from '@/lib/taste/taste-action-state'
 import { env } from '@/env'
 
 /**
- * `/[locale]/profile` — the real Taste Profile (Phase 5 / #220, P5-04b).
+ * §12 Palate — `/[locale]/profile`. Reference screenshots 22 and 23.
  *
- * Radar-first: the visitor's derived TasteProfile (ADR-0019) rendered as the
- * `<FlavorRadarView />`, with "what shaped this" provenance below and the
- * cross-beverage seed form to build/refine it. The seed form is the cheap,
- * deterministic build path — `/suggest` (an expensive LLM tool loop) is only a
- * quiet secondary link, never the hero.
+ * The Palate is a *derived view* of what you have rated (CONTEXT.md), and §12
+ * draws it as two screens rather than one: under three tastings it shows how
+ * far off a reading is and offers a way to start; from three it shows the
+ * reading, how firm it is, and which axes drive it. The threshold is the
+ * design's and the product's — "Your palate appears after three tastings."
  *
- * States: `profile` (radar + provenance) · `cold_start` (faded sample radar +
- * seed form as hero) · `unavailable` (non-prod without session/store env).
+ * What this port changes beyond styling:
  *
- * Age gate: renders flavor data → gated content (CLAUDE.md). Locale launch is
- * handled upstream by the proxy; the belt below keeps a non-launched deep-link
- * on the coming-soon block. Debug trace: ADR-0013 — the seed form pushes
- * client events + forwards the action's server trace when `yawaragi_debug=1`.
+ * - **The cold start is five named drinks, not sixty-two descriptors.** It was
+ *   a pair of `<select>`s offering the cross-beverage table's internal words
+ *   ("peated", "off-dry", "roasty"). §12 names bottles — Lagavulin 16,
+ *   Guinness, Fino Sherry — and the chips resolve to the same rows, so the
+ *   seed is identical and only the vocabulary changed. See
+ *   `cold-start-chips.ts`.
+ * - **"Taste map" and "taste profile" are gone from the copy.** The
+ *   user-facing name is the Palate (ADR-0020, CONTEXT.md); the old strings
+ *   predate that and said both.
+ * - **Each axis says how it compares, in words.** A bar and a tick close
+ *   together is a picture of "about the same", and a picture is not reachable
+ *   at a glance or by a screen reader.
+ *
+ * Deviations, all recorded on #300:
+ *
+ * - **The reference tick is the catalogue's mean sake, not §12's "typical
+ *   drinker".** A drinker average needs aggregated ratings, which in the EU
+ *   needs §12's own one-time opt-in (#297) and a lawful basis not yet in
+ *   ADR-0009's RoPA. The copy says "than most sakes" so the label matches what
+ *   the number is. `catalogue-mean.ts` carries the reasoning.
+ * - **No chart opt-in card** (§12's first element at 3+). That card IS the
+ *   consent prompt for the aggregation above — it is #297, and a consent
+ *   surface whose backing processing does not exist would be a dark pattern in
+ *   the literal sense.
+ * - **Rows are not tappable.** §12 sends each into the axis-detail screen
+ *   (24), which is not built; a row that looks tappable and does nothing is
+ *   the defect #184 was filed for.
+ * - **"Styles you rate highest"** needs a style classification (junmai /
+ *   daiginjō / kimoto) that the Sakenowa mirror does not carry at all.
+ * - **The maintainer journal branch stays.** §12 is the Palate; the journal is
+ *   §11 Collection, whose route is still a placeholder. It moves there in the
+ *   §11 port, and this early return goes with it. Until then a maintainer
+ *   lands on the journal here exactly as before.
+ *
+ * Two things §12 does not list are kept on purpose: `<TasteProvenanceSummary />`
+ * (ADR-0013's debuggability — §12 puts "the tastings behind it" on the
+ * unbuilt axis-detail screen, so removing it would leave no answer to "why
+ * this number") and the recommendation list on the early screen (it is what a
+ * seed actually buys; §12 makes the seed line the whole payoff, which would
+ * make seeding feel inert).
  */
 
-type Beverage = CrossBeverageSeedInput['beverage']
-
-// Illustrative sample (a fragrant/crisp read) shown faded on cold start so the
-// visitor sees what a real map looks like before they have one. Not personal
-// data, not Sakenowa data — no attribution (ADR-0005).
-const COLD_START_SAMPLE: FlavorProfile = { f1: 0.72, f2: 0.35, f3: 0.25, f4: 0.45, f5: 0.55, f6: 0.68 }
+type CookieJar = Awaited<ReturnType<typeof cookies>>
 
 const tp = (
   f1: number,
@@ -66,8 +107,6 @@ const tp = (
   f5: number,
   f6: number,
 ): FlavorProfile => ({ f1, f2, f3, f4, f5, f6 })
-
-type CookieJar = Awaited<ReturnType<typeof cookies>>
 
 // --- Maintainer tasting journal (ADR-0020, P5.5-C) ---------------------------
 
@@ -138,14 +177,26 @@ async function resolveSessionTasteProfile(cookieJar: CookieJar): Promise<Session
     const stub = cookieJar.get('yawaragi_taste_stub')?.value
     if (stub === 'cold_start') return { kind: 'cold_start' }
     if (stub === 'unavailable') return { kind: 'unavailable' }
+    // One rating: §12's "Taking shape" screen, which no stub could reach
+    // before — the only populated stub jumped straight to three events.
+    if (stub === 'taking_shape') {
+      return {
+        kind: 'profile',
+        profile: tp(0.68, 0.42, 0.3, 0.5, 0.4, 0.62),
+        events: [
+          { kind: 'rating', rating: 5, brandId: 1, target: tp(0.7, 0.4, 0.3, 0.5, 0.4, 0.6), occurredAt: 1 },
+        ],
+      }
+    }
     if (stub === 'populated') {
       return {
         kind: 'profile',
         profile: tp(0.68, 0.42, 0.3, 0.5, 0.4, 0.62),
         events: [
           { kind: 'rating', rating: 5, brandId: 1, target: tp(0.7, 0.4, 0.3, 0.5, 0.4, 0.6), occurredAt: 1 },
-          { kind: 'scan_accept', brandId: 2, target: tp(0.6, 0.5, 0.35, 0.45, 0.4, 0.6), occurredAt: 2 },
-          { kind: 'cross_beverage_seed', descriptor: 'smoky', target: tp(0.1, 0.8, 0.75, 0.2, 0.7, 0.15), occurredAt: 3 },
+          { kind: 'rating', rating: 4, brandId: 2, target: tp(0.6, 0.5, 0.35, 0.45, 0.4, 0.6), occurredAt: 2 },
+          { kind: 'rating', rating: 4, brandId: 3, target: tp(0.66, 0.45, 0.3, 0.5, 0.4, 0.62), occurredAt: 3 },
+          { kind: 'cross_beverage_seed', descriptor: 'smoky', target: tp(0.1, 0.8, 0.75, 0.2, 0.7, 0.15), occurredAt: 4 },
         ],
       }
     }
@@ -187,7 +238,7 @@ async function resolveRecommendations(
 ): Promise<readonly Recommendation[]> {
   if (process.env.NODE_ENV !== 'production') {
     const stub = cookieJar.get('yawaragi_taste_stub')?.value
-    if (stub === 'populated') return STUB_RECOMMENDATIONS
+    if (stub === 'populated' || stub === 'taking_shape') return STUB_RECOMMENDATIONS
     if (stub) return []
   }
   const pool = await getFlavorCandidatePool()
@@ -200,17 +251,43 @@ async function resolveRecommendations(
   }))
 }
 
+/** The ratings among a session's events — §12 counts tastings, not events. */
+function countRatings(events: readonly TasteEvent[]): number {
+  return events.filter((event) => event.kind === 'rating').length
+}
+
+/**
+ * The most recent rating, for §12's "So far: {sake} {rating}." line.
+ *
+ * Degrades to `null`: the name comes from the mirror, and the line is a nicety
+ * on a screen whose job is to say how far off a reading is.
+ */
+async function resolveLastRated(
+  events: readonly TasteEvent[],
+): Promise<{ name: string; rating: number } | null> {
+  const ratings = events.filter((event) => event.kind === 'rating')
+  const last = ratings[ratings.length - 1]
+  if (!last || last.kind !== 'rating') return null
+  try {
+    const brand = await lookupBrand(last.brandId)
+    if (!brand) return null
+    return { name: brand.nameRomaji ?? brand.nameKanji, rating: last.rating }
+  } catch {
+    return null
+  }
+}
+
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ locale: string }>
 }): Promise<Metadata> {
   const { locale } = await params
-  const t = await getTranslations({ locale, namespace: 'profile' })
+  const t = await getTranslations({ locale, namespace: 'palate' })
   return { title: `${t('title')} · Yawaragi` }
 }
 
-export default async function ProfilePage({
+export default async function PalatePage({
   params,
 }: {
   params: Promise<{ locale: string }>
@@ -224,12 +301,12 @@ export default async function ProfilePage({
     const tComingSoon = await getTranslations({ locale, namespace: 'comingSoon' })
     return (
       <main
-        className="flex flex-1 w-full max-w-3xl mx-auto flex-col gap-6 py-16 px-8"
+        className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-5 py-6"
         data-testid="coming-soon"
       >
-        <h1 className="text-4xl font-semibold leading-tight tracking-tight">{tComingSoon('title')}</h1>
-        <p className="text-base text-zinc-700 dark:text-zinc-300 max-w-prose">{tComingSoon('body')}</p>
-        <Link href="/" locale="en" className="text-base font-medium underline underline-offset-4">
+        <h1 className="text-title font-medium text-ink">{tComingSoon('title')}</h1>
+        <p className="max-w-prose text-body text-ash-600">{tComingSoon('body')}</p>
+        <Link href="/" locale="en" className="w-fit text-body font-medium text-ginshu-700 underline underline-offset-4">
           {tComingSoon('switchToEn')}
         </Link>
       </main>
@@ -242,28 +319,24 @@ export default async function ProfilePage({
   }
 
   // Maintainer branch (ADR-0020): an allowlisted maintainer gets the REAL
-  // persistent tasting journal; everyone else falls through to the anonymous,
-  // interactive-but-ephemeral example below. The `yawaragi_journal_stub` cookie
-  // (non-prod only) drives the journal states for the E2E without Clerk/Upstash,
-  // and stands in for the maintainer check so the stub path needs no real auth.
+  // persistent tasting journal. This is §11 Collection's content, not §12's,
+  // and moves there with that port — see the file docstring.
   const maintainerView = await resolveMaintainerJournalView(cookieJar)
   if (maintainerView.isMaintainer && maintainerView.journal) {
     const journal = maintainerView.journal
     const tJournal = await getTranslations('journal')
     return (
       <main
-        className="flex flex-1 w-full max-w-2xl mx-auto flex-col gap-10 py-12 px-6"
+        className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-5 py-6"
         data-testid="profile-journal-page"
       >
-        <section className="flex flex-col gap-3">
-          <h1 className="text-3xl font-semibold leading-tight tracking-tight">{tJournal('title')}</h1>
-          <p className="max-w-prose text-base text-zinc-700 dark:text-zinc-300">{tJournal('intro')}</p>
+        <section className="flex flex-col gap-2">
+          <h1 className="text-tab-title font-medium text-ink">{tJournal('title')}</h1>
+          <p className="max-w-prose text-body text-ash-600">{tJournal('intro')}</p>
         </section>
         {journal.kind === 'unavailable' ? (
           <section data-testid="journal-unavailable" className="flex flex-col gap-3">
-            <p className="max-w-prose text-sm text-zinc-600 dark:text-zinc-400">
-              {tJournal('unavailableBody')}
-            </p>
+            <p className="max-w-prose text-body text-ash-600">{tJournal('unavailableBody')}</p>
           </section>
         ) : (
           <JournalView
@@ -276,114 +349,172 @@ export default async function ProfilePage({
     )
   }
 
-  const t = await getTranslations('profile')
+  const t = await getTranslations('palate')
+  const tAxis = await getTranslations('flavorAxis')
   const debugMode = isDebugEnabledFromCookies(cookieJar)
   const session = await resolveSessionTasteProfile(cookieJar)
-  const recommendations =
-    session.kind === 'profile' ? await resolveRecommendations(cookieJar, session.events) : []
+  const events = session.kind === 'profile' ? session.events : []
+  const profile = session.kind === 'profile' ? session.profile : null
+  const ratingCount = countRatings(events)
+  const stage = palateStage(ratingCount)
 
-  const descriptorsByBeverage = {
-    whisky: knownCrossBeverageDescriptors('whisky'),
-    wine: knownCrossBeverageDescriptors('wine'),
-    beer: knownCrossBeverageDescriptors('beer'),
-    spirit: knownCrossBeverageDescriptors('spirit'),
-    fortified: knownCrossBeverageDescriptors('fortified'),
-    cider: knownCrossBeverageDescriptors('cider'),
-  } satisfies Record<Beverage, readonly string[]>
+  const [reference, recommendations, lastRated] = await Promise.all([
+    stage === 'read' ? catalogueMeanProfile() : Promise.resolve(null),
+    profile ? resolveRecommendations(cookieJar, events) : Promise.resolve([]),
+    stage === 'taking_shape' ? resolveLastRated(events) : Promise.resolve(null),
+  ])
 
-  const quietSuggestLink = (
-    <Link
-      href="/suggest"
-      className="w-fit text-xs text-zinc-500 underline underline-offset-2 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300"
-      data-testid="profile-suggest-quiet-link"
-    >
-      {t('suggestQuietLink')} <span aria-hidden>→</span>
-    </Link>
-  )
+  // §12's title. At a read it names the two strongest axes — the display word
+  // for the first (ADR-0022: Floral, Mellow, Rich, Mild, Dry, Light) and a
+  // lean phrase for the second, so "Rich, umami-forward" rather than "Rich,
+  // Mellow" which reads as two labels instead of one description.
+  const title =
+    stage === 'read' && profile
+      ? t('titleRead', {
+          top: tAxis(`${palateLean(profile).top}.label`),
+          lean: t(`lean.${palateLean(profile).second}`),
+        })
+      : stage === 'taking_shape'
+        ? t('titleTakingShape')
+        : t('titleNone')
+
+  const axisStrings: PalateAxisStrings = {
+    heading: t('axisHeading'),
+    axisLabel: (axis: FlavorAxis) => tAxis(`${axis}.label`),
+    comparison: (comparison) => t(`comparison.${comparison}`),
+    rowLabel: (axis: FlavorAxis, percent: number) =>
+      t('axisRowLabel', { axis: tAxis(`${axis}.label`), percent }),
+  }
+
+  const chips: ColdStartChipView[] = coldStartChips().map((chip) => {
+    // The "expect to like…" line comes from the row's own axes, not from
+    // per-descriptor copy: 62 rows would each need editorial text in two
+    // locales, which is how a line drifts out of agreement with its vector.
+    const row = resolveCrossBeverageTarget(chip.descriptor, chip.beverage)
+    const lean = row ? palateLean(row) : null
+    return {
+      ...chip,
+      seedLine: lean
+        ? t('coldStart.seedLine', {
+            name: chip.name,
+            first: tAxis(`${lean.top}.label`).toLocaleLowerCase(locale),
+            second: tAxis(`${lean.second}.label`).toLocaleLowerCase(locale),
+          })
+        : t('coldStart.seedLineUnknown', { name: chip.name }),
+    }
+  })
 
   return (
     <main
-      className="flex flex-1 w-full max-w-3xl mx-auto flex-col gap-10 py-12 px-6"
+      className="mx-auto flex w-full max-w-3xl flex-col gap-5 px-5 py-6"
       data-testid="profile-page"
     >
-      <section className="flex flex-col gap-3">
-        <h1 className="text-3xl font-semibold leading-tight tracking-tight">{t('title')}</h1>
-        <p className="max-w-prose text-base text-zinc-700 dark:text-zinc-300">{t('intro')}</p>
+      <section className="flex flex-col gap-1" data-testid="palate-header">
+        <p className="text-section-label uppercase text-ash-600">{t('sectionLabel')}</p>
+        <h1 className="text-hero font-medium text-ink" data-testid="palate-title">
+          {title}
+        </h1>
+        <p className="text-subtle text-ash-600">
+          {ratingCount > 0 ? t('derivedFrom', { count: ratingCount }) : t('derivedFromNone')}
+        </p>
       </section>
 
       {session.kind === 'unavailable' && (
-        <section data-testid="profile-unavailable" className="flex flex-col gap-3">
-          <p className="max-w-prose text-sm text-zinc-600 dark:text-zinc-400">{t('unavailableBody')}</p>
+        <section data-testid="profile-unavailable">
+          <p className="max-w-prose text-body text-ash-600">{t('unavailableBody')}</p>
         </section>
       )}
 
-      {session.kind === 'cold_start' && (
-        <section data-testid="profile-cold-start" className="flex flex-col gap-8">
-          <figure className="relative flex flex-col items-center gap-3">
-            <span
-              className="absolute left-0 top-0 z-10 rounded-full bg-zinc-200 px-2.5 py-0.5 text-xs font-medium uppercase tracking-wide text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
-              data-testid="profile-example-badge"
-            >
-              {t('exampleBadge')}
-            </span>
-            <div className="opacity-40">
-              <FlavorRadarView profile={COLD_START_SAMPLE} instanceId="cold-start" />
-            </div>
-            <figcaption className="max-w-md text-center text-xs text-zinc-500 dark:text-zinc-500">
-              {t('sampleCaption')}
-            </figcaption>
-          </figure>
-          <section className="flex flex-col gap-3">
-            <h2 className="text-lg font-medium">{t('coldStartHeading')}</h2>
-            <p className="max-w-prose text-sm text-zinc-600 dark:text-zinc-400">{t('coldStartBody')}</p>
-            <h3 className="mt-2 text-base font-medium">{t('seedHeading')}</h3>
-            <CrossBeverageSeedForm descriptorsByBeverage={descriptorsByBeverage} debugMode={debugMode} />
-          </section>
-          {quietSuggestLink}
-        </section>
-      )}
+      {stage !== 'read' && (
+        <div className="flex flex-col gap-5" data-testid="palate-early">
+          <PalateProgress ratingCount={ratingCount} label={t('progressLabel')} />
+          {/*
+            The last tasting, when there is one — a fact about this visitor.
 
-      {session.kind === 'profile' && (
-        <section data-testid="profile-populated" className="flex flex-col gap-8">
-          <div className="flex justify-center">
-            <FlavorRadarView profile={session.profile} instanceId="session" />
-          </div>
-          <TasteProvenanceSummary events={session.events} />
-          {recommendations.length > 0 && (
-            <section className="flex flex-col gap-3" data-testid="profile-recommendations">
-              <h2 className="text-lg font-medium">{t('recommendedHeading')}</h2>
-              <p className="max-w-prose text-sm text-zinc-600 dark:text-zinc-400">
-                {t('recommendedSubhead')}
-              </p>
-              <SakenowaAttribution placement="inline" />
-              <ul className="flex flex-col gap-2">
-                {recommendations.map((rec) => (
-                  <li key={rec.brandId}>
-                    <a
-                      href={`/${locale}/sake/${rec.brandId}`}
-                      data-testid={`recommendation-${rec.brandId}`}
-                      className="flex items-baseline gap-2 rounded-md border border-zinc-200 px-3 py-2 transition-colors hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 dark:border-zinc-800 dark:hover:bg-zinc-900"
-                    >
-                      <span className="text-base font-medium" lang="ja">
-                        {rec.nameJa}
-                      </span>
-                      {rec.nameRomaji && (
-                        <span className="text-sm text-zinc-600 dark:text-zinc-400">
-                          ({rec.nameRomaji})
-                        </span>
-                      )}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </section>
+            Not here, on purpose (maintainer review on #330): §12's "N more
+            tastings and your first read appears", its "Rate a few different
+            styles" tip and its "Scan a label" button. A visitor has nowhere to
+            rate a sake yet — `rateSake` has no screen until the bottle → Cellar
+            → tasting-notes work lands, and a scan does not feed the palate —
+            so all three pointed at a step that does not exist. The cold-start
+            chips are the one input that works today, so they are the screen.
+            The three return with rating.
+          */}
+          {lastRated !== null && (
+            <p className="text-body text-ash-600" data-testid="palate-so-far">
+              {t('soFar', { name: lastRated.name, rating: lastRated.rating })}
+            </p>
           )}
-          <section className="flex flex-col gap-3">
-            <h2 className="text-lg font-medium">{t('refineHeading')}</h2>
-            <p className="max-w-prose text-sm text-zinc-600 dark:text-zinc-400">{t('refineBody')}</p>
-            <CrossBeverageSeedForm descriptorsByBeverage={descriptorsByBeverage} debugMode={debugMode} />
-          </section>
-          {quietSuggestLink}
+          <ColdStartChips chips={chips} debugMode={debugMode} />
+        </div>
+      )}
+
+      {stage === 'read' && profile && (
+        <div className="flex flex-col gap-5" data-testid="palate-read">
+          <div className="flex justify-center">
+            <FlavorRadarView profile={profile} instanceId="palate" />
+          </div>
+          <PalateConfidence
+            ratingCount={ratingCount}
+            label={
+              ratingCount >= PALATE_FIRM_THRESHOLD
+                ? t('confidenceFirm', { count: ratingCount })
+                : t('confidenceEarly', { count: ratingCount, of: PALATE_FIRM_THRESHOLD })
+            }
+          />
+          <PalateAxisRows profile={profile} reference={reference} strings={axisStrings} />
+          {reference !== null && (
+            // The tick's label. §12 compares with "the typical drinker"; this
+            // compares with the catalogue, and says so rather than borrowing
+            // the design's words for a different number.
+            <p className="text-meta text-ash-700" data-testid="palate-comparison-note">
+              {t('comparisonNote')}
+            </p>
+          )}
+          <TasteProvenanceSummary events={events} />
+        </div>
+      )}
+
+      {recommendations.length > 0 && (
+        <section className="flex flex-col gap-2" data-testid="profile-recommendations">
+          <h2 className="text-section-label uppercase text-ash-600">{t('recommendedHeading')}</h2>
+          <ul className="flex flex-col gap-2" role="list">
+            {recommendations.map((rec) => (
+              <li key={rec.brandId}>
+                <Link
+                  href={{
+                    pathname: '/sake/[brandId]',
+                    params: { brandId: String(rec.brandId) },
+                  }}
+                  data-testid={`recommendation-${rec.brandId}`}
+                  // Centred in its 48px row, not baseline-aligned to the top of
+                  // it: `items-baseline` on the row left the names sitting on
+                  // the card's top edge with empty space under them. The
+                  // kanji and romaji still share a baseline, inside.
+                  className="flex min-h-12 items-center rounded-xl bg-surface px-4 py-2 shadow-yw-sm transition-colors hover:bg-ash-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+                >
+                  <span className="flex items-baseline gap-2">
+                    <span className="text-card-heading font-medium text-ink" lang="ja">
+                      {rec.nameJa}
+                    </span>
+                    {rec.nameRomaji && (
+                      <span className="text-meta text-ash-600" lang="en">
+                        {rec.nameRomaji}
+                      </span>
+                    )}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+          {/*
+            Under the list, not above it (maintainer review on #330): above,
+            it sat between the heading and the sakes it credits and read as
+            one more line of furniture. Directly under the list it is still
+            "inline near the data", which is what ADR-0014 asks of a page
+            where Sakenowa is one source among several.
+          */}
+          <SakenowaAttribution placement="inline" />
         </section>
       )}
     </main>
