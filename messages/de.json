@@ -468,7 +468,8 @@
     "passwordLabel": "Passwort",
     "submit": "Weiter",
     "signOut": "Abmelden",
-    "signingOut": "Wird abgemeldet…"
+    "signingOut": "Wird abgemeldet…",
+    "authWall": "Einen Moment …"
   },
   "rating": {
     "band": {

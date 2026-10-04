@@ -1,51 +1,111 @@
 'use client'
 
-// `'use client'` is load-bearing: it reads Clerk's client-side session and
-// drives the client router, neither of which exists on the server.
+// `'use client'` is load-bearing: it reads Clerk's client-side session, the
+// URL hash and timers, and drives the client router — none of which exist on
+// the server.
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { useAuth } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
+import { clearSignInPending } from '@/lib/auth/sign-in-pending'
+
+const noopSubscribe = () => () => {}
+const WALL_TIMEOUT_MS = 10_000
+
+interface RefreshOnAuthChangeProps {
+  /** The user the server rendered this page for (`auth().userId`). */
+  serverUserId: string | null
+  /** A Google sign-in was started (`yawaragi_sign_in_pending`), read on the server. */
+  signInPending: boolean
+  /** What the wall says to assistive tech and on screen, e.g. "Signing you in". */
+  label: string
+}
 
 /**
- * Re-renders the server components when they were drawn for a different
- * visitor than the one Clerk now knows.
+ * Keeps the server-rendered page in step with who is signed in, and hides it
+ * while it is not.
  *
- * Every signed-in/out decision in this app is made on the server: Clerk's
- * `<Show>` in the header and on Account calls `auth()` during the RSC render,
- * and so do the maintainer gates. Sign-in finishes on the CLIENT, though, and
- * the client router keeps showing server output rendered before it. The header
- * kept no "Sign out" and Account kept saying "Not signed in" until "Sign in"
- * was tapped a second time (maintainer report on #343).
+ * Every signed-in/out decision here is made on the server: Clerk's `<Show>` in
+ * Account and the maintainer gates call `auth()` during the RSC render. Sign-in
+ * finishes on the CLIENT, so the page on screen was drawn for the wrong person
+ * until a re-render. Two fixes in one component (maintainer reports on #343):
  *
- * The comparison is server vs client, not "did the client's user change":
- * after Google's OAuth round trip the page is a fresh load, and by the time
- * Clerk reports itself loaded the session already exists — there is no change
- * to observe, yet the server rendered that page signed out. The first version
- * watched for a change and missed exactly this case.
+ * 1. **Refresh.** When Clerk's user differs from the one the server rendered
+ *    for, `router.refresh()` re-renders on the server; the layout then passes
+ *    the new `serverUserId` and the two agree. Server vs client, not "did the
+ *    client's user change": after Google's round trip the page is a fresh
+ *    load and Clerk already has the session when it reports loaded, so there
+ *    is no change to see. At most once per mismatch, so a server that cannot
+ *    see the session settles instead of looping.
+ * 2. **Wall.** The refresh worked but was visible: the signed-out page, then
+ *    the signed-in one. An opaque, full-screen wall covers the page while it is
+ *    out of date — during the mismatch, while Clerk finishes a Google sign-in
+ *    on `#/sso-callback`, and (from the server's very first frame, via the
+ *    pending cookie) between the return from Google and Clerk loading. It comes
+ *    down the moment the page is right, and after 10 s regardless, so a failed
+ *    sign-in can never strand anyone behind it.
  *
- * `router.refresh()` re-renders the current route on the server without
- * losing client state; the layout then passes the new `serverUserId` and the
- * two agree. It asks at most once per mismatch, so a server that cannot see
- * the session (a cookie the request lacks) settles instead of looping.
+ * Returning from Google WITHOUT signing in (cancelled at the consent screen)
+ * lands on the plain sign-in route, not the callback, so the wall drops at once.
  */
-export function RefreshOnAuthChange({ serverUserId }: { serverUserId: string | null }) {
+export function RefreshOnAuthChange({
+  serverUserId,
+  signInPending,
+  label,
+}: RefreshOnAuthChangeProps) {
   const { isLoaded, userId } = useAuth()
   const router = useRouter()
+  const hydrated = useSyncExternalStore(noopSubscribe, () => true, () => false)
   const lastAskedFor = useRef<string | null>(null)
+  const [timedOut, setTimedOut] = useState(false)
+
+  const clientUserId = userId ?? null
+  // Clerk's answer only counts in the browser: during SSR and the hydration
+  // render it is the server's own initial state, which says nothing new.
+  const known = hydrated && isLoaded
+  const mismatch = known && clientUserId !== serverUserId
+  const callbackInProgress =
+    known &&
+    signInPending &&
+    clientUserId === null &&
+    window.location.hash.includes('sso-callback')
+  const covering = !timedOut && (known ? mismatch || callbackInProgress : signInPending)
 
   useEffect(() => {
-    if (!isLoaded) return
-    const clientUserId = userId ?? null
-    if (clientUserId === serverUserId) {
+    if (!mismatch) {
       lastAskedFor.current = null
       return
     }
-    const mismatch = `${serverUserId ?? '-'}→${clientUserId ?? '-'}`
-    if (lastAskedFor.current === mismatch) return
-    lastAskedFor.current = mismatch
+    const key = `${serverUserId ?? '-'}→${clientUserId ?? '-'}`
+    if (lastAskedFor.current === key) return
+    lastAskedFor.current = key
     router.refresh()
-  }, [isLoaded, userId, serverUserId, router])
+  }, [mismatch, serverUserId, clientUserId, router])
 
-  return null
+  useEffect(() => {
+    // The page is right and nothing is in flight: the hint has done its job.
+    if (signInPending && known && !mismatch && !callbackInProgress) clearSignInPending()
+  }, [signInPending, known, mismatch, callbackInProgress])
+
+  useEffect(() => {
+    if (!covering) return
+    const timer = setTimeout(() => setTimedOut(true), WALL_TIMEOUT_MS)
+    return () => clearTimeout(timer)
+  }, [covering])
+
+  if (!covering) return null
+
+  return (
+    <div
+      role="status"
+      aria-busy="true"
+      aria-live="polite"
+      // Above everything the app draws (dialogs are z-50/60), on the same
+      // ground as the page so it reads as "loading", not as an error.
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-ground"
+      data-testid="auth-transition-wall"
+    >
+      <p className="text-body text-ash-600">{label}</p>
+    </div>
+  )
 }

@@ -468,7 +468,8 @@
     "passwordLabel": "Password",
     "submit": "Continue",
     "signOut": "Sign out",
-    "signingOut": "Signing out…"
+    "signingOut": "Signing out…",
+    "authWall": "One moment…"
   },
   "rating": {
     "band": {
