@@ -1,10 +1,10 @@
-import { Globe, SignOut } from '@phosphor-icons/react/dist/ssr'
+import { Globe } from '@phosphor-icons/react/dist/ssr'
 import { Show } from '@clerk/nextjs'
 import { hasLocale } from 'next-intl'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
-import { HeaderAuth } from '@/components/auth/header-auth'
+import { SignOutRow } from '@/components/account/sign-out-row'
 import { CookieSettingsRow } from '@/components/account/cookie-settings-row'
 import { SettingsGroup, SettingsRow } from '@/components/account/settings-row'
 import { Link } from '@/i18n/navigation'
@@ -126,12 +126,7 @@ export default async function AccountPage({ params }: PageProps) {
 
       <Show when="signed-in">
         <SettingsGroup title={t('groupAccount')} testId="account-group-account">
-          <SettingsRow icon={SignOut} label={tSignIn('signOut')} testId="account-sign-out">
-            <HeaderAuth
-              signOutLabel={tSignIn('signOut')}
-              signingOutLabel={tSignIn('signingOut')}
-            />
-          </SettingsRow>
+          <SignOutRow label={tSignIn('signOut')} pendingLabel={tSignIn('signingOut')} />
         </SettingsGroup>
       </Show>
 

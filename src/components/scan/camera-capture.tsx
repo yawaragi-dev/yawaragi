@@ -72,6 +72,12 @@ interface CameraCaptureProps {
    * read rather than whatever the camera points at now.
    */
   stillUrl: string | null
+  /**
+   * A one-line message for the visitor — rate limit, an unreadable photo —
+   * shown under the title, where it is on screen whatever state the camera
+   * is in. `testId` names the message for tests.
+   */
+  notice?: { testId: string; text: string } | null
 }
 
 type CameraState = 'starting' | 'live' | 'denied' | 'unavailable'
@@ -82,6 +88,7 @@ export function CameraCapture({
   onChoosePhoto,
   typeItHref,
   stillUrl,
+  notice = null,
 }: CameraCaptureProps) {
   const t = useTranslations('scan.camera')
   const videoRef = useRef<HTMLVideoElement | null>(null)
@@ -223,6 +230,16 @@ export function CameraCapture({
           <span aria-hidden="true" data-testid="scan-camera-torch-slot" />
         )}
       </div>
+
+      {notice && !isWorking && (
+        <p
+          role="alert"
+          className="mx-5 rounded-lg border border-ginshu-400 px-3.5 py-2.5 text-center text-meta text-camera-ink text-balance"
+          data-testid={notice.testId}
+        >
+          {notice.text}
+        </p>
+      )}
 
       {showFrame ? (
         <div className="flex min-h-0 flex-1 flex-col items-center gap-5 px-5 py-4">

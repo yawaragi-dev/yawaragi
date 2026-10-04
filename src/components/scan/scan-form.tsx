@@ -397,6 +397,39 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
     view.status === 'no_match' ||
     view.status === 'ambiguous'
 
+  /**
+   * The one-line message states — none of them is a result, so the camera
+   * stays up and shows the line itself, under its title.
+   *
+   * They used to render under the camera, and since §4 made the camera
+   * exactly one screen tall that was below the fold: a visitor who hit the
+   * rate limit saw the shutter come back and nothing else (maintainer report).
+   *
+   * - `rate_limited`: PRD #105 / #107 discovery copy with the retry time,
+   *   rounded UP to whole hours so the visitor never hits the wall again
+   *   before the window we told them about has closed.
+   * - `extraction_failed`: the action catches the vision call + lookup;
+   *   random non-sake photos routinely end here. The copy stays generic; the
+   *   debug overlay carries the technical error.
+   * - `session_missing`: defensive (the proxy is the cookie's sole writer
+   *   since #161), kept so a matcher gap reads as a polite line, not a throw.
+   * - `invalid_input`, and the client-side `downscaleFailed`.
+   */
+  const notice: { testId: string; text: string } | null = downscaleFailed
+    ? { testId: 'scan-error-downscale', text: t('errorDownscale') }
+    : view.status === 'rate_limited'
+      ? {
+          testId: 'scan-error-rate-limited',
+          text: t('rateLimited', { hours: Math.max(1, Math.ceil(view.retryAfterSec / 3600)) }),
+        }
+      : view.status === 'extraction_failed'
+        ? { testId: 'scan-error-extraction-failed', text: t('extractionFailed') }
+        : view.status === 'invalid_input'
+          ? { testId: 'scan-error-invalid-input', text: t('errorInvalidInput') }
+          : view.status === 'session_missing'
+            ? { testId: 'scan-error-session-missing', text: t('sessionMissing') }
+            : null
+
   // The form is JS-only: there is no no-JS submit path because the canvas
   // downscale runs in the browser before we ever build the FormData. The
   // `onSubmit` handler exists so the Enter key on the button doesn't fall
@@ -437,6 +470,7 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
           onChoosePhoto={onUploadClick}
           typeItHref={null}
           stillUrl={photoUrl}
+          notice={notice}
         />
       )}
 
@@ -448,73 +482,6 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
       */}
       <div className="flex flex-col items-stretch gap-4 px-5 py-5 empty:hidden">
 
-        {view.status === 'invalid_input' && (
-          <p
-            role="alert"
-            className="text-sm text-amber-700 dark:text-amber-300"
-            data-testid="scan-error-invalid-input"
-          >
-            {t('errorInvalidInput')}
-          </p>
-        )}
-        {view.status === 'session_missing' && (
-          // Post-#161 defensive state: the middleware (src/proxy.ts) is
-          // the sole writer of `yawaragi_session`, and the /scan route is
-          // in the middleware matcher, so this branch should not surface
-          // in practice. Kept as a typed variant so a matcher gap /
-          // direct action invocation lands as a polite UI message
-          // instead of a thrown exception.
-          <p
-            role="alert"
-            className="text-sm text-amber-700 dark:text-amber-300"
-            data-testid="scan-error-session-missing"
-          >
-            {t('sessionMissing')}
-          </p>
-        )}
-        {view.status === 'rate_limited' && (
-          // PRD #105 §"Rate-limit policy v1" + issue #107: discovery /
-          // learning copy with the human-friendly retry time. The
-          // numeric retryAfterSec is rendered as a rounded-up hours
-          // figure via the ICU `plural` message — we deliberately
-          // over-estimate (always round up) so the visitor never bumps
-          // into the wall again before our reported window closes.
-          <p
-            role="alert"
-            className="text-sm text-amber-700 dark:text-amber-300"
-            data-testid="scan-error-rate-limited"
-          >
-            {t('rateLimited', {
-              hours: Math.max(1, Math.ceil(view.retryAfterSec / 3600)),
-            })}
-          </p>
-        )}
-        {downscaleFailed && (
-          <p
-            role="alert"
-            className="text-sm text-amber-700 dark:text-amber-300"
-            data-testid="scan-error-downscale"
-          >
-            {t('errorDownscale')}
-          </p>
-        )}
-        {view.status === 'extraction_failed' && (
-          // The action wraps the vision call + Sakenowa lookup in a
-          // try/catch (see scan-action.ts). Random non-sake images
-          // routinely bottom out the AI SDK's schema-validation retries
-          // and surface here. Anthropic outages, content moderation
-          // rejections, and DB blips share the same UI — the localized
-          // copy stays generic; the debug overlay carries the
-          // technical name (`AI_RetryError`, `ZodError`, etc.) and a
-          // sliced error message.
-          <p
-            role="alert"
-            className="text-sm text-amber-700 dark:text-amber-300"
-            data-testid="scan-error-extraction-failed"
-          >
-            {t('extractionFailed')}
-          </p>
-        )}
         {view.status === 'low_confidence' && consensus && (
           // Retry / low_confidence tier AND the per-tab history has a
           // strict-majority consensus on a brand from earlier successful

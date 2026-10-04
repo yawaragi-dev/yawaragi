@@ -76,7 +76,7 @@ test.describe('sign-in page', () => {
   test('the header carries no sign-out control (it lives on Account)', async ({ page }) => {
     await page.goto('/en/sign-in')
     await expect(page.getByTestId('site-header')).toBeVisible()
-    await expect(page.getByTestId('header-sign-out')).toHaveCount(0)
+    await expect(page.getByTestId('site-header').getByText('Sign out')).toHaveCount(0)
   })
   test('on the way back from Google, the page is hidden from the very first frame', async ({
     browser,
