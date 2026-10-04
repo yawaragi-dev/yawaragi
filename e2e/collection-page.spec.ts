@@ -1,0 +1,149 @@
+/**
+ * E2E coverage for /[locale]/collection — §11 Collection, the Journal tab.
+ *
+ * §11 is three tabs (Journal · Cellar · Wishlist) and only Journal ships:
+ * Cellar and Wishlist have no tables behind them and ADR-0011 blocks the
+ * migration while Production and Preview share one Supabase project, so the
+ * segmented control is not rendered at all rather than offering two options
+ * that lead nowhere (#162).
+ *
+ * The journal is maintainer-only until the local-first rewrite (ADR-0020), so
+ * everyone else gets `<TabPlaceholder />`. The `yawaragi_journal_stub` cookie
+ * drives the states AND stands in for the maintainer check, so these specs
+ * need no Clerk session and no Upstash.
+ */
+import { expect, test } from '@playwright/test'
+import { BASE_URL } from './_base-url'
+
+const AGE_GATE_COOKIE = {
+  name: 'yawaragi_age_gate',
+  value: JSON.stringify({ v: 1, ts: Date.now() }),
+  url: BASE_URL,
+}
+
+// Dismiss the cookie banner (fixed to the viewport bottom; can intercept
+// clicks on anything near it).
+const CONSENT_COOKIE = {
+  name: 'yawaragi_consent',
+  value: JSON.stringify({ version: 1, analytics: false, marketing: false }),
+  url: BASE_URL,
+}
+
+const journalStub = (mode: 'populated' | 'empty' | 'unavailable') => ({
+  name: 'yawaragi_journal_stub',
+  value: mode,
+  url: BASE_URL,
+})
+
+test.describe('/en/collection — §11 Journal (ADR-0020, maintainer-only)', () => {
+  test('lists the tastings newest first, each a door to its bottle page', async ({
+    browser,
+  }) => {
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([AGE_GATE_COOKIE, CONSENT_COOKIE, journalStub('populated')])
+    const page = await context.newPage()
+
+    await page.goto('/en/collection')
+
+    await expect(page.getByTestId('collection-page')).toBeVisible()
+    await expect(page.getByTestId('journal-list')).toBeVisible()
+    await expect(page.getByTestId('journal-entry').first()).toContainText('而今')
+    // Newest first, which is what makes the list readable without a date
+    // filter — the stub's two entries are a month apart.
+    const entries = page.getByTestId('journal-entry')
+    await expect(entries.first()).toContainText('而今')
+    await expect(entries.last()).toContainText('田酒')
+
+    // §11's radar is gone from here, and that is the port's point: the Palate
+    // IS the derived six-axis view, and drawing it above the journal too meant
+    // a maintainer saw a radar here and never reached §12 at all.
+    await expect(page.getByTestId('taste-profile-radar')).toHaveCount(0)
+
+    // Each row is a door. The bottle page is where the rest of what we know
+    // about a sake lives, and the journal is the one surface that knows the
+    // visitor has met it.
+    await expect(page.getByTestId('journal-entry-link-1')).toHaveAttribute(
+      'href',
+      '/en/sake/1',
+    )
+
+    // ADR-0014: Sakenowa brand names on the surface → attribution present.
+    await expect(page.getByText('Powered by Sakenowa')).toBeVisible()
+
+    // The FAB opens the log sheet (title, sake search, rating, save).
+    await page.getByTestId('journal-log-open').click()
+    await expect(page.getByTestId('journal-log-form')).toBeVisible()
+    await expect(page.getByTestId('journal-search')).toBeVisible()
+    await expect(page.getByTestId('journal-log-save')).toBeVisible()
+
+    await context.close()
+  })
+
+  test('empty: shows the start-your-journal state with the log affordance', async ({ browser }) => {
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([AGE_GATE_COOKIE, CONSENT_COOKIE, journalStub('empty')])
+    const page = await context.newPage()
+
+    await page.goto('/en/collection')
+
+    await expect(page.getByTestId('collection-page')).toBeVisible()
+    await expect(page.getByTestId('journal-empty')).toBeVisible()
+    await expect(page.getByTestId('journal-list')).toHaveCount(0)
+    // Even with no entries, the visitor can log their first sake. §5's star is
+    // the save and the star row is Phase 2, so this is the only way in.
+    await expect(page.getByTestId('journal-log-open')).toBeVisible()
+
+    await context.close()
+  })
+
+  test('unavailable: shows a quiet notice and no log affordance', async ({ browser }) => {
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([AGE_GATE_COOKIE, CONSENT_COOKIE, journalStub('unavailable')])
+    const page = await context.newPage()
+
+    await page.goto('/en/collection')
+
+    await expect(page.getByTestId('journal-unavailable')).toBeVisible()
+    await expect(page.getByTestId('journal-log-open')).toHaveCount(0)
+
+    await context.close()
+  })
+})
+
+test.describe('/en/collection — everyone else', () => {
+  test('still says what will be here, rather than showing an empty journal', async ({
+    browser,
+  }) => {
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([AGE_GATE_COOKIE, CONSENT_COOKIE])
+    const page = await context.newPage()
+
+    await page.goto('/en/collection')
+
+    // ADR-0020 keeps the journal maintainer-only, so a visitor has nothing of
+    // their own to list. #162's rule holds: navigable and honest about what it
+    // is, rather than an empty state implying they could fill it.
+    await expect(page.getByTestId('tab-placeholder')).toBeVisible()
+    await expect(page.getByTestId('journal-list')).toHaveCount(0)
+    await expect(page.getByTestId('journal-log-open')).toHaveCount(0)
+
+    await context.close()
+  })
+
+  test('shows the age gate when the cookie is absent — the list names sakes', async ({
+    browser,
+  }) => {
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([journalStub('populated')])
+    const page = await context.newPage()
+
+    await page.goto('/en/collection')
+
+    // The proxy's deny-by-default list is what enforces this, and it matters
+    // more here than on a placeholder: the list names sakes and shows ratings.
+    await expect(page.getByTestId('age-gate')).toBeVisible()
+    await expect(page.getByTestId('collection-page')).toHaveCount(0)
+
+    await context.close()
+  })
+})

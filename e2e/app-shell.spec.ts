@@ -89,9 +89,11 @@ test.describe('app shell — tab bar', () => {
 
     await page.goto('/en/scan')
 
-    // Home and Collection are not built yet. #162's rule is that they are
-    // still navigable and still say what they are, which is what makes
-    // shipping the full four-tab bar honest rather than aspirational.
+    // Home is not built yet, and Collection is built but maintainer-only —
+    // this context is signed out, so it gets the placeholder too (ADR-0020).
+    // #162's rule is that both are still navigable and still say what they
+    // are, which is what makes shipping the full four-tab bar honest rather
+    // than aspirational.
     await page.getByTestId('tab-home').click()
     await expect(page).toHaveURL(/\/en\/home$/)
     await expect(page.getByTestId('tab-placeholder')).toBeVisible()
