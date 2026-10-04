@@ -5,6 +5,7 @@ import { Geist_Mono, Inter } from 'next/font/google'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { ClerkProvider } from '@clerk/nextjs'
+import { auth } from '@clerk/nextjs/server'
 import { routing } from '@/i18n/routing'
 import { ClientHistoryTracker } from '@/components/layout/client-history-tracker'
 import { RefreshOnAuthChange } from '@/components/auth/refresh-on-auth-change'
@@ -39,6 +40,9 @@ export default async function LocaleLayout({
   setRequestLocale(locale)
 
   const cookieJar = await cookies()
+  // Who this render is for, so the client can tell when it is out of date —
+  // see <RefreshOnAuthChange />.
+  const { userId } = await auth()
   // ADR-0013: every feature exposes a per-request trace to the operator
   // when the `yawaragi_debug` cookie is set. The mount lives at layout
   // level so the panel persists across page navigations and reloads —
@@ -123,7 +127,7 @@ export default async function LocaleLayout({
             <ClientHistoryTracker />
             {/* Signing in or out changes what every server-rendered `<Show>`
                 and maintainer gate should say; this re-renders them. */}
-            <RefreshOnAuthChange />
+            <RefreshOnAuthChange serverUserId={userId} />
             {children}
             <DebugPanelMount debugMode={debugMode} />
           </NextIntlClientProvider>
