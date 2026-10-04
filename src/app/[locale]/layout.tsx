@@ -7,6 +7,7 @@ import type { Metadata } from 'next'
 import { ClerkProvider } from '@clerk/nextjs'
 import { routing } from '@/i18n/routing'
 import { ClientHistoryTracker } from '@/components/layout/client-history-tracker'
+import { RefreshOnAuthChange } from '@/components/auth/refresh-on-auth-change'
 import { DebugPanelMount } from '@/components/debug/debug-panel-mount'
 import { buildClerkLocalization } from '@/lib/auth/clerk-localization'
 import { isDebugEnabledFromCookies } from '@/lib/debug/debug-mode'
@@ -120,6 +121,9 @@ export default async function LocaleLayout({
                 because the move it most needs to notice is `(app)` → `(site)`,
                 which is how the legal documents are reached. */}
             <ClientHistoryTracker />
+            {/* Signing in or out changes what every server-rendered `<Show>`
+                and maintainer gate should say; this re-renders them. */}
+            <RefreshOnAuthChange />
             {children}
             <DebugPanelMount debugMode={debugMode} />
           </NextIntlClientProvider>
