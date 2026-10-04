@@ -1,6 +1,7 @@
 'use client'
 
 import { SignIn } from '@clerk/nextjs'
+import { markSignInPending } from '@/lib/auth/sign-in-pending'
 
 /**
  * The Clerk sign-in widget (#244 follow-on — the maintainer journal is gated
@@ -23,16 +24,40 @@ import { SignIn } from '@clerk/nextjs'
  * catch-all `[[...sign-in]]` route would need every Clerk sub-path mirrored
  * in both. One route, one entry in each list.
  */
-export function SignInCard() {
+/**
+ * Clerk's class names for its social sign-in buttons. They are Clerk's public
+ * styling hooks (the `cl-` prefix is what `appearance.elements` targets), so
+ * matching them is a supported surface, not DOM scraping.
+ */
+const SOCIAL_BUTTON = '.cl-socialButtonsBlockButton, .cl-socialButtonsIconButton'
+
+export function SignInCard({ fallbackRedirectUrl }: { fallbackRedirectUrl: string }) {
   return (
-    <SignIn
-      routing="hash"
-      appearance={{
-        elements: {
-          // No public sign-up (ADR-0020) — hide the footer that links to it.
-          footerAction: { display: 'none' },
-        },
+    // A click on "Continue with Google" leaves the app, and the way back is a
+    // full page load that the server renders before the session exists. The
+    // marker lets that render put up `<RefreshOnAuthChange />`'s wall from the
+    // first frame. Email sign-in never reloads the page, so it needs none.
+    <div
+      onClickCapture={(event) => {
+        if ((event.target as Element).closest(SOCIAL_BUTTON)) markSignInPending()
       }}
-    />
+    >
+      <SignIn
+        routing="hash"
+        // Where a signed-in visitor lands when the URL carries no
+        // `redirect_url` (Clerk honours one when present, and checks it against
+        // the instance's allowed origins). Without this Clerk sends them to "/",
+        // which the locale routing turns into Home — so signing in from Account
+        // dropped the visitor on a different tab. Most visible with Google: the
+        // round trip through Google's pages leaves nothing to go "back" to.
+        fallbackRedirectUrl={fallbackRedirectUrl}
+        appearance={{
+          elements: {
+            // No public sign-up (ADR-0020) — hide the footer that links to it.
+            footerAction: { display: 'none' },
+          },
+        }}
+      />
+    </div>
   )
 }

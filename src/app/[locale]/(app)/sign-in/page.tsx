@@ -1,6 +1,9 @@
 import type { Metadata } from 'next'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
+import { hasLocale } from 'next-intl'
 import { SignInCard } from '@/components/auth/sign-in-card'
+import { getPathname } from '@/i18n/navigation'
+import { routing } from '@/i18n/routing'
 
 /**
  * `/[locale]/sign-in` — the maintainer login surface.
@@ -59,7 +62,18 @@ export default async function SignInPage({
       </header>
       {/* Widget copy is localised at <ClerkProvider> in the locale layout —
           Clerk applies `localization` at the provider, not per widget. */}
-      <SignInCard />
+      {/*
+        Account is the only page that links here, so it is where a sign-in
+        returns to: the visitor sees the signed-in state they asked for, where
+        they asked for it. A future entry point ("sign in to save this note")
+        passes its own `redirect_url` instead.
+      */}
+      <SignInCard
+        fallbackRedirectUrl={getPathname({
+          locale: hasLocale(routing.locales, locale) ? locale : routing.defaultLocale,
+          href: '/account',
+        })}
+      />
     </main>
   )
 }

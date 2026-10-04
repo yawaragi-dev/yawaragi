@@ -1,7 +1,5 @@
 import { getTranslations } from 'next-intl/server'
-import { Show } from '@clerk/nextjs'
 import { Link } from '@/i18n/navigation'
-import { HeaderAuth } from '@/components/auth/header-auth'
 import { AccountLink } from '@/components/layout/account-link'
 import { BackLink } from '@/components/layout/back-link'
 import { LocaleSwitcher } from '@/components/layout/locale-switcher'
@@ -29,7 +27,6 @@ import { ShellBackLink } from '@/components/layout/shell-back-link'
  *   this with a per-screen back arrow driven by the history stack rule 11
  *   describes; that lands with the screens themselves, since each one supplies
  *   its own title.
- * - **Sign-out**, the only Clerk surface besides `/sign-in` (ADR-0020).
  *
  * Both deviations are deliberate and tracked on #300. Removing the switch to
  * chase the design sooner would leave no locale affordance; removing the
@@ -94,7 +91,6 @@ export async function Header(props: HeaderProps = {}) {
   const { linkWordmark = true, showAccount = false } = props
   const t = await getTranslations('header')
   const tCommon = await getTranslations('common')
-  const tSignIn = await getTranslations('signIn')
 
   return (
     <header
@@ -132,15 +128,11 @@ export async function Header(props: HeaderProps = {}) {
           </span>
         )}
         <div className="ml-auto flex items-center gap-2">
-          {/* Clerk v7 replaced <SignedIn> with <Show when="signed-in">; it is
-              a server component, so the gate lives here and only the button
-              itself crosses the client boundary. */}
-          <Show when="signed-in">
-            <HeaderAuth
-              signOutLabel={tSignIn('signOut')}
-              signingOutLabel={tSignIn('signingOut')}
-            />
-          </Show>
+          {/* No sign-out here. §15 Account has it as a settings row, and with
+              the wordmark, the locale switch and the avatar there was no room:
+              at 390px a signed-in header crowded "Sign out" in beside the
+              language pair (maintainer review on #343). The avatar is one tap
+              to it. */}
           <LocaleSwitcher />
           {showAccount && <AccountLink label={t('accountLabel')} />}
         </div>

@@ -51,6 +51,24 @@ export function AgeGate() {
   }
 
   return (
+    <>
+      {/*
+        An opaque cover, rendered on the SERVER, so nothing behind the gate is
+        ever on screen. The dialog itself lives in a portal, and portals mount
+        only after hydration: until then the server HTML was the landing page
+        with no gate over it, and a fresh visitor saw it, sample flavor chart
+        included, before the gate appeared (maintainer report). CLAUDE.md:
+        no flavor data before the 18+ gate is accepted.
+
+        Under the dialog (z-50 backdrop, z-60 content), over the page and the
+        cookie banner (z-40). Same ground as the gate, so the hand-over at
+        hydration is invisible.
+      */}
+      <div
+        aria-hidden="true"
+        className="fixed inset-0 z-[45] bg-ground"
+        data-testid="age-gate-cover"
+      />
     <Dialog open modal onOpenChange={() => {}} disablePointerDismissal>
       <DialogContent
         showCloseButton={false}
@@ -127,5 +145,6 @@ export function AgeGate() {
         </div>
       </DialogContent>
     </Dialog>
+    </>
   )
 }

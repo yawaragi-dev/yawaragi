@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { BASE_URL } from './_base-url'
 
 const LOCALES = ['en', 'de'] as const
 
@@ -72,9 +73,31 @@ test.describe('sign-in page', () => {
     await context.close()
   })
 
-  test('signed-out visitors see no sign-out control in the header', async ({ page }) => {
+  test('the header carries no sign-out control (it lives on Account)', async ({ page }) => {
     await page.goto('/en/sign-in')
     await expect(page.getByTestId('site-header')).toBeVisible()
-    await expect(page.getByTestId('header-sign-out')).toHaveCount(0)
+    await expect(page.getByTestId('site-header').getByText('Sign out')).toHaveCount(0)
+  })
+  test('on the way back from Google, the page is hidden from the very first frame', async ({
+    browser,
+  }) => {
+    // The return from Google is a full page load the server renders before the
+    // session exists. With the marker cookie the click sets, that render must
+    // already carry the wall — checked with JavaScript off, which freezes the
+    // page in exactly that pre-hydration state.
+    const context = await browser.newContext({ locale: 'en-US', javaScriptEnabled: false })
+    await context.addCookies([
+      { name: 'yawaragi_sign_in_pending', value: '1', url: BASE_URL },
+    ])
+    const page = await context.newPage()
+    await page.goto('/en/sign-in')
+    await expect(page.getByTestId('auth-transition-wall')).toBeVisible()
+    await context.close()
+  })
+
+  test('with no sign-in under way there is no wall', async ({ page }) => {
+    await page.goto('/en/sign-in')
+    await expect(page.getByTestId('sign-in-page')).toBeVisible()
+    await expect(page.getByTestId('auth-transition-wall')).toHaveCount(0)
   })
 })

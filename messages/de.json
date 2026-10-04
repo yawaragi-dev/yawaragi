@@ -243,7 +243,7 @@
       "choosePhoto": "Foto auswählen",
       "typeNameInstead": "Stattdessen Namen eingeben",
       "unavailableTitle": "Keine Kamera vorhanden",
-      "unavailableBody": "Füge stattdessen ein Foto des Etiketts hinzu — aus deinen Dateien oder als Screenshot — oder gib den Namen ein.",
+      "unavailableBody": "Füge stattdessen ein Foto des Etiketts hinzu — aus deinen Dateien oder als Screenshot.",
       "dropZone": "Etikettenfoto hierher ziehen oder zum Auswählen klicken"
     },
     "form": {
@@ -468,7 +468,8 @@
     "passwordLabel": "Passwort",
     "submit": "Weiter",
     "signOut": "Abmelden",
-    "signingOut": "Wird abgemeldet…"
+    "signingOut": "Wird abgemeldet…",
+    "authWall": "Einen Moment …"
   },
   "rating": {
     "band": {

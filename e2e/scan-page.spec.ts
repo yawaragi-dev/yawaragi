@@ -384,6 +384,10 @@ test.describe('scan entry route', () => {
     await expect(page.getByTestId('scan-entry-page')).toBeVisible()
     await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
     await expect(page.getByTestId('scan-error-rate-limited')).toBeVisible()
+    // ...and on screen, not merely in the DOM. Since §4 made the camera one
+    // screen tall, this line rendered below it — "visible" to Playwright,
+    // invisible to the visitor, who saw only the shutter come back.
+    await expect(page.getByTestId('scan-error-rate-limited')).toBeInViewport()
     // Page does not navigate away — the visitor stays on /en/scan.
     expect(page.url()).toMatch(/\/en\/scan$/)
 

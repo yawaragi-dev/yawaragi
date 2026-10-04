@@ -243,7 +243,7 @@
       "choosePhoto": "Choose a photo",
       "typeNameInstead": "Type the name instead",
       "unavailableTitle": "No camera here",
-      "unavailableBody": "Add a photo of the label instead — from your files or a screenshot — or type the name.",
+      "unavailableBody": "Add a photo of the label instead — from your files or a screenshot.",
       "dropZone": "Drop a label photo here, or click to choose"
     },
     "form": {
@@ -468,7 +468,8 @@
     "passwordLabel": "Password",
     "submit": "Continue",
     "signOut": "Sign out",
-    "signingOut": "Signing out…"
+    "signingOut": "Signing out…",
+    "authWall": "One moment…"
   },
   "rating": {
     "band": {

@@ -5,8 +5,11 @@ import { Geist_Mono, Inter } from 'next/font/google'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { ClerkProvider } from '@clerk/nextjs'
+import { auth } from '@clerk/nextjs/server'
 import { routing } from '@/i18n/routing'
 import { ClientHistoryTracker } from '@/components/layout/client-history-tracker'
+import { RefreshOnAuthChange } from '@/components/auth/refresh-on-auth-change'
+import { isSignInPending } from '@/lib/auth/sign-in-pending'
 import { DebugPanelMount } from '@/components/debug/debug-panel-mount'
 import { buildClerkLocalization } from '@/lib/auth/clerk-localization'
 import { isDebugEnabledFromCookies } from '@/lib/debug/debug-mode'
@@ -38,6 +41,9 @@ export default async function LocaleLayout({
   setRequestLocale(locale)
 
   const cookieJar = await cookies()
+  // Who this render is for, so the client can tell when it is out of date —
+  // see <RefreshOnAuthChange />.
+  const { userId } = await auth()
   // ADR-0013: every feature exposes a per-request trace to the operator
   // when the `yawaragi_debug` cookie is set. The mount lives at layout
   // level so the panel persists across page navigations and reloads —
@@ -120,6 +126,13 @@ export default async function LocaleLayout({
                 because the move it most needs to notice is `(app)` → `(site)`,
                 which is how the legal documents are reached. */}
             <ClientHistoryTracker />
+            {/* Signing in or out changes what every server-rendered `<Show>`
+                and maintainer gate should say; this re-renders them. */}
+            <RefreshOnAuthChange
+              serverUserId={userId}
+              signInPending={isSignInPending(cookieJar)}
+              label={tSignIn('authWall')}
+            />
             {children}
             <DebugPanelMount debugMode={debugMode} />
           </NextIntlClientProvider>
