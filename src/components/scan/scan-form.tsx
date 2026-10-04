@@ -9,6 +9,7 @@
 import { startTransition, useActionState, useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useTranslations } from 'next-intl'
+import { Camera } from '@phosphor-icons/react/dist/ssr'
 import NextLink from 'next/link'
 import { useRouter } from 'next/navigation'
 import { getPathname, Link } from '@/i18n/navigation'
@@ -1044,19 +1045,23 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
           // belonged with §4 — this is §4. It opened the photo library before,
           // because the camera was a hidden input and there was no screen to go
           // back to.
-          <div
-            className="mt-1 flex flex-wrap items-center gap-3"
-            data-testid="scan-result-match-rescan-row"
-          >
-            <Button
+          //
+          // Full width, with room above it (maintainer review): a small
+          // outline button left-aligned under a full-width card read as an
+          // afterthought, and it is the screen's one next action. Interim
+          // until the designers place it — §5 draws it as "Not this one" in a
+          // top bar we have not built (asked on #308).
+          <div className="mt-3" data-testid="scan-result-match-rescan-row">
+            <button
               type="button"
-              variant="outline"
               onClick={onPickClick}
               disabled={isPending}
               data-testid="scan-result-match-rescan"
+              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-divider text-card-heading font-medium text-ink transition-colors hover:bg-ash-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600 disabled:opacity-60"
             >
+              <Camera size={18} aria-hidden="true" className="text-ash-600" />
               {isPending ? t('pending') : t('retryRescan')}
-            </Button>
+            </button>
           </div>
         )}
       </div>
