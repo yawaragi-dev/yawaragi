@@ -410,12 +410,6 @@
     },
     "sheet": {
       "closeLabel": "Close"
-    },
-    "romajiDisclosure": {
-      "caveat": "Romaji readings are AI-generated.",
-      "triggerLabel": "Why?",
-      "title": "About the romaji readings",
-      "body": "Sakenowa publishes sake and brewery names in Japanese only. The Latin spellings here are Hepburn readings produced by an AI model when we sync the catalogue — a reading aid, not part of Sakenowa's data. An unusual name can be read more than one way, so treat these as a guide; the Japanese name beside each one is the canonical form."
     }
   },
   "flavorAxis": {
