@@ -223,4 +223,34 @@ test.describe('age gate a11y', () => {
 
     await context.close()
   })
+  test('before the gate can mount, nothing behind it is on screen', async ({ browser }) => {
+    // The gate dialog lives in a portal, which mounts only after hydration.
+    // The server HTML used to be the landing with no gate over it, so a fresh
+    // visitor saw the page, sample flavor chart included, until JS arrived.
+    // With JavaScript off, the page is frozen in exactly that pre-hydration
+    // state: whatever is at the centre of the screen is what they saw.
+    const context = await browser.newContext({ locale: 'en-US', javaScriptEnabled: false })
+    const page = await context.newPage()
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/en/')
+
+    const onTop = await page.evaluate(() => {
+      const el = document.elementFromPoint(innerWidth / 2, innerHeight / 2)
+      return el?.closest('[data-testid]')?.getAttribute('data-testid') ?? null
+    })
+    expect(onTop).toBe('age-gate-cover')
+
+    await context.close()
+  })
+
+  test('accepting the gate leaves no cover behind', async ({ browser }) => {
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([
+      { name: 'yawaragi_age_gate', value: JSON.stringify({ v: 1, ts: Date.now() }), url: BASE_URL },
+    ])
+    const page = await context.newPage()
+    await page.goto('/en/')
+    await expect(page.getByTestId('age-gate-cover')).toHaveCount(0)
+    await context.close()
+  })
 })
