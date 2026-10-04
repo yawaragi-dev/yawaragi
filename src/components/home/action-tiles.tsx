@@ -13,6 +13,10 @@ import { Link } from '@/i18n/navigation'
  * 404s is worse than a tile that is not there. The grid is written as a single
  * template so restoring the pair is one line plus the tile, not a re-layout.
  *
+ * Rendered only once there are tastings. On first run the first-run card's
+ * own "Scan a label" is the call to action, and a tile above it would repeat
+ * it word for word (see the Home page's deviations).
+ *
  * Deliberately not a "Collection" or "Palate" tile in the empty half: those
  * are tabs, one tap away on the bottom edge already, and §3's tiles are for
  * the two ways to *start* — which is a different job from navigating.

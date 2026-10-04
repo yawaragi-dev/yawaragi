@@ -41,7 +41,7 @@
       "month": "{count} Mon",
       "year": "{count} J"
     },
-    "palateLeans": "Dein Palate tendiert zu",
+    "palateLeans": "Dein Geschmack tendiert zu",
     "derivedFrom": "Aus {count, plural, one {# Verkostung} other {# Verkostungen}} abgeleitet",
     "firstRun": {
       "heading": "Beginne mit dem Glas vor dir",

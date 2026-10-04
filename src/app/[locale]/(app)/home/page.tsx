@@ -46,8 +46,15 @@ import { PALATE_READ_THRESHOLD, palateLean } from '@/lib/taste/palate-read'
  * what first-run means. The difference from the design is only *why* the list
  * is empty, which the visitor cannot see.
  *
- * Deviations, both recorded on #300:
+ * Deviations, recorded on #300:
  *
+ * - **No action tiles on first run.** §3 draws the tile row above the
+ *   first-run card, whose own primary button is also "Scan a label" — two
+ *   identical buttons a screen apart, with the tile row's partner ("Type it")
+ *   not there to tell them apart. The card's button is the call to action on
+ *   first run; the tile row appears once there are tastings, where it is the
+ *   only way to start. Revisit when "Type it" returns and the row is a pair.
+ *   Reported to the designers on #308.
  * - **One action tile, not two.** §3's v1 layout is "Scan a label" at `1.6fr`
  *   beside "Type it" at `1fr`, and "Type it" opens §8 Search — which is #323,
  *   BLOCKED on #327. There is no `/search` route for it to open, and a tile
@@ -176,10 +183,10 @@ export default async function HomeTabPage({ params }: PageProps) {
       data-testid="home-page"
     >
       <HomeGreeting />
-      <HomeActionTiles />
 
       {entries.length > 0 ? (
         <>
+          <HomeActionTiles />
           <HomeRecentTastings
             entries={entries.slice(0, RECENT_LIMIT)}
             totalCount={entries.length}

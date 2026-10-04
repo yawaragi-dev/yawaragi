@@ -32,7 +32,7 @@ const journalStub = (mode: 'populated' | 'empty') => ({
 test.describe('/en/home — §3 Home', () => {
   test('greets you and offers the one thing you can start', async ({ browser }) => {
     const context = await browser.newContext({ locale: 'en-US' })
-    await context.addCookies([AGE_GATE_COOKIE, CONSENT_COOKIE])
+    await context.addCookies([AGE_GATE_COOKIE, CONSENT_COOKIE, journalStub('populated')])
     const page = await context.newPage()
 
     await page.goto('/en/home')
@@ -68,6 +68,11 @@ test.describe('/en/home — §3 Home', () => {
     }
     await expect(page.getByTestId('palate-cold-start')).toBeVisible()
     await expect(page.getByTestId('heuristic-disclaimer-title')).toBeVisible()
+
+    // One way to the camera, not two: the card's own "Scan a label" is the
+    // call to action here, so the tile row above it would only repeat it.
+    await expect(page.getByTestId('home-first-run-cta')).toHaveAttribute('href', '/en/scan')
+    await expect(page.getByTestId('home-action-tiles')).toHaveCount(0)
     await expect(page.getByTestId('heuristic-disclaimer-body')).toBeAttached()
 
     // The first-run copy must not promise the save that does not exist yet.
