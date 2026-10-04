@@ -129,9 +129,12 @@ test.describe('/en/profile — §12 Palate', () => {
     // data point.
     await expect(page.getByTestId('palate-title')).toHaveText('Taking shape')
     await expect(page.getByTestId('palate-early')).toBeVisible()
-    // The last tasting is named — a fact about this visitor...
-    await expect(page.getByTestId('palate-so-far')).toBeVisible()
-    // ...and nothing points at a rating step that does not exist yet: no "N
+    // No "So far: {sake}" assertion: naming the last tasting looks the brand
+    // up in the Sakenowa mirror, and CI runs without one, so the line is
+    // (correctly) absent there. It is a DB-bound nicety; what this spec pins
+    // is the part that holds everywhere.
+    //
+    // Nothing points at a rating step that does not exist yet: no "N
     // more tastings", no "rate a few styles" tip, no "Scan a label" (a scan
     // does not feed the palate). They return when rating ships.
     await expect(page.getByText(/more tastings/)).toHaveCount(0)
