@@ -5,11 +5,11 @@ import { useClerk } from '@clerk/nextjs'
 import { Button } from '@/components/ui/button'
 
 /**
- * The header's sign-out control (#244 follow-on). Mounted by `<Header />`
- * inside Clerk's `<Show when="signed-in">`, so signed-out visitors see
- * nothing — the public product needs no account, and an always-visible
- * "Sign in" link would advertise a door ADR-0020 keeps shut for everyone but
- * maintainers. `/[locale]/sign-in` stays reachable by URL for those who need it.
+ * The sign-out control (#244 follow-on). Mounted on §15 Account inside
+ * Clerk's `<Show when="signed-in">`. It used to sit in the header too; it was
+ * taken out on #343 because the 390px header had no room for it beside the
+ * locale pair and the avatar, and Account is one tap away. (The name is
+ * historical.)
  *
  * Deliberately NOT Clerk's `<UserButton />`: that renders Clerk's own English
  * chrome ("Manage account", "Sign out"), which would put an English-only

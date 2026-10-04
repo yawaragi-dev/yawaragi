@@ -72,7 +72,7 @@ test.describe('sign-in page', () => {
     await context.close()
   })
 
-  test('signed-out visitors see no sign-out control in the header', async ({ page }) => {
+  test('the header carries no sign-out control (it lives on Account)', async ({ page }) => {
     await page.goto('/en/sign-in')
     await expect(page.getByTestId('site-header')).toBeVisible()
     await expect(page.getByTestId('header-sign-out')).toHaveCount(0)
