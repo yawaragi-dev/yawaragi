@@ -89,23 +89,25 @@ test.describe('app shell — tab bar', () => {
 
     await page.goto('/en/scan')
 
-    // Home is not built yet, and Collection is built but maintainer-only —
-    // this context is signed out, so it gets the placeholder too (ADR-0020).
-    // #162's rule is that both are still navigable and still say what they
-    // are, which is what makes shipping the full four-tab bar honest rather
-    // than aspirational.
+    // Three of the four tabs land on a built screen. Collection is built too,
+    // but its content is the journal, which ADR-0020 holds to maintainers —
+    // and this context is signed out, so it gets `<TabPlaceholder />`. #162's
+    // rule is what makes shipping the full four-tab bar honest rather than
+    // aspirational: a tab whose screen you cannot have yet is still navigable
+    // and still says what it is.
     await page.getByTestId('tab-home').click()
     await expect(page).toHaveURL(/\/en\/home$/)
-    await expect(page.getByTestId('tab-placeholder')).toBeVisible()
-    await expect(page.getByTestId('tab-placeholder-link')).toBeVisible()
+    await expect(page.getByTestId('home-page')).toBeVisible()
+    await expect(page.getByTestId('tab-placeholder')).toHaveCount(0)
 
     await page.getByTestId('tab-collection').click()
     await expect(page).toHaveURL(/\/en\/collection$/)
     await expect(page.getByTestId('tab-placeholder')).toBeVisible()
+    await expect(page.getByTestId('tab-placeholder-link')).toBeVisible()
 
     await page.getByTestId('tab-palate').click()
     await expect(page).toHaveURL(/\/en\/profile$/)
-    // The Palate tab points at a screen that IS built, so no placeholder.
+    await expect(page.getByTestId('profile-page')).toBeVisible()
     await expect(page.getByTestId('tab-placeholder')).toHaveCount(0)
 
     await context.close()

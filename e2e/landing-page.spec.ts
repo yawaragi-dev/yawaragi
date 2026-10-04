@@ -142,10 +142,11 @@ test.describe('landing hero (UX-E)', () => {
   })
 
   // §0 aims both "Open the app" buttons at the app's front door, which is §3
-  // Home — and §3 is not ported, so `/home` still renders
-  // `<TabPlaceholder />`. The rule worth pinning is not the destination but
-  // the outcome: the landing's way into the app must reach something
-  // finished. When §3 lands and these revert to `/home`, this keeps passing.
+  // Home. They pointed at `/scan` for three PRs while `/home` rendered
+  // `<TabPlaceholder />`; §3 is ported now and they are back where §0 put
+  // them. The rule pinned here is the outcome rather than the destination —
+  // the landing's way into the app must reach something finished — which is
+  // why this test did not need changing when the href did.
   //
   // One test per button rather than a loop inside one, so a failure names
   // which of the two broke instead of reporting the first one it reached.
@@ -160,6 +161,9 @@ test.describe('landing hero (UX-E)', () => {
 
       await expect(page.getByTestId('tab-bar')).toBeVisible()
       await expect(page.getByTestId('tab-placeholder')).toHaveCount(0)
+      // And specifically the front door, now that there is one.
+      await expect(page).toHaveURL(/\/en\/home$/)
+      await expect(page.getByTestId('home-page')).toBeVisible()
 
       await context.close()
     })
