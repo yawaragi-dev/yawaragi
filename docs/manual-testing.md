@@ -1,6 +1,6 @@
 # Manual testing — forcing states cheaply
 
-How to drive every UI state in local dev **without hunting for a bottle photo, burning Anthropic credit, or running a live MCP server**. All the stubs below are non-production (they fail closed on a production `NODE_ENV`), so they can only ever fire in dev/preview.
+How to drive every UI state in local dev **without hunting for a bottle photo, burning Anthropic credit, or running a live MCP server**. All the stubs below are non-production (they fail closed on a production `NODE_ENV`), so they only fire under `pnpm dev`. Vercel Preview builds with `NODE_ENV=production`, so no stub works on a preview deployment; test there signed in as a maintainer instead.
 
 Two levers do the work:
 
@@ -41,6 +41,10 @@ setScan = (name_ja, brewery_ja, confidence = 0.95) =>
 
 // Pick a suggest/chat state.
 setSuggest = (mode) => document.cookie = `yawaragi_suggest_stub=${mode};path=/`
+
+// Pick a journal state for Home, Collection and Palate: 'populated' | 'empty' | 'unavailable'.
+setJournal = (mode) => document.cookie = `yawaragi_journal_stub=${mode};path=/`
+clearJournal = () => document.cookie = 'yawaragi_journal_stub=;path=/;max-age=0'
 ```
 
 > The debug cookie (`yawaragi_debug`) is **HttpOnly** — you cannot set it from JS. Use the `?debug=1` URL param instead (below).
@@ -52,6 +56,7 @@ setSuggest = (mode) => document.cookie = `yawaragi_suggest_stub=${mode};path=/`
 | `yawaragi_age_gate` | Accept the 18+ JMStV gate (no flavor data renders until accepted) | `{"v":1,"ts":<ms>}`, or click the modal |
 | `yawaragi_e2e_vision` | Inject a scan extraction `{name_ja, brewery_ja, confidence}` (base64) | `setScan(...)` — **needs #194** + `VISION_PROVIDER=e2e-stub` |
 | `yawaragi_suggest_stub` | Pick a suggest state without the env var | `setSuggest('ok')` etc. |
+| `yawaragi_journal_stub` | Stand in for a maintainer's journal on Home, Collection and Palate (reads only; logging a sake still needs a real maintainer sign-in) | `setJournal('populated')` etc. |
 | `yawaragi_debug` | Debug panel + per-step server tracing (HttpOnly) | `?debug=1` URL param; `?debug=0` clears |
 | `yawaragi_consent` | GDPR cookie-consent decision | via the cookie banner UI |
 
@@ -130,7 +135,7 @@ The landing hero renders a real catalogued sake (木戸泉 / Kidoizumi, `brand_i
 - Rate limit: `src/env.ts` (`RATE_LIMIT_BYPASS`) + the prod guard in `src/instrumentation.ts`.
 - Debug: `src/lib/debug/debug-mode.ts`.
 
-All stub selectors fail closed on `NODE_ENV=production`.
+All stub selectors fail closed on `NODE_ENV=production`, which includes Vercel Preview.
 
 ## Automated equivalent
 
