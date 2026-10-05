@@ -41,6 +41,13 @@ updates:
           - 'tailwindcss'
           - '@tailwindcss/*'
           - 'tw-animate-css'
+    # TypeScript majors wait until typescript-eslint supports them. TS 7 broke
+    # the whole tooling group (#333: "typescript-eslint does not support TS
+    # 7.0"), holding back the patches that ride with it. Drop this once
+    # typescript-eslint lists the new major in its supported range.
+    ignore:
+      - dependency-name: 'typescript'
+        update-types: ['version-update:semver-major']
     labels:
       - dependencies
 
