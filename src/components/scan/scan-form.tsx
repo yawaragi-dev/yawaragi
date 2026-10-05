@@ -28,6 +28,7 @@ import { resolveBadgeKind } from '@/lib/provenance/policy'
 // `ScanActionState` and gate these renders with
 // `requiresSakenowaAttribution(sources)` from sakenowa-attribution.tsx.
 import { SakenowaAttributionView } from '@/components/sake/sakenowa-attribution'
+import { CellarButton } from '@/components/collection/cellar-button'
 import { TastingLogPanel } from '@/components/journal/tasting-log-panel'
 import { ScanResultCard } from '@/components/scan/scan-result-card'
 import type { DebugEvent } from '@/lib/debug/debug-log'
@@ -888,15 +889,22 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
                 // fresh "Your take", not a re-rate of the last bottle's entry.
                 // No history meta before the first tap — the scan does not
                 // read the journal, and "First time for you" would be a guess.
-                <TastingLogPanel
-                  key={view.brandId}
-                  brandId={view.brandId}
-                  chart={view.flavorChart}
-                  history={null}
-                  // Nothing on /scan reads the journal, so there is nothing to
-                  // refresh after a save.
-                  onSaved={() => {}}
-                />
+                <div key={view.brandId} className="flex flex-col gap-3">
+                  <TastingLogPanel
+                    brandId={view.brandId}
+                    chart={view.flavorChart}
+                    history={null}
+                    // Nothing on /scan reads the journal, so there is nothing
+                    // to refresh after a save.
+                    onSaved={() => {}}
+                  />
+                  {/* §5's "Add to cellar" (wishlist is not built). The scan
+                      does not read the cellar, so it starts at "Add to
+                      cellar"; the first tap answers with the real count. */}
+                  <div className="flex gap-2">
+                    <CellarButton brandId={view.brandId} initialCount={0} refreshOnSave={false} />
+                  </div>
+                </div>
               )
             }
           />

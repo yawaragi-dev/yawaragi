@@ -257,6 +257,8 @@ test.describe('sake brand page', () => {
     // §9.2: the personal action first, "Similar" beside it.
     await expect(page.getByTestId('bottle-rate-open')).toContainText('Rate a new tasting')
     await expect(page.getByTestId('similar-sakes-link')).toBeVisible()
+    // The cellar control, for a sake this visitor does not own yet.
+    await expect(page.getByTestId('cellar-add')).toHaveText('Add to cellar')
     // §9.3, with nothing in it yet.
     await expect(page.getByTestId('bottle-history')).toContainText('You and this sake')
     await expect(page.getByTestId('bottle-history-empty')).toContainText('Not tasted yet.')
@@ -278,6 +280,25 @@ test.describe('sake brand page', () => {
     await context.close()
   })
 
+  test('"Pour & rate" from the Cellar lands with the panel already open', async ({
+    browser,
+  }, testInfo) => {
+    testInfo.skip(brandWithChartId === null, 'DB-bound spec')
+
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([
+      AGE_GATE_COOKIE,
+      { name: 'yawaragi_journal_stub', value: 'empty', url: BASE_URL },
+    ])
+    const page = await context.newPage()
+    await page.goto(`/en/sake/${brandWithChartId}?rate=1`)
+
+    await expect(page.getByTestId('tasting-log-panel')).toBeVisible()
+    await expect(page.getByTestId('bottle-rate-open')).toHaveCount(0)
+
+    await context.close()
+  })
+
   test('everyone else sees no rating and no tasting history', async ({ browser }, testInfo) => {
     testInfo.skip(brandWithChartId === null, 'DB-bound spec')
 
@@ -289,6 +310,7 @@ test.describe('sake brand page', () => {
     await expect(page.getByTestId('sake-brand-page')).toBeVisible()
     await expect(page.getByTestId('bottle-rate-open')).toHaveCount(0)
     await expect(page.getByTestId('bottle-history')).toHaveCount(0)
+    await expect(page.getByTestId('cellar-add')).toHaveCount(0)
     await expect(page.getByTestId('similar-sakes-link')).toBeVisible()
 
     await context.close()

@@ -27,31 +27,46 @@ export function BottleRateRow({
   chart,
   history,
   similar,
+  cellar,
+  initiallyOpen = false,
 }: {
   brandId: number
   chart: Readonly<Record<FlavorAxis, number>> | null
   history: TastingHistoryMeta
   similar: ReactNode
+  /** §9's cellar control, rendered by the page. */
+  cellar: ReactNode
+  /** Open the panel straight away — the Cellar's "Pour & rate" lands here. */
+  initiallyOpen?: boolean
 }) {
   const t = useTranslations('tasting')
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(initiallyOpen)
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex gap-2" data-testid="bottle-actions">
-        {!open && (
-          <button
-            type="button"
-            onClick={() => setOpen(true)}
-            className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border-[1.5px] border-ginshu-400 px-4 text-body font-medium text-ginshu-700 transition-colors hover:bg-ginshu-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
-            data-testid="bottle-rate-open"
-          >
-            <Star size={17} aria-hidden="true" />
-            {t('rateNewTasting')}
-          </button>
-        )}
-        {similar}
-      </div>
+      {/* With the panel open and no "Similar" (a chartless bottle) the row
+          would be empty, and an empty row is not rendered. */}
+      {(!open || Boolean(similar)) && (
+        <div className="flex gap-2" data-testid="bottle-actions">
+          {!open && (
+            <button
+              type="button"
+              onClick={() => setOpen(true)}
+              className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border-[1.5px] border-ginshu-400 px-4 text-body font-medium text-ginshu-700 transition-colors hover:bg-ginshu-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+              data-testid="bottle-rate-open"
+            >
+              <Star size={17} aria-hidden="true" />
+              {t('rateNewTasting')}
+            </button>
+          )}
+          {similar}
+        </div>
+      )}
+      {/* §9 puts wishlist and cellar as icons in its own header, which is not
+          ported (the shell header carries the wordmark). Until it is, the
+          cellar control sits under the action row, as §5 places it under
+          the card. */}
+      <div className="flex gap-2">{cellar}</div>
       {open && <TastingLogPanel brandId={brandId} chart={chart} history={history} />}
     </div>
   )

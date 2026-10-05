@@ -14,6 +14,7 @@ import { getPrefectureNames } from '@/lib/sakenowa/prefecture'
 import { BottleHistory } from '@/components/sake/bottle-history'
 import { BottleRateRow } from '@/components/sake/bottle-rate-row'
 import { BottleSection, NotPublished } from '@/components/sake/bottle-section'
+import { CellarButton } from '@/components/collection/cellar-button'
 import { BottleSlot } from '@/components/sake/bottle-slot'
 import { BreweryOtherSakes, listSiblingBrandsSafe } from '@/components/sake/brewery-other-sakes'
 import { FlavorChartView } from '@/components/sake/flavor-chart'
@@ -106,7 +107,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function SakeBrandPage({ params, searchParams }: PageProps) {
   const { locale, brandId: brandIdParam } = await params
-  const arrivedViaScan = hasArrivedViaScan(await searchParams)
+  const query = await searchParams
+  const arrivedViaScan = hasArrivedViaScan(query)
+  // The Cellar's "Pour & rate" links here with `?rate=1`, to open §5's panel.
+  const rateNow = query.rate === '1'
   setRequestLocale(locale)
 
   const brandId = parseBrandIdParam(brandIdParam)
@@ -299,6 +303,13 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
         <BottleRateRow
           brandId={brandId}
           chart={flavorChart}
+          initiallyOpen={rateNow}
+          cellar={
+            <CellarButton
+              brandId={brandId}
+              initialCount={viewer.cellar.find((b) => b.brandId === brandId)?.count ?? 0}
+            />
+          }
           history={
             lastTasting && lastTasting.event.kind === 'rating'
               ? { kind: 'last', triedAt: lastTasting.triedAt, rating: lastTasting.event.rating }

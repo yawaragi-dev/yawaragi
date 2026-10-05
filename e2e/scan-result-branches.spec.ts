@@ -112,6 +112,7 @@ test.describe('scan result branches (#109 PR B)', () => {
     await visitor.page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
     await expect(visitor.page.getByTestId('scan-result-card')).toBeVisible()
     await expect(visitor.page.getByTestId('tasting-log-panel')).toHaveCount(0)
+    await expect(visitor.page.getByTestId('cellar-add')).toHaveCount(0)
     await visitor.context.close()
 
     // The journal stub stands in for the maintainer check, as on Collection.
@@ -126,6 +127,7 @@ test.describe('scan result branches (#109 PR B)', () => {
     await expect(panel).toContainText('Your take')
     // Ten half-star targets, each saying what it does.
     await expect(panel.getByRole('button', { name: 'Rate 4.5 stars' })).toBeVisible()
+    await expect(keeper.page.getByTestId('cellar-add')).toHaveText('Add to cellar')
     await keeper.context.close()
   })
 

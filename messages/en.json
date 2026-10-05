@@ -8,7 +8,10 @@
     "emptyBody": "Rate a sake after a scan, or from its bottle page, and it appears here — newest first.",
     "unavailableBody": "Your collection isn't available right now — please check back soon.",
     "emptyScan": "Scan a label",
-    "emptyTypeIt": "Type the name"
+    "emptyTypeIt": "Type the name",
+    "sectionsLabel": "Collection sections",
+    "segmentJournal": "Journal",
+    "segmentCellar": "Cellar"
   },
   "home": {
     "title": "Home",
@@ -571,5 +574,24 @@
     "historyHeading": "You and this sake",
     "historyCount": "{n, plural, one {# tasting} other {# tastings}}",
     "notTastedYet": "Not tasted yet."
+  },
+  "cellar": {
+    "add": "Add to cellar",
+    "inCellar": "In cellar · {count}",
+    "added": "Added to your cellar",
+    "addedAnother": "Another bottle added · {count} in cellar",
+    "view": "View",
+    "summary": "{bottles, plural, one {# bottle} other {# bottles}} · {open} open",
+    "countBadge": "× {count}",
+    "unopened": "Unopened · keeps for months, cool and dark",
+    "open": "{days, plural, =0 {Opened today} one {Open # day} other {Open # days}} · fridge",
+    "drinkSoon": "Open {days} days — best finished this week",
+    "pourAndRate": "Pour & rate",
+    "finished": "Finished",
+    "openBottle": "Open a bottle",
+    "remove": "Remove",
+    "emptyHeading": "Nothing in the cellar",
+    "emptyBody": "Bottles you own. Tap “Add to cellar” on any sake and we’ll tell you when an open one should be finished.",
+    "error": "Couldn’t change that just now — try again."
   }
 }
