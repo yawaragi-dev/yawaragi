@@ -32,6 +32,7 @@
       "night": "Noch wach?"
     },
     "tileScan": "Etikett scannen",
+    "tileTypeIt": "Eintippen",
     "recentHeading": "Zuletzt verkostet",
     "recentAll": "Alle {count}",
     "age": {
@@ -138,7 +139,7 @@
     "smallPrint": "Kostenlos · ohne Konto · für Erwachsene ab 18",
     "featuresHeading": "Drei Dinge, richtig gemacht",
     "featureIdentifyTitle": "Erkennen",
-    "featureIdentifyBody": "Kanji oder Romaji — die Kamera liest, was die Flasche hergibt. Keine Kamera? Nimm ein Foto.",
+    "featureIdentifyBody": "Kanji oder Romaji — die Kamera liest, was die Flasche hergibt. Keine Kamera? Nimm ein Foto oder tippe den Namen ein.",
     "featureRateTitle": "Mit einem Tipp bewerten",
     "featureRateBody": "Der Stern ist das Speichern. Füge eine Notiz hinzu, wenn du magst, oder später ausführliche Verkostungsnotizen.",
     "featurePalateTitle": "Deinen Geschmack kennenlernen",
@@ -272,7 +273,7 @@
       "choosePhoto": "Foto auswählen",
       "typeNameInstead": "Stattdessen Namen eingeben",
       "unavailableTitle": "Keine Kamera vorhanden",
-      "unavailableBody": "Füge stattdessen ein Foto des Etiketts hinzu — aus deinen Dateien oder als Screenshot.",
+      "unavailableBody": "Füge stattdessen ein Foto des Etiketts hinzu — aus deinen Dateien oder als Screenshot — oder gib den Namen ein.",
       "dropZone": "Etikettenfoto hierher ziehen oder zum Auswählen klicken"
     },
     "form": {

@@ -32,6 +32,7 @@
       "night": "Still up?"
     },
     "tileScan": "Scan a label",
+    "tileTypeIt": "Type it",
     "recentHeading": "Recent tastings",
     "recentAll": "All {count}",
     "age": {
@@ -138,7 +139,7 @@
     "smallPrint": "Free · no account needed · for adults 18+",
     "featuresHeading": "Three things, done well",
     "featureIdentifyTitle": "Identify",
-    "featureIdentifyBody": "Kanji or romaji — the camera reads whichever the bottle gives you. No camera? Use a photo.",
+    "featureIdentifyBody": "Kanji or romaji — the camera reads whichever the bottle gives you. No camera? Use a photo or type the name.",
     "featureRateTitle": "Rate in one tap",
     "featureRateBody": "The star is the save. Add a note if you want, or detailed tasting notes later.",
     "featurePalateTitle": "Learn your palate",
@@ -272,7 +273,7 @@
       "choosePhoto": "Choose a photo",
       "typeNameInstead": "Type the name instead",
       "unavailableTitle": "No camera here",
-      "unavailableBody": "Add a photo of the label instead — from your files or a screenshot.",
+      "unavailableBody": "Add a photo of the label instead — from your files or a screenshot — or type the name.",
       "dropZone": "Drop a label photo here, or click to choose"
     },
     "form": {
