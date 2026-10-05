@@ -89,12 +89,16 @@ export function deriveTasteProfile(
     .sort((a, b) => a.event.occurredAt - b.event.occurredAt || a.index - b.index)
 
   for (const { event } of ordered) {
+    // A rating of a sake with no FlavorProfile has nowhere to pull toward: it
+    // is a tasting in the journal, not a move on the Palate.
+    if (event.target === null) continue
+    const target = event.target
     // Age is clamped at 0 so a future-dated event (clock skew) doesn't amplify.
     const ageDays = Math.max(0, (now - event.occurredAt) / DAY_MS)
     const decay = Math.pow(0.5, ageDays / halfLifeDays)
     const wEff = tasteEventWeight(event) * decay
     for (const axis of AXES) {
-      v[axis] = clamp01(v[axis] + wEff * (event.target[axis] - v[axis]))
+      v[axis] = clamp01(v[axis] + wEff * (target[axis] - v[axis]))
     }
   }
 

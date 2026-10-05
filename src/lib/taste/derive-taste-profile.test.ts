@@ -64,6 +64,14 @@ describe('deriveTasteProfile', () => {
     expect(v.f1).toBeLessThan(NEUTRAL_AXIS)
   })
 
+  it('records nothing on the palate for a rated sake that has no flavor chart', () => {
+    // Half the catalogue has no chart (ADR-0016); the tasting is still logged
+    // (ADR-0024), it just has no position to pull toward.
+    const chartless: TasteEvent = { ...rating(5), target: null }
+    expect(deriveTasteProfile([chartless], NOW)).toEqual(NEUTRAL)
+    expect(deriveTasteProfile([chartless, rating(5)], NOW)).toEqual(deriveTasteProfile([rating(5)], NOW))
+  })
+
   it('leaves the vector unchanged for a 3-star (inert) rating', () => {
     expect(deriveTasteProfile([rating(3)], NOW)).toEqual(NEUTRAL)
   })

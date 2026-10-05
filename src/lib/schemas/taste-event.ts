@@ -18,9 +18,13 @@ import { FlavorProfileSchema } from '@/lib/schemas/flavor-profile'
 // scanned Sake's profile, or the CrossBeverageMap position for the descriptor.
 // It is snapshotted onto the event so the derivation stays a pure function of
 // stored events with no DB lookup. An interaction with a Sake that has NO
-// FlavorProfile (sparse coverage, ADR-0016) cannot be placed in axis space and
-// therefore produces no TasteEvent — enforced where events are created, not
-// here (the schema requires a target).
+// FlavorProfile (sparse coverage, ADR-0016) cannot be placed in axis space.
+// For a scan accept or a seed that means no TasteEvent at all. A RATING is the
+// exception (ADR-0024): a journal entry IS a rating event, and refusing to log
+// a tasting because the catalogue has no chart for the bottle would make half
+// the catalogue unloggable. So a rating's `target` may be `null` — the entry is
+// recorded, counts as a tasting, and the fold skips it because there is no
+// position to pull toward.
 
 const baseFields = {
   /** The FlavorProfile position this event pulls the vector toward (or, for a
@@ -31,6 +35,7 @@ const baseFields = {
 } as const
 
 export const RatingTasteEventSchema = z.object({
+  ...baseFields,
   kind: z.literal('rating'),
   /** 0.5–5 stars in half-star steps (design v1.4 §5). 3 is neutral (inert);
    *  below pushes away, above pulls toward. `multipleOf(0.5)` is what makes
@@ -40,7 +45,9 @@ export const RatingTasteEventSchema = z.object({
   /** The rated Sake (Sakenowa `brand_id`), kept for the /profile "which inputs
    *  shaped this" view. */
   brandId: z.number().int().positive(),
-  ...baseFields,
+  /** As `baseFields.target`, but `null` when the rated Sake has no
+   *  FlavorProfile — see the header. The fold skips a null target. */
+  target: FlavorProfileSchema.nullable(),
 })
 
 export const ScanAcceptTasteEventSchema = z.object({
