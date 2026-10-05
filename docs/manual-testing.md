@@ -128,6 +128,10 @@ The landing hero renders a real catalogued sake (木戸泉 / Kidoizumi, `brand_i
 
 ---
 
+## Firefox Responsive Design Mode hides the pointer after typing
+
+In Firefox's Responsive Design Mode (Ctrl+Shift+M) with **touch simulation** on (the hand icon), the mouse pointer disappears as soon as you type in any field and only comes back on a click. Firefox hides the pointer while you type and restores it on the next real mouse event, but touch simulation turns mouse movement into nothing (only presses become touch events), so no restoring event arrives. Every page on the origin does it, including a static HTML file, and the app is not involved (#327). Turn touch simulation off, or leave RDM, when you test typing with a mouse.
+
 ## Where the stubs live (maintainers)
 
 - Scan: `src/lib/ai/vision/e2e-stub-provider.ts` (+ `registry.ts` for `VISION_PROVIDER`). Cookie injection: `yawaragi_e2e_vision` (#194).

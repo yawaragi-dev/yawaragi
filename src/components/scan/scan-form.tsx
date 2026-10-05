@@ -109,6 +109,8 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
   // Reused for the brewery label on the enriched no_match state (the
   // same label the sake detail page and result card render).
   const tSake = useTranslations('sake.brand')
+  // §8's "Type it": the bridge the non-match states offer.
+  const tSearch = useTranslations('search')
   const router = useRouter()
   // One file input: the photo library.
   //
@@ -468,7 +470,7 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
           isWorking={isPending}
           onCapture={(file) => void handleFile(file)}
           onChoosePhoto={onUploadClick}
-          typeItHref={null}
+          typeItHref="/search"
           stillUrl={photoUrl}
           notice={notice}
         />
@@ -545,6 +547,21 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
               >
                 {t('consensusRescan')}
               </Button>
+              {/*
+                This card is a guess from the visitor's own history after a
+                label we could NOT read. If the guess is wrong, rescanning
+                re-runs the same bad photo in the same bad light — typing the
+                name is the way out, and it is the reason §8 exists. Every
+                other non-match state offers it; leaving this one without it
+                made the accept button the only forward path.
+              */}
+              <Link
+                href="/search"
+                className="inline-flex items-center text-sm font-medium underline underline-offset-4"
+                data-testid="scan-result-consensus-type-it"
+              >
+                {tSearch('cta')}
+              </Link>
             </div>
           </div>
         )}
@@ -584,6 +601,13 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
               >
                 {t('retryRescan')}
               </Button>
+              <Link
+                href="/search"
+                className="text-sm font-medium underline underline-offset-4"
+                data-testid="scan-result-retry-type-it"
+              >
+                {tSearch('cta')}
+              </Link>
               <Link
                 href="/suggest"
                 className="text-sm font-medium underline underline-offset-4"
@@ -668,6 +692,13 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
               >
                 {t('retryRescan')}
               </Button>
+              <Link
+                href="/search"
+                className="text-sm font-medium underline underline-offset-4"
+                data-testid="scan-result-no-match-type-it"
+              >
+                {tSearch('cta')}
+              </Link>
               <Link
                 href="/suggest"
                 className="text-sm font-medium underline underline-offset-4"
@@ -787,6 +818,13 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
                 >
                   {t('ambiguousRescan')}
                 </Button>
+                <Link
+                  href="/search"
+                  className="text-sm font-medium underline underline-offset-4"
+                  data-testid="scan-result-ambiguous-type-it"
+                >
+                  {tSearch('cta')}
+                </Link>
                 <Link
                   href="/suggest"
                   className="text-sm font-medium underline underline-offset-4"

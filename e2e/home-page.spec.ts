@@ -49,6 +49,11 @@ test.describe('/en/home — §3 Home', () => {
     await page.getByTestId('home-tile-scan').click()
     await expect(page).toHaveURL(/\/en\/scan$/)
 
+    // §3's second tile: typing the name is the other way to start.
+    await page.goto('/en/home')
+    await page.getByTestId('home-tile-type-it').click()
+    await expect(page).toHaveURL(/\/en\/search$/)
+
     await context.close()
   })
 

@@ -32,6 +32,7 @@
       "night": "Still up?"
     },
     "tileScan": "Scan a label",
+    "tileTypeIt": "Type it",
     "recentHeading": "Recent tastings",
     "recentAll": "All {count}",
     "age": {
@@ -138,7 +139,7 @@
     "smallPrint": "Free · no account needed · for adults 18+",
     "featuresHeading": "Three things, done well",
     "featureIdentifyTitle": "Identify",
-    "featureIdentifyBody": "Kanji or romaji — the camera reads whichever the bottle gives you. No camera? Use a photo.",
+    "featureIdentifyBody": "Kanji or romaji — the camera reads whichever the bottle gives you. No camera? Use a photo or type the name.",
     "featureRateTitle": "Rate in one tap",
     "featureRateBody": "The star is the save. Add a note if you want, or detailed tasting notes later.",
     "featurePalateTitle": "Learn your palate",
@@ -272,7 +273,7 @@
       "choosePhoto": "Choose a photo",
       "typeNameInstead": "Type the name instead",
       "unavailableTitle": "No camera here",
-      "unavailableBody": "Add a photo of the label instead — from your files or a screenshot.",
+      "unavailableBody": "Add a photo of the label instead — from your files or a screenshot — or type the name.",
       "dropZone": "Drop a label photo here, or click to choose"
     },
     "form": {
@@ -324,6 +325,26 @@
       "notThisOne": "Not the bottle you scanned?",
       "scanAgain": "Scan again"
     }
+  },
+  "search": {
+    "title": "Find a sake",
+    "fieldLabel": "Search the catalogue",
+    "placeholder": "Name, brewery or kanji",
+    "submit": "Search",
+    "clear": "Clear",
+    "emptyTitle": "Type a name",
+    "emptyBody": "Kanji, romaji or the brewery — whichever the bottle gives you. {count} sakes are in the catalogue.",
+    "tooShort": "One more letter, and we will look.",
+    "matches": "{count, plural, one {# match} other {# matches}}",
+    "matchesCapped": "First {count} matches — type more to narrow it",
+    "noMatchTitle": "Nothing in the catalogue matches",
+    "noMatchBody": "We list sake by name, not bottle by bottle — a grade or number from the label is usually worth dropping. The brewery name works too, and a few small releases aren't listed at all.",
+    "noMatchScanCta": "Read a label",
+    "unavailableTitle": "The catalogue is not reachable right now",
+    "unavailableBody": "This is on our side, not yours — the search index is briefly unavailable. Try again in a moment, or read a label instead.",
+    "breweryUnknown": "Brewery not recorded",
+    "cta": "Type it",
+    "searchedInstead": "Nothing for “{typed}”. Showing matches for “{used}” — the catalogue lists the sake, not each bottle."
   },
   "suggest": {
     "entry": {

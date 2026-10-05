@@ -50,15 +50,11 @@ import { PALATE_READ_THRESHOLD, palateLean } from '@/lib/taste/palate-read'
  *
  * - **No action tiles on first run.** §3 draws the tile row above the
  *   first-run card, whose own primary button is also "Scan a label" — two
- *   identical buttons a screen apart, with the tile row's partner ("Type it")
- *   not there to tell them apart. The card's button is the call to action on
- *   first run; the tile row appears once there are tastings, where it is the
- *   only way to start. Revisit when "Type it" returns and the row is a pair.
- *   Reported to the designers on #308.
- * - **One action tile, not two.** §3's v1 layout is "Scan a label" at `1.6fr`
- *   beside "Type it" at `1fr`, and "Type it" opens §8 Search — which is #323,
- *   BLOCKED on #327. There is no `/search` route for it to open, and a tile
- *   that 404s is worse than a tile that is not there.
+ *   identical buttons a screen apart (maintainer's test of #332). The card's
+ *   button is the call to action on first run; the tile row, Scan beside Type
+ *   it, appears once there are tastings, where it is the only way to start.
+ *   Whether first run should also carry the pair is a designer question on
+ *   #308.
  * - **§3's first-run copy is adapted, not ported.** Two of its three steps
  *   describe saving a tasting with a star, which is Phase 2, and a journal
  *   with no account, which ADR-0020 does not allow yet. `<HomeFirstRunCard />`

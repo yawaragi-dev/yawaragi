@@ -27,6 +27,13 @@ import { BackLink } from './back-link'
  */
 const TAB_MAIN_SCREENS: readonly string[] = ['/home', '/scan', '/collection', '/profile']
 
+/**
+ * Screens whose design draws the back arrow in their OWN top row, so the
+ * shell's would be a second one stacked above it. §8 Search is "back · the
+ * field" (screenshot 18). Exact match, like the tab list.
+ */
+const SCREENS_WITH_OWN_BACK: readonly string[] = ['/search']
+
 export function ShellBackLink({
   fallbackHref,
   label,
@@ -35,7 +42,7 @@ export function ShellBackLink({
   label: string
 }) {
   const pathname = usePathname()
-  if (TAB_MAIN_SCREENS.includes(pathname)) return null
+  if (!shouldShowBackArrow(pathname)) return null
 
   // `-ml-3` pulls the 44px touch target back by its own padding so the
   // arrow's glyph — not the edge of its hit area — lines up with the gutter
@@ -50,5 +57,5 @@ export function ShellBackLink({
 
 /** Exported for the unit test — the rule, without React. */
 export function shouldShowBackArrow(pathname: string): boolean {
-  return !TAB_MAIN_SCREENS.includes(pathname)
+  return !TAB_MAIN_SCREENS.includes(pathname) && !SCREENS_WITH_OWN_BACK.includes(pathname)
 }
