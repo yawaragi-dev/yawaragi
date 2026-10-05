@@ -1,0 +1,77 @@
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { NextIntlClientProvider } from 'next-intl'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import en from '~/messages/en.json'
+
+const updateTasting = vi.fn()
+vi.mock('@/lib/taste/tasting-actions', () => ({
+  updateTasting: (...a: unknown[]) => updateTasting(...a),
+}))
+
+const { DetailedNotesSheet } = await import('./detailed-notes-sheet')
+
+function renderSheet(initial?: Parameters<typeof DetailedNotesSheet>[0]['initial']) {
+  const onSaved = vi.fn()
+  render(
+    <NextIntlClientProvider locale="en" messages={en} timeZone="UTC">
+      <DetailedNotesSheet entryId="e1" initial={initial} open onOpenChange={() => {}} onSaved={onSaved} />
+    </NextIntlClientProvider>,
+  )
+  return { onSaved }
+}
+
+beforeEach(() => {
+  vi.clearAllMocks()
+  updateTasting.mockResolvedValue({ status: 'ok' })
+})
+
+describe('§10 detailed notes', () => {
+  it('opens on Palate with everything optional and no Save button', () => {
+    renderSheet()
+    expect(screen.getByTestId('detailed-notes-progress').textContent).toBe('All optional')
+    expect(screen.getByTestId('detailed-notes-scale-umami-4')).toBeTruthy()
+    expect(screen.queryByTestId('detailed-notes-clarity-clear')).toBeNull()
+    expect(screen.queryByRole('button', { name: /^save/i })).toBeNull()
+  })
+
+  it('saves a palate step as a key, and tapping it again clears it', async () => {
+    const { onSaved } = renderSheet()
+    fireEvent.click(screen.getByTestId('detailed-notes-scale-umami-4'))
+    await waitFor(() =>
+      expect(updateTasting).toHaveBeenLastCalledWith('e1', { detail: { palate: { umami: 4 } } }),
+    )
+    expect(screen.getByTestId('detailed-notes-scale-umami-value').textContent).toBe('Rich')
+    expect(screen.getByTestId('detailed-notes-progress').textContent).toBe('1 of 5 parts filled')
+    expect(onSaved).toHaveBeenCalled()
+
+    fireEvent.click(screen.getByTestId('detailed-notes-scale-umami-4'))
+    await waitFor(() => expect(screen.getByTestId('detailed-notes-progress').textContent).toBe('All optional'))
+  })
+
+  it('summarises a closed part in words and counts it as filled', async () => {
+    renderSheet()
+    fireEvent.click(screen.getByTestId('detailed-notes-toggle-nose'))
+    fireEvent.click(screen.getByTestId('detailed-notes-aromas-koji'))
+    fireEvent.click(screen.getByTestId('detailed-notes-aromas-fruit'))
+    await waitFor(() =>
+      expect(updateTasting).toHaveBeenLastCalledWith('e1', {
+        detail: { nose: { aromas: ['koji', 'fruit'] } },
+      }),
+    )
+    expect(screen.getByTestId('detailed-notes-summary-nose').textContent).toBe('Koji, Fruit')
+  })
+
+  it('reopens with what was saved before', () => {
+    renderSheet({ verdict: { again: 'yes' }, serve: { temperature: 'nurukan' } })
+    expect(screen.getByTestId('detailed-notes-progress').textContent).toBe('2 of 5 parts filled')
+    expect(screen.getByTestId('detailed-notes-summary-verdict').textContent).toBe('Yes')
+    expect(screen.getByTestId('detailed-notes-summary-serve').textContent).toBe('ぬる燗 40°')
+  })
+
+  it('says so when a save fails', async () => {
+    updateTasting.mockResolvedValue({ status: 'unavailable' })
+    renderSheet()
+    fireEvent.click(screen.getByTestId('detailed-notes-scale-body-3'))
+    await waitFor(() => expect(screen.getByTestId('detailed-notes-error')).toBeTruthy())
+  })
+})
