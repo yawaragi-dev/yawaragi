@@ -1,27 +1,18 @@
 import 'server-only'
 import type { Pool } from 'pg'
-import type { Brand } from '@/lib/schemas/brand'
-import { type BrandRow, rowToBrand } from '@/lib/sakenowa/db'
 import { publicQuery } from '@/lib/supabase/public-query'
 import { getServerDbPool } from '@/lib/supabase/server-client'
 
 /**
- * Minimal deterministic sake search (P5.5-C2b, #244) — the picker behind the
- * journal "Log a sake" form (ADR-0020). No LLM, no ranking model: a
- * case-insensitive substring match over a brand's name / kanji / romaji, read
- * pg-direct from the public `brands` mirror (ADR-0010).
+ * Deterministic sake search over the public `brands` mirror (ADR-0010, pg-direct)
+ * — §8 "Type it". No LLM, no ranking model.
  *
- * This is the deliberately-small first cut of the wider search surface (#234);
- * the log form only needs "type a name, pick the sake". It stays a plain
- * `*From Pool` + convenience pair like the other Sakenowa read helpers so the
- * query is integration-tested against real Postgres.
- *
- * Only brands that HAVE a FlavorChart are returned (the INNER JOIN): the journal
- * can only place a sake in axis space if it has one, so `logSakeToJournal` would
- * otherwise skip a chartless pick — surfacing it in the picker would be a dead
- * end. Filtering here means every pick is loggable.
+ * This file also held the journal "Log a sake" form's picker (#244): charted
+ * brands only, names only, ten rows. The form is gone — a tasting is rated
+ * from the bottle page or the scan result now, reached through §8 — and the
+ * picker went with it. A sake with no flavor chart can be rated too
+ * (ADR-0024), so nothing still needs a charted-only search.
  */
-export const MAX_BRAND_SEARCH_RESULTS = 10
 
 /**
  * Escape LIKE metacharacters (`%`, `_`, and the escape char itself) so a
@@ -33,61 +24,20 @@ export function escapeLikePattern(input: string): string {
   return input.replace(/[\\%_]/g, (ch) => `\\${ch}`)
 }
 
-const SEARCH_BRANDS = `
-  SELECT b.brand_id, b.name, b.name_kanji, b.name_romaji, b.brewery_id, b.source, b.confidence
-  FROM brands b
-  JOIN flavor_charts fc ON fc.brand_id = b.brand_id
-  WHERE b.superseded_at IS NULL
-    AND (b.name ILIKE $1 OR b.name_kanji ILIKE $1 OR b.name_romaji ILIKE $1)
-  ORDER BY char_length(b.name) ASC, b.name ASC
-  LIMIT $2
-`
-
-export async function searchBrandsFromPool(
-  query: string,
-  pool: Pool,
-  limit: number = MAX_BRAND_SEARCH_RESULTS,
-): Promise<Brand[]> {
-  const trimmed = query.trim()
-  if (trimmed.length === 0) return []
-  const pattern = `%${escapeLikePattern(trimmed)}%`
-  const capped = Math.min(Math.max(1, Math.trunc(limit)), MAX_BRAND_SEARCH_RESULTS)
-  const { rows } = await publicQuery<BrandRow>('brands', SEARCH_BRANDS, [pattern, capped], pool)
-  return rows.map(rowToBrand)
-}
-
-/**
- * App-facing read helper. Server-only. Tests use `searchBrandsFromPool(query,
- * testcontainerPool)` so they don't depend on a `DATABASE_URL` env var.
- */
-export async function searchBrands(query: string, limit?: number): Promise<Brand[]> {
-  return searchBrandsFromPool(query, getServerDbPool(), limit)
-}
-
 /**
  * ─────────────────────────────────────────────────────────────────────────
  * §8 Search ("Type it") — the visitor-facing surface
  * ─────────────────────────────────────────────────────────────────────────
  *
- * The helpers above are the journal's picker (#244): charted brands only,
- * name fields only, ten rows, behind a maintainer gate. §8 is the public
- * search, and it wants three things that picker deliberately does not:
+ * What §8 wants, and what the old journal picker (removed) did not do:
  *
  * - **Brewery in the match.** §8 "searches name, kana, brewery"; a visitor who
  *   remembers 旭酒造 but not 獺祭 has to be able to get there.
- * - **Chartless brands included.** The picker's INNER JOIN on `flavor_charts`
- *   is load-bearing for it — `logSakeToJournal` cannot place a chartless sake
- *   in axis space, so offering one would be a dead end. §8's rows go to the
- *   bottle page, which renders a "no chart yet" state perfectly well, and
- *   ADR-0016 records that about half the catalogue has no chart. Applying the
- *   picker's filter here would hide half the catalogue from search, which is
- *   the opposite of the point.
+ * - **Chartless brands included.** §8's rows go to the bottle page, which
+ *   renders a "no chart yet" state perfectly well, and ADR-0016 records that
+ *   about half the catalogue has no chart. A charted-only filter here would
+ *   hide half the catalogue from search, which is the opposite of the point.
  * - **Twenty rows, not ten**, and the brewery columns the row renders.
- *
- * So: two queries over one table, each honest about its own contract, sharing
- * {@link escapeLikePattern}. Merging them behind a flag would make the
- * picker's dead-end guarantee a runtime argument instead of a property of the
- * query.
  *
  * Deterministic and model-free throughout, which is also what makes §8 the
  * cheap alternative to `/suggest` — that surface runs the AI SDK tool loop and

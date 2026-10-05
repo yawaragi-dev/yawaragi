@@ -1,0 +1,139 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { Brand } from '@/lib/schemas/brand'
+import type { FlavorChart } from '@/lib/schemas/flavor-chart'
+
+const h = vi.hoisted(() => ({ journal: null as unknown, cellar: null as unknown }))
+
+vi.mock('@clerk/nextjs/server', () => ({
+  auth: vi.fn(async () => ({ userId: 'user_admin' })),
+}))
+vi.mock('@/lib/auth/maintainer', () => ({
+  currentUserIsMaintainer: vi.fn(async () => true),
+}))
+vi.mock('@/lib/sakenowa/lookup', () => ({
+  lookupFlavorChart: vi.fn(),
+  lookupBrand: vi.fn(),
+}))
+vi.mock('@/lib/taste/get-journal-store', () => ({
+  getJournalStore: vi.fn(() => h.journal),
+}))
+vi.mock('@/lib/collection/get-cellar-store', () => ({
+  getCellarStore: vi.fn(() => h.cellar),
+}))
+
+import { currentUserIsMaintainer } from '@/lib/auth/maintainer'
+import { InMemoryCellarStore } from '@/lib/collection/in-memory-cellar-store'
+import { lookupBrand, lookupFlavorChart } from '@/lib/sakenowa/lookup'
+import { InMemoryJournalStore } from '@/lib/taste/in-memory-journal-store'
+import { rateNewTasting, undoTasting, updateTasting } from '@/lib/taste/tasting-actions'
+
+const CHART: FlavorChart = { source: 'sakenowa', brandId: 123, f1: 1, f2: 1, f3: 1, f4: 1, f5: 1, f6: 1 }
+const BRAND: Brand = {
+  brandId: 123,
+  name: 'Nabeshima',
+  nameKanji: '鍋島',
+  nameRomaji: 'Nabeshima',
+  breweryId: 9,
+  source: 'sakenowa',
+}
+const USER = 'user_admin'
+const journal = () => h.journal as InMemoryJournalStore
+
+async function rated(rating = 4.5) {
+  const result = await rateNewTasting({ brandId: 123, rating })
+  if (result.status !== 'ok') throw new Error(`expected ok, got ${result.status}`)
+  return result
+}
+
+beforeEach(() => {
+  vi.clearAllMocks()
+  h.journal = new InMemoryJournalStore()
+  h.cellar = new InMemoryCellarStore()
+  vi.mocked(currentUserIsMaintainer).mockResolvedValue(true)
+  vi.mocked(lookupFlavorChart).mockResolvedValue(CHART)
+  vi.mocked(lookupBrand).mockResolvedValue(BRAND)
+})
+
+describe('tapping a star', () => {
+  it('logs a tasting with the rating, the sake name and the flavor position', async () => {
+    const result = await rated(4.5)
+
+    const [entry] = await journal().read(USER)
+    expect(entry).toMatchObject({
+      id: result.entryId,
+      schemaVersion: 2,
+      sake: { nameKanji: '鍋島', nameRomaji: 'Nabeshima' },
+      event: { kind: 'rating', rating: 4.5, brandId: 123, target: { f1: 1 } },
+    })
+    expect(entry!.triedAt).toBe(result.loggedAt)
+  })
+
+  it('counts which tasting of this sake it is — "2nd time"', async () => {
+    expect((await rated()).tastingNumber).toBe(1)
+    expect((await rated()).tastingNumber).toBe(2)
+  })
+
+  it('logs a sake with no flavor chart too, with no position on the palate', async () => {
+    vi.mocked(lookupFlavorChart).mockResolvedValue(null)
+    await rated()
+    expect((await journal().read(USER))[0]!.event).toMatchObject({ target: null })
+  })
+
+  it('refuses a rating off the half-star scale and a brand not in the catalogue', async () => {
+    expect(await rateNewTasting({ brandId: 123, rating: 3.7 })).toEqual({ status: 'invalid_input' })
+    vi.mocked(lookupBrand).mockResolvedValue(null)
+    expect(await rateNewTasting({ brandId: 999, rating: 4 })).toEqual({ status: 'not_found' })
+  })
+
+  it('stores nothing for someone who is not a maintainer', async () => {
+    vi.mocked(currentUserIsMaintainer).mockResolvedValue(false)
+    expect(await rateNewTasting({ brandId: 123, rating: 4 })).toEqual({ status: 'forbidden' })
+    expect(await journal().read(USER)).toEqual([])
+  })
+})
+
+describe('after the first tap', () => {
+  it('re-rating changes the same entry, not a new one', async () => {
+    const { entryId } = await rated(3)
+    expect(await updateTasting(entryId, { rating: 5 })).toEqual({ status: 'ok' })
+
+    const entries = await journal().read(USER)
+    expect(entries).toHaveLength(1)
+    expect(entries[0]!.event).toMatchObject({ rating: 5 })
+    expect(entries[0]!.updatedAt).toBeTypeOf('number')
+  })
+
+  it('saves the note trimmed, and an empty note clears it', async () => {
+    const { entryId } = await rated()
+    await updateTasting(entryId, { notes: '  Sour apple, almost cider.  ' })
+    expect((await journal().read(USER))[0]!.notes).toBe('Sour apple, almost cider.')
+    await updateTasting(entryId, { notes: '   ' })
+    expect((await journal().read(USER))[0]!.notes).toBeUndefined()
+  })
+
+  it('saves quick tags once each, and no tags as none', async () => {
+    const { entryId } = await rated()
+    await updateTasting(entryId, { tags: ['warm', 'withFood', 'warm'] })
+    expect((await journal().read(USER))[0]!.tags).toEqual(['warm', 'withFood'])
+    await updateTasting(entryId, { tags: [] })
+    expect((await journal().read(USER))[0]!.tags).toBeUndefined()
+  })
+
+  it('saves detailed notes without empty parts', async () => {
+    const { entryId } = await rated()
+    await updateTasting(entryId, { detail: { palate: { umami: 4 }, nose: { aromas: [] } } })
+    expect((await journal().read(USER))[0]!.detail).toEqual({ palate: { umami: 4 } })
+  })
+
+  it('refuses an empty change and an unknown entry', async () => {
+    const { entryId } = await rated()
+    expect(await updateTasting(entryId, {})).toEqual({ status: 'invalid_input' })
+    expect(await updateTasting('nope', { rating: 4 })).toEqual({ status: 'not_found' })
+  })
+
+  it('Undo removes the tasting', async () => {
+    const { entryId } = await rated()
+    expect(await undoTasting(entryId)).toEqual({ status: 'ok' })
+    expect(await journal().read(USER)).toEqual([])
+  })
+})

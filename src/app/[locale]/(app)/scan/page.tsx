@@ -9,6 +9,7 @@ import { isDebugEnabledFromCookies } from '@/lib/debug/debug-mode'
 import { hasLocale } from 'next-intl'
 import { routing } from '@/i18n/routing'
 import { notFound } from 'next/navigation'
+import { resolveViewerJournal } from '@/lib/taste/viewer-journal'
 
 /**
  * Scan entry route — `/[locale]/scan`.
@@ -64,6 +65,8 @@ export default async function ScanEntryPage({ params }: PageProps) {
   // read it from client JS. We pass the boolean down as a prop and the
   // form skips the panel + per-step accumulation when it's false.
   const debugMode = isDebugEnabledFromCookies(cookieJar)
+  // ADR-0020: only a visitor who can keep a journal gets §5's log panel.
+  const { canLog } = await resolveViewerJournal(cookieJar)
 
   // §4 gives the Scan tab a viewfinder, so the screen has no heading and no
   // intro paragraph of its own: the camera carries its own one-line title
@@ -78,7 +81,7 @@ export default async function ScanEntryPage({ params }: PageProps) {
   // column with a camera in it.
   return (
     <main className="flex w-full flex-col" data-testid="scan-entry-page">
-      <ScanForm locale={locale} debugMode={debugMode} />
+      <ScanForm locale={locale} debugMode={debugMode} canLog={canLog} />
     </main>
   )
 }

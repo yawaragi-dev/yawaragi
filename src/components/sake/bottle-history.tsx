@@ -1,0 +1,75 @@
+import { getFormatter, getTranslations } from 'next-intl/server'
+import { BottleSection } from '@/components/sake/bottle-section'
+import { StarRow } from '@/components/journal/star-row'
+import type { JournalEntry } from '@/lib/schemas/journal-entry'
+
+/**
+ * §9.3 "You and this sake" — the visitor's own tastings of this bottle, newest
+ * first: a date block, the stars, the note in italics. "Not tasted yet." when
+ * there are none. Reference screenshot 16.
+ *
+ * Dates are formatted in UTC, like §11's journal list, so one tasting shows
+ * the same day on both screens.
+ *
+ * Rendered only for a visitor who can keep a journal (ADR-0020); for everyone
+ * else "Not tasted yet." with no way to change it would be a dead end dressed
+ * as an empty state, which is why this section was left out until now.
+ */
+export async function BottleHistory({
+  entries,
+  locale,
+}: {
+  /** This sake's entries, newest first. */
+  entries: readonly JournalEntry[]
+  locale: string
+}) {
+  const t = await getTranslations('tasting')
+  const tJournal = await getTranslations('journal')
+  const format = await getFormatter({ locale })
+
+  return (
+    <BottleSection
+      label={t('historyHeading')}
+      caption={entries.length > 0 ? t('historyCount', { n: entries.length }) : undefined}
+      testId="bottle-history"
+    >
+      {entries.length === 0 ? (
+        <p className="text-subtle text-ash-700" data-testid="bottle-history-empty">
+          {t('notTastedYet')}
+        </p>
+      ) : (
+        <ul className="flex flex-col gap-2" role="list">
+          {entries.map((entry) => {
+            const rating = entry.event.kind === 'rating' ? entry.event.rating : null
+            return (
+              <li
+                key={entry.id}
+                className="flex gap-3 rounded-md bg-surface px-3 py-2.5 shadow-yw-sm"
+                data-testid="bottle-history-entry"
+              >
+                <span className="flex w-8 shrink-0 flex-col items-center">
+                  <span className="text-card-heading leading-none text-ink">
+                    {format.dateTime(new Date(entry.triedAt), { day: 'numeric', timeZone: 'UTC' })}
+                  </span>
+                  <span className="mt-0.5 text-micro uppercase tracking-[0.08em] text-ash-600">
+                    {format.dateTime(new Date(entry.triedAt), { month: 'short', timeZone: 'UTC' })}
+                  </span>
+                </span>
+                <span className="flex min-w-0 flex-1 flex-col gap-1">
+                  {rating !== null && (
+                    <span role="img" aria-label={tJournal('ratingStars', { rating })}>
+                      <StarRow value={rating} />
+                    </span>
+                  )}
+                  {entry.notes && (
+                    <span className="text-subtle italic text-ash-700">“{entry.notes}”</span>
+                  )}
+                </span>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </BottleSection>
+  )
+}

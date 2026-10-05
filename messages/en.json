@@ -1,27 +1,14 @@
 {
   "journal": {
-    "ratingStars": "{rating, plural, one {# star} other {# stars}}",
-    "logCta": "Log a sake",
-    "logTitle": "Log a sake",
-    "searchLabel": "Sake",
-    "searchChange": "Change",
-    "searchPlaceholder": "Search — 鍋島 / Nabeshima…",
-    "searching": "Searching…",
-    "searchNoResults": "No charted sake found — try another name.",
-    "ratingLabel": "Rating",
-    "notesLabel": "Notes",
-    "notesPlaceholder": "How was it? (optional)",
-    "triedAtLabel": "When you tried it",
-    "save": "Save to journal",
-    "saving": "Saving…",
-    "errorNoProfile": "That sake has no flavor data yet, so it can't join your map.",
-    "errorGeneric": "Couldn't save that just now — try again."
+    "ratingStars": "{rating, plural, one {# star} other {# stars}}"
   },
   "collection": {
     "title": "Collection",
-    "emptyHeading": "Nothing in here yet",
-    "emptyBody": "Log the first sake you try and it appears here, newest first.",
-    "unavailableBody": "Your collection isn't available right now — please check back soon."
+    "emptyHeading": "Your journal starts with one star",
+    "emptyBody": "Rate a sake after a scan, or from its bottle page, and it appears here — newest first.",
+    "unavailableBody": "Your collection isn't available right now — please check back soon.",
+    "emptyScan": "Scan a label",
+    "emptyTypeIt": "Type the name"
   },
   "home": {
     "title": "Home",
@@ -557,5 +544,33 @@
     "languageSub": "Deutsch — coming soon",
     "cookieSettingsLabel": "Cookie settings",
     "cookieSettingsSub": "Choose what we store"
+  },
+  "tasting": {
+    "yourTake": "Your take",
+    "logged": "Logged",
+    "firstTime": "First time for you",
+    "lastLogged": "Last logged {date} · {rating}",
+    "loggedMeta": "{time} · {n, selectordinal, =1 {first time} one {#st time} two {#nd time} few {#rd time} other {#th time}}",
+    "tapToRate": "Tap to rate",
+    "ratingValue": "{rating} · {band}",
+    "rateStar": "{rating, plural, one {Rate # star} other {Rate # stars}}",
+    "hint": "Tap a star and it’s logged — notes can wait.",
+    "noteLabel": "Note",
+    "notePlaceholder": "Add a note — what struck you?",
+    "quickTagsLabel": "Quick notes",
+    "quickTags": {
+      "sourApple": "Sour apple",
+      "ciderLike": "Cider-like",
+      "warm": "Warm",
+      "withFood": "With food"
+    },
+    "notice": "Logged",
+    "noticePalate": "Logged · palate updated",
+    "undo": "Undo",
+    "error": "Couldn’t save that just now — try again.",
+    "rateNewTasting": "Rate a new tasting",
+    "historyHeading": "You and this sake",
+    "historyCount": "{n, plural, one {# tasting} other {# tastings}}",
+    "notTastedYet": "Not tasted yet."
   }
 }

@@ -240,6 +240,60 @@ test.describe('sake brand page', () => {
     await context.close()
   })
 
+  test('a visitor who can keep a journal rates a new tasting right on the bottle page', async ({
+    browser,
+  }, testInfo) => {
+    testInfo.skip(brandWithChartId === null, 'DB-bound spec')
+
+    const context = await browser.newContext({ locale: 'en-US' })
+    // The stub stands in for ADR-0020's maintainer check, as on Collection.
+    await context.addCookies([
+      AGE_GATE_COOKIE,
+      { name: 'yawaragi_journal_stub', value: 'empty', url: BASE_URL },
+    ])
+    const page = await context.newPage()
+    await page.goto(`/en/sake/${brandWithChartId}`)
+
+    // §9.2: the personal action first, "Similar" beside it.
+    await expect(page.getByTestId('bottle-rate-open')).toContainText('Rate a new tasting')
+    await expect(page.getByTestId('similar-sakes-link')).toBeVisible()
+    // §9.3, with nothing in it yet.
+    await expect(page.getByTestId('bottle-history')).toContainText('You and this sake')
+    await expect(page.getByTestId('bottle-history-empty')).toContainText('Not tasted yet.')
+
+    // §5's panel opens in place; the button gives way to it.
+    await page.getByTestId('bottle-rate-open').click()
+    const panel = page.getByTestId('tasting-log-panel')
+    await expect(panel).toContainText('First time for you')
+    await expect(panel).toContainText('Tap a star and it’s logged')
+    await expect(page.getByTestId('bottle-rate-open')).toHaveCount(0)
+
+    // The stub draws the screen; it does not fake a store. The server
+    // refuses a visitor who is not really a maintainer, and the panel says
+    // the save did not happen rather than pretending it did.
+    await panel.getByRole('button', { name: 'Rate 4 stars' }).click()
+    await expect(page.getByTestId('tasting-log-error')).toBeVisible()
+    await expect(page.getByTestId('tasting-log-rating')).toHaveText('Tap to rate')
+
+    await context.close()
+  })
+
+  test('everyone else sees no rating and no tasting history', async ({ browser }, testInfo) => {
+    testInfo.skip(brandWithChartId === null, 'DB-bound spec')
+
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([AGE_GATE_COOKIE])
+    const page = await context.newPage()
+    await page.goto(`/en/sake/${brandWithChartId}`)
+
+    await expect(page.getByTestId('sake-brand-page')).toBeVisible()
+    await expect(page.getByTestId('bottle-rate-open')).toHaveCount(0)
+    await expect(page.getByTestId('bottle-history')).toHaveCount(0)
+    await expect(page.getByTestId('similar-sakes-link')).toBeVisible()
+
+    await context.close()
+  })
+
   test('offers a way back out, which the bottle page had none of', async ({
     browser,
   }, testInfo) => {

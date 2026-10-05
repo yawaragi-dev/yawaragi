@@ -1,4 +1,5 @@
 import { cache } from 'react'
+import { cookies } from 'next/headers'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
@@ -10,6 +11,8 @@ import {
   lookupFlavorChart,
 } from '@/lib/sakenowa/lookup'
 import { getPrefectureNames } from '@/lib/sakenowa/prefecture'
+import { BottleHistory } from '@/components/sake/bottle-history'
+import { BottleRateRow } from '@/components/sake/bottle-rate-row'
 import { BottleSection, NotPublished } from '@/components/sake/bottle-section'
 import { BottleSlot } from '@/components/sake/bottle-slot'
 import { BreweryOtherSakes, listSiblingBrandsSafe } from '@/components/sake/brewery-other-sakes'
@@ -22,6 +25,7 @@ import {
 } from '@/components/sake/sakenowa-attribution'
 import { FEATURES } from '@/lib/features'
 import { hasArrivedViaScan } from '@/lib/scan/arrived-via-scan'
+import { entriesForBrand, resolveViewerJournal } from '@/lib/taste/viewer-journal'
 
 /**
  * §9 Bottle page — one screen per sake. Reference screenshots 16 and 17.
@@ -52,13 +56,14 @@ import { hasArrivedViaScan } from '@/lib/scan/arrived-via-scan'
  *   title, and wishlist/cellar are Phase 2 domain concepts with no table
  *   behind them (ADR-0011 gates the migration). An icon that saves nothing is
  *   the dead affordance #162 forbids.
- * - **§9.3 "You and this sake".** It reads the visitor's journal, which is
+ * - **§9.2's "Rate a new tasting" and §9.3 "You and this sake" for everyone
+ *   but a maintainer.** Both read or write the visitor's journal, which is
  *   maintainer-only until the local-first rewrite (ADR-0020, gated on
- *   ADR-0011). Rendering "Not tasted yet." to everyone, with no way to change
- *   it, would be a dead end dressed as an empty state.
- * - **§9.2's primary "Rate a new tasting".** Same gate: the star IS the save
- *   (rule 1), and the star row is Phase 2 — #307 shipped §5's surface without
- *   it for the same reason. "Similar" is the action that is real today.
+ *   ADR-0011). A maintainer gets both; anyone else gets neither, because
+ *   "Not tasted yet." with no way to change it is a dead end dressed as an
+ *   empty state. For them "Similar" is the action row.
+ * - **"Rate a new tasting" opens §5's panel in place** rather than a second
+ *   result-card screen — see `<BottleRateRow />`.
  * - **§9.4 Serve it, §9.5 The sake, §9.7 Goes with, §9.8 What others
  *   noticed, §9.10 Where to find it.** No source for any bottle; behind
  *   `FEATURES` until #340, #339, #336, #337 and #338.
@@ -109,11 +114,12 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
     notFound()
   }
 
-  const [brand, brewery, flavorChart, siblings] = await Promise.all([
+  const [brand, brewery, flavorChart, siblings, viewer] = await Promise.all([
     lookupBrandCached(brandId),
     lookupBreweryCached(brandId),
     lookupFlavorChartCached(brandId),
     listSiblingBrandsSafe(brandId),
+    cookies().then(resolveViewerJournal),
   ])
   if (!brand) {
     notFound()
@@ -121,6 +127,11 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
 
   const t = await getTranslations('sake.brand')
   const tScan = await getTranslations('scan.form')
+
+  // §9.3: this sake's tastings, newest first — and the meta §5's panel shows
+  // before the first tap ("Last logged 19 Sep · 4.5" / "First time for you").
+  const tastings = viewer.canLog ? entriesForBrand(viewer.entries, brandId) : []
+  const lastTasting = tastings[0]
 
   // §9.1 draws the Latin name large with the Japanese beneath it — "Kidoizumi
   // AFS" over "木戸泉 AFS". That is §15's default name display (Romaji + kanji)
@@ -277,20 +288,50 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
         "Similar" ranks by distance over the six flavour axes, so a bottle with
         no chart has nothing to be similar BY — §6 would open on its "no chart
         yet" empty state. The page already knows, so it does not offer the
-        tap. With "Rate a new tasting" still Phase 2, that leaves the row empty,
-        and an empty row is not rendered.
+        tap. For a visitor who cannot keep a journal that can leave the row
+        empty, and an empty row is not rendered.
+
+        With "Rate a new tasting" beside it, "Similar" steps down to §9's
+        secondary style: one accent button per row (rule 9's spirit), and the
+        accent belongs to the personal action.
       */}
-      {flavorChart && (
-        <div className="flex gap-2" data-testid="bottle-actions">
-          <Link
-            href={{ pathname: '/sake/[brandId]/similar', params: { brandId: String(brandId) } }}
-            className="flex min-h-11 flex-1 items-center justify-center rounded-xl border border-ginshu-400 px-4 text-card-heading font-medium text-ginshu-700 transition-colors hover:bg-ginshu-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
-            data-testid="similar-sakes-link"
-          >
-            {t('similarAction')}
-          </Link>
-        </div>
+      {viewer.canLog ? (
+        <BottleRateRow
+          brandId={brandId}
+          hasChart={flavorChart !== null}
+          history={
+            lastTasting && lastTasting.event.kind === 'rating'
+              ? { kind: 'last', triedAt: lastTasting.triedAt, rating: lastTasting.event.rating }
+              : { kind: 'first' }
+          }
+          similar={
+            flavorChart && (
+              <Link
+                href={{ pathname: '/sake/[brandId]/similar', params: { brandId: String(brandId) } }}
+                className="flex min-h-11 items-center justify-center rounded-xl border border-ash-300 px-4 text-body font-medium text-ink transition-colors hover:bg-ash-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+                data-testid="similar-sakes-link"
+              >
+                {t('similarAction')}
+              </Link>
+            )
+          }
+        />
+      ) : (
+        flavorChart && (
+          <div className="flex gap-2" data-testid="bottle-actions">
+            <Link
+              href={{ pathname: '/sake/[brandId]/similar', params: { brandId: String(brandId) } }}
+              className="flex min-h-11 flex-1 items-center justify-center rounded-xl border border-ginshu-400 px-4 text-card-heading font-medium text-ginshu-700 transition-colors hover:bg-ginshu-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+              data-testid="similar-sakes-link"
+            >
+              {t('similarAction')}
+            </Link>
+          </div>
+        )
       )}
+
+      {/* -- §9.3 You and this sake ---------------------------------------- */}
+      {viewer.canLog && <BottleHistory entries={tastings} locale={locale} />}
 
       {/* -- §9.4 Serve it ------------------------------------------------ */}
       {FEATURES.bottleServing && (

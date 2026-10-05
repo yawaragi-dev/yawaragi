@@ -4,9 +4,9 @@ import { auth } from '@clerk/nextjs/server'
 import { hasLocale } from 'next-intl'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { notFound } from 'next/navigation'
+import { Camera, Keyboard } from '@phosphor-icons/react/dist/ssr'
 import { Link } from '@/i18n/navigation'
 import { JournalList } from '@/components/collection/journal-list'
-import { JournalLogForm } from '@/components/profile/journal/journal-log-form'
 import { TabPlaceholder } from '@/components/layout/tab-placeholder'
 import { SakenowaAttribution } from '@/components/sake/sakenowa-attribution'
 import { currentUserIsMaintainer } from '@/lib/auth/maintainer'
@@ -153,9 +153,29 @@ export default async function CollectionTabPage({ params }: PageProps) {
           <p className="max-w-prose text-body text-ash-600">{t('unavailableBody')}</p>
         </section>
       ) : journal.kind === 'empty' ? (
-        <section className="flex flex-col gap-2" data-testid="journal-empty">
+        // §11's empty journal: "Your journal starts with one star" and a way
+        // to the star — a scan, or §8 for a visitor without the bottle to hand.
+        <section className="flex flex-col gap-3" data-testid="journal-empty">
           <h2 className="text-card-heading font-medium text-ink">{t('emptyHeading')}</h2>
           <p className="max-w-prose text-body text-ash-600">{t('emptyBody')}</p>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/scan"
+              className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-ginshu-400 px-4 text-body font-medium text-ginshu-700 transition-colors hover:bg-ginshu-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+              data-testid="journal-empty-scan"
+            >
+              <Camera size={17} aria-hidden="true" />
+              {t('emptyScan')}
+            </Link>
+            <Link
+              href="/search"
+              className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-ash-300 px-4 text-body font-medium text-ink transition-colors hover:bg-ash-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+              data-testid="journal-empty-type-it"
+            >
+              <Keyboard size={17} aria-hidden="true" />
+              {t('emptyTypeIt')}
+            </Link>
+          </div>
         </section>
       ) : (
         <>
@@ -166,12 +186,6 @@ export default async function CollectionTabPage({ params }: PageProps) {
           <SakenowaAttribution placement="inline" />
         </>
       )}
-
-      {/* The log form stays in both states. §5's star IS the save (rule 1) and
-          the star row is Phase 2, so this floating action is the only way a
-          maintainer can add an entry at all — removing it to match §11's
-          screenshot would remove the feature, not port it. */}
-      {journal.kind !== 'unavailable' && <JournalLogForm />}
     </main>
   )
 }
