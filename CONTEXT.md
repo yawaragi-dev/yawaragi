@@ -52,6 +52,18 @@ _Avoid_: Verdict, Score, Grade (all imply we are judging the sake rather than re
 A *User*'s durable, ordered record of Sakes they have tried — the **spine surface** everything else hangs off (per ADR-0020). A **JournalEntry** *is* a **TasteEvent** plus richer fields: free-text `notes`, an explicit `tried_at`, the denormalised sake display name (kanji + romaji, captured at log time so the record survives a catalogue change), and (later) a scan reference. The **Palate** and recommender are *downstream outputs* of the journal. Persistence is auth-gated and maintainer-only in v1; the public sees an interactive-but-ephemeral example (ADR-0020). EN "tasting journal" / DE "Verkostungsjournal".
 _Avoid_: Log (clinical), Diary (personal-emotional), History (too generic), **Cellar** — no longer a banned synonym but a distinct sibling concept (bottles you own, not tastings you had); see **Cellar** below
 
+**DetailedNotes**:
+The optional structured tasting sheet attached to a **JournalEntry** (design v1.4 §10): appearance (clarity, colour), nose (intensity, aromas), five 1–5 palate scales (sweetness, acidity, umami, body, finish), how it was served (temperature, vessel, "with") and a verdict (drink it again?, would suit). Every part is optional and saves as it is filled — there is no Save button. Stored as stable keys, never as display words, so the wording can change without a migration. A field of the entry, not its own record: one tasting, one record (ADR-0024). Modelled on professional tasting practice; never named after any certification body.
+_Avoid_: Tasting sheet (fine in prose, not as an identifier), Scorecard, Review, Deep log (the pre-v1.4 name)
+
+**QuickTag**:
+One of §5's chips on a **JournalEntry** — "Sour apple", "Cider-like", "Warm", "With food" — tapped right after the star. Stored as a stable key in the entry's `tags`. A note in one tap, not a classification: QuickTags are the user's words about one tasting, unrelated to Sakenowa's **FlavorTags**, and they never feed the **TasteProfile**.
+_Avoid_: Tag (collides with FlavorTag), Chip (that is the widget), Label
+
+**SchemaVersion** (stored records):
+The integer every stored record (JournalEntry, CellarBottle) carries. Reads upcast older versions to the current one, writes always produce the current one, and a record with no version is version 1 (ADR-0024). Distinct from the export file's `formatVersion`, which versions only the envelope around the records.
+_Avoid_: Revision (implies edit history), Migration version (that is the SQL migrations' numbering)
+
 **Collection**:
 The user-facing container for everything a *User* has accumulated, and the third tab. Three segments: **TastingJournal** (what you drank), **Cellar** (what you own), **Wishlist** (what you want). A grouping in the UI only — there is no Collection record; each segment is its own store. Introduced by design v1.4 §11.
 _Avoid_: Library, My sakes, Shelf (that reads as the Cellar), Inventory (commercial)
@@ -65,7 +77,7 @@ The Sakes a *User* wants to try but has not. Each row records **where the want c
 _Avoid_: Saved, Favourites (that implies having tried and liked them), Watchlist, To-try list
 
 **Nama** (生):
-Unpasteurised sake. Relevant to the domain only because it shortens **Cellar** freshness: a *nama* bottle hits "drink soon" at 5 days open rather than 10. Stored as a boolean on the Cellar row.
+Unpasteurised sake. Relevant to the domain only because it shortens **Cellar** freshness: a *nama* bottle hits "drink soon" at 5 days open rather than 10. Planned as a boolean on the Cellar row (CellarBottle v2, ADR-0024); not stored yet, because neither the catalogue nor any screen supplies it.
 _Avoid_: Fresh, Raw, Unpasteurised (correct, but *nama* is the term on the bottle)
 
 **Ranking**:
