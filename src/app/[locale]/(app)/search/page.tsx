@@ -3,6 +3,7 @@ import { hasLocale } from 'next-intl'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
+import { FocusFieldAtEnd } from '@/components/search/focus-field-at-end'
 import { BackLink } from '@/components/layout/back-link'
 import { RomajiDisclosure } from '@/components/sake/romaji-disclosure'
 import { SakenowaAttribution } from '@/components/sake/sakenowa-attribution'
@@ -61,6 +62,9 @@ interface PageProps {
   params: Promise<{ locale: string }>
   searchParams: Promise<{ q?: string | string[] }>
 }
+
+/** Shared with `<FocusFieldAtEnd />`, which puts the caret back in it. */
+const SEARCH_FIELD_ID = 'search-field-input'
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { locale } = await params
@@ -148,12 +152,12 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
               // `45yama`, silently corrupting the next query. Chromium parks
               // it at 0 too; Firefox just makes it visible.
               //
-              // Fixing the caret position needs JavaScript on a page that
-              // deliberately ships none, and it would also keep a phone
-              // keyboard over the results the visitor just asked for and trap
-              // a screen reader in the field. So the field claims focus only
-              // when there is nothing in it. Tapping it still works normally,
-              // and the caret lands where the tap did.
+              // After a search, refocusing would keep a phone keyboard over the
+              // results the visitor just asked for and trap a screen reader in
+              // the field. So the field claims focus only when there is
+              // nothing in it, plus one exception: "One more letter" asks for
+              // more typing, and `<FocusFieldAtEnd />` puts the caret back
+              // after the text (autofocus alone would park it at offset 0).
               //
               // No lint suppression needed: the repo's config does not enable
               // `jsx-a11y/no-autofocus`.
@@ -163,6 +167,7 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
               autoComplete="off"
               placeholder={t('placeholder')}
               className="min-w-0 flex-1 bg-transparent text-card-heading text-ink placeholder:text-ash-500 focus:outline-none"
+              id={SEARCH_FIELD_ID}
               data-testid="search-input"
             />
             {query.length > 0 && (
@@ -195,9 +200,12 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
           <p className="text-body text-ash-600">{t('emptyBody', { count: CATALOGUE_SIZE })}</p>
         </section>
       ) : !specific ? (
-        <p className="text-body text-ash-600" data-testid="search-too-short">
-          {t('tooShort')}
-        </p>
+        <>
+          <p className="text-body text-ash-600" data-testid="search-too-short">
+            {t('tooShort')}
+          </p>
+          <FocusFieldAtEnd fieldId={SEARCH_FIELD_ID} />
+        </>
       ) : outcome.kind === 'unavailable' ? (
         <section className="flex flex-col gap-2" data-testid="search-unavailable">
           <h1 className="text-card-heading font-medium text-ink">{t('unavailableTitle')}</h1>

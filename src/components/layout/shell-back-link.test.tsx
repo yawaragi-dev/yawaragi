@@ -51,6 +51,13 @@ describe('the back arrow, screen by screen', () => {
     expect(screen.getByTestId('back-link')).toBeTruthy()
   })
 
+  // §8 draws its own top row — back · the field (screenshot 18) — so the
+  // shell's arrow above it was a second back button stacked on the first.
+  it('is absent on /search, whose own top row carries the arrow', () => {
+    renderAt('/search')
+    expect(screen.queryByTestId('back-link')).toBeNull()
+  })
+
   it('falls back to a real destination when there is no history to pop', () => {
     renderAt('/sake/1234')
     expect(screen.getByTestId('back-link').getAttribute('href')).toBe('/en/home')

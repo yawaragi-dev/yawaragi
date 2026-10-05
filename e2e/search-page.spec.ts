@@ -121,6 +121,14 @@ test.describe('§8 search', () => {
     await expect(page.getByTestId('search-too-short')).toBeVisible()
     await expect(page.getByTestId('search-results')).toHaveCount(0)
 
+    // "One more letter" is an instruction to keep typing, so the caret is
+    // already back in the field — after the letter, not before it, or the
+    // next keystroke would make "ba" out of "a" + "b".
+    const field = page.getByTestId('search-input')
+    await expect(field).toBeFocused()
+    await page.keyboard.type('b')
+    await expect(field).toHaveValue('ab')
+
     await context.close()
   })
 
