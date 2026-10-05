@@ -1,0 +1,424 @@
+'use client'
+
+import { useEffect, useRef, useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
+import {
+  CaretDown,
+  CaretUp,
+  CheckCircle,
+  Drop,
+  Eye,
+  ThermometerSimple,
+  Wind,
+} from '@phosphor-icons/react/dist/ssr'
+import { Sheet, SheetClose, SheetContent, SheetTitle } from '@/components/ui/sheet'
+import {
+  AROMAS,
+  CLARITY,
+  COLOR,
+  DETAILED_NOTES_PARTS,
+  DRINK_AGAIN,
+  type DetailedNotes,
+  type DetailedNotesPart,
+  NOSE_INTENSITY,
+  OCCASIONS,
+  PALATE_SCALES,
+  SERVING_TEMPERATURES,
+  VESSELS,
+  isPartFilled,
+} from '@/lib/schemas/detailed-notes'
+import { updateTasting } from '@/lib/taste/tasting-actions'
+import { cn } from '@/lib/utils'
+
+/**
+ * §10 Detailed notes — the bottom sheet. Reference screenshot 11.
+ *
+ * "Look, smell, taste, decide": five collapsible parts, Palate open by
+ * default, every field optional, **no Save button** — every pick saves as it
+ * is made (rule 1's spirit, and §10's own "it saves as you go"). A pick sends
+ * the whole sheet, so the server never has to merge partial sheets; the free
+ * text field waits for a pause in typing.
+ *
+ * Every value is a stable key (`slightlyHazy`, a 1–5 step), never the word on
+ * the button — the schema's rule, so the copy can change without a migration.
+ * The subtitle counts filled parts the same way the schema does.
+ *
+ * Not here: §10's "About the sake" part. It is for the user's own,
+ * non-catalogue entries, and manual entry is not built. For catalogue sakes
+ * §10 points at the bottle page's spec grid instead, which is not built either
+ * (#339), so that line is left out rather than pointing at nothing.
+ */
+
+const SAVE_TEXT_DEBOUNCE_MS = 700
+
+const PART_ICONS = {
+  appearance: Eye,
+  nose: Wind,
+  palate: Drop,
+  serve: ThermometerSimple,
+  verdict: CheckCircle,
+} as const
+
+export function DetailedNotesSheet({
+  entryId,
+  initial,
+  open,
+  onOpenChange,
+  onSaved,
+}: {
+  entryId: string
+  initial: DetailedNotes | undefined
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  /** Called with the sheet after each successful save. */
+  onSaved?: (notes: DetailedNotes) => void
+}) {
+  const t = useTranslations('detailedNotes')
+  const [notes, setNotes] = useState<DetailedNotes>(initial ?? {})
+  const [openPart, setOpenPart] = useState<DetailedNotesPart | null>('palate')
+  const [failed, setFailed] = useState(false)
+  const [, startTransition] = useTransition()
+  const textTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+
+  useEffect(() => () => clearTimeout(textTimer.current), [])
+
+  function save(next: DetailedNotes) {
+    startTransition(async () => {
+      const result = await updateTasting(entryId, { detail: next })
+      setFailed(result.status !== 'ok')
+      if (result.status === 'ok') onSaved?.(next)
+    })
+  }
+
+  /** Apply a change to one part and save straight away. */
+  function setPart<P extends DetailedNotesPart>(part: P, value: NonNullable<DetailedNotes[P]>) {
+    const next = { ...notes, [part]: { ...notes[part], ...value } }
+    setNotes(next)
+    clearTimeout(textTimer.current)
+    save(next)
+  }
+
+  function setWith(text: string) {
+    const next = { ...notes, serve: { ...notes.serve, with: text } }
+    setNotes(next)
+    clearTimeout(textTimer.current)
+    textTimer.current = setTimeout(() => save(next), SAVE_TEXT_DEBOUNCE_MS)
+  }
+
+  /** One-of: tapping the current choice clears it. */
+  const pickOne = <T extends string>(current: T | undefined, value: T): T | undefined =>
+    current === value ? undefined : value
+  /** Pick-any: toggles membership. */
+  const toggle = <T extends string>(list: readonly T[] | undefined, value: T): T[] => {
+    const cur = list ?? []
+    return cur.includes(value) ? cur.filter((x) => x !== value) : [...cur, value]
+  }
+
+  const filled = DETAILED_NOTES_PARTS.filter((p) => isPartFilled(notes, p)).length
+  const total = DETAILED_NOTES_PARTS.length
+
+  const summary = (part: DetailedNotesPart): string | null => {
+    if (!isPartFilled(notes, part)) return null
+    const v = t.raw('values') as Record<string, Record<string, string>>
+    switch (part) {
+      case 'appearance':
+        return [notes.appearance?.clarity && v.clarity![notes.appearance.clarity], notes.appearance?.color && v.color![notes.appearance.color]]
+          .filter(Boolean)
+          .join(' · ')
+      case 'nose':
+        return [
+          notes.nose?.intensity && v.intensity![notes.nose.intensity],
+          (notes.nose?.aromas ?? []).map((a) => v.aromas![a]).join(', '),
+        ]
+          .filter(Boolean)
+          .join(' · ')
+      case 'palate':
+        return PALATE_SCALES.filter((s) => notes.palate?.[s])
+          .map((s) => t(`scales.${s}.steps.s${notes.palate![s]}`))
+          .join(' · ')
+      case 'serve':
+        return [
+          notes.serve?.temperature && v.temperature![notes.serve.temperature],
+          notes.serve?.vessel && v.vessel![notes.serve.vessel],
+          notes.serve?.with?.trim(),
+        ]
+          .filter(Boolean)
+          .join(' · ')
+      case 'verdict':
+        return [
+          notes.verdict?.again && v.again![notes.verdict.again],
+          (notes.verdict?.suits ?? []).map((s) => v.suits![s]).join(', '),
+        ]
+          .filter(Boolean)
+          .join(' · ')
+    }
+  }
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="bottom"
+        showCloseButton={false}
+        overlayClassName="bg-black/55 supports-backdrop-filter:backdrop-blur-none"
+        className="max-h-[90dvh] gap-0 rounded-t-[20px] border-0 bg-surface p-0 text-ink shadow-yw-lg"
+        data-testid="detailed-notes-sheet"
+      >
+        <div className="flex justify-center pt-2.5 pb-1" aria-hidden="true">
+          <span className="h-1 w-9 rounded-full bg-ash-400" />
+        </div>
+        <div className="flex items-center gap-2.5 px-5 pt-1.5 pb-2.5">
+          <div className="min-w-0 flex-1">
+            <SheetTitle className="text-title font-medium text-ink">{t('title')}</SheetTitle>
+            <p className="mt-0.5 text-meta text-ash-600" data-testid="detailed-notes-progress">
+              {filled > 0 ? t('partsFilled', { n: filled, total }) : t('allOptional')}
+            </p>
+          </div>
+          <SheetClose
+            render={
+              <button
+                type="button"
+                className="min-h-10 rounded-xl border border-ginshu-400 px-[18px] text-body font-medium text-ginshu-700 transition-colors hover:bg-ginshu-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+                data-testid="detailed-notes-done"
+              />
+            }
+          >
+            {t('done')}
+          </SheetClose>
+        </div>
+
+        {/* Rule 7: the list fades under the fixed header instead of a hard
+            border, with 16px of padding so nothing fades at rest. */}
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 pt-3 pb-6 [mask-image:linear-gradient(to_bottom,transparent_0,#000_18px)]">
+          <p className="pt-1 pb-2 text-meta leading-normal text-ash-700">{t('intro')}</p>
+
+          {failed && (
+            <p role="alert" className="pb-2 text-meta text-ginshu-700" data-testid="detailed-notes-error">
+              {t('error')}
+            </p>
+          )}
+
+          {DETAILED_NOTES_PARTS.map((part) => {
+            const Icon = PART_ICONS[part]
+            const isOpen = openPart === part
+            const sum = summary(part)
+            const panelId = `detailed-notes-${part}`
+            return (
+              <div key={part} className="border-b border-divider" data-testid={`detailed-notes-part-${part}`}>
+                <button
+                  type="button"
+                  onClick={() => setOpenPart(isOpen ? null : part)}
+                  aria-expanded={isOpen}
+                  aria-controls={panelId}
+                  className="flex min-h-14 w-full items-center gap-3 py-2.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+                  data-testid={`detailed-notes-toggle-${part}`}
+                >
+                  <Icon size={19} aria-hidden="true" className={sum ? 'text-ginshu-600' : 'text-ash-500'} />
+                  <span className="flex min-w-0 flex-1 flex-col">
+                    <span className="text-card-heading font-medium text-ink">{t(`parts.${part}.title`)}</span>
+                    <span className="mt-px text-meta text-ash-600" data-testid={`detailed-notes-summary-${part}`}>
+                      {sum ?? t(`parts.${part}.hint`)}
+                    </span>
+                  </span>
+                  {isOpen ? (
+                    <CaretUp size={15} aria-hidden="true" className="text-ash-500" />
+                  ) : (
+                    <CaretDown size={15} aria-hidden="true" className="text-ash-500" />
+                  )}
+                </button>
+
+                {isOpen && (
+                  <div id={panelId} className="flex flex-col gap-3 pb-4 pl-[30px] motion-safe:animate-yw-fade">
+                    {part === 'appearance' && (
+                      <>
+                        <ChipGroup
+                          label={t('fields.clarity')}
+                          options={CLARITY}
+                          labelOf={(k) => t(`values.clarity.${k}`)}
+                          isOn={(k) => notes.appearance?.clarity === k}
+                          onPick={(k) => setPart('appearance', { clarity: pickOne(notes.appearance?.clarity, k) })}
+                          testId="clarity"
+                        />
+                        <ChipGroup
+                          label={t('fields.color')}
+                          options={COLOR}
+                          labelOf={(k) => t(`values.color.${k}`)}
+                          isOn={(k) => notes.appearance?.color === k}
+                          onPick={(k) => setPart('appearance', { color: pickOne(notes.appearance?.color, k) })}
+                          testId="color"
+                        />
+                      </>
+                    )}
+                    {part === 'nose' && (
+                      <>
+                        <ChipGroup
+                          label={t('fields.intensity')}
+                          options={NOSE_INTENSITY}
+                          labelOf={(k) => t(`values.intensity.${k}`)}
+                          isOn={(k) => notes.nose?.intensity === k}
+                          onPick={(k) => setPart('nose', { intensity: pickOne(notes.nose?.intensity, k) })}
+                          testId="intensity"
+                        />
+                        <ChipGroup
+                          label={t('fields.aromas')}
+                          options={AROMAS}
+                          labelOf={(k) => t(`values.aromas.${k}`)}
+                          isOn={(k) => (notes.nose?.aromas ?? []).includes(k)}
+                          onPick={(k) => setPart('nose', { aromas: toggle(notes.nose?.aromas, k) })}
+                          testId="aromas"
+                        />
+                      </>
+                    )}
+                    {part === 'palate' &&
+                      PALATE_SCALES.map((scale) => {
+                        const value = notes.palate?.[scale]
+                        const label = t(`scales.${scale}.label`)
+                        return (
+                          <div key={scale} className="flex flex-col gap-1.5" role="group" aria-label={label}>
+                            <div className="flex justify-between text-meta">
+                              <span className="text-ink">{label}</span>
+                              <span className="text-ash-600" data-testid={`detailed-notes-scale-${scale}-value`}>
+                                {value ? t(`scales.${scale}.steps.s${value}`) : t('notSet')}
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-5 gap-1">
+                              {[1, 2, 3, 4, 5].map((step) => (
+                                <button
+                                  key={step}
+                                  type="button"
+                                  // §10: "tapping the current step clears it".
+                                  onClick={() =>
+                                    setPart('palate', { [scale]: value === step ? undefined : step })
+                                  }
+                                  aria-label={t('stepLabel', {
+                                    scale: label,
+                                    step: t(`scales.${scale}.steps.s${step}`),
+                                  })}
+                                  aria-pressed={value === step}
+                                  className="flex h-[30px] items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+                                  data-testid={`detailed-notes-scale-${scale}-${step}`}
+                                >
+                                  <span
+                                    className={cn(
+                                      'block h-2 w-full rounded',
+                                      value && step <= value ? 'bg-ginshu-500' : 'bg-ash-300',
+                                    )}
+                                  />
+                                </button>
+                              ))}
+                            </div>
+                            <div className="flex justify-between text-micro text-ash-600">
+                              <span>{t(`scales.${scale}.steps.s1`)}</span>
+                              <span>{t(`scales.${scale}.steps.s5`)}</span>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    {part === 'serve' && (
+                      <>
+                        <ChipGroup
+                          label={t('fields.temperature')}
+                          options={SERVING_TEMPERATURES}
+                          labelOf={(k) => t(`values.temperature.${k}`)}
+                          isOn={(k) => notes.serve?.temperature === k}
+                          onPick={(k) => setPart('serve', { temperature: pickOne(notes.serve?.temperature, k) })}
+                          testId="temperature"
+                          lang="ja"
+                        />
+                        <ChipGroup
+                          label={t('fields.vessel')}
+                          options={VESSELS}
+                          labelOf={(k) => t(`values.vessel.${k}`)}
+                          isOn={(k) => notes.serve?.vessel === k}
+                          onPick={(k) => setPart('serve', { vessel: pickOne(notes.serve?.vessel, k) })}
+                          testId="vessel"
+                        />
+                        <label className="flex flex-col gap-1.5">
+                          <span className="text-section-label uppercase text-ash-600">{t('fields.with')}</span>
+                          <input
+                            type="text"
+                            maxLength={200}
+                            value={notes.serve?.with ?? ''}
+                            onChange={(e) => setWith(e.target.value)}
+                            placeholder={t('fields.withPlaceholder')}
+                            className="min-h-11 rounded-md border border-divider bg-ground px-3 text-body text-ink placeholder:italic placeholder:text-ash-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+                            data-testid="detailed-notes-with"
+                          />
+                        </label>
+                      </>
+                    )}
+                    {part === 'verdict' && (
+                      <>
+                        <ChipGroup
+                          label={t('fields.again')}
+                          options={DRINK_AGAIN}
+                          labelOf={(k) => t(`values.again.${k}`)}
+                          isOn={(k) => notes.verdict?.again === k}
+                          onPick={(k) => setPart('verdict', { again: pickOne(notes.verdict?.again, k) })}
+                          testId="again"
+                        />
+                        <ChipGroup
+                          label={t('fields.suits')}
+                          options={OCCASIONS}
+                          labelOf={(k) => t(`values.suits.${k}`)}
+                          isOn={(k) => (notes.verdict?.suits ?? []).includes(k)}
+                          onPick={(k) => setPart('verdict', { suits: toggle(notes.verdict?.suits, k) })}
+                          testId="suits"
+                        />
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      </SheetContent>
+    </Sheet>
+  )
+}
+
+/** A labelled row of §10's pill chips — one-of or pick-any, the caller decides. */
+function ChipGroup<T extends string>({
+  label,
+  options,
+  labelOf,
+  isOn,
+  onPick,
+  testId,
+  lang,
+}: {
+  label: string
+  options: readonly T[]
+  labelOf: (key: T) => string
+  isOn: (key: T) => boolean
+  onPick: (key: T) => void
+  testId: string
+  lang?: string
+}) {
+  return (
+    <div className="flex flex-col gap-1.5" role="group" aria-label={label}>
+      <span className="text-section-label uppercase text-ash-600">{label}</span>
+      <div className="flex flex-wrap gap-1.5">
+        {options.map((key) => {
+          const on = isOn(key)
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={() => onPick(key)}
+              aria-pressed={on}
+              lang={lang}
+              className={cn(
+                'min-h-9 rounded-full border px-3 text-subtle transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600',
+                on ? 'border-ginshu-600 bg-ginshu-600 text-ground' : 'border-divider text-ash-700 hover:bg-ash-200',
+              )}
+              data-testid={`detailed-notes-${testId}-${key}`}
+            >
+              {labelOf(key)}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}

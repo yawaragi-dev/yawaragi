@@ -595,5 +595,155 @@
     "emptyHeading": "Nothing in the cellar",
     "emptyBody": "Bottles you own. Tap “Add to cellar” on any sake and we’ll tell you when an open one should be finished.",
     "error": "Couldn’t change that just now — try again."
+  },
+  "detailedNotes": {
+    "title": "Detailed notes",
+    "done": "Done",
+    "allOptional": "All optional",
+    "partsFilled": "{n} of {total} parts filled",
+    "intro": "Look, smell, taste, decide — the order professional tasters work in. Fill any part, skip the rest; it saves as you go.",
+    "open": "Add detailed notes",
+    "edit": "Detailed notes · {n} of {total}",
+    "error": "Couldn’t save that just now — try again.",
+    "notSet": "—",
+    "stepLabel": "{scale}: {step}",
+    "parts": {
+      "appearance": {
+        "title": "Appearance",
+        "hint": "Clarity, color"
+      },
+      "nose": {
+        "title": "Nose",
+        "hint": "Intensity, aromas"
+      },
+      "palate": {
+        "title": "Palate",
+        "hint": "Sweetness, acidity, umami, body, finish"
+      },
+      "serve": {
+        "title": "How you had it",
+        "hint": "Temperature, vessel, food"
+      },
+      "verdict": {
+        "title": "Conclusion",
+        "hint": "Again? · occasion"
+      }
+    },
+    "fields": {
+      "clarity": "Clarity",
+      "color": "Color",
+      "intensity": "Intensity",
+      "aromas": "Aromas · pick any",
+      "temperature": "Temperature",
+      "vessel": "Vessel",
+      "with": "With",
+      "withPlaceholder": "Food, place, company",
+      "again": "Drink it again?",
+      "suits": "Would suit · pick any"
+    },
+    "values": {
+      "clarity": {
+        "clear": "Clear",
+        "slightlyHazy": "Slightly hazy",
+        "cloudy": "Cloudy"
+      },
+      "color": {
+        "waterWhite": "Water-white",
+        "paleStraw": "Pale straw",
+        "gold": "Gold",
+        "amber": "Amber"
+      },
+      "intensity": {
+        "light": "Light",
+        "medium": "Medium",
+        "pronounced": "Pronounced"
+      },
+      "aromas": {
+        "fruit": "Fruit",
+        "flower": "Flower",
+        "steamedRice": "Steamed rice",
+        "lactic": "Lactic",
+        "koji": "Koji",
+        "nut": "Nut",
+        "earth": "Earth",
+        "aged": "Aged"
+      },
+      "temperature": {
+        "yukibie": "雪冷え 5°",
+        "hanabie": "花冷え 10°",
+        "joon": "常温 20°",
+        "nurukan": "ぬる燗 40°",
+        "atsukan": "熱燗 50°"
+      },
+      "vessel": {
+        "ochoko": "Ochoko",
+        "guinomi": "Guinomi",
+        "wineGlass": "Wine glass",
+        "masu": "Masu"
+      },
+      "again": {
+        "yes": "Yes",
+        "maybe": "Maybe",
+        "no": "No"
+      },
+      "suits": {
+        "everyday": "Everyday",
+        "withDinner": "With dinner",
+        "specialOccasion": "Special occasion",
+        "gift": "As a gift"
+      }
+    },
+    "scales": {
+      "sweetness": {
+        "label": "Sweetness",
+        "steps": {
+          "s1": "Bone dry",
+          "s2": "Dry",
+          "s3": "Off-dry",
+          "s4": "Medium sweet",
+          "s5": "Sweet"
+        }
+      },
+      "acidity": {
+        "label": "Acidity",
+        "steps": {
+          "s1": "Soft",
+          "s2": "Low",
+          "s3": "Medium",
+          "s4": "High",
+          "s5": "Sharp"
+        }
+      },
+      "umami": {
+        "label": "Umami",
+        "steps": {
+          "s1": "Clean",
+          "s2": "Light",
+          "s3": "Medium",
+          "s4": "Rich",
+          "s5": "Savory"
+        }
+      },
+      "body": {
+        "label": "Body",
+        "steps": {
+          "s1": "Very light",
+          "s2": "Light",
+          "s3": "Medium",
+          "s4": "Full",
+          "s5": "Heavy"
+        }
+      },
+      "finish": {
+        "label": "Finish",
+        "steps": {
+          "s1": "Short",
+          "s2": "Brief",
+          "s3": "Medium",
+          "s4": "Long",
+          "s5": "Lingering"
+        }
+      }
+    }
   }
 }

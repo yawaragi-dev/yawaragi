@@ -3,9 +3,16 @@
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { useFormatter, useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
+import { SlidersHorizontal } from '@phosphor-icons/react/dist/ssr'
+import { DetailedNotesSheet } from '@/components/journal/detailed-notes-sheet'
 import { StarRating } from '@/components/journal/star-rating'
 import { UndoNotice } from '@/components/journal/undo-notice'
 import type { FlavorAxis } from '@/lib/schemas/flavor-chart'
+import {
+  DETAILED_NOTES_PARTS,
+  type DetailedNotes,
+  isPartFilled,
+} from '@/lib/schemas/detailed-notes'
 import type { QuickTag } from '@/lib/schemas/journal-entry'
 import { isAxisQuickTag, quickTagAxis, quickTagsFor } from '@/lib/taste/quick-tags'
 import { ratingBand } from '@/lib/taste/rating-band'
@@ -25,8 +32,8 @@ import { cn } from '@/lib/utils'
  * §9's bottle page. Maintainer-only (ADR-0020): callers render it only when the
  * server says this visitor can keep a journal, and the actions check again.
  *
- * `"Add detailed notes"` (§10) is not here yet — it opens a sheet that does not
- * exist, and a button that opens nothing is the dead affordance #162 forbids.
+ * After the first tap, "Add detailed notes" opens §10's sheet for the same
+ * entry; once parts are filled it reads "Detailed notes · 2 of 5".
  */
 
 export type TastingHistoryMeta =
@@ -65,6 +72,7 @@ export function TastingLogPanel({
 }) {
   const t = useTranslations('tasting')
   const tAxis = useTranslations('flavorAxis')
+  const tNotes = useTranslations('detailedNotes')
   const tBand = useTranslations('rating.band')
   const format = useFormatter()
   const router = useRouter()
@@ -76,6 +84,8 @@ export function TastingLogPanel({
   const [popKey, setPopKey] = useState<number | undefined>(undefined)
   const [noticeOpen, setNoticeOpen] = useState(false)
   const [failed, setFailed] = useState(false)
+  const [detail, setDetail] = useState<DetailedNotes | undefined>(undefined)
+  const [sheetOpen, setSheetOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
   // Undo has its own transition so the panel can dim while it runs without
   // dimming on every note or chip save.
@@ -185,6 +195,7 @@ export function TastingLogPanel({
         setNote('')
         savedNote.current = ''
         setTags([])
+        setDetail(undefined)
         setPopKey(undefined)
         changed()
       })
@@ -305,6 +316,32 @@ export function TastingLogPanel({
               )
             })}
           </div>
+          {(() => {
+            const filled = DETAILED_NOTES_PARTS.filter((p) => isPartFilled(detail, p)).length
+            return (
+              <button
+                type="button"
+                onClick={() => setSheetOpen(true)}
+                className="mt-0.5 flex min-h-[42px] w-full items-center justify-center gap-2 rounded-xl border border-ash-300 text-subtle font-medium text-ink transition-colors hover:bg-ash-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+                data-testid="tasting-log-detailed"
+              >
+                <SlidersHorizontal size={16} aria-hidden="true" />
+                {filled > 0
+                  ? tNotes('edit', { n: filled, total: DETAILED_NOTES_PARTS.length })
+                  : tNotes('open')}
+              </button>
+            )
+          })()}
+          <DetailedNotesSheet
+            entryId={logged.entryId}
+            initial={detail}
+            open={sheetOpen}
+            onOpenChange={setSheetOpen}
+            onSaved={(next) => {
+              setDetail(next)
+              changed()
+            }}
+          />
         </div>
       ) : (
         <p className="text-meta text-ash-600">{t('hint')}</p>
