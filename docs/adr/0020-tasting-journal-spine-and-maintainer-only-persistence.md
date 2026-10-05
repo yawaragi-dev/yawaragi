@@ -3,9 +3,12 @@ title: ADR-0020 — Tasting journal is the spine; persistence is auth-gated and 
 status: accepted
 date: 2026-07-18
 supersedes: ADR-0019
+amended-by: ADR-0024
 ---
 
 # ADR-0020: Tasting journal is the spine; persistence is auth-gated and maintainer-only, with an interactive-but-ephemeral public example
+
+> **Amended 2026-10-05 by [ADR-0024](./0024-collection-storage-versioned-records-and-backup.md).** The Cellar and §10's detailed notes join the journal in Upstash under the same gate; every stored record now carries a `schemaVersion` and is upcast on read; the export moves to `formatVersion: 2`; a daily backup to Supabase Storage replaces "`journal:export` is the only backstop"; and §4's Postgres migration is spelled out step by step. Everything below stands.
 
 ## Context
 
