@@ -1,4 +1,8 @@
-import { type JournalEntry, JournalEntrySchema } from '@/lib/schemas/journal-entry'
+import {
+  type StoreDump,
+  decodeStoredFields,
+} from '@/lib/collection/versioned-record'
+import { JOURNAL_ENTRY_CODEC, type JournalEntry } from '@/lib/schemas/journal-entry'
 
 /**
  * Persistence seam for a User's TastingJournal (CONTEXT.md, ADR-0020).
@@ -31,6 +35,13 @@ export interface JournalStore {
    *  (the field `deriveTasteProfile` replays on — equal to `triedAt` by the
    *  creating action's convention). `[]` if none. */
   read(userId: string): Promise<JournalEntry[]>
+  /**
+   * Everything stored for the user: the readable entries (ordered as `read`
+   * orders them) AND the raw records that could not be decoded (ADR-0024 §2).
+   * Exports and backups use this, so an unreadable record is carried along
+   * rather than silently left out of the only copy that leaves the store.
+   */
+  dump(userId: string): Promise<StoreDump<JournalEntry>>
   /** Upsert one entry by its `id` (create, or edit an existing entry). */
   put(userId: string, entry: JournalEntry): Promise<void>
   /** Delete one entry by id (granular erasure). No-op if absent. */
@@ -49,27 +60,26 @@ export function journalKey(userId: string): string {
 }
 
 /**
- * Parse raw stored JSON strings back into JournalEntries, dropping any entry
- * that no longer parses or fails the schema (tampering, or a schema migration)
- * rather than throwing — one bad entry must not nuke the whole journal — then
- * order oldest→newest by the embedded event's `occurredAt` (the field
- * `deriveTasteProfile` replays on), with `id` as a stable tie-break. A hash is
- * unordered, so ordering happens here on read.
+ * Decode a user's stored hash — `[entry id, JSON]` pairs — into current-version
+ * entries plus the records that could not be read. Each value goes through
+ * {@link JOURNAL_ENTRY_CODEC}: v1 entries (no `schemaVersion`) are upcast, a
+ * corrupt or newer-than-this-code record is set aside in `rejected` instead of
+ * throwing, so one bad entry never takes the journal down with it. Readable
+ * entries come back oldest→newest by the embedded event's `occurredAt` (the
+ * field `deriveTasteProfile` replays on), `id` breaking ties — a hash is
+ * unordered, so ordering happens here.
  */
-export function parseStoredEntries(raw: readonly string[]): JournalEntry[] {
-  const entries: JournalEntry[] = []
-  for (const item of raw) {
-    let json: unknown
-    try {
-      json = JSON.parse(item)
-    } catch {
-      continue
-    }
-    const parsed = JournalEntrySchema.safeParse(json)
-    if (parsed.success) entries.push(parsed.data)
-  }
-  entries.sort(
+export function decodeJournalHash(
+  fields: ReadonlyArray<readonly [id: string, raw: string]>,
+): StoreDump<JournalEntry> {
+  const dump = decodeStoredFields(fields, JOURNAL_ENTRY_CODEC)
+  dump.records.sort(
     (a, b) => a.event.occurredAt - b.event.occurredAt || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0),
   )
-  return entries
+  return dump
+}
+
+/** The readable half of {@link decodeJournalHash}, for callers with bare values. */
+export function parseStoredEntries(raw: readonly string[]): JournalEntry[] {
+  return decodeJournalHash(raw.map((value, i) => [String(i), value] as const)).records
 }

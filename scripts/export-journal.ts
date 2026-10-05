@@ -1,6 +1,6 @@
 /**
- * Maintainer utility — export one user's TastingJournal to a JSON file
- * (P5.5-D, #244, ADR-0020).
+ * Maintainer utility — export one user's collection (TastingJournal and
+ * Cellar) to a JSON file (P5.5-D, #244, ADR-0020; export v2 per ADR-0024).
  *
  * Usage:
  *   pnpm journal:export                     # the sole configured maintainer
@@ -28,7 +28,8 @@
 import { writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { parseMaintainerAllowlist } from '@/lib/auth/maintainer-allowlist'
-import { buildJournalExport } from '@/lib/taste/journal-export'
+import { UpstashCellarStore } from '@/lib/collection/upstash-cellar-store'
+import { buildCollectionExport } from '@/lib/taste/journal-export'
 import { UpstashJournalStore } from '@/lib/taste/upstash-journal-store'
 
 export type ResolvedUserId = { ok: true; userId: string } | { ok: false; reason: string }
@@ -111,19 +112,29 @@ async function main(): Promise<number> {
   const { userId } = resolved
 
   const exportedAt = Date.now()
-  const store = new UpstashJournalStore(url, token)
-  const entries = await store.read(userId)
-  const doc = buildJournalExport({ userId, entries, exportedAt })
+  const [journal, cellar] = await Promise.all([
+    new UpstashJournalStore(url, token).dump(userId),
+    new UpstashCellarStore(url, token).dump(userId),
+  ])
+  const doc = buildCollectionExport({ userId, journal, cellar, exportedAt })
 
   const outPath = resolve(flag(argv, 'out') ?? defaultExportFilename(userId, exportedAt))
   await writeFile(outPath, `${JSON.stringify(doc, null, 2)}\n`, 'utf8')
 
   // Deliberately reports only the count and destination — the entries are
   // personal data and must not be echoed into a terminal or CI log.
-  console.log(`Exported ${entries.length} journal entr${entries.length === 1 ? 'y' : 'ies'} for ${userId}`)
+  const n = doc.journal.length
+  console.log(
+    `Exported ${n} journal entr${n === 1 ? 'y' : 'ies'} and ${doc.cellar.length} cellar row(s) for ${userId}`,
+  )
   console.log(`  → ${outPath}`)
-  if (entries.length === 0) {
-    console.log('  (empty journal — a valid export, nothing was stored for this user)')
+  if (n === 0 && doc.cellar.length === 0) {
+    console.log('  (empty collection — a valid export, nothing was stored for this user)')
+  }
+  if (doc.rejected.length > 0) {
+    // Not an error: the records are in the file, raw. It does mean the running
+    // code could not read them, which someone should look at (ADR-0024 §2).
+    console.warn(`  ! ${doc.rejected.length} record(s) could not be read and were exported raw under "rejected"`)
   }
   return 0
 }

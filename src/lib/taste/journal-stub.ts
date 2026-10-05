@@ -40,6 +40,7 @@ export const STUB_JOURNAL_NOW = Date.UTC(2026, 6, 20, 12, 0, 0)
 
 export const STUB_JOURNAL_ENTRIES: readonly JournalEntry[] = [
   {
+    schemaVersion: 2,
     id: 's1',
     event: {
       kind: 'rating',
@@ -54,6 +55,7 @@ export const STUB_JOURNAL_ENTRIES: readonly JournalEntry[] = [
     createdAt: Date.UTC(2026, 6, 18),
   },
   {
+    schemaVersion: 2,
     id: 's2',
     event: {
       kind: 'rating',
@@ -67,6 +69,7 @@ export const STUB_JOURNAL_ENTRIES: readonly JournalEntry[] = [
     createdAt: Date.UTC(2026, 6, 6),
   },
   {
+    schemaVersion: 2,
     id: 's3',
     event: {
       kind: 'rating',
