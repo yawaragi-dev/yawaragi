@@ -48,6 +48,11 @@ updates:
     ignore:
       - dependency-name: 'typescript'
         update-types: ['version-update:semver-major']
+      # ESLint majors wait until eslint-config-next's plugins support them. ESLint
+      # 10 broke the tooling group (#354): eslint-plugin-react calls the removed
+      # `context.getFilename`. Drop this once eslint-config-next supports 10.
+      - dependency-name: 'eslint'
+        update-types: ['version-update:semver-major']
     labels:
       - dependencies
 
