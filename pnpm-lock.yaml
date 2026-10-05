@@ -10,13 +10,13 @@ importers:
     dependencies:
       '@ai-sdk/anthropic':
         specifier: ^4.0.58
-        version: 4.0.58(zod@4.4.3)
+        version: 4.0.58(zod@4.6.5)
       '@ai-sdk/mcp':
         specifier: ^2.0.54
-        version: 2.0.54(zod@4.4.3)
+        version: 2.0.54(zod@4.6.5)
       '@ai-sdk/react':
         specifier: ^4.0.110
-        version: 4.0.110(react@19.3.0)(zod@4.4.3)
+        version: 4.0.110(react@19.3.0)(zod@4.6.5)
       '@base-ui/react':
         specifier: ^1.6.0
         version: 1.6.0(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -31,7 +31,7 @@ importers:
         version: 5.11.0(@opentelemetry/api@1.9.0)
       '@langfuse/vercel-ai-sdk':
         specifier: 5.11.0
-        version: 5.11.0(@opentelemetry/api@1.9.0)(ai@7.0.107(zod@4.4.3))(zod@4.4.3)
+        version: 5.11.0(@opentelemetry/api@1.9.0)(ai@7.0.107(zod@4.6.5))(zod@4.6.5)
       '@opentelemetry/api':
         specifier: 1.9.0
         version: 1.9.0
@@ -52,7 +52,7 @@ importers:
         version: 0.1.0
       ai:
         specifier: ^7.0.107
-        version: 7.0.107(zod@4.4.3)
+        version: 7.0.107(zod@4.6.5)
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -90,8 +90,8 @@ importers:
         specifier: ^1.4.0
         version: 1.4.0
       zod:
-        specifier: ^4.4.3
-        version: 4.4.3
+        specifier: ^4.6.5
+        version: 4.6.5
     devDependencies:
       '@playwright/test':
         specifier: ^1.63.0
@@ -4824,64 +4824,64 @@ packages:
   zod@3.25.76:
     resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
 
-  zod@4.4.3:
-    resolution: {integrity: sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==}
+  zod@4.6.5:
+    resolution: {integrity: sha512-v5l/aFXZQeai4awLbOpSoHecE9UiMrnfx75tEXLjNonXVARxQ5mOeipTjROUchszUNCqnE+hqAMujRsRHsut2Q==}
 
 snapshots:
 
-  '@ai-sdk/anthropic@4.0.58(zod@4.4.3)':
+  '@ai-sdk/anthropic@4.0.58(zod@4.6.5)':
     dependencies:
       '@ai-sdk/provider': 4.0.17
-      '@ai-sdk/provider-utils': 5.0.45(zod@4.4.3)
-      zod: 4.4.3
+      '@ai-sdk/provider-utils': 5.0.45(zod@4.6.5)
+      zod: 4.6.5
 
-  '@ai-sdk/gateway@4.0.77(zod@4.4.3)':
+  '@ai-sdk/gateway@4.0.77(zod@4.6.5)':
     dependencies:
       '@ai-sdk/provider': 4.0.12
-      '@ai-sdk/provider-utils': 5.0.38(zod@4.4.3)
+      '@ai-sdk/provider-utils': 5.0.38(zod@4.6.5)
       '@vercel/oidc': 3.2.0
-      zod: 4.4.3
+      zod: 4.6.5
 
-  '@ai-sdk/gateway@4.0.87(zod@4.4.3)':
+  '@ai-sdk/gateway@4.0.87(zod@4.6.5)':
     dependencies:
       '@ai-sdk/provider': 4.0.17
-      '@ai-sdk/provider-utils': 5.0.45(zod@4.4.3)
+      '@ai-sdk/provider-utils': 5.0.45(zod@4.6.5)
       '@vercel/oidc': 3.2.0
-      zod: 4.4.3
+      zod: 4.6.5
 
-  '@ai-sdk/mcp@2.0.54(zod@4.4.3)':
+  '@ai-sdk/mcp@2.0.54(zod@4.6.5)':
     dependencies:
       '@ai-sdk/provider': 4.0.17
-      '@ai-sdk/provider-utils': 5.0.45(zod@4.4.3)
+      '@ai-sdk/provider-utils': 5.0.45(zod@4.6.5)
       cross-spawn: 7.0.6
       pkce-challenge: 5.0.1
-      zod: 4.4.3
+      zod: 4.6.5
 
-  '@ai-sdk/otel@1.0.96(zod@4.4.3)':
+  '@ai-sdk/otel@1.0.96(zod@4.6.5)':
     dependencies:
       '@ai-sdk/provider': 4.0.12
       '@opentelemetry/api': 1.9.1
-      ai: 7.0.96(zod@4.4.3)
+      ai: 7.0.96(zod@4.6.5)
     transitivePeerDependencies:
       - zod
 
-  '@ai-sdk/provider-utils@5.0.38(zod@4.4.3)':
+  '@ai-sdk/provider-utils@5.0.38(zod@4.6.5)':
     dependencies:
       '@ai-sdk/provider': 4.0.12
       '@standard-schema/spec': 1.1.0
       '@workflow/serde': 4.1.0
       eventsource-parser: 3.1.1
       undici: 7.29.1
-      zod: 4.4.3
+      zod: 4.6.5
 
-  '@ai-sdk/provider-utils@5.0.45(zod@4.4.3)':
+  '@ai-sdk/provider-utils@5.0.45(zod@4.6.5)':
     dependencies:
       '@ai-sdk/provider': 4.0.17
       '@standard-schema/spec': 1.1.0
       '@workflow/serde': 4.1.0
       eventsource-parser: 3.1.1
       undici: 7.29.1
-      zod: 4.4.3
+      zod: 4.6.5
 
   '@ai-sdk/provider@4.0.12':
     dependencies:
@@ -4891,12 +4891,12 @@ snapshots:
     dependencies:
       json-schema: 0.4.0
 
-  '@ai-sdk/react@4.0.110(react@19.3.0)(zod@4.4.3)':
+  '@ai-sdk/react@4.0.110(react@19.3.0)(zod@4.6.5)':
     dependencies:
-      '@ai-sdk/mcp': 2.0.54(zod@4.4.3)
+      '@ai-sdk/mcp': 2.0.54(zod@4.6.5)
       '@ai-sdk/provider': 4.0.17
-      '@ai-sdk/provider-utils': 5.0.45(zod@4.4.3)
-      ai: 7.0.107(zod@4.4.3)
+      '@ai-sdk/provider-utils': 5.0.45(zod@4.6.5)
+      ai: 7.0.107(zod@4.6.5)
       react: 19.3.0
       swr: 2.5.1(react@19.3.0)
       throttleit: 2.1.0
@@ -5589,12 +5589,12 @@ snapshots:
       '@langfuse/core': 5.11.1(@opentelemetry/api@1.9.0)
       '@opentelemetry/api': 1.9.0
 
-  '@langfuse/vercel-ai-sdk@5.11.0(@opentelemetry/api@1.9.0)(ai@7.0.107(zod@4.4.3))(zod@4.4.3)':
+  '@langfuse/vercel-ai-sdk@5.11.0(@opentelemetry/api@1.9.0)(ai@7.0.107(zod@4.6.5))(zod@4.6.5)':
     dependencies:
-      '@ai-sdk/otel': 1.0.96(zod@4.4.3)
+      '@ai-sdk/otel': 1.0.96(zod@4.6.5)
       '@langfuse/core': 5.11.1(@opentelemetry/api@1.9.0)
       '@opentelemetry/api': 1.9.0
-      ai: 7.0.107(zod@4.4.3)
+      ai: 7.0.107(zod@4.6.5)
     transitivePeerDependencies:
       - zod
 
@@ -6429,19 +6429,19 @@ snapshots:
 
   acorn@8.16.0: {}
 
-  ai@7.0.107(zod@4.4.3):
+  ai@7.0.107(zod@4.6.5):
     dependencies:
-      '@ai-sdk/gateway': 4.0.87(zod@4.4.3)
+      '@ai-sdk/gateway': 4.0.87(zod@4.6.5)
       '@ai-sdk/provider': 4.0.17
-      '@ai-sdk/provider-utils': 5.0.45(zod@4.4.3)
-      zod: 4.4.3
+      '@ai-sdk/provider-utils': 5.0.45(zod@4.6.5)
+      zod: 4.6.5
 
-  ai@7.0.96(zod@4.4.3):
+  ai@7.0.96(zod@4.6.5):
     dependencies:
-      '@ai-sdk/gateway': 4.0.77(zod@4.4.3)
+      '@ai-sdk/gateway': 4.0.77(zod@4.6.5)
       '@ai-sdk/provider': 4.0.12
-      '@ai-sdk/provider-utils': 5.0.38(zod@4.4.3)
-      zod: 4.4.3
+      '@ai-sdk/provider-utils': 5.0.38(zod@4.6.5)
+      zod: 4.6.5
 
   ajv-formats@2.1.1(ajv@8.20.0):
     optionalDependencies:
@@ -7278,8 +7278,8 @@ snapshots:
       '@babel/parser': 7.29.9
       eslint: 9.39.5(jiti@2.7.0)
       hermes-parser: 0.25.1
-      zod: 4.4.3
-      zod-validation-error: 4.0.2(zod@4.4.3)
+      zod: 4.6.5
+      zod-validation-error: 4.0.2(zod@4.6.5)
     transitivePeerDependencies:
       - supports-color
 
@@ -9608,10 +9608,10 @@ snapshots:
     dependencies:
       zod: 3.25.76
 
-  zod-validation-error@4.0.2(zod@4.4.3):
+  zod-validation-error@4.0.2(zod@4.6.5):
     dependencies:
-      zod: 4.4.3
+      zod: 4.6.5
 
   zod@3.25.76: {}
 
-  zod@4.4.3: {}
+  zod@4.6.5: {}
