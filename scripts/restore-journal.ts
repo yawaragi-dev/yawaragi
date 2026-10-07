@@ -6,7 +6,9 @@
  *   pnpm journal:restore -- --file ./journal-export.json      # a local export
  *   pnpm journal:restore -- --backup latest                   # newest daily backup
  *   pnpm journal:restore -- --backup 2026-10-05T03-30-00Z.json
- *   … --user user_abc      # write into another user id (e.g. after a Clerk
+ *   … --from user_abc      # whose backups --backup reads; default is the
+ *                          # sole MAINTAINER_USER_IDS entry
+ *   … --user user_xyz      # write into another user id (e.g. after a Clerk
  *                          # instance move, #344); default is the file's own
  *   … --dry-run            # read and validate, write nothing
  *
@@ -45,9 +47,10 @@ async function loadSource(argv: readonly string[]): Promise<string> {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY
   if (!url || !key) throw new Error('--backup needs NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.')
 
-  // Whose backups: --user, or the sole maintainer.
-  const owner = flag(argv, 'user') ?? [...parseMaintainerAllowlist(process.env.MAINTAINER_USER_IDS)][0]
-  if (!owner) throw new Error('--backup needs --user <clerkUserId> (no single maintainer configured).')
+  // Whose backups: --from, or the sole maintainer. Not --user: that is where
+  // the restore writes, and the two differ after a Clerk instance move.
+  const owner = flag(argv, 'from') ?? [...parseMaintainerAllowlist(process.env.MAINTAINER_USER_IDS)][0]
+  if (!owner) throw new Error('--backup needs --from <clerkUserId> (no single maintainer configured).')
   const storage = new SupabaseBackupStorage(url, key, BACKUP_BUCKET)
   const prefix = backupPrefix(owner)
   const names = (await storage.list(prefix)).filter((n) => n.endsWith('.json')).sort()

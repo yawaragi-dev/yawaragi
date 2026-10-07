@@ -41,7 +41,7 @@ Naming history: previously "Kanpai"; renamed to avoid collision with KANPAI Lond
 - `pnpm ingest` — refresh Sakenowa data into Supabase
 - `pnpm eval` — run eval golden sets
 - `pnpm journal:export` — export a maintainer's collection (tasting journal and cellar) to JSON, export `formatVersion: 2` per ADR-0024 (GDPR portability + the durability backstop for Upstash-of-record). Defaults to the sole `MAINTAINER_USER_IDS` entry; `-- --user <clerkUserId>` / `-- --out <path>` to override. **Output contains personal data** — gitignored by pattern, delete it once used.
-- `pnpm journal:restore` — write an export or a daily backup back into Upstash (`-- --file <path>`, or `-- --backup latest`; `--user` to retarget, `--dry-run` to only validate). Idempotent upsert, never deletes. The daily backup itself is `/api/cron/backup-collection` (Vercel Cron, `CRON_SECRET`) → private Supabase Storage bucket `collection-backups`, newest 30 kept (ADR-0024).
+- `pnpm journal:restore` — write an export or a daily backup back into Upstash (`-- --file <path>`, or `-- --backup latest`; `--from` picks whose backups, `--user` retargets the write, `--dry-run` only validates). Idempotent upsert, never deletes. The daily backup itself is `/api/cron/backup-collection` (Vercel Cron, `CRON_SECRET`) → private Supabase Storage bucket `collection-backups`, newest 30 kept (ADR-0024).
 - `pnpm journal:erase -- --user <clerkUserId> [--yes]` — the GDPR erasure path: journal, cellar **and** that user's backups. Without `--yes` it only reports what it would erase.
 
 To drive any scan/suggest UI state in dev without a bottle photo or paid API calls, see `docs/manual-testing.md` (stub env vars + cookie recipes).
