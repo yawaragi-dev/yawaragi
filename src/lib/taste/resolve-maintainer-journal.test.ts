@@ -8,6 +8,7 @@ const TARGET = { f1: 1, f2: 1, f3: 1, f4: 1, f5: 1, f6: 1 }
 const NOW = 1_000_000
 
 const entry = (id: string, occurredAt: number): JournalEntry => ({
+  schemaVersion: 2,
   id,
   event: { kind: 'rating', rating: 5, brandId: occurredAt, target: TARGET, occurredAt },
   sake: { nameKanji: '鍋島', nameRomaji: 'Nabeshima' },

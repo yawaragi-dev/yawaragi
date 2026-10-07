@@ -6,6 +6,7 @@ import { journalKey, parseStoredEntries } from '@/lib/taste/journal-store'
 const TARGET = { f1: 0.2, f2: 0.6, f3: 0.6, f4: 0.4, f5: 0.1, f6: 0.3 }
 
 const entry = (id: string, occurredAt: number, over: Partial<JournalEntry> = {}): JournalEntry => ({
+  schemaVersion: 2,
   id,
   event: { kind: 'rating', rating: 5, brandId: occurredAt, target: TARGET, occurredAt },
   sake: { nameKanji: '鍋島', nameRomaji: 'Nabeshima' },
@@ -77,5 +78,28 @@ describe('InMemoryJournalStore', () => {
     const store = new InMemoryJournalStore()
     await store.put('user_a', entry('a', 10))
     expect(await store.read('user_b')).toEqual([])
+  })
+})
+
+describe('journal reads across schema versions (ADR-0024)', () => {
+  it('reads an entry stored before versioning as a current one', async () => {
+    const store = new InMemoryJournalStore()
+    const legacy: Record<string, unknown> = { ...entry('old', 10) }
+    delete legacy.schemaVersion
+    store.putRaw(USER, 'old', JSON.stringify(legacy))
+
+    expect(await store.read(USER)).toEqual([entry('old', 10)])
+  })
+
+  it('leaves an unreadable record out of the journal but keeps it in the dump', async () => {
+    const store = new InMemoryJournalStore()
+    await store.put(USER, entry('a', 10))
+    store.putRaw(USER, 'future', JSON.stringify({ ...entry('future', 20), schemaVersion: 9 }))
+
+    expect((await store.read(USER)).map((e) => e.id)).toEqual(['a'])
+    const dump = await store.dump(USER)
+    expect(dump.rejected).toEqual([
+      expect.objectContaining({ store: 'journal', id: 'future', reason: 'newer' }),
+    ])
   })
 })

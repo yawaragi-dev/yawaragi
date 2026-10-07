@@ -1,4 +1,6 @@
 import { z } from 'zod'
+import type { VersionedRecordCodec } from '@/lib/collection/versioned-record'
+import { DetailedNotesSchema } from '@/lib/schemas/detailed-notes'
 import { type TasteEvent, TasteEventSchema } from '@/lib/schemas/taste-event'
 
 // A JournalEntry (CONTEXT.md, ADR-0020) — one row of a User's TastingJournal:
@@ -21,8 +23,33 @@ import { type TasteEvent, TasteEventSchema } from '@/lib/schemas/taste-event'
 // (personalisation). Not Art. 9 data — `notes` is free-text tasting notes only,
 // never repurposed for anything sensitive. The implementing account-persistence
 // slice updates ADR-0009's RoPA with this operation.
+//
+// VERSIONED (ADR-0024): a stored entry carries `schemaVersion` and is upcast on
+// read by `JOURNAL_ENTRY_CODEC` below. Changing this shape means bumping
+// `JOURNAL_ENTRY_SCHEMA_VERSION` and adding the upcaster from the old version —
+// never editing a field in place, because every entry already in Upstash (and
+// in every backup) was written in the old shape.
+//
+// v1 — no `schemaVersion` field: id, event, sake, notes, triedAt, createdAt.
+// v2 — `schemaVersion: 2`, plus optional `tags` (§5's quick chips), `detail`
+//      (§10's sheet) and `updatedAt`. Nothing renamed, so v1 → v2 only stamps
+//      the version.
+
+/**
+ * §5's quick chips — "Sour apple · Cider-like · Warm · With food". Stable keys;
+ * the words live in `messages/*.json` under `journal.quickTags`. These are the
+ * user's own one-tap notes about a tasting, unrelated to Sakenowa's FlavorTags,
+ * and they never feed the TasteProfile.
+ */
+export const QUICK_TAGS = ['sourApple', 'ciderLike', 'warm', 'withFood'] as const
+export type QuickTag = (typeof QUICK_TAGS)[number]
+
+export const JOURNAL_ENTRY_SCHEMA_VERSION = 2 as const
 
 export const JournalEntrySchema = z.object({
+  /** The record's stored-shape version (ADR-0024). Always the current one
+   *  after a read — older records are upcast before they get here. */
+  schemaVersion: z.literal(JOURNAL_ENTRY_SCHEMA_VERSION),
   /** Stable per-entry id, generated at creation. Enables edit (upsert by id)
    *  and granular erasure (delete one entry) — a permanent journal needs both,
    *  which is why the store is a hash keyed by id, not an append-only list. */
@@ -40,6 +67,14 @@ export const JournalEntrySchema = z.object({
   }),
   /** Free-text tasting note. Optional — a quick check-in has none. */
   notes: z.string().max(2000).optional(),
+  /** §5's quick chips, each at most once. Absent when none are picked. */
+  tags: z
+    .array(z.enum(QUICK_TAGS))
+    .max(QUICK_TAGS.length)
+    .refine((list) => new Set(list).size === list.length, 'duplicate tag')
+    .optional(),
+  /** §10's detailed notes. Absent until a part of the sheet is filled. */
+  detail: DetailedNotesSchema.optional(),
   /** Epoch ms — when the User TRIED the sake (user-facing, may be backdated:
    *  "I had this last week"). Distinct from `createdAt`. The entry's decay
    *  ordering uses `event.occurredAt`, which the creating action sets equal to
@@ -47,9 +82,22 @@ export const JournalEntrySchema = z.object({
   triedAt: z.number().int().nonnegative(),
   /** Epoch ms — when the entry was logged. Audit field; not user-editable. */
   createdAt: z.number().int().nonnegative(),
+  /** Epoch ms — the last edit (re-rate, note, tags, detailed notes). Absent on
+   *  an entry never edited since it was logged. */
+  updatedAt: z.number().int().nonnegative().optional(),
 })
 
 export type JournalEntry = z.infer<typeof JournalEntrySchema>
+
+/** How a stored JournalEntry is read: v1 → v2 stamps the version, nothing else. */
+export const JOURNAL_ENTRY_CODEC: VersionedRecordCodec<JournalEntry> = {
+  kind: 'journal',
+  current: JOURNAL_ENTRY_SCHEMA_VERSION,
+  upcasters: {
+    1: (record) => ({ ...record, schemaVersion: 2 }),
+  },
+  schema: JournalEntrySchema,
+}
 
 /** The primitive a JournalEntry emits — what `deriveTasteProfile` folds over. */
 export const journalEntryToTasteEvent = (entry: JournalEntry): TasteEvent => entry.event

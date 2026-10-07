@@ -1,7 +1,9 @@
 import 'server-only'
 
+import { UpstashHash } from '@/lib/collection/upstash-hash'
+import type { StoreDump } from '@/lib/collection/versioned-record'
 import type { JournalEntry } from '@/lib/schemas/journal-entry'
-import { type JournalStore, journalKey, parseStoredEntries } from '@/lib/taste/journal-store'
+import { type JournalStore, decodeJournalHash, journalKey } from '@/lib/taste/journal-store'
 
 /**
  * Production {@link JournalStore} backed by Upstash Redis over its REST API.
@@ -14,61 +16,36 @@ import { type JournalStore, journalKey, parseStoredEntries } from '@/lib/taste/j
  *
  * Storage shape: a Redis HASH per user (`journal:user:<clerkUserId>`), field =
  * entry id, value = a JSON-encoded JournalEntry. `put` is `HSET` (upsert by id,
- * so it doubles as edit); `remove` is `HDEL`; `read` is `HGETALL` (which the
- * REST API returns as a flat [field, value, field, value, …] array) parsed and
- * re-ordered oldest→newest by the shared helper. `clear` is `DEL`. There is
- * deliberately NO `EXPIRE` — a journal is a permanent record (ADR-0020).
+ * so it doubles as edit); `remove` is `HDEL`; `read`/`dump` are `HGETALL`,
+ * decoded and upcast by the shared helper (ADR-0024) and re-ordered
+ * oldest→newest. `clear` is `DEL`. There is deliberately NO `EXPIRE` — a
+ * journal is a permanent record (ADR-0020). The REST plumbing is
+ * {@link UpstashHash}, shared with the cellar store.
  */
 export class UpstashJournalStore implements JournalStore {
-  constructor(
-    private readonly restUrl: string,
-    private readonly restToken: string,
-    private readonly fetchImpl: typeof fetch = fetch,
-  ) {}
+  private readonly hash: UpstashHash
+
+  constructor(restUrl: string, restToken: string, fetchImpl: typeof fetch = fetch) {
+    this.hash = new UpstashHash(restUrl, restToken, fetchImpl)
+  }
 
   async read(userId: string): Promise<JournalEntry[]> {
-    const result = await this.exec(['HGETALL', journalKey(userId)])
-    if (!Array.isArray(result)) return []
-    // HGETALL returns [field0, value0, field1, value1, …]; the JSON payloads are
-    // the values (odd indices). Field ids are redundant with the parsed entry.id.
-    const values: string[] = []
-    for (let i = 1; i < result.length; i += 2) {
-      const value = result[i]
-      if (typeof value === 'string') values.push(value)
-    }
-    return parseStoredEntries(values)
+    return (await this.dump(userId)).records
+  }
+
+  async dump(userId: string): Promise<StoreDump<JournalEntry>> {
+    return decodeJournalHash(await this.hash.getAll(journalKey(userId)))
   }
 
   async put(userId: string, entry: JournalEntry): Promise<void> {
-    await this.exec(['HSET', journalKey(userId), entry.id, JSON.stringify(entry)])
+    await this.hash.set(journalKey(userId), entry.id, JSON.stringify(entry))
   }
 
   async remove(userId: string, entryId: string): Promise<void> {
-    await this.exec(['HDEL', journalKey(userId), entryId])
+    await this.hash.delete(journalKey(userId), entryId)
   }
 
   async clear(userId: string): Promise<void> {
-    await this.exec(['DEL', journalKey(userId)])
-  }
-
-  private async exec(command: ReadonlyArray<string>): Promise<unknown> {
-    const response = await this.fetchImpl(this.restUrl, {
-      method: 'POST',
-      headers: {
-        authorization: `Bearer ${this.restToken}`,
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify(command),
-      cache: 'no-store',
-    })
-
-    if (!response.ok) {
-      throw new Error(`Upstash REST error ${response.status} for command ${command[0]}`)
-    }
-    const json: unknown = await response.json()
-    if (typeof json === 'object' && json !== null && 'result' in json) {
-      return (json as { result: unknown }).result
-    }
-    return null
+    await this.hash.drop(journalKey(userId))
   }
 }

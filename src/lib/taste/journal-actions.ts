@@ -2,7 +2,11 @@
 
 import { auth } from '@clerk/nextjs/server'
 import { currentUserIsMaintainer } from '@/lib/auth/maintainer'
-import { type JournalEntry, JournalEntrySchema } from '@/lib/schemas/journal-entry'
+import {
+  JOURNAL_ENTRY_SCHEMA_VERSION,
+  type JournalEntry,
+  JournalEntrySchema,
+} from '@/lib/schemas/journal-entry'
 import { type JournalLogInput, JournalLogInputSchema } from '@/lib/schemas/journal-log-input'
 import { lookupBrand, lookupFlavorChart } from '@/lib/sakenowa/lookup'
 import { getJournalStore } from '@/lib/taste/get-journal-store'
@@ -63,6 +67,7 @@ export async function logSakeToJournal(input: JournalLogInput): Promise<JournalA
     const tried = triedAt ?? now
     const trimmedNotes = notes?.trim()
     const entry: JournalEntry = {
+      schemaVersion: JOURNAL_ENTRY_SCHEMA_VERSION,
       id: crypto.randomUUID(),
       event: {
         kind: 'rating',
@@ -99,6 +104,7 @@ export async function editJournalNotes(
     const updated = JournalEntrySchema.parse({
       ...existing,
       notes: trimmed ? trimmed : undefined,
+      updatedAt: Date.now(),
     })
     await store.put(userId, updated)
     return readJournal(store, userId)

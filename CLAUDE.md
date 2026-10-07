@@ -40,7 +40,7 @@ Naming history: previously "Kanpai"; renamed to avoid collision with KANPAI Lond
 - `pnpm migrate` — apply pending SQL files in `supabase/migrations/` to `DATABASE_URL`
 - `pnpm ingest` — refresh Sakenowa data into Supabase
 - `pnpm eval` — run eval golden sets
-- `pnpm journal:export` — export a maintainer's tasting journal to JSON (GDPR portability + the durability backstop for Upstash-of-record). Defaults to the sole `MAINTAINER_USER_IDS` entry; `-- --user <clerkUserId>` / `-- --out <path>` to override. **Output contains personal data** — gitignored by pattern, delete it once used.
+- `pnpm journal:export` — export a maintainer's collection (tasting journal and cellar) to JSON, export `formatVersion: 2` per ADR-0024 (GDPR portability + the durability backstop for Upstash-of-record). Defaults to the sole `MAINTAINER_USER_IDS` entry; `-- --user <clerkUserId>` / `-- --out <path>` to override. **Output contains personal data** — gitignored by pattern, delete it once used.
 
 To drive any scan/suggest UI state in dev without a bottle photo or paid API calls, see `docs/manual-testing.md` (stub env vars + cookie recipes).
 

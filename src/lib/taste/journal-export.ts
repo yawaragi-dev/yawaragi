@@ -1,33 +1,41 @@
-import type { JournalEntry } from '@/lib/schemas/journal-entry'
+import type { StoreDump } from '@/lib/collection/versioned-record'
+import type { CellarBottle } from '@/lib/schemas/cellar-bottle'
 import {
-  JOURNAL_EXPORT_FORMAT_VERSION,
-  type JournalExport,
+  COLLECTION_EXPORT_FORMAT_VERSION,
+  type CollectionExport,
 } from '@/lib/schemas/journal-export'
+import type { JournalEntry } from '@/lib/schemas/journal-entry'
 
 /**
- * Build the export document for one user's TastingJournal (P5.5-D, #244).
+ * Build the export document for one user's collection — journal and cellar
+ * (ADR-0020, ADR-0024 §3).
  *
  * Pure over injected arguments — no store, no clock, no filesystem — so the
- * document shape is unit-testable and the CLI in `scripts/export-journal.ts`
- * stays a thin shell around it. That split also means the eventual
- * "download my data" route for the public launch (ADR-0020) reuses this
- * function rather than reimplementing the envelope.
+ * shape is unit-testable, and the three callers (the `journal:export` CLI, the
+ * daily backup route, and the eventual "download my data" in Account) share one
+ * envelope instead of three.
+ *
+ * Takes the stores' DUMPS, not their reads, so records the running code cannot
+ * decode still travel into the file under `rejected`.
  *
  * @param exportedAt epoch ms, injected rather than read from `Date.now()` so
  *        the output is deterministic in tests.
  */
-export function buildJournalExport(args: {
+export function buildCollectionExport(args: {
   userId: string
-  entries: readonly JournalEntry[]
+  journal: StoreDump<JournalEntry>
+  cellar: StoreDump<CellarBottle>
   exportedAt: number
-}): JournalExport {
+}): CollectionExport {
   return {
-    formatVersion: JOURNAL_EXPORT_FORMAT_VERSION,
+    formatVersion: COLLECTION_EXPORT_FORMAT_VERSION,
     exportedAt: new Date(args.exportedAt).toISOString(),
     userId: args.userId,
-    // Copied into a fresh array so the caller's slice can't be mutated through
-    // the document, but the entries themselves are shared verbatim — the
-    // round-trip fidelity the export schema documents.
-    entries: [...args.entries],
+    // Fresh arrays so the caller's dump can't be mutated through the document;
+    // the records themselves are shared verbatim — the round-trip fidelity the
+    // export documents.
+    journal: [...args.journal.records],
+    cellar: [...args.cellar.records],
+    rejected: [...args.journal.rejected, ...args.cellar.rejected],
   }
 }
