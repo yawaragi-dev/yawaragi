@@ -91,11 +91,10 @@ export class SupabaseBackupStorage implements BackupStorage {
   private request(path: string, init: RequestInit): Promise<Response> {
     return this.fetchImpl(`${this.supabaseUrl.replace(/\/$/, '')}/storage/v1${path}`, {
       ...init,
-      headers: {
-        ...init.headers,
-        authorization: `Bearer ${this.serviceRoleKey}`,
-        apikey: this.serviceRoleKey,
-      },
+      // `apikey` only: Supabase's `sb_secret_` keys are not JWTs and belong
+      // on that header, never on `Authorization: Bearer`. A legacy
+      // service_role JWT works on it too.
+      headers: { ...init.headers, apikey: this.serviceRoleKey },
       cache: 'no-store',
     })
   }

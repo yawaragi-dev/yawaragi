@@ -42,7 +42,8 @@ describe('Supabase backup storage', () => {
       public: false,
     })
     expect(calls[2]!.headers['x-upsert']).toBe('false')
-    expect(calls[2]!.headers.authorization).toBe('Bearer srk')
+    expect(calls[2]!.headers.apikey).toBe('srk')
+    expect(calls[2]!.headers.authorization).toBeUndefined()
   })
 
   it('checks the bucket once per instance, not on every call', async () => {
