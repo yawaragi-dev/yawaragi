@@ -14,9 +14,19 @@ import {
 /**
  * A Cellar row's two buttons (§11). Open bottle: "Pour & rate" (to the bottle
  * page with §5's panel already open) · "Finished". Sealed: "Open a bottle" ·
- * "Remove". Each change re-renders the list from the store.
+ * "Remove" — one bottle at a time, so it reads "Remove one" while there are
+ * several. Each change re-renders the list from the store.
  */
-export function CellarRowActions({ brandId, isOpen }: { brandId: number; isOpen: boolean }) {
+export function CellarRowActions({
+  brandId,
+  isOpen,
+  count,
+}: {
+  brandId: number
+  isOpen: boolean
+  /** Bottles on the row. */
+  count: number
+}) {
   const t = useTranslations('cellar')
   const router = useRouter()
   const [failed, setFailed] = useState(false)
@@ -82,7 +92,7 @@ export function CellarRowActions({ brandId, isOpen }: { brandId: number; isOpen:
               className={secondary}
               data-testid={`cellar-remove-${brandId}`}
             >
-              {t('remove')}
+              {count > 1 ? t('removeOne') : t('remove')}
             </button>
           </>
         )}

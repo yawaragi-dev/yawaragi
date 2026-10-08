@@ -58,9 +58,11 @@ describe('the cellar, from the buttons', () => {
     expect(await cellar().read(USER)).toEqual([])
   })
 
-  it('removes the whole row', async () => {
+  it('removes one bottle at a time, and the row with the last one', async () => {
     await addToCellar(7)
     await addToCellar(7)
+    expect(await removeFromCellar(7)).toEqual({ status: 'ok', count: 1 })
+    expect((await cellar().read(USER))[0]!.count).toBe(1)
     expect(await removeFromCellar(7)).toEqual({ status: 'ok', count: 0 })
     expect(await cellar().read(USER)).toEqual([])
   })

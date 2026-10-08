@@ -97,7 +97,7 @@ export async function CellarList({
                       ? t('drinkSoon', { days: f.days })
                       : t('open', { days: f.days })}
                 </span>
-                <CellarRowActions brandId={row.brandId} isOpen={f.kind === 'open'} />
+                <CellarRowActions brandId={row.brandId} isOpen={f.kind === 'open'} count={row.count} />
               </span>
             </li>
           )

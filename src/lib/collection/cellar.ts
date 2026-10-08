@@ -61,6 +61,16 @@ export function finishBottle(bottle: CellarBottle, now: number): CellarBottle | 
   return { ...bottle, count: bottle.count - 1, openedAt: null, updatedAt: now }
 }
 
+/**
+ * "Remove" on a sealed row: one bottle fewer — a bottle given away, or added
+ * by mistake. The last one takes the row (`null`). The prototype drops the
+ * whole row, which left no way to take back a single extra bottle.
+ */
+export function removeBottle(bottle: CellarBottle, now: number): CellarBottle | null {
+  if (bottle.count <= 1) return null
+  return { ...bottle, count: bottle.count - 1, updatedAt: now }
+}
+
 export type CellarFreshness =
   | { kind: 'unopened' }
   | { kind: 'open'; days: number; drinkSoon: boolean }

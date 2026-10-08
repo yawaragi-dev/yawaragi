@@ -1,14 +1,14 @@
 'use server'
 
 import { z } from 'zod'
-import { addBottle, finishBottle, openBottle } from '@/lib/collection/cellar'
+import { addBottle, finishBottle, openBottle, removeBottle } from '@/lib/collection/cellar'
 import type { CellarBottle } from '@/lib/schemas/cellar-bottle'
 import { lookupBrand } from '@/lib/sakenowa/lookup'
 import { withMaintainerCollection } from '@/lib/taste/maintainer-collection'
 
 /**
  * The Cellar's write actions (design v1.4 §11, ADR-0024): add a bottle, open
- * one, finish one, remove the row. Each is a read-modify-write of one row
+ * one, finish one, remove one. Each is a read-modify-write of one row
  * through the pure rules in `cellar.ts`, behind the same maintainer gate as
  * the journal (ADR-0020). Not rate-limited, for the journal actions' reason.
  *
@@ -52,9 +52,9 @@ export async function finishCellarBottle(brandId: number): Promise<CellarActionR
   return change(brandId, (row, now) => finishBottle(row, now))
 }
 
-/** "Remove": the row goes, whatever its count — the prototype's behaviour. */
+/** "Remove": one bottle fewer; the last one takes the row. */
 export async function removeFromCellar(brandId: number): Promise<CellarActionResult> {
-  return change(brandId, () => null)
+  return change(brandId, (row, now) => removeBottle(row, now))
 }
 
 async function change(

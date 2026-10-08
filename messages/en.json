@@ -591,6 +591,7 @@
     "finished": "Finished",
     "openBottle": "Open a bottle",
     "remove": "Remove",
+    "removeOne": "Remove one",
     "emptyHeading": "Nothing in the cellar",
     "emptyBody": "Bottles you own. Tap “Add to cellar” on any sake and we’ll tell you when an open one should be finished.",
     "error": "Couldn’t change that just now — try again."

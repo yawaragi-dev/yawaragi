@@ -146,11 +146,12 @@ test.describe('/en/collection?tab=cellar — §11 Cellar (ADR-0024)', () => {
     )
 
     // Open: Pour & rate (to the bottle page with the panel open) · Finished.
-    // Sealed: Open a bottle · Remove.
+    // Sealed: Open a bottle · Remove — one bottle at a time, so on a row of
+    // two it says so.
     await expect(page.getByTestId('cellar-pour-1')).toHaveAttribute('href', '/en/sake/1?rate=1')
     await expect(page.getByTestId('cellar-finish-1')).toBeVisible()
     await expect(page.getByTestId('cellar-open-3')).toBeVisible()
-    await expect(page.getByTestId('cellar-remove-3')).toBeVisible()
+    await expect(page.getByTestId('cellar-remove-3')).toHaveText('Remove one')
 
     await expect(page.getByText('Powered by Sakenowa')).toBeVisible()
     await context.close()
