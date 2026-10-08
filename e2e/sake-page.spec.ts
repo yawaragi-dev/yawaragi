@@ -269,6 +269,13 @@ test.describe('sake brand page', () => {
     await expect(panel).toContainText('First time for you')
     await expect(panel).toContainText('Tap a star and it’s logged')
     await expect(page.getByTestId('bottle-rate-open')).toHaveCount(0)
+    // The panel takes the button's slot, right under the identity; the cellar
+    // control moves up beside "Similar" rather than leaving it alone in a row.
+    const panelBox = (await panel.boundingBox())!
+    const cellarBox = (await page.getByTestId('cellar-add').boundingBox())!
+    const similarBox = (await page.getByTestId('similar-sakes-link').boundingBox())!
+    expect(panelBox.y + panelBox.height).toBeLessThanOrEqual(cellarBox.y)
+    expect(Math.abs(cellarBox.y - similarBox.y)).toBeLessThan(4)
 
     // The stub draws the screen; it does not fake a store. The server
     // refuses a visitor who is not really a maintainer, and the panel says

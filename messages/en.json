@@ -578,6 +578,7 @@
   "cellar": {
     "add": "Add to cellar",
     "inCellar": "In cellar · {count}",
+    "addAnother": "Add another bottle",
     "added": "Added to your cellar",
     "addedAnother": "Another bottle added · {count} in cellar",
     "view": "View",

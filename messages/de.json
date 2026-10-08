@@ -578,6 +578,7 @@
   "cellar": {
     "add": "In den Keller",
     "inCellar": "Im Keller · {count}",
+    "addAnother": "Noch eine Flasche hinzufügen",
     "added": "In deinen Keller gelegt",
     "addedAnother": "Noch eine Flasche · {count} im Keller",
     "view": "Ansehen",
