@@ -298,7 +298,7 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
       {viewer.canLog ? (
         <BottleRateRow
           brandId={brandId}
-          hasChart={flavorChart !== null}
+          chart={flavorChart}
           history={
             lastTasting && lastTasting.event.kind === 'rating'
               ? { kind: 'last', triedAt: lastTasting.triedAt, rating: lastTasting.event.rating }

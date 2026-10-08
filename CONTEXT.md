@@ -57,7 +57,7 @@ The optional structured tasting sheet attached to a **JournalEntry** (design v1.
 _Avoid_: Tasting sheet (fine in prose, not as an identifier), Scorecard, Review, Deep log (the pre-v1.4 name)
 
 **QuickTag**:
-One of §5's chips on a **JournalEntry** — "Sour apple", "Cider-like", "Warm", "With food" — tapped right after the star. Stored as a stable key in the entry's `tags`. A note in one tap, not a classification: QuickTags are the user's words about one tasting, unrelated to Sakenowa's **FlavorTags**, and they never feed the **TasteProfile**.
+One of §5's chips on a **JournalEntry**, tapped right after the star: the bottle's two strongest **FlavorAxes** (as "Floral", "Light"…), then "Chilled", "Warm", "With food". Stored as a stable key in the entry's `tags` (`axis:f1`, `chilled`…). The design's fixed "Sour apple · Cider-like" set fitted one demo bottle; its keys stay readable but are no longer offered. What the chips should be is open (#367). A note in one tap, not a classification: QuickTags are the user's words about one tasting, unrelated to Sakenowa's **FlavorTags**, and they never feed the **TasteProfile**.
 _Avoid_: Tag (collides with FlavorTag), Chip (that is the widget), Label
 
 **SchemaVersion** (stored records):

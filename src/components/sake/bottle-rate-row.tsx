@@ -7,6 +7,7 @@ import {
   type TastingHistoryMeta,
   TastingLogPanel,
 } from '@/components/journal/tasting-log-panel'
+import type { FlavorAxis } from '@/lib/schemas/flavor-chart'
 
 /**
  * §9.2's action row — primary "Rate a new tasting", secondary "Similar" — for
@@ -23,12 +24,12 @@ import {
  */
 export function BottleRateRow({
   brandId,
-  hasChart,
+  chart,
   history,
   similar,
 }: {
   brandId: number
-  hasChart: boolean
+  chart: Readonly<Record<FlavorAxis, number>> | null
   history: TastingHistoryMeta
   similar: ReactNode
 }) {
@@ -51,7 +52,7 @@ export function BottleRateRow({
         )}
         {similar}
       </div>
-      {open && <TastingLogPanel brandId={brandId} hasChart={hasChart} history={history} />}
+      {open && <TastingLogPanel brandId={brandId} chart={chart} history={history} />}
     </div>
   )
 }

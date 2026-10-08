@@ -5,7 +5,9 @@ import { useFormatter, useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { StarRating } from '@/components/journal/star-rating'
 import { UndoNotice } from '@/components/journal/undo-notice'
-import { QUICK_TAGS, type QuickTag } from '@/lib/schemas/journal-entry'
+import type { FlavorAxis } from '@/lib/schemas/flavor-chart'
+import type { QuickTag } from '@/lib/schemas/journal-entry'
+import { isAxisQuickTag, quickTagAxis, quickTagsFor } from '@/lib/taste/quick-tags'
 import { ratingBand } from '@/lib/taste/rating-band'
 import { rateNewTasting, undoTasting, updateTasting } from '@/lib/taste/tasting-actions'
 import { cn } from '@/lib/utils'
@@ -39,26 +41,30 @@ interface Logged {
   loggedAt: number
 }
 
-/** How long the Undo notice stays (§5: "about 3s"; the prototype uses 3.4). */
-const NOTICE_MS = 3400
+/** How long the Undo notice stays. §5 says "about 3s" (the prototype uses
+ *  3.4); the maintainer found that too short to reach for Undo, so it is
+ *  doubled. */
+const NOTICE_MS = 6800
 /** A typed note is saved once typing pauses this long, and always on blur. */
 const NOTE_DEBOUNCE_MS = 700
 
 export function TastingLogPanel({
   brandId,
-  hasChart,
+  chart,
   history,
   onSaved,
 }: {
   brandId: number
-  /** Whether this sake has a flavor chart, i.e. whether a rating moves the Palate. */
-  hasChart: boolean
+  /** This sake's flavor chart, or `null` without one. It picks the quick chips,
+   *  and whether a rating moves the Palate. */
+  chart: Readonly<Record<FlavorAxis, number>> | null
   /** Shown before the first tap. `null` when the caller does not know (a fresh scan). */
   history: TastingHistoryMeta | null
   /** Called after the journal changed (logged, or undone), e.g. to refresh the page. */
   onSaved?: () => void
 }) {
   const t = useTranslations('tasting')
+  const tAxis = useTranslations('flavorAxis')
   const tBand = useTranslations('rating.band')
   const format = useFormatter()
   const router = useRouter()
@@ -71,6 +77,9 @@ export function TastingLogPanel({
   const [noticeOpen, setNoticeOpen] = useState(false)
   const [failed, setFailed] = useState(false)
   const [isPending, startTransition] = useTransition()
+  // Undo has its own transition so the panel can dim while it runs without
+  // dimming on every note or chip save.
+  const [isUndoing, startUndo] = useTransition()
 
   const noteTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const noticeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
@@ -160,19 +169,25 @@ export function TastingLogPanel({
     clearTimeout(noticeTimer.current)
     clearTimeout(noteTimer.current)
     setNoticeOpen(false)
-    startTransition(async () => {
+    startUndo(async () => {
       const result = await undoTasting(entryId)
       if (result.status !== 'ok') {
         setFailed(true)
         return
       }
-      setLogged(null)
-      setRating(0)
-      setNote('')
-      savedNote.current = ''
-      setTags([])
-      setPopKey(undefined)
-      changed()
+      // State set after an `await` is no longer part of the transition, so
+      // without this inner one the panel resets at once and the page's
+      // "You and this sake" catches up a beat later, when the refresh lands.
+      // Inside one transition the reset and the refreshed page commit together.
+      startUndo(() => {
+        setLogged(null)
+        setRating(0)
+        setNote('')
+        savedNote.current = ''
+        setTags([])
+        setPopKey(undefined)
+        changed()
+      })
     })
   }
 
@@ -213,9 +228,11 @@ export function TastingLogPanel({
   return (
     <section
       className={cn(
-        'flex flex-col gap-3 rounded-md border border-divider p-3.5 transition-colors',
+        'flex flex-col gap-3 rounded-md border border-divider p-3.5 transition-[background-color,opacity] duration-300',
         logged ? 'bg-ginshu-100' : 'bg-ash-100',
+        isUndoing && 'opacity-60',
       )}
+      aria-busy={isUndoing || undefined}
       aria-labelledby={`tasting-log-${brandId}-heading`}
       data-testid="tasting-log-panel"
       data-logged={logged ? '' : undefined}
@@ -269,7 +286,7 @@ export function TastingLogPanel({
             data-testid="tasting-log-note"
           />
           <div className="flex flex-wrap gap-1.5" role="group" aria-label={t('quickTagsLabel')}>
-            {QUICK_TAGS.map((tag) => {
+            {quickTagsFor(chart).map((tag) => {
               const on = tags.includes(tag)
               return (
                 <button
@@ -281,9 +298,9 @@ export function TastingLogPanel({
                     'min-h-8 rounded-full border px-3 text-meta transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600',
                     on ? 'border-ginshu-600 bg-ginshu-600 text-ground' : 'border-divider text-ash-700 hover:bg-ash-200',
                   )}
-                  data-testid={`tasting-tag-${tag}`}
+                  data-testid={`tasting-tag-${tag.replace(':', '-')}`}
                 >
-                  {t(`quickTags.${tag}`)}
+                  {isAxisQuickTag(tag) ? tAxis(`${quickTagAxis(tag)}.label`) : t(`quickTags.${tag}`)}
                 </button>
               )
             })}
@@ -301,7 +318,7 @@ export function TastingLogPanel({
 
       {noticeOpen && (
         <UndoNotice
-          message={hasChart ? t('noticePalate') : t('notice')}
+          message={chart ? t('noticePalate') : t('notice')}
           undoLabel={t('undo')}
           onUndo={undo}
         />

@@ -891,7 +891,7 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
                 <TastingLogPanel
                   key={view.brandId}
                   brandId={view.brandId}
-                  hasChart={view.flavorChart !== null}
+                  chart={view.flavorChart}
                   history={null}
                   // Nothing on /scan reads the journal, so there is nothing to
                   // refresh after a save.

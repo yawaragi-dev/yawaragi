@@ -15,7 +15,7 @@ The next slice is the core loop around a concrete bottle (design v1.4): find it,
 
 - **Cellar rows** — a new record type: which sakes the user owns, how many, and when one was opened.
 - **Detailed notes** — §10's structured tasting sheet (appearance, nose, five palate scales, how it was served, a verdict).
-- **Quick tags** — §5's chips ("Sour apple", "With food") on an entry.
+- **Quick tags** — §5's chips on an entry (the bottle's strongest flavor axes, "Chilled", "With food"; see #367).
 
 Three things make this the moment to settle storage rather than bolt the fields on:
 

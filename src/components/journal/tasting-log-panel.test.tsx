@@ -14,11 +14,14 @@ vi.mock('@/lib/taste/tasting-actions', () => ({
 
 const { TastingLogPanel } = await import('./tasting-log-panel')
 
+// Floral and light lead; a Dassai-like chart.
+const CHART = { f1: 0.62, f2: 0.3, f3: 0.12, f4: 0.35, f5: 0.28, f6: 0.55 }
+
 function renderPanel(props: Partial<Parameters<typeof TastingLogPanel>[0]> = {}) {
   const onSaved = vi.fn()
   render(
     <NextIntlClientProvider locale="en" messages={en} timeZone="UTC">
-      <TastingLogPanel brandId={7} hasChart history={{ kind: 'first' }} onSaved={onSaved} {...props} />
+      <TastingLogPanel brandId={7} chart={CHART} history={{ kind: 'first' }} onSaved={onSaved} {...props} />
     </NextIntlClientProvider>,
   )
   return { onSaved }
@@ -81,6 +84,33 @@ describe('§5 log panel', () => {
     vi.useRealTimers()
   })
 
+  it("offers this bottle's strongest flavors as chips, not another bottle's", async () => {
+    renderPanel()
+    fireEvent.click(screen.getByTestId('star-rating-4'))
+    const chips = await screen.findByRole('group', { name: en.tasting.quickTagsLabel })
+    expect([...chips.querySelectorAll('button')].map((b) => b.textContent)).toEqual([
+      'Floral',
+      'Light',
+      'Chilled',
+      'Warm',
+      'With food',
+    ])
+
+    fireEvent.click(screen.getByTestId('tasting-tag-axis-f6'))
+    await waitFor(() => expect(updateTasting).toHaveBeenCalledWith('e1', { tags: ['axis:f6'] }))
+  })
+
+  it('offers only the serving context for a sake with no flavor chart', async () => {
+    renderPanel({ chart: null })
+    fireEvent.click(screen.getByTestId('star-rating-4'))
+    const chips = await screen.findByRole('group', { name: en.tasting.quickTagsLabel })
+    expect([...chips.querySelectorAll('button')].map((b) => b.textContent)).toEqual([
+      'Chilled',
+      'Warm',
+      'With food',
+    ])
+  })
+
   it('Undo removes the tasting and returns the panel to "Your take"', async () => {
     renderPanel()
     fireEvent.click(screen.getByTestId('star-rating-4'))
@@ -92,8 +122,25 @@ describe('§5 log panel', () => {
     expect(screen.getByTestId('tasting-log-rating').textContent).toBe('Tap to rate')
   })
 
+  it('holds the logged panel, dimmed, until the undo is done, then resets it with the page', async () => {
+    let finish!: (v: { status: 'ok' }) => void
+    undoTasting.mockReturnValue(new Promise((r) => (finish = r)))
+    renderPanel()
+    fireEvent.click(screen.getByTestId('star-rating-4'))
+    await waitFor(() => expect(screen.getByTestId('undo-notice')).toBeTruthy())
+
+    fireEvent.click(screen.getByTestId('undo-notice-undo'))
+    const panel = screen.getByTestId('tasting-log-panel')
+    await waitFor(() => expect(panel.getAttribute('aria-busy')).toBe('true'))
+    expect(screen.getByText('Logged')).toBeTruthy()
+
+    await act(async () => finish({ status: 'ok' }))
+    await waitFor(() => expect(screen.getByText('Your take')).toBeTruthy())
+    expect(panel.getAttribute('aria-busy')).toBeNull()
+  })
+
   it('does not claim the palate moved for a sake with no flavor chart', async () => {
-    renderPanel({ hasChart: false })
+    renderPanel({ chart: null })
     fireEvent.click(screen.getByTestId('star-rating-4'))
     await waitFor(() => expect(screen.getByTestId('undo-notice').textContent).toContain('Logged'))
     expect(screen.getByTestId('undo-notice').textContent).not.toContain('palate')
