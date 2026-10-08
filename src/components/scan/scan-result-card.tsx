@@ -1,5 +1,6 @@
 'use client'
 
+import type { ReactNode } from 'react'
 import { useTranslations } from 'next-intl'
 import NextLink from 'next/link'
 import { ArrowsSplit, BookOpenText, CaretRight } from '@phosphor-icons/react/dist/ssr'
@@ -99,6 +100,13 @@ export interface ScanResultCardProps {
    * (keep the visitor's photo visible across the transition).
    */
   isStale?: boolean
+  /**
+   * §5's log panel ("Your take"), rendered under the identity block. Passed
+   * in rather than built here because only the scan flow has one, and only
+   * for a visitor who can keep a journal (ADR-0020): the landing's example
+   * card must never offer a star that saves somewhere.
+   */
+  logPanel?: ReactNode
 }
 
 export function ScanResultCard({
@@ -114,6 +122,7 @@ export function ScanResultCard({
   extractionConfidence,
   exampleLabel,
   isStale = false,
+  logPanel,
 }: ScanResultCardProps) {
   const t = useTranslations('scan.resultCard')
   const tBadge = useTranslations('provenance.badge.llmExtracted')
@@ -275,6 +284,11 @@ export function ScanResultCard({
                 {breweryRomaji && <span>({breweryRomaji})</span>}
               </div>
             </div>
+
+            {/* §5 puts the log panel straight under the identity, above the
+                chart: rating is the reason to be on this screen, and the chart
+                is reference. */}
+            {logPanel}
 
             {flavorChart ? (
               <FlavorGridForCard chart={flavorChart} />

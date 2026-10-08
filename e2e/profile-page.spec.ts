@@ -197,7 +197,6 @@ test.describe('/en/profile — §12 Palate', () => {
     // Collection now — and this screen reads it as DATA.
     await expect(page.getByTestId('profile-page')).toBeVisible()
     await expect(page.getByTestId('journal-list')).toHaveCount(0)
-    await expect(page.getByTestId('journal-log-open')).toHaveCount(0)
 
     // Three journal entries is a read, so the Palate must be one — not "Not
     // yet". Moving the journal WITHOUT this would have left a maintainer with

@@ -28,6 +28,7 @@ import { resolveBadgeKind } from '@/lib/provenance/policy'
 // `ScanActionState` and gate these renders with
 // `requiresSakenowaAttribution(sources)` from sakenowa-attribution.tsx.
 import { SakenowaAttributionView } from '@/components/sake/sakenowa-attribution'
+import { TastingLogPanel } from '@/components/journal/tasting-log-panel'
 import { ScanResultCard } from '@/components/scan/scan-result-card'
 import type { DebugEvent } from '@/lib/debug/debug-log'
 import { appendDebugEvents } from '@/lib/debug/debug-store'
@@ -58,6 +59,12 @@ interface ScanFormProps {
    * no-op.
    */
   debugMode?: boolean
+  /**
+   * Whether this visitor can keep a journal (ADR-0020), decided on the server.
+   * When true, a match carries §5's log panel; otherwise the card shows no
+   * star at all, because a star that saves nothing is a dead affordance.
+   */
+  canLog?: boolean
 }
 
 /**
@@ -95,7 +102,7 @@ interface ScanFormProps {
  * why. A "Scan again" dismisses the result and the viewfinder returns; see
  * `view` for why that is one value rather than five conditions.
  */
-export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
+export function ScanForm({ locale, debugMode = false, canLog = false }: ScanFormProps) {
   const t = useTranslations('scan.form')
   const tCard = useTranslations('scan.resultCard')
   // ProvenanceBadgeView + SakenowaAttributionView are the sync presentational
@@ -875,6 +882,23 @@ export function ScanForm({ locale, debugMode = false }: ScanFormProps) {
             // fading them tells the visitor "the previous match is
             // being replaced" without hiding their new bottle.
             isStale={isPending}
+            logPanel={
+              canLog && (
+                // Keyed by brand: a rescan that lands on another sake starts a
+                // fresh "Your take", not a re-rate of the last bottle's entry.
+                // No history meta before the first tap — the scan does not
+                // read the journal, and "First time for you" would be a guess.
+                <TastingLogPanel
+                  key={view.brandId}
+                  brandId={view.brandId}
+                  chart={view.flavorChart}
+                  history={null}
+                  // Nothing on /scan reads the journal, so there is nothing to
+                  // refresh after a save.
+                  onSaved={() => {}}
+                />
+              )
+            }
           />
         )}
         {view.status === 'matched_brand_only' && (

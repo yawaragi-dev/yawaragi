@@ -99,6 +99,36 @@ test.describe('scan result branches (#109 PR B)', () => {
     await context.close()
   })
 
+  test('§5 "Your take" rides on the card only for a visitor who can keep a journal', async ({
+    browser,
+  }, testInfo) => {
+    testInfo.skip(!dbReady, 'Sakenowa mirror not available — DB-bound spec')
+    const injection = injectionCookie({ name_ja: '獺祭', brewery_ja: '旭酒造', confidence: 0.95 })
+
+    // Everyone else: no star at all. A star that saves nowhere is the dead
+    // affordance #162 forbids, and ADR-0020 keeps the journal maintainer-only.
+    const visitor = await scanPageWith(browser, [injection])
+    await visitor.page.goto('/en/scan')
+    await visitor.page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
+    await expect(visitor.page.getByTestId('scan-result-card')).toBeVisible()
+    await expect(visitor.page.getByTestId('tasting-log-panel')).toHaveCount(0)
+    await visitor.context.close()
+
+    // The journal stub stands in for the maintainer check, as on Collection.
+    const keeper = await scanPageWith(browser, [
+      injection,
+      { name: 'yawaragi_journal_stub', value: 'empty', url: BASE_URL },
+    ])
+    await keeper.page.goto('/en/scan')
+    await keeper.page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
+    const panel = keeper.page.getByTestId('scan-result-card').getByTestId('tasting-log-panel')
+    await expect(panel).toBeVisible()
+    await expect(panel).toContainText('Your take')
+    // Ten half-star targets, each saying what it does.
+    await expect(panel.getByRole('button', { name: 'Rate 4.5 stars' })).toBeVisible()
+    await keeper.context.close()
+  })
+
   test('a rescan shows the camera reading, not the old result, while it works', async ({
     browser,
   }, testInfo) => {

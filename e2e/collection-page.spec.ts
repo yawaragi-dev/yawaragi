@@ -70,16 +70,15 @@ test.describe('/en/collection — §11 Journal (ADR-0020, maintainer-only)', () 
     // ADR-0014: Sakenowa brand names on the surface → attribution present.
     await expect(page.getByText('Powered by Sakenowa')).toBeVisible()
 
-    // The FAB opens the log sheet (title, sake search, rating, save).
-    await page.getByTestId('journal-log-open').click()
-    await expect(page.getByTestId('journal-log-form')).toBeVisible()
-    await expect(page.getByTestId('journal-search')).toBeVisible()
-    await expect(page.getByTestId('journal-log-save')).toBeVisible()
+    // No floating "Log a sake" button any more: a tasting is rated where the
+    // bottle is — the scan result or the bottle page — and rule 11 keeps the
+    // bottom edge for the tab bar.
+    await expect(page.getByTestId('journal-log-open')).toHaveCount(0)
 
     await context.close()
   })
 
-  test('empty: shows the start-your-journal state with the log affordance', async ({ browser }) => {
+  test('empty: says the journal starts with one star, and where to find one', async ({ browser }) => {
     const context = await browser.newContext({ locale: 'en-US' })
     await context.addCookies([AGE_GATE_COOKIE, CONSENT_COOKIE, journalStub('empty')])
     const page = await context.newPage()
@@ -89,14 +88,17 @@ test.describe('/en/collection — §11 Journal (ADR-0020, maintainer-only)', () 
     await expect(page.getByTestId('collection-page')).toBeVisible()
     await expect(page.getByTestId('journal-empty')).toBeVisible()
     await expect(page.getByTestId('journal-list')).toHaveCount(0)
-    // Even with no entries, the visitor can log their first sake. §5's star is
-    // the save and the star row is Phase 2, so this is the only way in.
-    await expect(page.getByTestId('journal-log-open')).toBeVisible()
+    // §11: "Your journal starts with one star" + "Scan a label". The star is
+    // on the scan result and the bottle page, so the empty state points at
+    // both ways to reach a bottle.
+    await expect(page.getByTestId('journal-empty')).toContainText('Your journal starts with one star')
+    await expect(page.getByTestId('journal-empty-scan')).toHaveAttribute('href', '/en/scan')
+    await expect(page.getByTestId('journal-empty-type-it')).toHaveAttribute('href', '/en/search')
 
     await context.close()
   })
 
-  test('unavailable: shows a quiet notice and no log affordance', async ({ browser }) => {
+  test('unavailable: shows a quiet notice', async ({ browser }) => {
     const context = await browser.newContext({ locale: 'en-US' })
     await context.addCookies([AGE_GATE_COOKIE, CONSENT_COOKIE, journalStub('unavailable')])
     const page = await context.newPage()
@@ -104,7 +106,7 @@ test.describe('/en/collection — §11 Journal (ADR-0020, maintainer-only)', () 
     await page.goto('/en/collection')
 
     await expect(page.getByTestId('journal-unavailable')).toBeVisible()
-    await expect(page.getByTestId('journal-log-open')).toHaveCount(0)
+    await expect(page.getByTestId('journal-empty-scan')).toHaveCount(0)
 
     await context.close()
   })
@@ -125,7 +127,6 @@ test.describe('/en/collection — everyone else', () => {
     // is, rather than an empty state implying they could fill it.
     await expect(page.getByTestId('tab-placeholder')).toBeVisible()
     await expect(page.getByTestId('journal-list')).toHaveCount(0)
-    await expect(page.getByTestId('journal-log-open')).toHaveCount(0)
 
     await context.close()
   })

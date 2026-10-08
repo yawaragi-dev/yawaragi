@@ -36,13 +36,31 @@ import { type TasteEvent, TasteEventSchema } from '@/lib/schemas/taste-event'
 //      the version.
 
 /**
- * §5's quick chips — "Sour apple · Cider-like · Warm · With food". Stable keys;
- * the words live in `messages/*.json` under `journal.quickTags`. These are the
- * user's own one-tap notes about a tasting, unrelated to Sakenowa's FlavorTags,
- * and they never feed the TasteProfile.
+ * §5's quick chips — the user's own one-tap notes about a tasting. Stable keys;
+ * the words live in `messages/*.json` (`tasting.quickTags`, and
+ * `flavorAxis.<axis>.label` for the axis chips). Unrelated to Sakenowa's
+ * FlavorTags, and they never feed the TasteProfile.
+ *
+ * The panel offers this bottle's two strongest axes plus the serving context
+ * (`quickTagsFor`). The design's fixed "Sour apple · Cider-like · Warm · With
+ * food" fitted its demo bottle and no other; those two keys are retired from
+ * the panel but stay valid here, so an entry that already carries them still
+ * reads instead of landing in `rejected`.
  */
-export const QUICK_TAGS = ['sourApple', 'ciderLike', 'warm', 'withFood'] as const
+export const AXIS_QUICK_TAGS = [
+  'axis:f1',
+  'axis:f2',
+  'axis:f3',
+  'axis:f4',
+  'axis:f5',
+  'axis:f6',
+] as const
+export const CONTEXT_QUICK_TAGS = ['chilled', 'warm', 'withFood'] as const
+const RETIRED_QUICK_TAGS = ['sourApple', 'ciderLike'] as const
+export const QUICK_TAGS = [...AXIS_QUICK_TAGS, ...CONTEXT_QUICK_TAGS, ...RETIRED_QUICK_TAGS] as const
 export type QuickTag = (typeof QUICK_TAGS)[number]
+export type AxisQuickTag = (typeof AXIS_QUICK_TAGS)[number]
+export type ContextQuickTag = (typeof CONTEXT_QUICK_TAGS)[number]
 
 export const JOURNAL_ENTRY_SCHEMA_VERSION = 2 as const
 

@@ -1,27 +1,14 @@
 {
   "journal": {
-    "ratingStars": "{rating, plural, one {# Stern} other {# Sterne}}",
-    "logCta": "Sake eintragen",
-    "logTitle": "Sake eintragen",
-    "searchLabel": "Sake",
-    "searchChange": "Ändern",
-    "searchPlaceholder": "Suchen — 鍋島 / Nabeshima…",
-    "searching": "Suche läuft…",
-    "searchNoResults": "Kein Sake mit Geschmacksdaten gefunden — versuch einen anderen Namen.",
-    "ratingLabel": "Bewertung",
-    "notesLabel": "Notizen",
-    "notesPlaceholder": "Wie war er? (optional)",
-    "triedAtLabel": "Wann du ihn probiert hast",
-    "save": "Ins Journal speichern",
-    "saving": "Speichern…",
-    "errorNoProfile": "Dieser Sake hat noch keine Geschmacksdaten und kann daher nicht in deine Karte aufgenommen werden.",
-    "errorGeneric": "Konnte gerade nicht gespeichert werden — versuch es noch einmal."
+    "ratingStars": "{rating, plural, one {# Stern} other {# Sterne}}"
   },
   "collection": {
     "title": "Sammlung",
-    "emptyHeading": "Hier ist noch nichts",
-    "emptyBody": "Trage den ersten Sake ein, den du probierst — er erscheint hier, der neueste zuerst.",
-    "unavailableBody": "Deine Sammlung ist gerade nicht verfügbar — schau bitte später wieder vorbei."
+    "emptyHeading": "Dein Journal beginnt mit einem Stern",
+    "emptyBody": "Bewerte einen Sake nach dem Scannen oder auf seiner Seite — dann erscheint er hier, der neueste zuerst.",
+    "unavailableBody": "Deine Sammlung ist gerade nicht verfügbar — schau bitte später wieder vorbei.",
+    "emptyScan": "Etikett scannen",
+    "emptyTypeIt": "Namen eintippen"
   },
   "home": {
     "title": "Start",
@@ -557,5 +544,32 @@
     "languageSub": "Deutsch — folgt in Kürze",
     "cookieSettingsLabel": "Cookie-Einstellungen",
     "cookieSettingsSub": "Wähle, was wir speichern"
+  },
+  "tasting": {
+    "yourTake": "Dein Eindruck",
+    "logged": "Eingetragen",
+    "firstTime": "Zum ersten Mal für dich",
+    "lastLogged": "Zuletzt am {date} · {rating}",
+    "loggedMeta": "{time} · {n, plural, =1 {zum ersten Mal} other {zum #. Mal}}",
+    "tapToRate": "Zum Bewerten tippen",
+    "ratingValue": "{rating} · {band}",
+    "rateStar": "{rating, plural, one {Mit # Stern bewerten} other {Mit # Sternen bewerten}}",
+    "hint": "Tipp auf einen Stern und es ist eingetragen — Notizen können warten.",
+    "noteLabel": "Notiz",
+    "notePlaceholder": "Notiz hinzufügen — was ist dir aufgefallen?",
+    "quickTagsLabel": "Kurznotizen",
+    "quickTags": {
+      "chilled": "Gekühlt",
+      "warm": "Warm",
+      "withFood": "Zum Essen"
+    },
+    "notice": "Eingetragen",
+    "noticePalate": "Eingetragen · Geschmack aktualisiert",
+    "undo": "Rückgängig",
+    "error": "Das ließ sich gerade nicht speichern — versuch es noch einmal.",
+    "rateNewTasting": "Neue Verkostung bewerten",
+    "historyHeading": "Du und dieser Sake",
+    "historyCount": "{n, plural, one {# Verkostung} other {# Verkostungen}}",
+    "notTastedYet": "Noch nicht probiert."
   }
 }
