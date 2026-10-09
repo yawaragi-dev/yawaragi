@@ -1,4 +1,5 @@
 import type { FlavorProfile } from '@/lib/schemas/flavor-profile'
+import type { CellarBottle } from '@/lib/schemas/cellar-bottle'
 import type { JournalEntry } from '@/lib/schemas/journal-entry'
 import type { MaintainerJournalState } from '@/lib/taste/resolve-maintainer-journal'
 
@@ -83,6 +84,48 @@ export const STUB_JOURNAL_ENTRIES: readonly JournalEntry[] = [
     createdAt: Date.UTC(2026, 5, 24),
   },
 ]
+
+const DAY = 24 * 60 * 60 * 1000
+
+/**
+ * The Cellar under the same `populated` stub: one bottle open long enough to
+ * be "best finished this week", one open two days, and two sealed bottles of a
+ * third sake — every state §11 draws, against the same fixed instant.
+ */
+export const STUB_CELLAR: readonly CellarBottle[] = [
+  {
+    schemaVersion: 1,
+    brandId: 2,
+    sake: { nameKanji: '鍋島', nameRomaji: 'Nabeshima' },
+    count: 1,
+    openedAt: STUB_JOURNAL_NOW - 2 * DAY,
+    addedAt: STUB_JOURNAL_NOW - 20 * DAY,
+    updatedAt: STUB_JOURNAL_NOW - 2 * DAY,
+  },
+  {
+    schemaVersion: 1,
+    brandId: 3,
+    sake: { nameKanji: '田酒', nameRomaji: 'Denshu' },
+    count: 2,
+    openedAt: null,
+    addedAt: STUB_JOURNAL_NOW - 5 * DAY,
+    updatedAt: STUB_JOURNAL_NOW - 5 * DAY,
+  },
+  {
+    schemaVersion: 1,
+    brandId: 1,
+    sake: { nameKanji: '而今', nameRomaji: 'Jikon' },
+    count: 1,
+    openedAt: STUB_JOURNAL_NOW - 12 * DAY,
+    addedAt: STUB_JOURNAL_NOW - 30 * DAY,
+    updatedAt: STUB_JOURNAL_NOW - 12 * DAY,
+  },
+]
+
+/** The cellar for a stub value: the fixture when populated, otherwise none. */
+export function resolveCellarStub(stub: string): readonly CellarBottle[] {
+  return stub === 'populated' ? STUB_CELLAR : []
+}
 
 /** Map the cookie's value onto a journal state. Unknown values read as empty. */
 export function resolveJournalStub(stub: string): MaintainerJournalState {

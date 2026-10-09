@@ -6,21 +6,24 @@ import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { notFound } from 'next/navigation'
 import { Camera, Keyboard } from '@phosphor-icons/react/dist/ssr'
 import { Link } from '@/i18n/navigation'
+import { CellarList } from '@/components/collection/cellar-list'
 import { JournalList } from '@/components/collection/journal-list'
 import { TabPlaceholder } from '@/components/layout/tab-placeholder'
 import { SakenowaAttribution } from '@/components/sake/sakenowa-attribution'
 import { currentUserIsMaintainer } from '@/lib/auth/maintainer'
 import { isLaunched } from '@/i18n/launch-state'
 import { routing } from '@/i18n/routing'
+import { getCellarStore } from '@/lib/collection/get-cellar-store'
+import type { CellarBottle } from '@/lib/schemas/cellar-bottle'
 import { getJournalStore } from '@/lib/taste/get-journal-store'
-import { resolveJournalStub } from '@/lib/taste/journal-stub'
+import { STUB_JOURNAL_NOW, resolveCellarStub, resolveJournalStub } from '@/lib/taste/journal-stub'
 import {
   type MaintainerJournalState,
   resolveMaintainerJournal,
 } from '@/lib/taste/resolve-maintainer-journal'
 
 /**
- * §11 Collection — the Journal tab. Reference screenshot 19.
+ * §11 Collection — the Journal and Cellar segments. Reference screenshots 19, 20.
  *
  * **This is where the journal was always supposed to live.** It was rendered by
  * `/profile`, from an early return ahead of everything else, which made one
@@ -29,16 +32,11 @@ import {
  * one visitor shut out of the view derived from them. Moving it here fixes the
  * information architecture and, incidentally, makes §12 reachable.
  *
- * §11 is three tabs — Journal · Cellar · Wishlist. **Only Journal ships**, and
- * the segmented control is not rendered:
- *
- * - Cellar and Wishlist are new domain concepts with no tables behind them,
- *   and ADR-0011 blocks any migration adding a `user_id` table while
- *   Production and Preview share one Supabase project. Cellar additionally
- *   overlaps #243.
- * - A three-way control where two options lead nowhere is worse than one
- *   screen that is honest about being one screen (#162). The control arrives
- *   with the second tab that has something in it.
+ * §11 is three segments — Journal · Cellar · Wishlist. **Journal and Cellar
+ * ship** (ADR-0024 puts the Cellar in Upstash beside the journal, so ADR-0011
+ * does not block it); Wishlist is not built and is not offered, because an
+ * option that leads nowhere is the dead affordance #162 forbids. The segment
+ * is `?tab=cellar`, so the cellar notice's "View" can link straight to it.
  *
  * Who sees what: the journal is maintainer-only until the local-first rewrite
  * (ADR-0020, gated on ADR-0011), so everyone else still gets
@@ -53,7 +51,11 @@ import {
 
 interface PageProps {
   params: Promise<{ locale: string }>
+  searchParams: Promise<Record<string, string | string[] | undefined>>
 }
+
+/** §11's segments that have something behind them. Wishlist is not built. */
+type Segment = 'journal' | 'cellar'
 
 type CookieJar = Awaited<ReturnType<typeof cookies>>
 
@@ -63,26 +65,36 @@ type CookieJar = Awaited<ReturnType<typeof cookies>>
  * `yawaragi_journal_stub` seam also stands in for the maintainer check + store
  * so the E2E needs no Clerk session and no Upstash.
  */
-async function resolveJournalView(
-  cookieJar: CookieJar,
-): Promise<{ isMaintainer: boolean; journal: MaintainerJournalState | null }> {
+async function resolveJournalView(cookieJar: CookieJar): Promise<{
+  isMaintainer: boolean
+  journal: MaintainerJournalState | null
+  cellar: readonly CellarBottle[]
+  /** The instant the cellar's "open N days" is measured against. */
+  now: number
+}> {
   const journalStub =
     process.env.NODE_ENV !== 'production'
       ? cookieJar.get('yawaragi_journal_stub')?.value
       : undefined
   if (journalStub != null) {
-    return { isMaintainer: true, journal: resolveJournalStub(journalStub) }
+    return {
+      isMaintainer: true,
+      journal: resolveJournalStub(journalStub),
+      cellar: resolveCellarStub(journalStub),
+      now: STUB_JOURNAL_NOW,
+    }
   }
+  const now = Date.now()
   if (!(await currentUserIsMaintainer())) {
-    return { isMaintainer: false, journal: null }
+    return { isMaintainer: false, journal: null, cellar: [], now }
   }
   const { userId } = await auth()
-  const journal = await resolveMaintainerJournal({
-    store: getJournalStore(),
-    userId,
-    now: Date.now(),
-  })
-  return { isMaintainer: true, journal }
+  const cellarStore = getCellarStore()
+  const [journal, cellar] = await Promise.all([
+    resolveMaintainerJournal({ store: getJournalStore(), userId, now }),
+    userId && cellarStore ? cellarStore.read(userId) : Promise.resolve([]),
+  ])
+  return { isMaintainer: true, journal, cellar, now }
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -92,8 +104,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return { title: `${t('title')} | Yawaragi` }
 }
 
-export default async function CollectionTabPage({ params }: PageProps) {
+export default async function CollectionTabPage({ params, searchParams }: PageProps) {
   const { locale } = await params
+  const segment: Segment = (await searchParams).tab === 'cellar' ? 'cellar' : 'journal'
 
   if (!hasLocale(routing.locales, locale)) {
     notFound()
@@ -148,10 +161,44 @@ export default async function CollectionTabPage({ params }: PageProps) {
           rather than what it contains, because the list below does that. */}
       <h1 className="text-tab-title font-medium text-ink">{t('title')}</h1>
 
+      {/* §11's segmented control, minus Wishlist (not built — a third
+          option leading nowhere is the dead affordance #162 forbids). Plain
+          links with a `?tab=`, so the segment is a URL: "View" on the cellar
+          notice can land on it, and it works before hydration. */}
+      <nav
+        aria-label={t('sectionsLabel')}
+        // §11 / screenshot 20: a compact group on the left, not a full-width
+        // pill; the current segment in the accent outline.
+        className="flex self-start rounded-lg border border-divider"
+        data-testid="collection-segments"
+      >
+        {(['journal', 'cellar'] as const).map((key) => (
+          <Link
+            key={key}
+            href={key === 'journal' ? '/collection' : { pathname: '/collection', query: { tab: key } }}
+            aria-current={segment === key ? 'page' : undefined}
+            className={
+              segment === key
+                ? '-m-px flex min-h-9 items-center rounded-lg border border-ginshu-500 bg-ginshu-100 px-3.5 text-subtle font-medium text-ginshu-700'
+                : 'flex min-h-9 items-center px-3.5 text-subtle text-ink transition-colors hover:text-ginshu-700'
+            }
+            data-testid={`collection-segment-${key}`}
+          >
+            {t(key === 'journal' ? 'segmentJournal' : 'segmentCellar')}
+          </Link>
+        ))}
+      </nav>
+
       {journal.kind === 'unavailable' ? (
         <section data-testid="journal-unavailable">
           <p className="max-w-prose text-body text-ash-600">{t('unavailableBody')}</p>
         </section>
+      ) : segment === 'cellar' ? (
+        <>
+          <CellarList rows={view.cellar} now={view.now} />
+          {/* ADR-0014: cellar rows name Sakenowa brands too. */}
+          {view.cellar.length > 0 && <SakenowaAttribution placement="end" />}
+        </>
       ) : journal.kind === 'empty' ? (
         // §11's empty journal: "Your journal starts with one star" and a way
         // to the star — a scan, or §8 for a visitor without the bottle to hand.

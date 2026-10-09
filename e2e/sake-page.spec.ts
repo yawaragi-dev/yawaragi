@@ -257,6 +257,8 @@ test.describe('sake brand page', () => {
     // §9.2: the personal action first, "Similar" beside it.
     await expect(page.getByTestId('bottle-rate-open')).toContainText('Rate a new tasting')
     await expect(page.getByTestId('similar-sakes-link')).toBeVisible()
+    // The cellar control, for a sake this visitor does not own yet.
+    await expect(page.getByTestId('cellar-add')).toHaveText('Add to cellar')
     // §9.3, with nothing in it yet.
     await expect(page.getByTestId('bottle-history')).toContainText('You and this sake')
     await expect(page.getByTestId('bottle-history-empty')).toContainText('Not tasted yet.')
@@ -267,6 +269,13 @@ test.describe('sake brand page', () => {
     await expect(panel).toContainText('First time for you')
     await expect(panel).toContainText('Tap a star and it’s logged')
     await expect(page.getByTestId('bottle-rate-open')).toHaveCount(0)
+    // The panel takes the button's slot, right under the identity; the cellar
+    // control moves up beside "Similar" rather than leaving it alone in a row.
+    const panelBox = (await panel.boundingBox())!
+    const cellarBox = (await page.getByTestId('cellar-add').boundingBox())!
+    const similarBox = (await page.getByTestId('similar-sakes-link').boundingBox())!
+    expect(panelBox.y + panelBox.height).toBeLessThanOrEqual(cellarBox.y)
+    expect(Math.abs(cellarBox.y - similarBox.y)).toBeLessThan(4)
 
     // The stub draws the screen; it does not fake a store. The server
     // refuses a visitor who is not really a maintainer, and the panel says
@@ -274,6 +283,25 @@ test.describe('sake brand page', () => {
     await panel.getByRole('button', { name: 'Rate 4 stars' }).click()
     await expect(page.getByTestId('tasting-log-error')).toBeVisible()
     await expect(page.getByTestId('tasting-log-rating')).toHaveText('Tap to rate')
+
+    await context.close()
+  })
+
+  test('"Pour & rate" from the Cellar lands with the panel already open', async ({
+    browser,
+  }, testInfo) => {
+    testInfo.skip(brandWithChartId === null, 'DB-bound spec')
+
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([
+      AGE_GATE_COOKIE,
+      { name: 'yawaragi_journal_stub', value: 'empty', url: BASE_URL },
+    ])
+    const page = await context.newPage()
+    await page.goto(`/en/sake/${brandWithChartId}?rate=1`)
+
+    await expect(page.getByTestId('tasting-log-panel')).toBeVisible()
+    await expect(page.getByTestId('bottle-rate-open')).toHaveCount(0)
 
     await context.close()
   })
@@ -289,6 +317,7 @@ test.describe('sake brand page', () => {
     await expect(page.getByTestId('sake-brand-page')).toBeVisible()
     await expect(page.getByTestId('bottle-rate-open')).toHaveCount(0)
     await expect(page.getByTestId('bottle-history')).toHaveCount(0)
+    await expect(page.getByTestId('cellar-add')).toHaveCount(0)
     await expect(page.getByTestId('similar-sakes-link')).toBeVisible()
 
     await context.close()

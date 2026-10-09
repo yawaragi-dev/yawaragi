@@ -42,7 +42,11 @@ export async function resolveMaintainerJournal({
   if (store == null || userId == null) {
     return { kind: 'unavailable' }
   }
-  const entries = await store.read(userId)
+  // Newest first, by when it was tasted: every surface lists the journal that
+  // way (§11, Home's recent tastings), and a store hands entries back in its
+  // own order — a Redis hash's is roughly insertion, which put a tasting
+  // backdated or logged late in the wrong place.
+  const entries = [...(await store.read(userId))].sort((a, b) => b.triedAt - a.triedAt)
   if (entries.length === 0) {
     return { kind: 'empty' }
   }

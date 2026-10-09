@@ -2,7 +2,7 @@ import { getTranslations } from 'next-intl/server'
 import { ArrowRight } from '@phosphor-icons/react/dist/ssr'
 import { Link } from '@/i18n/navigation'
 import type { JournalEntry } from '@/lib/schemas/journal-entry'
-import { ratingStars } from '@/lib/taste/rating-stars'
+import { StarRow } from '@/components/journal/star-row'
 import { relativeAge } from '@/lib/home/relative-age'
 
 /**
@@ -67,19 +67,21 @@ export async function HomeRecentTastings({
                 data-testid="home-recent-bottle-slot"
               />
               <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                <span className="truncate text-card-heading font-medium text-ink" lang="ja">
-                  {entry.sake.nameKanji}
+                {/* Latin name first, kanji under it — screenshot 04, and the
+                    journal's order. */}
+                <span
+                  className="truncate text-card-heading font-medium text-ink"
+                  lang={entry.sake.nameRomaji ? 'en' : 'ja'}
+                >
+                  {entry.sake.nameRomaji ?? entry.sake.nameKanji}
                 </span>
                 {entry.sake.nameRomaji && (
-                  <span className="truncate text-meta text-ash-600" lang="en">
-                    {entry.sake.nameRomaji}
+                  <span className="truncate text-meta text-ash-600" lang="ja">
+                    {entry.sake.nameKanji}
                   </span>
                 )}
-                <span
-                  className="text-meta text-ginshu-600"
-                  aria-label={tJournal('ratingStars', { rating })}
-                >
-                  {ratingStars(rating)}
+                <span role="img" className="pt-0.5" aria-label={tJournal('ratingStars', { rating })}>
+                  <StarRow value={rating} size={12} />
                 </span>
               </span>
               <span className="shrink-0 self-start text-meta text-ash-600">

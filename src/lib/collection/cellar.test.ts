@@ -5,6 +5,7 @@ import {
   cellarFreshness,
   cellarSummary,
   finishBottle,
+  removeBottle,
   openBottle,
   sortCellar,
 } from '@/lib/collection/cellar'
@@ -36,6 +37,16 @@ describe('adding to the cellar', () => {
     expect(second.count).toBe(2)
     expect(second.addedAt).toBe(1000)
     expect(second.updatedAt).toBe(2000)
+  })
+})
+
+describe('removing a sealed bottle', () => {
+  it('takes one bottle off a row of several, not the whole row', () => {
+    expect(removeBottle(row({ count: 3 }), 9000)).toMatchObject({ count: 2, updatedAt: 9000 })
+  })
+
+  it('removing the last bottle removes the row', () => {
+    expect(removeBottle(row({ count: 1 }), 9000)).toBeNull()
   })
 })
 

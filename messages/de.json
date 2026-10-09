@@ -8,7 +8,10 @@
     "emptyBody": "Bewerte einen Sake nach dem Scannen oder auf seiner Seite — dann erscheint er hier, der neueste zuerst.",
     "unavailableBody": "Deine Sammlung ist gerade nicht verfügbar — schau bitte später wieder vorbei.",
     "emptyScan": "Etikett scannen",
-    "emptyTypeIt": "Namen eintippen"
+    "emptyTypeIt": "Namen eintippen",
+    "sectionsLabel": "Bereiche der Sammlung",
+    "segmentJournal": "Journal",
+    "segmentCellar": "Keller"
   },
   "home": {
     "title": "Start",
@@ -571,5 +574,26 @@
     "historyHeading": "Du und dieser Sake",
     "historyCount": "{n, plural, one {# Verkostung} other {# Verkostungen}}",
     "notTastedYet": "Noch nicht probiert."
+  },
+  "cellar": {
+    "add": "In den Keller",
+    "inCellar": "Im Keller · {count}",
+    "addAnother": "Noch eine Flasche hinzufügen",
+    "added": "In deinen Keller gelegt",
+    "addedAnother": "Noch eine Flasche · {count} im Keller",
+    "view": "Ansehen",
+    "summary": "{bottles, plural, one {# Flasche} other {# Flaschen}} · {open} offen",
+    "countBadge": "× {count}",
+    "unopened": "Ungeöffnet · hält Monate, kühl und dunkel",
+    "open": "{days, plural, =0 {Heute geöffnet} one {Seit # Tag offen} other {Seit # Tagen offen}} · Kühlschrank",
+    "drinkSoon": "Seit {days} Tagen offen — am besten diese Woche aufbrauchen",
+    "pourAndRate": "Einschenken & bewerten",
+    "finished": "Leer",
+    "openBottle": "Flasche öffnen",
+    "remove": "Entfernen",
+    "removeOne": "Eine entfernen",
+    "emptyHeading": "Noch nichts im Keller",
+    "emptyBody": "Flaschen, die du besitzt. Tipp bei einem Sake auf „In den Keller“, und wir sagen dir, wann eine offene Flasche aufgebraucht werden sollte.",
+    "error": "Das ließ sich gerade nicht ändern — versuch es noch einmal."
   }
 }

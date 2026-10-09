@@ -56,6 +56,17 @@ describe('resolveMaintainerJournal', () => {
     expect(state.profile.f1).toBeGreaterThan(NEUTRAL_AXIS)
   })
 
+  it('lists the newest tasting first, whatever order the store returns them in', async () => {
+    const store = new InMemoryJournalStore()
+    // Logged oldest-first — a store hands entries back in insertion order.
+    await store.put(USER, entry('older', NOW - 3000))
+    await store.put(USER, entry('newest', NOW - 1000))
+    await store.put(USER, entry('middle', NOW - 2000))
+    const state = await resolveMaintainerJournal({ store, userId: USER, now: NOW })
+    if (state.kind !== 'journal') throw new Error('expected journal')
+    expect(state.entries.map((e) => e.id)).toEqual(['newest', 'middle', 'older'])
+  })
+
   it('scopes to the given user — another user id sees an empty journal', async () => {
     const store = new InMemoryJournalStore()
     await store.put(USER, entry('a', NOW - 1000))

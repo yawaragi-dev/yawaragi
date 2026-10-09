@@ -112,6 +112,64 @@ test.describe('/en/collection — §11 Journal (ADR-0020, maintainer-only)', () 
   })
 })
 
+test.describe('/en/collection?tab=cellar — §11 Cellar (ADR-0024)', () => {
+  test('lists the bottles, the ones to finish first, each with its two actions', async ({
+    browser,
+  }) => {
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([AGE_GATE_COOKIE, CONSENT_COOKIE, journalStub('populated')])
+    const page = await context.newPage()
+
+    await page.goto('/en/collection')
+    // Journal is the default segment; Cellar is a link away, and a URL.
+    await expect(page.getByTestId('collection-segment-journal')).toHaveAttribute('aria-current', 'page')
+    await page.getByTestId('collection-segment-cellar').click()
+    await expect(page).toHaveURL(/\/en\/collection\?tab=cellar$/)
+    await expect(page.getByTestId('collection-segment-cellar')).toHaveAttribute('aria-current', 'page')
+    // No Wishlist: it is not built, and an option to nowhere is #162's dead end.
+    await expect(page.getByTestId('collection-segment-wishlist')).toHaveCount(0)
+
+    // Bottles, not rows: 1 + 2 + 1.
+    await expect(page.getByTestId('cellar-summary')).toHaveText('4 bottles · 2 open')
+
+    // §11: "drink soon" sorts first and says so; sealed bottles last.
+    const rows = page.getByTestId('cellar-row')
+    await expect(rows).toHaveCount(3)
+    await expect(rows.nth(0)).toContainText('而今')
+    await expect(rows.nth(0).getByTestId('cellar-state')).toHaveText(
+      'Open 12 days — best finished this week',
+    )
+    await expect(rows.nth(1).getByTestId('cellar-state')).toHaveText('Open 2 days · fridge')
+    await expect(rows.nth(2)).toContainText('× 2')
+    await expect(rows.nth(2).getByTestId('cellar-state')).toHaveText(
+      'Unopened · keeps for months, cool and dark',
+    )
+
+    // Open: Pour & rate (to the bottle page with the panel open) · Finished.
+    // Sealed: Open a bottle · Remove — one bottle at a time, so on a row of
+    // two it says so.
+    await expect(page.getByTestId('cellar-pour-1')).toHaveAttribute('href', '/en/sake/1?rate=1')
+    await expect(page.getByTestId('cellar-finish-1')).toBeVisible()
+    await expect(page.getByTestId('cellar-open-3')).toBeVisible()
+    await expect(page.getByTestId('cellar-remove-3')).toHaveText('Remove one')
+
+    await expect(page.getByText('Powered by Sakenowa')).toBeVisible()
+    await context.close()
+  })
+
+  test('an empty cellar says what it is for', async ({ browser }) => {
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([AGE_GATE_COOKIE, CONSENT_COOKIE, journalStub('empty')])
+    const page = await context.newPage()
+
+    await page.goto('/en/collection?tab=cellar')
+    await expect(page.getByTestId('cellar-empty')).toContainText('Nothing in the cellar')
+    await expect(page.getByTestId('cellar-empty')).toContainText('Add to cellar')
+
+    await context.close()
+  })
+})
+
 test.describe('/en/collection — everyone else', () => {
   test('still says what will be here, rather than showing an empty journal', async ({
     browser,

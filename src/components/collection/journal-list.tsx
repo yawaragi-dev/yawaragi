@@ -1,7 +1,7 @@
 import { getFormatter, getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
 import type { JournalEntry } from '@/lib/schemas/journal-entry'
-import { ratingStars } from '@/lib/taste/rating-stars'
+import { StarRow } from '@/components/journal/star-row'
 
 /**
  * §11's Journal list. Reference screenshot 19.
@@ -49,19 +49,22 @@ export async function JournalList({
                 calendar edge rather than as a sentence. */}
             <span className="flex w-10 shrink-0 flex-col items-start pt-0.5">
               <span className="text-lg-alt font-medium text-ink">
-                {format.dateTime(new Date(entry.triedAt), { day: 'numeric', timeZone: 'UTC' })}
+                {format.dateTime(new Date(entry.triedAt), { day: '2-digit', timeZone: 'UTC' })}
               </span>
               <span className="text-micro uppercase text-ash-600">
                 {format.dateTime(new Date(entry.triedAt), { month: 'short', timeZone: 'UTC' })}
               </span>
             </span>
             <span className="flex min-w-0 flex-1 flex-col gap-1">
-              <span className="text-card-heading font-medium text-ink" lang="ja">
-                {entry.sake.nameKanji}
+              {/* Screenshot 19 leads with the Latin name, like the bottle page's
+                  title; the kanji follows verbatim on the line §11 gives the
+                  brewery, which the entry does not store. */}
+              <span className="text-card-heading font-medium text-ink" lang={entry.sake.nameRomaji ? 'en' : 'ja'}>
+                {entry.sake.nameRomaji ?? entry.sake.nameKanji}
               </span>
               {entry.sake.nameRomaji && (
-                <span className="text-meta text-ash-600" lang="en">
-                  {entry.sake.nameRomaji}
+                <span className="text-meta text-ash-600" lang="ja">
+                  {entry.sake.nameKanji}
                 </span>
               )}
               {entry.notes && (
@@ -71,18 +74,16 @@ export async function JournalList({
                 <span className="text-subtle italic text-ash-700">“{entry.notes}”</span>
               )}
             </span>
-            <span
-              className="shrink-0 whitespace-nowrap text-card-heading text-ginshu-600"
-              aria-label={t('ratingStars', { rating })}
-            >
-              {ratingStars(rating)}
+            {/* §11: 12px stars, the same glyphs as everywhere else, not text. */}
+            <span role="img" className="shrink-0 pt-1" aria-label={t('ratingStars', { rating })}>
+              <StarRow value={rating} size={12} />
             </span>
           </>
         )
         return (
           <li
             key={entry.id}
-            className="border-b border-divider last:border-b-0"
+            className="border-b border-divider"
             data-testid="journal-entry"
           >
             {brandId !== null ? (
