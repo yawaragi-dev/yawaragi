@@ -197,7 +197,7 @@ export default async function CollectionTabPage({ params, searchParams }: PagePr
         <>
           <CellarList rows={view.cellar} now={view.now} />
           {/* ADR-0014: cellar rows name Sakenowa brands too. */}
-          {view.cellar.length > 0 && <SakenowaAttribution placement="inline" />}
+          {view.cellar.length > 0 && <SakenowaAttribution placement="end" />}
         </>
       ) : journal.kind === 'empty' ? (
         // §11's empty journal: "Your journal starts with one star" and a way
