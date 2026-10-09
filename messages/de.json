@@ -602,6 +602,7 @@
     "allOptional": "Alles optional",
     "partsFilled": "{n} von {total} Teilen ausgefüllt",
     "intro": "Ansehen, riechen, schmecken, entscheiden — die Reihenfolge, in der professionelle Verkoster arbeiten. Füll aus, was du magst, und lass den Rest; alles wird sofort gespeichert.",
+    "triedOn": "Verkostet am",
     "open": "Ausführliche Notizen hinzufügen",
     "edit": "Ausführliche Notizen · {n} von {total}",
     "error": "Das ließ sich gerade nicht speichern — versuch es noch einmal.",

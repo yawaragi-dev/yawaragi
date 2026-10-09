@@ -14,7 +14,14 @@ function renderSheet(initial?: Parameters<typeof DetailedNotesSheet>[0]['initial
   const onSaved = vi.fn()
   render(
     <NextIntlClientProvider locale="en" messages={en} timeZone="UTC">
-      <DetailedNotesSheet entryId="e1" initial={initial} open onOpenChange={() => {}} onSaved={onSaved} />
+      <DetailedNotesSheet
+        entryId="e1"
+        initial={initial}
+        initialDay="2026-10-08"
+        open
+        onOpenChange={() => {}}
+        onSaved={onSaved}
+      />
     </NextIntlClientProvider>,
   )
   return { onSaved }
@@ -32,6 +39,24 @@ describe('§10 detailed notes', () => {
     expect(screen.getByTestId('detailed-notes-scale-umami-4')).toBeTruthy()
     expect(screen.queryByTestId('detailed-notes-clarity-clear')).toBeNull()
     expect(screen.queryByRole('button', { name: /^save/i })).toBeNull()
+  })
+
+  it('moves the tasting to another day, and offers no day after today', async () => {
+    const { onSaved } = renderSheet()
+    const day = screen.getByLabelText('Tasted on') as HTMLInputElement
+    expect(day.value).toBe('2026-10-08')
+    expect(day.max).toBe(new Date().toLocaleDateString('en-CA'))
+    expect(day.min).toBe('2000-01-01')
+
+    fireEvent.change(day, { target: { value: '2026-10-01' } })
+    await waitFor(() => expect(updateTasting).toHaveBeenLastCalledWith('e1', { triedOn: '2026-10-01' }))
+    expect(onSaved).toHaveBeenCalled()
+  })
+
+  it('does not save a half-typed or cleared day', () => {
+    renderSheet()
+    fireEvent.change(screen.getByLabelText('Tasted on'), { target: { value: '' } })
+    expect(updateTasting).not.toHaveBeenCalled()
   })
 
   it('saves a palate step as a key, and tapping it again clears it', async () => {

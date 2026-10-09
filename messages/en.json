@@ -602,6 +602,7 @@
     "allOptional": "All optional",
     "partsFilled": "{n} of {total} parts filled",
     "intro": "Look, smell, taste, decide — the order professional tasters work in. Fill any part, skip the rest; it saves as you go.",
+    "triedOn": "Tasted on",
     "open": "Add detailed notes",
     "edit": "Detailed notes · {n} of {total}",
     "error": "Couldn’t save that just now — try again.",

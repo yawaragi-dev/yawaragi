@@ -15,6 +15,7 @@ import {
 } from '@/lib/schemas/detailed-notes'
 import type { QuickTag } from '@/lib/schemas/journal-entry'
 import { isAxisQuickTag, quickTagAxis, quickTagsFor } from '@/lib/taste/quick-tags'
+import { tastingDayOf } from '@/lib/taste/tasting-day'
 import { ratingBand } from '@/lib/taste/rating-band'
 import { rateNewTasting, undoTasting, updateTasting } from '@/lib/taste/tasting-actions'
 import { cn } from '@/lib/utils'
@@ -335,6 +336,7 @@ export function TastingLogPanel({
           <DetailedNotesSheet
             entryId={logged.entryId}
             initial={detail}
+            initialDay={tastingDayOf(logged.loggedAt)}
             open={sheetOpen}
             onOpenChange={setSheetOpen}
             onSaved={(next) => {

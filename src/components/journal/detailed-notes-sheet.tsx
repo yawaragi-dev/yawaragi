@@ -27,6 +27,7 @@ import {
   VESSELS,
   isPartFilled,
 } from '@/lib/schemas/detailed-notes'
+import { EARLIEST_TASTING_DAY } from '@/lib/schemas/tasting-input'
 import { updateTasting } from '@/lib/taste/tasting-actions'
 import { cn } from '@/lib/utils'
 
@@ -62,12 +63,15 @@ const PART_ICONS = {
 export function DetailedNotesSheet({
   entryId,
   initial,
+  initialDay,
   open,
   onOpenChange,
   onSaved,
 }: {
   entryId: string
   initial: DetailedNotes | undefined
+  /** The tasting's day, `YYYY-MM-DD`. */
+  initialDay: string
   open: boolean
   onOpenChange: (open: boolean) => void
   /** Called with the sheet after each successful save. */
@@ -79,6 +83,10 @@ export function DetailedNotesSheet({
   const [failed, setFailed] = useState(false)
   const [, startTransition] = useTransition()
   const textTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const [day, setDay] = useState(initialDay)
+  // The visitor's own calendar: a tasting can be today, never tomorrow. Read
+  // once, when the sheet first renders (only ever in the browser, after a tap).
+  const [today] = useState(() => new Date().toLocaleDateString('en-CA'))
 
   useEffect(() => () => clearTimeout(textTimer.current), [])
 
@@ -87,6 +95,18 @@ export function DetailedNotesSheet({
       const result = await updateTasting(entryId, { detail: next })
       setFailed(result.status !== 'ok')
       if (result.status === 'ok') onSaved?.(next)
+    })
+  }
+
+  /** Move the tasting to another day. A cleared or half-typed field is
+   *  not a day, so it saves nothing. */
+  function changeDay(value: string) {
+    setDay(value)
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value) || value > today || value < EARLIEST_TASTING_DAY) return
+    startTransition(async () => {
+      const result = await updateTasting(entryId, { triedOn: value })
+      setFailed(result.status !== 'ok')
+      if (result.status === 'ok') onSaved?.(notes)
     })
   }
 
@@ -190,6 +210,21 @@ export function DetailedNotesSheet({
             border, with 16px of padding so nothing fades at rest. */}
         <div className="min-h-0 flex-1 overflow-y-auto px-5 pt-3 pb-6 [mask-image:linear-gradient(to_bottom,transparent_0,#000_18px)]">
           <p className="pt-1 pb-2 text-meta leading-normal text-ash-700">{t('intro')}</p>
+          {/* Not in §10: the day of the tasting, so one logged late can say
+              when it really happened. At the top rather than inside "How you
+              had it", which starts collapsed. Asked on #308. */}
+          <label className="flex items-center justify-between gap-3 border-b border-divider pb-3">
+            <span className="text-section-label uppercase text-ash-600">{t('triedOn')}</span>
+            <input
+              type="date"
+              value={day}
+              min={EARLIEST_TASTING_DAY}
+              max={today}
+              onChange={(e) => changeDay(e.target.value)}
+              className="min-h-11 rounded-md border border-divider bg-ground px-3 text-body text-ink [color-scheme:dark] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+              data-testid="detailed-notes-tried-on"
+            />
+          </label>
 
           {failed && (
             <p role="alert" className="pb-2 text-meta text-ginshu-700" data-testid="detailed-notes-error">
