@@ -41,6 +41,11 @@ test.describe('cookie banner — surface', () => {
 
     const banner = page.getByTestId('cookie-banner')
     await expect(banner).toBeVisible()
+    // The banner publishes its height from an effect, after hydration; the
+    // spacer is 0 until then. Scroll only once it is there.
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.style.getPropertyValue('--cookie-banner-h')))
+      .not.toBe('')
     // The shell's scrolling pane is the outer <main>; screens may nest their own.
     await page.locator('main').first().evaluate((el) => el.scrollTo(0, el.scrollHeight))
 
