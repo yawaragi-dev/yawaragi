@@ -320,7 +320,15 @@ const SELECT_BRANDS_BY_KANJI_EXTRACTION = `
   -- expansion happens in JS in generateKanjiVariants. Most strings
   -- expand to 1 element (no variant kanji); worst case is 2-3
   -- elements, well within ANY()s performance envelope.
-  WHERE br.name_kanji = ANY($1) AND b.name_kanji = ANY($2)
+  -- The brewery side also matches with the stored name's spaces removed, or
+  -- on any one of its space-separated parts: Sakenowa stores some names with
+  -- a space the label does not print ('仙台伊澤家 勝山酒造', 38 such
+  -- breweries), and a label often prints only the last part ('勝山酒造').
+  WHERE br.name_kanji = ANY($1) AND (
+         b.name_kanji = ANY($2)
+      OR regexp_replace(b.name_kanji, '[[:space:]　]+', '', 'g') = ANY($2)
+      OR regexp_split_to_array(b.name_kanji, '[[:space:]　]+') && $2::text[]
+    )
     AND br.superseded_at IS NULL
     AND b.superseded_at IS NULL
   ORDER BY br.brand_id
@@ -398,7 +406,12 @@ const SELECT_BRANDS_AND_BREWERIES_BY_BREWERY_KANJI = `
     b.confidence         AS brewery_confidence
   FROM brands br
   JOIN breweries b ON b.brewery_id = br.brewery_id
-  WHERE b.name_kanji = ANY($1)
+  -- Spaces and parts as in the first pass.
+  WHERE (
+         b.name_kanji = ANY($1)
+      OR regexp_replace(b.name_kanji, '[[:space:]　]+', '', 'g') = ANY($1)
+      OR regexp_split_to_array(b.name_kanji, '[[:space:]　]+') && $1::text[]
+    )
     AND br.superseded_at IS NULL
     AND b.superseded_at IS NULL
   ORDER BY

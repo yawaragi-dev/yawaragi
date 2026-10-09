@@ -365,6 +365,23 @@ describe('findSakeByExtractionFromPool', () => {
     })
   })
 
+  it('matches a brewery stored with a space, whether the label prints all of it or only its last part', async () => {
+    // Sakenowa stores 仙台伊澤家 勝山酒造 with a space (38 breweries have one);
+    // the label prints 勝山酒造, or the whole name without the space.
+    await seedBrewery({ breweryId: 9501, name: 'Katsuyama Shuzo', nameKanji: '仙台伊澤家 勝山酒造', areaId: 4 })
+    await pool.query(
+      `INSERT INTO brands
+         (brand_id, name, name_kanji, brewery_id, source, confidence, content_hash)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [9001, 'Katsuyama', '勝山', 9501, 'sakenowa', null, 'hash-katsuyama-9001'],
+    )
+
+    for (const breweryJa of ['勝山酒造', '仙台伊澤家勝山酒造', '仙台伊澤家 勝山酒造']) {
+      const result = await findSakeByExtractionFromPool({ nameJa: '勝山', breweryJa }, pool)
+      expect(result.kind, breweryJa).toBe('exact')
+    }
+  })
+
   it('returns {kind: "no_match"} when neither kanji pair matches any seeded brand', async () => {
     // Seed something else so the query has at least one brand row to
     // compare against, then look up a pair that doesn't exist.
