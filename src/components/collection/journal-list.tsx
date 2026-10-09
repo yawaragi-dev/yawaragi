@@ -1,7 +1,9 @@
 import { getFormatter, getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
 import type { JournalEntry } from '@/lib/schemas/journal-entry'
+import { FullNotesChip } from '@/components/collection/full-notes-chip'
 import { StarRow } from '@/components/journal/star-row'
+import { DETAILED_NOTES_PARTS, isPartFilled } from '@/lib/schemas/detailed-notes'
 
 /**
  * §11's Journal list. Reference screenshot 19.
@@ -21,9 +23,8 @@ import { StarRow } from '@/components/journal/star-row'
  *   unit test and its caller is now the one surface that wants months.
  *
  * Each row links to the sake's bottle page, which is where the rest of what we
- * know about it lives. §11's "Full notes" chip is not here: it opens §10's
- * detailed-notes sheet, which is not built, and a chip that opens nothing is
- * the dead affordance #162 forbids.
+ * know about it lives. A row with detailed notes carries §11's "Full notes"
+ * chip, which opens §10's sheet for that tasting.
  */
 export async function JournalList({
   entries,
@@ -100,11 +101,25 @@ export async function JournalList({
               // still the record, it just is not a door.
               <div className="flex min-h-14 items-start gap-3 py-3">{row}</div>
             )}
+            {/* §11's "Full notes" chip, under the note. Outside the row's link:
+                a button inside a link is two targets in one, and this one opens
+                the sheet rather than the bottle page. Indented past the date
+                block (w-10 + gap-3) so it sits on the text column. */}
+            {hasDetailedNotes(entry) && (
+              <div className="-mt-1.5 pb-3 pl-[52px]">
+                <FullNotesChip entryId={entry.id} detail={entry.detail!} triedAt={entry.triedAt} />
+              </div>
+            )}
           </li>
         )
       })}
     </ul>
   )
+}
+
+/** Whether a tasting has any of §10's parts filled in. */
+function hasDetailedNotes(entry: JournalEntry): boolean {
+  return DETAILED_NOTES_PARTS.some((part) => isPartFilled(entry.detail, part))
 }
 
 /** A rating entry carries its stars; other kinds default to a neutral 3. */

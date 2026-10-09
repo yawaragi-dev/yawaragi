@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useRef, useState, useTransition } from 'react'
+import { type ReactNode, useEffect, useRef, useState, useTransition } from 'react'
 import { useTranslations } from 'next-intl'
 import {
+  CalendarBlank,
   CaretDown,
   CaretUp,
   CheckCircle,
@@ -11,6 +12,7 @@ import {
   ThermometerSimple,
   Wind,
 } from '@phosphor-icons/react/dist/ssr'
+import { InfoSheet } from '@/components/ui/info-sheet'
 import { Sheet, SheetClose, SheetContent, SheetTitle } from '@/components/ui/sheet'
 import {
   AROMAS,
@@ -24,6 +26,7 @@ import {
   OCCASIONS,
   PALATE_SCALES,
   SERVING_TEMPERATURES,
+  SERVING_TEMPERATURE_TERMS,
   VESSELS,
   isPartFilled,
 } from '@/lib/schemas/detailed-notes'
@@ -158,7 +161,7 @@ export function DetailedNotesSheet({
           .join(' · ')
       case 'serve':
         return [
-          notes.serve?.temperature && v.temperature![notes.serve.temperature],
+          notes.serve?.temperature && temperatureName(notes.serve.temperature),
           notes.serve?.vessel && v.vessel![notes.serve.vessel],
           notes.serve?.with?.trim(),
         ]
@@ -213,18 +216,34 @@ export function DetailedNotesSheet({
           {/* Not in §10: the day of the tasting, so one logged late can say
               when it really happened. At the top rather than inside "How you
               had it", which starts collapsed. Asked on #308. */}
-          <label className="flex items-center justify-between gap-3 border-b border-divider pb-3">
-            <span className="text-section-label uppercase text-ash-600">{t('triedOn')}</span>
-            <input
-              type="date"
-              value={day}
-              min={EARLIEST_TASTING_DAY}
-              max={today}
-              onChange={(e) => changeDay(e.target.value)}
-              className="min-h-11 rounded-md border border-divider bg-ground px-3 text-body text-ink [color-scheme:dark] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
-              data-testid="detailed-notes-tried-on"
-            />
-          </label>
+          <div className="flex items-center justify-between gap-3 border-b border-divider pb-3">
+            <label htmlFor={`tried-on-${entryId}`} className="text-section-label uppercase text-ash-600">
+              {t('triedOn')}
+            </label>
+            {/* A native date input draws the day in the browser's own format
+                (US-style for an English browser), which no attribute can
+                change. So the day is shown European-style, day first, and the
+                input lies transparent on top of it: tapping still opens the
+                system picker, and assistive tech still gets a real date field.
+                Following the visitor's own locale instead is #371. */}
+            <span className="relative inline-flex min-h-11 items-center rounded-md border border-divider bg-ground px-3 text-body text-ink focus-within:ring-2 focus-within:ring-ginshu-600">
+              <span aria-hidden="true" data-testid="detailed-notes-tried-on-shown">
+                {europeanDay(day)}
+              </span>
+              <CalendarBlank size={16} aria-hidden="true" className="ml-2 text-ash-600" />
+              <input
+                type="date"
+                value={day}
+                min={EARLIEST_TASTING_DAY}
+                max={today}
+                onChange={(e) => changeDay(e.target.value)}
+                onClick={(e) => e.currentTarget.showPicker?.()}
+                className="absolute inset-0 cursor-pointer opacity-0 [color-scheme:dark]"
+                id={`tried-on-${entryId}`}
+                data-testid="detailed-notes-tried-on"
+              />
+            </span>
+          </div>
 
           {failed && (
             <p role="alert" className="pb-2 text-meta text-ginshu-700" data-testid="detailed-notes-error">
@@ -353,11 +372,48 @@ export function DetailedNotesSheet({
                         <ChipGroup
                           label={t('fields.temperature')}
                           options={SERVING_TEMPERATURES}
-                          labelOf={(k) => t(`values.temperature.${k}`)}
+                          labelOf={(k) => (
+                            <>
+                              <span lang="ja">{SERVING_TEMPERATURE_TERMS[k].kanji}</span>{' '}
+                              <span className="opacity-70">{SERVING_TEMPERATURE_TERMS[k].romaji}</span>{' '}
+                              {SERVING_TEMPERATURE_TERMS[k].degrees}°
+                            </>
+                          )}
                           isOn={(k) => notes.serve?.temperature === k}
                           onPick={(k) => setPart('serve', { temperature: pickOne(notes.serve?.temperature, k) })}
                           testId="temperature"
-                          lang="ja"
+                          aside={
+                            // §16's pattern, as beside the flavor chart: the
+                            // names are brewers' terms, so they get the same
+                            // "what do these mean" sheet.
+                            <InfoSheet
+                              id="serving-temperatures"
+                              caveat={t('temperatureTerms.caveat')}
+                              triggerLabel={t('temperatureTerms.triggerLabel')}
+                              title={t('temperatureTerms.title')}
+                              closeLabel={t('temperatureTerms.closeLabel')}
+                            >
+                              <p className="mb-4">{t('temperatureTerms.intro')}</p>
+                              <dl className="flex flex-col gap-3" data-testid="serving-temperature-terms">
+                                {SERVING_TEMPERATURES.map((k) => (
+                                  <div key={k} className="flex gap-3">
+                                    <dt className="w-[42px] shrink-0 text-subtle font-medium text-ink">
+                                      {SERVING_TEMPERATURE_TERMS[k].degrees}°
+                                    </dt>
+                                    <dd className="min-w-0 flex-1">
+                                      <span className="text-subtle text-ink" lang="ja">
+                                        {SERVING_TEMPERATURE_TERMS[k].kanji}
+                                      </span>{' '}
+                                      <span className="text-meta text-ash-600">{SERVING_TEMPERATURE_TERMS[k].romaji}</span>
+                                      <span className="mt-0.5 block text-meta leading-snug text-ash-700">
+                                        {t(`temperatureTerms.notes.${k}`)}
+                                      </span>
+                                    </dd>
+                                  </div>
+                                ))}
+                              </dl>
+                            </InfoSheet>
+                          }
                         />
                         <ChipGroup
                           label={t('fields.vessel')}
@@ -421,18 +477,22 @@ function ChipGroup<T extends string>({
   onPick,
   testId,
   lang,
+  aside,
 }: {
   label: string
   options: readonly T[]
-  labelOf: (key: T) => string
+  labelOf: (key: T) => ReactNode
   isOn: (key: T) => boolean
   onPick: (key: T) => void
   testId: string
   lang?: string
+  /** Shown under the label — e.g. an info sheet about the options. */
+  aside?: ReactNode
 }) {
   return (
     <div className="flex flex-col gap-1.5" role="group" aria-label={label}>
       <span className="text-section-label uppercase text-ash-600">{label}</span>
+      {aside}
       <div className="flex flex-wrap gap-1.5">
         {options.map((key) => {
           const on = isOn(key)
@@ -456,4 +516,15 @@ function ChipGroup<T extends string>({
       </div>
     </div>
   )
+}
+
+/** A temperature as the part summary shows it: "涼冷え 15°". */
+function temperatureName(k: keyof typeof SERVING_TEMPERATURE_TERMS): string {
+  return `${SERVING_TEMPERATURE_TERMS[k].kanji} ${SERVING_TEMPERATURE_TERMS[k].degrees}°`
+}
+
+/** `2026-10-08` → `08.10.2026`; a half-typed value is shown as it is. */
+function europeanDay(day: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(day)
+  return m ? `${m[3]}.${m[2]}.${m[1]}` : day
 }

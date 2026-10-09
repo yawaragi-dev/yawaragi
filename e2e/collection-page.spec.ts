@@ -67,6 +67,14 @@ test.describe('/en/collection — §11 Journal (ADR-0020, maintainer-only)', () 
       '/en/sake/1',
     )
 
+    // §11's "Full notes" chip on a row with detailed notes, and only there. It
+    // opens §10's sheet for that tasting.
+    await expect(page.getByTestId('journal-full-notes-s1')).toBeVisible()
+    await expect(page.getByTestId('journal-full-notes-s2')).toHaveCount(0)
+    await page.getByTestId('journal-full-notes-s1').click()
+    await expect(page.getByTestId('detailed-notes-progress')).toHaveText('2 of 5 parts filled')
+    await page.keyboard.press('Escape')
+
     // ADR-0014: Sakenowa brand names on the surface → attribution present.
     await expect(page.getByText('Powered by Sakenowa')).toBeVisible()
 

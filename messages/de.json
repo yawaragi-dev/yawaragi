@@ -1,6 +1,7 @@
 {
   "journal": {
-    "ratingStars": "{rating, plural, one {# Stern} other {# Sterne}}"
+    "ratingStars": "{rating, plural, one {# Stern} other {# Sterne}}",
+    "fullNotes": "Alle Notizen"
   },
   "collection": {
     "title": "Sammlung",
@@ -669,13 +670,6 @@
         "earth": "Erde",
         "aged": "Gereift"
       },
-      "temperature": {
-        "yukibie": "雪冷え 5°",
-        "hanabie": "花冷え 10°",
-        "joon": "常温 20°",
-        "nurukan": "ぬる燗 40°",
-        "atsukan": "熱燗 50°"
-      },
       "vessel": {
         "ochoko": "Ochoko",
         "guinomi": "Guinomi",
@@ -744,6 +738,21 @@
           "s4": "Lang",
           "s5": "Anhaltend"
         }
+      }
+    },
+    "temperatureTerms": {
+      "caveat": "Japanische Namen, von kalt bis heiß.",
+      "triggerLabel": "Über die Serviertemperaturen",
+      "title": "Serviertemperaturen",
+      "intro": "Sake wird bei ganz unterschiedlichen Temperaturen serviert, und jede Stufe hat einen japanischen Namen. Die Gradzahlen sind ungefähr; entscheidend ist, wie sich derselbe Sake von Stufe zu Stufe verändert.",
+      "closeLabel": "Schließen",
+      "notes": {
+        "yukibie": "Schneekalt: so kalt wie möglich. Das Aroma tritt zurück, der Abgang wird klar und scharf.",
+        "hanabie": "Blütenkühl: kalt aus dem Kühlschrank. Frisch, das Aroma noch zurückhaltend.",
+        "suzuhie": "Kühl, knapp unter Zimmertemperatur. Das Aroma öffnet sich, der Sake bleibt frisch.",
+        "joon": "Zimmertemperatur: der Sake, wie er ist – nichts verdeckt, nichts hinzugefügt.",
+        "nurukan": "Lauwarm, etwas über Körpertemperatur. Runder und weicher, das Umami tritt hervor.",
+        "atsukan": "Heiß. Trockener und schärfer, am besten zu vollen, würzigen Sakes."
       }
     }
   }

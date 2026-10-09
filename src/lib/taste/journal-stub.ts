@@ -52,6 +52,8 @@ export const STUB_JOURNAL_ENTRIES: readonly JournalEntry[] = [
     },
     sake: { nameKanji: '而今', nameRomaji: 'Jikon' },
     notes: 'Melon and white peach, gone in a clean line.',
+    // §10's sheet, so the stub journal shows §11's "Full notes" chip.
+    detail: { palate: { umami: 2, finish: 4 }, serve: { temperature: 'hanabie' } },
     triedAt: Date.UTC(2026, 6, 18),
     createdAt: Date.UTC(2026, 6, 18),
   },

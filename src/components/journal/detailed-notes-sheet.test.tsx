@@ -45,11 +45,14 @@ describe('§10 detailed notes', () => {
     const { onSaved } = renderSheet()
     const day = screen.getByLabelText('Tasted on') as HTMLInputElement
     expect(day.value).toBe('2026-10-08')
+    // Shown day first, European style, whatever the browser's own format.
+    expect(screen.getByTestId('detailed-notes-tried-on-shown').textContent).toBe('08.10.2026')
     expect(day.max).toBe(new Date().toLocaleDateString('en-CA'))
     expect(day.min).toBe('2000-01-01')
 
     fireEvent.change(day, { target: { value: '2026-10-01' } })
     await waitFor(() => expect(updateTasting).toHaveBeenLastCalledWith('e1', { triedOn: '2026-10-01' }))
+    expect(screen.getByTestId('detailed-notes-tried-on-shown').textContent).toBe('01.10.2026')
     expect(onSaved).toHaveBeenCalled()
   })
 
@@ -91,6 +94,30 @@ describe('§10 detailed notes', () => {
     expect(screen.getByTestId('detailed-notes-progress').textContent).toBe('2 of 5 parts filled')
     expect(screen.getByTestId('detailed-notes-summary-verdict').textContent).toBe('Yes')
     expect(screen.getByTestId('detailed-notes-summary-serve').textContent).toBe('ぬる燗 40°')
+  })
+
+  it('offers six serving temperatures, each with its romaji, and a sheet that explains them', () => {
+    renderSheet()
+    fireEvent.click(screen.getByTestId('detailed-notes-toggle-serve'))
+    const chips = screen.getByRole('group', { name: 'Temperature' }).querySelectorAll('button[aria-pressed]')
+    expect([...chips].map((c) => c.textContent)).toEqual([
+      '雪冷え yukibie 5°',
+      '花冷え hanabie 10°',
+      '涼冷え suzuhie 15°',
+      '常温 jōon 20°',
+      'ぬる燗 nurukan 40°',
+      '熱燗 atsukan 50°',
+    ])
+    // §16's pattern: the caveat is in the DOM and wired to the info button.
+    const caveat = screen.getByTestId('info-sheet-serving-temperatures-caveat')
+    expect(screen.getByTestId('info-sheet-serving-temperatures-trigger').getAttribute('aria-describedby')).toBe(caveat.id)
+    fireEvent.click(screen.getByTestId('info-sheet-serving-temperatures-trigger'))
+    expect(screen.getByTestId('serving-temperature-terms').textContent).toContain('Cool, just under room temperature')
+  })
+
+  it('reads a saved temperature back in the part summary', () => {
+    renderSheet({ serve: { temperature: 'suzuhie' } })
+    expect(screen.getByTestId('detailed-notes-summary-serve').textContent).toBe('涼冷え 15°')
   })
 
   it('says so when a save fails', async () => {
