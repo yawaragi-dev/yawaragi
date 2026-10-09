@@ -37,8 +37,8 @@ import { cn } from '@/lib/utils'
 /**
  * §10 Detailed notes — the bottom sheet. Reference screenshot 11.
  *
- * "Look, smell, taste, decide": five collapsible parts, Palate open by
- * default, every field optional, **no Save button** — every pick saves as it
+ * "Look, smell, taste, decide": five collapsible parts, the first open by
+ * default (§10 says Palate), every field optional, **no Save button** — every pick saves as it
  * is made (rule 1's spirit, and §10's own "it saves as you go"). A pick sends
  * the whole sheet, so the server never has to merge partial sheets; the free
  * text field waits for a pause in typing.
@@ -82,7 +82,9 @@ export function DetailedNotesSheet({
 }) {
   const t = useTranslations('detailedNotes')
   const [notes, setNotes] = useState<DetailedNotes>(initial ?? {})
-  const [openPart, setOpenPart] = useState<DetailedNotesPart | null>('palate')
+  // The first part, so the sheet reads top-down in "look, smell, taste,
+  // decide" order. §10 opens Palate; the maintainer preferred the first.
+  const [openPart, setOpenPart] = useState<DetailedNotesPart | null>(DETAILED_NOTES_PARTS[0])
   const [failed, setFailed] = useState(false)
   const [, startTransition] = useTransition()
   const textTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
@@ -372,20 +374,17 @@ export function DetailedNotesSheet({
                         <ChipGroup
                           label={t('fields.temperature')}
                           options={SERVING_TEMPERATURES}
-                          labelOf={(k) => (
-                            <>
-                              <span lang="ja">{SERVING_TEMPERATURE_TERMS[k].kanji}</span>{' '}
-                              <span className="opacity-70">{SERVING_TEMPERATURE_TERMS[k].romaji}</span>{' '}
-                              {SERVING_TEMPERATURE_TERMS[k].degrees}°
-                            </>
-                          )}
+                          // Romaji and degrees; the kanji are in the info sheet
+                          // beside the field, as the flavor chart keeps its
+                          // Japanese terms in its own.
+                          labelOf={temperatureName}
                           isOn={(k) => notes.serve?.temperature === k}
                           onPick={(k) => setPart('serve', { temperature: pickOne(notes.serve?.temperature, k) })}
                           testId="temperature"
                           aside={
                             // §16's pattern, as beside the flavor chart: the
                             // names are brewers' terms, so they get the same
-                            // "what do these mean" sheet.
+                            // "what do these mean" sheet — kanji included.
                             <InfoSheet
                               id="serving-temperatures"
                               caveat={t('temperatureTerms.caveat')}
@@ -518,9 +517,9 @@ function ChipGroup<T extends string>({
   )
 }
 
-/** A temperature as the part summary shows it: "涼冷え 15°". */
+/** A temperature as the chips and the part summary show it: "suzuhie 15°". */
 function temperatureName(k: keyof typeof SERVING_TEMPERATURE_TERMS): string {
-  return `${SERVING_TEMPERATURE_TERMS[k].kanji} ${SERVING_TEMPERATURE_TERMS[k].degrees}°`
+  return `${SERVING_TEMPERATURE_TERMS[k].romaji} ${SERVING_TEMPERATURE_TERMS[k].degrees}°`
 }
 
 /** `2026-10-08` → `08.10.2026`; a half-typed value is shown as it is. */

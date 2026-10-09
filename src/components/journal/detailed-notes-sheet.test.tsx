@@ -33,11 +33,11 @@ beforeEach(() => {
 })
 
 describe('§10 detailed notes', () => {
-  it('opens on Palate with everything optional and no Save button', () => {
+  it('opens on the first part, Appearance, with everything optional and no Save button', () => {
     renderSheet()
     expect(screen.getByTestId('detailed-notes-progress').textContent).toBe('All optional')
-    expect(screen.getByTestId('detailed-notes-scale-umami-4')).toBeTruthy()
-    expect(screen.queryByTestId('detailed-notes-clarity-clear')).toBeNull()
+    expect(screen.getByTestId('detailed-notes-clarity-clear')).toBeTruthy()
+    expect(screen.queryByTestId('detailed-notes-scale-umami-4')).toBeNull()
     expect(screen.queryByRole('button', { name: /^save/i })).toBeNull()
   })
 
@@ -64,6 +64,7 @@ describe('§10 detailed notes', () => {
 
   it('saves a palate step as a key, and tapping it again clears it', async () => {
     const { onSaved } = renderSheet()
+    fireEvent.click(screen.getByTestId('detailed-notes-toggle-palate'))
     fireEvent.click(screen.getByTestId('detailed-notes-scale-umami-4'))
     await waitFor(() =>
       expect(updateTasting).toHaveBeenLastCalledWith('e1', { detail: { palate: { umami: 4 } } }),
@@ -93,36 +94,39 @@ describe('§10 detailed notes', () => {
     renderSheet({ verdict: { again: 'yes' }, serve: { temperature: 'nurukan' } })
     expect(screen.getByTestId('detailed-notes-progress').textContent).toBe('2 of 5 parts filled')
     expect(screen.getByTestId('detailed-notes-summary-verdict').textContent).toBe('Yes')
-    expect(screen.getByTestId('detailed-notes-summary-serve').textContent).toBe('ぬる燗 40°')
+    expect(screen.getByTestId('detailed-notes-summary-serve').textContent).toBe('nurukan 40°')
   })
 
-  it('offers six serving temperatures, each with its romaji, and a sheet that explains them', () => {
+  it('offers six serving temperatures by romaji, with the kanji in a sheet that explains them', () => {
     renderSheet()
     fireEvent.click(screen.getByTestId('detailed-notes-toggle-serve'))
     const chips = screen.getByRole('group', { name: 'Temperature' }).querySelectorAll('button[aria-pressed]')
     expect([...chips].map((c) => c.textContent)).toEqual([
-      '雪冷え yukibie 5°',
-      '花冷え hanabie 10°',
-      '涼冷え suzuhie 15°',
-      '常温 jōon 20°',
-      'ぬる燗 nurukan 40°',
-      '熱燗 atsukan 50°',
+      'yukibie 5°',
+      'hanabie 10°',
+      'suzuhie 15°',
+      'jōon 20°',
+      'nurukan 40°',
+      'atsukan 50°',
     ])
     // §16's pattern: the caveat is in the DOM and wired to the info button.
     const caveat = screen.getByTestId('info-sheet-serving-temperatures-caveat')
     expect(screen.getByTestId('info-sheet-serving-temperatures-trigger').getAttribute('aria-describedby')).toBe(caveat.id)
     fireEvent.click(screen.getByTestId('info-sheet-serving-temperatures-trigger'))
-    expect(screen.getByTestId('serving-temperature-terms').textContent).toContain('Cool, just under room temperature')
+    const terms = screen.getByTestId('serving-temperature-terms').textContent
+    expect(terms).toContain('涼冷え')
+    expect(terms).toContain('Cool, just under room temperature')
   })
 
   it('reads a saved temperature back in the part summary', () => {
     renderSheet({ serve: { temperature: 'suzuhie' } })
-    expect(screen.getByTestId('detailed-notes-summary-serve').textContent).toBe('涼冷え 15°')
+    expect(screen.getByTestId('detailed-notes-summary-serve').textContent).toBe('suzuhie 15°')
   })
 
   it('says so when a save fails', async () => {
     updateTasting.mockResolvedValue({ status: 'unavailable' })
     renderSheet()
+    fireEvent.click(screen.getByTestId('detailed-notes-toggle-palate'))
     fireEvent.click(screen.getByTestId('detailed-notes-scale-body-3'))
     await waitFor(() => expect(screen.getByTestId('detailed-notes-error')).toBeTruthy())
   })
