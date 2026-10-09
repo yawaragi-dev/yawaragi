@@ -139,6 +139,32 @@ describe('§5 log panel', () => {
     expect(panel.getAttribute('aria-busy')).toBeNull()
   })
 
+  it('"Done" hands the panel back, saving a note still being typed', async () => {
+    const onDone = vi.fn()
+    renderPanel({ onDone })
+    expect(screen.queryByRole('button', { name: 'Done' })).toBeNull()
+    fireEvent.click(screen.getByTestId('star-rating-4'))
+    await waitFor(() => expect(screen.getByTestId('tasting-log-note')).toBeTruthy())
+
+    fireEvent.change(screen.getByTestId('tasting-log-note'), { target: { value: 'Pear' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Done' }))
+    await waitFor(() => expect(updateTasting).toHaveBeenCalledWith('e1', { notes: 'Pear' }))
+    expect(onDone).toHaveBeenCalledTimes(1)
+  })
+
+  it('"Done" with nowhere to hand back to folds the panel into a saved line', async () => {
+    renderPanel()
+    fireEvent.click(screen.getByTestId('star-rating-4'))
+    await waitFor(() => expect(screen.getByTestId('tasting-log-note')).toBeTruthy())
+    fireEvent.click(screen.getByRole('button', { name: 'Done' }))
+
+    const saved = await screen.findByTestId('tasting-log-done')
+    expect(saved.textContent).toContain('Logged')
+    expect(saved.textContent).toContain('4.0')
+    expect(screen.getByRole('link', { name: 'In your journal' }).getAttribute('href')).toBe('/en/collection')
+    expect(screen.queryByTestId('tasting-log-note')).toBeNull()
+  })
+
   it('does not claim the palate moved for a sake with no flavor chart', async () => {
     renderPanel({ chart: null })
     fireEvent.click(screen.getByTestId('star-rating-4'))

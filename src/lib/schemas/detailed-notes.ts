@@ -46,7 +46,28 @@ export const PALATE_SCALES = ['sweetness', 'acidity', 'umami', 'body', 'finish']
  * Japanese names in romaji — 雪冷え 5°, 花冷え 10°, 常温 20°, ぬる燗 40°,
  * 熱燗 50° — because those ARE the names; the degrees are a gloss.
  */
-export const SERVING_TEMPERATURES = ['yukibie', 'hanabie', 'joon', 'nurukan', 'atsukan'] as const
+// Six, as §9's "Serve it" lists them; §10 says "the five Japanese names", but
+// 15° 涼冷え sits between the two cold names and 常温 and was missing. Added
+// at the maintainer's request; order is the ladder's, coldest first.
+export const SERVING_TEMPERATURES = ['yukibie', 'hanabie', 'suzuhie', 'joon', 'nurukan', 'atsukan'] as const
+export type ServingTemperature = (typeof SERVING_TEMPERATURES)[number]
+
+/**
+ * The serving-temperature ladder's names. Japanese terms, so they are data,
+ * not translatable strings — the same footing as `FLAVOR_AXIS_ROMAJI`. Only
+ * the explanation of each lives in `messages/*.json`.
+ */
+export const SERVING_TEMPERATURE_TERMS: Readonly<
+  Record<ServingTemperature, { kanji: string; romaji: string; degrees: number }>
+> = {
+  yukibie: { kanji: '雪冷え', romaji: 'yukibie', degrees: 5 },
+  hanabie: { kanji: '花冷え', romaji: 'hanabie', degrees: 10 },
+  suzuhie: { kanji: '涼冷え', romaji: 'suzuhie', degrees: 15 },
+  joon: { kanji: '常温', romaji: 'jōon', degrees: 20 },
+  nurukan: { kanji: 'ぬる燗', romaji: 'nurukan', degrees: 40 },
+  atsukan: { kanji: '熱燗', romaji: 'atsukan', degrees: 50 },
+}
+
 export const VESSELS = ['ochoko', 'guinomi', 'wineGlass', 'masu'] as const
 export const DRINK_AGAIN = ['yes', 'maybe', 'no'] as const
 export const OCCASIONS = ['everyday', 'withDinner', 'specialOccasion', 'gift'] as const

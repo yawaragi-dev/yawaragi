@@ -125,6 +125,26 @@ describe('after the first tap', () => {
     expect((await journal().read(USER))[0]!.detail).toEqual({ palate: { umami: 4 } })
   })
 
+  it('moves a tasting to the day it really happened, and the palate replays it on that day', async () => {
+    const { entryId } = await rated()
+    expect(await updateTasting(entryId, { triedOn: '2026-09-21' })).toEqual({ status: 'ok' })
+    const entry = (await journal().read(USER))[0]!
+    // Noon UTC, so the day reads the same wherever the list is drawn (it
+    // formats dates in UTC).
+    expect(entry.triedAt).toBe(Date.UTC(2026, 8, 21, 12))
+    expect(entry.event.occurredAt).toBe(entry.triedAt)
+    // The audit field stays when it was logged.
+    expect(entry.createdAt).not.toBe(entry.triedAt)
+  })
+
+  it('refuses a tasting date in the future, before 2000, or that is not a date', async () => {
+    const { entryId } = await rated()
+    const tomorrow = new Date(Date.now() + 2 * 86_400_000).toISOString().slice(0, 10)
+    expect(await updateTasting(entryId, { triedOn: tomorrow })).toEqual({ status: 'invalid_input' })
+    expect(await updateTasting(entryId, { triedOn: '1999-12-31' })).toEqual({ status: 'invalid_input' })
+    expect(await updateTasting(entryId, { triedOn: '2026-02-30' })).toEqual({ status: 'invalid_input' })
+  })
+
   it('refuses an empty change and an unknown entry', async () => {
     const { entryId } = await rated()
     expect(await updateTasting(entryId, {})).toEqual({ status: 'invalid_input' })

@@ -1,6 +1,7 @@
 {
   "journal": {
-    "ratingStars": "{rating, plural, one {# star} other {# stars}}"
+    "ratingStars": "{rating, plural, one {# star} other {# stars}}",
+    "fullNotes": "Full notes"
   },
   "collection": {
     "title": "Collection",
@@ -573,7 +574,9 @@
     "rateNewTasting": "Rate a new tasting",
     "historyHeading": "You and this sake",
     "historyCount": "{n, plural, one {# tasting} other {# tastings}}",
-    "notTastedYet": "Not tasted yet."
+    "notTastedYet": "Not tasted yet.",
+    "done": "Done",
+    "inJournal": "In your journal"
   },
   "cellar": {
     "add": "Add to cellar",
@@ -595,5 +598,164 @@
     "emptyHeading": "Nothing in the cellar",
     "emptyBody": "Bottles you own. Tap “Add to cellar” on any sake and we’ll tell you when an open one should be finished.",
     "error": "Couldn’t change that just now — try again."
+  },
+  "detailedNotes": {
+    "title": "Detailed notes",
+    "done": "Done",
+    "allOptional": "All optional",
+    "partsFilled": "{n} of {total} parts filled",
+    "intro": "Look, smell, taste, decide — the order professional tasters work in. Fill any part, skip the rest; it saves as you go.",
+    "triedOn": "Tasted on",
+    "open": "Add detailed notes",
+    "edit": "Detailed notes · {n} of {total}",
+    "error": "Couldn’t save that just now — try again.",
+    "notSet": "—",
+    "stepLabel": "{scale}: {step}",
+    "parts": {
+      "appearance": {
+        "title": "Appearance",
+        "hint": "Clarity, color"
+      },
+      "nose": {
+        "title": "Nose",
+        "hint": "Intensity, aromas"
+      },
+      "palate": {
+        "title": "Palate",
+        "hint": "Sweetness, acidity, umami, body, finish"
+      },
+      "serve": {
+        "title": "How you had it",
+        "hint": "Temperature, vessel, food"
+      },
+      "verdict": {
+        "title": "Conclusion",
+        "hint": "Again? · occasion"
+      }
+    },
+    "fields": {
+      "clarity": "Clarity",
+      "color": "Color",
+      "intensity": "Intensity",
+      "aromas": "Aromas · pick any",
+      "temperature": "Temperature",
+      "vessel": "Vessel",
+      "with": "With",
+      "withPlaceholder": "Food, place, company",
+      "again": "Drink it again?",
+      "suits": "Would suit · pick any"
+    },
+    "values": {
+      "clarity": {
+        "clear": "Clear",
+        "slightlyHazy": "Slightly hazy",
+        "cloudy": "Cloudy"
+      },
+      "color": {
+        "waterWhite": "Water-white",
+        "paleStraw": "Pale straw",
+        "gold": "Gold",
+        "amber": "Amber"
+      },
+      "intensity": {
+        "light": "Light",
+        "medium": "Medium",
+        "pronounced": "Pronounced"
+      },
+      "aromas": {
+        "fruit": "Fruit",
+        "flower": "Flower",
+        "steamedRice": "Steamed rice",
+        "lactic": "Lactic",
+        "koji": "Koji",
+        "nut": "Nut",
+        "earth": "Earth",
+        "aged": "Aged"
+      },
+      "vessel": {
+        "ochoko": "Ochoko",
+        "guinomi": "Guinomi",
+        "wineGlass": "Wine glass",
+        "masu": "Masu"
+      },
+      "again": {
+        "yes": "Yes",
+        "maybe": "Maybe",
+        "no": "No"
+      },
+      "suits": {
+        "everyday": "Everyday",
+        "withDinner": "With dinner",
+        "specialOccasion": "Special occasion",
+        "gift": "As a gift"
+      }
+    },
+    "scales": {
+      "sweetness": {
+        "label": "Sweetness",
+        "steps": {
+          "s1": "Bone dry",
+          "s2": "Dry",
+          "s3": "Off-dry",
+          "s4": "Medium sweet",
+          "s5": "Sweet"
+        }
+      },
+      "acidity": {
+        "label": "Acidity",
+        "steps": {
+          "s1": "Soft",
+          "s2": "Low",
+          "s3": "Medium",
+          "s4": "High",
+          "s5": "Sharp"
+        }
+      },
+      "umami": {
+        "label": "Umami",
+        "steps": {
+          "s1": "Clean",
+          "s2": "Light",
+          "s3": "Medium",
+          "s4": "Rich",
+          "s5": "Savory"
+        }
+      },
+      "body": {
+        "label": "Body",
+        "steps": {
+          "s1": "Very light",
+          "s2": "Light",
+          "s3": "Medium",
+          "s4": "Full",
+          "s5": "Heavy"
+        }
+      },
+      "finish": {
+        "label": "Finish",
+        "steps": {
+          "s1": "Short",
+          "s2": "Brief",
+          "s3": "Medium",
+          "s4": "Long",
+          "s5": "Lingering"
+        }
+      }
+    },
+    "temperatureTerms": {
+      "caveat": "Japanese names, coldest to hottest.",
+      "triggerLabel": "About the serving temperatures",
+      "title": "Serving temperatures",
+      "intro": "Sake is served across a range of temperatures, and each step has a Japanese name. The degrees are approximate; what matters is how the same sake changes from one step to the next.",
+      "closeLabel": "Close",
+      "notes": {
+        "yukibie": "Snow-chilled: as cold as it gets. Aroma is muted and the finish turns sharp and clean.",
+        "hanabie": "Flower-chilled: cold from the fridge. Crisp, with the aroma still held back.",
+        "suzuhie": "Cool, just under room temperature. The aroma starts to open while it stays fresh.",
+        "joon": "Room temperature: the sake as it is, with nothing hidden or added.",
+        "nurukan": "Lukewarm, a little above body heat. Rounder and softer; umami comes forward.",
+        "atsukan": "Hot. Drier and sharper, best with fuller, savory sakes."
+      }
+    }
   }
 }

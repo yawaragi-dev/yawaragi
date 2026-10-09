@@ -1,6 +1,7 @@
 {
   "journal": {
-    "ratingStars": "{rating, plural, one {# Stern} other {# Sterne}}"
+    "ratingStars": "{rating, plural, one {# Stern} other {# Sterne}}",
+    "fullNotes": "Alle Notizen"
   },
   "collection": {
     "title": "Sammlung",
@@ -573,7 +574,9 @@
     "rateNewTasting": "Neue Verkostung bewerten",
     "historyHeading": "Du und dieser Sake",
     "historyCount": "{n, plural, one {# Verkostung} other {# Verkostungen}}",
-    "notTastedYet": "Noch nicht probiert."
+    "notTastedYet": "Noch nicht probiert.",
+    "done": "Fertig",
+    "inJournal": "Im Journal"
   },
   "cellar": {
     "add": "In den Keller",
@@ -595,5 +598,164 @@
     "emptyHeading": "Noch nichts im Keller",
     "emptyBody": "Flaschen, die du besitzt. Tipp bei einem Sake auf „In den Keller“, und wir sagen dir, wann eine offene Flasche aufgebraucht werden sollte.",
     "error": "Das ließ sich gerade nicht ändern — versuch es noch einmal."
+  },
+  "detailedNotes": {
+    "title": "Ausführliche Notizen",
+    "done": "Fertig",
+    "allOptional": "Alles optional",
+    "partsFilled": "{n} von {total} Teilen ausgefüllt",
+    "intro": "Ansehen, riechen, schmecken, entscheiden — die Reihenfolge, in der professionelle Verkoster arbeiten. Füll aus, was du magst, und lass den Rest; alles wird sofort gespeichert.",
+    "triedOn": "Verkostet am",
+    "open": "Ausführliche Notizen hinzufügen",
+    "edit": "Ausführliche Notizen · {n} von {total}",
+    "error": "Das ließ sich gerade nicht speichern — versuch es noch einmal.",
+    "notSet": "—",
+    "stepLabel": "{scale}: {step}",
+    "parts": {
+      "appearance": {
+        "title": "Aussehen",
+        "hint": "Klarheit, Farbe"
+      },
+      "nose": {
+        "title": "Nase",
+        "hint": "Intensität, Aromen"
+      },
+      "palate": {
+        "title": "Gaumen",
+        "hint": "Süße, Säure, Umami, Körper, Abgang"
+      },
+      "serve": {
+        "title": "Wie du ihn hattest",
+        "hint": "Temperatur, Gefäß, Essen"
+      },
+      "verdict": {
+        "title": "Fazit",
+        "hint": "Noch einmal? · Anlass"
+      }
+    },
+    "fields": {
+      "clarity": "Klarheit",
+      "color": "Farbe",
+      "intensity": "Intensität",
+      "aromas": "Aromen · beliebig viele",
+      "temperature": "Temperatur",
+      "vessel": "Gefäß",
+      "with": "Dazu",
+      "withPlaceholder": "Essen, Ort, Gesellschaft",
+      "again": "Noch einmal?",
+      "suits": "Passt zu · beliebig viele"
+    },
+    "values": {
+      "clarity": {
+        "clear": "Klar",
+        "slightlyHazy": "Leicht trüb",
+        "cloudy": "Trüb"
+      },
+      "color": {
+        "waterWhite": "Wasserhell",
+        "paleStraw": "Blassstrohgelb",
+        "gold": "Gold",
+        "amber": "Bernstein"
+      },
+      "intensity": {
+        "light": "Leicht",
+        "medium": "Mittel",
+        "pronounced": "Ausgeprägt"
+      },
+      "aromas": {
+        "fruit": "Frucht",
+        "flower": "Blüte",
+        "steamedRice": "Gedämpfter Reis",
+        "lactic": "Milchig",
+        "koji": "Koji",
+        "nut": "Nuss",
+        "earth": "Erde",
+        "aged": "Gereift"
+      },
+      "vessel": {
+        "ochoko": "Ochoko",
+        "guinomi": "Guinomi",
+        "wineGlass": "Weinglas",
+        "masu": "Masu"
+      },
+      "again": {
+        "yes": "Ja",
+        "maybe": "Vielleicht",
+        "no": "Nein"
+      },
+      "suits": {
+        "everyday": "Alltag",
+        "withDinner": "Zum Abendessen",
+        "specialOccasion": "Besonderer Anlass",
+        "gift": "Als Geschenk"
+      }
+    },
+    "scales": {
+      "sweetness": {
+        "label": "Süße",
+        "steps": {
+          "s1": "Knochentrocken",
+          "s2": "Trocken",
+          "s3": "Halbtrocken",
+          "s4": "Lieblich",
+          "s5": "Süß"
+        }
+      },
+      "acidity": {
+        "label": "Säure",
+        "steps": {
+          "s1": "Weich",
+          "s2": "Niedrig",
+          "s3": "Mittel",
+          "s4": "Hoch",
+          "s5": "Scharf"
+        }
+      },
+      "umami": {
+        "label": "Umami",
+        "steps": {
+          "s1": "Klar",
+          "s2": "Leicht",
+          "s3": "Mittel",
+          "s4": "Reich",
+          "s5": "Herzhaft"
+        }
+      },
+      "body": {
+        "label": "Körper",
+        "steps": {
+          "s1": "Sehr leicht",
+          "s2": "Leicht",
+          "s3": "Mittel",
+          "s4": "Voll",
+          "s5": "Schwer"
+        }
+      },
+      "finish": {
+        "label": "Abgang",
+        "steps": {
+          "s1": "Kurz",
+          "s2": "Knapp",
+          "s3": "Mittel",
+          "s4": "Lang",
+          "s5": "Anhaltend"
+        }
+      }
+    },
+    "temperatureTerms": {
+      "caveat": "Japanische Namen, von kalt bis heiß.",
+      "triggerLabel": "Über die Serviertemperaturen",
+      "title": "Serviertemperaturen",
+      "intro": "Sake wird bei ganz unterschiedlichen Temperaturen serviert, und jede Stufe hat einen japanischen Namen. Die Gradzahlen sind ungefähr; entscheidend ist, wie sich derselbe Sake von Stufe zu Stufe verändert.",
+      "closeLabel": "Schließen",
+      "notes": {
+        "yukibie": "Schneekalt: so kalt wie möglich. Das Aroma tritt zurück, der Abgang wird klar und scharf.",
+        "hanabie": "Blütenkühl: kalt aus dem Kühlschrank. Frisch, das Aroma noch zurückhaltend.",
+        "suzuhie": "Kühl, knapp unter Zimmertemperatur. Das Aroma öffnet sich, der Sake bleibt frisch.",
+        "joon": "Zimmertemperatur: der Sake, wie er ist – nichts verdeckt, nichts hinzugefügt.",
+        "nurukan": "Lauwarm, etwas über Körpertemperatur. Runder und weicher, das Umami tritt hervor.",
+        "atsukan": "Heiß. Trockener und schärfer, am besten zu vollen, würzigen Sakes."
+      }
+    }
   }
 }

@@ -3,11 +3,20 @@
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { useFormatter, useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
+import { CheckCircle, SlidersHorizontal } from '@phosphor-icons/react/dist/ssr'
+import { Link } from '@/i18n/navigation'
+import { DetailedNotesSheet } from '@/components/journal/detailed-notes-sheet'
 import { StarRating } from '@/components/journal/star-rating'
 import { UndoNotice } from '@/components/journal/undo-notice'
 import type { FlavorAxis } from '@/lib/schemas/flavor-chart'
+import {
+  DETAILED_NOTES_PARTS,
+  type DetailedNotes,
+  isPartFilled,
+} from '@/lib/schemas/detailed-notes'
 import type { QuickTag } from '@/lib/schemas/journal-entry'
 import { isAxisQuickTag, quickTagAxis, quickTagsFor } from '@/lib/taste/quick-tags'
+import { tastingDayOf } from '@/lib/taste/tasting-day'
 import { ratingBand } from '@/lib/taste/rating-band'
 import { rateNewTasting, undoTasting, updateTasting } from '@/lib/taste/tasting-actions'
 import { cn } from '@/lib/utils'
@@ -25,8 +34,8 @@ import { cn } from '@/lib/utils'
  * §9's bottle page. Maintainer-only (ADR-0020): callers render it only when the
  * server says this visitor can keep a journal, and the actions check again.
  *
- * `"Add detailed notes"` (§10) is not here yet — it opens a sheet that does not
- * exist, and a button that opens nothing is the dead affordance #162 forbids.
+ * After the first tap, "Add detailed notes" opens §10's sheet for the same
+ * entry; once parts are filled it reads "Detailed notes · 2 of 5".
  */
 
 export type TastingHistoryMeta =
@@ -53,6 +62,7 @@ export function TastingLogPanel({
   chart,
   history,
   onSaved,
+  onDone,
 }: {
   brandId: number
   /** This sake's flavor chart, or `null` without one. It picks the quick chips,
@@ -62,9 +72,14 @@ export function TastingLogPanel({
   history: TastingHistoryMeta | null
   /** Called after the journal changed (logged, or undone), e.g. to refresh the page. */
   onSaved?: () => void
+  /** "Done" after logging hands the panel back to the caller (the bottle page
+   *  closes it). Without it, "Done" folds the panel into a one-line "Logged"
+   *  confirmation, which is what the scan's result card wants. */
+  onDone?: () => void
 }) {
   const t = useTranslations('tasting')
   const tAxis = useTranslations('flavorAxis')
+  const tNotes = useTranslations('detailedNotes')
   const tBand = useTranslations('rating.band')
   const format = useFormatter()
   const router = useRouter()
@@ -76,10 +91,13 @@ export function TastingLogPanel({
   const [popKey, setPopKey] = useState<number | undefined>(undefined)
   const [noticeOpen, setNoticeOpen] = useState(false)
   const [failed, setFailed] = useState(false)
+  const [detail, setDetail] = useState<DetailedNotes | undefined>(undefined)
+  const [sheetOpen, setSheetOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
   // Undo has its own transition so the panel can dim while it runs without
   // dimming on every note or chip save.
   const [isUndoing, startUndo] = useTransition()
+  const [done, setDone] = useState(false)
 
   const noteTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const noticeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
@@ -185,10 +203,20 @@ export function TastingLogPanel({
         setNote('')
         savedNote.current = ''
         setTags([])
+        setDetail(undefined)
         setPopKey(undefined)
         changed()
       })
     })
+  }
+
+  /** "Done": the tasting is already saved — this says so and gets out of the
+   *  way. A note still waiting for its debounce is saved first. */
+  function finish() {
+    saveNote(note)
+    setSheetOpen(false)
+    if (onDone) onDone()
+    else setDone(true)
   }
 
   const ratingText =
@@ -224,6 +252,24 @@ export function TastingLogPanel({
             rating: format.number(history.rating, { maximumFractionDigits: 1 }),
           })
         : null
+
+  if (logged && done) {
+    return (
+      <section
+        className="flex items-center gap-2 rounded-md border border-divider bg-ginshu-100 px-3.5 py-3 motion-safe:animate-yw-fade"
+        aria-live="polite"
+        data-testid="tasting-log-done"
+      >
+        <CheckCircle size={18} weight="fill" aria-hidden="true" className="shrink-0 text-ginshu-600" />
+        <span className="min-w-0 flex-1 text-subtle text-ink">
+          {t('logged')} · {ratingText}
+        </span>
+        <Link href="/collection" className="shrink-0 text-meta text-ginshu-700 underline underline-offset-4">
+          {t('inJournal')}
+        </Link>
+      </section>
+    )
+  }
 
   return (
     <section
@@ -305,6 +351,46 @@ export function TastingLogPanel({
               )
             })}
           </div>
+          {(() => {
+            const filled = DETAILED_NOTES_PARTS.filter((p) => isPartFilled(detail, p)).length
+            return (
+              <div className="mt-0.5 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSheetOpen(true)}
+                  className="flex min-h-[42px] flex-1 items-center justify-center gap-2 rounded-xl border border-ash-300 text-subtle font-medium text-ink transition-colors hover:bg-ash-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+                  data-testid="tasting-log-detailed"
+                >
+                  <SlidersHorizontal size={16} aria-hidden="true" />
+                  {filled > 0
+                    ? tNotes('edit', { n: filled, total: DETAILED_NOTES_PARTS.length })
+                    : tNotes('open')}
+                </button>
+                {/* Not in §5: every tap already saved, but with no Save button
+                    there was no way to say "I'm finished" — or to see that it
+                    was kept. Same look as §10's "Done". */}
+                <button
+                  type="button"
+                  onClick={finish}
+                  className="min-h-[42px] shrink-0 rounded-xl border border-ginshu-400 px-4 text-subtle font-medium text-ginshu-700 transition-colors hover:bg-ginshu-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+                  data-testid="tasting-log-done-button"
+                >
+                  {t('done')}
+                </button>
+              </div>
+            )
+          })()}
+          <DetailedNotesSheet
+            entryId={logged.entryId}
+            initial={detail}
+            initialDay={tastingDayOf(logged.loggedAt)}
+            open={sheetOpen}
+            onOpenChange={setSheetOpen}
+            onSaved={(next) => {
+              setDetail(next)
+              changed()
+            }}
+          />
         </div>
       ) : (
         <p className="text-meta text-ash-600">{t('hint')}</p>

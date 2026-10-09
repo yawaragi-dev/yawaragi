@@ -48,7 +48,9 @@ export function BottleRateRow({
     // alone in a row, with the panel opening below everything else.
     return (
       <div className="flex flex-col gap-3">
-        <TastingLogPanel brandId={brandId} chart={chart} history={history} />
+        {/* "Done" closes the panel back to "Rate a new tasting"; the tasting
+            is already in "You and this sake" below. */}
+        <TastingLogPanel brandId={brandId} chart={chart} history={history} onDone={() => setOpen(false)} />
         <div className="flex gap-2" data-testid="bottle-actions">
           {cellar}
           {similar}

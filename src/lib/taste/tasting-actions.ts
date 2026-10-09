@@ -14,6 +14,9 @@ import {
 } from '@/lib/schemas/tasting-input'
 import { lookupBrand, lookupFlavorChart } from '@/lib/sakenowa/lookup'
 import { withMaintainerCollection } from '@/lib/taste/maintainer-collection'
+import { tastingDayAt } from '@/lib/taste/tasting-day'
+
+const HOUR = 3_600_000
 
 /**
  * The one-tap tasting actions behind §5's log panel (design v1.4, rule 1:
@@ -108,12 +111,21 @@ export async function updateTasting(
     if (!existing) return { status: 'not_found' }
 
     const next: Record<string, unknown> = { ...existing, updatedAt: Date.now() }
-    if (p.rating !== undefined && existing.event.kind === 'rating') {
-      next.event = { ...existing.event, rating: p.rating }
-    }
+    let event = existing.event
+    if (p.rating !== undefined && event.kind === 'rating') event = { ...event, rating: p.rating }
     if (p.notes !== undefined) next.notes = p.notes.trim() || undefined
     if (p.tags !== undefined) next.tags = p.tags.length > 0 ? [...new Set(p.tags)] : undefined
     if (p.detail !== undefined) next.detail = compactDetailedNotes(p.detail)
+    if (p.triedOn !== undefined) {
+      const triedAt = tastingDayAt(p.triedOn)
+      // "Today" anywhere on Earth is at most 14 hours ahead of UTC.
+      if (triedAt - 12 * HOUR > Date.now() + 14 * HOUR) return { status: 'invalid_input' }
+      next.triedAt = triedAt
+      // The palate replays tastings by `occurredAt`, which the journal keeps
+      // equal to `triedAt` — so a backdated tasting weighs as an older one.
+      event = { ...event, occurredAt: triedAt }
+    }
+    next.event = event
 
     const checked = JournalEntrySchema.safeParse(next)
     if (!checked.success) return { status: 'invalid_input' }

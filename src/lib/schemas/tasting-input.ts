@@ -19,10 +19,28 @@ export const RateTastingInputSchema = z.object({
 })
 export type RateTastingInput = z.infer<typeof RateTastingInputSchema>
 
+/** The earliest tasting day the journal accepts. */
+export const EARLIEST_TASTING_DAY = '2000-01-01'
+
+/**
+ * A tasting day, `YYYY-MM-DD`, as the visitor's calendar shows it. A real
+ * calendar date (no 30 February), not before {@link EARLIEST_TASTING_DAY}.
+ * "Not in the future" needs a clock, so the action checks it.
+ */
+export const TastingDaySchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/)
+  .refine((day) => {
+    const [y, m, d] = day.split('-').map(Number) as [number, number, number]
+    const at = new Date(Date.UTC(y, m - 1, d))
+    return at.getUTCFullYear() === y && at.getUTCMonth() === m - 1 && at.getUTCDate() === d
+  }, 'not a calendar date')
+  .refine((day) => day >= EARLIEST_TASTING_DAY, 'too early')
+
 /**
  * What can change on a logged tasting after the first tap: the rating
- * ("re-rating updates the same entry"), the note, the quick tags, and §10's
- * detailed notes. Every field optional; an absent field is left as it is.
+ * ("re-rating updates the same entry"), the note, the quick tags, §10's
+ * detailed notes, and the day it was tasted. Every field optional; an absent field is left as it is.
  * `notes: ''` clears the note, `tags: []` clears the tags, and a `detail`
  * replaces the whole sheet (the client holds the sheet, so it sends it whole).
  */
@@ -32,6 +50,8 @@ export const TastingPatchSchema = z
     notes: z.string().max(2000).optional(),
     tags: z.array(z.enum(QUICK_TAGS)).max(QUICK_TAGS.length).optional(),
     detail: DetailedNotesSchema.optional(),
+    /** Move the tasting to another day — "I had this last week". */
+    triedOn: TastingDaySchema.optional(),
   })
   .refine((p) => Object.values(p).some((v) => v !== undefined), 'empty patch')
 export type TastingPatch = z.infer<typeof TastingPatchSchema>
