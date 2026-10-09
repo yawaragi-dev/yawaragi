@@ -165,6 +165,41 @@ describe('§5 log panel', () => {
     expect(screen.queryByTestId('tasting-log-note')).toBeNull()
   })
 
+  it('opens an earlier tasting already filled in, and edits it rather than logging a new one', async () => {
+    renderPanel({
+      existing: { entryId: 'old', rating: 3.5, notes: 'Pear', tags: ['warm'], triedAt: Date.UTC(2026, 6, 18, 12), tastingNumber: 2 },
+    })
+    expect(screen.getByText('Your tasting')).toBeTruthy()
+    expect(screen.getByTestId('tasting-log-meta').textContent).toBe('Tasted 18.07.2026')
+    expect((screen.getByTestId('tasting-log-note') as HTMLTextAreaElement).value).toBe('Pear')
+    expect(screen.getByTestId('tasting-tag-warm').getAttribute('aria-pressed')).toBe('true')
+    expect(screen.queryByTestId('undo-notice')).toBeNull()
+
+    fireEvent.click(screen.getByTestId('star-rating-5'))
+    await waitFor(() => expect(updateTasting).toHaveBeenCalledWith('old', { rating: 5 }))
+    expect(rateNewTasting).not.toHaveBeenCalled()
+  })
+
+  it('deletes a tasting only after it is confirmed', async () => {
+    undoTasting.mockResolvedValue({ status: 'ok' })
+    const onDeleted = vi.fn()
+    renderPanel({
+      existing: { entryId: 'old', rating: 4, triedAt: Date.UTC(2026, 6, 18, 12), tastingNumber: 1 },
+      onDeleted,
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Delete tasting' }))
+    expect(undoTasting).not.toHaveBeenCalled()
+    expect(screen.getByText('Delete this tasting? This can’t be undone.')).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Keep' }))
+    expect(screen.queryByText('Delete this tasting? This can’t be undone.')).toBeNull()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete tasting' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }))
+    await waitFor(() => expect(undoTasting).toHaveBeenCalledWith('old'))
+    await waitFor(() => expect(onDeleted).toHaveBeenCalled())
+  })
+
   it('does not claim the palate moved for a sake with no flavor chart', async () => {
     renderPanel({ chart: null })
     fireEvent.click(screen.getByTestId('star-rating-4'))

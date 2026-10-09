@@ -576,7 +576,14 @@
     "historyCount": "{n, plural, one {# Verkostung} other {# Verkostungen}}",
     "notTastedYet": "Noch nicht probiert.",
     "done": "Fertig",
-    "inJournal": "Im Journal"
+    "inJournal": "Im Journal",
+    "yourTasting": "Deine Verkostung",
+    "tastedOn": "Verkostet am {date}",
+    "edit": "Bearbeiten",
+    "delete": "Verkostung löschen",
+    "deleteConfirm": "Diese Verkostung löschen? Das lässt sich nicht rückgängig machen.",
+    "deleteYes": "Löschen",
+    "deleteNo": "Behalten"
   },
   "cellar": {
     "add": "In den Keller",

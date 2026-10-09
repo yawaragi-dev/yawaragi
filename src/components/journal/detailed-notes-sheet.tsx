@@ -32,6 +32,7 @@ import {
 } from '@/lib/schemas/detailed-notes'
 import { EARLIEST_TASTING_DAY } from '@/lib/schemas/tasting-input'
 import { updateTasting } from '@/lib/taste/tasting-actions'
+import { europeanDay } from '@/lib/taste/tasting-day'
 import { cn } from '@/lib/utils'
 
 /**
@@ -520,10 +521,4 @@ function ChipGroup<T extends string>({
 /** A temperature as the chips and the part summary show it: "suzuhie 15°". */
 function temperatureName(k: keyof typeof SERVING_TEMPERATURE_TERMS): string {
   return `${SERVING_TEMPERATURE_TERMS[k].romaji} ${SERVING_TEMPERATURE_TERMS[k].degrees}°`
-}
-
-/** `2026-10-08` → `08.10.2026`; a half-typed value is shown as it is. */
-function europeanDay(day: string): string {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(day)
-  return m ? `${m[3]}.${m[2]}.${m[1]}` : day
 }

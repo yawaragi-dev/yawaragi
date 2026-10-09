@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { useFormatter, useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
-import { CheckCircle, SlidersHorizontal } from '@phosphor-icons/react/dist/ssr'
+import { CheckCircle, SlidersHorizontal, Trash } from '@phosphor-icons/react/dist/ssr'
 import { Link } from '@/i18n/navigation'
 import { DetailedNotesSheet } from '@/components/journal/detailed-notes-sheet'
 import { StarRating } from '@/components/journal/star-rating'
@@ -16,7 +16,7 @@ import {
 } from '@/lib/schemas/detailed-notes'
 import type { QuickTag } from '@/lib/schemas/journal-entry'
 import { isAxisQuickTag, quickTagAxis, quickTagsFor } from '@/lib/taste/quick-tags'
-import { tastingDayOf } from '@/lib/taste/tasting-day'
+import { europeanDay, tastingDayOf } from '@/lib/taste/tasting-day'
 import { ratingBand } from '@/lib/taste/rating-band'
 import { rateNewTasting, undoTasting, updateTasting } from '@/lib/taste/tasting-actions'
 import { cn } from '@/lib/utils'
@@ -44,6 +44,17 @@ export type TastingHistoryMeta =
   /** The most recent earlier tasting. */
   | { kind: 'last'; triedAt: number; rating: number }
 
+/** An earlier tasting, opened in the panel to edit or delete it. */
+export interface ExistingTasting {
+  entryId: string
+  rating: number
+  notes?: string
+  tags?: readonly QuickTag[]
+  detail?: DetailedNotes
+  triedAt: number
+  tastingNumber: number
+}
+
 interface Logged {
   entryId: string
   tastingNumber: number
@@ -63,6 +74,8 @@ export function TastingLogPanel({
   history,
   onSaved,
   onDone,
+  existing,
+  onDeleted,
 }: {
   brandId: number
   /** This sake's flavor chart, or `null` without one. It picks the quick chips,
@@ -76,6 +89,12 @@ export function TastingLogPanel({
    *  closes it). Without it, "Done" folds the panel into a one-line "Logged"
    *  confirmation, which is what the scan's result card wants. */
   onDone?: () => void
+  /** Open an earlier tasting instead of starting a new one — "You and this
+   *  sake"'s Edit. Every change edits that entry, and nothing logs anew. */
+  existing?: ExistingTasting
+  /** Called once a tasting has been deleted. Without it the panel resets to
+   *  "Your take", as after Undo. */
+  onDeleted?: () => void
 }) {
   const t = useTranslations('tasting')
   const tAxis = useTranslations('flavorAxis')
@@ -84,25 +103,30 @@ export function TastingLogPanel({
   const format = useFormatter()
   const router = useRouter()
 
-  const [rating, setRating] = useState(0)
-  const [logged, setLogged] = useState<Logged | null>(null)
-  const [note, setNote] = useState('')
-  const [tags, setTags] = useState<readonly QuickTag[]>([])
+  const [rating, setRating] = useState(existing?.rating ?? 0)
+  const [logged, setLogged] = useState<Logged | null>(
+    existing
+      ? { entryId: existing.entryId, tastingNumber: existing.tastingNumber, loggedAt: existing.triedAt }
+      : null,
+  )
+  const [note, setNote] = useState(existing?.notes ?? '')
+  const [tags, setTags] = useState<readonly QuickTag[]>(existing?.tags ?? [])
   const [popKey, setPopKey] = useState<number | undefined>(undefined)
   const [noticeOpen, setNoticeOpen] = useState(false)
   const [failed, setFailed] = useState(false)
-  const [detail, setDetail] = useState<DetailedNotes | undefined>(undefined)
+  const [detail, setDetail] = useState<DetailedNotes | undefined>(existing?.detail)
   const [sheetOpen, setSheetOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
   // Undo has its own transition so the panel can dim while it runs without
   // dimming on every note or chip save.
   const [isUndoing, startUndo] = useTransition()
   const [done, setDone] = useState(false)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
 
   const noteTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const noticeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   /** The note as last saved, so a blur after the debounce fired saves nothing. */
-  const savedNote = useRef('')
+  const savedNote = useRef(existing?.notes ?? '')
 
   // Cleanup only: timers are scheduled from event handlers, not from effects.
   useEffect(
@@ -198,13 +222,42 @@ export function TastingLogPanel({
       // "You and this sake" catches up a beat later, when the refresh lands.
       // Inside one transition the reset and the refreshed page commit together.
       startUndo(() => {
-        setLogged(null)
-        setRating(0)
-        setNote('')
-        savedNote.current = ''
-        setTags([])
-        setDetail(undefined)
-        setPopKey(undefined)
+        resetToFresh()
+        changed()
+      })
+    })
+  }
+
+  /** Back to "Your take", as before the first tap. */
+  function resetToFresh() {
+    setLogged(null)
+    setRating(0)
+    setNote('')
+    savedNote.current = ''
+    setTags([])
+    setDetail(undefined)
+    setPopKey(undefined)
+    setConfirmingDelete(false)
+  }
+
+  /** "Delete tasting", once confirmed. The same server delete as Undo, but
+   *  reachable after the notice is gone — and for an earlier tasting. */
+  function deleteTasting() {
+    if (!logged) return
+    const entryId = logged.entryId
+    clearTimeout(noticeTimer.current)
+    clearTimeout(noteTimer.current)
+    setNoticeOpen(false)
+    startUndo(async () => {
+      const result = await undoTasting(entryId)
+      if (result.status !== 'ok') {
+        setFailed(true)
+        return
+      }
+      // One transition with the refresh, as in `undo`.
+      startUndo(() => {
+        if (onDeleted) onDeleted()
+        else resetToFresh()
         changed()
       })
     })
@@ -227,7 +280,11 @@ export function TastingLogPanel({
         })
       : t('tapToRate')
 
-  const meta = logged
+  const meta = existing
+    ? t('tastedOn', {
+        date: europeanDay(tastingDayOf(existing.triedAt)),
+      })
+    : logged
     ? t('loggedMeta', {
         // The visitor's own clock — "21:40" means the time where they are
         // sitting. Only ever formatted in the browser (it appears after a
@@ -287,7 +344,7 @@ export function TastingLogPanel({
         <div className="flex items-center gap-2">
           <span aria-hidden="true" className="block h-3.5 w-0.5 rounded-full bg-ginshu-500" />
           <h3 id={`tasting-log-${brandId}-heading`} className="text-card-heading font-medium text-ink">
-            {logged ? t('logged') : t('yourTake')}
+            {existing ? t('yourTasting') : logged ? t('logged') : t('yourTake')}
           </h3>
         </div>
         {meta && (
@@ -391,6 +448,39 @@ export function TastingLogPanel({
               changed()
             }}
           />
+          {/* Interim, until #308 places edit and delete: a per-tasting delete
+              is also what GDPR erasure needs below "delete everything". */}
+          {confirmingDelete ? (
+            <div className="flex flex-wrap items-center gap-2 pt-1" role="group" aria-label={t('deleteConfirm')}>
+              <span className="min-w-0 flex-1 text-meta text-ink">{t('deleteConfirm')}</span>
+              <button
+                type="button"
+                onClick={deleteTasting}
+                disabled={isUndoing}
+                className="min-h-9 rounded-md bg-ginshu-600 px-3 text-meta font-medium text-ground transition-colors hover:bg-ginshu-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600 disabled:opacity-60"
+                data-testid="tasting-log-delete-confirm"
+              >
+                {t('deleteYes')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmingDelete(false)}
+                className="min-h-9 rounded-md px-3 text-meta text-ash-700 transition-colors hover:bg-ash-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+              >
+                {t('deleteNo')}
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setConfirmingDelete(true)}
+              className="flex min-h-9 items-center gap-1.5 self-start rounded-md px-1 text-meta text-ash-600 transition-colors hover:text-ginshu-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+              data-testid="tasting-log-delete"
+            >
+              <Trash size={14} aria-hidden="true" />
+              {t('delete')}
+            </button>
+          )}
         </div>
       ) : (
         <p className="text-meta text-ash-600">{t('hint')}</p>
