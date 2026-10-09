@@ -789,7 +789,7 @@ const SAKE_GRADE_TOKENS = new Set<string>([
 
 /**
  * Expands a Latin brand candidate into the set of lookup keys we
- * actually query. Three transforms:
+ * actually query. Four transforms:
  *   - Verbatim (lowercased).
  *   - For multi-word inputs where the first word is substantial
  *     (≥ 4 characters) AND NOT in `SAKE_GRADE_TOKENS`, also try the
@@ -798,6 +798,8 @@ const SAKE_GRADE_TOKENS = new Set<string>([
  *     `JUNMAI TARU SAKE` → `junmai` matching unrelated brands.
  *   - Space-stripped form for `name_romaji` (which the #121 ingest
  *     pipeline stores as single-word camel Latin like `Tanigawadake`).
+ *   - Leading words, grade words dropped: `SAWA NO HANA Kokoro` → also
+ *     `sawa no hana` (and `sawanohana`).
  *
  * Returns lowercased strings so the SQL only has to LOWER() each
  * column on the right-hand side.
@@ -828,6 +830,18 @@ export function expandLatinBrandVariants(text: string): string[] {
   // already-spaceless case is covered by `lower`).
   if (lower.includes(' ')) {
     variants.add(lower.replace(/\s+/g, ''))
+  }
+  // Leading words, longest first, with grade words dropped wherever they
+  // sit: a label's Latin often runs the line and the product together —
+  // "SAWA NO HANA Kokoro" is 澤の花 "Sawa no Hana" plus the product "Kokoro",
+  // and "sawa" alone is not the line. Safe to widen: the SQL compares whole
+  // names for equality, so a prefix can only match a line with exactly that
+  // name. Two words or more, since one word is the first-word rule above.
+  const words = lower.split(/\s+/).filter((w) => !SAKE_GRADE_TOKENS.has(w))
+  for (let n = words.length; n >= 2; n--) {
+    const prefix = words.slice(0, n).join(' ')
+    variants.add(prefix)
+    variants.add(prefix.replace(/\s+/g, ''))
   }
   return [...variants]
 }
