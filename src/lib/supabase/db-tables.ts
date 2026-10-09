@@ -42,6 +42,10 @@ export type PublicTable =
   | 'flavor_tags'
   | 'rankings'
   | 'ingestion_runs'
+  // Curated romaji that wins over the LLM's (migration 0013). Read only by
+  // the triggers on brands/breweries today; listed so a future reader is
+  // routed correctly.
+  | 'name_romaji_overrides'
 
 /**
  * Tables whose rows are scoped to a single Clerk user. Reads/writes MUST

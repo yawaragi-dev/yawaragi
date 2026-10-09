@@ -26,6 +26,21 @@ describe('expandLatinBrandVariants', () => {
     )
   })
 
+  it('tries the leading words of a longer label name: "SAWA NO HANA Kokoro" → "sawa no hana"', () => {
+    // A real scan (2026-10-09): the model read the label's Latin as one name,
+    // the line is 澤の花 "Sawa no Hana", and only "Kokoro" — the product —
+    // stood in the way. "sawa" alone is not the line.
+    expect(expandLatinBrandVariants('SAWA NO HANA Kokoro')).toEqual(
+      expect.arrayContaining(['sawa no hana kokoro', 'sawa no hana', 'sawanohana']),
+    )
+  })
+
+  it('drops grade words wherever they sit before taking the leading words', () => {
+    expect(expandLatinBrandVariants('Yamagata Masamune Junmai Ginjo Omachi')).toEqual(
+      expect.arrayContaining(['yamagata masamune']),
+    )
+  })
+
   it('skips the first-word-strip when the first word is shorter than 4 chars', () => {
     // 4-char floor prevents `"Big River" → "Big"` from polluting candidates.
     const out = expandLatinBrandVariants('Big River')

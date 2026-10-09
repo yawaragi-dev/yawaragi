@@ -138,10 +138,17 @@ const LABEL_QUALIFIERS_JA = [
   '古酒',
   '辛口',
   '甘口',
+  'スパークリング',
+  '菩提酛',
+  '生酛',
+  '山廃',
+  '樽酒',
+  '発泡',
 ] as const
 
 const LABEL_QUALIFIERS_ROMAJI = [
   'junmai daiginjo',
+  'tokubetsu honjozo',
   'tokubetsu junmai',
   'junmai ginjo',
   'honjozo',
@@ -160,6 +167,19 @@ const LABEL_QUALIFIERS_ROMAJI = [
   'omachi',
   'karakuchi',
   'amakuchi',
+  // What EU labels and importer pages print beside the name (the 23-bottle
+  // check, 2026-10-09): grade and process words, the starter, an age
+  // statement. Not "gold": ゴールド人気 is "Gold Ninki", a line's own name.
+  'tokubetsu',
+  'sparkling',
+  'bodaimoto',
+  'mizumoto',
+  'kimoto',
+  'yamahai',
+  'namazume',
+  'koshu',
+  'years',
+  'year',
 ] as const
 
 /**
@@ -189,10 +209,62 @@ export function stripLabelQualifiers(query: string): string | null {
   // Free-standing numbers only: `23`, `７２０`, `720ml`. `NEXT5` keeps its 5,
   // because the digit is part of the word.
   out = out.replace(/(?<![\p{L}\p{N}])[\d０-９]+\s*(?:ml|ML|㎖|ミリ|合|%|％|度)?(?![\p{L}\p{N}])/gu, ' ')
+  // Punctuation an age statement leaves behind once its number and "year"
+  // are gone: "10-year" → "-".
+  out = out.replace(/(?<=^|\s)[-–·,/]+(?=\s|$)/g, ' ')
   out = out.replace(/\s+/g, ' ').trim()
 
   if (out.length === 0) return null
   if (out === query.trim()) return null
+  return out
+}
+
+/** At most this many extra searches for one query that found nothing. */
+const MAX_FALLBACK_SEARCHES = 6
+
+/**
+ * What to search for, in order, when the visitor's whole query matched
+ * nothing. The first one that finds rows wins, and the page says which it
+ * was (`searchedInstead`).
+ *
+ * The catalogue matches a query as one string, so a label's extra words sink
+ * it: "Rihaku Wandering Poet" never matches 李白 "Rihaku", because the
+ * importer's English product name is exactly what Sakenowa never has — and on
+ * an EU shelf it is often the most visible text. In a check of 23 real bottles
+ * the label name found 2 of them. So:
+ *
+ * 1. the query without label words ({@link stripLabelQualifiers});
+ * 2. that, shortened a word at a time from the end — the line's name comes
+ *    first on a label ("Rihaku Wandering" → "Rihaku").
+ *
+ * Not each word on its own: a word from the middle of a label is a product
+ * name more often than a line, and searching it alone finds strangers —
+ * "Nohime no Sato" landed on 佐藤企 by "Sato", "Hanatomoe Sugi Barrel" on 杉勇
+ * by "Sugi". A wrong sake is worse than an honest "no match".
+ *
+ * Never the query itself, never a repeat, never a Latin word under three
+ * letters ("of", "no"), and never more than {@link MAX_FALLBACK_SEARCHES}.
+ */
+export function searchFallbacks(query: string): string[] {
+  const original = query.trim()
+  const base = stripLabelQualifiers(original) ?? original
+  const words = base.split(/\s+/).filter((w) => w.length > 0)
+
+  const candidates: string[] = []
+  if (base !== original) candidates.push(base)
+  for (let n = words.length - 1; n >= 1; n--) candidates.push(words.slice(0, n).join(' '))
+
+  const seen = new Set([original.toLowerCase()])
+  const out: string[] = []
+  for (const candidate of candidates) {
+    const key = candidate.toLowerCase()
+    if (seen.has(key)) continue
+    seen.add(key)
+    if (!isCatalogueQuerySpecific(candidate)) continue
+    if (/^[\x20-\x7e]+$/.test(candidate) && candidate.length < 3) continue
+    out.push(candidate)
+    if (out.length === MAX_FALLBACK_SEARCHES) break
+  }
   return out
 }
 
@@ -355,18 +427,15 @@ export async function searchCatalogue(
     const matches = await searchCatalogueFromPool(query, pool, limit)
     if (matches.length > 0) return { kind: 'ok', matches }
 
-    // Nothing matched. Before calling it a dead end, try the query without
-    // the parts of a label that are not a sake's name — see
-    // `stripLabelQualifiers`. "Dassai 23" is the reported case: the bottle
-    // exists, the line is in the catalogue, and only the polishing ratio
-    // stood between them.
-    const narrowed = stripLabelQualifiers(query)
-    if (narrowed === null || !isCatalogueQuerySpecific(narrowed)) {
-      return { kind: 'ok', matches }
+    // Nothing matched. Before calling it a dead end, try the parts of the
+    // query that could be a sake's name — see `searchFallbacks`. "Dassai 23"
+    // and "Rihaku Wandering Poet" are the reported cases: the line is in the
+    // catalogue, and only the label's other words stood in the way.
+    for (const narrowed of searchFallbacks(query)) {
+      const fallback = await searchCatalogueFromPool(narrowed, pool, limit)
+      if (fallback.length > 0) return { kind: 'ok', matches: fallback, searchedInstead: narrowed }
     }
-    const fallback = await searchCatalogueFromPool(narrowed, pool, limit)
-    if (fallback.length === 0) return { kind: 'ok', matches }
-    return { kind: 'ok', matches: fallback, searchedInstead: narrowed }
+    return { kind: 'ok', matches }
   } catch {
     return { kind: 'unavailable' }
   }

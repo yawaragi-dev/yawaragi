@@ -320,7 +320,15 @@ const SELECT_BRANDS_BY_KANJI_EXTRACTION = `
   -- expansion happens in JS in generateKanjiVariants. Most strings
   -- expand to 1 element (no variant kanji); worst case is 2-3
   -- elements, well within ANY()s performance envelope.
-  WHERE br.name_kanji = ANY($1) AND b.name_kanji = ANY($2)
+  -- The brewery side also matches with the stored name's spaces removed, or
+  -- on any one of its space-separated parts: Sakenowa stores some names with
+  -- a space the label does not print ('仙台伊澤家 勝山酒造', 38 such
+  -- breweries), and a label often prints only the last part ('勝山酒造').
+  WHERE br.name_kanji = ANY($1) AND (
+         b.name_kanji = ANY($2)
+      OR regexp_replace(b.name_kanji, '[[:space:]　]+', '', 'g') = ANY($2)
+      OR regexp_split_to_array(b.name_kanji, '[[:space:]　]+') && $2::text[]
+    )
     AND br.superseded_at IS NULL
     AND b.superseded_at IS NULL
   ORDER BY br.brand_id
@@ -398,7 +406,12 @@ const SELECT_BRANDS_AND_BREWERIES_BY_BREWERY_KANJI = `
     b.confidence         AS brewery_confidence
   FROM brands br
   JOIN breweries b ON b.brewery_id = br.brewery_id
-  WHERE b.name_kanji = ANY($1)
+  -- Spaces and parts as in the first pass.
+  WHERE (
+         b.name_kanji = ANY($1)
+      OR regexp_replace(b.name_kanji, '[[:space:]　]+', '', 'g') = ANY($1)
+      OR regexp_split_to_array(b.name_kanji, '[[:space:]　]+') && $1::text[]
+    )
     AND br.superseded_at IS NULL
     AND b.superseded_at IS NULL
   ORDER BY
@@ -776,7 +789,7 @@ const SAKE_GRADE_TOKENS = new Set<string>([
 
 /**
  * Expands a Latin brand candidate into the set of lookup keys we
- * actually query. Three transforms:
+ * actually query. Four transforms:
  *   - Verbatim (lowercased).
  *   - For multi-word inputs where the first word is substantial
  *     (≥ 4 characters) AND NOT in `SAKE_GRADE_TOKENS`, also try the
@@ -785,6 +798,8 @@ const SAKE_GRADE_TOKENS = new Set<string>([
  *     `JUNMAI TARU SAKE` → `junmai` matching unrelated brands.
  *   - Space-stripped form for `name_romaji` (which the #121 ingest
  *     pipeline stores as single-word camel Latin like `Tanigawadake`).
+ *   - Leading words, grade words dropped: `SAWA NO HANA Kokoro` → also
+ *     `sawa no hana` (and `sawanohana`).
  *
  * Returns lowercased strings so the SQL only has to LOWER() each
  * column on the right-hand side.
@@ -815,6 +830,18 @@ export function expandLatinBrandVariants(text: string): string[] {
   // already-spaceless case is covered by `lower`).
   if (lower.includes(' ')) {
     variants.add(lower.replace(/\s+/g, ''))
+  }
+  // Leading words, longest first, with grade words dropped wherever they
+  // sit: a label's Latin often runs the line and the product together —
+  // "SAWA NO HANA Kokoro" is 澤の花 "Sawa no Hana" plus the product "Kokoro",
+  // and "sawa" alone is not the line. Safe to widen: the SQL compares whole
+  // names for equality, so a prefix can only match a line with exactly that
+  // name. Two words or more, since one word is the first-word rule above.
+  const words = lower.split(/\s+/).filter((w) => !SAKE_GRADE_TOKENS.has(w))
+  for (let n = words.length; n >= 2; n--) {
+    const prefix = words.slice(0, n).join(' ')
+    variants.add(prefix)
+    variants.add(prefix.replace(/\s+/g, ''))
   }
   return [...variants]
 }

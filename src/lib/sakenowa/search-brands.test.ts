@@ -6,6 +6,7 @@ import {
   isCatalogueQuerySpecific,
   rankCatalogueMatches,
   searchCatalogueFromPool,
+  searchFallbacks,
   stripLabelQualifiers,
 } from '@/lib/sakenowa/search-brands'
 
@@ -249,5 +250,54 @@ describe('rankCatalogueMatches', () => {
     rankCatalogueMatches('男山', input)
 
     expect(input.map((r) => r.nameKanji)).toEqual(['秘蔵男山', '男山'])
+  })
+})
+
+describe('searchFallbacks — what to try when the whole query found nothing', () => {
+  it('drops the importer\'s English product name and keeps the line: "Rihaku Wandering Poet"', () => {
+    expect(searchFallbacks('Rihaku Wandering Poet')).toEqual(['Rihaku Wandering', 'Rihaku'])
+  })
+
+  it('removes grade and process words before shortening: "Bekkaku Tokubetsu Honjozo"', () => {
+    expect(searchFallbacks('Bekkaku Tokubetsu Honjozo')[0]).toBe('Bekkaku')
+  })
+
+  it('removes an age statement and size: "Daruma Masamune 10-year 180ml"', () => {
+    expect(searchFallbacks('Daruma Masamune 10-year 180ml')[0]).toBe('Daruma Masamune')
+  })
+
+  it('removes "sparkling" and the starter: "Shichiken Sparkling Dry", "Amabuki Kimoto"', () => {
+    expect(searchFallbacks('Shichiken Sparkling Dry')[0]).toBe('Shichiken Dry')
+    expect(searchFallbacks('Shichiken Sparkling Dry')).toContain('Shichiken')
+    expect(searchFallbacks('Amabuki Kimoto Junmai Daiginjo')[0]).toBe('Amabuki')
+  })
+
+  it('keeps "Gold": it is part of a line\'s name (Gold Ninki)', () => {
+    expect(searchFallbacks('Ninki Gold')).toEqual(['Ninki'])
+  })
+
+  it('still answers the reported case the same way: "Dassai 23" → "Dassai"', () => {
+    expect(searchFallbacks('Dassai 23')).toEqual(['Dassai'])
+  })
+
+  it('never offers the query itself, a repeat, or a word too short to mean anything', () => {
+    const tries = searchFallbacks('Ichinoseki Daiginjo of')
+    expect(tries).not.toContain('Ichinoseki Daiginjo of')
+    expect(tries).not.toContain('of')
+    expect(new Set(tries).size).toBe(tries.length)
+  })
+
+  it('never tries a word from the middle on its own — it finds strangers, not the line', () => {
+    // "Sato" found 佐藤企 for "Nohime no Sato"; "Sugi" found 杉勇.
+    expect(searchFallbacks('Nohime no Sato Kakushi')).not.toContain('Sato')
+    expect(searchFallbacks('Hanatomoe Sugi Barrel')).toEqual(['Hanatomoe Sugi', 'Hanatomoe'])
+  })
+
+  it('offers nothing for a single word that matched nothing', () => {
+    expect(searchFallbacks('Kumamoto')).toEqual([])
+  })
+
+  it('bounds how many extra searches one query can cost', () => {
+    expect(searchFallbacks('a b c d e f g h i j k l m n o p').length).toBeLessThanOrEqual(6)
   })
 })
