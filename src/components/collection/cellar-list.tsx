@@ -67,8 +67,11 @@ export async function CellarList({
               />
               <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                 <span className="flex items-baseline gap-2">
-                  <span className="min-w-0 flex-1 text-card-heading font-medium text-ink" lang="ja">
-                    {row.sake.nameKanji}
+                  <span
+                    className="min-w-0 flex-1 text-card-heading font-medium text-ink"
+                    lang={row.sake.nameRomaji ? 'en' : 'ja'}
+                  >
+                    {row.sake.nameRomaji ?? row.sake.nameKanji}
                   </span>
                   {row.count > 1 && (
                     <span className="shrink-0 text-meta text-ash-700">
@@ -76,11 +79,12 @@ export async function CellarList({
                     </span>
                   )}
                 </span>
-                {/* Kanji first, romaji under it — the journal list's order, so
-                    one sake reads the same in both segments. */}
+                {/* Latin name first, kanji under it — screenshot 20, and the
+                    journal list's order, so one sake reads the same in both
+                    segments. */}
                 {row.sake.nameRomaji && (
-                  <span className="text-meta text-ash-600" lang="en">
-                    {row.sake.nameRomaji}
+                  <span className="text-meta text-ash-600" lang="ja">
+                    {row.sake.nameKanji}
                   </span>
                 )}
                 <span
