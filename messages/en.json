@@ -574,7 +574,9 @@
     "rateNewTasting": "Rate a new tasting",
     "historyHeading": "You and this sake",
     "historyCount": "{n, plural, one {# tasting} other {# tastings}}",
-    "notTastedYet": "Not tasted yet."
+    "notTastedYet": "Not tasted yet.",
+    "done": "Done",
+    "inJournal": "In your journal"
   },
   "cellar": {
     "add": "Add to cellar",

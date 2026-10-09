@@ -574,7 +574,9 @@
     "rateNewTasting": "Neue Verkostung bewerten",
     "historyHeading": "Du und dieser Sake",
     "historyCount": "{n, plural, one {# Verkostung} other {# Verkostungen}}",
-    "notTastedYet": "Noch nicht probiert."
+    "notTastedYet": "Noch nicht probiert.",
+    "done": "Fertig",
+    "inJournal": "Im Journal"
   },
   "cellar": {
     "add": "In den Keller",
