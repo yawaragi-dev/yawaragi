@@ -56,6 +56,18 @@ describe('SakenowaAttributionView', () => {
     })
   })
 
+  describe('end-of-screen variant', () => {
+    it('credits Sakenowa with a working link, as a line of its own', () => {
+      render(<SakenowaAttributionView placement="end" {...baseProps} />)
+      const root = screen.getByTestId('sakenowa-attribution-end')
+      expect(root.tagName).toBe('P')
+      expect(root.textContent).toContain('Powered by Sakenowa')
+      const link = screen.getByRole('link', { name: 'Visit Sakenowa' })
+      expect(link.getAttribute('href')).toBe('https://sakenowa.com')
+      expect(link.getAttribute('rel')).toBe('noopener noreferrer')
+    })
+  })
+
   it('renders the German attribution copy when the locale wrapper supplies it', () => {
     // The proper noun "Sakenowa" is preserved verbatim across locales —
     // assert the German phrasing still surfaces it and links to the same URL.

@@ -466,7 +466,7 @@ export default async function PalatePage({
             "inline near the data", which is what ADR-0014 asks of a page
             where Sakenowa is one source among several.
           */}
-          <SakenowaAttribution placement="inline" />
+          <SakenowaAttribution placement="end" />
         </section>
       )}
     </main>

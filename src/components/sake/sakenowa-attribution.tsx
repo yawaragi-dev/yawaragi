@@ -52,7 +52,14 @@ export function requiresSakenowaAttribution(
   return false
 }
 
-export type SakenowaAttributionPlacement = 'above-fold' | 'inline'
+/**
+ * - `above-fold` — its own panel at the top of a detail page.
+ * - `inline` — inside a card or beside one line of a list.
+ * - `end` — the last line of a screen's content, directly above the legal
+ *   footer, on the same column and in the same quiet type, so the two read
+ *   as one end-of-screen block on every screen that has it.
+ */
+export type SakenowaAttributionPlacement = 'above-fold' | 'inline' | 'end'
 
 interface SakenowaAttributionProps {
   placement: SakenowaAttributionPlacement
@@ -125,6 +132,17 @@ export function SakenowaAttributionView({
       >
         {visibleText}
       </aside>
+    )
+  }
+
+  if (placement === 'end') {
+    return (
+      <p
+        className={cn('flex flex-wrap items-center gap-x-1.5 text-meta text-ash-600', className)}
+        data-testid="sakenowa-attribution-end"
+      >
+        {visibleText}
+      </p>
     )
   }
 

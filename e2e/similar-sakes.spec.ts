@@ -78,7 +78,7 @@ test.describe('§6 similar sakes', () => {
     }
 
     // Licence: flavour data on the page means attribution on the page.
-    await expect(page.getByTestId('sakenowa-attribution-inline')).toBeVisible()
+    await expect(page.getByTestId('sakenowa-attribution-end')).toBeVisible()
 
     // The RANKING is deterministic maths, not a model — so no provenance
     // badge on the similarity itself. If one shows up here, something started
