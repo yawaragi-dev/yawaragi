@@ -115,8 +115,13 @@ export function CookieBanner({
       // It deliberately does NOT block the screen behind it — the design says
       // so, and a consent prompt that blocks the product is a dark pattern in
       // its own right.
+      //
+      // One step lighter than §2's `surface` (ash-200, with an ash-400 ring),
+      // and a shadow cast upward as well as down: §2's `shadow-lg` falls only
+      // downward, onto the tab bar, so a `surface` card read as one more card
+      // of the page scrolling under it. Interim — asked on #308.
       className={cn(
-        'fixed inset-x-2.5 z-40 rounded-xl bg-surface p-3.5 shadow-yw-lg',
+        'fixed inset-x-2.5 z-40 rounded-xl bg-ash-200 p-3.5 shadow-[0_-14px_36px_rgb(0_0_0/0.7),0_18px_44px_rgb(0_0_0/0.55)] ring-1 ring-ash-400',
         placement === 'app' ? 'bottom-[var(--tab-bar-h)]' : 'bottom-4 mx-auto max-w-[560px]',
       )}
     >
@@ -231,7 +236,7 @@ function ConsentButton({ onClick, disabled, testId, label }: ConsentButtonProps)
       onClick={onClick}
       disabled={disabled}
       data-testid={testId}
-      className="h-[42px] rounded-lg bg-ash-200 px-2 text-meta font-medium text-ink transition-colors hover:bg-ash-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600 disabled:opacity-60"
+      className="h-[42px] rounded-lg bg-ash-300 px-2 text-meta font-medium text-ink transition-colors hover:bg-ash-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600 disabled:opacity-60"
     >
       {label}
     </button>

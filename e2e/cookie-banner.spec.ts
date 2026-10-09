@@ -28,6 +28,34 @@ test.describe('cookie banner — surface', () => {
     await context.close()
   })
 
+  test('in the app, the bottom of a screen can still be scrolled clear of the banner', async ({
+    browser,
+  }) => {
+    // §2: the banner does not block the app. A card that sits over the last
+    // things on a screen, with no way to scroll them out from under it, does
+    // block them — the Impressum among them.
+    const context = await browser.newContext({ locale: 'en-US', viewport: { width: 390, height: 844 } })
+    await acceptAgeGateCookie(context)
+    const page = await context.newPage()
+    await page.goto('/en/home')
+
+    const banner = page.getByTestId('cookie-banner')
+    await expect(banner).toBeVisible()
+    // The banner publishes its height from an effect, after hydration; the
+    // spacer is 0 until then. Scroll only once it is there.
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.style.getPropertyValue('--cookie-banner-h')))
+      .not.toBe('')
+    // The shell's scrolling pane is the outer <main>; screens may nest their own.
+    await page.locator('main').first().evaluate((el) => el.scrollTo(0, el.scrollHeight))
+
+    const footer = (await page.getByTestId('site-footer').boundingBox())!
+    const card = (await banner.boundingBox())!
+    expect(footer.y + footer.height).toBeLessThanOrEqual(card.y)
+
+    await context.close()
+  })
+
   test('also renders on /de/ coming-soon (GDPR is page-agnostic)', async ({
     browser,
   }) => {

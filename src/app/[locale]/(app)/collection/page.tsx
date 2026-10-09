@@ -183,7 +183,7 @@ export default async function CollectionTabPage({ params }: PageProps) {
           {/* ADR-0014: the list renders Sakenowa brand names, so the credit
               rides on this surface. Inline, because Sakenowa is one source
               among the visitor's own notes and ratings. */}
-          <SakenowaAttribution placement="inline" />
+          <SakenowaAttribution placement="end" />
         </>
       )}
     </main>

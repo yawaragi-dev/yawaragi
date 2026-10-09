@@ -152,7 +152,7 @@ export default async function SimilarSakesPage({ params }: PageProps) {
           {/* Every row is Sakenowa flavour data, so attribution is not
               optional (ADR-0014 / the licence). Inline, because the list is
               the subject rather than any single record. */}
-          <SakenowaAttribution placement="inline" />
+          <SakenowaAttribution placement="end" />
         </>
       )}
     </main>
