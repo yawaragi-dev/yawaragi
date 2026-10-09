@@ -14,3 +14,10 @@ export function tastingDayAt(day: string): number {
 export function tastingDayOf(at: number): string {
   return new Date(at).toISOString().slice(0, 10)
 }
+
+/** `2026-10-08` → `08.10.2026`, day first; a half-typed value is shown as it
+ *  is. Fixed European order until regional formats land (#371). */
+export function europeanDay(day: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(day)
+  return m ? `${m[3]}.${m[2]}.${m[1]}` : day
+}

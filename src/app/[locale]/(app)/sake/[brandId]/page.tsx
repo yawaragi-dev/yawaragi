@@ -342,7 +342,9 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
       )}
 
       {/* -- §9.3 You and this sake ---------------------------------------- */}
-      {viewer.canLog && <BottleHistory entries={tastings} locale={locale} />}
+      {viewer.canLog && (
+        <BottleHistory brandId={brandId} chart={flavorChart} entries={tastings} locale={locale} />
+      )}
 
       {/* -- §9.4 Serve it ------------------------------------------------ */}
       {FEATURES.bottleServing && (

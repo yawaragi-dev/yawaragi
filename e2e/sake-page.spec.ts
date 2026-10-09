@@ -287,6 +287,36 @@ test.describe('sake brand page', () => {
     await context.close()
   })
 
+  test('an earlier tasting opens in the panel from "You and this sake", with a confirmed delete', async ({
+    browser,
+  }) => {
+    // The populated stub journal has a tasting of brand 1, so this needs no DB
+    // rows of its own beyond the brand page itself.
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([
+      AGE_GATE_COOKIE,
+      { name: 'yawaragi_journal_stub', value: 'populated', url: BASE_URL },
+    ])
+    const page = await context.newPage()
+    await page.goto('/en/sake/1')
+    test.skip((await page.getByTestId('sake-brand-page').count()) === 0, 'DB-bound spec')
+
+    await page.getByTestId('bottle-history-edit-s1').click()
+    const panel = page.getByTestId('tasting-log-panel')
+    await expect(panel).toContainText('Your tasting')
+    await expect(panel.getByTestId('tasting-log-note')).toHaveValue('Melon and white peach, gone in a clean line.')
+
+    await panel.getByTestId('tasting-log-delete').click()
+    await expect(panel).toContainText('Delete this tasting?')
+    // The stub draws; it does not store. The server refuses, and the panel
+    // says so instead of pretending the tasting is gone.
+    await panel.getByTestId('tasting-log-delete-confirm').click()
+    await expect(page.getByTestId('tasting-log-error')).toBeVisible()
+    await expect(page.getByTestId('bottle-history-entry')).toHaveCount(1)
+
+    await context.close()
+  })
+
   test('"Pour & rate" from the Cellar lands with the panel already open', async ({
     browser,
   }, testInfo) => {

@@ -576,7 +576,14 @@
     "historyCount": "{n, plural, one {# tasting} other {# tastings}}",
     "notTastedYet": "Not tasted yet.",
     "done": "Done",
-    "inJournal": "In your journal"
+    "inJournal": "In your journal",
+    "yourTasting": "Your tasting",
+    "tastedOn": "Tasted {date}",
+    "edit": "Edit",
+    "delete": "Delete tasting",
+    "deleteConfirm": "Delete this tasting? This can’t be undone.",
+    "deleteYes": "Delete",
+    "deleteNo": "Keep"
   },
   "cellar": {
     "add": "Add to cellar",

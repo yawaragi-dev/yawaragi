@@ -1,6 +1,8 @@
 import { getFormatter, getTranslations } from 'next-intl/server'
 import { BottleSection } from '@/components/sake/bottle-section'
 import { StarRow } from '@/components/journal/star-row'
+import { EditableTasting } from '@/components/sake/editable-tasting'
+import type { FlavorChart } from '@/lib/schemas/flavor-chart'
 import type { JournalEntry } from '@/lib/schemas/journal-entry'
 
 /**
@@ -11,14 +13,22 @@ import type { JournalEntry } from '@/lib/schemas/journal-entry'
  * Dates are formatted in UTC, like §11's journal list, so one tasting shows
  * the same day on both screens.
  *
+ * Each row has an Edit that opens the tasting in §5's panel, where it can be
+ * changed or deleted (`<EditableTasting />`, interim until #308 answers).
+ *
  * Rendered only for a visitor who can keep a journal (ADR-0020); for everyone
  * else "Not tasted yet." with no way to change it would be a dead end dressed
  * as an empty state, which is why this section was left out until now.
  */
 export async function BottleHistory({
+  brandId,
+  chart,
   entries,
   locale,
 }: {
+  brandId: number
+  /** The sake's chart, for the quick chips when a tasting is edited. */
+  chart: FlavorChart | null
   /** This sake's entries, newest first. */
   entries: readonly JournalEntry[]
   locale: string
@@ -39,17 +49,27 @@ export async function BottleHistory({
         </p>
       ) : (
         <ul className="flex flex-col gap-2" role="list">
-          {entries.map((entry) => {
+          {entries.map((entry, i) => {
             const rating = entry.event.kind === 'rating' ? entry.event.rating : null
             return (
-              <li
+              <EditableTasting
                 key={entry.id}
-                className="flex gap-3 rounded-md bg-surface px-3 py-2.5 shadow-yw-sm"
-                data-testid="bottle-history-entry"
+                brandId={brandId}
+                chart={chart}
+                tasting={{
+                  entryId: entry.id,
+                  rating: rating ?? 0,
+                  notes: entry.notes,
+                  tags: entry.tags,
+                  detail: entry.detail,
+                  triedAt: entry.triedAt,
+                  // Newest first, so the first row is the latest tasting.
+                  tastingNumber: entries.length - i,
+                }}
               >
                 <span className="flex w-8 shrink-0 flex-col items-center">
                   <span className="text-card-heading leading-none text-ink">
-                    {format.dateTime(new Date(entry.triedAt), { day: 'numeric', timeZone: 'UTC' })}
+                    {format.dateTime(new Date(entry.triedAt), { day: '2-digit', timeZone: 'UTC' })}
                   </span>
                   <span className="mt-0.5 text-micro uppercase tracking-[0.08em] text-ash-600">
                     {format.dateTime(new Date(entry.triedAt), { month: 'short', timeZone: 'UTC' })}
@@ -65,7 +85,7 @@ export async function BottleHistory({
                     <span className="text-subtle italic text-ash-700">“{entry.notes}”</span>
                   )}
                 </span>
-              </li>
+              </EditableTasting>
             )
           })}
         </ul>
