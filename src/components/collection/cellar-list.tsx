@@ -55,7 +55,7 @@ export async function CellarList({
           return (
             <li
               key={row.brandId}
-              className="flex gap-3 border-b border-divider py-3 last:border-b-0"
+              className="flex gap-3 border-b border-divider py-3"
               data-testid="cellar-row"
               data-brand-id={row.brandId}
             >

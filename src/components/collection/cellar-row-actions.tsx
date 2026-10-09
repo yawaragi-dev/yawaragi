@@ -42,7 +42,7 @@ export function CellarRowActions({
   }
 
   const secondary =
-    'flex min-h-9 items-center rounded-md px-2.5 text-meta text-ash-700 transition-colors hover:bg-ash-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600 disabled:opacity-50'
+    'flex min-h-9 items-center rounded-md px-2.5 text-meta text-ginshu-700 transition-colors hover:bg-ash-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600 disabled:opacity-50'
   const primary =
     'flex min-h-9 items-center gap-1.5 rounded-md border border-ash-300 px-3 text-meta font-medium text-ink transition-colors hover:bg-ash-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600 disabled:opacity-50'
 

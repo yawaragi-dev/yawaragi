@@ -167,7 +167,9 @@ export default async function CollectionTabPage({ params, searchParams }: PagePr
           notice can land on it, and it works before hydration. */}
       <nav
         aria-label={t('sectionsLabel')}
-        className="grid grid-cols-2 gap-1 rounded-lg bg-ash-100 p-1"
+        // §11 / screenshot 20: a compact group on the left, not a full-width
+        // pill; the current segment in the accent outline.
+        className="flex self-start rounded-lg border border-divider"
         data-testid="collection-segments"
       >
         {(['journal', 'cellar'] as const).map((key) => (
@@ -177,8 +179,8 @@ export default async function CollectionTabPage({ params, searchParams }: PagePr
             aria-current={segment === key ? 'page' : undefined}
             className={
               segment === key
-                ? 'flex min-h-9 items-center justify-center rounded-md bg-surface text-subtle font-medium text-ink shadow-yw-sm'
-                : 'flex min-h-9 items-center justify-center rounded-md text-subtle text-ash-600 transition-colors hover:text-ink'
+                ? '-m-px flex min-h-9 items-center rounded-lg border border-ginshu-500 bg-ginshu-100 px-3.5 text-subtle font-medium text-ginshu-700'
+                : 'flex min-h-9 items-center px-3.5 text-subtle text-ink transition-colors hover:text-ginshu-700'
             }
             data-testid={`collection-segment-${key}`}
           >
