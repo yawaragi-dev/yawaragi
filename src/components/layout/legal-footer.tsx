@@ -46,6 +46,8 @@ import { CookieSettingsLink } from '@/components/legal/cookie-settings-link'
  * link in the pane for two taps through the avatar, which is a judgement about
  * "unmittelbar erreichbar" and not a port decision. Also #300.
  */
+// Left-aligned, on the content column like everything above it: pushed to
+// the right edge it read as misaligned under left-aligned screens.
 // 11px, as §15's footer line is in the prototype, and inherited by every item
 // so the four stay one size. 12px plus the German labels was ~400px of text
 // for a 350px row: "Trinke verantwortungsvoll" wrapped onto a line of its own.
@@ -60,7 +62,7 @@ export async function LegalFooter() {
 
   return (
     <footer
-      className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1 px-5 py-4 text-[11px] leading-normal"
+      className="flex flex-wrap items-center gap-x-3 gap-y-1 px-5 py-4 text-[11px] leading-normal"
       data-testid="site-footer"
     >
       <Link href="/imprint" data-testid="footer-imprint-link" className={LINK_CLASS_NAME}>
