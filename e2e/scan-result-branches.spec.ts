@@ -91,10 +91,10 @@ test.describe('scan result branches (#109 PR B)', () => {
 
     await expect(page.getByTestId('scan-result-card')).toBeVisible()
     await expect(page.getByTestId('scan-result-name-kanji')).toContainText('獺祭')
-    // The confidence badge surfaces the tier: 70%.
-    await expect(
-      page.getByTestId('scan-result-card').getByTestId('provenance-badge-confidence'),
-    ).toContainText('70%')
+    // v1.5 §5: the tier is the match tag — 0.70 is a "Best guess" — and the
+    // card carries no provenance badge (everything on it is catalogue data).
+    await expect(page.getByTestId('scan-result-match-tag')).toHaveText('Best guess')
+    await expect(page.getByTestId('scan-result-card').getByTestId('provenance-badge')).toHaveCount(0)
     expect(page.url()).toMatch(/\/en\/scan$/)
     await context.close()
   })
