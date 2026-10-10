@@ -111,7 +111,9 @@
     "closestToDrink": "Am nächsten an {drink}, laut Geschmacksprofil.",
     "closestToPalate": "Am nächsten an deinem Gaumen, laut Geschmacksprofil.",
     "reasonDrink": "Gleiche Form wie {drink}: {first} und {second}.",
-    "reasonPalate": "Nah an deinem Gaumen: {first} und {second}."
+    "reasonPalate": "Nah an deinem Gaumen: {first} und {second}.",
+    "leadShapes": "Drei klare, ganz verschiedene Formen für den Anfang. Wähle oben ein Getränk, dann richten sie sich danach.",
+    "reasonShape": "Eine klare Form: {first} und {second}."
   },
   "landing": {
     "title": "Yawaragi",

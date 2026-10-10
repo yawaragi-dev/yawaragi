@@ -40,6 +40,7 @@ import {
   readSessionTasteProfile,
 } from '@/lib/taste/read-session-taste-profile'
 import { recommendFromTasteEvents } from '@/lib/taste/taste-recommender'
+import { pickDistinctShapes } from '@/lib/taste/distinct-shapes'
 import { env } from '@/env'
 
 /**
@@ -241,6 +242,20 @@ async function resolveRecommendations(
   }))
 }
 
+/**
+ * §12 before any pick: three clear, different shapes from the catalogue, so
+ * "Sakes to try next" shows what there is to like instead of nothing. Degrades
+ * to `[]` without a DB, like the ranked path.
+ */
+async function resolveDistinctShapes(cookieJar: CookieJar) {
+  if (process.env.NODE_ENV !== 'production') {
+    const stub = cookieJar.get('yawaragi_taste_stub')?.value
+    if (stub === 'cold_start') return pickDistinctShapes(STUB_RECOMMENDATIONS)
+    if (stub) return []
+  }
+  return pickDistinctShapes(await getFlavorCandidatePool())
+}
+
 /** The ratings among a session's events — §12 counts tastings, not events. */
 function countRatings(events: readonly TasteEvent[]): number {
   return events.filter((event) => event.kind === 'rating').length
@@ -362,6 +377,17 @@ export default async function PalatePage({
       ? (coldStartChips().find((chip) => chip.descriptor === lastSeed.descriptor)?.name ?? null)
       : null
   const shownRecommendations = stage === 'read' ? recommendations : recommendations.slice(0, 3)
+  // Nothing to rank against yet: show three clear shapes instead (§12).
+  const shapes =
+    stage !== 'read' && shownRecommendations.length === 0 ? await resolveDistinctShapes(cookieJar) : []
+  const cards =
+    shapes.length > 0
+      ? shapes.map(({ candidate, lean }) => ({ rec: candidate, lean, reason: 'shape' as const }))
+      : shownRecommendations.map((rec) => ({
+          rec,
+          lean: palateLean(rec),
+          reason: seededDrink && stage !== 'read' ? ('drink' as const) : ('palate' as const),
+        }))
 
   const axisStrings: PalateAxisStrings = {
     heading: t('axisHeading'),
@@ -454,7 +480,7 @@ export default async function PalatePage({
         </div>
       )}
 
-      {shownRecommendations.length > 0 && (
+      {cards.length > 0 && (
         <section className="flex flex-col gap-2" data-testid="profile-recommendations">
           {/* v1.5 §12: the Sakenowa credit folds into the label row, at the
               right, in §17's caption style — this list's attribution. */}
@@ -468,11 +494,14 @@ export default async function PalatePage({
             />
           </div>
           <p className="text-meta text-ash-600" data-testid="profile-recommendations-lead">
-            {seededDrink && stage !== 'read' ? t('closestToDrink', { drink: seededDrink }) : t('closestToPalate')}
+            {shapes.length > 0
+              ? t('leadShapes')
+              : seededDrink && stage !== 'read'
+                ? t('closestToDrink', { drink: seededDrink })
+                : t('closestToPalate')}
           </p>
           <ul className="flex flex-col gap-2" role="list">
-            {shownRecommendations.map((rec) => {
-              const lean = palateLean(rec)
+            {cards.map(({ rec, lean, reason }) => {
               const first = tAxis(`${lean.top}.label`)
               const second = tAxis(`${lean.second}.label`)
               return (
@@ -500,9 +529,11 @@ export default async function PalatePage({
                       </span>
                     )}
                     <span className="text-subtle text-ash-700">
-                      {seededDrink && stage !== 'read'
-                        ? t('reasonDrink', { drink: seededDrink, first: first.toLocaleLowerCase(locale), second: second.toLocaleLowerCase(locale) })
-                        : t('reasonPalate', { first: first.toLocaleLowerCase(locale), second: second.toLocaleLowerCase(locale) })}
+                      {reason === 'shape'
+                        ? t('reasonShape', { first: first.toLocaleLowerCase(locale), second: second.toLocaleLowerCase(locale) })
+                        : reason === 'drink' && seededDrink
+                          ? t('reasonDrink', { drink: seededDrink, first: first.toLocaleLowerCase(locale), second: second.toLocaleLowerCase(locale) })
+                          : t('reasonPalate', { first: first.toLocaleLowerCase(locale), second: second.toLocaleLowerCase(locale) })}
                     </span>
                     <span className="mt-0.5 flex gap-1.5">
                       {[first, second].map((word) => (

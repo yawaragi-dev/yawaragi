@@ -111,7 +111,9 @@
     "closestToDrink": "Closest to {drink} by flavor chart.",
     "closestToPalate": "Closest to your palate by flavor chart.",
     "reasonDrink": "Same shape as {drink}: {first} and {second}.",
-    "reasonPalate": "Close to your palate: {first} and {second}."
+    "reasonPalate": "Close to your palate: {first} and {second}.",
+    "leadShapes": "Three clear, different shapes to start with. Pick a drink above and these follow it.",
+    "reasonShape": "A clear shape: {first} and {second}."
   },
   "landing": {
     "title": "Yawaragi",
