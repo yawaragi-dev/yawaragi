@@ -57,12 +57,12 @@ describe('SakenowaAttributionView', () => {
   })
 
   describe('end-of-screen variant', () => {
-    it('credits Sakenowa with a working link, as a line of its own', () => {
-      render(<SakenowaAttributionView placement="end" {...baseProps} />)
+    it('reads "Catalogue and flavor data · Powered by Sakenowa ↗", the phrase being the link', () => {
+      render(<SakenowaAttributionView placement="end" {...baseProps} catalogueData="Catalogue and flavor data" />)
       const root = screen.getByTestId('sakenowa-attribution-end')
       expect(root.tagName).toBe('P')
-      expect(root.textContent).toContain('Powered by Sakenowa')
-      const link = screen.getByRole('link', { name: 'Visit Sakenowa' })
+      expect(root.textContent).toBe('Catalogue and flavor data · Powered by Sakenowa ↗')
+      const link = screen.getByRole('link', { name: 'Powered by Sakenowa ↗' })
       expect(link.getAttribute('href')).toBe('https://sakenowa.com')
       expect(link.getAttribute('rel')).toBe('noopener noreferrer')
     })

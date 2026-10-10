@@ -59,12 +59,8 @@ export async function CellarList({
               data-testid="cellar-row"
               data-brand-id={row.brandId}
             >
-              {/* §11's 36×50 bottle thumb — striped, like every bottle slot,
-                  until there are photos (#335). */}
-              <span
-                aria-hidden="true"
-                className="h-[50px] w-9 shrink-0 rounded-[5px] bg-[repeating-linear-gradient(135deg,var(--color-ash-200),var(--color-ash-200)_4px,var(--color-ash-300)_4px,var(--color-ash-300)_8px)]"
-              />
+              {/* No bottle thumb: v1.5 rule 14 — there is no image to show, and
+                  a permanent striped placeholder is gone with it. */}
               <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                 <span className="flex items-baseline gap-2">
                   <span

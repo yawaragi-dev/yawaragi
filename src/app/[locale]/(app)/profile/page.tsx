@@ -11,7 +11,6 @@ import { PalateConfidence } from '@/components/palate/palate-confidence'
 import { PalateProgress } from '@/components/palate/palate-progress'
 import { TasteProvenanceSummary } from '@/components/profile/taste-provenance-summary'
 import { FlavorRadarView } from '@/components/sake/flavor-radar-view'
-import { SakenowaAttribution } from '@/components/sake/sakenowa-attribution'
 import { coldStartChips } from '@/lib/cross-beverage/cold-start-chips'
 import { resolveCrossBeverageTarget } from '@/lib/cross-beverage/forward-lookup'
 import { currentUserIsMaintainer } from '@/lib/auth/maintainer'
@@ -459,14 +458,8 @@ export default async function PalatePage({
               </li>
             ))}
           </ul>
-          {/*
-            Under the list, not above it (maintainer review on #330): above,
-            it sat between the heading and the sakes it credits and read as
-            one more line of furniture. Directly under the list it is still
-            "inline near the data", which is what ADR-0014 asks of a page
-            where Sakenowa is one source among several.
-          */}
-          <SakenowaAttribution placement="end" />
+          {/* ADR-0014: the Sakenowa credit is line 1 of the end-of-screen block,
+              rendered by the app shell directly under this list (v1.5 rule 15). */}
         </section>
       )}
     </main>

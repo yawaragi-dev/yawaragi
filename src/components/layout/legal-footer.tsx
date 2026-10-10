@@ -1,6 +1,7 @@
 import { getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
 import { CookieSettingsLink } from '@/components/legal/cookie-settings-link'
+import { FooterCredit } from '@/components/layout/footer-credit'
 
 /**
  * Impressum · Privacy notice · Cookie settings.
@@ -36,48 +37,39 @@ import { CookieSettingsLink } from '@/components/legal/cookie-settings-link'
  * app screen's spec argues against showing it. §0 keeps its own copy, because
  * the landing footer is a separate component.
  *
- * Still not §15's row: the prototype makes it a left-aligned 11px line with
- * `·` separators, and "Terms" has no route yet. Restyling the app-wide footer
- * to one screen's spec is the §15 full port's job, not this slice's — the
- * whole reason this component still exists on app screens is that it is
- * interim chrome. Tracked on #300.
- *
- * Retiring it from the *other* screens is a separate question: it trades a
- * link in the pane for two taps through the avatar, which is a judgement about
- * "unmittelbar erreichbar" and not a port decision. Also #300.
+ * **In the app it is v1.5's end-of-screen block** (rule 15): line 1, the
+ * Sakenowa credit (`<FooterCredit />`, every screen but Account), then these
+ * links. The `(site)` pages render line 2 only — the landing has its own
+ * footer with the credit, and the legal pages show no catalogue data.
  */
-// Left-aligned, on the content column like everything above it: pushed to
-// the right edge it read as misaligned under left-aligned screens. No top
-// padding: every app screen ends with `py-6`, so the footer always sits the
-// same 24px under the last thing on it — the `end` Sakenowa line included.
-// 11px, as §15's footer line is in the prototype, and inherited by every item
-// so the four stay one size. 12px plus the German labels was ~400px of text
-// for a 350px row: "Trinke verantwortungsvoll" wrapped onto a line of its own.
-// At 11px, with the German cookie link shortened to "Cookies", both locales
-// fit one row at 390px. `whitespace-nowrap` keeps an item whole if a narrower
-// screen does force a wrap.
+// v1.5 rule 15, line 2: accent-700 links, 14px apart, 6px vertical padding
+// (a taller tap target than the text), wrapping; no underline — the accent is
+// the link cue. `whitespace-nowrap` keeps an item whole when the row wraps.
 const LINK_CLASS_NAME =
-  'whitespace-nowrap text-ash-600 underline underline-offset-4 hover:text-ash-800'
+  'whitespace-nowrap py-1.5 text-ginshu-700 hover:text-ginshu-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600'
 
-export async function LegalFooter() {
+export async function LegalFooter({ credit = false }: { credit?: boolean } = {}) {
   const t = await getTranslations('footer')
 
   return (
-    <footer
-      className="flex flex-wrap items-center gap-x-3 gap-y-1 px-5 pb-5 text-[11px] leading-normal"
-      data-testid="site-footer"
-    >
-      <Link href="/imprint" data-testid="footer-imprint-link" className={LINK_CLASS_NAME}>
-        {t('imprintLink')}
-      </Link>
-      <Link href="/privacy" data-testid="footer-privacy-link" className={LINK_CLASS_NAME}>
-        {t('privacyLink')}
-      </Link>
-      <CookieSettingsLink className={`${LINK_CLASS_NAME} cursor-pointer`} />
-      {/* Not a link: it is a statement, and #162 forbids a dead destination. */}
-      <span className="whitespace-nowrap text-ash-600" data-testid="footer-drink-responsibly">
-        {t('drinkResponsibly')}
-      </span>
+    // v1.5 rule 15, the end-of-screen block: last in every scrolling app
+    // screen, 28px under the content (screens end with `py-6`, so 4px more
+    // here), left-aligned on the content column, 12px neutral-600, no divider.
+    <footer className="flex flex-col gap-1 px-5 pt-1 pb-5 text-meta leading-normal text-ash-600" data-testid="site-footer">
+      {credit && <FooterCredit />}
+      <nav className="flex flex-wrap items-center gap-x-3.5" aria-label={t('label')}>
+        <Link href="/imprint" data-testid="footer-imprint-link" className={LINK_CLASS_NAME}>
+          {t('imprintLink')}
+        </Link>
+        <Link href="/privacy" data-testid="footer-privacy-link" className={LINK_CLASS_NAME}>
+          {t('privacyLink')}
+        </Link>
+        <CookieSettingsLink className={`${LINK_CLASS_NAME} cursor-pointer`} />
+        {/* Not a link: it is a statement, and #162 forbids a dead destination. */}
+        <span className="whitespace-nowrap py-1.5" data-testid="footer-drink-responsibly">
+          {t('drinkResponsibly')}
+        </span>
+      </nav>
     </footer>
   )
 }

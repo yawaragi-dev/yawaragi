@@ -53,7 +53,8 @@
   "footer": {
     "imprintLink": "Impressum",
     "privacyLink": "Datenschutz",
-    "drinkResponsibly": "Trinke verantwortungsvoll"
+    "drinkResponsibly": "Trinke verantwortungsvoll",
+    "label": "Rechtliches"
   },
   "header": {
     "wordmarkLabel": "Yawaragi Startseite",
@@ -185,7 +186,6 @@
   "sake": {
     "brand": {
       "breweryLabel": "Brauerei",
-      "bottleSlotLabel": "Flasche",
       "littlePublished": "Wenig veröffentlicht",
       "similarAction": "Ähnliche",
       "serveLabel": "Serviertemperatur",
@@ -374,7 +374,8 @@
   },
   "sakenowaAttribution": {
     "poweredBy": "Bereitgestellt mit Daten von Sakenowa",
-    "linkLabel": "Sakenowa besuchen"
+    "linkLabel": "Sakenowa besuchen",
+    "catalogueData": "Katalog- und Geschmacksdaten"
   },
   "provenance": {
     "badge": {

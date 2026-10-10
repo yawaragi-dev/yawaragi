@@ -3,7 +3,6 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { hasLocale } from 'next-intl'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
-import { SakenowaAttribution } from '@/components/sake/sakenowa-attribution'
 import {
   SimilarSakeRow,
   type SimilarSakeRowStrings,
@@ -149,10 +148,8 @@ export default async function SimilarSakesPage({ params }: PageProps) {
               )
             })}
           </ol>
-          {/* Every row is Sakenowa flavour data, so attribution is not
-              optional (ADR-0014 / the licence). Inline, because the list is
-              the subject rather than any single record. */}
-          <SakenowaAttribution placement="end" />
+          {/* ADR-0014: the Sakenowa credit is line 1 of the end-of-screen block,
+              rendered by the app shell directly under this list (v1.5 rule 15). */}
         </>
       )}
     </main>

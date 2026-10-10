@@ -51,9 +51,10 @@
     "skipToContent": "Skip to content"
   },
   "footer": {
-    "imprintLink": "Imprint",
-    "privacyLink": "Privacy",
-    "drinkResponsibly": "Drink responsibly"
+    "imprintLink": "Impressum",
+    "privacyLink": "Privacy notice",
+    "drinkResponsibly": "Drink responsibly",
+    "label": "Legal"
   },
   "header": {
     "wordmarkLabel": "Yawaragi home",
@@ -180,12 +181,11 @@
     "rejectNonEssential": "Reject all",
     "customize": "Customise",
     "savePreferences": "Save choice",
-    "settingsLink": "Cookie preferences"
+    "settingsLink": "Cookie settings"
   },
   "sake": {
     "brand": {
       "breweryLabel": "Brewery",
-      "bottleSlotLabel": "bottle",
       "littlePublished": "Little published",
       "similarAction": "Similar",
       "serveLabel": "Serve it",
@@ -374,7 +374,8 @@
   },
   "sakenowaAttribution": {
     "poweredBy": "Powered by Sakenowa",
-    "linkLabel": "Visit Sakenowa"
+    "linkLabel": "Visit Sakenowa",
+    "catalogueData": "Catalogue and flavor data"
   },
   "provenance": {
     "badge": {

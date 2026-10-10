@@ -92,7 +92,7 @@ export default async function AppShellLayout({
         {children}
         {/* Inside the scrolling pane, so the Impressum stays reachable from
             every app screen without a second fixed bar. See <LegalFooter />. */}
-        <LegalFooter />
+        <LegalFooter credit />
         {/* While the cookie banner is open it floats over the bottom of the
             pane (§2: it does not block the app). This spacer, as tall as the
             banner (`--cookie-banner-h`, published by <CookieBanner />, unset

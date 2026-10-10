@@ -188,7 +188,6 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
       <section className="flex items-start gap-4" data-testid="bottle-identity">
         <BottleSlot
           showScannedPhoto={arrivedViaScan}
-          placeholderLabel={t('bottleSlotLabel')}
           photoAlt={tScan('photoAlt')}
         />
         <div className="flex min-w-0 flex-col gap-1">

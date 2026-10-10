@@ -11,8 +11,6 @@ const serverSnapshot = () => null
 interface BottleSlotProps {
   /** True when the visitor tapped through from a scan result (`?from=scan`). */
   showScannedPhoto: boolean
-  /** The placeholder's caption, e.g. "Bottle". */
-  placeholderLabel: string
   /** Alt text for the visitor's own photo. */
   photoAlt: string
 }
@@ -21,16 +19,13 @@ interface BottleSlotProps {
  * §9's 88×128 bottle slot.
  *
  * Arriving from a scan, it shows the photo the visitor just took — the bottle
- * they are holding, which the scan card showed a tap earlier. Otherwise, and
- * after a reload (the photo is memory-only), it is the design's labelled
- * placeholder: we have no bottle photography (#335, #334 for a drawn
- * stand-in), and a labelled slot says "a picture goes here" where a blank one
- * says "something failed to load".
- *
- * The slot has a fixed size either way, so swapping the photo in after
- * hydration moves nothing else on the page.
+ * they are holding, which the scan card showed a tap earlier. Otherwise there
+ * is no slot (v1.5 rule 14, "no image, no slot"): we have no bottle
+ * photography (#335), and a permanent placeholder said "a picture goes here"
+ * on every page. Arriving by scan the server already knows, so the slot is
+ * held at a fixed size while the photo loads and nothing else moves.
  */
-export function BottleSlot({ showScannedPhoto, placeholderLabel, photoAlt }: BottleSlotProps) {
+export function BottleSlot({ showScannedPhoto, photoAlt }: BottleSlotProps) {
   const photoUrl = useSyncExternalStore(subscribeScannedPhoto, getScannedPhotoUrl, serverSnapshot)
 
   if (showScannedPhoto && photoUrl) {
@@ -51,15 +46,16 @@ export function BottleSlot({ showScannedPhoto, placeholderLabel, photoAlt }: Bot
     )
   }
 
-  // `aria-hidden`: the placeholder carries nothing a screen-reader user needs;
-  // the name beside it is the content.
+  // v1.5 rule 14, "no image, no slot": the only image there ever is is the
+  // photo this session took. Arriving by scan, the slot is held (the server
+  // knows, so nothing jumps) while the photo loads, empty; otherwise the
+  // identity is text-only and there is no slot at all.
+  if (!showScannedPhoto) return null
   return (
     <div
-      className="flex h-32 w-22 shrink-0 items-end justify-center rounded-xl bg-ash-200 pb-2 shadow-yw-sm"
+      className="h-32 w-22 shrink-0 rounded-xl bg-ash-200 shadow-yw-sm"
       aria-hidden="true"
       data-testid="bottle-slot"
-    >
-      <span className="text-micro uppercase text-ash-500">{placeholderLabel}</span>
-    </div>
+    />
   )
 }

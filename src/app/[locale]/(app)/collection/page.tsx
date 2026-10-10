@@ -9,7 +9,6 @@ import { Link } from '@/i18n/navigation'
 import { CellarList } from '@/components/collection/cellar-list'
 import { JournalList } from '@/components/collection/journal-list'
 import { TabPlaceholder } from '@/components/layout/tab-placeholder'
-import { SakenowaAttribution } from '@/components/sake/sakenowa-attribution'
 import { currentUserIsMaintainer } from '@/lib/auth/maintainer'
 import { isLaunched } from '@/i18n/launch-state'
 import { routing } from '@/i18n/routing'
@@ -210,8 +209,8 @@ export default async function CollectionTabPage({ params, searchParams }: PagePr
       ) : segment === 'cellar' ? (
         <>
           <CellarList rows={view.cellar} now={view.now} />
-          {/* ADR-0014: cellar rows name Sakenowa brands too. */}
-          {view.cellar.length > 0 && <SakenowaAttribution placement="end" />}
+          {/* ADR-0014: the Sakenowa credit is line 1 of the end-of-screen
+              block, rendered by the app shell directly under this list. */}
         </>
       ) : journal.kind === 'empty' ? (
         // §11's empty journal: "Your journal starts with one star" and a way
@@ -241,10 +240,8 @@ export default async function CollectionTabPage({ params, searchParams }: PagePr
       ) : (
         <>
           <JournalList entries={journal.entries} locale={locale} />
-          {/* ADR-0014: the list renders Sakenowa brand names, so the credit
-              rides on this surface. Inline, because Sakenowa is one source
-              among the visitor's own notes and ratings. */}
-          <SakenowaAttribution placement="end" />
+          {/* ADR-0014: the Sakenowa credit is line 1 of the end-of-screen
+              block, rendered by the app shell directly under this list. */}
         </>
       )}
     </main>
