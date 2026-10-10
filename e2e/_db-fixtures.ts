@@ -91,6 +91,22 @@ export async function findScanS1FixtureBrandId(): Promise<number | null> {
   return row?.brand_id ?? null
 }
 
+// A sake whose brewery renamed itself, for §9's "formerly …" line: Dassai,
+// whose brewery Sakenowa lists as 獺祭 (id 679) since the 2025 rename. Null
+// if the mirror no longer carries the brewery under that id and name.
+export async function findRenamedBreweryBrandId(): Promise<number | null> {
+  const row = await queryOne<{ brand_id: number }>(`
+    SELECT br.brand_id
+    FROM brands br
+    JOIN breweries b ON b.brewery_id = br.brewery_id
+    WHERE b.brewery_id = 679 AND b.name_kanji = '獺祭'
+      AND br.name IS NOT NULL AND br.name <> ''
+    ORDER BY br.brand_id
+    LIMIT 1
+  `)
+  return row?.brand_id ?? null
+}
+
 // ADR-0016 / #202 recognised-but-no-chart fixture. A brand whose kanji is
 // catalogue-unique (so the lookup resolves to a single row) joined to its
 // brewery, where NO `flavor_charts` row exists. Injecting `name_ja` = the
