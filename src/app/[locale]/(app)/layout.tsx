@@ -4,6 +4,7 @@ import { getComplianceState } from '@/lib/legal/compliance-state'
 import { getTranslations } from 'next-intl/server'
 import { Header } from '@/components/layout/header'
 import { LegalFooter } from '@/components/layout/legal-footer'
+import { NoticeHost } from '@/components/journal/undo-notice'
 import { TabBar, type TabBarMessages } from '@/components/layout/tab-bar'
 import { getPathname } from '@/i18n/navigation'
 import { hasLocale } from 'next-intl'
@@ -100,6 +101,9 @@ export default async function AppShellLayout({
         <div aria-hidden="true" className="h-[var(--cookie-banner-h,0px)]" />
       </main>
       <TabBar messages={messages} />
+      {/* Plain notices from components that unmount as they finish —
+          "Tasting deleted" — see `announceNotice`. */}
+      <NoticeHost />
       {/* Fixed, so it sits outside the scrolling pane and above the tab
           bar — §2 puts it 88px up for exactly that clearance. */}
       <CookieBanner initialDecision={consent} placement="app" />

@@ -21,7 +21,7 @@ function renderPanel(props: Partial<Parameters<typeof TastingLogPanel>[0]> = {})
   const onSaved = vi.fn()
   render(
     <NextIntlClientProvider locale="en" messages={en} timeZone="UTC">
-      <TastingLogPanel brandId={7} chart={CHART} history={{ kind: 'first' }} onSaved={onSaved} {...props} />
+      <TastingLogPanel brandId={7} sakeName="Jikon" chart={CHART} history={{ kind: 'first' }} onSaved={onSaved} {...props} />
     </NextIntlClientProvider>,
   )
   return { onSaved }
@@ -187,17 +187,26 @@ describe('§5 log panel', () => {
       existing: { entryId: 'old', rating: 4, triedAt: Date.UTC(2026, 6, 18, 12), tastingNumber: 1 },
       onDeleted,
     })
+    const notices: string[] = []
+    const onNotice = (e: Event) => notices.push((e as CustomEvent<string>).detail)
+    window.addEventListener('yawaragi:notice', onNotice)
+
     fireEvent.click(screen.getByRole('button', { name: 'Delete tasting' }))
     expect(undoTasting).not.toHaveBeenCalled()
-    expect(screen.getByText('Delete this tasting? This can’t be undone.')).toBeTruthy()
+    // v1.5 §5: the confirmation names what goes — its rating, sake and day.
+    const question = 'Delete your 4.0 tasting of Jikon from 18.07.2026? This can’t be undone.'
+    expect(screen.getByText(question)).toBeTruthy()
 
     fireEvent.click(screen.getByRole('button', { name: 'Keep' }))
-    expect(screen.queryByText('Delete this tasting? This can’t be undone.')).toBeNull()
+    expect(screen.queryByText(question)).toBeNull()
 
     fireEvent.click(screen.getByRole('button', { name: 'Delete tasting' }))
     fireEvent.click(screen.getByRole('button', { name: 'Delete' }))
     await waitFor(() => expect(undoTasting).toHaveBeenCalledWith('old'))
     await waitFor(() => expect(onDeleted).toHaveBeenCalled())
+    // No Undo after a confirmed delete — the confirmation was the safety.
+    expect(notices).toEqual(['Tasting deleted'])
+    window.removeEventListener('yawaragi:notice', onNotice)
   })
 
   it('does not claim the palate moved for a sake with no flavor chart', async () => {

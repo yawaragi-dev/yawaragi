@@ -55,6 +55,7 @@ export async function BottleHistory({
               <EditableTasting
                 key={entry.id}
                 brandId={brandId}
+                sakeName={entry.sake.nameRomaji ?? entry.sake.nameKanji}
                 chart={chart}
                 tasting={{
                   entryId: entry.id,

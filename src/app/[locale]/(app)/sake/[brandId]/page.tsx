@@ -302,6 +302,7 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
       {viewer.canLog ? (
         <BottleRateRow
           brandId={brandId}
+          sakeName={brand.nameRomaji ?? brand.nameKanji}
           chart={flavorChart}
           initiallyOpen={rateNow}
           cellar={

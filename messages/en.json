@@ -581,9 +581,10 @@
     "tastedOn": "Tasted {date}",
     "edit": "Edit",
     "delete": "Delete tasting",
-    "deleteConfirm": "Delete this tasting? This can’t be undone.",
+    "deleteConfirm": "Delete your {rating} tasting of {name} from {date}? This can’t be undone.",
     "deleteYes": "Delete",
-    "deleteNo": "Keep"
+    "deleteNo": "Keep",
+    "deleted": "Tasting deleted"
   },
   "cellar": {
     "add": "Add to cellar",
@@ -614,7 +615,7 @@
     "intro": "Look, smell, taste, decide — the order professional tasters work in. Fill any part, skip the rest; it saves as you go.",
     "triedOn": "Tasted on",
     "open": "Add detailed notes",
-    "edit": "Detailed notes · {n} of {total}",
+    "edit": "Detailed notes",
     "error": "Couldn’t save that just now — try again.",
     "notSet": "—",
     "stepLabel": "{scale}: {step}",

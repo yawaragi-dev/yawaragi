@@ -1,6 +1,6 @@
 'use client'
 
-import type { ReactNode } from 'react'
+import { type ReactNode, useEffect, useState } from 'react'
 import { CheckCircle } from '@phosphor-icons/react/dist/ssr'
 import { Link } from '@/i18n/navigation'
 
@@ -13,11 +13,13 @@ import { Link } from '@/i18n/navigation'
  * `role="status"` so the confirmation is announced without stealing focus;
  * callers own the timer, because they know what the action undoes or opens.
  */
-function NoticeBar({ message, children }: { message: string; children: ReactNode }) {
+function NoticeBar({ message, children }: { message: string; children?: ReactNode }) {
   return (
     <div
       role="status"
-      className="fixed inset-x-4 z-30 mx-auto flex max-w-md items-center gap-2.5 rounded-md bg-camera px-3.5 py-3 text-ash-900 shadow-yw-lg motion-safe:animate-yw-rise"
+      // v1.5 rule 12: a floating surface — `raised` with the `float` shadow,
+      // so it never reads as a card of the page scrolling under it.
+      className="fixed inset-x-4 z-30 mx-auto flex max-w-md items-center gap-2.5 rounded-md bg-raised px-3.5 py-3 text-ink shadow-yw-float motion-safe:animate-yw-rise"
       style={{ bottom: 'calc(var(--tab-bar-h) + 8px)' }}
       data-testid="undo-notice"
     >
@@ -67,4 +69,38 @@ export function ViewNotice({
       </Link>
     </NoticeBar>
   )
+}
+
+/** How long a plain notice (no action) stays. */
+const PLAIN_NOTICE_MS = 3400
+const NOTICE_EVENT = 'yawaragi:notice'
+
+/**
+ * Show a plain notice — "Tasting deleted" — from a component that is about to
+ * unmount, so it cannot render the notice itself: deleting a tasting removes
+ * the row whose panel asked. `<NoticeHost />` in the app shell shows it.
+ */
+export function announceNotice(message: string): void {
+  window.dispatchEvent(new CustomEvent<string>(NOTICE_EVENT, { detail: message }))
+}
+
+/** Renders notices sent with {@link announceNotice}. Mounted once, in the app shell. */
+export function NoticeHost() {
+  const [message, setMessage] = useState<string | null>(null)
+
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const onNotice = (event: Event) => {
+      setMessage((event as CustomEvent<string>).detail)
+      clearTimeout(timer)
+      timer = setTimeout(() => setMessage(null), PLAIN_NOTICE_MS)
+    }
+    window.addEventListener(NOTICE_EVENT, onNotice)
+    return () => {
+      window.removeEventListener(NOTICE_EVENT, onNotice)
+      clearTimeout(timer)
+    }
+  }, [])
+
+  return message ? <NoticeBar message={message} /> : null
 }

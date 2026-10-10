@@ -24,6 +24,7 @@ import type { FlavorAxis } from '@/lib/schemas/flavor-chart'
  */
 export function BottleRateRow({
   brandId,
+  sakeName,
   chart,
   history,
   similar,
@@ -31,6 +32,8 @@ export function BottleRateRow({
   initiallyOpen = false,
 }: {
   brandId: number
+  /** The name the page shows; the delete confirmation names it. */
+  sakeName: string
   chart: Readonly<Record<FlavorAxis, number>> | null
   history: TastingHistoryMeta
   similar: ReactNode
@@ -50,7 +53,7 @@ export function BottleRateRow({
       <div className="flex flex-col gap-3">
         {/* "Done" closes the panel back to "Rate a new tasting"; the tasting
             is already in "You and this sake" below. */}
-        <TastingLogPanel brandId={brandId} chart={chart} history={history} onDone={() => setOpen(false)} />
+        <TastingLogPanel brandId={brandId} sakeName={sakeName} chart={chart} history={history} onDone={() => setOpen(false)} />
         <div className="flex gap-2" data-testid="bottle-actions">
           {cellar}
           {similar}

@@ -116,12 +116,11 @@ export function CookieBanner({
       // so, and a consent prompt that blocks the product is a dark pattern in
       // its own right.
       //
-      // One step lighter than §2's `surface` (ash-200, with an ash-400 ring),
-      // and a shadow cast upward as well as down: §2's `shadow-lg` falls only
-      // downward, onto the tab bar, so a `surface` card read as one more card
-      // of the page scrolling under it. Interim — asked on #308.
+      // v1.5 rule 12, the floating surface: `raised` (one step lighter than
+      // the cards) with the `float` shadow, whose upward shade sets it apart
+      // from the page scrolling under it. No scrim — it does not block.
       className={cn(
-        'fixed inset-x-2.5 z-40 rounded-xl bg-ash-200 p-3.5 shadow-[0_-14px_36px_rgb(0_0_0/0.7),0_18px_44px_rgb(0_0_0/0.55)] ring-1 ring-ash-400',
+        'fixed inset-x-2.5 z-40 rounded-xl bg-raised p-3.5 shadow-yw-float',
         placement === 'app' ? 'bottom-[var(--tab-bar-h)]' : 'bottom-4 mx-auto max-w-[560px]',
       )}
     >
