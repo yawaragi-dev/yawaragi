@@ -82,7 +82,9 @@ export async function findScanS1FixtureBrandId(): Promise<number | null> {
     SELECT br.brand_id
     FROM brands br
     JOIN breweries b ON b.brewery_id = br.brewery_id
-    WHERE br.name_kanji = '獺祭' AND b.name_kanji = '旭酒造'
+    -- Sakenowa lists Dassai under 獺祭 since the 2025 rename (#387); the
+    -- label, and the stub's default read, still say 旭酒造.
+    WHERE br.name_kanji = '獺祭' AND b.name_kanji IN ('旭酒造', '獺祭')
     ORDER BY br.brand_id
     LIMIT 1
   `)

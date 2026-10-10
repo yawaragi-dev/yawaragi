@@ -365,6 +365,24 @@ describe('findSakeByExtractionFromPool', () => {
     })
   })
 
+  it('matches an older label that prints the brewery under its former name', async () => {
+    // #387: Sakenowa lists Dassai under 獺祭 since the company's 2025 rename;
+    // bottles printed before it say 旭酒造.
+    await seedBrewery({ breweryId: 9502, name: 'Dassai', nameKanji: '獺祭', areaId: 35 })
+    await pool.query(
+      `INSERT INTO brands
+         (brand_id, name, name_kanji, brewery_id, source, confidence, content_hash)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [9002, 'Dassai', '獺祭', 9502, 'sakenowa', null, 'hash-dassai-9002'],
+    )
+
+    const result = await findSakeByExtractionFromPool({ nameJa: '獺祭', breweryJa: '旭酒造' }, pool)
+
+    expect(result.kind).toBe('exact')
+    if (result.kind !== 'exact') throw new Error('unreachable; for narrowing only')
+    expect(result.sake.brandId).toBe(9002)
+  })
+
   it('matches a brewery stored with a space, whether the label prints all of it or only its last part', async () => {
     // Sakenowa stores 仙台伊澤家 勝山酒造 with a space (38 breweries have one);
     // the label prints 勝山酒造, or the whole name without the space.

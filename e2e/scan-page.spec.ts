@@ -363,6 +363,8 @@ test.describe('scan entry route', () => {
       !hasRateLimitEnv,
       'Rate-limit env triplet not set (SESSION_COOKIE_SECRET / IP_HASH_SALT / UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN)',
     )
+    // The dev escape hatch unmeters the server, so there is no cap to reach.
+    testInfo.skip(process.env.RATE_LIMIT_BYPASS === '1', 'RATE_LIMIT_BYPASS=1 — the server does not meter scans')
 
     const context = await browser.newContext({ locale: 'en-US' })
     await context.addCookies([AGE_GATE_COOKIE])

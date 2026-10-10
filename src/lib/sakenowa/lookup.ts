@@ -20,6 +20,7 @@ import {
   expandBreweryVariants,
   expandPossibleBrandVariants,
 } from './brewery-variants'
+import { withFormerBreweryNames } from './former-brewery-names'
 import { publicQuery } from '../supabase/public-query'
 import { getServerDbPool } from '../supabase/server-client'
 
@@ -518,7 +519,9 @@ export async function findSakeByExtractionFromPool(
   // inconsistently. See `expandPossibleBrandVariants` and
   // `expandBreweryVariants`.
   const nameVariants = expandBrandVariants(query.nameJa)
-  const breweryVariants = expandBreweryVariants(query.breweryJa)
+  // Plus a renamed brewery's current name (旭酒造 → 獺祭, #387) — here only,
+  // where the brand must match too; see `former-brewery-names.ts`.
+  const breweryVariants = withFormerBreweryNames(expandBreweryVariants(query.breweryJa))
   debugAdd(
     'Sakenowa',
     `first-pass: querying brands WHERE name_kanji ∈ {${nameVariants.join('|')}} AND brewery.name_kanji ∈ {${breweryVariants.join('|')}}`,
