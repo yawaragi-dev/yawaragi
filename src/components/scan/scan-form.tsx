@@ -14,6 +14,7 @@ import {
   ArrowsOut,
   Camera,
   CameraRotate,
+  ClockCounterClockwise,
   EyeSlash,
   HandPalm,
   HourglassMedium,
@@ -21,7 +22,6 @@ import {
   Lightning,
   ListBullets,
   MagnifyingGlass,
-  Question,
   WarningCircle,
 } from '@phosphor-icons/react/dist/ssr'
 import { useRouter } from 'next/navigation'
@@ -587,36 +587,31 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
         return consensus ? (
           <ScanOutcome
             testId="scan-result-consensus"
-            icon={icon(Question)}
+            icon={icon(ClockCounterClockwise)}
             kicker={tOutcome('consensus.kicker')}
             title={tOutcome('consensus.title', { sake: consensus.nameRomaji ?? consensus.nameKanji })}
             body={tOutcome('consensus.body', { votes: consensus.votes, total: consensus.total })}
             onRescan={onPickClick}
           >
-            <div className="flex flex-col gap-3">
-              {consensus.nameRomaji && (
-                <span className="text-subtle text-ash-600" lang="ja" data-testid="scan-result-consensus-kanji">
-                  {consensus.nameKanji}
-                </span>
-              )}
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => router.push(consensus.sakeHref)}
-                  className="flex min-h-11 flex-1 items-center justify-center rounded-xl border-[1.5px] border-ginshu-400 text-body font-medium text-ginshu-700 transition-colors hover:bg-ginshu-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
-                  data-testid="scan-result-consensus-accept"
-                >
-                  {tOutcome('consensus.yes')}
-                </button>
-                <button
-                  type="button"
-                  onClick={onPickClick}
-                  className="flex min-h-11 flex-1 items-center justify-center rounded-xl border border-ash-300 text-body font-medium text-ink transition-colors hover:bg-ash-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
-                  data-testid="scan-result-consensus-rescan"
-                >
-                  {tOutcome('consensus.no')}
-                </button>
-              </div>
+            {/* §5a (45): the two answers stacked full width, Yes first. The
+                title names the sake; no separate kanji line under it. */}
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => router.push(consensus.sakeHref)}
+                className="flex min-h-11 items-center justify-center rounded-xl border-[1.5px] border-ginshu-400 text-body font-medium text-ginshu-700 transition-colors hover:bg-ginshu-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+                data-testid="scan-result-consensus-accept"
+              >
+                {tOutcome('consensus.yes')}
+              </button>
+              <button
+                type="button"
+                onClick={onPickClick}
+                className="flex min-h-11 items-center justify-center rounded-xl border border-ash-300 text-body font-medium text-ink transition-colors hover:bg-ash-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+                data-testid="scan-result-consensus-rescan"
+              >
+                {tOutcome('consensus.no')}
+              </button>
             </div>
           </ScanOutcome>
         ) : (

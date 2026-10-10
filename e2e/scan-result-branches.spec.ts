@@ -282,7 +282,9 @@ test.describe('scan result branches (#109 PR B)', () => {
     await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
 
     await expect(page.getByTestId('scan-result-consensus')).toBeVisible()
-    await expect(page.getByTestId('scan-result-consensus-kanji')).toContainText('獺祭')
+    // §5a (45): the title names the sake; no lone kanji line under it.
+    await expect(page.getByTestId('scan-outcome-title')).toHaveText('This looks like Dassai')
+    await expect(page.getByTestId('scan-result-consensus-kanji')).toHaveCount(0)
     // The point of the test: the camera has stepped aside, and this state still has
     // both a way forward (accept) and a way back to the camera (rescan).
     await expect(page.getByTestId('scan-camera')).toHaveCount(0)
