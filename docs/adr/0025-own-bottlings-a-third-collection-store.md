@@ -54,7 +54,7 @@ A store of its own, not a field on a tasting, because an Expression exists befor
 
 This ADR adds the record, its store and its place in export, backup, restore and erasure. Nothing references an Expression yet. The slices that follow each bump a version, as ADR-0024 §2 requires:
 
-- **JournalEntry v3** — a tasting may be logged against an Expression. One without a line has no brand and no flavor position: it is recorded and counted, and the Palate fold skips it, exactly as it skips a chartless Sake today.
+- **JournalEntry v3** (landed with §9a's page) — a tasting may be logged against an Expression: an optional `expression: { id, name }`, the name denormalised like the sake's. One without a line has no brand and no flavor position: it is recorded and counted, and the Palate fold skips it, exactly as it skips a chartless Sake today.
 - **CellarBottle v2** — one row per thing a bottle was logged against (design v1.6.1, answer 3), so the row's key stops being the brand id.
 
 ### 5. The Postgres path is unchanged

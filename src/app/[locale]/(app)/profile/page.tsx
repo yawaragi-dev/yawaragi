@@ -272,7 +272,9 @@ async function resolveLastRated(
 ): Promise<{ name: string; rating: number } | null> {
   const ratings = events.filter((event) => event.kind === 'rating')
   const last = ratings[ratings.length - 1]
-  if (!last || last.kind !== 'rating') return null
+  // A rating of an own bottling with no known sake has no brand to name
+  // (ADR-0025); the event does not carry the bottling's name.
+  if (!last || last.kind !== 'rating' || last.brandId === null) return null
   try {
     const brand = await lookupBrand(last.brandId)
     if (!brand) return null

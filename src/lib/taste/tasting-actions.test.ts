@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Brand } from '@/lib/schemas/brand'
+import type { Expression } from '@/lib/schemas/expression'
 import type { FlavorChart } from '@/lib/schemas/flavor-chart'
 
 const h = vi.hoisted(() => ({
@@ -46,6 +47,17 @@ const BRAND: Brand = {
 }
 const USER = 'user_admin'
 const journal = () => h.journal as InMemoryJournalStore
+const expressions = () => h.expressions as InMemoryExpressionStore
+const OWN_BOTTLING: Expression = {
+  schemaVersion: 1,
+  id: 'x1',
+  own: true,
+  brandId: 123,
+  line: { nameKanji: '鍋島', nameRomaji: 'Nabeshima' },
+  name: 'Nabeshima Nama 2025',
+  createdAt: 1,
+  updatedAt: 1,
+}
 
 async function rated(rating = 4.5) {
   const result = await rateNewTasting({ brandId: 123, rating })
@@ -70,7 +82,7 @@ describe('tapping a star', () => {
     const [entry] = await journal().read(USER)
     expect(entry).toMatchObject({
       id: result.entryId,
-      schemaVersion: 2,
+      schemaVersion: 3,
       sake: { nameKanji: '鍋島', nameRomaji: 'Nabeshima' },
       event: { kind: 'rating', rating: 4.5, brandId: 123, target: { f1: 1 } },
     })
@@ -92,6 +104,35 @@ describe('tapping a star', () => {
     expect(await rateNewTasting({ brandId: 123, rating: 3.7 })).toEqual({ status: 'invalid_input' })
     vi.mocked(lookupBrand).mockResolvedValue(null)
     expect(await rateNewTasting({ brandId: 999, rating: 4 })).toEqual({ status: 'not_found' })
+  })
+
+  it('logs a tasting of one bottling on that bottling, and counts its tastings apart from the sake\'s', async () => {
+    await expressions().put(USER, OWN_BOTTLING)
+    await rated() // the sake itself
+
+    const first = await rateNewTasting({ brandId: 123, rating: 4, expressionId: 'x1' })
+    expect(first).toMatchObject({ status: 'ok', tastingNumber: 1 })
+    const second = await rateNewTasting({ brandId: 123, rating: 5, expressionId: 'x1' })
+    expect(second).toMatchObject({ status: 'ok', tastingNumber: 2 })
+
+    const entries = await journal().read(USER)
+    expect(entries.filter((e) => e.expression).map((e) => e.expression)).toEqual([
+      { id: 'x1', name: 'Nabeshima Nama 2025' },
+      { id: 'x1', name: 'Nabeshima Nama 2025' },
+    ])
+    // It still counts toward the palate, through its sake's chart.
+    expect(entries.at(-1)!.event).toMatchObject({ brandId: 123, target: { f1: 1 } })
+  })
+
+  it('refuses a bottling that is not theirs, or that belongs to another sake', async () => {
+    expect(await rateNewTasting({ brandId: 123, rating: 4, expressionId: 'nope' })).toEqual({
+      status: 'not_found',
+    })
+    await expressions().put(USER, { ...OWN_BOTTLING, brandId: 7 })
+    expect(await rateNewTasting({ brandId: 123, rating: 4, expressionId: 'x1' })).toEqual({
+      status: 'not_found',
+    })
+    expect(await journal().read(USER)).toEqual([])
   })
 
   it('stores nothing for someone who is not a maintainer', async () => {

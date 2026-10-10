@@ -25,6 +25,7 @@ export async function BottleHistory({
   chart,
   entries,
   locale,
+  subject = 'sake',
 }: {
   brandId: number
   /** The sake's chart, for the quick chips when a tasting is edited. */
@@ -32,6 +33,9 @@ export async function BottleHistory({
   /** This sake's entries, newest first. */
   entries: readonly JournalEntry[]
   locale: string
+  /** §9a's page lists one bottling's tastings under "You and this bottling";
+   *  the sake's page lists them all and names the bottling on each (v1.6 §9). */
+  subject?: 'sake' | 'bottling'
 }) {
   const t = await getTranslations('tasting')
   const tJournal = await getTranslations('journal')
@@ -39,7 +43,7 @@ export async function BottleHistory({
 
   return (
     <BottleSection
-      label={t('historyHeading')}
+      label={t(subject === 'bottling' ? 'historyHeadingBottling' : 'historyHeading')}
       caption={entries.length > 0 ? t('historyCount', { n: entries.length }) : undefined}
       testId="bottle-history"
     >
@@ -55,7 +59,7 @@ export async function BottleHistory({
               <EditableTasting
                 key={entry.id}
                 brandId={brandId}
-                sakeName={entry.sake.nameRomaji ?? entry.sake.nameKanji}
+                sakeName={entry.expression?.name ?? entry.sake.nameRomaji ?? entry.sake.nameKanji}
                 chart={chart}
                 tasting={{
                   entryId: entry.id,
@@ -77,6 +81,12 @@ export async function BottleHistory({
                   </span>
                 </span>
                 <span className="flex min-w-0 flex-1 flex-col gap-1">
+                  {subject === 'sake' && entry.expression && (
+                    // v1.6 §9: a bottling's tasting leads with the bottling name.
+                    <span className="text-subtle font-medium text-ink" data-testid="bottle-history-bottling">
+                      {entry.expression.name}
+                    </span>
+                  )}
                   {rating !== null && (
                     <span role="img" aria-label={tJournal('ratingStars', { rating })}>
                       <StarRow value={rating} />

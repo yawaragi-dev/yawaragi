@@ -1,5 +1,6 @@
 import type { FlavorProfile } from '@/lib/schemas/flavor-profile'
 import type { CellarBottle } from '@/lib/schemas/cellar-bottle'
+import type { Expression } from '@/lib/schemas/expression'
 import type { JournalEntry } from '@/lib/schemas/journal-entry'
 import type { MaintainerJournalState } from '@/lib/taste/resolve-maintainer-journal'
 
@@ -41,7 +42,7 @@ export const STUB_JOURNAL_NOW = Date.UTC(2026, 6, 20, 12, 0, 0)
 
 export const STUB_JOURNAL_ENTRIES: readonly JournalEntry[] = [
   {
-    schemaVersion: 2,
+    schemaVersion: 3,
     id: 's1',
     event: {
       kind: 'rating',
@@ -51,6 +52,9 @@ export const STUB_JOURNAL_ENTRIES: readonly JournalEntry[] = [
       occurredAt: Date.UTC(2026, 6, 18),
     },
     sake: { nameKanji: '而今', nameRomaji: 'Jikon' },
+    // Logged against the stub's own bottling (`STUB_EXPRESSIONS`), so the
+    // bottling-aware rows have one to draw.
+    expression: { id: 'stub-bottling', name: 'Jikon Nama 2025' },
     notes: 'Melon and white peach, gone in a clean line.',
     // §10's sheet, so the stub journal shows §11's "Full notes" chip.
     detail: { palate: { umami: 2, finish: 4 }, serve: { temperature: 'hanabie' } },
@@ -58,7 +62,7 @@ export const STUB_JOURNAL_ENTRIES: readonly JournalEntry[] = [
     createdAt: Date.UTC(2026, 6, 18),
   },
   {
-    schemaVersion: 2,
+    schemaVersion: 3,
     id: 's2',
     event: {
       kind: 'rating',
@@ -72,7 +76,7 @@ export const STUB_JOURNAL_ENTRIES: readonly JournalEntry[] = [
     createdAt: Date.UTC(2026, 6, 6),
   },
   {
-    schemaVersion: 2,
+    schemaVersion: 3,
     id: 's3',
     event: {
       kind: 'rating',
@@ -123,6 +127,29 @@ export const STUB_CELLAR: readonly CellarBottle[] = [
     updatedAt: STUB_JOURNAL_NOW - 12 * DAY,
   },
 ]
+
+/**
+ * One bottling the stubbed visitor added themselves, under the stub journal's
+ * first sake, with one tasting logged against it (entry `s1` above).
+ * Enough to draw §9a's page and §9's "Your bottlings" without a store.
+ */
+export const STUB_EXPRESSIONS: readonly Expression[] = [
+  {
+    schemaVersion: 1,
+    id: 'stub-bottling',
+    own: true,
+    brandId: 1,
+    line: { nameKanji: '而今', nameRomaji: 'Jikon' },
+    name: 'Jikon Nama 2025',
+    createdAt: Date.UTC(2026, 6, 10),
+    updatedAt: Date.UTC(2026, 6, 10),
+  },
+]
+
+/** The own bottlings for a stub value: the fixture when populated, otherwise none. */
+export function resolveExpressionsStub(stub: string): readonly Expression[] {
+  return stub === 'populated' ? STUB_EXPRESSIONS : []
+}
 
 /** The cellar for a stub value: the fixture when populated, otherwise none. */
 export function resolveCellarStub(stub: string): readonly CellarBottle[] {

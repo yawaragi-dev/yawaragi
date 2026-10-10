@@ -11,7 +11,7 @@ import {
 const TARGET = { f1: 0.2, f2: 0.6, f3: 0.6, f4: 0.4, f5: 0.1, f6: 0.3 }
 
 const entry = (over: Partial<JournalEntry> = {}): JournalEntry => ({
-  schemaVersion: 2,
+  schemaVersion: 3,
   id: 'e1',
   event: { kind: 'rating', rating: 5, brandId: 42, target: TARGET, occurredAt: 1000 },
   sake: { nameKanji: '鍋島', nameRomaji: 'Nabeshima' },
@@ -59,6 +59,40 @@ describe('stored JournalEntry versions (ADR-0024)', () => {
     delete legacy.schemaVersion
     const decoded = decodeVersionedRecord(JSON.stringify(legacy), JOURNAL_ENTRY_CODEC)
     expect(decoded).toEqual({ ok: true, value: entry({ notes: 'Rice-forward.' }) })
+  })
+
+  it('reads a version-2 entry, written before bottlings, as the current shape', () => {
+    const v2 = { ...entry({ notes: 'Rice-forward.' }), schemaVersion: 2 }
+    const decoded = decodeVersionedRecord(JSON.stringify(v2), JOURNAL_ENTRY_CODEC)
+    expect(decoded).toEqual({ ok: true, value: entry({ notes: 'Rice-forward.' }) })
+  })
+
+  it('can be a tasting of one bottling of a sake', () => {
+    const parsed = JournalEntrySchema.safeParse(
+      entry({ expression: { id: 'x1', name: 'Rihaku Wandering Poet' } }),
+    )
+    expect(parsed.success).toBe(true)
+  })
+
+  it('can be a tasting of a bottling whose sake is unknown, with no flavor position', () => {
+    const noSake = { kind: 'rating', rating: 4, brandId: null, target: null, occurredAt: 1000 } as const
+    expect(
+      JournalEntrySchema.safeParse(
+        entry({
+          event: noSake,
+          sake: { nameKanji: '富久千代', nameRomaji: null },
+          expression: { id: 'x2', name: '富久千代' },
+        }),
+      ).success,
+    ).toBe(true)
+    // ...but a tasting has to be of something,
+    expect(JournalEntrySchema.safeParse(entry({ event: noSake })).success).toBe(false)
+    // and without a sake there is no chart to take a position from.
+    expect(
+      JournalEntrySchema.safeParse(
+        entry({ event: { ...noSake, target: TARGET }, expression: { id: 'x2', name: '富久千代' } }),
+      ).success,
+    ).toBe(false)
   })
 
   it('carries quick tags and detailed notes', () => {

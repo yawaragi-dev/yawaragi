@@ -62,13 +62,22 @@ export async function HomeRecentTastings({
               <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                 {/* Latin name first, kanji under it — screenshot 04, and the
                     journal's order. */}
-                <span
-                  className="truncate text-card-heading font-medium text-ink"
-                  lang={entry.sake.nameRomaji ? 'en' : 'ja'}
-                >
-                  {entry.sake.nameRomaji ?? entry.sake.nameKanji}
-                </span>
-                {entry.sake.nameRomaji && (
+                {entry.expression ? (
+                  // v1.6: a bottling's tasting leads with the bottling name.
+                  <span className="truncate text-card-heading font-medium text-ink">
+                    {entry.expression.name}
+                  </span>
+                ) : (
+                  <span
+                    className="truncate text-card-heading font-medium text-ink"
+                    lang={entry.sake.nameRomaji ? 'en' : 'ja'}
+                  >
+                    {entry.sake.nameRomaji ?? entry.sake.nameKanji}
+                  </span>
+                )}
+                {(entry.expression
+                  ? entry.expression.name !== entry.sake.nameKanji
+                  : entry.sake.nameRomaji) && (
                   <span className="truncate text-meta text-ash-600" lang="ja">
                     {entry.sake.nameKanji}
                   </span>
@@ -84,7 +93,15 @@ export async function HomeRecentTastings({
           )
           return (
             <li key={entry.id} data-testid="home-recent-entry">
-              {brandId !== null ? (
+              {entry.expression ? (
+                <Link
+                  href={{ pathname: '/bottling/[id]', params: { id: entry.expression.id } }}
+                  className="flex min-h-16 items-center gap-3 rounded-xl bg-surface p-3 shadow-yw-sm transition-colors hover:bg-ash-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+                  data-testid={`home-recent-bottling-link-${entry.expression.id}`}
+                >
+                  {card}
+                </Link>
+              ) : brandId !== null ? (
                 <Link
                   href={{ pathname: '/sake/[brandId]', params: { brandId: String(brandId) } }}
                   className="flex min-h-16 items-center gap-3 rounded-xl bg-surface p-3 shadow-yw-sm transition-colors hover:bg-ash-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"

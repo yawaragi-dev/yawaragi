@@ -25,6 +25,11 @@ import { FlavorProfileSchema } from '@/lib/schemas/flavor-profile'
 // the catalogue unloggable. So a rating's `target` may be `null` — the entry is
 // recorded, counts as a tasting, and the fold skips it because there is no
 // position to pull toward.
+//
+// The same holds one step further out (ADR-0025): a rating of a bottling the
+// User added themselves, whose Sake the catalogue does not have, has no brand
+// at all. Its `brandId` is `null`, and so is its `target` — with no Sake there
+// is no chart to take a position from.
 
 const baseFields = {
   /** The FlavorProfile position this event pulls the vector toward (or, for a
@@ -34,7 +39,8 @@ const baseFields = {
   occurredAt: z.number().int().nonnegative(),
 } as const
 
-export const RatingTasteEventSchema = z.object({
+export const RatingTasteEventSchema = z
+  .object({
   ...baseFields,
   kind: z.literal('rating'),
   /** 0.5–5 stars in half-star steps (design v1.4 §5). 3 is neutral (inert);
@@ -43,12 +49,16 @@ export const RatingTasteEventSchema = z.object({
    *  could persist 3.7 and the star row would have nothing to render. */
   rating: z.number().min(0.5).max(5).multipleOf(0.5),
   /** The rated Sake (Sakenowa `brand_id`), kept for the /profile "which inputs
-   *  shaped this" view. */
-  brandId: z.number().int().positive(),
+   *  shaped this" view. `null` for an own bottling whose Sake is unknown. */
+  brandId: z.number().int().positive().nullable(),
   /** As `baseFields.target`, but `null` when the rated Sake has no
    *  FlavorProfile — see the header. The fold skips a null target. */
   target: FlavorProfileSchema.nullable(),
-})
+  })
+  .refine((e) => e.brandId !== null || e.target === null, {
+    message: 'a rating with no sake has no flavor position',
+    path: ['target'],
+  })
 
 export const ScanAcceptTasteEventSchema = z.object({
   kind: z.literal('scan_accept'),

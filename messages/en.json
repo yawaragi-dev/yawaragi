@@ -586,6 +586,7 @@
     "error": "Couldn’t save that just now — try again.",
     "rateNewTasting": "Rate a new tasting",
     "historyHeading": "You and this sake",
+    "historyHeadingBottling": "You and this bottling",
     "historyCount": "{n, plural, one {# tasting} other {# tastings}}",
     "notTastedYet": "Not tasted yet.",
     "done": "Done",
@@ -856,5 +857,32 @@
     "notThisOne": "Not this one",
     "sureMatch": "Sure match",
     "bestGuess": "Best guess"
+  },
+  "bottling": {
+    "addRowTitle": "Add your bottling",
+    "addRowHint": "Just the name — the rest can wait",
+    "nameLabel": "Bottling name",
+    "formHint": "Just the name for now. Only you can see it.",
+    "add": "Add bottling",
+    "adding": "Adding…",
+    "cancel": "Cancel",
+    "error": "Couldn’t add that just now — try again.",
+    "yourBottlings": "Your bottlings",
+    "count": "{n, plural, one {# bottling} other {# bottlings}}",
+    "ownEntry": "Your own entry",
+    "tasted": "Tasted",
+    "bottlingOf": "A bottling of {line} <kanji></kanji>",
+    "ownOfLine": "Your own bottling of {line}, not in the catalogue yet. Only you can see it.",
+    "otherBottlings": "Other bottlings in this line",
+    "more": "{n} more",
+    "lineBlockTitle": "About the {line} line <kanji></kanji>",
+    "lineCaveat": "Measured for the whole line; bottlings vary.",
+    "similarToLine": "Sakes similar to {line}",
+    "lineSheet": {
+      "triggerLabel": "About this measurement",
+      "title": "Measured for the whole line",
+      "measured": "Sakenowa charts a sake — the {line} line — not each bottling under its name. A ginjō and a genshu from the same line can taste quite different.",
+      "howToRead": "Read the chart and Similar as the family resemblance. Your own rating and notes on this page are about this bottling only."
+    }
   }
 }

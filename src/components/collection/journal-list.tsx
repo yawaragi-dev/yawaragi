@@ -22,8 +22,9 @@ import { DETAILED_NOTES_PARTS, isPartFilled } from '@/lib/schemas/detailed-notes
  *   answer to a question already answered. `groupJournalByMonth` keeps its
  *   unit test and its caller is now the one surface that wants months.
  *
- * Each row links to the sake's bottle page, which is where the rest of what we
- * know about it lives. A row with detailed notes carries §11's "Full notes"
+ * Each row links to the page of what the tasting was logged against — the
+ * sake's page, or the bottling's (design v1.6.1) — which is where the rest of
+ * what we know about it lives. A row with detailed notes carries §11's "Full notes"
  * chip, which opens §10's sheet for that tasting.
  */
 export async function JournalList({
@@ -60,13 +61,30 @@ export async function JournalList({
               {/* Screenshot 19 leads with the Latin name, like the bottle page's
                   title; the kanji follows verbatim on the line §11 gives the
                   brewery, which the entry does not store. */}
-              <span className="text-card-heading font-medium text-ink" lang={entry.sake.nameRomaji ? 'en' : 'ja'}>
-                {entry.sake.nameRomaji ?? entry.sake.nameKanji}
-              </span>
-              {entry.sake.nameRomaji && (
-                <span className="text-meta text-ash-600" lang="ja">
-                  {entry.sake.nameKanji}
-                </span>
+              {entry.expression ? (
+                // v1.6 §11: a bottling leads with its own name, the line's
+                // kanji under it.
+                <>
+                  <span className="text-card-heading font-medium text-ink" data-testid="journal-entry-bottling">
+                    {entry.expression.name}
+                  </span>
+                  {entry.expression.name !== entry.sake.nameKanji && (
+                    <span className="text-meta text-ash-600" lang="ja">
+                      {entry.sake.nameKanji}
+                    </span>
+                  )}
+                </>
+              ) : (
+                <>
+                  <span className="text-card-heading font-medium text-ink" lang={entry.sake.nameRomaji ? 'en' : 'ja'}>
+                    {entry.sake.nameRomaji ?? entry.sake.nameKanji}
+                  </span>
+                  {entry.sake.nameRomaji && (
+                    <span className="text-meta text-ash-600" lang="ja">
+                      {entry.sake.nameKanji}
+                    </span>
+                  )}
+                </>
               )}
               {entry.notes && (
                 // Italic, because §11 draws the note as the visitor's own voice
@@ -87,7 +105,17 @@ export async function JournalList({
             className="border-b border-divider"
             data-testid="journal-entry"
           >
-            {brandId !== null ? (
+            {entry.expression ? (
+              // v1.6.1 §11: a row opens the page of what the tasting was
+              // logged against — a bottling's row, its bottling page.
+              <Link
+                href={{ pathname: '/bottling/[id]', params: { id: entry.expression.id } }}
+                className="flex min-h-14 items-start gap-3 py-3 transition-colors hover:bg-ash-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+                data-testid={`journal-entry-bottling-link-${entry.expression.id}`}
+              >
+                {row}
+              </Link>
+            ) : brandId !== null ? (
               <Link
                 href={{ pathname: '/sake/[brandId]', params: { brandId: String(brandId) } }}
                 className="flex min-h-14 items-start gap-3 py-3 transition-colors hover:bg-ash-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"

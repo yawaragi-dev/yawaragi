@@ -32,7 +32,8 @@ export interface FlavorCandidate extends FlavorAxes {
 export function ratedBrandIds(events: readonly TasteEvent[]): Set<number> {
   const ids = new Set<number>()
   for (const event of events) {
-    if (event.kind === 'rating' || event.kind === 'scan_accept') {
+    // A rating of an own bottling whose sake is unknown has no brand (ADR-0025).
+    if ((event.kind === 'rating' || event.kind === 'scan_accept') && event.brandId !== null) {
       ids.add(event.brandId)
     }
   }
