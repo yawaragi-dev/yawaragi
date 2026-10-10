@@ -18,6 +18,7 @@ describe('a tasting in "You and this sake"', () => {
         <ul>
           <EditableTasting
             brandId={7}
+            sakeName="Jikon"
             chart={null}
             tasting={{ entryId: 'e1', rating: 4, notes: 'Pear', triedAt: Date.UTC(2026, 6, 18, 12), tastingNumber: 1 }}
           >

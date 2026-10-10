@@ -73,6 +73,7 @@ Sakenowa data is free under an attribution-only licence. **Footer attribution is
 - The `<SakenowaAttribution />` component appears on every page that displays flavor data, brand data, or rankings sourced from Sakenowa.
 - Placement: above the fold on dedicated detail pages (e.g. `/sake/[brandId]`); inline near the data on pages where Sakenowa is one of multiple sources.
 - The component links to https://sakenowa.com and includes the phrase "Powered by Sakenowa".
+- On list screens (Journal, Cellar, Palate, Similar) the credit is **line 1 of the end-of-screen block** (design v1.5 rule 15): "Catalogue and flavor data · Powered by Sakenowa ↗", rendered by the app shell's `<LegalFooter credit />` directly under the screen's content. That is the end of the list it credits, not a site footer far from the data, so it satisfies "inline near the data". Detail pages still need their own above-the-fold credit.
 - "Flavor Chart" is a Sakenowa registered trademark — when referring to the 6-axis visualisation in product copy, use "flavor chart (Sakenowa)" (or the German equivalent) on first mention per page.
 
 ## 6-axis flavor vocabulary

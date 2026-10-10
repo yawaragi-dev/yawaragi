@@ -7,7 +7,7 @@ import { CheckCircle, SlidersHorizontal, Trash } from '@phosphor-icons/react/dis
 import { Link } from '@/i18n/navigation'
 import { DetailedNotesSheet } from '@/components/journal/detailed-notes-sheet'
 import { StarRating } from '@/components/journal/star-rating'
-import { UndoNotice } from '@/components/journal/undo-notice'
+import { UndoNotice, announceNotice } from '@/components/journal/undo-notice'
 import type { FlavorAxis } from '@/lib/schemas/flavor-chart'
 import {
   DETAILED_NOTES_PARTS,
@@ -35,7 +35,7 @@ import { cn } from '@/lib/utils'
  * server says this visitor can keep a journal, and the actions check again.
  *
  * After the first tap, "Add detailed notes" opens §10's sheet for the same
- * entry; once parts are filled it reads "Detailed notes · 2 of 5".
+ * entry; once any part is filled it reads "Detailed notes" (v1.5 §5).
  */
 
 export type TastingHistoryMeta =
@@ -70,6 +70,7 @@ const NOTE_DEBOUNCE_MS = 700
 
 export function TastingLogPanel({
   brandId,
+  sakeName,
   chart,
   history,
   onSaved,
@@ -78,6 +79,8 @@ export function TastingLogPanel({
   onDeleted,
 }: {
   brandId: number
+  /** The sake's name as the page shows it — the delete confirmation names it. */
+  sakeName: string
   /** This sake's flavor chart, or `null` without one. It picks the quick chips,
    *  and whether a rating moves the Palate. */
   chart: Readonly<Record<FlavorAxis, number>> | null
@@ -260,6 +263,9 @@ export function TastingLogPanel({
         else resetToFresh()
         changed()
       })
+      // No Undo after a confirmed delete — the confirmation was the safety
+      // (v1.5 §5). Announced to the shell: this panel may be gone already.
+      announceNotice(t('deleted'))
     })
   }
 
@@ -271,6 +277,14 @@ export function TastingLogPanel({
     if (onDone) onDone()
     else setDone(true)
   }
+
+  const deleteQuestion = logged
+    ? t('deleteConfirm', {
+        rating: format.number(rating, { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
+        name: sakeName,
+        date: europeanDay(tastingDayOf(logged.loggedAt)),
+      })
+    : ''
 
   const ratingText =
     rating > 0
@@ -321,7 +335,7 @@ export function TastingLogPanel({
         <span className="min-w-0 flex-1 text-subtle text-ink">
           {t('logged')} · {ratingText}
         </span>
-        <Link href="/collection" className="shrink-0 text-meta text-ginshu-700 underline underline-offset-4">
+        <Link href={{ pathname: '/collection', query: { tab: 'journal' } }} className="shrink-0 text-meta text-ginshu-700 underline underline-offset-4">
           {t('inJournal')}
         </Link>
       </section>
@@ -331,9 +345,10 @@ export function TastingLogPanel({
   return (
     <section
       className={cn(
-        'flex flex-col gap-3 rounded-md border border-divider p-3.5 transition-[background-color,opacity] duration-300',
+        'flex flex-col gap-3 rounded-md border border-divider p-3.5 transition-[background-color,opacity] duration-200',
         logged ? 'bg-ginshu-100' : 'bg-ash-100',
-        isUndoing && 'opacity-60',
+        // v1.5 §5: "the panel dims to 45% for 0.2s".
+        isUndoing && 'opacity-45',
       )}
       aria-busy={isUndoing || undefined}
       aria-labelledby={`tasting-log-${brandId}-heading`}
@@ -419,9 +434,7 @@ export function TastingLogPanel({
                   data-testid="tasting-log-detailed"
                 >
                   <SlidersHorizontal size={16} aria-hidden="true" />
-                  {filled > 0
-                    ? tNotes('edit', { n: filled, total: DETAILED_NOTES_PARTS.length })
-                    : tNotes('open')}
+                  {filled > 0 ? tNotes('edit') : tNotes('open')}
                 </button>
                 {/* Not in §5: every tap already saved, but with no Save button
                     there was no way to say "I'm finished" — or to see that it
@@ -451,24 +464,31 @@ export function TastingLogPanel({
           {/* Interim, until #308 places edit and delete: a per-tasting delete
               is also what GDPR erasure needs below "delete everything". */}
           {confirmingDelete ? (
-            <div className="flex flex-wrap items-center gap-2 pt-1" role="group" aria-label={t('deleteConfirm')}>
-              <span className="min-w-0 flex-1 text-meta text-ink">{t('deleteConfirm')}</span>
-              <button
-                type="button"
-                onClick={deleteTasting}
-                disabled={isUndoing}
-                className="min-h-9 rounded-md bg-ginshu-600 px-3 text-meta font-medium text-ground transition-colors hover:bg-ginshu-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600 disabled:opacity-60"
-                data-testid="tasting-log-delete-confirm"
-              >
-                {t('deleteYes')}
-              </button>
-              <button
-                type="button"
-                onClick={() => setConfirmingDelete(false)}
-                className="min-h-9 rounded-md px-3 text-meta text-ash-700 transition-colors hover:bg-ash-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
-              >
-                {t('deleteNo')}
-              </button>
+            // v1.5 §5: inline, in a ground-coloured box, naming what goes.
+            <div
+              className="flex flex-col gap-2 rounded-md bg-ground p-3"
+              role="group"
+              aria-label={deleteQuestion}
+            >
+              <span className="text-meta text-ink">{deleteQuestion}</span>
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setConfirmingDelete(false)}
+                  className="min-h-9 rounded-md px-3 text-meta text-ash-700 transition-colors hover:bg-ash-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+                >
+                  {t('deleteNo')}
+                </button>
+                <button
+                  type="button"
+                  onClick={deleteTasting}
+                  disabled={isUndoing}
+                  className="min-h-9 rounded-md border border-ginshu-700 bg-ginshu-100 px-3 text-meta font-medium text-ginshu-700 transition-colors hover:bg-ginshu-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600 disabled:opacity-60"
+                  data-testid="tasting-log-delete-confirm"
+                >
+                  {t('deleteYes')}
+                </button>
+              </div>
             </div>
           ) : (
             <button

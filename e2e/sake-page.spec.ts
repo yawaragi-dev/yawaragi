@@ -307,7 +307,7 @@ test.describe('sake brand page', () => {
     await expect(panel.getByTestId('tasting-log-note')).toHaveValue('Melon and white peach, gone in a clean line.')
 
     await panel.getByTestId('tasting-log-delete').click()
-    await expect(panel).toContainText('Delete this tasting?')
+    await expect(panel).toContainText('Delete your 5.0 tasting of')
     // The stub draws; it does not store. The server refuses, and the panel
     // says so instead of pretending the tasting is gone.
     await panel.getByTestId('tasting-log-delete-confirm').click()

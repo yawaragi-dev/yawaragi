@@ -37,7 +37,9 @@ export async function HomeRecentTastings({
       <div className="flex items-baseline justify-between gap-3">
         <h2 className="text-section-label uppercase text-ash-600">{t('recentHeading')}</h2>
         <Link
-          href="/collection"
+          // Names its segment: Collection otherwise opens on the last one
+          // the visitor used, and "See all" is about tastings.
+          href={{ pathname: '/collection', query: { tab: 'journal' } }}
           className="inline-flex items-center gap-1 rounded-sm text-meta text-ginshu-700 hover:text-ginshu-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
           data-testid="home-recent-all"
         >
@@ -55,17 +57,8 @@ export async function HomeRecentTastings({
           const age = relativeAge(entry.triedAt, now)
           const card = (
             <>
-              {/*
-                The bottle slot. We have no bottle photography and the
-                catalogue carries none, so this is the design's own
-                placeholder — `aria-hidden` because the name beside it is the
-                content.
-              */}
-              <span
-                aria-hidden="true"
-                className="h-14 w-10 shrink-0 rounded-md bg-ash-300"
-                data-testid="home-recent-bottle-slot"
-              />
+              {/* No bottle slot: v1.5 rule 14 ("no image, no slot") and §3's recent
+                  rows, which are text-only. */}
               <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                 {/* Latin name first, kanji under it — screenshot 04, and the
                     journal's order. */}

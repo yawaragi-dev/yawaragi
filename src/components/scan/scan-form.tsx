@@ -892,6 +892,7 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
                 <div key={view.brandId} className="flex flex-col gap-3">
                   <TastingLogPanel
                     brandId={view.brandId}
+                    sakeName={view.sakeRomaji ?? view.extraction.name_ja}
                     chart={view.flavorChart}
                     history={null}
                     // Nothing on /scan reads the journal, so there is nothing

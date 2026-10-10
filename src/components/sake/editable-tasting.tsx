@@ -17,11 +17,13 @@ import type { FlavorAxis } from '@/lib/schemas/flavor-chart'
  */
 export function EditableTasting({
   brandId,
+  sakeName,
   chart,
   tasting,
   children,
 }: {
   brandId: number
+  sakeName: string
   chart: Readonly<Record<FlavorAxis, number>> | null
   tasting: ExistingTasting
   children: ReactNode
@@ -48,6 +50,7 @@ export function EditableTasting({
       {open && (
         <TastingLogPanel
           brandId={brandId}
+          sakeName={sakeName}
           chart={chart}
           history={null}
           existing={tasting}

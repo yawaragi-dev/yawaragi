@@ -76,7 +76,10 @@ export function InfoSheet({
       // supplements the surrounding content without joining the main
       // reading flow — the same role `<HeuristicDisclaimer />` uses.
       role="note"
-      className={cn('inline-flex w-fit items-center gap-1.5', className)}
+      // v1.5 §16: the ⓘ sits inline after the caveat's last word and wraps
+      // with the text, rather than beside the whole (possibly two-line)
+      // caveat as a flex row put it.
+      className={cn('text-meta leading-snug text-ash-700', className)}
       data-testid={`info-sheet-${id}`}
     >
       <span
@@ -88,7 +91,6 @@ export function InfoSheet({
         // mismatch already fixed on the locale switcher and the
         // cookie-settings link. §16 specifies neutral-700, which is
         // `--color-ash-700`.
-        className="text-meta leading-snug text-ash-700"
         data-testid={`info-sheet-${id}-caveat`}
       >
         {caveat}
@@ -100,11 +102,10 @@ export function InfoSheet({
               type="button"
               aria-label={triggerLabel}
               aria-describedby={caveatId}
-              // 44px tap target via the negative-margin trick: the visual
-              // dot stays 16px and inline with the caveat, but the hit area
-              // meets the touch-target floor. Without this the button is a
-              // 16px target in the middle of a text line.
-              className="-m-3 inline-flex size-11 items-center justify-center rounded-full text-ash-600 transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ginshu-600"
+              // A 16px glyph in the line of text, with a 44px hit area from a
+              // pseudo-element, so the touch target meets the floor without
+              // the button's box pushing the line apart.
+              className="relative ml-1 inline-flex size-4 items-center justify-center rounded-full align-[-3px] text-ash-600 transition-colors after:absolute after:-inset-3.5 after:content-[''] hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ginshu-600"
               data-testid={`info-sheet-${id}-trigger`}
             />
           }

@@ -53,7 +53,8 @@
   "footer": {
     "imprintLink": "Impressum",
     "privacyLink": "Datenschutz",
-    "drinkResponsibly": "Trinke verantwortungsvoll"
+    "drinkResponsibly": "Trinke verantwortungsvoll",
+    "label": "Rechtliches"
   },
   "header": {
     "wordmarkLabel": "Yawaragi Startseite",
@@ -185,7 +186,6 @@
   "sake": {
     "brand": {
       "breweryLabel": "Brauerei",
-      "bottleSlotLabel": "Flasche",
       "littlePublished": "Wenig veröffentlicht",
       "similarAction": "Ähnliche",
       "serveLabel": "Serviertemperatur",
@@ -374,7 +374,8 @@
   },
   "sakenowaAttribution": {
     "poweredBy": "Bereitgestellt mit Daten von Sakenowa",
-    "linkLabel": "Sakenowa besuchen"
+    "linkLabel": "Sakenowa besuchen",
+    "catalogueData": "Katalog- und Geschmacksdaten"
   },
   "provenance": {
     "badge": {
@@ -581,9 +582,10 @@
     "tastedOn": "Verkostet am {date}",
     "edit": "Bearbeiten",
     "delete": "Verkostung löschen",
-    "deleteConfirm": "Diese Verkostung löschen? Das lässt sich nicht rückgängig machen.",
+    "deleteConfirm": "Deine Verkostung von {name} ({rating}) vom {date} löschen? Das lässt sich nicht rückgängig machen.",
     "deleteYes": "Löschen",
-    "deleteNo": "Behalten"
+    "deleteNo": "Behalten",
+    "deleted": "Verkostung gelöscht"
   },
   "cellar": {
     "add": "In den Keller",
@@ -614,7 +616,7 @@
     "intro": "Ansehen, riechen, schmecken, entscheiden — die Reihenfolge, in der professionelle Verkoster arbeiten. Füll aus, was du magst, und lass den Rest; alles wird sofort gespeichert.",
     "triedOn": "Verkostet am",
     "open": "Ausführliche Notizen hinzufügen",
-    "edit": "Ausführliche Notizen · {n} von {total}",
+    "edit": "Ausführliche Notizen",
     "error": "Das ließ sich gerade nicht speichern — versuch es noch einmal.",
     "notSet": "—",
     "stepLabel": "{scale}: {step}",

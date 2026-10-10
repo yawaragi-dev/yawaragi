@@ -168,6 +168,9 @@ body {
   /* -- Ground, surfaces, text ---------------------------------------- */
   --color-ground: #1b1a19;
   --color-surface: #232221;
+  /* v1.5 rule 12: anything that floats over scrolling content (cookie
+   * banner, notices) is one step lighter than the cards under it. */
+  --color-raised: #2d2b29;
   --color-ink: #e8e4dd;
   --color-divider: rgba(232, 228, 221, 0.14);
   /* The camera/overlay ground sits BELOW the ramp — fixed, not a ramp step. */
@@ -208,6 +211,9 @@ body {
   --shadow-yw-sm: 0 0 0 1px #302e2c;
   --shadow-yw-md: 0 0 0 1px #302e2c, 0 10px 26px rgb(0 0 0 / 0.42);
   --shadow-yw-lg: 0 0 0 1px #363431, 0 18px 44px rgb(0 0 0 / 0.55);
+  /* v1.5 rule 12, floating surfaces only, with `raised`: a ring, an upward
+   * shade over what scrolls beneath, and the lg drop. */
+  --shadow-yw-float: 0 0 0 1px #4a4744, 0 -10px 28px rgb(0 0 0 / 0.45), 0 18px 44px rgb(0 0 0 / 0.55);
 
   /* -- Type scale -----------------------------------------------------
    * Fixed px steps from the spec, named by role. Letter-spacing is baked

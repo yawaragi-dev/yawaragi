@@ -55,9 +55,9 @@ export function requiresSakenowaAttribution(
 /**
  * - `above-fold` — its own panel at the top of a detail page.
  * - `inline` — inside a card or beside one line of a list.
- * - `end` — the last line of a screen's content, directly above the legal
- *   footer, on the same column and in the same quiet type, so the two read
- *   as one end-of-screen block on every screen that has it.
+ * - `end` — line 1 of v1.5's end-of-screen block (rule 15): "Catalogue and
+ *   flavor data · Powered by Sakenowa ↗", rendered by the app shell's footer
+ *   on every scrolling screen, directly under the screen's last content.
  */
 export type SakenowaAttributionPlacement = 'above-fold' | 'inline' | 'end'
 
@@ -82,6 +82,8 @@ interface SakenowaAttributionViewProps {
   placement: SakenowaAttributionPlacement
   poweredBy: string
   linkLabel: string
+  /** `end` only: the lead-in, "Catalogue and flavor data". */
+  catalogueData?: string
   className?: string
 }
 
@@ -89,6 +91,7 @@ export function SakenowaAttributionView({
   placement,
   poweredBy,
   linkLabel,
+  catalogueData,
   className,
 }: SakenowaAttributionViewProps) {
   // above-fold is a discrete attribution region — `<aside>` (a
@@ -136,12 +139,19 @@ export function SakenowaAttributionView({
   }
 
   if (placement === 'end') {
+    // v1.5 rule 15, line 1: the lead-in, then "Powered by Sakenowa ↗" as the
+    // link — the licence's phrase stays visible and the link goes out.
     return (
-      <p
-        className={cn('flex flex-wrap items-center gap-x-1.5 text-meta text-ash-600', className)}
-        data-testid="sakenowa-attribution-end"
-      >
-        {visibleText}
+      <p className={cn('text-meta text-ash-600', className)} data-testid="sakenowa-attribution-end">
+        {catalogueData ? `${catalogueData} · ` : null}
+        <a
+          href={SAKENOWA_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline underline-offset-4 hover:no-underline focus-visible:no-underline"
+        >
+          {poweredBy} ↗
+        </a>
       </p>
     )
   }
