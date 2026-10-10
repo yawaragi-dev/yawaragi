@@ -99,6 +99,40 @@ test.describe('scan result branches (#109 PR B)', () => {
     await context.close()
   })
 
+  test('a best guess offers the other candidates under the card; a sure match does not ask', async ({
+    browser,
+  }, testInfo) => {
+    testInfo.skip(!dbUp, 'Sakenowa mirror not populated — DB-bound spec')
+    // 而今 is the only sake of that name and 木屋正酒造 brews another, so the
+    // read matches exactly and there is a same-brewery sake to offer.
+    const best = await scanPageWith(browser, [
+      injectionCookie({ name_ja: '而今', brewery_ja: '木屋正酒造', confidence: 0.7 }),
+    ])
+    await best.page.goto('/en/scan')
+    await best.page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
+    await expect(best.page.getByTestId('scan-result-match-tag')).toHaveText('Best guess')
+
+    const toggle = best.page.getByTestId('scan-result-other-candidates-toggle')
+    await expect(toggle).toHaveText(/Not sure\? \d other candidates?/)
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    await toggle.click()
+    const list = best.page.getByTestId('scan-result-other-candidates-list')
+    await expect(list.getByRole('link').first()).toBeVisible()
+    await expect(list).toContainText('Same brewery')
+    // Never the match itself.
+    await expect(list).not.toContainText('而今')
+    await best.context.close()
+
+    const sure = await scanPageWith(browser, [
+      injectionCookie({ name_ja: '而今', brewery_ja: '木屋正酒造', confidence: 0.95 }),
+    ])
+    await sure.page.goto('/en/scan')
+    await sure.page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
+    await expect(sure.page.getByTestId('scan-result-match-tag')).toHaveText('Sure match')
+    await expect(sure.page.getByTestId('scan-result-other-candidates')).toHaveCount(0)
+    await sure.context.close()
+  })
+
   test('§5 "Your take" rides on the card only for a visitor who can keep a journal', async ({
     browser,
   }, testInfo) => {

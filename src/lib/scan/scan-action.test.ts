@@ -491,6 +491,43 @@ describe('scanAction — Sakenowa lookup states', () => {
     expect(getVisionProviderMock).toHaveBeenCalledWith('anthropic-haiku-4-5')
   })
 
+  it('lists the other candidates under a best guess, never the match itself', async () => {
+    stubEmptyRequestContext()
+    stubVisionTiers(mockModelReturning({ ...DASSAI_EXTRACTION, confidence: 0.7 }))
+    resolveScannedLabelMock.mockResolvedValueOnce({ kind: 'exact', sake: DASSAI_BRAND })
+    lookupBreweryByBrandMock.mockResolvedValueOnce(ASAHI_SHUZO)
+    vi.mocked(findNearestBrands).mockResolvedValueOnce([
+      {
+        row: { brandId: 99, nameKanji: '獺祭X', nameRomaji: null, breweryKanji: '旭酒造', breweryRomaji: null, areaId: null },
+        reason: 'both',
+        sameBrewery: true,
+      },
+    ])
+
+    const state = await scanAction(INITIAL_SCAN_ACTION_STATE, jpegFormData())
+
+    expect(state.status).toBe('matched')
+    if (state.status !== 'matched') return
+    expect(vi.mocked(findNearestBrands)).toHaveBeenCalledWith(
+      { name: '獺祭', brewery: '旭酒造' },
+      { exclude: DASSAI_BRAND.brandId },
+    )
+    expect(state.otherCandidates).toEqual([expect.objectContaining({ brandId: 99, reason: 'both', sameBrewery: true })])
+  })
+
+  it('does not look for other candidates behind a sure match', async () => {
+    stubEmptyRequestContext()
+    stubVisionTiers(mockModelReturning(DASSAI_EXTRACTION))
+    resolveScannedLabelMock.mockResolvedValueOnce({ kind: 'exact', sake: DASSAI_BRAND })
+    lookupBreweryByBrandMock.mockResolvedValueOnce(ASAHI_SHUZO)
+    vi.mocked(findNearestBrands).mockClear()
+
+    const state = await scanAction(INITIAL_SCAN_ACTION_STATE, jpegFormData())
+
+    expect(state.status === 'matched' && state.otherCandidates).toEqual([])
+    expect(vi.mocked(findNearestBrands)).not.toHaveBeenCalled()
+  })
+
   it('returns no_match when both tiers extract cleanly but Sakenowa has no such brand', async () => {
     stubEmptyRequestContext()
     stubVisionTiers(
@@ -527,6 +564,7 @@ describe('scanAction — Sakenowa lookup states', () => {
       {
         row: { brandId: 7, nameKanji: '獺祭', nameRomaji: 'Dassai', breweryKanji: '獺祭', breweryRomaji: null, areaId: 35 },
         reason: 'name',
+        sameBrewery: false,
       },
     ])
 

@@ -50,6 +50,8 @@ export type NearestReason = 'name' | 'brewery' | 'both'
 export interface NearestBrand {
   readonly row: NearestBrandRow
   readonly reason: NearestReason
+  /** The brewery is the one that was read, not just a lookalike. */
+  readonly sameBrewery: boolean
 }
 
 /** Company forms a label prints and the catalogue does not. */
@@ -109,18 +111,24 @@ function breweryForms(brewery: string): Set<string>[] {
 export function rankNearestBrands(
   read: { readonly name: string; readonly brewery: string },
   catalogue: readonly NearestBrandRow[],
+  options: { readonly exclude?: number } = {},
 ): NearestBrand[] {
   const names = nameForms(read.name)
   const breweries = breweryForms(read.brewery)
 
-  const all = catalogue.map((row) => ({
-    row,
-    name: best(names, [normalise(row.nameKanji), row.nameRomaji && normalise(row.nameRomaji)]),
-    brewery: best(breweries, [
-      row.breweryKanji && breweryStem(row.breweryKanji),
-      row.breweryRomaji && breweryStem(row.breweryRomaji),
-    ]),
-  }))
+  // The excluded sake (§5's match, when this lists the others) goes before
+  // the relative bar is set: an exact match would otherwise raise it out of
+  // reach of every alternative.
+  const all = catalogue
+    .filter((row) => row.brandId !== options.exclude)
+    .map((row) => ({
+      row,
+      name: best(names, [normalise(row.nameKanji), row.nameRomaji && normalise(row.nameRomaji)]),
+      brewery: best(breweries, [
+        row.breweryKanji && breweryStem(row.breweryKanji),
+        row.breweryRomaji && breweryStem(row.breweryRomaji),
+      ]),
+    }))
   const topName = Math.max(0, ...all.map((c) => c.name))
   const topBrewery = Math.max(0, ...all.map((c) => c.brewery))
   const scored = all
@@ -137,9 +145,10 @@ export function rankNearestBrands(
     (a, b) => b.name + b.brewery - (a.name + a.brewery) || b.name - a.name || a.row.brandId - b.row.brandId,
   )
 
-  return scored.slice(0, MAX_NEAREST_BRANDS).map(({ row, nameNear, breweryNear }) => ({
+  return scored.slice(0, MAX_NEAREST_BRANDS).map(({ row, brewery, nameNear, breweryNear }) => ({
     row,
     reason: nameNear && breweryNear ? 'both' : nameNear ? 'name' : 'brewery',
+    sameBrewery: brewery === 1,
   }))
 }
 
@@ -166,6 +175,7 @@ const SELECT_CATALOGUE_NAMES = `
 export async function findNearestBrandsFromPool(
   read: { readonly name: string; readonly brewery: string },
   pool: Pool,
+  options: { readonly exclude?: number } = {},
 ): Promise<NearestBrand[]> {
   const { rows } = await publicQuery<NearestBrandQueryRow>('brands', SELECT_CATALOGUE_NAMES, [], pool)
   return rankNearestBrands(
@@ -178,6 +188,7 @@ export async function findNearestBrandsFromPool(
       breweryRomaji: r.brewery_romaji,
       areaId: r.area_id,
     })),
+    options,
   )
 }
 
@@ -185,12 +196,12 @@ export async function findNearestBrandsFromPool(
  * Never throws: "Did you mean" is a help on a screen that already works
  * without it, so a database failure means no candidates, not a failed scan.
  */
-export async function findNearestBrands(read: {
-  readonly name: string
-  readonly brewery: string
-}): Promise<NearestBrand[]> {
+export async function findNearestBrands(
+  read: { readonly name: string; readonly brewery: string },
+  options: { readonly exclude?: number } = {},
+): Promise<NearestBrand[]> {
   try {
-    return await findNearestBrandsFromPool(read, getServerDbPool())
+    return await findNearestBrandsFromPool(read, getServerDbPool(), options)
   } catch {
     return []
   }

@@ -808,14 +808,19 @@
       "reasonSharedBrewery": "Same brewery · same name",
       "reasonName": "Same name · {brewery}"
     },
+    "candidateReason": {
+      "name": "Similar name",
+      "brewery": "Similar brewery name",
+      "both": "Similar name and brewery",
+      "sameBrewery": "Same brewery",
+      "sameBreweryName": "Same brewery · similar name"
+    },
+    "otherCandidates": "Not sure? {count, plural, one {# other candidate} other {# other candidates}}",
     "noMatch": {
       "kicker": "Not in the catalogue",
       "title": "We read it, but can’t find it",
       "body": "Fix anything we misread and search again. If the front label is stylised, the back usually prints the name and brewery more plainly.",
-      "candidates": "Did you mean",
-      "reasonName": "Similar name",
-      "reasonBrewery": "Similar brewery name",
-      "reasonBoth": "Similar name and brewery"
+      "candidates": "Did you mean"
     },
     "consensus": {
       "kicker": "Unclear photo",

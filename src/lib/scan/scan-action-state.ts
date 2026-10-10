@@ -4,6 +4,23 @@ import type { NearestReason } from '@/lib/sakenowa/nearest-brands'
 import type { LabelScanExtraction } from '@/lib/schemas/label-scan-extraction'
 
 /**
+ * A catalogue sake offered as a guess — §5a's "Did you mean" and §5's
+ * Best-guess "Not sure?" list — from `nearest-brands.ts`, with why.
+ */
+export interface ScanCandidate {
+  brandId: number
+  sakeHref: string
+  nameKanji: string
+  nameRomaji: string | null
+  breweryKanji: string | null
+  breweryRomaji: string | null
+  prefectureName: string | null
+  reason: NearestReason
+  /** The brewery is the one that was read, not a lookalike. */
+  sameBrewery: boolean
+}
+
+/**
  * Tagged-union state returned by `scanAction`. Lives in its own module
  * because Next's `'use server'` rule forbids non-async exports from an
  * actions file — only async functions are allowed. Types and constants
@@ -38,6 +55,12 @@ type ScanActionStateBase =
        * without the chart rather than fail the whole match.
        */
       flavorChart: FlavorChart | null
+      /**
+       * §5 Best guess (confidence 0.60–0.84): up to three other catalogue
+       * sakes near the read, for the "Not sure?" row under the card. Never
+       * the match itself. Empty for a sure match, which does not ask.
+       */
+      otherCandidates: readonly ScanCandidate[]
     }
   /**
    * Phase 3 / #123: the `(brand AND brewery)` exact-match join
@@ -118,16 +141,7 @@ type ScanActionStateBase =
        * offered. Empty when nothing is near or the catalogue is unreachable.
        * Guesses, not matches — the screen never styles them as one.
        */
-      candidates: readonly {
-        brandId: number
-        sakeHref: string
-        nameKanji: string
-        nameRomaji: string | null
-        breweryKanji: string | null
-        breweryRomaji: string | null
-        prefectureName: string | null
-        reason: NearestReason
-      }[]
+      candidates: readonly ScanCandidate[]
     }
   /**
    * Disambiguation list state. Multiple Sakenowa brands match the

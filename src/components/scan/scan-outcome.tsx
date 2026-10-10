@@ -107,31 +107,7 @@ export function ScanOutcome({
       {candidates && candidates.rows.length > 0 && (
         <div className="flex flex-col">
           <span className="text-section-label uppercase text-ash-600">{candidates.label}</span>
-          <ul className="flex flex-col" role="list" data-testid="scan-outcome-candidates">
-            {candidates.rows.slice(0, 3).map((row) => (
-              <li key={row.key} className="border-b border-divider">
-                <NextLink
-                  href={row.href}
-                  className="flex min-h-14 items-center gap-3 py-3 transition-colors hover:bg-ash-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
-                  data-testid={`scan-outcome-candidate-${row.key}`}
-                >
-                  <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                    <span className="flex flex-wrap items-baseline gap-x-2">
-                      <span className="text-card-heading font-medium text-ink">{row.name}</span>
-                      {row.kanji && (
-                        <span className="text-meta text-ash-600" lang="ja">
-                          {row.kanji}
-                        </span>
-                      )}
-                    </span>
-                    {row.where && <span className="text-meta text-ash-600">{row.where}</span>}
-                    <span className="text-meta text-ash-700">{row.reason}</span>
-                  </span>
-                  <CaretRight size={16} aria-hidden="true" className="shrink-0 text-ash-500" />
-                </NextLink>
-              </li>
-            ))}
-          </ul>
+          <CandidateRows rows={candidates.rows} testId="scan-outcome-candidates" />
         </div>
       )}
 
@@ -210,5 +186,48 @@ function WhatWeRead({ read }: { read: OutcomeRead }) {
         {t('searchAgain')}
       </Link>
     </div>
+  )
+}
+
+/**
+ * §5a's candidate rows — Latin name + kanji · brewery · prefecture · a reason
+ * in words · caret. A guess, so no percentage and no accent. Up to three.
+ * Shared by the outcome screen and §5's Best-guess "Not sure?" list.
+ */
+export function CandidateRows({
+  rows,
+  testId,
+  id,
+}: {
+  rows: readonly OutcomeCandidate[]
+  testId: string
+  id?: string
+}) {
+  return (
+    <ul className="flex flex-col" role="list" data-testid={testId} id={id}>
+      {rows.slice(0, 3).map((row) => (
+        <li key={row.key} className="border-b border-divider">
+          <NextLink
+            href={row.href}
+            className="flex min-h-14 items-center gap-3 py-3 transition-colors hover:bg-ash-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+            data-testid={`scan-outcome-candidate-${row.key}`}
+          >
+            <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+              <span className="flex flex-wrap items-baseline gap-x-2">
+                <span className="text-card-heading font-medium text-ink">{row.name}</span>
+                {row.kanji && (
+                  <span className="text-meta text-ash-600" lang="ja">
+                    {row.kanji}
+                  </span>
+                )}
+              </span>
+              {row.where && <span className="text-meta text-ash-600">{row.where}</span>}
+              <span className="text-meta text-ash-700">{row.reason}</span>
+            </span>
+            <CaretRight size={16} aria-hidden="true" className="shrink-0 text-ash-500" />
+          </NextLink>
+        </li>
+      ))}
+    </ul>
   )
 }

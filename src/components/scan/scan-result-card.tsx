@@ -107,6 +107,11 @@ export interface ScanResultCardProps {
    * card must never offer a star that saves somewhere.
    */
   logPanel?: ReactNode
+  /**
+   * §5 Best guess: the "Not sure? {n} other candidates" row, under the
+   * identity and log panel and above the chart. Absent on a sure match.
+   */
+  otherCandidates?: ReactNode
 }
 
 export function ScanResultCard({
@@ -123,6 +128,7 @@ export function ScanResultCard({
   exampleLabel,
   isStale = false,
   logPanel,
+  otherCandidates,
 }: ScanResultCardProps) {
   const tOutcome = useTranslations('scanOutcome')
   // v1.5 §5 / ADR-0015's tiers: "Sure match" at ≥ 0.85, "Best guess" at
@@ -268,6 +274,8 @@ export function ScanResultCard({
                 chart: rating is the reason to be on this screen, and the chart
                 is reference. */}
             {logPanel}
+
+            {otherCandidates}
 
             {flavorChart ? (
               <FlavorGridForCard chart={flavorChart} />

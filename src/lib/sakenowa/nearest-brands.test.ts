@@ -56,6 +56,18 @@ describe('rankNearestBrands', () => {
     expect(picks.map((p) => p.row.brandId)).toEqual([10])
   })
 
+  it('tells a sake from the very brewery that was read from one whose brewery only looks alike', () => {
+    const picks = rankNearestBrands({ name: '架空銘柄', brewery: '新澤醸造店' }, CATALOGUE)
+    expect(picks.map((p) => p.sameBrewery)).toEqual([true, true])
+    const [near] = rankNearestBrands({ name: '架空銘柄', brewery: '澄川酒' }, CATALOGUE)
+    expect(near.sameBrewery).toBe(false)
+  })
+
+  it('leaves out a sake the caller already has', () => {
+    const picks = rankNearestBrands({ name: '伯楽星', brewery: '新澤醸造店' }, CATALOGUE, { exclude: 5 })
+    expect(picks.map((p) => p.row.brandId)).toEqual([6])
+  })
+
   it('offers at most three', () => {
     const many = Array.from({ length: 6 }, (_, i) => row(100 + i, `山田${i}`, '山田酒造'))
     expect(rankNearestBrands({ name: '架空銘柄', brewery: '山田酒' }, many)).toHaveLength(3)
