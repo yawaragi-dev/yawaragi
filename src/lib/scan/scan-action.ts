@@ -20,6 +20,7 @@ import {
   resolveScannedLabel,
   type ResolveScannedLabelResult,
 } from '@/lib/sakenowa/resolve-scanned-label'
+import { findNearestBrands } from '@/lib/sakenowa/nearest-brands'
 import { getPrefectureNames } from '@/lib/sakenowa/prefecture'
 import type { Brand } from '@/lib/schemas/brand'
 import type { Brewery } from '@/lib/schemas/brewery'
@@ -291,9 +292,8 @@ async function runScanAction(
         'scan.tier2Used': true,
         'scan.tier2Provider': TIER_2_VISION_PROVIDER_KEY,
       })
-      return extractAndLookupWithProvider(
-        getVisionProvider(TIER_2_VISION_PROVIDER_KEY),
-        image,
+      return withNearestCandidates(
+        await extractAndLookupWithProvider(getVisionProvider(TIER_2_VISION_PROVIDER_KEY), image, localeRaw),
         localeRaw,
       )
     }
@@ -303,12 +303,36 @@ async function runScanAction(
       'scan.tier1Status': tier1Result.status,
       'scan.tier2Used': false,
     })
-    return tier1Result
+    return withNearestCandidates(tier1Result, localeRaw)
   })
 
   // Attach the accumulated trace to the response. Stripped when debug
   // is off so non-debug visitors never see it.
   return log ? { ...result, debugLog: log.toArray() } : result
+}
+
+/**
+ * §5a "Did you mean": a `no_match` gets the catalogue sakes nearest to what
+ * was read. Applied to the answer the visitor will see, not inside the
+ * per-tier pipeline — a tier-1 `no_match` is always retried, and reading the
+ * catalogue for a result that is thrown away is wasted work.
+ */
+async function withNearestCandidates(state: ScanActionState, locale: Locale): Promise<ScanActionState> {
+  if (state.status !== 'no_match') return state
+  const nearest = await findNearestBrands({ name: state.extraction.name_ja, brewery: state.extraction.brewery_ja })
+  return {
+    ...state,
+    candidates: nearest.map(({ row, reason }) => ({
+      brandId: row.brandId,
+      sakeHref: sakeHrefFor(row.brandId, locale),
+      nameKanji: row.nameKanji,
+      nameRomaji: row.nameRomaji,
+      breweryKanji: row.breweryKanji,
+      breweryRomaji: row.breweryRomaji,
+      prefectureName: row.areaId === null ? null : (getPrefectureNames(row.areaId)?.nameEn ?? null),
+      reason,
+    })),
+  }
 }
 
 /**
@@ -497,7 +521,8 @@ async function mapResolvedToState(
       debugAdd('ScanAction', 'returning no_match', {
         attempted: { name_ja: extraction.name_ja, brewery_ja: extraction.brewery_ja },
       })
-      return { status: 'no_match', extraction }
+      // Filled by `withNearestCandidates` once the last tier has answered.
+      return { status: 'no_match', extraction, candidates: [] }
   }
 }
 

@@ -90,6 +90,12 @@ vi.mock('@/lib/sakenowa/lookup', () => ({
   lookupFlavorChart: vi.fn(),
 }))
 
+// §5a "Did you mean" reads the whole catalogue; the ranking itself is
+// unit-tested in `nearest-brands.test.ts`.
+vi.mock('@/lib/sakenowa/nearest-brands', () => ({
+  findNearestBrands: vi.fn().mockResolvedValue([]),
+}))
+
 vi.mock('@/lib/rate-limit/config-gate', () => ({
   // Return null by default so the action skips rate-limit enforcement
   // (as if env is unset in non-production). Individual tests override
@@ -102,6 +108,7 @@ import { getVisionProvider } from '@/lib/ai/vision/registry'
 import { createAnthropicHaikuProvider } from '@/lib/ai/vision/anthropic-haiku-provider'
 import { resolveScannedLabel } from '@/lib/sakenowa/resolve-scanned-label'
 import { lookupBreweryByBrand } from '@/lib/sakenowa/lookup'
+import { findNearestBrands } from '@/lib/sakenowa/nearest-brands'
 import { assertRateLimitConfig } from '@/lib/rate-limit/config-gate'
 import { scanAction } from './scan-action'
 import { INITIAL_SCAN_ACTION_STATE } from './scan-action-state'
@@ -504,6 +511,39 @@ describe('scanAction — Sakenowa lookup states', () => {
     expect(getVisionProviderMock).toHaveBeenCalledWith('anthropic-haiku-4-5')
     expect(getVisionProviderMock).toHaveBeenCalledWith('anthropic-sonnet-4-6')
     expect(resolveScannedLabelMock).toHaveBeenCalledTimes(2)
+  })
+
+  it('offers the nearest catalogue sakes when nothing matched, so the visitor is not at a dead end', async () => {
+    stubEmptyRequestContext()
+    stubVisionTiers(
+      mockModelReturning(DASSAI_EXTRACTION),
+      mockModelReturning(DASSAI_EXTRACTION),
+    )
+    resolveScannedLabelMock.mockResolvedValue({
+      kind: 'no_match',
+      query: { nameJa: '獺祭', breweryJa: '旭酒造' },
+    })
+    vi.mocked(findNearestBrands).mockResolvedValueOnce([
+      {
+        row: { brandId: 7, nameKanji: '獺祭', nameRomaji: 'Dassai', breweryKanji: '獺祭', breweryRomaji: null, areaId: 35 },
+        reason: 'name',
+      },
+    ])
+
+    const state = await scanAction(INITIAL_SCAN_ACTION_STATE, jpegFormData())
+
+    expect(state.status).toBe('no_match')
+    if (state.status !== 'no_match') return
+    expect(state.candidates).toEqual([
+      expect.objectContaining({
+        brandId: 7,
+        nameKanji: '獺祭',
+        nameRomaji: 'Dassai',
+        breweryKanji: '獺祭',
+        prefectureName: 'Yamaguchi',
+        reason: 'name',
+      }),
+    ])
   })
 
   it('returns matched_brand_only with brewery divergence when only the brand-only fallback resolves on tier-2', async () => {

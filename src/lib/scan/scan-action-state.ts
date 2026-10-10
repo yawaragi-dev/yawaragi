@@ -1,5 +1,6 @@
 import type { DebugEvent } from '@/lib/debug/debug-log'
 import type { FlavorChart } from '@/lib/schemas/flavor-chart'
+import type { NearestReason } from '@/lib/sakenowa/nearest-brands'
 import type { LabelScanExtraction } from '@/lib/schemas/label-scan-extraction'
 
 /**
@@ -111,6 +112,22 @@ type ScanActionStateBase =
   | {
       status: 'no_match'
       extraction: LabelScanExtraction
+      /**
+       * §5a "Did you mean": up to three catalogue sakes nearest to the read
+       * by name or brewery (`nearest-brands.ts`), each with why it is
+       * offered. Empty when nothing is near or the catalogue is unreachable.
+       * Guesses, not matches — the screen never styles them as one.
+       */
+      candidates: readonly {
+        brandId: number
+        sakeHref: string
+        nameKanji: string
+        nameRomaji: string | null
+        breweryKanji: string | null
+        breweryRomaji: string | null
+        prefectureName: string | null
+        reason: NearestReason
+      }[]
     }
   /**
    * Disambiguation list state. Multiple Sakenowa brands match the

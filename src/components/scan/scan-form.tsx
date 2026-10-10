@@ -536,9 +536,11 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
           />
         )
       }
-      case 'no_match':
-        // "Did you mean" (v1.5 §5a) needs nearest candidates the pipeline
-        // does not return yet; the read card is the way forward meanwhile.
+      case 'no_match': {
+        // §5a "Did you mean": the nearest by name or brewery, each with its
+        // reason in words. Older states (and an unreachable catalogue) carry
+        // none, and the read card is the way forward then.
+        const candidates = Array.isArray(view.candidates) ? view.candidates : []
         return (
           <ScanOutcome
             testId="scan-result-no-match"
@@ -552,8 +554,29 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
               brewery: view.extraction.brewery_ja,
               badge: readBadge('scan-outcome-no-match-badge'),
             }}
+            candidates={
+              candidates.length > 0
+                ? {
+                    label: tOutcome('noMatch.candidates'),
+                    rows: candidates.map((c) => ({
+                      key: c.brandId,
+                      href: c.sakeHref,
+                      name: c.nameRomaji ?? c.nameKanji,
+                      kanji: c.nameRomaji ? c.nameKanji : null,
+                      where: join(c.breweryRomaji ?? c.breweryKanji, c.prefectureName),
+                      reason:
+                        c.reason === 'both'
+                          ? tOutcome('noMatch.reasonBoth')
+                          : c.reason === 'name'
+                            ? tOutcome('noMatch.reasonName')
+                            : tOutcome('noMatch.reasonBrewery'),
+                    })),
+                  }
+                : undefined
+            }
           />
         )
+      }
       case 'low_confidence':
         return consensus ? (
           <ScanOutcome

@@ -811,7 +811,11 @@
     "noMatch": {
       "kicker": "Not in the catalogue",
       "title": "We read it, but can’t find it",
-      "body": "Fix anything we misread and search again. If the front label is stylised, the back usually prints the name and brewery more plainly."
+      "body": "Fix anything we misread and search again. If the front label is stylised, the back usually prints the name and brewery more plainly.",
+      "candidates": "Did you mean",
+      "reasonName": "Similar name",
+      "reasonBrewery": "Similar brewery name",
+      "reasonBoth": "Similar name and brewery"
     },
     "consensus": {
       "kicker": "Unclear photo",
