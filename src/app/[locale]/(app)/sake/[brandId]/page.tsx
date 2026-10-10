@@ -12,6 +12,7 @@ import {
 } from '@/lib/sakenowa/lookup'
 import { getPrefectureNames } from '@/lib/sakenowa/prefecture'
 import { BottleHistory } from '@/components/sake/bottle-history'
+import { ScreenBar } from '@/components/layout/screen-header'
 import { BottleRateRow } from '@/components/sake/bottle-rate-row'
 import { BottleSection, NotPublished } from '@/components/sake/bottle-section'
 import { CellarButton } from '@/components/collection/cellar-button'
@@ -176,6 +177,8 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
       className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-5 py-5"
       data-testid="sake-brand-page"
     >
+      {/* v1.5 §9: the top bar is back · name, nothing else. */}
+      <ScreenBar title={brand.nameRomaji ?? brand.nameKanji} />
       {/*
         "Not the bottle you scanned? Scan again" — only when the link that
         brought the visitor was a scan result's (#109). Decided here, on the

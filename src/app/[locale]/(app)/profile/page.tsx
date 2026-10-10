@@ -9,6 +9,7 @@ import { ColdStartChips, type ColdStartChipView } from '@/components/palate/cold
 import { PalateAxisRows, type PalateAxisStrings } from '@/components/palate/palate-axis-rows'
 import { PalateConfidence } from '@/components/palate/palate-confidence'
 import { PalateProgress } from '@/components/palate/palate-progress'
+import { TabHeader } from '@/components/layout/screen-header'
 import { TasteProvenanceSummary } from '@/components/profile/taste-provenance-summary'
 import { FlavorRadarView } from '@/components/sake/flavor-radar-view'
 import { SakenowaAttributionView } from '@/components/sake/sakenowa-attribution'
@@ -396,14 +397,16 @@ export default async function PalatePage({
       className="mx-auto flex w-full max-w-3xl flex-col gap-5 px-5 py-6"
       data-testid="profile-page"
     >
-      <section className="flex flex-col gap-1" data-testid="palate-header">
-        <h1 className="text-tab-title font-medium text-ink" data-testid="palate-title">
-          {title}
-        </h1>
-        <p className="text-subtle text-ash-600" data-testid="palate-meta">
-          {meta}
-        </p>
-      </section>
+      <TabHeader>
+        <section className="flex flex-col gap-1" data-testid="palate-header">
+          <h1 className="text-tab-title font-medium text-ink" data-testid="palate-title">
+            {title}
+          </h1>
+          <p className="text-subtle text-ash-600" data-testid="palate-meta">
+            {meta}
+          </p>
+        </section>
+      </TabHeader>
 
       {session.kind === 'unavailable' && (
         <section data-testid="profile-unavailable">

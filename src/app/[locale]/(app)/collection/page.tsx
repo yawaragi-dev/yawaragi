@@ -9,6 +9,7 @@ import { Link } from '@/i18n/navigation'
 import { CellarList } from '@/components/collection/cellar-list'
 import { JournalList } from '@/components/collection/journal-list'
 import { TabPlaceholder } from '@/components/layout/tab-placeholder'
+import { TabHeader } from '@/components/layout/screen-header'
 import { currentUserIsMaintainer } from '@/lib/auth/maintainer'
 import { isLaunched } from '@/i18n/launch-state'
 import { routing } from '@/i18n/routing'
@@ -149,12 +150,20 @@ export default async function CollectionTabPage({ params, searchParams }: PagePr
     // Still scaffolding, still honest: ADR-0020 keeps the journal
     // maintainer-only, so there is nothing of the visitor's to list yet.
     const tPlaceholder = await getTranslations({ locale, namespace: 'tabPlaceholder.collection' })
+    const tCollection = await getTranslations({ locale, namespace: 'collection' })
     return (
-      <TabPlaceholder
-        title={tPlaceholder('title')}
-        body={tPlaceholder('body')}
-        link={{ href: '/profile', label: tPlaceholder('linkLabel') }}
-      />
+      // The tab's own header (v1.5) — title beside the avatar — above the
+      // placeholder, so Account is reachable from here as from every tab.
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-5 py-6">
+        <TabHeader>
+          <h1 className="text-tab-title font-medium text-ink">{tCollection('title')}</h1>
+        </TabHeader>
+        <TabPlaceholder
+          title={tPlaceholder('title')}
+          body={tPlaceholder('body')}
+          link={{ href: '/profile', label: tPlaceholder('linkLabel') }}
+        />
+      </div>
     )
   }
 
@@ -168,7 +177,9 @@ export default async function CollectionTabPage({ params, searchParams }: PagePr
     >
       {/* §11's title is the tab's name at 26px — the screen says where you are
           rather than what it contains, because the list below does that. */}
-      <h1 className="text-tab-title font-medium text-ink">{t('title')}</h1>
+      <TabHeader>
+        <h1 className="text-tab-title font-medium text-ink">{t('title')}</h1>
+      </TabHeader>
 
       {/* §11's segmented control, minus Wishlist (not built — a third
           option leading nowhere is the dead affordance #162 forbids). Plain

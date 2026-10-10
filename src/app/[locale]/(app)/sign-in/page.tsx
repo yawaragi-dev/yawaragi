@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { hasLocale } from 'next-intl'
 import { SignInCard } from '@/components/auth/sign-in-card'
+import { ScreenBar } from '@/components/layout/screen-header'
 import { getPathname } from '@/i18n/navigation'
 import { routing } from '@/i18n/routing'
 
@@ -54,12 +55,11 @@ export default async function SignInPage({
       className="flex flex-1 w-full max-w-md mx-auto flex-col items-center gap-8 py-16 px-8"
       data-testid="sign-in-page"
     >
-      <header className="flex flex-col gap-2 text-center">
-        <h1 className="text-3xl font-semibold leading-tight tracking-tight">
-          {t('title')}
-        </h1>
-        <p className="text-base text-zinc-700 dark:text-zinc-300">{t('intro')}</p>
-      </header>
+      {/* v1.5 header rule: back · title. */}
+      <div className="w-full">
+        <ScreenBar titleAs="h1" title={t('title')} />
+      </div>
+      <p className="text-center text-body text-ash-700">{t('intro')}</p>
       {/* Widget copy is localised at <ClerkProvider> in the locale layout —
           Clerk applies `localization` at the provider, not per widget. */}
       {/*

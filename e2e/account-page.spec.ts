@@ -33,8 +33,16 @@ test.describe('§15 account', () => {
   test('Impressum is two taps from any tab', async ({ browser }) => {
     const { context, page } = await appPage(browser)
 
-    // Tap one: the Account entry in the header, from a tab screen.
+    // From the camera, which has its own top row and no avatar (v1.5): the
+    // Home tab, then the end-of-screen block's Impressum — two taps.
     await page.goto('/en/scan')
+    await page.getByTestId('tab-home').click()
+    await expect(page).toHaveURL(/\/en\/home$/)
+    await page.getByTestId('footer-imprint-link').click()
+    await expect(page).toHaveURL(/\/en\/imprint$/)
+
+    // Tap one from a tab with an avatar: Account.
+    await page.goto('/en/home')
     await page.getByTestId('header-account-link').click()
     await expect(page).toHaveURL(/\/en\/account$/)
 
@@ -48,10 +56,12 @@ test.describe('§15 account', () => {
     await context.close()
   })
 
-  test('the Account entry is on every tab screen', async ({ browser }) => {
+  test('the Account entry is on Home, Collection and Palate', async ({ browser }) => {
     const { context, page } = await appPage(browser)
 
-    for (const path of ['/en/home', '/en/scan', '/en/collection', '/en/profile']) {
+    // v1.5: "Account opens from the avatar at the top right of Home,
+    // Collection and Palate". The camera's top row is its own.
+    for (const path of ['/en/home', '/en/collection', '/en/profile']) {
       await page.goto(path)
       await expect(page.getByTestId('header-account-link')).toBeVisible()
     }
@@ -142,21 +152,18 @@ test.describe('§15 account', () => {
     await context.close()
   })
 
-  test('the Account entry says so when you are already on Account', async ({ browser }) => {
+  test('Account has its own bar — back · Account — and no avatar pointing at itself', async ({ browser }) => {
     const { context, page } = await appPage(browser)
 
-    // A nav item, so it stays a link on its own route — unlike the wordmark,
-    // whose whole job is to be an exit. What it must not do is claim to lead
-    // somewhere else, which is what `aria-current` is for. `<TabBar />` marks
-    // its active item the same way.
-    await page.goto('/en/scan')
+    // v1.5 header rule: a non-tab screen's top is back · title. The avatar
+    // lives on the tab screens and is not marked current there.
+    await page.goto('/en/home')
     await expect(page.getByTestId('header-account-link')).not.toHaveAttribute('aria-current')
 
     await page.goto('/en/account')
-    await expect(page.getByTestId('header-account-link')).toHaveAttribute(
-      'aria-current',
-      'page',
-    )
+    await expect(page.getByTestId('screen-bar')).toBeVisible()
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Account')
+    await expect(page.getByTestId('header-account-link')).toHaveCount(0)
 
     await context.close()
   })
@@ -172,10 +179,15 @@ test.describe('§15 account', () => {
     // §15 marks the row "not tappable until DACH launch" and `de` is not in
     // `LAUNCHED_LOCALES` — so this pins the GUARANTEE rather than either
     // control, and keeps passing when the header switch goes.
+    // From the camera: the Home tab, then the header's switch — two taps.
     await page.goto('/en/scan')
+    await page.getByTestId('tab-home').click()
+    await expect(page.getByTestId('locale-switcher')).toBeVisible()
+
     await page.getByTestId('header-account-link').click()
     await expect(page).toHaveURL(/\/en\/account$/)
     await expect(page.getByTestId('account-language')).toBeVisible()
+    await page.goto('/en/home')
 
     // Step 1 of the amendment's sequencing: the header still carries a working
     // switch, because the row above is not one yet. When `de` launches this

@@ -7,6 +7,7 @@ import { Link } from '@/i18n/navigation'
 import { routing } from '@/i18n/routing'
 import { isLaunched } from '@/i18n/launch-state'
 import { AgeGate } from '@/components/legal/age-gate'
+import { ScreenBar } from '@/components/layout/screen-header'
 import { DebugLogPusher } from '@/components/debug/debug-log-pusher'
 import { hasAcceptedAgeGate } from '@/lib/legal/age-gate-cookie'
 import { suggestAction } from '@/lib/suggest/suggest-action'
@@ -71,6 +72,7 @@ export default async function SuggestPage({ params, searchParams }: PageProps) {
     notFound()
   }
   setRequestLocale(locale)
+  const tBar = await getTranslations('suggest')
 
   // Non-launched-locale gate (ADR-0008): render coming-soon copy so
   // German visitors don't see the suggest surface before the Impressum +
@@ -82,6 +84,7 @@ export default async function SuggestPage({ params, searchParams }: PageProps) {
         className="flex flex-1 w-full max-w-3xl mx-auto flex-col gap-6 py-16 px-8"
         data-testid="coming-soon"
       >
+        <ScreenBar title={tBar('barTitle')} />
         <h1 className="text-4xl font-semibold leading-tight tracking-tight">
           {tComingSoon('title')}
         </h1>
@@ -135,6 +138,7 @@ export default async function SuggestPage({ params, searchParams }: PageProps) {
           className="flex flex-1 w-full max-w-3xl mx-auto flex-col gap-6 py-16 px-8"
           data-testid="suggest-no-seed"
         >
+          <ScreenBar title={tBar('barTitle')} />
           <h1 className="text-4xl font-semibold leading-tight tracking-tight">
             {tEntry('title')}
           </h1>
@@ -164,6 +168,7 @@ export default async function SuggestPage({ params, searchParams }: PageProps) {
         className="flex flex-1 w-full max-w-3xl mx-auto flex-col gap-6 py-16 px-8"
         data-testid="suggest-page"
       >
+        <ScreenBar title={tBar('barTitle')} />
         <h1 className="text-4xl font-semibold leading-tight tracking-tight">
           {tEntry('title')}
         </h1>
