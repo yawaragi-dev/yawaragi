@@ -120,6 +120,33 @@ test.describe('/en/collection — §11 Journal (ADR-0020, maintainer-only)', () 
   })
 })
 
+test.describe('/en/collection — which segment opens (design v1.5, #369)', () => {
+  test('opens on the segment the visitor was last on; a link that names one wins', async ({
+    browser,
+  }) => {
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([AGE_GATE_COOKIE, CONSENT_COOKIE, journalStub('populated')])
+    const page = await context.newPage()
+
+    await page.goto('/en/collection?tab=cellar')
+    await expect(page.getByTestId('collection-segment-cellar')).toHaveAttribute('aria-current', 'page')
+    // Remembered in a session cookie, written once the page has hydrated.
+    await expect
+      .poll(async () => (await context.cookies()).find((c) => c.name === 'yawaragi_collection_tab')?.value)
+      .toBe('cellar')
+
+    // The tab bar's plain /collection now opens the Cellar...
+    await page.goto('/en/collection')
+    await expect(page.getByTestId('collection-segment-cellar')).toHaveAttribute('aria-current', 'page')
+    // ...and a tap on Journal names it, so it wins and is remembered.
+    await page.getByTestId('collection-segment-journal').click()
+    await expect(page).toHaveURL(/\/en\/collection\?tab=journal$/)
+    await expect(page.getByTestId('collection-segment-journal')).toHaveAttribute('aria-current', 'page')
+
+    await context.close()
+  })
+})
+
 test.describe('/en/collection?tab=cellar — §11 Cellar (ADR-0024)', () => {
   test('lists the bottles, the ones to finish first, each with its two actions', async ({
     browser,

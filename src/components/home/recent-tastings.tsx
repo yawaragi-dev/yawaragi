@@ -37,7 +37,9 @@ export async function HomeRecentTastings({
       <div className="flex items-baseline justify-between gap-3">
         <h2 className="text-section-label uppercase text-ash-600">{t('recentHeading')}</h2>
         <Link
-          href="/collection"
+          // Names its segment: Collection otherwise opens on the last one
+          // the visitor used, and "See all" is about tastings.
+          href={{ pathname: '/collection', query: { tab: 'journal' } }}
           className="inline-flex items-center gap-1 rounded-sm text-meta text-ginshu-700 hover:text-ginshu-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
           data-testid="home-recent-all"
         >

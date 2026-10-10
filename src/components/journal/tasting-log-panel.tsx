@@ -321,7 +321,7 @@ export function TastingLogPanel({
         <span className="min-w-0 flex-1 text-subtle text-ink">
           {t('logged')} · {ratingText}
         </span>
-        <Link href="/collection" className="shrink-0 text-meta text-ginshu-700 underline underline-offset-4">
+        <Link href={{ pathname: '/collection', query: { tab: 'journal' } }} className="shrink-0 text-meta text-ginshu-700 underline underline-offset-4">
           {t('inJournal')}
         </Link>
       </section>

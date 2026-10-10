@@ -161,7 +161,7 @@ describe('§5 log panel', () => {
     const saved = await screen.findByTestId('tasting-log-done')
     expect(saved.textContent).toContain('Logged')
     expect(saved.textContent).toContain('4.0')
-    expect(screen.getByRole('link', { name: 'In your journal' }).getAttribute('href')).toBe('/en/collection')
+    expect(screen.getByRole('link', { name: 'In your journal' }).getAttribute('href')).toBe('/en/collection?tab=journal')
     expect(screen.queryByTestId('tasting-log-note')).toBeNull()
   })
 

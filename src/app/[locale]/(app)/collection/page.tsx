@@ -13,7 +13,14 @@ import { SakenowaAttribution } from '@/components/sake/sakenowa-attribution'
 import { currentUserIsMaintainer } from '@/lib/auth/maintainer'
 import { isLaunched } from '@/i18n/launch-state'
 import { routing } from '@/i18n/routing'
+import { RememberCollectionSegment } from '@/components/collection/remember-collection-segment'
 import { getCellarStore } from '@/lib/collection/get-cellar-store'
+import {
+  COLLECTION_SEGMENT_COOKIE,
+  type CollectionSegment,
+  parseCollectionSegment,
+  pickCollectionSegment,
+} from '@/lib/collection/segment'
 import type { CellarBottle } from '@/lib/schemas/cellar-bottle'
 import { getJournalStore } from '@/lib/taste/get-journal-store'
 import { STUB_JOURNAL_NOW, resolveCellarStub, resolveJournalStub } from '@/lib/taste/journal-stub'
@@ -55,7 +62,7 @@ interface PageProps {
 }
 
 /** §11's segments that have something behind them. Wishlist is not built. */
-type Segment = 'journal' | 'cellar'
+type Segment = CollectionSegment
 
 type CookieJar = Awaited<ReturnType<typeof cookies>>
 
@@ -106,7 +113,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function CollectionTabPage({ params, searchParams }: PageProps) {
   const { locale } = await params
-  const segment: Segment = (await searchParams).tab === 'cellar' ? 'cellar' : 'journal'
+  const tabParam = (await searchParams).tab
 
   if (!hasLocale(routing.locales, locale)) {
     notFound()
@@ -134,6 +141,9 @@ export default async function CollectionTabPage({ params, searchParams }: PagePr
   }
 
   const cookieJar = await cookies()
+  // The segment a link names, else the one this visitor was last on, else
+  // Journal (design v1.5, #369).
+  const segment: Segment = pickCollectionSegment(tabParam, cookieJar.get(COLLECTION_SEGMENT_COOKIE)?.value)
   const view = await resolveJournalView(cookieJar)
 
   if (!view.isMaintainer || !view.journal) {
@@ -175,7 +185,9 @@ export default async function CollectionTabPage({ params, searchParams }: PagePr
         {(['journal', 'cellar'] as const).map((key) => (
           <Link
             key={key}
-            href={key === 'journal' ? '/collection' : { pathname: '/collection', query: { tab: key } }}
+            // Every segment link names its segment, so a tap on Journal wins
+            // over a remembered Cellar.
+            href={{ pathname: '/collection', query: { tab: key } }}
             aria-current={segment === key ? 'page' : undefined}
             className={
               segment === key
@@ -188,6 +200,8 @@ export default async function CollectionTabPage({ params, searchParams }: PagePr
           </Link>
         ))}
       </nav>
+      {/* Remember a segment the visitor chose, not one we fell back to. */}
+      {parseCollectionSegment(tabParam) && <RememberCollectionSegment segment={segment} />}
 
       {journal.kind === 'unavailable' ? (
         <section data-testid="journal-unavailable">
