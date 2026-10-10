@@ -29,6 +29,7 @@ import { writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { parseMaintainerAllowlist } from '@/lib/auth/maintainer-allowlist'
 import { UpstashCellarStore } from '@/lib/collection/upstash-cellar-store'
+import { UpstashExpressionStore } from '@/lib/collection/upstash-expression-store'
 import { buildCollectionExport } from '@/lib/taste/journal-export'
 import { UpstashJournalStore } from '@/lib/taste/upstash-journal-store'
 
@@ -112,11 +113,12 @@ async function main(): Promise<number> {
   const { userId } = resolved
 
   const exportedAt = Date.now()
-  const [journal, cellar] = await Promise.all([
+  const [journal, cellar, expressions] = await Promise.all([
     new UpstashJournalStore(url, token).dump(userId),
     new UpstashCellarStore(url, token).dump(userId),
+    new UpstashExpressionStore(url, token).dump(userId),
   ])
-  const doc = buildCollectionExport({ userId, journal, cellar, exportedAt })
+  const doc = buildCollectionExport({ userId, journal, cellar, expressions, exportedAt })
 
   const outPath = resolve(flag(argv, 'out') ?? defaultExportFilename(userId, exportedAt))
   await writeFile(outPath, `${JSON.stringify(doc, null, 2)}\n`, 'utf8')
@@ -125,10 +127,11 @@ async function main(): Promise<number> {
   // personal data and must not be echoed into a terminal or CI log.
   const n = doc.journal.length
   console.log(
-    `Exported ${n} journal entr${n === 1 ? 'y' : 'ies'} and ${doc.cellar.length} cellar row(s) for ${userId}`,
+    `Exported ${n} journal entr${n === 1 ? 'y' : 'ies'}, ${doc.cellar.length} cellar row(s) and ` +
+      `${doc.expressions.length} own bottling(s) for ${userId}`,
   )
   console.log(`  → ${outPath}`)
-  if (n === 0 && doc.cellar.length === 0) {
+  if (n === 0 && doc.cellar.length === 0 && doc.expressions.length === 0) {
     console.log('  (empty collection — a valid export, nothing was stored for this user)')
   }
   if (doc.rejected.length > 0) {

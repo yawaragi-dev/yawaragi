@@ -4,7 +4,9 @@ import { parseMaintainerAllowlist } from '@/lib/auth/maintainer-allowlist'
 import { authorizeCronRequest } from '@/lib/cron/authorize'
 import { BACKUP_BUCKET, type BackupStorage } from '@/lib/collection/backup-storage'
 import type { CellarStore } from '@/lib/collection/cellar-store'
+import type { ExpressionStore } from '@/lib/collection/expression-store'
 import { getCellarStore } from '@/lib/collection/get-cellar-store'
+import { getExpressionStore } from '@/lib/collection/get-expression-store'
 import { type BackupUserResult, runCollectionBackup } from '@/lib/collection/run-collection-backup'
 import { SupabaseBackupStorage } from '@/lib/collection/supabase-backup-storage'
 import { getJournalStore } from '@/lib/taste/get-journal-store'
@@ -34,7 +36,12 @@ export interface BackupRouteDeps {
   expectedSecret: string
   userIds: readonly string[]
   /** `null` when a store or the bucket is not configured. */
-  build: () => { journal: JournalStore; cellar: CellarStore; storage: BackupStorage } | null
+  build: () => {
+    journal: JournalStore
+    cellar: CellarStore
+    expressions: ExpressionStore
+    storage: BackupStorage
+  } | null
   now: () => number
 }
 
@@ -77,10 +84,11 @@ export function createProductionDeps(): BackupRouteDeps {
     build: () => {
       const journal = getJournalStore()
       const cellar = getCellarStore()
+      const expressions = getExpressionStore()
       const url = env.NEXT_PUBLIC_SUPABASE_URL
       const key = env.SUPABASE_SERVICE_ROLE_KEY
-      if (!journal || !cellar || !url || !key) return null
-      return { journal, cellar, storage: new SupabaseBackupStorage(url, key, BACKUP_BUCKET) }
+      if (!journal || !cellar || !expressions || !url || !key) return null
+      return { journal, cellar, expressions, storage: new SupabaseBackupStorage(url, key, BACKUP_BUCKET) }
     },
     now: () => Date.now(),
   }

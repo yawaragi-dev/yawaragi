@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { addBottle } from '@/lib/collection/cellar'
 import type { BackupStorage } from '@/lib/collection/backup-storage'
 import { InMemoryCellarStore } from '@/lib/collection/in-memory-cellar-store'
+import { InMemoryExpressionStore } from '@/lib/collection/in-memory-expression-store'
 import { runCollectionBackup } from '@/lib/collection/run-collection-backup'
 import { parseCollectionExport } from '@/lib/schemas/journal-export'
 import type { JournalEntry } from '@/lib/schemas/journal-entry'
@@ -43,10 +44,21 @@ class MemoryStorage implements BackupStorage {
 async function stores() {
   const journal = new InMemoryJournalStore()
   const cellar = new InMemoryCellarStore()
+  const expressions = new InMemoryExpressionStore()
+  await expressions.put('user_a', {
+    schemaVersion: 1,
+    id: 'x1',
+    own: true,
+    brandId: null,
+    line: null,
+    name: '富久千代',
+    createdAt: 1,
+    updatedAt: 1,
+  })
   await journal.put('user_a', entry('e1'))
   journal.putRaw('user_a', 'broken', '{nope')
   await cellar.put('user_a', addBottle(undefined, { brandId: 7, nameKanji: '而今', nameRomaji: null }, 1))
-  return { journal, cellar }
+  return { journal, cellar, expressions }
 }
 
 describe('the daily backup', () => {
@@ -66,12 +78,14 @@ describe('the daily backup', () => {
         path: 'user_a/2026-10-05T03-30-00Z.json',
         journal: 1,
         cellar: 1,
+        expressions: 1,
         rejected: 1,
         pruned: 0,
       },
     ])
     const parsed = parseCollectionExport(JSON.parse(storage.files.get('user_a/2026-10-05T03-30-00Z.json')!))
     expect(parsed.ok && parsed.doc.journal.map((e) => e.id)).toEqual(['e1'])
+    expect(parsed.ok && parsed.doc.expressions.map((e) => e.name)).toEqual(['富久千代'])
     expect(parsed.ok && parsed.doc.rejected.map((r) => r.raw)).toEqual(['{nope'])
   })
 

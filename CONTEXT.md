@@ -12,7 +12,7 @@ _Avoid_: Brand, Label, Meigara, Product
 Where it must be told apart from an **Expression**, call it the **Line** (design v1.5's B-Line table). In the UI it is always "sake" ("this sake" = the line).
 
 **Expression**:
-One bottling a Brewery sells under a name and a spec, within a **Sake** (line) or standing alone when the line is unknown — e.g. Rihaku "Wandering Poet", Junmai Ginjo, Yamada Nishiki 55%. Independent of bottle size and usually of vintage; an age statement (Daruma Masamune 3- / 5- / 10-year) makes separate Expressions. Sakenowa has no such level; ours are curated from labels and importer / brewery pages, each fact with its own source. In the UI: "bottling" (DE "Abfüllung"). Not built yet (bottle-level slice 2); private to its author until accounts open (design v1.5).
+One bottling a Brewery sells under a name and a spec, within a **Sake** (line) or standing alone when the line is unknown — e.g. Rihaku "Wandering Poet", Junmai Ginjo, Yamada Nishiki 55%. Independent of bottle size and usually of vintage; an age statement (Daruma Masamune 3- / 5- / 10-year) makes separate Expressions. Sakenowa has no such level; ours are curated from labels and importer / brewery pages, each fact with its own source. In the UI: "bottling" (DE "Abfüllung"). Two kinds. An **own Expression** is one a *User* added themselves — "Add your bottling", "Keep it anyway", "Add it yourself" — with `own: true` and a line that may be unknown (`brandId: null`); it is private to its author, lives in the user's `ExpressionStore`, and is what the design calls an "own bottling" or "your own entry" (design v1.6 B2, ADR-0025). A **catalogue Expression** is curated and public; none exist yet, because nothing supplies them.
 _Avoid_: Product, Label, SKU, Variant
 
 **Bottle**:
@@ -74,7 +74,7 @@ One of §5's chips on a **JournalEntry**, tapped right after the star: the bottl
 _Avoid_: Tag (collides with FlavorTag), Chip (that is the widget), Label
 
 **SchemaVersion** (stored records):
-The integer every stored record (JournalEntry, CellarBottle) carries. Reads upcast older versions to the current one, writes always produce the current one, and a record with no version is version 1 (ADR-0024). Distinct from the export file's `formatVersion`, which versions only the envelope around the records.
+The integer every stored record (JournalEntry, CellarBottle, Expression) carries. Reads upcast older versions to the current one, writes always produce the current one, and a record with no version is version 1 (ADR-0024). Distinct from the export file's `formatVersion`, which versions only the envelope around the records.
 _Avoid_: Revision (implies edit history), Migration version (that is the SQL migrations' numbering)
 
 **Collection**:

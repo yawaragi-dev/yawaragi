@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { type RejectedRecord, upcastRecord } from '@/lib/collection/versioned-record'
 import { CELLAR_BOTTLE_CODEC, type CellarBottle } from '@/lib/schemas/cellar-bottle'
+import { EXPRESSION_CODEC, type Expression } from '@/lib/schemas/expression'
 import { JOURNAL_ENTRY_CODEC, type JournalEntry } from '@/lib/schemas/journal-entry'
 
 // The on-disk shape of `pnpm journal:export` and of the daily backup
@@ -26,13 +27,14 @@ import { JOURNAL_ENTRY_CODEC, type JournalEntry } from '@/lib/schemas/journal-en
 //
 // TWO VERSION NUMBERS, two jobs (ADR-0024):
 // - `formatVersion` versions this ENVELOPE. v1 was `{ entries }`; v2 is
-//   `{ journal, cellar, rejected }`.
+//   `{ journal, cellar, rejected }`; v3 adds `expressions`, the bottlings a
+//   User added themselves (ADR-0025).
 // - Each record carries its own `schemaVersion`. A new journal field bumps
 //   that, not this. The reader below therefore upcasts records one by one
 //   rather than validating them against today's schema, so a file written
 //   today still restores after the record shapes have moved on.
 
-export const COLLECTION_EXPORT_FORMAT_VERSION = 2 as const
+export const COLLECTION_EXPORT_FORMAT_VERSION = 3 as const
 
 const RejectedRecordSchema = z.object({
   store: z.string(),
@@ -52,6 +54,8 @@ export interface CollectionExport {
   journal: JournalEntry[]
   /** Cellar rows, in store order. */
   cellar: CellarBottle[]
+  /** The bottlings the User added themselves, oldest first (ADR-0025). */
+  expressions: Expression[]
   /**
    * Records the store held but the exporting code could not read (ADR-0024
    * §2), byte for byte. Empty in the normal case; present so a backup taken
@@ -76,6 +80,11 @@ const EnvelopeV2 = z.object({
   rejected: z.array(RejectedRecordSchema),
 })
 
+const EnvelopeV3 = EnvelopeV2.extend({
+  formatVersion: z.literal(3),
+  expressions: z.array(z.unknown()),
+})
+
 export type ParsedCollectionExport =
   | { ok: true; doc: CollectionExport }
   | { ok: false; reason: 'unknown_format' | 'invalid_envelope' | 'invalid_record'; detail: string }
@@ -92,15 +101,26 @@ export function parseCollectionExport(input: unknown): ParsedCollectionExport {
       ? (input as { formatVersion: unknown }).formatVersion
       : undefined
 
-  let envelope: { exportedAt: string; userId: string; journal: unknown[]; cellar: unknown[]; rejected: RejectedRecord[] }
+  let envelope: {
+    exportedAt: string
+    userId: string
+    journal: unknown[]
+    cellar: unknown[]
+    expressions: unknown[]
+    rejected: RejectedRecord[]
+  }
   if (version === 1) {
     const v1 = EnvelopeV1.safeParse(input)
     if (!v1.success) return { ok: false, reason: 'invalid_envelope', detail: v1.error.message }
-    envelope = { ...v1.data, journal: v1.data.entries, cellar: [], rejected: [] }
+    envelope = { ...v1.data, journal: v1.data.entries, cellar: [], expressions: [], rejected: [] }
   } else if (version === 2) {
     const v2 = EnvelopeV2.safeParse(input)
     if (!v2.success) return { ok: false, reason: 'invalid_envelope', detail: v2.error.message }
-    envelope = v2.data
+    envelope = { ...v2.data, expressions: [] }
+  } else if (version === 3) {
+    const v3 = EnvelopeV3.safeParse(input)
+    if (!v3.success) return { ok: false, reason: 'invalid_envelope', detail: v3.error.message }
+    envelope = v3.data
   } else {
     return { ok: false, reason: 'unknown_format', detail: `formatVersion ${String(version)}` }
   }
@@ -117,6 +137,12 @@ export function parseCollectionExport(input: unknown): ParsedCollectionExport {
     if (!result.ok) return { ok: false, reason: 'invalid_record', detail: `cellar[${i}]: ${result.reason}` }
     cellar.push(result.value)
   }
+  const expressions: Expression[] = []
+  for (const [i, record] of envelope.expressions.entries()) {
+    const result = upcastRecord(record, EXPRESSION_CODEC)
+    if (!result.ok) return { ok: false, reason: 'invalid_record', detail: `expressions[${i}]: ${result.reason}` }
+    expressions.push(result.value)
+  }
 
   return {
     ok: true,
@@ -126,6 +152,7 @@ export function parseCollectionExport(input: unknown): ParsedCollectionExport {
       userId: envelope.userId,
       journal,
       cellar,
+      expressions,
       rejected: envelope.rejected,
     },
   }

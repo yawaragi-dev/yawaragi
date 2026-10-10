@@ -1,4 +1,5 @@
 import type { CellarStore } from '@/lib/collection/cellar-store'
+import type { ExpressionStore } from '@/lib/collection/expression-store'
 import type { CollectionExport } from '@/lib/schemas/journal-export'
 import type { JournalStore } from '@/lib/taste/journal-store'
 
@@ -26,12 +27,17 @@ export async function restoreCollection(args: {
   userId: string
   journal: JournalStore
   cellar: CellarStore
-}): Promise<{ journal: number; cellar: number; skippedRejected: number }> {
+  expressions: ExpressionStore
+}): Promise<{ journal: number; cellar: number; expressions: number; skippedRejected: number }> {
+  // Bottlings first: a tasting or a cellar row may point at one, and a restore
+  // that dies halfway should not leave a pointer to a bottling not yet written.
+  for (const expression of args.doc.expressions) await args.expressions.put(args.userId, expression)
   for (const entry of args.doc.journal) await args.journal.put(args.userId, entry)
   for (const bottle of args.doc.cellar) await args.cellar.put(args.userId, bottle)
   return {
     journal: args.doc.journal.length,
     cellar: args.doc.cellar.length,
+    expressions: args.doc.expressions.length,
     skippedRejected: args.doc.rejected.length,
   }
 }
