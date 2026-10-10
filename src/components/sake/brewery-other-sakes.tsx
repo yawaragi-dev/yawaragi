@@ -33,13 +33,17 @@ export function BreweryOtherSakes({
     <div className="flex flex-col gap-2" data-testid="brewery-other-sakes">
       <p className="text-body text-ash-600">{intro}</p>
       {/*
-        `-mx-5 px-5` lets the row bleed to the screen edge while keeping its
-        first and last chip on the page's gutter, so a half-visible chip at the
-        edge reads as "there is more" rather than as a layout bug.
+        v1.5 rule 7, the horizontal-row edge: the row bleeds to the screen
+        edge, the trailing 32px fade out (a mask, not an overlay), 48px of
+        trailing padding lets the last card scroll clear of the fade, and
+        cards snap to their starts.
       */}
-      <ul className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1" role="list">
+      <ul
+        className="-mx-5 flex snap-x snap-proximity scroll-pl-5 gap-2 overflow-x-auto pr-12 pb-1 pl-5 [mask-image:linear-gradient(to_right,#000_calc(100%-32px),transparent)]"
+        role="list"
+      >
         {siblings.map((sibling) => (
-          <li key={sibling.brandId} className="shrink-0">
+          <li key={sibling.brandId} className="shrink-0 snap-start">
             <Link
               href={{
                 pathname: '/sake/[brandId]',

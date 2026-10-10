@@ -176,7 +176,6 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
       className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-5 py-5"
       data-testid="sake-brand-page"
     >
-      {showSakenowaAttribution && <SakenowaAttribution placement="above-fold" />}
       {/*
         "Not the bottle you scanned? Scan again" — only when the link that
         brought the visitor was a scan result's (#109). Decided here, on the
@@ -185,105 +184,113 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
       {arrivedViaScan && <ScanReturnHint />}
 
       {/* -- §9.1 Identity ------------------------------------------------ */}
-      <section className="flex items-start gap-4" data-testid="bottle-identity">
-        <BottleSlot
-          showScannedPhoto={arrivedViaScan}
-          photoAlt={tScan('photoAlt')}
-        />
-        <div className="flex min-w-0 flex-col gap-1">
-          {romaji !== null ? (
-            <>
-              {/*
-                Both Latin names on this block — the sake's and the brewery's —
-                are LLM transliterations of Sakenowa-sourced records
-                (`src/lib/sakenowa/romaji.ts`), so CLAUDE.md requires that
-                neither appears without a provenance affordance. The affordance
-                is ONE §16 disclosure under the block rather than a
-                `<ProvenanceBadge />` on each.
-                
-                Why: at 390px the identity column is ~270px wide and the name
-                is 25px type, so a chip beside it never fits — it wraps to its
-                own line, every time, and the page's most important element
-                arrives as name / chip / kana / brewery / chip. §16 is the
-                design's pattern for exactly this (CLAUDE.md: "reuse it for
-                every inferred claim"), and the compliance property is the same
-                one `<HeuristicDisclaimer />`'s density pass relies on: the
-                caveat text stays in the DOM, wired to the info button by
-                `aria-describedby`, so a screen-reader user reaches the full
-                explanation with no interaction.
-                
-                `data-romaji-field` marks the fields themselves, which is what
-                the e2e uses to check that no badge has drifted onto a
-                canonical Sakenowa value.
-              */}
+      <section className="flex flex-col gap-3" data-testid="bottle-identity">
+        <div className="flex items-start gap-4">
+          <BottleSlot
+            showScannedPhoto={arrivedViaScan}
+            photoAlt={tScan('photoAlt')}
+          />
+          <div className="flex min-w-0 flex-col gap-1">
+            {romaji !== null ? (
+              <>
+                {/*
+                  Both Latin names on this block — the sake's and the brewery's —
+                  are LLM transliterations of Sakenowa-sourced records
+                  (`src/lib/sakenowa/romaji.ts`), so CLAUDE.md requires that
+                  neither appears without a provenance affordance. The affordance
+                  is ONE §16 disclosure under the block rather than a
+                  `<ProvenanceBadge />` on each.
+                  
+                  Why: at 390px the identity column is ~270px wide and the name
+                  is 25px type, so a chip beside it never fits — it wraps to its
+                  own line, every time, and the page's most important element
+                  arrives as name / chip / kana / brewery / chip. §16 is the
+                  design's pattern for exactly this (CLAUDE.md: "reuse it for
+                  every inferred claim"), and the compliance property is the same
+                  one `<HeuristicDisclaimer />`'s density pass relies on: the
+                  caveat text stays in the DOM, wired to the info button by
+                  `aria-describedby`, so a screen-reader user reaches the full
+                  explanation with no interaction.
+                  
+                  `data-romaji-field` marks the fields themselves, which is what
+                  the e2e uses to check that no badge has drifted onto a
+                  canonical Sakenowa value.
+                */}
+                <h1
+                  className="text-bottle-name font-medium text-ink"
+                  lang="en"
+                  data-testid="brand-name-romaji"
+                  data-romaji-field=""
+                >
+                  {romaji}
+                </h1>
+                <p className="text-md-alt text-ash-700" lang="ja" data-testid="brand-name-kanji">
+                  {brand.nameKanji}
+                </p>
+              </>
+            ) : (
               <h1
                 className="text-bottle-name font-medium text-ink"
-                lang="en"
-                data-testid="brand-name-romaji"
-                data-romaji-field=""
+                lang="ja"
+                data-testid="brand-name-kanji"
               >
-                {romaji}
-              </h1>
-              <p className="text-md-alt text-ash-700" lang="ja" data-testid="brand-name-kanji">
                 {brand.nameKanji}
+              </h1>
+            )}
+            {showBrewery && (
+              <p className="text-body text-ash-600" data-testid="bottle-brewery-line">
+                {breweryRomaji !== null ? (
+                  <span lang="en" data-testid="brewery-name-romaji" data-romaji-field="">
+                    {breweryRomaji}
+                  </span>
+                ) : (
+                  <span lang="ja">{brewery.nameKanji}</span>
+                )}
+                {prefecture && (
+                  <>
+                    <span className="mx-1.5 text-ash-500" aria-hidden="true">
+                      ·
+                    </span>
+                    <span lang="en" data-testid="prefecture-name-en">
+                      {prefecture.nameEn}
+                    </span>
+                  </>
+                )}
               </p>
-            </>
-          ) : (
-            <h1
-              className="text-bottle-name font-medium text-ink"
-              lang="ja"
-              data-testid="brand-name-kanji"
-            >
-              {brand.nameKanji}
-            </h1>
-          )}
-          {showBrewery && (
-            <p className="text-body text-ash-600" data-testid="bottle-brewery-line">
-              {breweryRomaji !== null ? (
-                <span lang="en" data-testid="brewery-name-romaji" data-romaji-field="">
-                  {breweryRomaji}
+            )}
+            {/*
+              The page's ONE transliteration caveat. It covers every Latin name
+              on the page — this bottle's, its brewery's, and the other sakes'
+              chips in §9.9 — so it shows when any of them does. Two copies of
+              the same sentence on one screen read as noise (maintainer review).
+            */}
+            {showRomajiDisclosure && (
+              <RomajiDisclosure id={`brand-${brandId}-identity-romaji`} />
+            )}
+            {littlePublished && (
+              <p className="mt-1">
+                {/*
+                  v1.5 §9: a neutral outline. The accent is kept for the app's
+                  personal actions; facts about the sake (Junmai, Kimoto) would
+                  be neutral fills — none of them are in the mirror yet.
+                */}
+                <span
+                  className="inline-flex min-h-7 items-center rounded-full border border-ash-400 px-2.5 text-meta text-ash-700"
+                  data-testid="bottle-little-published"
+                >
+                  {t('littlePublished')}
                 </span>
-              ) : (
-                <span lang="ja">{brewery.nameKanji}</span>
-              )}
-              {prefecture && (
-                <>
-                  <span className="mx-1.5 text-ash-500" aria-hidden="true">
-                    ·
-                  </span>
-                  <span lang="en" data-testid="prefecture-name-en">
-                    {prefecture.nameEn}
-                  </span>
-                </>
-              )}
-            </p>
-          )}
-          {/*
-            The page's ONE transliteration caveat. It covers every Latin name
-            on the page — this bottle's, its brewery's, and the other sakes'
-            chips in §9.9 — so it shows when any of them does. Two copies of
-            the same sentence on one screen read as noise (maintainer review).
-          */}
-          {showRomajiDisclosure && (
-            <RomajiDisclosure id={`brand-${brandId}-identity-romaji`} />
-          )}
-          {littlePublished && (
-            <p className="mt-1">
-              {/*
-                Rule 9, "one accent tag per row": this is the app's own claim
-                about its knowledge, so it takes the accent outline. Facts
-                about the sake (Junmai, Kimoto) would be neutral — none of them
-                are in the mirror yet.
-              */}
-              <span
-                className="inline-flex min-h-7 items-center rounded-full border border-ginshu-400 px-2.5 text-meta text-ginshu-700"
-                data-testid="bottle-little-published"
-              >
-                {t('littlePublished')}
-              </span>
-            </p>
-          )}
+              </p>
+            )}
+          </div>
         </div>
+        {/*
+          v1.5 §9 / B8: the above-the-fold Sakenowa credit is the identity
+          block's last line — after the name, still above the fold at
+          390×844 — on the content column. Only when a rendered record is
+          Sakenowa's (ADR-0014): a curated entry of our own carries none.
+        */}
+        {showSakenowaAttribution && <SakenowaAttribution placement="identity" />}
       </section>
 
       {/* -- §9.2 Action row ---------------------------------------------- */}

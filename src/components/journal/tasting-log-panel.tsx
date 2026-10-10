@@ -294,10 +294,10 @@ export function TastingLogPanel({
         })
       : t('tapToRate')
 
+  // v1.5 §9: an earlier tasting reads "Your tasting · 18.07.2026", and the
+  // meta says how it behaves — there is no Save here either.
   const meta = existing
-    ? t('tastedOn', {
-        date: europeanDay(tastingDayOf(existing.triedAt)),
-      })
+    ? t('savesAsYouGo')
     : logged
     ? t('loggedMeta', {
         // The visitor's own clock — "21:40" means the time where they are
@@ -359,7 +359,11 @@ export function TastingLogPanel({
         <div className="flex items-center gap-2">
           <span aria-hidden="true" className="block h-3.5 w-0.5 rounded-full bg-ginshu-500" />
           <h3 id={`tasting-log-${brandId}-heading`} className="text-card-heading font-medium text-ink">
-            {existing ? t('yourTasting') : logged ? t('logged') : t('yourTake')}
+            {existing
+              ? t('yourTastingOn', { date: europeanDay(tastingDayOf(existing.triedAt)) })
+              : logged
+                ? t('logged')
+                : t('yourTake')}
           </h3>
         </div>
         {meta && (

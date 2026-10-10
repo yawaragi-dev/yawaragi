@@ -375,7 +375,8 @@
   "sakenowaAttribution": {
     "poweredBy": "Powered by Sakenowa",
     "linkLabel": "Visit Sakenowa",
-    "catalogueData": "Catalogue and flavor data"
+    "catalogueData": "Catalogue and flavor data",
+    "catalogueDataShort": "Catalogue data"
   },
   "provenance": {
     "badge": {
@@ -578,14 +579,14 @@
     "notTastedYet": "Not tasted yet.",
     "done": "Done",
     "inJournal": "In your journal",
-    "yourTasting": "Your tasting",
-    "tastedOn": "Tasted {date}",
     "edit": "Edit",
     "delete": "Delete tasting",
     "deleteConfirm": "Delete your {rating} tasting of {name} from {date}? This can’t be undone.",
     "deleteYes": "Delete",
     "deleteNo": "Keep",
-    "deleted": "Tasting deleted"
+    "deleted": "Tasting deleted",
+    "yourTastingOn": "Your tasting · {date}",
+    "savesAsYouGo": "Changes save as you go"
   },
   "cellar": {
     "add": "Add to cellar",
