@@ -811,7 +811,11 @@
     "noMatch": {
       "kicker": "Nicht im Katalog",
       "title": "Gelesen, aber nicht gefunden",
-      "body": "Korrigiere, was wir falsch gelesen haben, und suche erneut. Ist das Vorderetikett verziert, steht der Name auf dem Rückenetikett meist klarer."
+      "body": "Korrigiere, was wir falsch gelesen haben, und suche erneut. Ist das Vorderetikett verziert, steht der Name auf dem Rückenetikett meist klarer.",
+      "candidates": "Meintest du",
+      "reasonName": "Ähnlicher Name",
+      "reasonBrewery": "Ähnlicher Brauereiname",
+      "reasonBoth": "Ähnlicher Name und ähnliche Brauerei"
     },
     "consensus": {
       "kicker": "Unscharfes Foto",

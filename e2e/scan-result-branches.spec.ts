@@ -340,6 +340,28 @@ test.describe('scan result branches (#109 PR B)', () => {
     await context.close()
   })
 
+  test('no-match offers the nearest catalogue sakes as guesses, with a reason in words', async ({
+    browser,
+  }, testInfo) => {
+    testInfo.skip(!dbUp, 'Sakenowa mirror not populated — DB-bound spec')
+    // A near miss: the line's name with a bottling word glued on, and a
+    // brewery that is not in the catalogue. Nothing matches exactly, but
+    // 十四代 is one tap away under "Did you mean".
+    const { context, page } = await scanPageWith(browser, [
+      injectionCookie({ name_ja: '十四代本丸', brewery_ja: '架空酒造零', confidence: 0.95 }),
+    ])
+    await page.goto('/en/scan')
+    await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
+
+    const outcome = page.getByTestId('scan-result-no-match')
+    await expect(outcome).toBeVisible()
+    const candidates = outcome.getByTestId('scan-outcome-candidates')
+    await expect(candidates.getByRole('link')).toHaveCount(1)
+    await expect(candidates.getByRole('link').first()).toContainText('十四代')
+    await expect(candidates.getByRole('link').first()).toContainText('Similar name')
+    await context.close()
+  })
+
   test('recognised-but-no-chart shows the "flavor profile coming soon" affordance with onward paths', async ({
     browser,
   }, testInfo) => {
