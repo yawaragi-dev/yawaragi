@@ -24,6 +24,8 @@
   --shadow-sm:0 0 0 1px #302e2c;
   --shadow-md:0 0 0 1px #302e2c, 0 10px 26px rgba(0,0,0,.42);
   --shadow-lg:0 0 0 1px #363431, 0 18px 44px rgba(0,0,0,.55);
+  --color-raised:#2d2b29;
+  --shadow-float:0 0 0 1px #4a4744, 0 -10px 28px rgba(0,0,0,.45), 0 18px 44px rgba(0,0,0,.55);
 }
 html,body{overscroll-behavior:none}
 body{margin:0;background:#121110;font-family:var(--font-body);color:var(--color-text)}
@@ -35,6 +37,8 @@ a:hover{color:var(--color-accent-600)}
 @keyframes yw-rise{0%{transform:translateY(14px);opacity:0}100%{transform:translateY(0);opacity:1}}
 @keyframes yw-sheet{0%{transform:translateY(100%)}100%{transform:translateY(0)}}
 @keyframes yw-pulse{0%,100%{opacity:.45}50%{opacity:1}}
+@keyframes yw-fade{0%{opacity:0}100%{opacity:1}}
+@keyframes yw-pop{0%{transform:scale(.6)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
 textarea::placeholder,input::placeholder{font-style:italic}
 </style></helmet>
 <template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#1b1a19"/><text x="50" y="62" text-anchor="middle" font-size="34" fill="#cf8a6e" font-family="serif">和</text></svg></template>
@@ -68,13 +72,15 @@ textarea::placeholder,input::placeholder{font-style:italic}
           <button onClick="{{ openAccount }}" aria-label="Account" style="width:36px;height:36px;border-radius:50%;border:0;padding:0;cursor:pointer;background:{{ avatarBg }};color:{{ avatarFg }};display:grid;place-items:center;font-family:var(--font-heading);font-weight:500;font-size:13px"><sc-if value="{{ signedIn }}">K</sc-if><sc-if value="{{ signedOut }}"><i class="ph ph-user" style="font-size:17px"></i></sc-if></button>
         </div>
 
+        <sc-if value="{{ hasEntries }}">
         <div style="display:grid;grid-template-columns:{{ homeTileCols }};gap:8px;padding:0 22px 20px;flex:none">
-          <button class="btn btn-primary" style="flex-direction:column;gap:8px;padding:15px 4px;height:auto;font-size:12px;border-width:1.5px" onClick="{{ goScan }}"><i class="ph ph-camera" style="font-size:23px"></i>Scan a label</button>
-          <button class="btn btn-secondary" style="flex-direction:column;gap:8px;padding:15px 4px;height:auto;font-size:12px" onClick="{{ goSearch }}"><i class="ph ph-keyboard" style="font-size:23px"></i>Type it</button>
+          <button onClick="{{ goScan }}" style="display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:16px;min-height:78px;padding:12px 13px;border:0;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm);cursor:pointer;text-align:left;font-family:var(--font-body);font-size:13px;color:var(--color-text)" style-hover="background:var(--color-neutral-200)" style-active="background:var(--color-neutral-300)"><i class="ph ph-camera" style="font-size:22px;color:var(--color-accent-600)"></i>Scan a label</button>
+          <button onClick="{{ goSearch }}" style="display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:16px;min-height:78px;padding:12px 13px;border:0;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm);cursor:pointer;text-align:left;font-family:var(--font-body);font-size:13px;color:var(--color-text)" style-hover="background:var(--color-neutral-200)" style-active="background:var(--color-neutral-300)"><i class="ph ph-keyboard" style="font-size:22px;color:var(--color-neutral-700)"></i>Type it</button>
           <sc-if value="{{ askOn }}">
-            <button class="btn btn-secondary" style="flex-direction:column;gap:8px;padding:15px 4px;height:auto;font-size:12px" onClick="{{ goAsk }}"><i class="ph ph-chat-circle-dots" style="font-size:23px"></i>Ask</button>
+            <button onClick="{{ goAsk }}" style="display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:16px;min-height:78px;padding:12px 13px;border:0;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm);cursor:pointer;text-align:left;font-family:var(--font-body);font-size:13px;color:var(--color-text)" style-hover="background:var(--color-neutral-200)" style-active="background:var(--color-neutral-300)"><i class="ph ph-chat-circle-dots" style="font-size:22px;color:var(--color-neutral-700)"></i>Ask</button>
           </sc-if>
         </div>
+        </sc-if>
 
         <div style="flex:1;min-height:0;overflow-y:auto;padding:16px 22px 16px;display:flex;flex-direction:column;gap:12px;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 18px);mask-image:linear-gradient(to bottom,transparent 0,#000 18px)">
           <sc-if value="{{ noEntries }}">
@@ -89,7 +95,10 @@ textarea::placeholder,input::placeholder{font-style:italic}
                   </div>
                 </sc-for>
               </div>
-              <button class="btn btn-primary btn-block" style="height:48px;font-size:14px;gap:8px;border-width:1.5px;margin:0" onClick="{{ goScan }}"><i class="ph ph-camera" style="font-size:18px"></i>Scan a label</button>
+              <div style="display:flex;flex-direction:column;gap:4px">
+                <button class="btn btn-primary btn-block" style="height:48px;font-size:14px;gap:8px;border-width:1.5px;margin:0" onClick="{{ goScan }}"><i class="ph ph-camera" style="font-size:18px"></i>Scan a label</button>
+                <button class="btn btn-ghost btn-block" style="height:44px;font-size:13px;gap:6px;margin:0" onClick="{{ goSearch }}"><i class="ph ph-keyboard" style="font-size:16px"></i>Or type the name</button>
+              </div>
             </div>
           </sc-if>
           <sc-if value="{{ hasEntries }}">
@@ -100,15 +109,13 @@ textarea::placeholder,input::placeholder{font-style:italic}
 
           <div style="display:flex;flex-direction:column;gap:8px">
             <sc-for list="{{ recent }}" as="e" hint-placeholder-count="3">
-              <button class="card elev-sm" onClick="{{ e.open }}" style="flex-direction:row;gap:13px;align-items:center;padding:11px;text-align:left;border:0;cursor:pointer;font-family:var(--font-body);color:var(--color-text)">
-                <div style="width:44px;height:58px;border-radius:5px;flex:none;background:repeating-linear-gradient(135deg,#2a2826,#2a2826 4px,#33302d 4px,#33302d 8px)"></div>
+              <button class="card elev-sm" onClick="{{ e.open }}" style="flex-direction:row;gap:13px;align-items:center;padding:12px 13px;text-align:left;border:0;cursor:pointer;font-family:var(--font-body);color:var(--color-text)">
                 <div style="flex:1;min-width:0">
                   <div style="font-family:var(--font-heading);font-weight:500;font-size:16px;line-height:1.2">{{ e.name }}</div>
-                  <div style="font-size:12px;color:var(--color-neutral-600);margin-top:2px">{{ e.brewery }}</div>
-                  <div style="display:flex;gap:2px;margin-top:6px;color:var(--color-accent-500);font-size:12px">
+                  <sc-if value="{{ e.hasKana }}"><div style="font-size:12px;color:var(--color-neutral-600);margin-top:2px" lang="ja">{{ e.kana }}</div></sc-if>
+                  <div style="display:flex;gap:2px;margin-top:6px;color:var(--color-accent-600);font-size:12px">
                     <sc-for list="{{ e.stars }}" as="s" hint-placeholder-count="5"><i class="ph {{ s.cls }}"></i></sc-for>
                   </div>
-          </sc-if>
                 </div>
                 <div style="font-size:11px;color:var(--color-neutral-500);align-self:flex-start">{{ e.ago }}</div>
               </button>
@@ -123,6 +130,11 @@ textarea::placeholder,input::placeholder{font-style:italic}
             </div>
             <i class="ph ph-arrow-right" style="font-size:15px;color:var(--color-neutral-500)"></i>
           </button>
+          </sc-if>
+          <div style="margin-top:auto;padding-top:28px;display:flex;flex-direction:column;gap:2px;font-size:12px;line-height:1.5;color:var(--color-neutral-600)">
+            <div>Catalogue and flavour data · <a href="https://sakenowa.com" target="_blank" rel="noopener">Powered by Sakenowa ↗</a></div>
+            <div style="display:flex;flex-wrap:wrap;column-gap:14px"><a href="#impressum" style="padding:6px 0">Impressum</a><a href="#privacy" style="padding:6px 0">Privacy notice</a><a href="#cookies" onClick="{{ reopenCookies }}" style="padding:6px 0">Cookie settings</a><a href="#drink" style="padding:6px 0">Drink responsibly</a></div>
+          </div>
         </div>
       </div>
     </sc-if>
@@ -241,12 +253,11 @@ textarea::placeholder,input::placeholder{font-style:italic}
         </div>
         <div style="padding:4px 20px 0;flex:none">
           <div style="font-family:var(--font-heading);font-weight:500;font-size:24px;letter-spacing:-.02em;line-height:1.15;text-wrap:pretty">Like {{ simSource }}</div>
-          <div style="font-size:13px;color:var(--color-neutral-700);margin-top:4px;text-wrap:pretty">Closest by flavour profile across all six axes. No tasting involved — just the shape of the chart.</div>
+          <div style="font-size:13px;color:var(--color-neutral-700);margin-top:4px;text-wrap:pretty">Closest by flavour distance across all six axes. No tasting involved — just how near the two charts sit.</div>
         </div>
         <div style="flex:1;min-height:0;overflow-y:auto;padding:16px 20px 24px;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 18px);mask-image:linear-gradient(to bottom,transparent 0,#000 18px)">
           <sc-for list="{{ simRows }}" as="sm" hint-placeholder-count="4">
             <button onClick="{{ sm.open }}" style="display:flex;gap:12px;width:100%;padding:13px 0;border:0;border-bottom:1px solid var(--color-divider);background:transparent;text-align:left;cursor:pointer;font-family:var(--font-body);color:var(--color-text)">
-              <div style="width:36px;height:50px;border-radius:5px;flex:none;background:repeating-linear-gradient(135deg,#2a2826,#2a2826 4px,#33302d 4px,#33302d 8px)"></div>
               <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px">
                 <div style="display:flex;align-items:baseline;gap:8px">
                   <div style="font-family:var(--font-heading);font-weight:500;font-size:15px;flex:1;min-width:0">{{ sm.name }}</div>
@@ -260,6 +271,10 @@ textarea::placeholder,input::placeholder{font-style:italic}
           <sc-if value="{{ simNone }}">
             <div style="font-size:13px;color:var(--color-neutral-700);padding:14px 0;text-wrap:pretty">This sake has no flavour chart yet, so there’s nothing to compare it with.</div>
           </sc-if>
+          <div style="padding-top:28px;display:flex;flex-direction:column;gap:2px;font-size:12px;line-height:1.5;color:var(--color-neutral-600)">
+            <div>Catalogue and flavour data · <a href="https://sakenowa.com" target="_blank" rel="noopener">Powered by Sakenowa ↗</a></div>
+            <div style="display:flex;flex-wrap:wrap;column-gap:14px"><a href="#impressum" style="padding:6px 0">Impressum</a><a href="#privacy" style="padding:6px 0">Privacy notice</a><a href="#cookies" onClick="{{ reopenCookies }}" style="padding:6px 0">Cookie settings</a><a href="#drink" style="padding:6px 0">Drink responsibly</a></div>
+          </div>
         </div>
       </div>
     </sc-if>
@@ -342,7 +357,6 @@ textarea::placeholder,input::placeholder{font-style:italic}
           <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-600);margin:6px 0 4px">{{ searchHeading }}</div>
           <sc-for list="{{ searchResults }}" as="it" hint-placeholder-count="4">
             <button onClick="{{ it.pick }}" style="display:flex;align-items:center;gap:12px;width:100%;min-height:58px;padding:9px 0;border:0;border-bottom:1px solid var(--color-divider);background:transparent;text-align:left;cursor:pointer;font-family:var(--font-body);color:var(--color-text)">
-              <div style="width:30px;height:40px;border-radius:4px;flex:none;background:repeating-linear-gradient(135deg,#2a2826,#2a2826 3px,#33302d 3px,#33302d 6px)"></div>
               <div style="flex:1;min-width:0">
                 <div style="display:flex;align-items:baseline;gap:7px">
                   <span style="font-family:var(--font-heading);font-weight:500;font-size:15px">{{ it.name }}</span>
@@ -380,32 +394,44 @@ textarea::placeholder,input::placeholder{font-style:italic}
         <div style="padding:6px 18px 0;animation:yw-rise .34s ease-out">
           <article style="border-radius:var(--radius-lg);background:var(--color-surface);box-shadow:var(--shadow-md);overflow:hidden">
             <div style="display:flex;gap:14px;padding:14px">
+              <sc-if value="{{ pickFromPhoto }}">
               <div style="width:92px;height:122px;flex:none;border-radius:8px;background:repeating-linear-gradient(135deg,#2a2826,#2a2826 5px,#33302d 5px,#33302d 10px);display:grid;place-items:end center;padding-bottom:8px">
                 <span style="font-family:ui-monospace,monospace;font-size:10px;color:var(--color-neutral-700)">your photo</span>
               </div>
+              </sc-if>
               <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">
                 <div style="font-family:var(--font-heading);font-weight:500;font-size:21px;line-height:1.14;letter-spacing:-.02em">{{ pickName }}</div>
                 <sc-if value="{{ pickHasKana }}"><div style="font-size:13px;color:var(--color-neutral-600)" lang="ja">{{ pickKana }}</div></sc-if>
                 <div style="font-size:12px;color:var(--color-neutral-600)">{{ pickBrewery }}</div>
                 <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px">
+                  <sc-if value="{{ pickHasMatch }}"><span class="tag tag-accent">{{ pickMatch }}</span></sc-if>
                   <sc-for list="{{ pickTags }}" as="pt" hint-placeholder-count="2"><span class="tag tag-neutral">{{ pt.label }}</span></sc-for>
                 </div>
+                <sc-if value="{{ pickInCatalogue }}"><div style="font-size:11px;color:var(--color-neutral-700);margin-top:6px">Catalogue data · <a href="https://sakenowa.com" target="_blank" rel="noopener" style="color:var(--color-neutral-700);text-decoration:underline;text-decoration-color:var(--color-neutral-500);text-underline-offset:2px">Powered by Sakenowa ↗</a></div></sc-if>
               </div>
             </div>
-
-            <div style="padding:14px;border-top:1px solid var(--color-divider);background:{{ rLogBg }};display:flex;flex-direction:column;gap:11px">
-              <div style="display:flex;align-items:baseline;justify-content:space-between">
+            <div style="border-top:1px solid var(--color-divider)">
+            <sc-if value="{{ rFolded }}">
+              <button onClick="{{ rUnfold }}" style="display:flex;align-items:center;gap:10px;width:100%;min-height:52px;padding:12px 14px;border:0;background:var(--color-accent-100);text-align:left;cursor:pointer;font-family:var(--font-body);color:var(--color-text);animation:yw-fade .2s ease-out">
+                <i class="ph-fill ph-check-circle" style="font-size:18px;color:var(--color-accent-600);flex:none"></i>
+                <div style="flex:1;min-width:0;font-size:13px;line-height:1.4">Logged · {{ rRatingLabel }} <span style="color:var(--color-neutral-700)">— In your journal</span></div>
+                <span style="font-size:12px;color:var(--color-accent-700);flex:none">Edit</span>
+              </button>
+            </sc-if>
+            <sc-if value="{{ rPanelOpen }}">
+            <div style="padding:14px;background:{{ rLogBg }};display:flex;flex-direction:column;gap:11px">
+              <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
                 <div style="display:flex;align-items:center;gap:8px">
                   <span style="width:2px;height:14px;background:var(--color-accent-500);display:block"></span>
                   <div style="font-family:var(--font-heading);font-weight:500;font-size:15px">{{ rLogTitle }}</div>
                 </div>
-                <span style="font-size:11px;color:var(--color-neutral-600)">{{ rLogMeta }}</span>
+                <span style="font-size:11px;color:var(--color-neutral-600);text-align:right">{{ rLogMeta }}</span>
               </div>
               <div style="display:flex;align-items:center;gap:11px">
                 <div style="display:flex;gap:4px">
                   <sc-for list="{{ rStars }}" as="st" hint-placeholder-count="5">
                     <span style="position:relative;display:inline-block;width:34px;height:34px">
-                      <i class="ph {{ st.cls }}" style="font-size:33px;color:{{ st.color }};animation:{{ st.anim }}"></i>
+                      <i class="ph {{ st.cls }}" style="font-size:33px;color:{{ st.color }};animation:{{ st.anim }};display:inline-block"></i>
                       <button onClick="{{ st.setHalf }}" aria-label="{{ st.halfLabel }}" style="position:absolute;left:0;top:0;width:50%;height:100%;border:0;background:transparent;cursor:pointer"></button>
                       <button onClick="{{ st.setFull }}" aria-label="{{ st.fullLabel }}" style="position:absolute;right:0;top:0;width:50%;height:100%;border:0;background:transparent;cursor:pointer"></button>
                     </span>
@@ -414,39 +440,69 @@ textarea::placeholder,input::placeholder{font-style:italic}
                 <span style="font-family:var(--font-heading);font-size:14px;line-height:1.2;white-space:nowrap;color:{{ rRatingColor }}">{{ rRatingLabel }}</span>
               </div>
               <sc-if value="{{ rSaved }}">
-                <div style="display:flex;flex-direction:column;gap:9px;animation:yw-fade .3s ease-out">
+                <div style="display:flex;flex-direction:column;gap:9px;animation:yw-fade .3s ease-out;opacity:{{ rDim }};transition:opacity .2s">
                   <textarea class="input" placeholder="Add a note — what struck you?" value="{{ rNote }}" onChange="{{ rSetNote }}" style="min-height:62px;background:var(--color-bg)"></textarea>
                   <div style="display:flex;gap:7px;flex-wrap:wrap">
-                    <sc-for list="{{ rQuickTags }}" as="t" hint-placeholder-count="4">
-                      <button onClick="{{ t.pick }}" style="padding:6px 11px;border-radius:999px;border:1px solid {{ t.border }};background:{{ t.bg }};color:{{ t.fg }};font-size:12px;font-family:var(--font-body);cursor:pointer">{{ t.label }}</button>
+                    <sc-for list="{{ rQuickTags }}" as="t" hint-placeholder-count="5">
+                      <button onClick="{{ t.pick }}" style="min-height:32px;padding:6px 11px;border-radius:999px;border:1px solid {{ t.border }};background:{{ t.bg }};color:{{ t.fg }};font-size:12px;font-family:var(--font-body);cursor:pointer">{{ t.label }}</button>
                     </sc-for>
                   </div>
-                  <button class="btn btn-secondary btn-block" style="height:42px;font-size:13px;gap:7px;margin:2px 0 0" onClick="{{ openDetail }}"><i class="ph ph-sliders-horizontal" style="font-size:16px"></i>Add detailed notes</button>
+                  <div style="display:flex;gap:8px;margin-top:2px">
+                    <button class="btn btn-secondary" style="flex:1;height:42px;font-size:13px;gap:7px" onClick="{{ openDetail }}"><i class="ph ph-sliders-horizontal" style="font-size:16px"></i>{{ rDetailLabel }}</button>
+                    <button class="btn btn-primary" style="height:42px;font-size:13px;padding-inline:20px;border-width:1.5px" onClick="{{ rDone }}">Done</button>
+                  </div>
+                  <sc-if value="{{ rNoConfirm }}">
+                    <button class="btn" style="align-self:flex-start;height:36px;font-size:12px;gap:5px;padding:0;color:var(--color-neutral-600)" onClick="{{ rAskDelete }}"><i class="ph ph-trash" style="font-size:14px"></i>Delete tasting</button>
+                  </sc-if>
+                  <sc-if value="{{ rConfirm }}">
+                    <div role="alert" style="padding:12px;border-radius:var(--radius-md);background:var(--color-bg);box-shadow:var(--shadow-sm);display:flex;flex-direction:column;gap:10px;animation:yw-fade .2s ease-out">
+                      <div style="font-size:13px;line-height:1.5;text-wrap:pretty">{{ rConfirmText }}</div>
+                      <div style="display:flex;gap:8px">
+                        <button class="btn btn-ghost" style="flex:1;height:40px;font-size:13px" onClick="{{ rKeep }}">Keep</button>
+                        <button onClick="{{ rDelete }}" style="flex:1;height:40px;font-size:13px;border-radius:var(--radius-md);border:1px solid var(--color-accent-700);background:var(--color-accent-100);color:var(--color-accent-800);font-family:var(--font-body);cursor:pointer">Delete</button>
+                      </div>
+                    </div>
+                  </sc-if>
                 </div>
               </sc-if>
               <sc-if value="{{ rUnsaved }}">
                 <div style="font-size:12px;color:var(--color-neutral-600);text-wrap:pretty">Tap a star and it’s logged — notes can wait.</div>
               </sc-if>
             </div>
+            </sc-if>
+            </div>
           </article>
         </div>
 
+        <sc-if value="{{ pickBestGuess }}">
+          <div style="padding:10px 18px 0;display:flex;flex-direction:column">
+            <button onClick="{{ toggleCands }}" style="display:flex;align-items:center;gap:8px;min-height:44px;padding:0 2px;border:0;background:transparent;cursor:pointer;font-family:var(--font-body);font-size:13px;color:var(--color-text);text-align:left"><i class="ph ph-list-magnifying-glass" style="font-size:17px;color:var(--color-neutral-600)"></i><span style="flex:1">Not sure? {{ candCount }} other candidates</span><i class="ph {{ candCaret }}" style="font-size:14px;color:var(--color-neutral-500)"></i></button>
+            <sc-if value="{{ candsOpen }}"><div style="display:flex;flex-direction:column;padding:0 2px;animation:yw-fade .2s ease-out"><sc-for list="{{ bestCands }}" as="cd" hint-placeholder-count="2">
+              <button onClick="{{ cd.open }}" style="display:flex;align-items:center;gap:12px;width:100%;min-height:58px;padding:10px 0;border:0;border-bottom:1px solid var(--color-divider);background:transparent;text-align:left;cursor:pointer;font-family:var(--font-body);color:var(--color-text)">
+                <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+                  <div style="display:flex;align-items:baseline;gap:7px;flex-wrap:wrap"><span style="font-family:var(--font-heading);font-weight:500;font-size:15px">{{ cd.name }}</span><span style="font-size:12px;color:var(--color-neutral-600)" lang="ja">{{ cd.kana }}</span></div>
+                  <div style="font-size:12px;color:var(--color-neutral-600)">{{ cd.meta }}</div>
+                  <div style="font-size:12px;color:var(--color-neutral-700)">{{ cd.why }}</div>
+                </div>
+                <i class="ph ph-caret-right" style="font-size:15px;color:var(--color-neutral-500)"></i>
+              </button>
+            </sc-for></div></sc-if>
+          </div>
+        </sc-if>
+
         <sc-if value="{{ pickInCatalogue }}">
         <div style="padding:16px 18px 0;display:flex;flex-direction:column;gap:11px">
-          <div style="display:flex;align-items:baseline;justify-content:space-between">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:2px 12px">
             <div style="display:flex;align-items:center;gap:4px">
-              <h6 style="margin:0;font-size:11px;letter-spacing:.1em;color:var(--color-neutral-600)">Flavour chart (Sakenowa)</h6>
+              <h6 style="margin:0;font-size:11px;letter-spacing:.1em;color:var(--color-neutral-600);white-space:nowrap">Flavour chart (Sakenowa)</h6>
               <button onClick="{{ openTerms }}" aria-label="About these flavour words" aria-describedby="yw-terms-caveat" style="width:28px;height:28px;border:0;background:transparent;cursor:pointer;display:grid;place-items:center;color:var(--color-neutral-600);margin:-8px 0"><i class="ph ph-info" style="font-size:14px"></i></button>
             </div>
             <a href="https://sakenowa.com" target="_blank" rel="noopener" style="font-size:11px;color:var(--color-neutral-700);text-decoration:underline;text-decoration-color:var(--color-neutral-500);text-underline-offset:2px">{{ chartCredit }}</a>
           </div>
-          <div id="yw-terms-caveat" style="font-size:11px;color:var(--color-neutral-600);margin-top:-6px">Brewers’ terms, translated loosely.</div>
-          <div style="padding:11px 12px;border-radius:var(--radius-md);border:1px solid var(--color-divider);display:flex;flex-direction:column;gap:2px;margin-top:2px">
-            <div style="font-family:var(--font-heading);font-weight:500;font-size:13px">{{ xbevLine }}</div>
-            <div style="display:flex;align-items:center;gap:4px">
-              <span id="yw-xbev-card" style="font-size:11px;color:var(--color-neutral-700)">Cross-beverage estimate, not a tasting note.</span>
-              <button onClick="{{ openXbev }}" aria-label="Why?" aria-describedby="yw-xbev-card" style="border:0;background:transparent;cursor:pointer;font-size:11px;color:var(--color-accent-700);font-family:var(--font-body);padding:6px 2px;text-decoration:underline;text-underline-offset:2px">Why?</button>
-            </div>
+          <div id="yw-terms-caveat" style="font-size:11px;color:var(--color-neutral-700);margin-top:-6px">Brewers’ terms, translated loosely.</div>
+          <div style="padding:11px 12px;border-radius:var(--radius-md);border:1px solid var(--color-divider);display:flex;flex-direction:column;gap:4px;margin-top:2px">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="font-family:var(--font-heading);font-weight:500;font-size:13px">{{ xbevLine }}</span><span style="display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px;border-radius:999px;border:1px solid var(--color-neutral-400);color:var(--color-neutral-700);font-size:11px;box-sizing:border-box"><i class="ph ph-arrows-left-right" style="font-size:12px"></i>Cross-beverage</span></div>
+            <div style="font-size:11px;line-height:1.5;color:var(--color-neutral-700)"><span id="yw-xbev-card">Cross-beverage estimate, not a tasting note.</span> <button onClick="{{ openXbev }}" aria-label="Why?" aria-describedby="yw-xbev-card" style="display:inline-grid;place-items:center;width:20px;height:20px;margin:-4px 0 -4px 1px;padding:0;border:0;background:transparent;cursor:pointer;color:var(--color-neutral-600);vertical-align:middle"><i class="ph ph-info" style="font-size:13px"></i></button></div>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px 16px">
             <sc-for list="{{ axes }}" as="a" hint-placeholder-count="6">
@@ -479,23 +535,90 @@ textarea::placeholder,input::placeholder{font-style:italic}
           <div style="padding:16px 18px 0">
             <div style="padding:14px;border-radius:var(--radius-md);border:1px dashed var(--color-neutral-400);display:flex;flex-direction:column;gap:6px">
               <div style="font-family:var(--font-heading);font-weight:500;font-size:14px">Added by you</div>
-              <div style="font-size:12px;color:var(--color-neutral-700);line-height:1.5;text-wrap:pretty">Not in the catalogue yet, so there’s no chart or bottle page. It still counts toward your palate, and we’ll link it if the sake turns up later.</div>
-              <button class="btn btn-ghost" style="font-size:12px;gap:5px;justify-content:flex-start;padding:4px 0"><i class="ph ph-camera" style="font-size:14px"></i>Add a label photo</button>
+              <div style="font-size:12px;color:var(--color-neutral-700);line-height:1.5;text-wrap:pretty">Not in the catalogue yet, so there’s no chart or bottle page. It still counts toward your palate, and we’ll link it if the sake turns up later. Only you can see it.</div>
             </div>
           </div>
         </sc-if>
-        <div style="padding:14px 18px 24px;display:flex;gap:8px">
+        <div style="padding:14px 18px 0;display:flex;gap:8px">
+          <sc-if value="{{ cellarNo }}"><button class="btn btn-secondary" style="flex:1;height:44px;gap:7px;font-size:13px" onClick="{{ addCellarCur }}"><i class="ph ph-stack-plus" style="font-size:17px"></i>Add to cellar</button></sc-if>
+            <sc-if value="{{ cellarYes }}"><div style="flex:1;min-width:0;display:flex;height:44px;border-radius:var(--radius-md);border:1px solid var(--color-divider);box-sizing:border-box;overflow:hidden">
+              <button onClick="{{ goCellar }}" style="flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:6px;padding:0 10px;border:0;background:transparent;color:var(--color-accent-700);font-size:13px;font-family:var(--font-body);cursor:pointer;white-space:nowrap" style-hover="background:var(--color-neutral-100)"><i class="ph-fill ph-stack" style="font-size:16px"></i>{{ curCellarLabel }}<i class="ph ph-caret-right" style="font-size:12px"></i></button>
+              <span style="width:1px;background:var(--color-divider);flex:none"></span>
+              <button onClick="{{ addCellarCur }}" aria-label="Add another bottle" style="width:44px;flex:none;border:0;background:transparent;color:var(--color-text);cursor:pointer;display:grid;place-items:center" style-hover="background:var(--color-neutral-100)"><i class="ph ph-plus" style="font-size:16px"></i></button>
+            </div></sc-if>
           <button class="btn btn-secondary" style="flex:1;height:44px;gap:7px;font-size:13px;color:{{ curWishColor }}" onClick="{{ toggleWishCur }}"><i class="ph {{ curWishIcon }}" style="font-size:17px"></i>{{ curWishLabel }}</button>
-          <button class="btn btn-secondary" style="flex:1;height:44px;gap:7px;font-size:13px;color:{{ curCellarColor }}" onClick="{{ addCellarCur }}"><i class="ph {{ curCellarIcon }}" style="font-size:17px"></i>{{ curCellarLabel }}</button>
         </div>
-
-        <sc-if value="{{ rToast }}">
-          <div style="position:absolute;left:18px;right:18px;bottom:96px;padding:12px 14px;border-radius:var(--radius-md);background:#121110;color:#f6f2ea;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow-lg);animation:yw-rise .24s ease-out;z-index:5">
-            <i class="ph-fill ph-check-circle" style="font-size:19px;color:var(--color-accent-600)"></i>
-            <div style="flex:1;font-size:13px">Logged · palate updated</div>
-            <button class="btn" style="color:var(--color-accent-700);font-size:12px;padding-inline:2px" onClick="{{ rUndo }}">Undo</button>
+        <div style="padding:0 18px 24px">
+          <div style="padding-top:28px;display:flex;flex-direction:column;gap:2px;font-size:12px;line-height:1.5;color:var(--color-neutral-600)">
+            <div>Catalogue and flavour data · <a href="https://sakenowa.com" target="_blank" rel="noopener">Powered by Sakenowa ↗</a></div>
+            <div style="display:flex;flex-wrap:wrap;column-gap:14px"><a href="#impressum" style="padding:6px 0">Impressum</a><a href="#privacy" style="padding:6px 0">Privacy notice</a><a href="#cookies" onClick="{{ reopenCookies }}" style="padding:6px 0">Cookie settings</a><a href="#drink" style="padding:6px 0">Drink responsibly</a></div>
           </div>
-        </sc-if>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isOutcome }}">
+      <div style="flex:1;min-height:0;display:flex;flex-direction:column">
+        <div style="display:flex;align-items:center;gap:6px;padding:10px 14px 6px;flex:none">
+          <button class="btn" style="padding-inline:4px" onClick="{{ back }}" aria-label="Back"><i class="ph ph-arrow-left" style="font-size:19px"></i></button>
+          <div style="font-size:12px;color:var(--color-neutral-600);flex:1">{{ oc.kicker }}</div>
+          <button class="btn btn-ghost" style="font-size:12px;gap:5px" onClick="{{ goScan }}"><i class="ph ph-camera-rotate" style="font-size:14px"></i>Scan again</button>
+        </div>
+        <div style="flex:1;min-height:0;overflow-y:auto;padding:16px 20px 24px;display:flex;flex-direction:column;gap:20px;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 18px);mask-image:linear-gradient(to bottom,transparent 0,#000 18px);animation:yw-rise .3s ease-out">
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <i class="ph {{ oc.icon }}" style="font-size:28px;color:var(--color-neutral-600)"></i>
+            <div style="font-family:var(--font-heading);font-weight:500;font-size:21px;line-height:1.2;letter-spacing:-.02em;text-wrap:pretty">{{ oc.title }}</div>
+            <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.55;text-wrap:pretty">{{ oc.body }}</div>
+          </div>
+          <sc-if value="{{ oc.consensus }}">
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <button class="btn btn-primary btn-block" style="height:46px;font-size:14px;border-width:1.5px;margin:0" onClick="{{ ocYes }}">Yes, that’s it</button>
+              <button class="btn btn-secondary btn-block" style="height:44px;font-size:13px;margin:0" onClick="{{ goScan }}">No — scan again</button>
+            </div>
+          </sc-if>
+          <sc-if value="{{ oc.tips }}">
+            <div style="display:flex;flex-direction:column">
+              <sc-for list="{{ ocTips }}" as="tp" hint-placeholder-count="3">
+                <div style="display:flex;align-items:center;gap:12px;min-height:44px;border-bottom:1px solid var(--color-divider);font-size:13px"><i class="ph {{ tp.icon }}" style="font-size:18px;color:var(--color-neutral-600)"></i>{{ tp.label }}</div>
+              </sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{ oc.hasRead }}">
+            <div style="padding:14px;border-radius:var(--radius-lg);background:var(--color-surface);box-shadow:var(--shadow-sm);display:flex;flex-direction:column;gap:12px">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+                <h6 style="margin:0;font-size:11px;letter-spacing:.1em;color:var(--color-neutral-600)">What we read</h6>
+                <button onClick="{{ openProv }}" aria-label="Read by AI — what this means" style="display:inline-flex;align-items:center;gap:4px;height:24px;padding:0 9px;border-radius:999px;border:1px solid var(--color-neutral-400);background:transparent;color:var(--color-neutral-700);font-size:11px;font-family:var(--font-body);cursor:pointer;box-sizing:border-box" style-hover="background:var(--color-neutral-200)"><i class="ph ph-scan" style="font-size:12px"></i>Read by AI</button>
+              </div>
+              <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600)">Name</span><input class="input" value="{{ ocName }}" onChange="{{ ocSetName }}" style="height:44px;font-size:15px;background:var(--color-bg)" /></label>
+              <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600)">Brewery</span><input class="input" value="{{ ocBrewery }}" onChange="{{ ocSetBrewery }}" style="height:44px;font-size:15px;background:var(--color-bg)" lang="ja" /></label>
+              <div style="font-size:12px;color:var(--color-neutral-600);text-wrap:pretty">Misread? Fix it from the label and search again.</div>
+              <button class="btn btn-secondary btn-block" style="height:42px;font-size:13px;gap:7px;margin:0" onClick="{{ ocSearch }}"><i class="ph ph-magnifying-glass" style="font-size:15px"></i>Search again</button>
+            </div>
+          </sc-if>
+          <sc-if value="{{ oc.hasCands }}">
+            <div style="display:flex;flex-direction:column">
+              <h6 style="margin:0 0 2px;font-size:11px;letter-spacing:.1em;color:var(--color-neutral-600)">{{ oc.candLabel }}</h6>
+              <sc-for list="{{ ocCands }}" as="cd" hint-placeholder-count="2">
+              <button onClick="{{ cd.open }}" style="display:flex;align-items:center;gap:12px;width:100%;min-height:58px;padding:10px 0;border:0;border-bottom:1px solid var(--color-divider);background:transparent;text-align:left;cursor:pointer;font-family:var(--font-body);color:var(--color-text)">
+                <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+                  <div style="display:flex;align-items:baseline;gap:7px;flex-wrap:wrap"><span style="font-family:var(--font-heading);font-weight:500;font-size:15px">{{ cd.name }}</span><span style="font-size:12px;color:var(--color-neutral-600)" lang="ja">{{ cd.kana }}</span></div>
+                  <div style="font-size:12px;color:var(--color-neutral-600)">{{ cd.meta }}</div>
+                  <div style="font-size:12px;color:var(--color-neutral-700)">{{ cd.why }}</div>
+                </div>
+                <i class="ph ph-caret-right" style="font-size:15px;color:var(--color-neutral-500)"></i>
+              </button>
+            </sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{ oc.hasRead }}">
+            <div style="padding:14px;border-radius:var(--radius-md);border:1px dashed var(--color-neutral-400);display:flex;flex-direction:column;gap:8px">
+              <div style="font-family:var(--font-heading);font-weight:500;font-size:14px">Keep it anyway</div>
+              <div style="font-size:12px;color:var(--color-neutral-700);line-height:1.5;text-wrap:pretty">Rate it and put it in your cellar now, with the name above. It’s marked as your own entry, and we’ll link it if the sake turns up in the catalogue.</div>
+              <button class="btn btn-secondary" style="height:42px;font-size:13px;gap:7px;align-self:flex-start;padding-inline:14px" onClick="{{ ocAdd }}"><i class="ph ph-plus-circle" style="font-size:16px"></i>Add this bottle</button>
+            </div>
+          </sc-if>
+          <button class="btn btn-ghost" style="height:44px;font-size:13px;gap:6px;align-self:flex-start;padding-inline:0" onClick="{{ goSearch }}"><i class="ph ph-keyboard" style="font-size:16px"></i>Type the name instead</button>
+        </div>
       </div>
     </sc-if>
 
@@ -541,7 +664,7 @@ textarea::placeholder,input::placeholder{font-style:italic}
               </sc-for>
             </div>
           </sc-for>
-          <div style="font-size:11px;color:var(--color-neutral-600);line-height:1.5">Yawaragi 1.0 · <a href="#impressum">Impressum</a> · <a href="#terms">Terms</a> · <a href="#privacy">Privacy notice</a> · <a href="#">Drink responsibly</a></div>
+          <div style="font-size:11px;color:var(--color-neutral-600);line-height:1.5">Yawaragi · design 1.5 · <a href="#impressum">Impressum</a> · <a href="#terms">Terms</a> · <a href="#privacy">Privacy notice</a> · <a href="#">Drink responsibly</a></div>
         </div>
         <sc-if value="{{ acctDialog }}">
           <div style="position:absolute;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:24px;animation:yw-fade .2s ease-out;z-index:4">
@@ -564,34 +687,105 @@ textarea::placeholder,input::placeholder{font-style:italic}
         <div style="display:flex;align-items:center;gap:4px;padding:8px 12px;flex:none">
           <button class="btn" style="padding-inline:4px" onClick="{{ back }}" aria-label="Back"><i class="ph ph-arrow-left" style="font-size:19px"></i></button>
           <div style="font-family:var(--font-heading);font-weight:500;font-size:15px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ sk.name }}</div>
-          <button class="btn" style="padding-inline:6px;color:{{ curWishColor }}" aria-label="{{ curWishLabel }}" onClick="{{ toggleWishCur }}"><i class="ph {{ curWishIcon }}" style="font-size:19px"></i></button>
-          <button class="btn" style="padding-inline:6px;color:{{ curCellarColor }}" aria-label="{{ curCellarLabel }}" onClick="{{ addCellarCur }}"><i class="ph {{ curCellarIcon }}" style="font-size:19px"></i></button>
         </div>
 
         <div style="flex:1;min-height:0;overflow-y:auto;padding-bottom:20px;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 18px);mask-image:linear-gradient(to bottom,transparent 0,#000 18px)">
-          <div style="display:flex;gap:16px;padding:18px 20px 6px">
-            <div style="width:88px;height:128px;flex:none;border-radius:8px;background:repeating-linear-gradient(135deg,#2a2826,#2a2826 5px,#33302d 5px,#33302d 10px);display:grid;place-items:end center;padding-bottom:8px">
-              <span style="font-family:ui-monospace,monospace;font-size:10px;color:var(--color-neutral-700)">bottle</span>
+          <div style="display:flex;flex-direction:column;gap:4px;padding:18px 20px 6px">
+            <div style="font-family:var(--font-heading);font-weight:500;font-size:25px;line-height:1.1;letter-spacing:-.02em">{{ sk.name }}</div>
+            <sc-if value="{{ sk.hasKana }}"><div style="font-size:13px;color:var(--color-neutral-600)" lang="ja">{{ sk.kana }}</div></sc-if>
+            <div style="font-size:12px;color:var(--color-neutral-600)">{{ sk.place }}</div>
+            <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:6px">
+              <sc-for list="{{ sk.tags }}" as="tg" hint-placeholder-count="2"><span class="tag tag-neutral">{{ tg.label }}</span></sc-for>
+              <sc-if value="{{ sk.thin }}"><span class="tag" style="border:1px solid var(--color-neutral-400);color:var(--color-neutral-700)">Little published</span></sc-if>
             </div>
-            <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;padding-top:2px">
-              <div style="font-family:var(--font-heading);font-weight:500;font-size:25px;line-height:1.1;letter-spacing:-.02em">{{ sk.name }}</div>
-              <sc-if value="{{ sk.hasKana }}"><div style="font-size:13px;color:var(--color-neutral-600)" lang="ja">{{ sk.kana }}</div></sc-if>
-              <div style="font-size:12px;color:var(--color-neutral-600)">{{ sk.place }}</div>
-              <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:6px">
-                <sc-for list="{{ sk.tags }}" as="tg" hint-placeholder-count="2"><span class="tag tag-neutral">{{ tg.label }}</span></sc-for>
-                <sc-if value="{{ sk.thin }}"><span class="tag tag-outline">Little published</span></sc-if>
+            <sc-if value="{{ sk.fromCatalogue }}"><div style="font-size:11px;color:var(--color-neutral-700);margin-top:8px">Catalogue data · <a href="https://sakenowa.com" target="_blank" rel="noopener" style="color:var(--color-neutral-700);text-decoration:underline;text-decoration-color:var(--color-neutral-500);text-underline-offset:2px">Powered by Sakenowa ↗</a></div></sc-if>
+          </div>
+          <sc-if value="{{ skPanelClosed }}">
+            <div style="display:flex;gap:8px;padding:10px 20px 0">
+              <button class="btn btn-primary" style="flex:1;height:44px;font-size:14px;gap:8px;border-width:1.5px" onClick="{{ logAgain }}"><i class="ph ph-star" style="font-size:17px"></i>Rate a new tasting</button>
+              <button class="btn btn-secondary" style="height:44px;font-size:14px;gap:7px" onClick="{{ openSimilar }}"><i class="ph ph-arrows-split" style="font-size:17px"></i>Similar</button>
+            </div>
+            <div style="display:flex;gap:8px;padding:8px 20px 0">
+              <sc-if value="{{ cellarNo }}"><button class="btn btn-secondary" style="flex:1;height:44px;gap:7px;font-size:13px" onClick="{{ addCellarCur }}"><i class="ph ph-stack-plus" style="font-size:17px"></i>Add to cellar</button></sc-if>
+            <sc-if value="{{ cellarYes }}"><div style="flex:1;min-width:0;display:flex;height:44px;border-radius:var(--radius-md);border:1px solid var(--color-divider);box-sizing:border-box;overflow:hidden">
+              <button onClick="{{ goCellar }}" style="flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:6px;padding:0 10px;border:0;background:transparent;color:var(--color-accent-700);font-size:13px;font-family:var(--font-body);cursor:pointer;white-space:nowrap" style-hover="background:var(--color-neutral-100)"><i class="ph-fill ph-stack" style="font-size:16px"></i>{{ curCellarLabel }}<i class="ph ph-caret-right" style="font-size:12px"></i></button>
+              <span style="width:1px;background:var(--color-divider);flex:none"></span>
+              <button onClick="{{ addCellarCur }}" aria-label="Add another bottle" style="width:44px;flex:none;border:0;background:transparent;color:var(--color-text);cursor:pointer;display:grid;place-items:center" style-hover="background:var(--color-neutral-100)"><i class="ph ph-plus" style="font-size:16px"></i></button>
+            </div></sc-if>
+              <button class="btn btn-secondary" style="width:44px;height:44px;padding:0;flex:none;color:{{ curWishColor }}" aria-label="{{ curWishLabel }}" onClick="{{ toggleWishCur }}"><i class="ph {{ curWishIcon }}" style="font-size:17px"></i></button>
+            </div>
+          </sc-if>
+          <sc-if value="{{ skPanelOpen }}">
+            <div style="padding:10px 20px 0;animation:yw-rise .26s ease-out">
+              <div style="border-radius:var(--radius-lg);background:var(--color-surface);box-shadow:var(--shadow-md);overflow:hidden">
+              <div style="padding:14px;background:{{ rLogBg }};display:flex;flex-direction:column;gap:11px">
+              <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span style="width:2px;height:14px;background:var(--color-accent-500);display:block"></span>
+                  <div style="font-family:var(--font-heading);font-weight:500;font-size:15px">{{ rLogTitle }}</div>
+                </div>
+                <span style="font-size:11px;color:var(--color-neutral-600);text-align:right">{{ rLogMeta }}</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:11px">
+                <div style="display:flex;gap:4px">
+                  <sc-for list="{{ rStars }}" as="st" hint-placeholder-count="5">
+                    <span style="position:relative;display:inline-block;width:34px;height:34px">
+                      <i class="ph {{ st.cls }}" style="font-size:33px;color:{{ st.color }};animation:{{ st.anim }};display:inline-block"></i>
+                      <button onClick="{{ st.setHalf }}" aria-label="{{ st.halfLabel }}" style="position:absolute;left:0;top:0;width:50%;height:100%;border:0;background:transparent;cursor:pointer"></button>
+                      <button onClick="{{ st.setFull }}" aria-label="{{ st.fullLabel }}" style="position:absolute;right:0;top:0;width:50%;height:100%;border:0;background:transparent;cursor:pointer"></button>
+                    </span>
+                  </sc-for>
+                </div>
+                <span style="font-family:var(--font-heading);font-size:14px;line-height:1.2;white-space:nowrap;color:{{ rRatingColor }}">{{ rRatingLabel }}</span>
+              </div>
+              <sc-if value="{{ rSaved }}">
+                <div style="display:flex;flex-direction:column;gap:9px;animation:yw-fade .3s ease-out;opacity:{{ rDim }};transition:opacity .2s">
+                  <textarea class="input" placeholder="Add a note — what struck you?" value="{{ rNote }}" onChange="{{ rSetNote }}" style="min-height:62px;background:var(--color-bg)"></textarea>
+                  <div style="display:flex;gap:7px;flex-wrap:wrap">
+                    <sc-for list="{{ rQuickTags }}" as="t" hint-placeholder-count="5">
+                      <button onClick="{{ t.pick }}" style="min-height:32px;padding:6px 11px;border-radius:999px;border:1px solid {{ t.border }};background:{{ t.bg }};color:{{ t.fg }};font-size:12px;font-family:var(--font-body);cursor:pointer">{{ t.label }}</button>
+                    </sc-for>
+                  </div>
+                  <div style="display:flex;gap:8px;margin-top:2px">
+                    <button class="btn btn-secondary" style="flex:1;height:42px;font-size:13px;gap:7px" onClick="{{ openDetail }}"><i class="ph ph-sliders-horizontal" style="font-size:16px"></i>{{ rDetailLabel }}</button>
+                    <button class="btn btn-primary" style="height:42px;font-size:13px;padding-inline:20px;border-width:1.5px" onClick="{{ rDone }}">Done</button>
+                  </div>
+                  <sc-if value="{{ rNoConfirm }}">
+                    <button class="btn" style="align-self:flex-start;height:36px;font-size:12px;gap:5px;padding:0;color:var(--color-neutral-600)" onClick="{{ rAskDelete }}"><i class="ph ph-trash" style="font-size:14px"></i>Delete tasting</button>
+                  </sc-if>
+                  <sc-if value="{{ rConfirm }}">
+                    <div role="alert" style="padding:12px;border-radius:var(--radius-md);background:var(--color-bg);box-shadow:var(--shadow-sm);display:flex;flex-direction:column;gap:10px;animation:yw-fade .2s ease-out">
+                      <div style="font-size:13px;line-height:1.5;text-wrap:pretty">{{ rConfirmText }}</div>
+                      <div style="display:flex;gap:8px">
+                        <button class="btn btn-ghost" style="flex:1;height:40px;font-size:13px" onClick="{{ rKeep }}">Keep</button>
+                        <button onClick="{{ rDelete }}" style="flex:1;height:40px;font-size:13px;border-radius:var(--radius-md);border:1px solid var(--color-accent-700);background:var(--color-accent-100);color:var(--color-accent-800);font-family:var(--font-body);cursor:pointer">Delete</button>
+                      </div>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-if>
+              <sc-if value="{{ rUnsaved }}">
+                <div style="font-size:12px;color:var(--color-neutral-600);text-wrap:pretty">Tap a star and it’s logged — notes can wait.</div>
+              </sc-if>
+            </div>
               </div>
             </div>
-          </div>
-          <div style="display:flex;gap:8px;padding:10px 20px 0">
-            <button class="btn btn-primary" style="flex:1;height:44px;font-size:14px;gap:8px;border-width:1.5px" onClick="{{ logAgain }}"><i class="ph ph-star" style="font-size:17px"></i>Rate a new tasting</button>
-            <button class="btn btn-secondary" style="height:44px;font-size:14px;gap:7px" onClick="{{ openSimilar }}"><i class="ph ph-arrows-split" style="font-size:17px"></i>Similar</button>
-          </div>
+            <div style="display:flex;gap:8px;padding:8px 20px 0">
+              <button class="btn btn-secondary" style="height:44px;font-size:13px;gap:7px;flex:none" onClick="{{ openSimilar }}"><i class="ph ph-arrows-split" style="font-size:17px"></i>Similar</button>
+              <sc-if value="{{ cellarNo }}"><button class="btn btn-secondary" style="flex:1;height:44px;gap:7px;font-size:13px" onClick="{{ addCellarCur }}"><i class="ph ph-stack-plus" style="font-size:17px"></i>Add to cellar</button></sc-if>
+            <sc-if value="{{ cellarYes }}"><div style="flex:1;min-width:0;display:flex;height:44px;border-radius:var(--radius-md);border:1px solid var(--color-divider);box-sizing:border-box;overflow:hidden">
+              <button onClick="{{ goCellar }}" style="flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:6px;padding:0 10px;border:0;background:transparent;color:var(--color-accent-700);font-size:13px;font-family:var(--font-body);cursor:pointer;white-space:nowrap" style-hover="background:var(--color-neutral-100)"><i class="ph-fill ph-stack" style="font-size:16px"></i>{{ curCellarLabel }}<i class="ph ph-caret-right" style="font-size:12px"></i></button>
+              <span style="width:1px;background:var(--color-divider);flex:none"></span>
+              <button onClick="{{ addCellarCur }}" aria-label="Add another bottle" style="width:44px;flex:none;border:0;background:transparent;color:var(--color-text);cursor:pointer;display:grid;place-items:center" style-hover="background:var(--color-neutral-100)"><i class="ph ph-plus" style="font-size:16px"></i></button>
+            </div></sc-if>
+              <button class="btn btn-secondary" style="width:44px;height:44px;padding:0;flex:none;color:{{ curWishColor }}" aria-label="{{ curWishLabel }}" onClick="{{ toggleWishCur }}"><i class="ph {{ curWishIcon }}" style="font-size:17px"></i></button>
+            </div>
+          </sc-if>
 
           <div style="padding:18px 20px 0;display:flex;flex-direction:column;gap:10px">
             <div style="display:flex;align-items:baseline;justify-content:space-between"><h6 style="margin:0;font-size:11px;letter-spacing:.1em;color:var(--color-neutral-600)">You and this sake</h6><span style="font-size:11px;color:var(--color-neutral-700)">{{ historyMeta }}</span></div>
             <sc-for list="{{ history }}" as="h" hint-placeholder-count="1">
-              <div style="display:flex;gap:12px;padding:10px 12px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm)">
+              <div style="display:flex;gap:12px;align-items:flex-start;padding:10px 6px 10px 12px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm)">
                 <div style="width:30px;flex:none;text-align:center">
                   <div style="font-family:var(--font-heading);font-size:16px;line-height:1">{{ h.day }}</div>
                   <div style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600);margin-top:2px">{{ h.mon }}</div>
@@ -600,6 +794,7 @@ textarea::placeholder,input::placeholder{font-style:italic}
                   <div style="display:flex;gap:1px;color:var(--color-accent-600);font-size:13px"><sc-for list="{{ h.stars }}" as="st" hint-placeholder-count="5"><i class="ph {{ st.cls }}"></i></sc-for></div>
                   <div style="font-size:13px;color:var(--color-neutral-700);margin-top:4px;font-style:italic;text-wrap:pretty">{{ h.note }}</div>
                 </div>
+                <button class="btn btn-ghost" style="height:36px;font-size:12px;padding:0 10px;margin:-4px 0;flex:none" onClick="{{ h.edit }}">Edit</button>
               </div>
             </sc-for>
             <sc-if value="{{ noHistory }}"><div style="font-size:13px;color:var(--color-neutral-700);line-height:1.5;text-wrap:pretty">Not tasted yet.</div></sc-if>
@@ -637,7 +832,7 @@ textarea::placeholder,input::placeholder{font-style:italic}
           </div>
 
           <div style="padding:24px 20px 0;display:flex;flex-direction:column;gap:11px">
-            <div style="display:flex;align-items:baseline;justify-content:space-between"><div style="display:flex;align-items:center;gap:4px"><h6 style="margin:0;font-size:11px;letter-spacing:.1em;color:var(--color-neutral-600)">Flavour chart (Sakenowa)</h6><button onClick="{{ openTerms }}" aria-label="About these flavour words" style="width:28px;height:28px;border:0;background:transparent;cursor:pointer;display:grid;place-items:center;color:var(--color-neutral-600);margin:-8px 0"><i class="ph ph-info" style="font-size:14px"></i></button></div><sc-if value="{{ sk.hasChart }}"><a href="https://sakenowa.com" target="_blank" rel="noopener" style="font-size:11px;color:var(--color-neutral-700);text-decoration:underline;text-decoration-color:var(--color-neutral-500);text-underline-offset:2px">{{ sk.chartMeta }}</a></sc-if></div>
+            <div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:2px 12px"><div style="display:flex;align-items:center;gap:4px"><h6 style="margin:0;font-size:11px;letter-spacing:.1em;color:var(--color-neutral-600);white-space:nowrap">Flavour chart (Sakenowa)</h6><button onClick="{{ openTerms }}" aria-label="About these flavour words" style="width:28px;height:28px;border:0;background:transparent;cursor:pointer;display:grid;place-items:center;color:var(--color-neutral-600);margin:-8px 0"><i class="ph ph-info" style="font-size:14px"></i></button></div><sc-if value="{{ sk.hasChart }}"><a href="https://sakenowa.com" target="_blank" rel="noopener" style="font-size:11px;color:var(--color-neutral-700);text-decoration:underline;text-decoration-color:var(--color-neutral-500);text-underline-offset:2px">{{ sk.chartMeta }}</a></sc-if></div>
             <sc-if value="{{ twoTone }}">
               <div style="display:flex;gap:14px;font-size:11px;color:var(--color-neutral-600)">
                 <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:2px;background:var(--color-accent-500);display:block"></span>Sakenowa</span>
@@ -699,13 +894,12 @@ textarea::placeholder,input::placeholder{font-style:italic}
             <div style="padding:24px 20px 0;display:flex;flex-direction:column;gap:10px">
               <div style="display:flex;align-items:baseline;justify-content:space-between"><h6 style="margin:0;font-size:11px;letter-spacing:.1em;color:var(--color-neutral-600)">The brewery</h6><span style="font-size:11px;color:var(--color-neutral-700)">{{ sk.founded }}</span></div>
               <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.5;text-wrap:pretty">{{ sk.story }}</div>
-              <div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:2px">
+              <div style="display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x proximity;scroll-padding-left:20px;margin:0 -20px;padding:2px 48px 4px 20px;scrollbar-width:none;-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 32px),transparent);mask-image:linear-gradient(to right,#000 calc(100% - 32px),transparent)">
                 <sc-for list="{{ sk.same }}" as="o" hint-placeholder-count="3">
-                  <div style="width:128px;flex:none;display:flex;flex-direction:column;gap:6px">
-                    <div style="height:72px;border-radius:6px;background:repeating-linear-gradient(135deg,#2a2826,#2a2826 4px,#33302d 4px,#33302d 8px)"></div>
-                    <div style="font-family:var(--font-heading);font-weight:500;font-size:13px;line-height:1.2">{{ o.name }}</div>
-                    <div style="font-size:11px;color:var(--color-neutral-600)">{{ o.meta }}</div>
-                  </div>
+                  <button style="flex:none;scroll-snap-align:start;display:flex;flex-direction:column;gap:3px;padding:10px 12px;border:0;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm);text-align:left;cursor:pointer;font-family:var(--font-body);color:var(--color-text);white-space:nowrap">
+                    <span style="font-family:var(--font-heading);font-weight:500;font-size:13px">{{ o.name }}</span>
+                    <span style="font-size:11px;color:var(--color-neutral-600)">{{ o.meta }}</span>
+                  </button>
                 </sc-for>
               </div>
             </div>
@@ -721,6 +915,12 @@ textarea::placeholder,input::placeholder{font-style:italic}
               </div>
             </sc-for>
             <sc-if value="{{ sk.noShops }}"><div style="font-size:13px;color:var(--color-neutral-700);line-height:1.5;text-wrap:pretty">Not tracked in any shop yet. Save it to your wishlist and we’ll tell you if it turns up.</div></sc-if>
+          </div>
+          <div style="padding:0 20px 8px">
+          <div style="padding-top:28px;display:flex;flex-direction:column;gap:2px;font-size:12px;line-height:1.5;color:var(--color-neutral-600)">
+            <div>Catalogue and flavour data · <a href="https://sakenowa.com" target="_blank" rel="noopener">Powered by Sakenowa ↗</a></div>
+            <div style="display:flex;flex-wrap:wrap;column-gap:14px"><a href="#impressum" style="padding:6px 0">Impressum</a><a href="#privacy" style="padding:6px 0">Privacy notice</a><a href="#cookies" onClick="{{ reopenCookies }}" style="padding:6px 0">Cookie settings</a><a href="#drink" style="padding:6px 0">Drink responsibly</a></div>
+          </div>
           </div>
         </div>
 
@@ -775,22 +975,25 @@ textarea::placeholder,input::placeholder{font-style:italic}
                 </div>
               </sc-if>
               <sc-for list="{{ entries }}" as="e" hint-placeholder-count="4">
-                <button onClick="{{ e.open }}" style="display:flex;gap:14px;padding:13px 0;border:0;border-bottom:1px solid color-mix(in srgb,#e8e4dd 8%,transparent);background:transparent;text-align:left;cursor:pointer;font-family:var(--font-body);color:var(--color-text)">
-                  <div style="width:36px;flex:none;text-align:center">
-                    <div style="font-family:var(--font-heading);font-size:18px;line-height:1">{{ e.day }}</div>
-                    <div style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-500)">{{ e.mon }}</div>
-                  </div>
-                  <div style="flex:1;min-width:0">
-                    <div style="font-family:var(--font-heading);font-weight:500;font-size:16px">{{ e.name }}</div>
-                    <div style="font-size:12px;color:var(--color-neutral-600);margin-top:2px;text-wrap:pretty">{{ e.note }}</div>
-                    <sc-if value="{{ e.hasDetail }}">
-                      <span class="tag tag-neutral" style="margin-top:6px;gap:4px"><i class="ph ph-list-checks" style="font-size:11px"></i>Full notes</span>
-                    </sc-if>
-                  </div>
-                  <div style="display:flex;gap:1px;color:var(--color-accent-500);font-size:11px;align-self:flex-start;margin-top:3px">
-                    <sc-for list="{{ e.stars }}" as="s" hint-placeholder-count="5"><i class="ph {{ s.cls }}"></i></sc-for>
-                  </div>
-                </button>
+                <div style="display:flex;flex-direction:column;gap:6px;padding:13px 0;border-bottom:1px solid var(--color-divider)">
+                  <button onClick="{{ e.open }}" style="display:flex;gap:14px;padding:0;border:0;background:transparent;text-align:left;cursor:pointer;font-family:var(--font-body);color:var(--color-text)">
+                    <div style="width:36px;flex:none;text-align:center">
+                      <div style="font-family:var(--font-heading);font-size:18px;line-height:1">{{ e.day }}</div>
+                      <div style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600)">{{ e.mon }}</div>
+                    </div>
+                    <div style="flex:1;min-width:0">
+                      <div style="font-family:var(--font-heading);font-weight:500;font-size:16px">{{ e.name }}</div>
+                      <sc-if value="{{ e.hasKana }}"><div style="font-size:12px;color:var(--color-neutral-600);margin-top:1px" lang="ja">{{ e.kana }}</div></sc-if>
+                      <div style="font-size:12px;color:var(--color-neutral-700);margin-top:4px;font-style:italic;text-wrap:pretty">{{ e.note }}</div>
+                    </div>
+                    <div style="display:flex;gap:1px;color:var(--color-accent-600);font-size:11px;align-self:flex-start;margin-top:3px">
+                      <sc-for list="{{ e.stars }}" as="s" hint-placeholder-count="5"><i class="ph {{ s.cls }}"></i></sc-for>
+                    </div>
+                  </button>
+                  <sc-if value="{{ e.hasDetail }}">
+                    <button onClick="{{ e.openNotes }}" class="tag tag-neutral" style="margin-left:50px;align-self:flex-start;gap:4px;border:0;cursor:pointer;min-height:28px;font-family:var(--font-body)" style-hover="background:var(--color-neutral-300)"><i class="ph ph-list-checks" style="font-size:12px"></i>Full notes</button>
+                  </sc-if>
+                </div>
               </sc-for>
             </div>
           </sc-if>
@@ -799,13 +1002,12 @@ textarea::placeholder,input::placeholder{font-style:italic}
               <div style="font-size:12px;color:var(--color-neutral-700);padding:2px 0 8px">{{ cellarSummary }}</div>
               <sc-for list="{{ cellarRows }}" as="c" hint-placeholder-count="3">
                 <div style="display:flex;gap:13px;padding:13px 0;border-bottom:1px solid var(--color-divider)">
-                  <div style="width:36px;height:50px;border-radius:5px;flex:none;background:repeating-linear-gradient(135deg,#2a2826,#2a2826 4px,#33302d 4px,#33302d 8px)"></div>
                   <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px">
                     <div style="display:flex;align-items:baseline;gap:8px">
                       <div style="font-family:var(--font-heading);font-weight:500;font-size:15px;flex:1;min-width:0">{{ c.name }}</div>
                       <span style="font-size:12px;color:var(--color-neutral-700);flex:none">{{ c.countLabel }}</span>
                     </div>
-                    <div style="font-size:12px;color:var(--color-neutral-600)">{{ c.brewery }}</div>
+                    <sc-if value="{{ c.hasKana }}"><div style="font-size:12px;color:var(--color-neutral-600)" lang="ja">{{ c.kana }}</div></sc-if>
                     <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:{{ c.stateColor }};margin-top:2px">
                       <i class="ph {{ c.stateIcon }}" style="font-size:14px"></i>{{ c.state }}
                     </div>
@@ -830,7 +1032,6 @@ textarea::placeholder,input::placeholder{font-style:italic}
               <div style="font-size:12px;color:var(--color-neutral-700);padding:2px 0 8px">{{ wishSummary }}</div>
               <sc-for list="{{ wishRows }}" as="w" hint-placeholder-count="3">
                 <div style="display:flex;gap:13px;padding:13px 0;border-bottom:1px solid var(--color-divider)">
-                  <div style="width:36px;height:50px;border-radius:5px;flex:none;background:repeating-linear-gradient(135deg,#2a2826,#2a2826 4px,#33302d 4px,#33302d 8px)"></div>
                   <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px">
                     <div style="font-family:var(--font-heading);font-weight:500;font-size:15px">{{ w.name }}</div>
                     <div style="font-size:12px;color:var(--color-neutral-600)">{{ w.brewery }}</div>
@@ -855,50 +1056,74 @@ textarea::placeholder,input::placeholder{font-style:italic}
               </sc-if>
             </div>
           </sc-if>
+          <div style="padding-top:28px;display:flex;flex-direction:column;gap:2px;font-size:12px;line-height:1.5;color:var(--color-neutral-600)">
+            <div>Catalogue and flavour data · <a href="https://sakenowa.com" target="_blank" rel="noopener">Powered by Sakenowa ↗</a></div>
+            <div style="display:flex;flex-wrap:wrap;column-gap:14px"><a href="#impressum" style="padding:6px 0">Impressum</a><a href="#privacy" style="padding:6px 0">Privacy notice</a><a href="#cookies" onClick="{{ reopenCookies }}" style="padding:6px 0">Cookie settings</a><a href="#drink" style="padding:6px 0">Drink responsibly</a></div>
+          </div>
         </div>
       </div>
     </sc-if>
 
     <sc-if value="{{ isPalate }}">
       <div style="flex:1;min-height:0;display:flex;flex-direction:column">
-        <div style="padding:14px 22px 6px;flex:none;position:relative">
-          <button onClick="{{ openAccount }}" aria-label="Account" style="position:absolute;right:22px;top:12px;width:36px;height:36px;border-radius:50%;border:0;padding:0;cursor:pointer;background:{{ avatarBg }};color:{{ avatarFg }};display:grid;place-items:center;font-family:var(--font-heading);font-weight:500;font-size:13px"><sc-if value="{{ signedIn }}">K</sc-if><sc-if value="{{ signedOut }}"><i class="ph ph-user" style="font-size:17px"></i></sc-if></button>
-          <div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-accent-700)">Your palate</div>
-          <div style="font-family:var(--font-heading);font-weight:500;font-size:26px;letter-spacing:-.02em;margin-top:3px">{{ palateTitle }}</div>
-          <div style="font-size:12px;color:var(--color-neutral-600);margin-top:4px">Derived from {{ entryCount }} tastings · updates as you log</div>
+        <div style="padding:14px 22px 6px;flex:none;display:flex;align-items:flex-start;gap:12px">
+          <div style="flex:1;min-width:0">
+            <div style="font-family:var(--font-heading);font-weight:500;font-size:26px;letter-spacing:-.02em;line-height:1.15">{{ palateTitle }}</div>
+            <div style="font-size:13px;color:var(--color-neutral-600);margin-top:4px;text-wrap:pretty">{{ palateMeta }}</div>
+          </div>
+          <button onClick="{{ openAccount }}" aria-label="Account" style="flex:none;width:36px;height:36px;border-radius:50%;border:0;padding:0;cursor:pointer;background:{{ avatarBg }};color:{{ avatarFg }};display:grid;place-items:center;font-family:var(--font-heading);font-weight:500;font-size:13px"><sc-if value="{{ signedIn }}">K</sc-if><sc-if value="{{ signedOut }}"><i class="ph ph-user" style="font-size:17px"></i></sc-if></button>
         </div>
         <div style="flex:1;min-height:0;overflow-y:auto;padding:16px 22px 18px;display:flex;flex-direction:column;gap:16px;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 18px);mask-image:linear-gradient(to bottom,transparent 0,#000 18px)">
           <sc-if value="{{ palateEarly }}">
-            <div style="display:flex;flex-direction:column;gap:16px;padding-top:6px">
-              <div style="display:flex;gap:8px">
-                <sc-for list="{{ palateDots }}" as="pd" hint-placeholder-count="3">
-                  <div style="flex:1;height:6px;border-radius:3px;background:{{ pd.bg }}"></div>
-                </sc-for>
-              </div>
-              <div style="font-size:14px;color:var(--color-neutral-700);line-height:1.6;text-wrap:pretty">{{ palateEarlyText }}</div>
-              <div style="padding:14px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm);display:flex;flex-direction:column;gap:10px">
-                <div style="display:flex;align-items:center;gap:8px"><span style="width:2px;height:14px;background:var(--color-accent-500);display:block"></span><span style="font-family:var(--font-heading);font-weight:500;font-size:15px">Start from a drink you know</span></div>
-                <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.5;text-wrap:pretty">Pick something you already like and we’ll sketch a starting palate straight away.</div>
+            <div style="display:flex;flex-direction:column;gap:22px">
+              <sc-if value="{{ ratingSlot }}">
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  <div style="display:flex;gap:4px;max-width:120px">
+                    <sc-for list="{{ palateDots }}" as="pd" hint-placeholder-count="3"><div style="flex:1;height:3px;border-radius:2px;background:{{ pd.bg }}"></div></sc-for>
+                  </div>
+                  <div style="font-size:12px;color:var(--color-neutral-700);text-wrap:pretty">{{ palateEarlyText }}</div>
+                </div>
+              </sc-if>
+              <div style="padding:16px;border-radius:var(--radius-lg);background:var(--color-surface);box-shadow:var(--shadow-sm);display:flex;flex-direction:column;gap:12px">
+                <div style="display:flex;align-items:center;gap:8px"><span style="width:2px;height:14px;background:var(--color-accent-500);display:block"></span><span style="font-family:var(--font-heading);font-weight:500;font-size:19px;letter-spacing:-.01em">Start from a drink you know</span></div>
+                <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.5;text-wrap:pretty">Pick one you already like. We’ll sketch a starting palate from it now, and point you at sakes of the same shape.</div>
                 <div style="display:flex;gap:6px;flex-wrap:wrap">
                   <sc-for list="{{ xbevChips }}" as="xb" hint-placeholder-count="5">
                     <button onClick="{{ xb.pick }}" style="min-height:36px;padding:7px 12px;border-radius:999px;border:1px solid {{ xb.border }};background:{{ xb.bg }};color:{{ xb.fg }};font-size:13px;font-family:var(--font-body);cursor:pointer">{{ xb.label }}</button>
                   </sc-for>
                 </div>
                 <sc-if value="{{ xbevSeeded }}">
-                  <div style="display:flex;flex-direction:column;gap:6px;padding-top:4px;animation:yw-fade .25s ease-out">
-                    <div style="font-size:14px;line-height:1.45;text-wrap:pretty">{{ xbevSeedText }}</div>
-                    <div style="display:flex;align-items:center;gap:4px">
-                      <span id="yw-xbev-caveat" style="font-size:11px;color:var(--color-neutral-600)">Cross-beverage estimate, not a tasting note.</span>
-                      <button onClick="{{ openXbev }}" aria-label="Why?" aria-describedby="yw-xbev-caveat" style="border:0;background:transparent;cursor:pointer;font-size:11px;color:var(--color-accent-700);font-family:var(--font-body);padding:6px 2px;text-decoration:underline;text-underline-offset:2px">Why?</button>
+                  <div style="display:flex;flex-direction:column;gap:10px;padding-top:12px;border-top:1px solid var(--color-divider);animation:yw-fade .25s ease-out">
+                    <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-600)">Starting sketch · from {{ xbevLabel }}</div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px 16px">
+                      <sc-for list="{{ xbevAxes }}" as="xa" hint-placeholder-count="6">
+                        <div style="display:flex;flex-direction:column;gap:4px">
+                          <div style="font-size:11px;color:var(--color-neutral-700)">{{ xa.label }}</div>
+                          <div style="height:4px;border-radius:2px;background:var(--color-neutral-200);overflow:hidden"><div style="height:100%;border-radius:2px;background:var(--color-accent-500);width:{{ xa.pct }}"></div></div>
+                        </div>
+                      </sc-for>
                     </div>
+                    <div style="font-size:14px;line-height:1.45;text-wrap:pretty">{{ xbevSeedText }}</div>
                   </div>
                 </sc-if>
+                <div style="font-size:11px;line-height:1.5;color:var(--color-neutral-700)"><span id="yw-xbev-caveat">Cross-beverage estimates, not tasting notes.</span> <button onClick="{{ openXbev }}" aria-label="How cross-beverage works" aria-describedby="yw-xbev-caveat" style="display:inline-grid;place-items:center;width:20px;height:20px;margin:-4px 0 -4px 1px;padding:0;border:0;background:transparent;cursor:pointer;color:var(--color-neutral-600);vertical-align:middle"><i class="ph ph-info" style="font-size:13px"></i></button></div>
               </div>
-              <div style="padding:14px;border-radius:var(--radius-md);border:1px dashed var(--color-neutral-400);display:flex;flex-direction:column;gap:8px">
-                <div style="font-family:var(--font-heading);font-weight:500;font-size:14px">Rate a few different styles</div>
-                <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.5;text-wrap:pretty">A fruity ginjō, an everyday junmai and something warm tell us more than three of the same.</div>
+
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
+                  <h6 style="margin:0;font-size:11px;letter-spacing:.1em;color:var(--color-neutral-600)">Sakes to try next</h6>
+                  <a href="https://sakenowa.com" target="_blank" rel="noopener" style="font-size:11px;color:var(--color-neutral-700);text-decoration:underline;text-decoration-color:var(--color-neutral-500);text-underline-offset:2px;white-space:nowrap">Powered by Sakenowa ↗</a>
+                </div>
+                <div style="font-size:12px;color:var(--color-neutral-600);text-wrap:pretty">{{ tryNextLead }}</div>
+                <sc-for list="{{ tryNext }}" as="tn" hint-placeholder-count="3">
+                  <button onClick="{{ tn.open }}" style="display:flex;flex-direction:column;gap:6px;padding:12px 13px;border:0;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm);text-align:left;cursor:pointer;font-family:var(--font-body);color:var(--color-text)" style-hover="background:var(--color-neutral-200)">
+                    <div style="display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;width:100%"><span style="font-family:var(--font-heading);font-weight:500;font-size:15px">{{ tn.name }}</span><span style="font-size:12px;color:var(--color-neutral-600)" lang="ja">{{ tn.kana }}</span></div>
+                    <div style="font-size:12px;color:var(--color-neutral-600)">{{ tn.place }}</div>
+                    <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.45;text-wrap:pretty">{{ tn.why }}</div>
+                    <div style="display:flex;gap:5px"><sc-for list="{{ tn.words }}" as="w" hint-placeholder-count="2"><span class="tag tag-neutral">{{ w.label }}</span></sc-for></div>
+                  </button>
+                </sc-for>
               </div>
-              <button class="btn btn-primary btn-block" style="height:46px;font-size:14px;gap:8px;border-width:1.5px;margin:0" onClick="{{ goScan }}"><i class="ph ph-camera" style="font-size:17px"></i>Scan a label</button>
             </div>
           </sc-if>
           <sc-if value="{{ palateReady }}">
@@ -979,7 +1204,6 @@ textarea::placeholder,input::placeholder{font-style:italic}
           <div style="display:flex;gap:10px">
             <sc-for list="{{ recs }}" as="r" hint-placeholder-count="2">
               <button class="card elev-sm" onClick="{{ r.open }}" style="flex:1;min-width:0;padding:12px;gap:6px;border:0;text-align:left;cursor:pointer;font-family:var(--font-body);color:var(--color-text)">
-                <div style="height:62px;border-radius:5px;background:repeating-linear-gradient(135deg,#2a2826,#2a2826 4px,#33302d 4px,#33302d 8px)"></div>
                 <div style="font-family:var(--font-heading);font-weight:500;font-size:14px;line-height:1.2">{{ r.name }}</div>
                 <div style="font-size:11px;color:var(--color-neutral-600)">{{ r.meta }}</div>
               </button>
@@ -987,6 +1211,10 @@ textarea::placeholder,input::placeholder{font-style:italic}
           </div>
         </div>
           </sc-if>
+          <div style="padding-top:28px;display:flex;flex-direction:column;gap:2px;font-size:12px;line-height:1.5;color:var(--color-neutral-600)">
+            <div>Catalogue and flavour data · <a href="https://sakenowa.com" target="_blank" rel="noopener">Powered by Sakenowa ↗</a></div>
+            <div style="display:flex;flex-wrap:wrap;column-gap:14px"><a href="#impressum" style="padding:6px 0">Impressum</a><a href="#privacy" style="padding:6px 0">Privacy notice</a><a href="#cookies" onClick="{{ reopenCookies }}" style="padding:6px 0">Cookie settings</a><a href="#drink" style="padding:6px 0">Drink responsibly</a></div>
+          </div>
         </div>
       </div>
     </sc-if>
@@ -1116,7 +1344,12 @@ textarea::placeholder,input::placeholder{font-style:italic}
           <button class="btn btn-primary" style="height:40px;font-size:14px;padding-inline:18px" onClick="{{ dnDone }}">Done</button>
         </div>
         <div style="flex:1;min-height:0;overflow-y:auto;padding:12px 20px 24px;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 18px);mask-image:linear-gradient(to bottom,transparent 0,#000 18px)">
-          <div style="font-size:12px;color:var(--color-neutral-700);line-height:1.5;padding:4px 0 8px;text-wrap:pretty">Look, smell, taste, decide — the order professional tasters work in. Fill any part, skip the rest; it saves as you go.</div>
+          <div style="display:flex;align-items:center;gap:11px;min-height:52px;padding:4px 0 8px;border-bottom:1px solid var(--color-divider)">
+            <i class="ph ph-calendar-blank" style="font-size:19px;color:var(--color-neutral-600)"></i>
+            <span style="flex:1;font-family:var(--font-heading);font-weight:500;font-size:15px">Tasted on</span>
+            <button onClick="{{ dnStepDate }}" aria-label="Change the tasting date" style="display:flex;align-items:center;gap:8px;height:40px;padding:0 12px;border-radius:var(--radius-md);border:1px solid var(--color-divider);background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);font-size:14px;cursor:pointer">{{ dnDateLabel }}<i class="ph ph-caret-down" style="font-size:13px;color:var(--color-neutral-600)"></i></button>
+          </div>
+          <div style="font-size:12px;color:var(--color-neutral-700);line-height:1.5;padding:12px 0 8px;text-wrap:pretty">Look, smell, taste, decide — the order professional tasters work in. Fill any part, skip the rest; it saves as you go.</div>
 
           <div style="border-bottom:1px solid var(--color-divider)">
             <button onClick="{{ dnApp.toggle }}" style="display:flex;align-items:center;gap:11px;width:100%;min-height:56px;padding:10px 0;border:0;background:transparent;cursor:pointer;text-align:left;font-family:var(--font-body);color:var(--color-text)">
@@ -1205,7 +1438,7 @@ textarea::placeholder,input::placeholder{font-style:italic}
             </button>
             <sc-if value="{{ dnServe.open }}">
               <div style="display:flex;flex-direction:column;gap:12px;padding:0 0 16px 30px;animation:yw-fade .2s ease-out">
-                <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600)">Temperature</div><div style="display:flex;gap:6px;flex-wrap:wrap">
+                <div style="display:flex;align-items:center;gap:2px;margin:-8px 0"><span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600)">Temperature</span><button onClick="{{ openTemps }}" aria-label="About these temperature names" style="width:32px;height:32px;border:0;background:transparent;cursor:pointer;display:grid;place-items:center;color:var(--color-neutral-600)"><i class="ph ph-info" style="font-size:14px"></i></button></div><div style="display:flex;gap:6px;flex-wrap:wrap">
                 <sc-for list="{{ dnTemp }}" as="o" hint-placeholder-count="3">
                   <button onClick="{{ o.pick }}" style="min-height:36px;padding:7px 12px;border-radius:999px;border:1px solid {{ o.border }};background:{{ o.bg }};color:{{ o.fg }};font-size:13px;font-family:var(--font-body);cursor:pointer">{{ o.label }}</button>
                 </sc-for>
@@ -1277,8 +1510,16 @@ textarea::placeholder,input::placeholder{font-style:italic}
     </div>
   </sc-if>
 
+  <sc-if value="{{ rToast }}">
+    <div role="status" style="position:absolute;left:18px;right:18px;bottom:96px;padding:12px 14px;border-radius:var(--radius-md);background:var(--color-raised);color:var(--color-text);display:flex;align-items:center;gap:10px;box-shadow:var(--shadow-float);animation:yw-rise .24s ease-out;z-index:5">
+      <i class="ph-fill ph-check-circle" style="font-size:19px;color:var(--color-accent-600)"></i>
+      <div style="flex:1;font-size:13px">Logged · palate updated</div>
+      <button class="btn" style="color:var(--color-accent-700);font-size:13px;min-height:40px;padding-inline:8px" onClick="{{ rUndo }}">Undo</button>
+    </div>
+  </sc-if>
+
   <sc-if value="{{ shelfMsg }}">
-    <div style="position:absolute;left:18px;right:18px;bottom:96px;padding:12px 14px;border-radius:var(--radius-md);background:#121110;color:#f6f2ea;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow-lg);animation:yw-rise .24s ease-out;z-index:5">
+    <div style="position:absolute;left:18px;right:18px;bottom:96px;padding:12px 14px;border-radius:var(--radius-md);background:var(--color-raised);color:var(--color-text);display:flex;align-items:center;gap:10px;box-shadow:var(--shadow-float);animation:yw-rise .24s ease-out;z-index:5">
       <i class="ph-fill ph-check-circle" style="font-size:19px;color:var(--color-accent-600)"></i>
       <div style="flex:1;font-size:13px">{{ shelfMsgText }}</div>
       <button class="btn" style="color:var(--color-accent-700);font-size:12px;padding-inline:2px" onClick="{{ shelfMsgGo }}">View</button>
@@ -1319,7 +1560,44 @@ textarea::placeholder,input::placeholder{font-style:italic}
             </div>
           </sc-for>
         </div>
-        <div style="font-size:11px;color:var(--color-neutral-600);line-height:1.5">Flavour chart data <a href="https://sakenowa.com" target="_blank" rel="noopener">Powered by Sakenowa</a>, plus ratings from Yawaragi users who share them.</div>
+        <div style="font-size:11px;color:var(--color-neutral-700);line-height:1.5">Flavour chart data <a href="https://sakenowa.com" target="_blank" rel="noopener">Powered by Sakenowa</a>, plus ratings from Yawaragi users who share them.</div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ tempsOpen }}">
+    <div style="position:absolute;inset:0;background:rgba(0,0,0,.55);display:flex;flex-direction:column;justify-content:flex-end;z-index:8;animation:yw-fade .2s ease-out">
+      <button onClick="{{ closeTemps }}" aria-label="Dismiss" style="flex:1;border:0;background:transparent;cursor:pointer"></button>
+      <div role="dialog" aria-labelledby="yw-temp-title" style="background:var(--color-surface);border-radius:20px 20px 0 0;padding:10px 20px 26px;box-shadow:var(--shadow-lg);animation:yw-sheet .26s ease-out;display:flex;flex-direction:column;gap:12px">
+        <span style="width:36px;height:4px;border-radius:2px;background:var(--color-neutral-400);align-self:center"></span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div id="yw-temp-title" style="font-family:var(--font-heading);font-weight:500;font-size:19px;flex:1">Serving temperatures</div>
+          <button class="btn" style="padding-inline:2px" onClick="{{ closeTemps }}" aria-label="Close"><i class="ph ph-x" style="font-size:18px"></i></button>
+        </div>
+        <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.5;text-wrap:pretty">Japanese names for how warm sake is served. The degrees are typical, not exact.</div>
+        <div style="display:flex;flex-direction:column">
+          <sc-for list="{{ tempTerms }}" as="tm" hint-placeholder-count="6">
+            <div style="display:grid;grid-template-columns:40px 1fr;gap:10px;padding:9px 0;border-top:1px solid var(--color-divider)">
+              <div style="font-family:var(--font-heading);font-size:14px">{{ tm.deg }}</div>
+              <div><span style="font-size:14px" lang="ja">{{ tm.jp }}</span> <span style="font-size:12px;color:var(--color-neutral-600);font-style:italic">{{ tm.ro }}</span><div style="font-size:12px;color:var(--color-neutral-700);margin-top:2px">{{ tm.note }}</div></div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ provOpen }}">
+    <div style="position:absolute;inset:0;background:rgba(0,0,0,.55);display:flex;flex-direction:column;justify-content:flex-end;z-index:8;animation:yw-fade .2s ease-out">
+      <button onClick="{{ closeProv }}" aria-label="Dismiss" style="flex:1;border:0;background:transparent;cursor:pointer"></button>
+      <div role="dialog" aria-labelledby="yw-prov-title" style="background:var(--color-surface);border-radius:20px 20px 0 0;padding:10px 20px 26px;box-shadow:var(--shadow-lg);animation:yw-sheet .26s ease-out;display:flex;flex-direction:column;gap:12px">
+        <span style="width:36px;height:4px;border-radius:2px;background:var(--color-neutral-400);align-self:center"></span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div id="yw-prov-title" style="font-family:var(--font-heading);font-weight:500;font-size:19px;flex:1">Read by AI</div>
+          <button class="btn" style="padding-inline:2px" onClick="{{ closeProv }}" aria-label="Close"><i class="ph ph-x" style="font-size:18px"></i></button>
+        </div>
+        <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.55;text-wrap:pretty">An AI model read these words off your photo. It can misread a character or run two names together, so check them against the label.</div>
+        <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.55;text-wrap:pretty">How sure it was: <span style="color:var(--color-text)">{{ ocConfidence }}</span>. Your photo is discarded once it has been read.</div>
       </div>
     </div>
   </sc-if>
@@ -1368,7 +1646,7 @@ textarea::placeholder,input::placeholder{font-style:italic}
   </sc-if>
 
   <sc-if value="{{ toast }}">
-    <div style="position:absolute;left:18px;right:18px;bottom:96px;padding:12px 14px;border-radius:var(--radius-md);background:#121110;color:#f6f2ea;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow-lg);animation:yw-rise .24s ease-out">
+    <div style="position:absolute;left:18px;right:18px;bottom:96px;padding:12px 14px;border-radius:var(--radius-md);background:var(--color-raised);color:var(--color-text);display:flex;align-items:center;gap:10px;box-shadow:var(--shadow-float);animation:yw-rise .24s ease-out">
       <i class="ph-fill ph-check-circle" style="font-size:19px;color:var(--color-accent-600)"></i>
       <div style="flex:1;font-size:13px">Tasting saved · palate updated</div>
       <button class="btn" style="color:var(--color-accent-700);font-size:12px;padding-inline:2px" onClick="{{ dismissToast }}">View</button>
@@ -1376,7 +1654,7 @@ textarea::placeholder,input::placeholder{font-style:italic}
   </sc-if>
 
   <sc-if value="{{ cookieShow }}">
-    <div role="region" aria-label="Cookie settings" style="position:absolute;left:10px;right:10px;bottom:88px;z-index:7;padding:14px;border-radius:var(--radius-lg);background:var(--color-surface);box-shadow:var(--shadow-lg);display:flex;flex-direction:column;gap:10px;animation:yw-rise .28s ease-out">
+    <div role="region" aria-label="Cookie settings" style="position:absolute;left:10px;right:10px;bottom:88px;z-index:7;padding:14px;border-radius:var(--radius-lg);background:var(--color-raised);box-shadow:var(--shadow-float);display:flex;flex-direction:column;gap:10px;animation:yw-rise .28s ease-out">
       <div style="font-family:var(--font-heading);font-weight:500;font-size:15px">{{ cookieTitle }}</div>
       <div style="font-size:12px;color:var(--color-neutral-700);line-height:1.5;text-wrap:pretty">{{ cookieBody }}</div>
       <sc-if value="{{ cookieCustom }}">
@@ -1390,9 +1668,9 @@ textarea::placeholder,input::placeholder{font-style:italic}
         </div>
       </sc-if>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
-        <button class="btn btn-secondary" style="height:42px;font-size:13px;padding-inline:4px" onClick="{{ cookieReject }}">{{ cookieRejectLabel }}</button>
-        <button class="btn btn-secondary" style="height:42px;font-size:13px;padding-inline:4px" onClick="{{ cookieMiddle }}">{{ cookieMiddleLabel }}</button>
-        <button class="btn btn-secondary" style="height:42px;font-size:13px;padding-inline:4px" onClick="{{ cookieAccept }}">{{ cookieAcceptLabel }}</button>
+        <button class="btn btn-secondary" style="height:42px;font-size:13px;padding-inline:4px;background:var(--color-neutral-300)" onClick="{{ cookieReject }}">{{ cookieRejectLabel }}</button>
+        <button class="btn btn-secondary" style="height:42px;font-size:13px;padding-inline:4px;background:var(--color-neutral-300)" onClick="{{ cookieMiddle }}">{{ cookieMiddleLabel }}</button>
+        <button class="btn btn-secondary" style="height:42px;font-size:13px;padding-inline:4px;background:var(--color-neutral-300)" onClick="{{ cookieAccept }}">{{ cookieAcceptLabel }}</button>
       </div>
     </div>
   </sc-if>
@@ -1450,7 +1728,7 @@ textarea::placeholder,input::placeholder{font-style:italic}
 </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;firstRun&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;market&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;EU (Germany)&quot;,&quot;Japan&quot;],&quot;default&quot;:&quot;EU (Germany)&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;askEnabled&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;menuScan&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;camera&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Allowed&quot;,&quot;Permission denied&quot;,&quot;Desktop / none&quot;],&quot;default&quot;:&quot;Allowed&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;iosWebview&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;twoToneBars&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;firstRun&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;market&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;EU (Germany)&quot;,&quot;Japan&quot;],&quot;default&quot;:&quot;EU (Germany)&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;askEnabled&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;menuScan&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;camera&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Allowed&quot;,&quot;Permission denied&quot;,&quot;Desktop / none&quot;],&quot;default&quot;:&quot;Allowed&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;iosWebview&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;twoToneBars&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;scanOutcome&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Matched&quot;,&quot;Matched, best guess&quot;,&quot;Brand only&quot;,&quot;Brewery only&quot;,&quot;Several fit&quot;,&quot;Not in catalogue&quot;,&quot;Unclear, recent scans agree&quot;,&quot;Unclear, nothing read&quot;,&quot;Rate limited&quot;,&quot;Something went wrong&quot;,&quot;Photo unusable&quot;],&quot;default&quot;:&quot;Matched&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Scan&quot;},&quot;ratingLive&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;}}">
 const SEED = [
   { id: 3, day: '19', mon: 'Sep', ago: '2d', name: 'Kidoizumi AFS', brewery: 'Kidoizumi Shuzō · Chiba', note: '“Sour apple, almost cider — nothing like the others.”', rating: 4.5, hasDetail: true },
   { id: 2, day: '14', mon: 'Sep', ago: '1w', name: 'Kamoshibito Kuheiji', brewery: 'Banjō Jōzō · Aichi', note: '“White peach, long finish. Best of the year so far.”', rating: 5, hasDetail: false },
@@ -1491,11 +1769,36 @@ const PAIRINGS = {
   ],
 }
 const AXIS_ORDER = ['Floral', 'Mellow', 'Rich', 'Mild', 'Dry', 'Light']
-const cosSim = (a, b) => { let d = 0, x = 0, y = 0; for (let i = 0; i < 6; i++) { d += a[i] * b[i]; x += a[i] * a[i]; y += b[i] * b[i] } return d / Math.sqrt(x * y) }
+// Euclidean (L2) distance on the six 0–100 axes; magnitude carries signal, so not cosine. Shown as "% alike" = 1 − d / max distance.
+const l2Sim = (a, b) => { let d = 0; for (let i = 0; i < 6; i++) d += (a[i] - b[i]) ** 2; return 1 - Math.sqrt(d) / (100 * Math.sqrt(6)) }
+const topAxes = (p, n) => AXIS_ORDER.map((l, i) => ({ l, v: p[i] })).sort((a, b) => b.v - a.v).slice(0, n).map((x) => x.l)
+const kanaOf = (name) => (CATALOGUE.find((c) => c.name === name) || {}).kana || ''
+const MON = { Sep: '09', Oct: '10' }
+const dateOf = (e) => e.day + '.' + (MON[e.mon] || '09') + '.2026'
+const OUTCOMES = {
+  'Brand only': { kicker: 'Partly matched', icon: 'ph-git-diff', title: 'We found the sake, not its brewery', body: 'The name matches Rihaku in the catalogue, but the brewery we read isn’t the one it lists. If it’s this one, pick it.', read: { name: 'RIHAKU Wandering Poet', brewery: '田中酒造' }, conf: '81%', candLabel: 'Is it this one?', cands: [{ name: 'Rihaku', kana: '李白', brewery: 'Rihaku Shuzō · Shimane', why: 'Same name · different brewery on the label', tags: ['Junmai'] }] },
+  'Brewery only': { kicker: 'Partly matched', icon: 'ph-git-diff', title: 'We found the brewery, not the sake', body: 'Banjō Jōzō is in the catalogue, but none of its sakes goes by the name we read. Is it one of these?', read: { name: 'Kuheiji Kurodashō', brewery: '萬乗醸造' }, conf: '88%', candLabel: 'From this brewery', cands: [{ name: 'Kamoshibito Kuheiji', kana: '醸し人九平次', brewery: 'Banjō Jōzō · Aichi', why: 'Same brewery · closest name', cat: 1 }] },
+  'Several fit': { kicker: 'A few fit', icon: 'ph-list-magnifying-glass', title: 'Which one is it?', body: 'The label fits more than one sake in the catalogue. Pick the one in front of you.', read: { name: 'Kidoizumi', brewery: '木戸泉酒造' }, conf: '90%', candLabel: 'Closest in the catalogue', cands: [{ cat: 0, why: 'Name and brewery match' }, { name: 'Kidoizumi Afuruu', kana: '木戸泉 アフルー', brewery: 'Kidoizumi Shuzō · Chiba', why: 'Same brewery · sparkling', tags: ['Sparkling'] }, { name: 'Kidoizumi Junmai', kana: '木戸泉 純米', brewery: 'Kidoizumi Shuzō · Chiba', why: 'Same brewery', tags: ['Junmai'] }] },
+  'Not in catalogue': { kicker: 'Not in the catalogue', icon: 'ph-magnifying-glass', title: 'We read it, but can’t find it', body: 'Fix anything we misread and search again — or keep it as your own entry.', read: { name: 'SAWA NO HANA Kokoro', brewery: '友野酒造' }, conf: '85%', candLabel: 'Did you mean', cands: [{ name: 'Sawa no Hana', kana: '澤の花', brewery: 'Banno Shuzō · Nagano', why: 'Similar name · brewery 伴野, not 友野', tags: ['Junmai'] }] },
+  'Unclear, recent scans agree': { kicker: 'Unclear photo', icon: 'ph-clock-counter-clockwise', title: 'This looks like Kidoizumi AFS', body: 'The photo was hard to read, but 3 of your last 4 scans were this sake. Is it?', consensus: true },
+  'Unclear, nothing read': { kicker: 'Unclear photo', icon: 'ph-eye-slash', title: 'We couldn’t read this label', body: 'Nothing on it was clear enough to look up. Another photo usually does it.', tips: true },
+  'Rate limited': { kicker: 'Paused', icon: 'ph-hourglass-medium', title: 'Too many scans in a row', body: 'Give it a minute, then scan again. Typing the name works any time.' },
+  'Something went wrong': { kicker: 'Not read', icon: 'ph-warning-circle', title: 'Something went wrong on our side', body: 'It wasn’t your photo. Scan again, or type the name.' },
+  'Photo unusable': { kicker: 'Not read', icon: 'ph-image-broken', title: 'We couldn’t use that photo', body: 'Try another photo of the label — JPEG, PNG or HEIC.' },
+}
+const XSEED = { lag: [20, 45, 85, 30, 82, 15], ries: [82, 50, 32, 55, 22, 56], guin: [24, 72, 80, 42, 40, 20], fino: [30, 40, 60, 45, 86, 40], pinot: [56, 46, 30, 70, 40, 66] }
+const TEMP_TERMS = [
+  { deg: '5°', jp: '雪冷え', ro: 'yukibie', note: 'Snow-chilled. Tight and crisp; the aroma holds back.' },
+  { deg: '10°', jp: '花冷え', ro: 'hanabie', note: 'Fridge-cold. Fruit starts to show.' },
+  { deg: '15°', jp: '涼冷え', ro: 'suzuhie', note: 'Cool. Aroma opens, still fresh.' },
+  { deg: '20°', jp: '常温', ro: 'jōon', note: 'Room temperature. The sake as it is.' },
+  { deg: '40°', jp: 'ぬる燗', ro: 'nurukan', note: 'Body-warm. Rice and umami come forward.' },
+  { deg: '50°', jp: '熱燗', ro: 'atsukan', note: 'Hot. Sharper and drier; for rich, dry styles.' },
+]
 function simRow(base, name) {
   const p = PROFILES[name]
   const cat = CATALOGUE.find((c) => c.name === name) || { brewery: '' }
-  const score = cosSim(base, p)
+  const score = l2Sim(base, p)
   const close = AXIS_ORDER.filter((l, i) => Math.abs(p[i] - base[i]) <= 10).map((l) => l.toLowerCase())
   const gaps = AXIS_ORDER.map((l, i) => ({ l: l.toLowerCase(), d: p[i] - base[i] })).sort((a, b) => Math.abs(b.d) - Math.abs(a.d))
   const g = gaps[0]
@@ -1734,7 +2037,7 @@ class Component extends DCLogic {
     const rows = base ? Object.keys(PROFILES).filter((n) => n !== src).map((n) => simRow(base, n)).sort((a, b) => b.score - a.score).slice(0, 5) : []
     return {
       isSimilar: view === 'similar', simSource: src, simNone: rows.length === 0,
-      simRows: rows.map((r) => ({ ...r, open: () => this.setState({ view: 'sake', sakeName: r.name }) })),
+      simRows: rows.map((r) => ({ ...r, open: () => this.setState({ view: 'sake', sakeName: r.name, skPanel: false }) })),
       openSimilar: () => this.setState({ view: 'similar', simFrom: src, simBack: view }),
       closeSimilar: () => this.goBack(),
     }
@@ -1765,7 +2068,7 @@ class Component extends DCLogic {
   }
 
   pickSake(p, manual) {
-    this.setState({ view: 'result', pick: { ...p, manual: !!manual }, query: '', dn: {}, r: { rating: 0, note: '', tags: [], id: null, toast: false, pop: 0 } })
+    this.setState({ view: 'result', pick: { ...p, manual: !!manual }, bestGuess: false, query: '', dn: {}, r: { rating: 0, note: '', tags: [], id: null, toast: false, pop: 0 } })
   }
 
   setDn(p) { this.setState((st) => ({ dn: { ...(st.dn || {}), ...p } })) }
@@ -1781,7 +2084,7 @@ class Component extends DCLogic {
 
   shelfNote(text, seg) {
     this.setState({ shelfMsg: { text, seg } })
-    clearTimeout(this._sh); this._sh = setTimeout(() => this.setState({ shelfMsg: null }), 3000)
+    clearTimeout(this._sh); this._sh = setTimeout(() => this.setState({ shelfMsg: null }), 6800)
   }
 
   setR(p) { this.setState((st) => ({ r: { ...(st.r || {}), ...p } })) }
@@ -1795,12 +2098,12 @@ class Component extends DCLogic {
     }
     const id = Date.now()
     const pk = this.state.pick || CATALOGUE[0]
-    const entry = { id, day: '21', mon: 'Sep', ago: 'now', name: pk.name, brewery: pk.brewery, note: '“No note.”', rating: v, hasDetail: false }
+    const entry = { id, day: '21', mon: 'Sep', ago: 'now', name: pk.name, brewery: pk.brewery, note: '“No note.”', rating: v, hasDetail: false, tags: [] }
     this.setState((st) => ({ entries: [entry, ...st.entries] }))
-    this.setR({ rating: v, id, toast: true, pop: Date.now() })
+    this.setR({ rating: v, id, toast: true, pop: Date.now(), folded: false, confirm: false })
     this.promptAuth('log')
     clearTimeout(this._r)
-    this._r = setTimeout(() => this.setR({ toast: false }), 3400)
+    this._r = setTimeout(() => this.setR({ toast: false }), 6800)
   }
 
   send = (text) => {
@@ -1832,7 +2135,9 @@ class Component extends DCLogic {
     clearTimeout(this._t)
     this._t = setTimeout(() => this.setState({ scan: 'working', shutter: false }), 220)
     clearTimeout(this._u)
-    this._u = setTimeout(() => this.setState({ view: this.state.mode === 'menu' ? 'menu' : 'result', menuSort: 'you', menuFilter: [], scan: 'idle', pick: null, dn: {}, r: { rating: 0, note: '', tags: [], id: null, toast: false, pop: 0 } }), 2000)
+    const out = this.pp.scanOutcome ?? 'Matched'
+    const oc = OUTCOMES[out]
+    this._u = setTimeout(() => this.setState({ view: this.state.mode === 'menu' ? 'menu' : oc ? 'outcome' : 'result', outcome: oc ? out : null, ocRead: oc && oc.read ? { ...oc.read } : null, bestGuess: out === 'Matched, best guess', candsOpen: false, menuSort: 'you', menuFilter: [], scan: 'idle', pick: null, dn: {}, r: { rating: 0, note: '', tags: [], id: null, toast: false, pop: 0 } }), 2000)
   }
 
 
@@ -1853,12 +2158,12 @@ class Component extends DCLogic {
       return {
         label: t.label, icon: active ? t.on : t.off,
         color: active ? ACTIVE : MUTED, current: active && !view ? 'page' : undefined,
-        go: () => { this._hist = []; this.setState({ tab: t.key, view: null, scan: 'idle', sheet: null }) },
+        go: () => { this._hist = []; this.setState({ tab: t.key, view: null, scan: 'idle', sheet: null, skPanel: false }) },
       }
     })
 
-    const openEntry = (e) => this.setState({ view: 'sake', sakeName: e.name })
-    const decorate = (e) => ({ ...e, stars: this.starsFor(e.rating), open: () => openEntry(e) })
+    const openEntry = (e) => this.setState({ view: 'sake', sakeName: e.name, skPanel: false })
+    const decorate = (e) => ({ ...e, kana: kanaOf(e.name), hasKana: !!kanaOf(e.name), stars: this.starsFor(e.rating), open: () => openEntry(e), openNotes: () => this.setState({ sheet: 'detail', dnEntry: e.id, dn: { open: 'App' } }) })
 
 
     const collectionTabs = [
@@ -1905,7 +2210,7 @@ class Component extends DCLogic {
       goCollection: () => this.setState({ tab: 'collection', view: null, collection: 'journal' }),
       back: () => this.goBack(),
       _nav: this.trackNav(),
-      openSake: () => this.setState({ view: 'sake', sakeName: (s.pick || { name: 'Kidoizumi AFS' }).name }),
+      openSake: () => this.setState({ view: 'sake', skPanel: false, sakeName: (s.pick || { name: 'Kidoizumi AFS' }).name }),
 
       entryCount: s.entries.length,
       recent: s.entries.slice(0, 3).map(decorate),
@@ -1917,10 +2222,12 @@ class Component extends DCLogic {
       commonWords: ['Green apple', 'Yoghurt', 'Sour', 'Grain', 'Long finish'].map((label) => ({ label })),
       sameBrewery: SAME_BREWERY,
       shops: SHOPS,
-      history: s.entries.filter((e) => e.name === (s.sakeName || 'Kidoizumi AFS')).map((e) => ({ ...e, stars: [1, 2, 3, 4, 5].map((i) => ({ cls: e.rating >= i ? 'ph-fill ph-star' : e.rating >= i - 0.5 ? 'ph-fill ph-star-half' : 'ph ph-star' })) })),
+      history: s.entries.filter((e) => e.name === (s.sakeName || 'Kidoizumi AFS')).map((e) => ({ ...e, stars: [1, 2, 3, 4, 5].map((i) => ({ cls: e.rating >= i ? 'ph-fill ph-star' : e.rating >= i - 0.5 ? 'ph-fill ph-star-half' : 'ph ph-star' })),
+        edit: () => { const nm = s.sakeName || 'Kidoizumi AFS'; this.setState({ skPanel: true, dn: {}, pick: { ...(CATALOGUE.find((c) => c.name === nm) || { name: nm, kana: '', brewery: '', tags: [] }), manual: false }, r: { rating: e.rating, note: e.note === '“No note.”' ? '' : e.note.replace(/^“|”$/g, ''), tags: e.tags || [], id: e.id, editing: true, toast: false, pop: 0 } }) } })),
+      skPanelOpen: !!s.skPanel, skPanelClosed: !s.skPanel,
       historyMeta: (() => { const n = s.entries.filter((e) => e.name === (s.sakeName || 'Kidoizumi AFS')).length; return n ? n + (n === 1 ? ' tasting' : ' tastings') : '' })(),
       noHistory: !s.entries.some((e) => e.name === (s.sakeName || 'Kidoizumi AFS')),
-      logAgain: () => this.setState({ view: 'result', pick: { ...(CATALOGUE.find((c) => c.name === s.sakeName) || { name: s.sakeName || 'Kidoizumi AFS', kana: '', brewery: '', tags: [] }), manual: !CATALOGUE.some((c) => c.name === s.sakeName) && !!s.sakeName }, dn: {}, r: { rating: 0, note: '', tags: [], id: null, toast: false, pop: 0 } }),
+      logAgain: () => this.setState({ skPanel: true, pick: { ...(CATALOGUE.find((c) => c.name === s.sakeName) || { name: s.sakeName || 'Kidoizumi AFS', kana: '', brewery: '', tags: [] }), manual: !CATALOGUE.some((c) => c.name === s.sakeName) && !!s.sakeName }, dn: {}, r: { rating: 0, note: '', tags: [], id: null, toast: false, pop: 0 } }),
       recs: [
         { name: 'Shinkame Kinoene', meta: 'Saitama · 92% match' },
         { name: 'Tamagawa Time Machine', meta: 'Kyōto · 88% match' },
@@ -1979,7 +2286,7 @@ class Component extends DCLogic {
         ? (menuMode ? 'Finding each sake and ranking it for you' : 'Matching against 12,400 catalogued sakes')
         : menuMode
           ? 'We’ll pick what fits your palate from what’s listed.'
-          : 'Kanji, romaji or barcode — whichever the bottle gives you.',
+          : 'Kanji or romaji — whichever the bottle gives you.',
 
       showJournal: s.collection === 'journal',
       sheetOpen: s.sheet !== null,
@@ -1992,8 +2299,9 @@ class Component extends DCLogic {
         const syncNote = (note) => this.setState((st) => ({ entries: st.entries.map((e) => e.id === r.id ? { ...e, note: note ? '“' + note + '”' : '“No note.”' } : e) }))
         return {
           rSaved: !!r.id, rUnsaved: !r.id,
-          rLogTitle: r.id ? 'Logged tonight' : 'Your take',
+          rLogTitle: r.editing ? (() => { const e = s.entries.find((x) => x.id === r.id); return e ? 'Your tasting · ' + e.day + ' ' + e.mon : 'Your tasting' })() : r.id ? 'Logged' : 'Your take',
           rLogMeta: (() => {
+            if (r.editing) return 'Changes save as you go'
             const nm = (s.pick || { name: 'Kidoizumi AFS' }).name
             const prev = s.entries.filter((e) => e.name === nm && e.id !== r.id)
             if (r.id) return '21:40 · ' + (prev.length ? (prev.length + 1) + (prev.length === 1 ? 'nd' : prev.length === 2 ? 'rd' : 'th') + ' time' : 'first time')
@@ -2011,19 +2319,40 @@ class Component extends DCLogic {
           })),
           rNote: r.note || '',
           rSetNote: (ev) => { const v = ev.target.value; this.setR({ note: v }); syncNote(v) },
-          rQuickTags: ['Sour apple', 'Cider-like', 'Warm', 'With food'].map((t) => {
+          rQuickTags: [...(PROFILES[(s.pick || CATALOGUE[0]).name] ? topAxes(PROFILES[(s.pick || CATALOGUE[0]).name], 2) : []), 'Chilled', 'Warm', 'With food'].map((t) => {
             const on = tags.indexOf(t) >= 0
             return {
               label: t, bg: on ? '#cf8a6e' : 'transparent', fg: on ? '#1b1a19' : '#bdb9b1',
               border: on ? '#cf8a6e' : 'var(--color-divider)',
-              pick: () => this.setR({ tags: on ? tags.filter((x) => x !== t) : [...tags, t] }),
+              pick: () => { const next = on ? tags.filter((x) => x !== t) : [...tags, t]; this.setR({ tags: next }); this.setState((st) => ({ entries: st.entries.map((e) => e.id === r.id ? { ...e, tags: next } : e) })) },
             }
           }),
           rToast: !!r.toast,
+          rDim: r.undoing ? '.45' : '1',
           rUndo: () => {
             clearTimeout(this._r)
-            this.setState((st) => ({ entries: st.entries.filter((e) => e.id !== r.id) }))
-            this.setR({ rating: 0, note: '', tags: [], id: null, toast: false, pop: 0 })
+            this.setR({ undoing: true, toast: false })
+            setTimeout(() => {
+              this.setState((st) => ({ entries: st.entries.filter((e) => e.id !== r.id), skPanel: view === 'sake' ? false : st.skPanel }))
+              this.setR({ rating: 0, note: '', tags: [], id: null, toast: false, pop: 0, undoing: false })
+            }, 220)
+          },
+          rFolded: !!r.folded && view === 'result', rPanelOpen: !(r.folded && view === 'result'),
+          rUnfold: () => this.setR({ folded: false }),
+          rDetailLabel: (s.entries.find((e) => e.id === r.id) || {}).hasDetail ? 'Detailed notes' : 'Add detailed notes',
+          rDone: () => {
+            clearTimeout(this._r)
+            if (view === 'sake') { this.setState({ skPanel: false, r: { rating: 0, note: '', tags: [], id: null, toast: false, pop: 0 } }); return }
+            this.setR({ folded: true, confirm: false, toast: false })
+          },
+          rNoConfirm: !r.confirm, rConfirm: !!r.confirm,
+          rConfirmText: (() => { const e = s.entries.find((x) => x.id === r.id); const nm = (s.pick || CATALOGUE[0]).name; return 'Delete your ' + (e ? e.rating.toFixed(1) : '') + ' tasting of ' + nm + ' from ' + (e ? dateOf(e) : '') + '? This can’t be undone.' })(),
+          rAskDelete: () => this.setR({ confirm: true }),
+          rKeep: () => this.setR({ confirm: false }),
+          rDelete: () => {
+            clearTimeout(this._r)
+            this.setState((st) => ({ entries: st.entries.filter((e) => e.id !== r.id), skPanel: false, shelfMsg: { text: 'Tasting deleted', seg: 'journal' }, r: { rating: 0, note: '', tags: [], id: null, toast: false, pop: 0 } }))
+            clearTimeout(this._sh); this._sh = setTimeout(() => this.setState({ shelfMsg: null }), 6800)
           },
         }
       })(),
@@ -2082,12 +2411,34 @@ class Component extends DCLogic {
           pickName: pk.name, pickKana: pk.kana, pickHasKana: !!pk.kana, pickBrewery: pk.brewery,
           pickTags: (pk.tags || []).map((label) => ({ label })),
           pickKicker: pk.manual ? 'Your own entry' : s.pick ? 'From the catalogue' : 'Matched from your photo',
+          pickFromPhoto: !s.pick, pickHasMatch: !s.pick, pickMatch: s.bestGuess ? 'Best guess' : 'Sure match',
+          pickBestGuess: !s.pick && !!s.bestGuess, candsOpen: !!s.candsOpen, candCount: 2, candCaret: s.candsOpen ? 'ph-caret-up' : 'ph-caret-down',
+          toggleCands: () => this.setState({ candsOpen: !s.candsOpen }),
+          bestCands: [CATALOGUE[2], CATALOGUE[3]].map((c, i) => ({ name: c.name, kana: c.kana, meta: c.brewery, why: i ? 'Similar label, same region' : 'Same starter style · similar name', open: () => this.pickSake(c) })),
+          ...(() => {
+            const oc = OUTCOMES[s.outcome] || {}
+            const rd = s.ocRead || {}
+            return {
+              isOutcome: view === 'outcome',
+              oc: { kicker: oc.kicker, icon: oc.icon, title: oc.title, body: oc.body, consensus: !!oc.consensus, tips: !!oc.tips, hasRead: !!oc.read, hasCands: !!(oc.cands && oc.cands.length), candLabel: oc.candLabel },
+              ocTips: [{ icon: 'ph-arrows-out', label: 'Get closer so the label fills the frame' }, { icon: 'ph-lightning', label: 'Turn on the light' }, { icon: 'ph-hand', label: 'Hold still for a second' }],
+              ocName: rd.name || '', ocBrewery: rd.brewery || '',
+              ocSetName: (ev) => this.setState({ ocRead: { ...rd, name: ev.target.value } }),
+              ocSetBrewery: (ev) => this.setState({ ocRead: { ...rd, brewery: ev.target.value } }),
+              ocSearch: () => this.setState({ view: 'search', query: rd.name || '' }),
+              ocAdd: () => this.pickSake({ name: rd.name || 'Unnamed sake', kana: '', brewery: rd.brewery || 'Added by you', tags: [] }, true),
+              ocYes: () => this.pickSake(CATALOGUE[0]),
+              ocCands: (oc.cands || []).map((c) => { const cat = c.cat !== undefined ? CATALOGUE[c.cat] : null; const it = cat ? { ...cat } : { name: c.name, kana: c.kana, brewery: c.brewery, tags: c.tags || [] }; return { name: it.name, kana: it.kana, meta: it.brewery, why: c.why, open: () => this.pickSake(it) } }),
+              provOpen: !!s.provOpen, openProv: () => this.setState({ provOpen: true }), closeProv: () => this.setState({ provOpen: false }),
+              ocConfidence: oc.conf || '—',
+            }
+          })(),
           pickInCatalogue: !pk.manual, pickManual: !!pk.manual,
         }
       })(),
       ...(() => {
         const dn = s.dn || {}
-        const open = dn.open === undefined ? 'Palate' : dn.open
+        const open = dn.open === undefined ? 'App' : dn.open
         const chip = (on) => ({ bg: on ? '#cf8a6e' : 'transparent', fg: on ? '#1b1a19' : '#bdb9b1', border: on ? '#cf8a6e' : 'var(--color-divider)' })
         const one = (key, vals) => vals.map((v) => ({ label: v, ...chip(dn[key] === v), pick: () => this.setDn({ [key]: dn[key] === v ? null : v }) }))
         const many = (key, vals) => { const cur = dn[key] || []; return vals.map((v) => { const on = cur.indexOf(v) >= 0; return { label: v, ...chip(on), pick: () => this.setDn({ [key]: on ? cur.filter((x) => x !== v) : [...cur, v] }) } }) }
@@ -2132,7 +2483,10 @@ class Component extends DCLogic {
               pick: () => this.setDn({ sc: { ...sc, [x.k]: sc[x.k] === i ? 0 : i } }),
             })),
           })),
-          dnTemp: one('temp', ['雪冷え 5°', '花冷え 10°', '常温 20°', 'ぬる燗 40°', '熱燗 50°']),
+          dnTemp: one('temp', TEMP_TERMS.map((t) => t.ro + ' ' + t.deg)),
+          dnDateLabel: (() => { const d = new Date(Date.UTC(2026, 8, 21 - (dn.back || 0))); return String(d.getUTCDate()).padStart(2, '0') + '.' + String(d.getUTCMonth() + 1).padStart(2, '0') + '.' + d.getUTCFullYear() })(),
+          dnStepDate: () => this.setDn({ back: (dn.back || 0) + 1 }),
+          tempsOpen: !!s.tempsOpen, openTemps: () => this.setState({ tempsOpen: true }), closeTemps: () => this.setState({ tempsOpen: false }), tempTerms: TEMP_TERMS,
           dnVessel: one('vessel', ['Ochoko', 'Guinomi', 'Wine glass', 'Masu']),
           dnFood: dn.food || '', dnSetFood: setTxt('food'),
           dnAgain: one('again', ['Yes', 'Maybe', 'No']),
@@ -2143,8 +2497,8 @@ class Component extends DCLogic {
           dnYeast: dn.yeast || '', dnSetYeast: setTxt('yeast'),
           dnSmv: dn.smv || '', dnSetSmv: setTxt('smv'),
           dnDone: () => {
-            const rid = (s.r || {}).id
-            this.setState((st) => ({ sheet: null, entries: rid ? st.entries.map((e) => e.id === rid ? { ...e, hasDetail: done > 0 } : e) : st.entries }))
+            const rid = s.dnEntry || (s.r || {}).id
+            this.setState((st) => ({ sheet: null, dnEntry: null, entries: rid ? st.entries.map((e) => e.id === rid ? { ...e, hasDetail: done > 0 } : e) : st.entries }))
           },
         }
       })(),
@@ -2275,7 +2629,7 @@ class Component extends DCLogic {
             const isOpen = c.openedDaysAgo !== null
             const hurry = soon(c)
             return {
-              ...c,
+              ...c, kana: kanaOf(c.name), hasKana: !!kanaOf(c.name),
               countLabel: c.count > 1 ? '× ' + c.count : '',
               state: !isOpen ? 'Unopened' + (c.nama ? ' · nama, keep cold' : ' · keeps for months, cool and dark')
                 : hurry ? 'Open ' + c.openedDaysAgo + ' days — best finished this week'
@@ -2285,9 +2639,9 @@ class Component extends DCLogic {
               primaryLabel: isOpen ? 'Pour & rate' : 'Open a bottle',
               primaryIcon: isOpen ? 'ph-star' : 'ph-lock-simple-open',
               primary: isOpen ? () => pour(c) : () => setCellar(cellar.map((x) => x.name === c.name ? { ...x, openedDaysAgo: 0 } : x)),
-              secondaryLabel: isOpen ? 'Finished' : 'Remove',
-              secondary: () => setCellar(isOpen && c.count > 1
-                ? cellar.map((x) => x.name === c.name ? { ...x, count: x.count - 1, openedDaysAgo: null } : x)
+              secondaryLabel: isOpen ? 'Finished' : c.count > 1 ? 'Remove one' : 'Remove',
+              secondary: () => setCellar(c.count > 1
+                ? cellar.map((x) => x.name === c.name ? { ...x, count: x.count - 1, openedDaysAgo: isOpen ? null : x.openedDaysAgo } : x)
                 : cellar.filter((x) => x.name !== c.name)),
             }
           }),
@@ -2307,6 +2661,8 @@ class Component extends DCLogic {
             this.promptAuth('wish')
           },
           curCellarLabel: inCellar ? 'In cellar · ' + inCellar.count : 'Add to cellar',
+          cellarYes: !!inCellar, cellarNo: !inCellar,
+          goCellar: () => { this._hist = []; this.setState({ tab: 'collection', view: null, collection: 'cellar' }) },
           curCellarIcon: inCellar ? 'ph-fill ph-stack' : 'ph ph-stack-plus',
           curCellarColor: inCellar ? '#e0a88f' : 'var(--color-text)',
           addCellarCur: () => {
@@ -2407,9 +2763,28 @@ class Component extends DCLogic {
         { icon: 'ph-hexagon', label: 'Your palate forms at three', color: '#a8a49c' },
       ],
       palateReady: s.entries.length >= 3, palateEarly: s.entries.length < 3,
-      palateTitle: s.entries.length >= 3 ? 'Rich, umami-forward' : s.entries.length ? 'Taking shape' : 'Not yet',
+      palateTitle: s.entries.length >= 3 ? 'Rich, umami-forward' : 'Your palate',
+      palateMeta: s.entries.length >= 3 ? 'Derived from ' + s.entries.length + ' tastings · updates as you log' : s.entries.length ? 'Taking shape · so far ' + s.entries.map((e) => e.name + ' ' + e.rating.toFixed(1)).join(', ') : 'Not yet — it starts with your first tasting',
+      ratingSlot: (this.pp.ratingLive ?? true) !== false,
       palateDots: [0, 1, 2].map((i) => ({ bg: i < s.entries.length ? '#b8735a' : '#383634' })),
-      palateEarlyText: s.entries.length === 0 ? 'Your palate appears after three tastings. It learns from what you rate, not from what you say you like.' : (3 - s.entries.length) + ' more ' + (3 - s.entries.length === 1 ? 'tasting' : 'tastings') + ' and your first read appears. So far: ' + s.entries.map((e) => e.name + ' ' + e.rating).join(', ') + '.',
+      palateEarlyText: (3 - s.entries.length) + ' more ' + (3 - s.entries.length === 1 ? 'tasting' : 'tastings') + ' and your first read appears. It learns from what you rate.',
+      ...(() => {
+        const X = { lag: 'Lagavulin 16', ries: 'Riesling Spätlese', guin: 'Guinness', fino: 'Fino sherry', pinot: 'Pinot Noir' }
+        const seed = XSEED[s.xbev]
+        const tasted = (n) => s.entries.some((e) => e.name === n)
+        const pool = Object.keys(PROFILES).filter((n) => !tasted(n))
+        const picks = seed ? pool.sort((a, b) => l2Sim(seed, PROFILES[b]) - l2Sim(seed, PROFILES[a])).slice(0, 3) : ['Dassai 45', 'Katori 90', 'Tamagawa Time Machine'].filter((n) => !tasted(n)).concat(pool).filter((n, i, arr) => arr.indexOf(n) === i).slice(0, 3)
+        return {
+          xbevLabel: seed ? X[s.xbev] : '',
+          xbevAxes: seed ? AXIS_ORDER.map((l, i) => ({ label: l, pct: seed[i] + '%' })) : [],
+          tryNextLead: seed ? 'Closest to ' + X[s.xbev] + ' by flavour chart.' : 'Three clear, different shapes to start with. Pick a drink above and these follow it.',
+          tryNext: picks.map((n) => {
+            const c = CATALOGUE.find((x) => x.name === n) || { name: n, kana: '', brewery: '' }
+            const w = topAxes(PROFILES[n], 2)
+            return { name: c.name, kana: c.kana, place: c.brewery, words: w.map((label) => ({ label })), why: seed ? 'Same shape as ' + X[s.xbev] + ': ' + w.join(' and ').toLowerCase() + '.' : 'A clear example of ' + w.join(' and ').toLowerCase() + '.', open: () => this.pickSake(c) }
+          }),
+        }
+      })(),
       askSub: s.entries.length ? 'Reads your palate · ' + s.entries.length + ' tastings' : 'Doesn’t know your palate yet — tell it what you like',
       sk: (() => {
         const name = s.sakeName || 'Kidoizumi AFS'
@@ -2426,7 +2801,7 @@ class Component extends DCLogic {
         const axes = info.chart === 'AXES' ? AXES : info.chart || null
         const on = info.tempsOn || []
         return {
-          name, kana: cat ? cat.kana : '', hasKana: !!(cat && cat.kana),
+          name, kana: cat ? cat.kana : '', hasKana: !!(cat && cat.kana), fromCatalogue: !!cat,
           place: info.place || (cat ? cat.brewery : 'Added by you'),
           tags: (info.tags || (cat ? cat.tags : [])).map((label) => ({ label })),
           thin,
