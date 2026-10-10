@@ -64,9 +64,6 @@
   },
   "palate": {
     "title": "Dein Geschmack",
-    "sectionLabel": "Dein Geschmack",
-    "titleNone": "Noch nicht",
-    "titleTakingShape": "Nimmt Form an",
     "titleRead": "{top}, {lean}",
     "lean": {
       "f1": "blumig betont",
@@ -77,9 +74,7 @@
       "f6": "klar im Abgang"
     },
     "derivedFrom": "Aus {count, plural, one {# Verkostung} other {# Verkostungen}} abgeleitet · wächst mit jedem Eintrag",
-    "derivedFromNone": "Noch nichts bewertet · es beginnt mit deiner ersten Verkostung",
     "progressLabel": "Verkostungen bis zur ersten Auswertung",
-    "soFar": "Bisher: {name} {rating}.",
     "confidenceEarly": "Erste Auswertung · {count} von {of} Verkostungen bis zu einem festen Profil",
     "confidenceFirm": "Fest · basiert auf {count, plural, one {# Verkostung} other {# Verkostungen}}",
     "axisHeading": "Was es prägt",
@@ -105,8 +100,18 @@
       "errorUnknown": "Dieses Getränk haben wir noch nicht zugeordnet — probiere ein anderes.",
       "errorRateLimited": "Du hast heute schon viel skizziert. Versuche es in etwa {hours, plural, one {# Stunde} other {# Stunden}} erneut.",
       "errorInvalid": "Wähle zuerst ein Getränk.",
-      "errorUnavailable": "Das ist gerade nicht verfügbar."
-    }
+      "errorUnavailable": "Das ist gerade nicht verfügbar.",
+      "sketchHeading": "Erste Skizze · aus {drink}"
+    },
+    "titleEarly": "Dein Gaumen",
+    "metaTakingShape": "Nimmt Form an · bisher {name} {rating}",
+    "metaTakingShapeBare": "Nimmt Form an",
+    "metaNone": "Noch nicht – es beginnt mit deiner ersten Verkostung",
+    "progressLine": "{count, plural, =0 {Deine erste Einschätzung ist da.} one {Noch # Verkostung, dann erscheint deine erste Einschätzung.} other {Noch # Verkostungen, dann erscheint deine erste Einschätzung.}} Sie lernt aus dem, was du bewertest.",
+    "closestToDrink": "Am nächsten an {drink}, laut Geschmacksprofil.",
+    "closestToPalate": "Am nächsten an deinem Gaumen, laut Geschmacksprofil.",
+    "reasonDrink": "Gleiche Form wie {drink}: {first} und {second}.",
+    "reasonPalate": "Nah an deinem Gaumen: {first} und {second}."
   },
   "landing": {
     "title": "Yawaragi",

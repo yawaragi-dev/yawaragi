@@ -64,9 +64,6 @@
   },
   "palate": {
     "title": "Your palate",
-    "sectionLabel": "Your palate",
-    "titleNone": "Not yet",
-    "titleTakingShape": "Taking shape",
     "titleRead": "{top}, {lean}",
     "lean": {
       "f1": "floral-forward",
@@ -77,9 +74,7 @@
       "f6": "clean-finishing"
     },
     "derivedFrom": "Derived from {count, plural, one {# tasting} other {# tastings}} · updates as you log",
-    "derivedFromNone": "Nothing rated yet · it starts with your first tasting",
     "progressLabel": "Tastings towards your first read",
-    "soFar": "So far: {name} {rating}.",
     "confidenceEarly": "Early read · {count} of {of} tastings to a firm profile",
     "confidenceFirm": "Firm · based on {count, plural, one {# tasting} other {# tastings}}",
     "axisHeading": "What shapes it",
@@ -105,8 +100,18 @@
       "errorUnknown": "We don't have that drink mapped yet — try another.",
       "errorRateLimited": "You've sketched a lot today. Try again in about {hours, plural, one {# hour} other {# hours}}.",
       "errorInvalid": "Pick a drink first.",
-      "errorUnavailable": "That isn't available right now."
-    }
+      "errorUnavailable": "That isn't available right now.",
+      "sketchHeading": "Starting sketch · from {drink}"
+    },
+    "titleEarly": "Your palate",
+    "metaTakingShape": "Taking shape · so far {name} {rating}",
+    "metaTakingShapeBare": "Taking shape",
+    "metaNone": "Not yet — it starts with your first tasting",
+    "progressLine": "{count, plural, =0 {Your first read is ready.} one {# more tasting and your first read appears.} other {# more tastings and your first read appears.}} It learns from what you rate.",
+    "closestToDrink": "Closest to {drink} by flavor chart.",
+    "closestToPalate": "Closest to your palate by flavor chart.",
+    "reasonDrink": "Same shape as {drink}: {first} and {second}.",
+    "reasonPalate": "Close to your palate: {first} and {second}."
   },
   "landing": {
     "title": "Yawaragi",

@@ -11,13 +11,14 @@ import { PalateConfidence } from '@/components/palate/palate-confidence'
 import { PalateProgress } from '@/components/palate/palate-progress'
 import { TasteProvenanceSummary } from '@/components/profile/taste-provenance-summary'
 import { FlavorRadarView } from '@/components/sake/flavor-radar-view'
+import { SakenowaAttributionView } from '@/components/sake/sakenowa-attribution'
 import { coldStartChips } from '@/lib/cross-beverage/cold-start-chips'
 import { resolveCrossBeverageTarget } from '@/lib/cross-beverage/forward-lookup'
 import { currentUserIsMaintainer } from '@/lib/auth/maintainer'
 import { isDebugEnabledFromCookies } from '@/lib/debug/debug-mode'
 import { hasAcceptedAgeGate } from '@/lib/legal/age-gate-cookie'
 import { readAnonymousSessionCookie } from '@/lib/legal/anonymous-session-cookie'
-import type { FlavorAxis } from '@/lib/schemas/flavor-chart'
+import { FLAVOR_AXES, type FlavorAxis } from '@/lib/schemas/flavor-chart'
 import type { FlavorProfile } from '@/lib/schemas/flavor-profile'
 import type { TasteEvent } from '@/lib/schemas/taste-event'
 import { lookupBrand } from '@/lib/sakenowa/lookup'
@@ -189,19 +190,21 @@ async function resolveSessionTasteProfile(cookieJar: CookieJar): Promise<Session
 }
 
 /** A Sake recommended for the visitor — enough to render a link + name. */
-interface Recommendation {
+interface Recommendation extends FlavorProfile {
   brandId: number
   nameJa: string
   nameRomaji: string | null
+  brewery: string | null
+  prefecture: string | null
 }
 
 // Canned recommendations for the non-production E2E stub (the populated stub
 // profile). The real path fetches a candidate pool and ranks it; the stub
 // bypasses the DB so the E2E is deterministic without a live mirror.
 const STUB_RECOMMENDATIONS: readonly Recommendation[] = [
-  { brandId: 101, nameJa: '獺祭', nameRomaji: 'Dassai' },
-  { brandId: 102, nameJa: '田酒', nameRomaji: 'Denshu' },
-  { brandId: 103, nameJa: '而今', nameRomaji: 'Jikon' },
+  { brandId: 101, nameJa: '獺祭', nameRomaji: 'Dassai', brewery: 'Asahi Shuzo', prefecture: 'Yamaguchi', f1: 0.62, f2: 0.4, f3: 0.25, f4: 0.45, f5: 0.35, f6: 0.58 },
+  { brandId: 102, nameJa: '田酒', nameRomaji: 'Denshu', brewery: 'Nishida Shuzoten', prefecture: 'Aomori', f1: 0.3, f2: 0.6, f3: 0.55, f4: 0.4, f5: 0.5, f6: 0.3 },
+  { brandId: 103, nameJa: '而今', nameRomaji: 'Jikon', brewery: 'Kiyasho Shuzo', prefecture: 'Mie', f1: 0.58, f2: 0.55, f3: 0.3, f4: 0.42, f5: 0.32, f6: 0.5 },
 ]
 
 /**
@@ -222,10 +225,18 @@ async function resolveRecommendations(
   const pool = await getFlavorCandidatePool()
   const result = recommendFromTasteEvents(events, pool, Date.now(), { limit: 6 })
   if (result.kind !== 'ranked') return []
-  return result.results.map((match) => ({
-    brandId: match.candidate.brandId,
-    nameJa: match.candidate.nameJa,
-    nameRomaji: match.candidate.nameRomaji,
+  return result.results.map(({ candidate }) => ({
+    brandId: candidate.brandId,
+    nameJa: candidate.nameJa,
+    nameRomaji: candidate.nameRomaji,
+    brewery: candidate.brewery,
+    prefecture: candidate.prefecture,
+    f1: candidate.f1,
+    f2: candidate.f2,
+    f3: candidate.f3,
+    f4: candidate.f4,
+    f5: candidate.f5,
+    f6: candidate.f6,
   }))
 }
 
@@ -298,12 +309,16 @@ export default async function PalatePage({
 
   const t = await getTranslations('palate')
   const tAxis = await getTranslations('flavorAxis')
+  const tAttribution = await getTranslations('sakenowaAttribution')
   const debugMode = isDebugEnabledFromCookies(cookieJar)
   // The journal first, the anonymous session second. A maintainer's tastings
   // are the real thing; the session store is what an anonymous visitor builds
   // from scans and cross-beverage seeds.
-  const session =
-    (await resolveJournalTasteProfile(cookieJar)) ?? (await resolveSessionTasteProfile(cookieJar))
+  const journalSession = await resolveJournalTasteProfile(cookieJar)
+  const session = journalSession ?? (await resolveSessionTasteProfile(cookieJar))
+  // v1.5 §12: the rating slot shows only once rating is available to the
+  // visitor — today, someone who keeps a journal (ADR-0020).
+  const canRate = journalSession !== null
   const events = session.kind === 'profile' ? session.events : []
   const profile = session.kind === 'profile' ? session.profile : null
   const ratingCount = countRatings(events)
@@ -319,15 +334,33 @@ export default async function PalatePage({
   // for the first (ADR-0022: Floral, Mellow, Rich, Mild, Dry, Light) and a
   // lean phrase for the second, so "Rich, umami-forward" rather than "Rich,
   // Mellow" which reads as two labels instead of one description.
+  // v1.5 §12 header, the tab pattern: one title, one meta line. Under three
+  // tastings the title is "Your palate" and the meta says how far along it is
+  // ("So far" moved into it).
   const title =
     stage === 'read' && profile
       ? t('titleRead', {
           top: tAxis(`${palateLean(profile).top}.label`),
           lean: t(`lean.${palateLean(profile).second}`),
         })
+      : t('titleEarly')
+  const meta =
+    stage === 'read'
+      ? t('derivedFrom', { count: ratingCount })
       : stage === 'taking_shape'
-        ? t('titleTakingShape')
-        : t('titleNone')
+        ? lastRated
+          ? t('metaTakingShape', { name: lastRated.name, rating: lastRated.rating })
+          : t('metaTakingShapeBare')
+        : t('metaNone')
+
+  // "Same shape as {drink}" — the drink the visitor last seeded from, when the
+  // palate came from a cold-start chip rather than from ratings.
+  const lastSeed = [...events].reverse().find((event) => event.kind === 'cross_beverage_seed')
+  const seededDrink =
+    lastSeed && lastSeed.kind === 'cross_beverage_seed'
+      ? (coldStartChips().find((chip) => chip.descriptor === lastSeed.descriptor)?.name ?? null)
+      : null
+  const shownRecommendations = stage === 'read' ? recommendations : recommendations.slice(0, 3)
 
   const axisStrings: PalateAxisStrings = {
     heading: t('axisHeading'),
@@ -345,6 +378,9 @@ export default async function PalatePage({
     const lean = row ? palateLean(row) : null
     return {
       ...chip,
+      sketch: row
+        ? FLAVOR_AXES.map((axis) => ({ axis, label: tAxis(`${axis}.label`), value: row[axis] }))
+        : null,
       seedLine: lean
         ? t('coldStart.seedLine', {
             name: chip.name,
@@ -361,12 +397,11 @@ export default async function PalatePage({
       data-testid="profile-page"
     >
       <section className="flex flex-col gap-1" data-testid="palate-header">
-        <p className="text-section-label uppercase text-ash-600">{t('sectionLabel')}</p>
-        <h1 className="text-hero font-medium text-ink" data-testid="palate-title">
+        <h1 className="text-tab-title font-medium text-ink" data-testid="palate-title">
           {title}
         </h1>
-        <p className="text-subtle text-ash-600">
-          {ratingCount > 0 ? t('derivedFrom', { count: ratingCount }) : t('derivedFromNone')}
+        <p className="text-subtle text-ash-600" data-testid="palate-meta">
+          {meta}
         </p>
       </section>
 
@@ -378,23 +413,13 @@ export default async function PalatePage({
 
       {stage !== 'read' && (
         <div className="flex flex-col gap-5" data-testid="palate-early">
-          <PalateProgress ratingCount={ratingCount} label={t('progressLabel')} />
-          {/*
-            The last tasting, when there is one — a fact about this visitor.
-
-            Not here, on purpose (maintainer review on #330): §12's "N more
-            tastings and your first read appears", its "Rate a few different
-            styles" tip and its "Scan a label" button. A visitor has nowhere to
-            rate a sake yet — `rateSake` has no screen until the bottle → Cellar
-            → tasting-notes work lands, and a scan does not feed the palate —
-            so all three pointed at a step that does not exist. The cold-start
-            chips are the one input that works today, so they are the screen.
-            The three return with rating.
-          */}
-          {lastRated !== null && (
-            <p className="text-body text-ash-600" data-testid="palate-so-far">
-              {t('soFar', { name: lastRated.name, rating: lastRated.rating })}
-            </p>
+          {canRate && (
+            <div className="flex flex-col gap-2">
+              <PalateProgress ratingCount={ratingCount} label={t('progressLabel')} />
+              <p className="text-meta text-ash-600" data-testid="palate-progress-line">
+                {t('progressLine', { count: Math.max(0, 3 - ratingCount) })}
+              </p>
+            </div>
           )}
           <ColdStartChips chips={chips} debugMode={debugMode} />
         </div>
@@ -426,40 +451,68 @@ export default async function PalatePage({
         </div>
       )}
 
-      {recommendations.length > 0 && (
+      {shownRecommendations.length > 0 && (
         <section className="flex flex-col gap-2" data-testid="profile-recommendations">
-          <h2 className="text-section-label uppercase text-ash-600">{t('recommendedHeading')}</h2>
+          {/* v1.5 §12: the Sakenowa credit folds into the label row, at the
+              right, in §17's caption style — this list's attribution. */}
+          <div className="flex items-baseline justify-between gap-3">
+            <h2 className="text-section-label uppercase text-ash-600">{t('recommendedHeading')}</h2>
+            <SakenowaAttributionView
+              placement="end"
+              poweredBy={tAttribution('poweredBy')}
+              linkLabel={tAttribution('linkLabel')}
+              className="shrink-0 text-[11px]"
+            />
+          </div>
+          <p className="text-meta text-ash-600" data-testid="profile-recommendations-lead">
+            {seededDrink && stage !== 'read' ? t('closestToDrink', { drink: seededDrink }) : t('closestToPalate')}
+          </p>
           <ul className="flex flex-col gap-2" role="list">
-            {recommendations.map((rec) => (
-              <li key={rec.brandId}>
-                <Link
-                  href={{
-                    pathname: '/sake/[brandId]',
-                    params: { brandId: String(rec.brandId) },
-                  }}
-                  data-testid={`recommendation-${rec.brandId}`}
-                  // Centred in its 48px row, not baseline-aligned to the top of
-                  // it: `items-baseline` on the row left the names sitting on
-                  // the card's top edge with empty space under them. The
-                  // kanji and romaji still share a baseline, inside.
-                  className="flex min-h-12 items-center rounded-xl bg-surface px-4 py-2 shadow-yw-sm transition-colors hover:bg-ash-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
-                >
-                  <span className="flex items-baseline gap-2">
-                    <span className="text-card-heading font-medium text-ink" lang="ja">
-                      {rec.nameJa}
+            {shownRecommendations.map((rec) => {
+              const lean = palateLean(rec)
+              const first = tAxis(`${lean.top}.label`)
+              const second = tAxis(`${lean.second}.label`)
+              return (
+                <li key={rec.brandId}>
+                  <Link
+                    href={{ pathname: '/sake/[brandId]', params: { brandId: String(rec.brandId) } }}
+                    data-testid={`recommendation-${rec.brandId}`}
+                    className="flex flex-col gap-1 rounded-xl bg-surface px-4 py-3 shadow-yw-sm transition-colors hover:bg-ash-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+                  >
+                    {/* Only what we know: the name, brewery, prefecture and
+                        the chart's axes — no photo, grade or price (v1.5). */}
+                    <span className="flex flex-wrap items-baseline gap-x-2">
+                      <span className="text-card-heading font-medium text-ink" lang={rec.nameRomaji ? 'en' : 'ja'}>
+                        {rec.nameRomaji ?? rec.nameJa}
+                      </span>
+                      {rec.nameRomaji && (
+                        <span className="text-meta text-ash-600" lang="ja">
+                          {rec.nameJa}
+                        </span>
+                      )}
                     </span>
-                    {rec.nameRomaji && (
-                      <span className="text-meta text-ash-600" lang="en">
-                        {rec.nameRomaji}
+                    {(rec.brewery || rec.prefecture) && (
+                      <span className="text-meta text-ash-600">
+                        {[rec.brewery, rec.prefecture].filter(Boolean).join(' · ')}
                       </span>
                     )}
-                  </span>
-                </Link>
-              </li>
-            ))}
+                    <span className="text-subtle text-ash-700">
+                      {seededDrink && stage !== 'read'
+                        ? t('reasonDrink', { drink: seededDrink, first: first.toLocaleLowerCase(locale), second: second.toLocaleLowerCase(locale) })
+                        : t('reasonPalate', { first: first.toLocaleLowerCase(locale), second: second.toLocaleLowerCase(locale) })}
+                    </span>
+                    <span className="mt-0.5 flex gap-1.5">
+                      {[first, second].map((word) => (
+                        <span key={word} className="inline-flex min-h-6 items-center rounded-full bg-ash-200 px-2 text-[11px] text-ash-700">
+                          {word}
+                        </span>
+                      ))}
+                    </span>
+                  </Link>
+                </li>
+              )
+            })}
           </ul>
-          {/* ADR-0014: the Sakenowa credit is line 1 of the end-of-screen block,
-              rendered by the app shell directly under this list (v1.5 rule 15). */}
         </section>
       )}
     </main>
