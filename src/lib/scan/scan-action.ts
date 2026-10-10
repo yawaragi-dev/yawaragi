@@ -20,12 +20,13 @@ import {
   resolveScannedLabel,
   type ResolveScannedLabelResult,
 } from '@/lib/sakenowa/resolve-scanned-label'
-import { findNearestBrands } from '@/lib/sakenowa/nearest-brands'
+import { findNearestBrands, type NearestBrand } from '@/lib/sakenowa/nearest-brands'
 import { getPrefectureNames } from '@/lib/sakenowa/prefecture'
 import type { Brand } from '@/lib/schemas/brand'
 import type { Brewery } from '@/lib/schemas/brewery'
 import type { LabelScanExtraction } from '@/lib/schemas/label-scan-extraction'
-import type { ScanActionState } from './scan-action-state'
+import type { ScanActionState, ScanCandidate } from './scan-action-state'
+import { CONFIDENCE_AUTO_THRESHOLD } from './confidence-tier'
 import { classifyScanOutcome } from './scan-outcome'
 
 /**
@@ -312,27 +313,34 @@ async function runScanAction(
 }
 
 /**
- * §5a "Did you mean": a `no_match` gets the catalogue sakes nearest to what
- * was read. Applied to the answer the visitor will see, not inside the
- * per-tier pipeline — a tier-1 `no_match` is always retried, and reading the
- * catalogue for a result that is thrown away is wasted work.
+ * Guesses for the answer the visitor will see: §5a "Did you mean" on a
+ * `no_match`, and §5's "Not sure?" list under a Best-guess match (0.60–0.84,
+ * the match itself left out). Applied once, not inside the per-tier pipeline
+ * — a tier-1 `no_match` is always retried, and reading the catalogue for a
+ * result that is thrown away is wasted work. A sure match asks nothing.
  */
 async function withNearestCandidates(state: ScanActionState, locale: Locale): Promise<ScanActionState> {
-  if (state.status !== 'no_match') return state
-  const nearest = await findNearestBrands({ name: state.extraction.name_ja, brewery: state.extraction.brewery_ja })
-  return {
-    ...state,
-    candidates: nearest.map(({ row, reason }) => ({
-      brandId: row.brandId,
-      sakeHref: sakeHrefFor(row.brandId, locale),
-      nameKanji: row.nameKanji,
-      nameRomaji: row.nameRomaji,
-      breweryKanji: row.breweryKanji,
-      breweryRomaji: row.breweryRomaji,
-      prefectureName: row.areaId === null ? null : (getPrefectureNames(row.areaId)?.nameEn ?? null),
-      reason,
-    })),
+  const read = (extraction: LabelScanExtraction) => ({ name: extraction.name_ja, brewery: extraction.brewery_ja })
+  const toCandidate = ({ row, reason, sameBrewery }: NearestBrand): ScanCandidate => ({
+    brandId: row.brandId,
+    sakeHref: sakeHrefFor(row.brandId, locale),
+    nameKanji: row.nameKanji,
+    nameRomaji: row.nameRomaji,
+    breweryKanji: row.breweryKanji,
+    breweryRomaji: row.breweryRomaji,
+    prefectureName: row.areaId === null ? null : (getPrefectureNames(row.areaId)?.nameEn ?? null),
+    reason,
+    sameBrewery,
+  })
+
+  if (state.status === 'no_match') {
+    return { ...state, candidates: (await findNearestBrands(read(state.extraction))).map(toCandidate) }
   }
+  if (state.status === 'matched' && state.extraction.confidence < CONFIDENCE_AUTO_THRESHOLD) {
+    const others = await findNearestBrands(read(state.extraction), { exclude: state.brandId })
+    return { ...state, otherCandidates: others.map(toCandidate) }
+  }
+  return state
 }
 
 /**
@@ -455,6 +463,8 @@ async function mapResolvedToState(
         sakeRomaji: bestRomaji(resolved.sake),
         breweryRomaji: brewery ? bestRomaji(brewery) : null,
         flavorChart,
+        // Filled by `withNearestCandidates` for a best guess.
+        otherCandidates: [],
       }
     }
 

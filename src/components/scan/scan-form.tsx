@@ -41,7 +41,8 @@ import { resolveBadgeKind } from '@/lib/provenance/policy'
 // `requiresSakenowaAttribution(sources)` from sakenowa-attribution.tsx.
 import { CellarButton } from '@/components/collection/cellar-button'
 import { TastingLogPanel } from '@/components/journal/tasting-log-panel'
-import { ScanOutcome } from '@/components/scan/scan-outcome'
+import { OtherCandidates } from '@/components/scan/other-candidates'
+import { ScanOutcome, type OutcomeCandidate } from '@/components/scan/scan-outcome'
 import { ScanResultCard } from '@/components/scan/scan-result-card'
 import type { DebugEvent } from '@/lib/debug/debug-log'
 import { appendDebugEvents } from '@/lib/debug/debug-store'
@@ -54,6 +55,7 @@ import { scanAction } from '@/lib/scan/scan-action'
 import {
   INITIAL_SCAN_ACTION_STATE,
   type ScanActionState,
+  type ScanCandidate,
 } from '@/lib/scan/scan-action-state'
 import { appendMatchToHistory } from '@/lib/scan/scan-history'
 import { rememberScannedPhoto } from '@/lib/scan/scanned-photo'
@@ -405,6 +407,24 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
   // of the read — so the working state only ever appeared on a first scan.
   const view = resultDismissed || isPending ? INITIAL_SCAN_ACTION_STATE : state
 
+  const join = (...parts: (string | null | undefined)[]) =>
+    parts.filter((p): p is string => Boolean(p)).join(' · ') || null
+  // §5a's rows, for "Did you mean" and §5's "Not sure?" alike: a guess with
+  // its reason in words, never a percentage.
+  const candidateRow = (c: ScanCandidate): OutcomeCandidate => ({
+    key: c.brandId,
+    href: c.sakeHref,
+    name: c.nameRomaji ?? c.nameKanji,
+    kanji: c.nameRomaji ? c.nameKanji : null,
+    where: join(c.breweryRomaji ?? c.breweryKanji, c.prefectureName),
+    reason: tOutcome(
+      c.sameBrewery
+        ? c.reason === 'brewery'
+          ? 'candidateReason.sameBrewery'
+          : 'candidateReason.sameBreweryName'
+        : `candidateReason.${c.reason}`,
+    ),
+  })
 
   const outcome = renderOutcome()
   // §5a: every outcome — including the message-only ones — is a screen of its
@@ -429,8 +449,6 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
         id={id}
       />
     )
-    const join = (...parts: (string | null | undefined)[]) =>
-      parts.filter((p): p is string => Boolean(p)).join(' · ') || null
     const icon = (Icon: typeof Camera) => <Icon size={28} />
 
     if (downscaleFailed) {
@@ -558,19 +576,7 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
               candidates.length > 0
                 ? {
                     label: tOutcome('noMatch.candidates'),
-                    rows: candidates.map((c) => ({
-                      key: c.brandId,
-                      href: c.sakeHref,
-                      name: c.nameRomaji ?? c.nameKanji,
-                      kanji: c.nameRomaji ? c.nameKanji : null,
-                      where: join(c.breweryRomaji ?? c.breweryKanji, c.prefectureName),
-                      reason:
-                        c.reason === 'both'
-                          ? tOutcome('noMatch.reasonBoth')
-                          : c.reason === 'name'
-                            ? tOutcome('noMatch.reasonName')
-                            : tOutcome('noMatch.reasonBrewery'),
-                    })),
+                    rows: candidates.map(candidateRow),
                   }
                 : undefined
             }
@@ -771,6 +777,13 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
             })}
             flavorChart={view.flavorChart}
             extractionConfidence={view.extraction.confidence}
+            // §5 Best guess: "Not sure? {n} other candidates" under the card.
+            // Empty on a sure match, so the row is absent there.
+            otherCandidates={
+              <OtherCandidates
+                rows={(Array.isArray(view.otherCandidates) ? view.otherCandidates : []).map(candidateRow)}
+              />
+            }
             // Rescan-in-flight fade: `isPending` covers both the browser-
             // side downscale AND the server round-trip. While either is
             // running, the visitor's fresh photo is already displayed
