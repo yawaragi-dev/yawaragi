@@ -78,6 +78,8 @@ test.describe('/en/home — §3 Home', () => {
     // call to action here, so the tile row above it would only repeat it.
     await expect(page.getByTestId('home-first-run-cta')).toHaveAttribute('href', '/en/scan')
     await expect(page.getByTestId('home-action-tiles')).toHaveCount(0)
+    // v1.5 §3: the card's one action pair ends with a ghost "Or type the name".
+    await expect(page.getByTestId('home-first-run-type-it')).toHaveAttribute('href', '/en/search')
     await expect(page.getByTestId('heuristic-disclaimer-body')).toBeAttached()
 
     // The first-run copy must not promise the save that does not exist yet.

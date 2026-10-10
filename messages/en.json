@@ -43,7 +43,8 @@
         "learn": "See what's known",
         "palate": "Or start from a drink you know"
       },
-      "cta": "Scan a label"
+      "cta": "Scan a label",
+      "typeIt": "Or type the name"
     }
   },
   "common": {
