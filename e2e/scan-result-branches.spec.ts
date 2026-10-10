@@ -208,7 +208,7 @@ test.describe('scan result branches (#109 PR B)', () => {
     await expect(page.getByTestId('scan-camera')).toBeVisible()
     await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
     await expect(page.getByTestId('scan-result-low-confidence')).toBeVisible()
-    await expect(page.getByTestId('scan-result-retry-rescan')).toBeVisible()
+    await expect(page.getByTestId('scan-outcome-rescan')).toBeVisible()
     await context.close()
   })
 
@@ -252,8 +252,9 @@ test.describe('scan result branches (#109 PR B)', () => {
     const rescan = page.getByTestId('scan-result-consensus-rescan')
     await expect(rescan).toBeVisible()
     // And a third way out. This card is a guess made BECAUSE the label would
-    // not read, so "rescan" re-runs the same bad photo; §8 is the escape.
-    await expect(page.getByTestId('scan-result-consensus-type-it')).toBeVisible()
+    // not read, so "rescan" re-runs the same bad photo; §8 is the escape —
+    // §5a's "Type the name instead", on every outcome.
+    await expect(page.getByTestId('scan-outcome-type-it')).toBeVisible()
 
     // §4's model: a rescan RETURNS TO THE CAMERA. It used to open the OS photo
     // library, because there was no camera screen to return to — the entry
@@ -280,8 +281,10 @@ test.describe('scan result branches (#109 PR B)', () => {
     await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
 
     await expect(page.getByTestId('scan-result-low-confidence')).toBeVisible()
-    await expect(page.getByTestId('scan-result-retry-rescan')).toBeVisible()
-    await expect(page.getByTestId('scan-result-retry-type-it')).toBeVisible()
+    // §5a's unreadable outcome: three tips, the rescan in the bar, §8 last.
+    await expect(page.getByTestId('scan-outcome-tips').locator('li')).toHaveCount(3)
+    await expect(page.getByTestId('scan-outcome-rescan')).toBeVisible()
+    await expect(page.getByTestId('scan-outcome-type-it')).toBeVisible()
     // The camera steps aside once the result owns the rescan: two
     // ways to re-pick a photo stacked above the answer is what the
     // maintainer caught on this exact screen.
@@ -292,13 +295,13 @@ test.describe('scan result branches (#109 PR B)', () => {
     await context.addCookies([
       injectionCookie({ name_ja: '獺祭', brewery_ja: '旭酒造', confidence: 0.95 }),
     ])
-    await page.getByTestId('scan-result-retry-rescan').click()
+    await page.getByTestId('scan-outcome-rescan').click()
     await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
     await expect(page.getByTestId('scan-result-card')).toBeVisible()
     await context.close()
   })
 
-  test('no-match renders the enriched extraction with a provenance badge', async ({
+  test('no-match shows what was read, editable, and searches again with the fix', async ({
     browser,
   }, testInfo) => {
     testInfo.skip(!dbUp, 'Sakenowa mirror not populated — DB-bound spec')
@@ -316,21 +319,24 @@ test.describe('scan result branches (#109 PR B)', () => {
     await page.goto('/en/scan')
     await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
 
-    await expect(page.getByTestId('scan-result-no-match')).toBeVisible()
-    await expect(page.getByTestId('scan-result-no-match-name-ja')).toContainText('架空銘柄零一')
-    await expect(page.getByTestId('scan-result-no-match-brewery-ja')).toContainText('架空酒造零')
-    // llm_extracted provenance badge sits on the extracted-name baseline.
+    const outcome = page.getByTestId('scan-result-no-match')
+    await expect(outcome).toBeVisible()
+    await expect(outcome.getByTestId('scan-outcome-kicker')).toHaveText('Not in the catalogue')
+    // §5a "What we read": the read as editable fields, marked Read by AI.
+    await expect(page.getByTestId('scan-outcome-read-name')).toHaveValue('架空銘柄零一')
+    await expect(page.getByTestId('scan-outcome-read-brewery')).toHaveValue('架空酒造零')
     await expect(
-      page
-        .getByTestId('scan-result-no-match')
-        .locator('[data-testid="provenance-badge"][data-kind="llmExtracted"]'),
+      page.getByTestId('scan-outcome-read').locator('[data-testid="provenance-badge"][data-kind="llmExtracted"]'),
     ).toBeVisible()
-    // Dead-end recovery: rescan + explore bridge both present, and the
-    // camera is gone because this state carries its own rescan.
-    await expect(page.getByTestId('scan-result-no-match-rescan')).toBeVisible()
-    await expect(page.getByTestId('scan-result-no-match-explore')).toBeVisible()
-    await expect(page.getByTestId('scan-result-no-match-type-it')).toBeVisible()
+    // Not a dead end: fix the name and search again — it lands on §8 with it.
+    await page.getByTestId('scan-outcome-read-name').fill('Dassai')
+    await expect(page.getByTestId('scan-outcome-search-again')).toHaveAttribute('href', '/en/search?q=Dassai')
+    // The rescan is in the bar, §8 is last, and the camera has stepped aside.
+    await expect(page.getByTestId('scan-outcome-rescan')).toBeVisible()
+    await expect(page.getByTestId('scan-outcome-type-it')).toBeVisible()
     await expect(page.getByTestId('scan-camera')).toHaveCount(0)
+    await page.getByTestId('scan-outcome-search-again').click()
+    await page.waitForURL(/\/en\/search\?q=Dassai$/)
     await context.close()
   })
 
@@ -397,14 +403,15 @@ test.describe('scan result branches (#109 PR B)', () => {
     await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
 
     await expect(page.getByTestId('scan-result-ambiguous')).toBeVisible()
-    await expect(page.getByTestId('scan-result-ambiguous-list')).toBeVisible()
-    const candidate = page.getByTestId(`scan-result-ambiguous-candidate-${firstBrandId}`)
+    await expect(page.getByTestId('scan-outcome-candidates')).toBeVisible()
+    const candidate = page.getByTestId(`scan-outcome-candidate-${firstBrandId}`)
     await expect(candidate).toBeVisible()
-    // This state is in `hasResult`, so the camera is hidden — which is
-    // only safe because the candidate list carries its own rescan.
+    // A candidate is a guess (§5a): a reason in words, never a percentage.
+    await expect(page.getByTestId('scan-outcome-candidates')).not.toContainText('%')
+    // The camera is hidden — only safe because the outcome carries its rescan.
     await expect(page.getByTestId('scan-camera')).toHaveCount(0)
-    await expect(page.getByTestId('scan-result-ambiguous-rescan')).toBeVisible()
-    await expect(page.getByTestId('scan-result-ambiguous-type-it')).toBeVisible()
+    await expect(page.getByTestId('scan-outcome-rescan')).toBeVisible()
+    await expect(page.getByTestId('scan-outcome-type-it')).toBeVisible()
 
     await candidate.click()
     await page.waitForURL(new RegExp(`/en/sake/${firstBrandId}\\?from=scan$`))
@@ -433,8 +440,9 @@ test.describe('scan result branches (#109 PR B)', () => {
     await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
 
     await expect(page.getByTestId('scan-result-matched-brand-only')).toBeVisible()
-    await expect(page.getByTestId('scan-result-brewery-divergence')).toBeVisible()
-    const link = page.getByTestId('scan-result-matched-brand-only-link')
+    // §5a: "Is it this one?" — the one row, saying the brewery differs.
+    const link = page.getByTestId(`scan-outcome-candidate-${fixture.brandId}`)
+    await expect(link).toContainText('架空酒造零')
     await expect(link).toHaveAttribute('href', new RegExp(`/en/sake/${fixture.brandId}\\?from=scan$`))
     await context.close()
   })
@@ -458,8 +466,9 @@ test.describe('scan result branches (#109 PR B)', () => {
     await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
 
     await expect(page.getByTestId('scan-result-matched-brewery-only')).toBeVisible()
-    await expect(page.getByTestId('scan-result-brand-divergence')).toBeVisible()
-    const link = page.getByTestId('scan-result-matched-brewery-only-link')
+    // §5a: "From this brewery" — the row says the label read another name.
+    const link = page.getByTestId(`scan-outcome-candidate-${fixture.brandId}`)
+    await expect(link).toContainText('架空銘柄零一')
     await expect(link).toHaveAttribute('href', new RegExp(`/en/sake/${fixture.brandId}\\?from=scan$`))
     await context.close()
   })

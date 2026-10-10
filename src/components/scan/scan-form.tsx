@@ -9,11 +9,23 @@
 import { startTransition, useActionState, useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useTranslations } from 'next-intl'
-import { Camera } from '@phosphor-icons/react/dist/ssr'
-import NextLink from 'next/link'
+import {
+  ArrowsDownUp,
+  ArrowsOut,
+  Camera,
+  CameraRotate,
+  EyeSlash,
+  HandPalm,
+  HourglassMedium,
+  ImageBroken,
+  Lightning,
+  ListBullets,
+  MagnifyingGlass,
+  Question,
+  WarningCircle,
+} from '@phosphor-icons/react/dist/ssr'
 import { useRouter } from 'next/navigation'
-import { getPathname, Link } from '@/i18n/navigation'
-import { Button } from '@/components/ui/button'
+import { getPathname } from '@/i18n/navigation'
 import { CameraCapture } from '@/components/scan/camera-capture'
 import { ProvenanceBadgeView } from '@/components/sake/provenance-badge'
 import { resolveBadgeKind } from '@/lib/provenance/policy'
@@ -27,9 +39,9 @@ import { resolveBadgeKind } from '@/lib/provenance/policy'
 // `manual_curation`) record, thread sources through
 // `ScanActionState` and gate these renders with
 // `requiresSakenowaAttribution(sources)` from sakenowa-attribution.tsx.
-import { SakenowaAttributionView } from '@/components/sake/sakenowa-attribution'
 import { CellarButton } from '@/components/collection/cellar-button'
 import { TastingLogPanel } from '@/components/journal/tasting-log-panel'
+import { ScanOutcome } from '@/components/scan/scan-outcome'
 import { ScanResultCard } from '@/components/scan/scan-result-card'
 import type { DebugEvent } from '@/lib/debug/debug-log'
 import { appendDebugEvents } from '@/lib/debug/debug-store'
@@ -105,7 +117,6 @@ interface ScanFormProps {
  */
 export function ScanForm({ locale, debugMode = false, canLog = false }: ScanFormProps) {
   const t = useTranslations('scan.form')
-  const tCard = useTranslations('scan.resultCard')
   // ProvenanceBadgeView + SakenowaAttributionView are the sync presentational
   // halves; we resolve their strings via the client-side translator since this
   // module is `'use client'`. The badge's policy (don't render canonical
@@ -113,12 +124,10 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
   // the extraction came back with source: 'llm_extracted'.
   const tBadge = useTranslations('provenance.badge.llmExtracted')
   const tProvenanceSheet = useTranslations('provenance.sheet')
-  const tAttribution = useTranslations('sakenowaAttribution')
   // Reused for the brewery label on the enriched no_match state (the
   // same label the sake detail page and result card render).
-  const tSake = useTranslations('sake.brand')
   // §8's "Type it": the bridge the non-match states offer.
-  const tSearch = useTranslations('search')
+  const tOutcome = useTranslations('scanOutcome')
   const router = useRouter()
   // One file input: the photo library.
   //
@@ -397,48 +406,245 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
   const view = resultDismissed || isPending ? INITIAL_SCAN_ACTION_STATE : state
 
 
-  const isMatch =
-    view.status === 'matched' ||
-    view.status === 'matched_brand_only' ||
-    view.status === 'matched_brewery_only'
-  const hasResult =
-    isMatch ||
-    view.status === 'low_confidence' ||
-    view.status === 'no_match' ||
-    view.status === 'ambiguous'
+  const outcome = renderOutcome()
+  // §5a: every outcome — including the message-only ones — is a screen of its
+  // own, with the rescan in its bar; the camera is not left up behind it.
+  const hasResult = view.status === 'matched' || outcome !== null
+
 
   /**
-   * The one-line message states — none of them is a result, so the camera
-   * stays up and shows the line itself, under its title.
-   *
-   * They used to render under the camera, and since §4 made the camera
-   * exactly one screen tall that was below the fold: a visitor who hit the
-   * rate limit saw the shutter come back and nothing else (maintainer report).
-   *
-   * - `rate_limited`: PRD #105 / #107 discovery copy with the retry time,
-   *   rounded UP to whole hours so the visitor never hits the wall again
-   *   before the window we told them about has closed.
-   * - `extraction_failed`: the action catches the vision call + lookup;
-   *   random non-sake photos routinely end here. The copy stays generic; the
-   *   debug overlay carries the technical error.
-   * - `session_missing`: defensive (the proxy is the cookie's sole writer
-   *   since #161), kept so a matcher gap reads as a polite line, not a throw.
-   * - `invalid_input`, and the client-side `downscaleFailed`.
+   * §5a (design v1.5): the outcome screen for everything that is not a
+   * match, or `null` while the camera is up or a match is showing. Each
+   * branch only fills in the shared vocabulary of `<ScanOutcome />`.
    */
-  const notice: { testId: string; text: string } | null = downscaleFailed
-    ? { testId: 'scan-error-downscale', text: t('errorDownscale') }
-    : view.status === 'rate_limited'
-      ? {
-          testId: 'scan-error-rate-limited',
-          text: t('rateLimited', { hours: Math.max(1, Math.ceil(view.retryAfterSec / 3600)) }),
-        }
-      : view.status === 'extraction_failed'
-        ? { testId: 'scan-error-extraction-failed', text: t('extractionFailed') }
-        : view.status === 'invalid_input'
-          ? { testId: 'scan-error-invalid-input', text: t('errorInvalidInput') }
-          : view.status === 'session_missing'
-            ? { testId: 'scan-error-session-missing', text: t('sessionMissing') }
-            : null
+  function renderOutcome(): React.ReactNode {
+    const readBadge = (id: string) => (
+      // "Read by AI" — no percentage on this screen (v1.5 §5a).
+      <ProvenanceBadgeView
+        kind={resolveBadgeKind('llm_extracted')}
+        label={tBadge('label')}
+        explanation={tBadge('explanation')}
+        sheetTitle={tBadge('sheetTitle')}
+        closeLabel={tProvenanceSheet('closeLabel')}
+        id={id}
+      />
+    )
+    const join = (...parts: (string | null | undefined)[]) =>
+      parts.filter((p): p is string => Boolean(p)).join(' · ') || null
+    const icon = (Icon: typeof Camera) => <Icon size={28} />
+
+    if (downscaleFailed) {
+      return (
+        <ScanOutcome
+          testId="scan-error-downscale"
+          icon={icon(ImageBroken)}
+          kicker={tOutcome('badPhoto.kicker')}
+          title={tOutcome('badPhoto.title')}
+          body={tOutcome('badPhoto.body')}
+          onRescan={onPickClick}
+        />
+      )
+    }
+    switch (view.status) {
+      case 'matched_brand_only':
+        return (
+          <ScanOutcome
+            testId="scan-result-matched-brand-only"
+            icon={icon(ArrowsDownUp)}
+            kicker={tOutcome('brandOnly.kicker')}
+            title={tOutcome('brandOnly.title')}
+            body={tOutcome('brandOnly.body', { line: view.sakeRomaji ?? view.sakeKanji })}
+            onRescan={onPickClick}
+            read={{
+              name: view.extraction.name_ja,
+              brewery: view.extraction.brewery_ja,
+              badge: readBadge('scan-outcome-brand-only-badge'),
+            }}
+            candidates={{
+              label: tOutcome('brandOnly.candidates'),
+              rows: [
+                {
+                  key: view.brandId,
+                  href: view.sakeHref,
+                  name: view.sakeRomaji ?? view.sakeKanji,
+                  kanji: view.sakeRomaji ? view.sakeKanji : null,
+                  where: view.breweryDivergence.storedRomaji ?? view.breweryDivergence.stored,
+                  reason: tOutcome('brandOnly.reason', { extracted: view.breweryDivergence.extracted }),
+                },
+              ],
+            }}
+          />
+        )
+      case 'matched_brewery_only':
+        return (
+          <ScanOutcome
+            testId="scan-result-matched-brewery-only"
+            icon={icon(ArrowsDownUp)}
+            kicker={tOutcome('breweryOnly.kicker')}
+            title={tOutcome('breweryOnly.title')}
+            body={tOutcome('breweryOnly.body', { brewery: view.breweryRomaji ?? view.extraction.brewery_ja })}
+            onRescan={onPickClick}
+            read={{
+              name: view.extraction.name_ja,
+              brewery: view.extraction.brewery_ja,
+              badge: readBadge('scan-outcome-brewery-only-badge'),
+            }}
+            candidates={{
+              label: tOutcome('breweryOnly.candidates'),
+              rows: [
+                {
+                  key: view.brandId,
+                  href: view.sakeHref,
+                  name: view.brandDivergence.storedRomaji ?? view.brandDivergence.stored,
+                  kanji: view.brandDivergence.storedRomaji ? view.brandDivergence.stored : null,
+                  where: view.breweryRomaji ?? view.extraction.brewery_ja,
+                  reason: tOutcome('breweryOnly.reason', { extracted: view.extraction.name_ja }),
+                },
+              ],
+            }}
+          />
+        )
+      case 'ambiguous': {
+        const candidates = Array.isArray(view.candidates) ? view.candidates : []
+        const sharedBrewery = new Set(candidates.map((c) => c.breweryKanji)).size === 1
+        return (
+          <ScanOutcome
+            testId="scan-result-ambiguous"
+            icon={icon(ListBullets)}
+            kicker={tOutcome('ambiguous.kicker')}
+            title={tOutcome('ambiguous.title')}
+            body={tOutcome('ambiguous.body')}
+            onRescan={onPickClick}
+            read={{
+              name: view.extraction.name_ja,
+              brewery: view.extraction.brewery_ja,
+              badge: readBadge('scan-outcome-ambiguous-badge'),
+            }}
+            candidates={{
+              label: tOutcome('ambiguous.candidates'),
+              rows: candidates.map((c) => ({
+                key: c.brandId,
+                href: c.sakeHref,
+                name: c.nameRomaji ?? c.nameKanji,
+                kanji: c.nameRomaji ? c.nameKanji : null,
+                where: join(c.breweryRomaji ?? c.breweryKanji, c.prefectureName),
+                reason: sharedBrewery
+                  ? tOutcome('ambiguous.reasonSharedBrewery')
+                  : tOutcome('ambiguous.reasonName', { brewery: c.breweryRomaji ?? c.breweryKanji }),
+              })),
+            }}
+          />
+        )
+      }
+      case 'no_match':
+        // "Did you mean" (v1.5 §5a) needs nearest candidates the pipeline
+        // does not return yet; the read card is the way forward meanwhile.
+        return (
+          <ScanOutcome
+            testId="scan-result-no-match"
+            icon={icon(MagnifyingGlass)}
+            kicker={tOutcome('noMatch.kicker')}
+            title={tOutcome('noMatch.title')}
+            body={tOutcome('noMatch.body')}
+            onRescan={onPickClick}
+            read={{
+              name: view.extraction.name_ja,
+              brewery: view.extraction.brewery_ja,
+              badge: readBadge('scan-outcome-no-match-badge'),
+            }}
+          />
+        )
+      case 'low_confidence':
+        return consensus ? (
+          <ScanOutcome
+            testId="scan-result-consensus"
+            icon={icon(Question)}
+            kicker={tOutcome('consensus.kicker')}
+            title={tOutcome('consensus.title', { sake: consensus.nameRomaji ?? consensus.nameKanji })}
+            body={tOutcome('consensus.body', { votes: consensus.votes, total: consensus.total })}
+            onRescan={onPickClick}
+          >
+            <div className="flex flex-col gap-3">
+              {consensus.nameRomaji && (
+                <span className="text-subtle text-ash-600" lang="ja" data-testid="scan-result-consensus-kanji">
+                  {consensus.nameKanji}
+                </span>
+              )}
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => router.push(consensus.sakeHref)}
+                  className="flex min-h-11 flex-1 items-center justify-center rounded-xl border-[1.5px] border-ginshu-400 text-body font-medium text-ginshu-700 transition-colors hover:bg-ginshu-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+                  data-testid="scan-result-consensus-accept"
+                >
+                  {tOutcome('consensus.yes')}
+                </button>
+                <button
+                  type="button"
+                  onClick={onPickClick}
+                  className="flex min-h-11 flex-1 items-center justify-center rounded-xl border border-ash-300 text-body font-medium text-ink transition-colors hover:bg-ash-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+                  data-testid="scan-result-consensus-rescan"
+                >
+                  {tOutcome('consensus.no')}
+                </button>
+              </div>
+            </div>
+          </ScanOutcome>
+        ) : (
+          <ScanOutcome
+            testId="scan-result-low-confidence"
+            icon={icon(EyeSlash)}
+            kicker={tOutcome('unreadable.kicker')}
+            title={tOutcome('unreadable.title')}
+            body={tOutcome('unreadable.body')}
+            onRescan={onPickClick}
+            tips={[
+              { icon: <ArrowsOut size={18} />, text: tOutcome('unreadable.tipCloser') },
+              { icon: <Lightning size={18} />, text: tOutcome('unreadable.tipLight') },
+              { icon: <HandPalm size={18} />, text: tOutcome('unreadable.tipStill') },
+            ]}
+          />
+        )
+      case 'rate_limited':
+        // v1.5's copy says "give it a minute"; our anonymous limit is per day
+        // (5 scans / 24h), so the body keeps the honest wait in hours.
+        return (
+          <ScanOutcome
+            testId="scan-error-rate-limited"
+            icon={icon(HourglassMedium)}
+            kicker={tOutcome('rateLimited.kicker')}
+            title={tOutcome('rateLimited.title')}
+            body={t('rateLimited', { hours: Math.max(1, Math.ceil(view.retryAfterSec / 3600)) })}
+            onRescan={onPickClick}
+          />
+        )
+      case 'extraction_failed':
+      case 'session_missing':
+        return (
+          <ScanOutcome
+            testId={view.status === 'extraction_failed' ? 'scan-error-extraction-failed' : 'scan-error-session-missing'}
+            icon={icon(WarningCircle)}
+            kicker={tOutcome('failed.kicker')}
+            title={tOutcome('failed.title')}
+            body={tOutcome('failed.body')}
+            onRescan={onPickClick}
+          />
+        )
+      case 'invalid_input':
+        return (
+          <ScanOutcome
+            testId="scan-error-invalid-input"
+            icon={icon(ImageBroken)}
+            kicker={tOutcome('badPhoto.kicker')}
+            title={tOutcome('badPhoto.title')}
+            body={tOutcome('badPhoto.body')}
+            onRescan={onPickClick}
+          />
+        )
+      default:
+        return null
+    }
+  }
 
   // The form is JS-only: there is no no-JS submit path because the canvas
   // downscale runs in the browser before we ever build the FormData. The
@@ -480,7 +686,7 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
           onChoosePhoto={onUploadClick}
           typeItHref="/search"
           stillUrl={photoUrl}
-          notice={notice}
+          notice={null}
         />
       )}
 
@@ -492,358 +698,24 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
       */}
       <div className="flex flex-col items-stretch gap-4 px-5 py-5 empty:hidden">
 
-        {view.status === 'low_confidence' && consensus && (
-          // Retry / low_confidence tier AND the per-tab history has a
-          // strict-majority consensus on a brand from earlier successful
-          // scans. Surface the consensus as a soft-match: "based on
-          // your recent scans, this looks like X". Explicit tap to
-          // accept — consensus over noisy retry-mode inputs is still
-          // inference, not certainty. The vote count (3 of 5) is shown
-          // so the visitor understands what the system is leaning on.
-          <div
-            className="flex flex-col gap-3"
-            data-testid="scan-result-consensus"
-          >
-            <SakenowaAttributionView
-              placement="inline"
-              poweredBy={tAttribution('poweredBy')}
-              linkLabel={tAttribution('linkLabel')}
-            />
-            <p className="text-sm text-zinc-700 dark:text-zinc-300">
-              {t('consensusTitle')}
-            </p>
-            <div className="flex flex-col gap-1">
-              <span className="flex items-baseline gap-2">
-                <span
-                  className="text-base font-medium"
-                  lang="ja"
-                  data-testid="scan-result-consensus-kanji"
-                >
-                  {consensus.nameKanji}
-                </span>
-                {consensus.nameRomaji && (
-                  <span
-                    className="text-sm text-zinc-600 dark:text-zinc-400"
-                    data-testid="scan-result-consensus-romaji"
-                  >
-                    ({consensus.nameRomaji})
-                  </span>
-                )}
-              </span>
-              <span
-                className="text-xs text-zinc-500 dark:text-zinc-500"
-                data-testid="scan-result-consensus-votes"
-              >
-                {t('consensusVotes', { votes: consensus.votes, total: consensus.total })}
-              </span>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                onClick={() => {
-                  router.push(consensus.sakeHref)
-                }}
-                data-testid="scan-result-consensus-accept"
-              >
-                {t('consensusAccept')}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onPickClick}
-                data-testid="scan-result-consensus-rescan"
-              >
-                {t('consensusRescan')}
-              </Button>
-              {/*
-                This card is a guess from the visitor's own history after a
-                label we could NOT read. If the guess is wrong, rescanning
-                re-runs the same bad photo in the same bad light — typing the
-                name is the way out, and it is the reason §8 exists. Every
-                other non-match state offers it; leaving this one without it
-                made the accept button the only forward path.
-              */}
-              <Link
-                href="/search"
-                className="inline-flex items-center text-sm font-medium underline underline-offset-4"
-                data-testid="scan-result-consensus-type-it"
-              >
-                {tSearch('cta')}
-              </Link>
-            </div>
+        {outcome}
+        {view.status === 'matched' && (
+          // v1.5 §5's bar: kicker · ghost "Not this one" back to the camera.
+          // It replaces the "Scan again" button that sat under the card.
+          <div className="flex min-h-11 items-center justify-between gap-3" data-testid="scan-result-bar">
+            <span className="text-subtle text-ash-600">{tOutcome('matchedKicker')}</span>
+            <button
+              type="button"
+              onClick={onPickClick}
+              disabled={isPending}
+              className="-mr-2 flex min-h-11 items-center gap-1.5 rounded-md px-2 text-subtle font-medium text-ginshu-700 transition-colors hover:bg-ash-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600 disabled:opacity-60"
+              data-testid="scan-result-match-rescan"
+            >
+              <CameraRotate size={16} aria-hidden="true" />
+              {tOutcome('notThisOne')}
+            </button>
           </div>
         )}
-        {view.status === 'low_confidence' && !consensus && (
-          // Retry tier (confidence < 0.60). No lookup attempted upstream
-          // — the model isn't confident enough about the (name, brewery)
-          // pair to be worth checking against Sakenowa. Per #163 this
-          // is framed as discovery, not error: neutral zinc colours (no
-          // amber alert), no `role="alert"`. The back-label hint stays
-          // (real-world bottles like 二世古 ship designer-driven front
-          // labels the model can't parse but legible regulatory back
-          // labels), plus an explicit rescan button and a bridge to the
-          // sibling suggest surface so a curious tester who scanned a
-          // coffee mug still has a way to keep exploring.
-          <div
-            className="flex flex-col gap-2"
-            data-testid="scan-result-retry"
-          >
-            <p
-              className="text-sm text-zinc-700 dark:text-zinc-300"
-              data-testid="scan-result-low-confidence"
-            >
-              {t('lowConfidence')}
-            </p>
-            <p
-              className="text-xs text-zinc-500 dark:text-zinc-500"
-              data-testid="scan-result-back-label-hint"
-            >
-              {t('backLabelHint')}
-            </p>
-            <div className="mt-1 flex flex-wrap items-center gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onPickClick}
-                data-testid="scan-result-retry-rescan"
-              >
-                {t('retryRescan')}
-              </Button>
-              <Link
-                href="/search"
-                className="text-sm font-medium underline underline-offset-4"
-                data-testid="scan-result-retry-type-it"
-              >
-                {tSearch('cta')}
-              </Link>
-              <Link
-                href="/suggest"
-                className="text-sm font-medium underline underline-offset-4"
-                data-testid="scan-result-explore-sample"
-              >
-                {tCard('exploreAnotherWay')}
-              </Link>
-            </div>
-          </div>
-        )}
-        {view.status === 'no_match' && (
-          // Bottle wasn't found in the catalogue. Sometimes this is
-          // genuine (limited edition, collaboration product — covered
-          // by §22/§23) and sometimes the model fabricated a
-          // confidently-shaped name unrelated to the bottle (§23).
-          // The back-label hint covers the latter case. Per #163 the
-          // copy is discovery-framed, not error-framed, and we surface
-          // both a "scan again" affordance and a bridge to /suggest —
-          // a visitor who tried scanning a coffee mug still has an
-          // inviting next step, not a dead end.
-          <div
-            className="flex flex-col gap-3"
-            data-testid="scan-result-no-match"
-          >
-            {/*
-              No-match enrichment (#109 PR B). Show the visitor WHAT we
-              read from the label so they can judge whether the model
-              misread it or the bottle is genuinely absent. The extracted
-              name + brewery are LLM-derived, so the name renders next to
-              a <ProvenanceBadge kind="llmExtracted" /> on the same
-              baseline (CLAUDE.md provenance rule). Kanji renders verbatim
-              (lang="ja"), never translated.
-            */}
-            <p
-              className="text-sm text-zinc-700 dark:text-zinc-300"
-              data-testid="scan-result-no-match-read-label"
-            >
-              {t('noMatchReadLabel')}
-            </p>
-            <div className="flex flex-col gap-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <span
-                  className="text-base font-medium"
-                  lang="ja"
-                  data-testid="scan-result-no-match-name-ja"
-                >
-                  {view.extraction.name_ja}
-                </span>
-                <ProvenanceBadgeView
-                  kind={resolveBadgeKind('llm_extracted')}
-                  label={tBadge('label')}
-                  explanation={tBadge('explanation')}
-                  sheetTitle={tBadge('sheetTitle')}
-                  closeLabel={tProvenanceSheet('closeLabel')}
-                  confidence={view.extraction.confidence}
-                  id="scan-result-no-match-badge"
-                />
-              </div>
-              <div
-                className="flex flex-wrap items-baseline gap-1.5 text-sm text-zinc-600 dark:text-zinc-400"
-                data-testid="scan-result-no-match-brewery-ja"
-              >
-                <span className="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-500">
-                  {tSake('breweryLabel')}
-                </span>
-                <span lang="ja">{view.extraction.brewery_ja}</span>
-              </div>
-            </div>
-            <p className="text-sm text-zinc-700 dark:text-zinc-300">{t('noMatch')}</p>
-            <p
-              className="text-xs text-zinc-500 dark:text-zinc-500"
-              data-testid="scan-result-no-match-back-label-hint"
-            >
-              {t('backLabelHint')}
-            </p>
-            <div className="mt-1 flex flex-wrap items-center gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onPickClick}
-                data-testid="scan-result-no-match-rescan"
-              >
-                {t('retryRescan')}
-              </Button>
-              <Link
-                href="/search"
-                className="text-sm font-medium underline underline-offset-4"
-                data-testid="scan-result-no-match-type-it"
-              >
-                {tSearch('cta')}
-              </Link>
-              <Link
-                href="/suggest"
-                className="text-sm font-medium underline underline-offset-4"
-                data-testid="scan-result-no-match-explore"
-              >
-                {tCard('exploreAnotherWay')}
-              </Link>
-            </div>
-          </div>
-        )}
-        {view.status === 'ambiguous' && (() => {
-          // Disambiguation list. Each candidate carries its brand
-          // kanji + romaji and its brewery info; if every candidate
-          // shares the same brewery (common shape from brewery-only
-          // ambiguous), the UI surfaces that brewery in the header so
-          // the visitor knows *which* brewery they matched.
-          //
-          // Defensive copy: the discriminated union types candidates
-          // as a non-optional array, but the 2026-06-13 dev log
-          // captured a render-time crash here with `candidates is
-          // undefined`. Hypothesis: a stale serialized state from
-          // before #109's wire-shape change (which renamed
-          // `brandIds` → `candidates`) survived a hot reload and the
-          // client saw `{status: 'ambiguous'}` with no candidates
-          // field. Treat missing/non-array as empty and fall through
-          // to the no-match copy rather than crashing the whole
-          // page into Next.js's "This page couldn't load" overlay.
-          const candidates = Array.isArray(view.candidates) ? view.candidates : []
-          const breweryKanjis = new Set(candidates.map((c) => c.breweryKanji))
-          const sharedBrewery = breweryKanjis.size === 1 ? candidates[0] : null
-          // Compose the "romaji, prefecture" parenthetical shown next to
-          // a brewery's kanji. Both are optional (romaji may be null for
-          // an un-transliterated row; prefecture null for an unknown
-          // areaId), so we drop empties and only render parens when at
-          // least one part survives. The kanji itself is always shown by
-          // the caller. Prefecture is the discriminator for same-brand-
-          // across-breweries collisions (Hakushika: Ibaraki vs Hyogo).
-          const breweryParens = (
-            romaji: string | null,
-            prefecture: string | null,
-          ): string | null => {
-            const parts = [romaji, prefecture].filter(
-              (p): p is string => Boolean(p),
-            )
-            return parts.length > 0 ? parts.join(', ') : null
-          }
-          const sharedBreweryParens = sharedBrewery
-            ? breweryParens(sharedBrewery.breweryRomaji, sharedBrewery.prefectureName)
-            : null
-          const sharedBreweryDescriptor = sharedBrewery
-            ? sharedBreweryParens
-              ? `${sharedBrewery.breweryKanji} (${sharedBreweryParens})`
-              : sharedBrewery.breweryKanji
-            : ''
-          return (
-            <div
-              className="flex flex-col gap-3"
-              data-testid="scan-result-ambiguous"
-            >
-              <SakenowaAttributionView
-                placement="inline"
-                poweredBy={tAttribution('poweredBy')}
-                linkLabel={tAttribution('linkLabel')}
-              />
-              <p className="text-sm text-zinc-700 dark:text-zinc-300">
-                {sharedBrewery
-                  ? t('ambiguousSharedBrewery', { brewery: sharedBreweryDescriptor })
-                  : t('ambiguous')}
-              </p>
-              <ul className="flex flex-col gap-1.5" data-testid="scan-result-ambiguous-list">
-                {candidates.map((c) => (
-                  <li key={c.brandId}>
-                    <NextLink
-                      href={c.sakeHref}
-                      className="flex flex-col gap-0.5 rounded border border-zinc-200 px-3 py-2 transition-colors hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 dark:border-zinc-800 dark:hover:bg-zinc-900"
-                      data-testid={`scan-result-ambiguous-candidate-${c.brandId}`}
-                    >
-                      <span className="flex items-baseline gap-2 flex-wrap">
-                        <span className="text-base font-medium" lang="ja">
-                          {c.nameKanji}
-                        </span>
-                        {c.nameRomaji && (
-                          <span className="text-sm text-zinc-600 dark:text-zinc-400">
-                            ({c.nameRomaji})
-                          </span>
-                        )}
-                      </span>
-                      {!sharedBrewery && (() => {
-                        // Cross-brewery candidates: show the brewery kanji
-                        // plus a "(romaji, prefecture)" parenthetical so a
-                        // same-brand-across-breweries collision is
-                        // resolvable by region (the Hakushika shape).
-                        const parens = breweryParens(c.breweryRomaji, c.prefectureName)
-                        return (
-                          <span className="text-xs text-zinc-500 dark:text-zinc-500 flex items-baseline gap-1 flex-wrap">
-                            <span lang="ja">{c.breweryKanji}</span>
-                            {parens && <span>({parens})</span>}
-                          </span>
-                        )
-                      })()}
-                    </NextLink>
-                  </li>
-                ))}
-              </ul>
-              <p
-                className="text-xs text-zinc-500 dark:text-zinc-500"
-                data-testid="scan-result-ambiguous-not-listed"
-              >
-                {t('ambiguousNotListed')}
-              </p>
-              <div className="flex flex-wrap items-center gap-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={onPickClick}
-                  data-testid="scan-result-ambiguous-rescan"
-                >
-                  {t('ambiguousRescan')}
-                </Button>
-                <Link
-                  href="/search"
-                  className="text-sm font-medium underline underline-offset-4"
-                  data-testid="scan-result-ambiguous-type-it"
-                >
-                  {tSearch('cta')}
-                </Link>
-                <Link
-                  href="/suggest"
-                  className="text-sm font-medium underline underline-offset-4"
-                  data-testid="scan-result-ambiguous-explore"
-                >
-                  {tCard('exploreAnotherWay')}
-                </Link>
-              </div>
-            </div>
-          )
-        })()}
         {view.status === 'matched' && (
           // ADR-0015 / #163: the matched result renders IN PLACE on /scan
           // (previously auto-navigated to /sake/[brandId] on the auto tier
@@ -909,198 +781,6 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
               )
             }
           />
-        )}
-        {view.status === 'matched_brand_only' && (
-          // Phase 3 / #123: brand-only fallback succeeded but the
-          // brewery on the label diverged from the catalogue. NO
-          // auto-navigate — the visitor must make a conscious tap so
-          // the divergence is acknowledged. Side-by-side display of the
-          // two brewery values (label vs catalogue) so the visitor can
-          // judge whether the brand match is the one they meant.
-          <div
-            className="flex flex-col gap-3"
-            data-testid="scan-result-matched-brand-only"
-          >
-            <SakenowaAttributionView
-              placement="inline"
-              poweredBy={tAttribution('poweredBy')}
-              linkLabel={tAttribution('linkLabel')}
-            />
-            <div className="flex items-center gap-2 flex-wrap">
-              <span
-                className="text-base font-medium"
-                lang="ja"
-                data-testid="scan-result-name-ja"
-              >
-                {view.sakeKanji}
-              </span>
-              {view.sakeRomaji && (
-                <span
-                  className="text-sm text-zinc-600 dark:text-zinc-400"
-                  data-testid="scan-result-matched-brand-only-sake-romaji"
-                >
-                  ({view.sakeRomaji})
-                </span>
-              )}
-              <ProvenanceBadgeView
-                kind={resolveBadgeKind('llm_extracted')}
-                label={tBadge('label')}
-                explanation={tBadge('explanation')}
-                sheetTitle={tBadge('sheetTitle')}
-                closeLabel={tProvenanceSheet('closeLabel')}
-                confidence={view.extraction.confidence}
-                id="scan-result-matched-brand-only-badge"
-              />
-            </div>
-            <p className="text-sm text-zinc-700 dark:text-zinc-300">
-              {t('matchedBrandOnly')}
-            </p>
-            <p
-              className="text-sm text-zinc-600 dark:text-zinc-400"
-              data-testid="scan-result-brewery-divergence"
-            >
-              <span lang="ja">
-                {t('matchedBrandOnlyDivergence', {
-                  extracted: view.breweryDivergence.extracted,
-                  stored: view.breweryDivergence.stored,
-                })}
-              </span>
-              {view.breweryDivergence.storedRomaji && (
-                <>
-                  {' '}
-                  <span data-testid="scan-result-brewery-divergence-romaji">
-                    ({view.breweryDivergence.storedRomaji})
-                  </span>
-                </>
-              )}
-            </p>
-            <NextLink
-              href={view.sakeHref}
-              className="text-sm font-medium text-blue-700 underline-offset-2 hover:underline dark:text-blue-300"
-              data-testid="scan-result-matched-brand-only-link"
-            >
-              {t('matchedBrandOnlyOpen')}
-            </NextLink>
-          </div>
-        )}
-        {view.status === 'matched_brewery_only' && (
-          // Structural dual of `matched_brand_only` (#123). The
-          // brand-only fallback also missed, but brewery-only found a
-          // mono-brand brewery: the brewery is identified, the brand
-          // the model extracted does NOT match what Sakenowa stores
-          // for that brewery. NO auto-navigate — explicit-tap required
-          // so the divergence is acknowledged. The CATALOGUE brand
-          // kanji is shown prominently (it's the trusted value) with
-          // the extracted brand surfaced via the divergence line below
-          // alongside the LLM-extracted provenance badge.
-          <div
-            className="flex flex-col gap-3"
-            data-testid="scan-result-matched-brewery-only"
-          >
-            <SakenowaAttributionView
-              placement="inline"
-              poweredBy={tAttribution('poweredBy')}
-              linkLabel={tAttribution('linkLabel')}
-            />
-            <div className="flex items-center gap-2 flex-wrap">
-              <span
-                className="text-base font-medium"
-                lang="ja"
-                data-testid="scan-result-name-ja"
-              >
-                {view.brandDivergence.stored}
-              </span>
-              {view.brandDivergence.storedRomaji && (
-                <span
-                  className="text-sm text-zinc-600 dark:text-zinc-400"
-                  data-testid="scan-result-matched-brewery-only-sake-romaji"
-                >
-                  ({view.brandDivergence.storedRomaji})
-                </span>
-              )}
-              <ProvenanceBadgeView
-                kind={resolveBadgeKind('llm_extracted')}
-                label={tBadge('label')}
-                explanation={tBadge('explanation')}
-                sheetTitle={tBadge('sheetTitle')}
-                closeLabel={tProvenanceSheet('closeLabel')}
-                confidence={view.extraction.confidence}
-                id="scan-result-matched-brewery-only-badge"
-              />
-            </div>
-            {view.breweryRomaji && (
-              <span
-                className="text-sm text-zinc-600 dark:text-zinc-400 flex items-baseline gap-2 flex-wrap"
-                data-testid="scan-result-matched-brewery-only-brewery"
-              >
-                <span lang="ja">{view.extraction.brewery_ja}</span>
-                <span>({view.breweryRomaji})</span>
-              </span>
-            )}
-            <p className="text-sm text-zinc-700 dark:text-zinc-300">
-              {t('matchedBreweryOnly')}
-            </p>
-            <p
-              className="text-sm text-zinc-600 dark:text-zinc-400"
-              data-testid="scan-result-brand-divergence"
-            >
-              <span lang="ja">
-                {t('matchedBreweryOnlyDivergence', {
-                  extracted: view.brandDivergence.extracted,
-                  stored: view.brandDivergence.stored,
-                })}
-              </span>
-              {view.brandDivergence.storedRomaji && (
-                <>
-                  {' '}
-                  <span data-testid="scan-result-brand-divergence-romaji">
-                    ({view.brandDivergence.storedRomaji})
-                  </span>
-                </>
-              )}
-            </p>
-            <NextLink
-              href={view.sakeHref}
-              className="text-sm font-medium text-blue-700 underline-offset-2 hover:underline dark:text-blue-300"
-              data-testid="scan-result-matched-brewery-only-link"
-            >
-              {t('matchedBreweryOnlyOpen')}
-            </NextLink>
-          </div>
-        )}
-        {isMatch && (
-          // The three match states are the only results that carried no
-          // rescan of their own — they leaned on the entry pair above,
-          // which is now hidden while a result is on screen. One shared
-          // row serves all three: the same "Scan again" wording the
-          // non-match states use, so the escape hatch reads identically
-          // wherever the visitor lands. §5 puts this in a top bar as a
-          // ghost "Not this one"; that bar arrives with the §4 camera
-          // port, and until then the affordance lives under the card
-          // rather than not existing.
-          //
-          // It returns to the camera, which is what this comment used to say
-          // belonged with §4 — this is §4. It opened the photo library before,
-          // because the camera was a hidden input and there was no screen to go
-          // back to.
-          //
-          // Full width, with room above it (maintainer review): a small
-          // outline button left-aligned under a full-width card read as an
-          // afterthought, and it is the screen's one next action. Interim
-          // until the designers place it — §5 draws it as "Not this one" in a
-          // top bar we have not built (asked on #308).
-          <div className="mt-3" data-testid="scan-result-match-rescan-row">
-            <button
-              type="button"
-              onClick={onPickClick}
-              disabled={isPending}
-              data-testid="scan-result-match-rescan"
-              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-divider text-card-heading font-medium text-ink transition-colors hover:bg-ash-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600 disabled:opacity-60"
-            >
-              <Camera size={18} aria-hidden="true" className="text-ash-600" />
-              {isPending ? t('pending') : t('retryRescan')}
-            </button>
-          </div>
         )}
       </div>
     </form>

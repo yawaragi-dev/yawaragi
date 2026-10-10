@@ -767,5 +767,74 @@
         "atsukan": "Hot. Drier and sharper, best with fuller, savory sakes."
       }
     }
+  },
+  "scanOutcome": {
+    "scanAgain": "Scan again",
+    "typeInstead": "Type the name instead",
+    "whatWeRead": "What we read",
+    "name": "Name",
+    "brewery": "Brewery",
+    "misreadHint": "Misread? Fix it from the label and search again.",
+    "searchAgain": "Search again",
+    "brandOnly": {
+      "kicker": "Partly matched",
+      "title": "We found the sake, not its brewery",
+      "body": "The name matches {line} in the catalogue, but the brewery we read isn’t the one it lists. If it’s this one, pick it.",
+      "candidates": "Is it this one?",
+      "reason": "Same name · the label’s brewery is {extracted}"
+    },
+    "breweryOnly": {
+      "kicker": "Partly matched",
+      "title": "We found the brewery, not the sake",
+      "body": "{brewery} is in the catalogue, but none of its sakes goes by the name we read.",
+      "candidates": "From this brewery",
+      "reason": "Same brewery · the label reads {extracted}"
+    },
+    "ambiguous": {
+      "kicker": "A few fit",
+      "title": "Which one is it?",
+      "body": "The label fits more than one sake in the catalogue.",
+      "candidates": "Closest in the catalogue",
+      "reasonSharedBrewery": "Same brewery · same name",
+      "reasonName": "Same name · {brewery}"
+    },
+    "noMatch": {
+      "kicker": "Not in the catalogue",
+      "title": "We read it, but can’t find it",
+      "body": "Fix anything we misread and search again. If the front label is stylised, the back usually prints the name and brewery more plainly."
+    },
+    "consensus": {
+      "kicker": "Unclear photo",
+      "title": "This looks like {sake}",
+      "body": "The photo was hard to read, but {votes} of your last {total} scans were this sake. Is it?",
+      "yes": "Yes, that’s it",
+      "no": "No — scan again"
+    },
+    "unreadable": {
+      "kicker": "Unclear photo",
+      "title": "We couldn’t read this label",
+      "body": "Nothing on it was clear enough to look up. Another photo usually does it.",
+      "tipCloser": "Get closer so the label fills the frame",
+      "tipLight": "Turn on the light",
+      "tipStill": "Hold still for a second"
+    },
+    "rateLimited": {
+      "kicker": "Paused",
+      "title": "Too many scans for now"
+    },
+    "failed": {
+      "kicker": "Not read",
+      "title": "Something went wrong on our side",
+      "body": "It wasn’t your photo. Scan again, or type the name."
+    },
+    "badPhoto": {
+      "kicker": "Not read",
+      "title": "We couldn’t use that photo",
+      "body": "Try another photo of the label — JPEG, PNG or HEIC."
+    },
+    "matchedKicker": "Matched from your photo",
+    "notThisOne": "Not this one",
+    "sureMatch": "Sure match",
+    "bestGuess": "Best guess"
   }
 }

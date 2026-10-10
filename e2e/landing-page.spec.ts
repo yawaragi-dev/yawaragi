@@ -85,7 +85,8 @@ test.describe('landing hero (UX-E)', () => {
       card.getByTestId('scan-result-reverse-exemplar-match'),
     ).toBeVisible()
     await expect(card.getByTestId('heuristic-disclaimer')).toBeVisible()
-    await expect(card.getByTestId('sakenowa-attribution-inline')).toBeVisible()
+    // v1.5 §5: the card's Sakenowa credit is its identity block's last line.
+    await expect(card.getByTestId('sakenowa-attribution-identity')).toBeVisible()
 
     // The sample's kanji is shown verbatim.
     await expect(card.getByTestId('scan-result-name-kanji')).toHaveText('木戸泉')

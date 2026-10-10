@@ -767,5 +767,74 @@
         "atsukan": "Heiß. Trockener und schärfer, am besten zu vollen, würzigen Sakes."
       }
     }
+  },
+  "scanOutcome": {
+    "scanAgain": "Neu scannen",
+    "typeInstead": "Stattdessen den Namen eintippen",
+    "whatWeRead": "Was wir gelesen haben",
+    "name": "Name",
+    "brewery": "Brauerei",
+    "misreadHint": "Falsch gelesen? Korrigiere es nach dem Etikett und suche erneut.",
+    "searchAgain": "Erneut suchen",
+    "brandOnly": {
+      "kicker": "Teilweise gefunden",
+      "title": "Den Sake gefunden, nicht die Brauerei",
+      "body": "Der Name passt zu {line} im Katalog, aber die gelesene Brauerei ist nicht die dort eingetragene. Wenn es dieser ist, wähle ihn aus.",
+      "candidates": "Ist es dieser?",
+      "reason": "Gleicher Name · auf dem Etikett steht die Brauerei {extracted}"
+    },
+    "breweryOnly": {
+      "kicker": "Teilweise gefunden",
+      "title": "Die Brauerei gefunden, nicht den Sake",
+      "body": "{brewery} ist im Katalog, aber keiner ihrer Sakes trägt den gelesenen Namen.",
+      "candidates": "Von dieser Brauerei",
+      "reason": "Gleiche Brauerei · auf dem Etikett steht {extracted}"
+    },
+    "ambiguous": {
+      "kicker": "Mehrere passen",
+      "title": "Welcher ist es?",
+      "body": "Das Etikett passt zu mehr als einem Sake im Katalog.",
+      "candidates": "Am nächsten im Katalog",
+      "reasonSharedBrewery": "Gleiche Brauerei · gleicher Name",
+      "reasonName": "Gleicher Name · {brewery}"
+    },
+    "noMatch": {
+      "kicker": "Nicht im Katalog",
+      "title": "Gelesen, aber nicht gefunden",
+      "body": "Korrigiere, was wir falsch gelesen haben, und suche erneut. Ist das Vorderetikett verziert, steht der Name auf dem Rückenetikett meist klarer."
+    },
+    "consensus": {
+      "kicker": "Unscharfes Foto",
+      "title": "Das sieht aus wie {sake}",
+      "body": "Das Foto war schwer zu lesen, aber {votes} deiner letzten {total} Scans waren dieser Sake. Ist er es?",
+      "yes": "Ja, das ist er",
+      "no": "Nein – neu scannen"
+    },
+    "unreadable": {
+      "kicker": "Unscharfes Foto",
+      "title": "Dieses Etikett konnten wir nicht lesen",
+      "body": "Nichts darauf war klar genug zum Nachschlagen. Ein weiteres Foto klappt meistens.",
+      "tipCloser": "Näher heran, bis das Etikett das Bild füllt",
+      "tipLight": "Licht einschalten",
+      "tipStill": "Eine Sekunde ruhig halten"
+    },
+    "rateLimited": {
+      "kicker": "Pause",
+      "title": "Vorerst zu viele Scans"
+    },
+    "failed": {
+      "kicker": "Nicht gelesen",
+      "title": "Bei uns ist etwas schiefgegangen",
+      "body": "Es lag nicht an deinem Foto. Scanne erneut oder tippe den Namen ein."
+    },
+    "badPhoto": {
+      "kicker": "Nicht gelesen",
+      "title": "Dieses Foto konnten wir nicht verwenden",
+      "body": "Versuche ein anderes Foto des Etiketts – JPEG, PNG oder HEIC."
+    },
+    "matchedKicker": "Aus deinem Foto erkannt",
+    "notThisOne": "Nicht dieser",
+    "sureMatch": "Sicherer Treffer",
+    "bestGuess": "Beste Vermutung"
   }
 }
