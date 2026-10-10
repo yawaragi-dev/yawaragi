@@ -36,6 +36,7 @@
     "journal:restore": "tsx --conditions react-server --env-file=.env.local scripts/restore-journal.ts",
     "journal:erase": "tsx --conditions react-server --env-file=.env.local scripts/erase-collection.ts",
     "eval": "tsx --conditions=react-server --env-file=.env.local scripts/eval.ts",
+    "eval:corpus-check": "tsx scripts/check-label-scan-corpus.ts",
     "db:resync": "npm run db:reset -- --yes && npm run migrate && npm run ingest",
     "verify": "npm run lint && npm run typecheck && npm run test && npm run test:integration && npm run test:e2e && npm run i18n:audit && npm run anthropic-files:audit"
   },
