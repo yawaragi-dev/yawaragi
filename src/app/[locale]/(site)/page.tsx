@@ -157,12 +157,13 @@ function FeatureCard({ icon: Icon, title, body, testId }: FeatureCardProps) {
     // an edge. It is the only shadow §0 asks for (the prototype's two
     // `shadow-md` uses are the phone placeholder, which `<LandingHero />`
     // replaces with its own `ring-divider`, and the cookie banner).
-    <div
-      className="flex flex-col gap-2.5 rounded-xl bg-surface p-5 shadow-yw-sm"
-      data-testid={testId}
-    >
-      <Icon size={24} className="text-ginshu-600" aria-hidden="true" />
-      <h3 className="text-md-alt font-medium text-ink">{title}</h3>
+    <div className="flex flex-col gap-2 rounded-xl bg-surface p-5 shadow-yw-sm" data-testid={testId}>
+      {/* v1.5 §0: the icon sits on the title's row at every width, 10px
+          apart, the title centred on it; the body 8px below. */}
+      <div className="flex items-center gap-2.5">
+        <Icon size={24} className="shrink-0 text-ginshu-600" aria-hidden="true" />
+        <h3 className="text-md-alt font-medium text-ink">{title}</h3>
+      </div>
       <p className="text-body text-ash-600">{body}</p>
     </div>
   )

@@ -23,18 +23,21 @@ export async function HomeActionTiles() {
     <div className="grid grid-cols-[1.6fr_1fr] gap-2.5" data-testid="home-action-tiles">
       <Link
         href="/scan"
-        className="flex min-h-[86px] flex-col items-center justify-center gap-2 rounded-xl border border-ginshu-400 py-4 text-card-heading font-medium text-ginshu-700 transition-colors hover:bg-ginshu-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+        // v1.5 §3: tiles are filled surfaces — icon top-left, label
+        // bottom-left — so they never read like the outlined, centred buttons.
+        // Only Scan's icon takes the accent.
+        className="flex min-h-[78px] flex-col items-start justify-between rounded-lg bg-surface px-[13px] py-3 text-subtle font-medium text-ink shadow-yw-sm transition-colors hover:bg-ash-200 active:bg-ash-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
         data-testid="home-tile-scan"
       >
-        <Camera size={23} aria-hidden="true" />
+        <Camera size={22} aria-hidden="true" className="text-ginshu-600" />
         {t('tileScan')}
       </Link>
       <Link
         href="/search"
-        className="flex min-h-[86px] flex-col items-center justify-center gap-2 rounded-xl border border-ash-300 py-4 text-card-heading font-medium text-ink transition-colors hover:bg-ash-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+        className="flex min-h-[78px] flex-col items-start justify-between rounded-lg bg-surface px-[13px] py-3 text-subtle font-medium text-ink shadow-yw-sm transition-colors hover:bg-ash-200 active:bg-ash-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
         data-testid="home-tile-type-it"
       >
-        <Keyboard size={23} aria-hidden="true" />
+        <Keyboard size={22} aria-hidden="true" className="text-ash-700" />
         {t('tileTypeIt')}
       </Link>
     </div>

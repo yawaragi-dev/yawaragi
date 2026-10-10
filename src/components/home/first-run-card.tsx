@@ -70,6 +70,15 @@ export async function HomeFirstRunCard() {
         <Camera size={17} aria-hidden="true" />
         {t('cta')}
       </Link>
+      {/* v1.5 §3: the card's one action pair — the primary, then a ghost
+          "Or type the name", which ships now that §8 has. */}
+      <Link
+        href="/search"
+        className="-mt-1 flex min-h-11 items-center justify-center text-subtle font-medium text-ginshu-700 hover:text-ginshu-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+        data-testid="home-first-run-type-it"
+      >
+        {t('typeIt')}
+      </Link>
     </section>
   )
 }
