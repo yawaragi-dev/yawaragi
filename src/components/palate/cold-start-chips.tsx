@@ -47,6 +47,11 @@ export interface ColdStartChipView {
    * which is how a line drifts out of agreement with the vector it describes.
    */
   seedLine: string
+  /**
+   * The drink's six axes, labelled, for v1.5 §12's "Starting sketch". Absent
+   * where a surface does not draw the sketch (first-run Home).
+   */
+  sketch?: readonly { axis: string; label: string; value: number }[] | null
 }
 
 export function ColdStartChips({
@@ -136,9 +141,31 @@ export function ColdStartChips({
       </ul>
 
       {pickedChip && (
-        <p className="text-body text-ash-700" data-testid="palate-cold-start-seed-line">
-          {pickedChip.seedLine}
-        </p>
+        // v1.5 §12: under a divider, "Starting sketch · from {drink}" — the six
+        // axes as 4px bars (the §17 bar, no numbers) and its seed line.
+        <div className="flex flex-col gap-2.5 border-t border-divider pt-3" data-testid="palate-cold-start-sketch">
+          <span className="text-section-label uppercase text-ash-600">
+            {t('sketchHeading', { drink: pickedChip.name })}
+          </span>
+          {pickedChip.sketch && (
+            <ul className="grid grid-cols-2 gap-x-5 gap-y-2" role="list">
+              {pickedChip.sketch.map((bar) => (
+                <li key={bar.axis} className="flex flex-col gap-1">
+                  <span className="text-meta text-ink">{bar.label}</span>
+                  <span className="h-1 w-full overflow-hidden rounded-full bg-ash-300" aria-hidden="true">
+                    <span
+                      className="block h-full rounded-full bg-ginshu-500"
+                      style={{ width: `${Math.round(Math.max(0, Math.min(1, bar.value)) * 100)}%` }}
+                    />
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="text-body text-ash-700" data-testid="palate-cold-start-seed-line">
+            {pickedChip.seedLine}
+          </p>
+        </div>
       )}
 
       <HeuristicDisclaimerView title={tDisclaimer('title')} body={tDisclaimer('body')} />

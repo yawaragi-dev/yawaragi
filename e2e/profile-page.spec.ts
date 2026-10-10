@@ -116,23 +116,25 @@ test.describe('/en/profile — §12 Palate', () => {
 
     await page.goto('/en/profile')
 
-    // §12: "Taking shape" at 1–2 tastings. The threshold is three, and the
-    // screen's job is to say so rather than render a six-axis reading off one
-    // data point.
-    await expect(page.getByTestId('palate-title')).toHaveText('Taking shape')
+    // v1.5 §12: at 1–2 tastings the title is "Your palate" and the meta line
+    // says "Taking shape". The threshold is three, and the screen's job is to
+    // say so rather than render a six-axis reading off one data point.
+    await expect(page.getByTestId('palate-title')).toHaveText('Your palate')
+    await expect(page.getByTestId('palate-meta')).toContainText('Taking shape')
     await expect(page.getByTestId('palate-early')).toBeVisible()
     // No "So far: {sake}" assertion: naming the last tasting looks the brand
     // up in the Sakenowa mirror, and CI runs without one, so the line is
     // (correctly) absent there. It is a DB-bound nicety; what this spec pins
     // is the part that holds everywhere.
     //
-    // Nothing points at a rating step that does not exist yet: no "N
-    // more tastings", no "rate a few styles" tip, no "Scan a label" (a scan
-    // does not feed the palate). They return when rating ships.
+    // v1.5 §12: the rating slot appears only once rating is available to the
+    // visitor (a journal, ADR-0020). This anonymous visitor cannot rate, so
+    // no "N more tastings", no progress bar; and the tip card with its "Scan
+    // a label" is gone from the early screen for everyone.
     await expect(page.getByText(/more tastings/)).toHaveCount(0)
+    await expect(page.getByTestId('palate-progress')).toHaveCount(0)
     await expect(page.getByText('Rate a few different styles')).toHaveCount(0)
     await expect(page.getByRole('link', { name: 'Scan a label' })).toHaveCount(0)
-    await expect(page.getByTestId('palate-progress')).toHaveAttribute('aria-valuenow', '1')
     // No reading, and nothing that implies one.
     await expect(page.getByTestId('palate-read')).toHaveCount(0)
     await expect(page.getByTestId('palate-axis-rows')).toHaveCount(0)
@@ -148,7 +150,8 @@ test.describe('/en/profile — §12 Palate', () => {
 
     await page.goto('/en/profile')
 
-    await expect(page.getByTestId('palate-title')).toHaveText('Not yet')
+    await expect(page.getByTestId('palate-title')).toHaveText('Your palate')
+    await expect(page.getByTestId('palate-meta')).toHaveText('Not yet — it starts with your first tasting')
     await expect(page.getByTestId('palate-cold-start')).toBeVisible()
 
     // §12 names bottles, not descriptors. This replaced two <select>s offering
@@ -174,6 +177,9 @@ test.describe('/en/profile — §12 Palate', () => {
     await lagavulin.click()
     await expect(lagavulin).toHaveAttribute('aria-pressed', 'true')
     await expect(page.getByTestId('palate-cold-start-seed-line')).toContainText('Lagavulin 16')
+    // v1.5 §12: the pick opens a "Starting sketch" — the drink's six axes.
+    await expect(page.getByTestId('palate-cold-start-sketch')).toContainText('Starting sketch · from Lagavulin 16')
+    await expect(page.getByTestId('palate-cold-start-sketch').locator('li')).toHaveCount(6)
 
     await context.close()
   })
@@ -203,7 +209,7 @@ test.describe('/en/profile — §12 Palate', () => {
     // every tasting they own and no reading of them, which is the regression
     // this assertion exists to catch.
     await expect(page.getByTestId('palate-read')).toBeVisible()
-    await expect(page.getByTestId('palate-title')).not.toHaveText('Not yet')
+    await expect(page.getByTestId('palate-title')).not.toHaveText('Your palate')
     await expect(page.getByTestId('palate-confidence')).toContainText('3 of 10')
 
     await context.close()

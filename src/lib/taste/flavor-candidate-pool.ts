@@ -3,6 +3,7 @@ import 'server-only'
 import type { Pool } from 'pg'
 import { publicQuery } from '@/lib/supabase/public-query'
 import { getServerDbPool } from '@/lib/supabase/server-client'
+import { getPrefectureNames } from '@/lib/sakenowa/prefecture'
 import type { FlavorCandidate } from '@/lib/taste/taste-recommender'
 
 /**
@@ -14,12 +15,19 @@ import type { FlavorCandidate } from '@/lib/taste/taste-recommender'
 export interface FlavorCandidatePoolRow extends FlavorCandidate {
   nameJa: string
   nameRomaji: string | null
+  /** The brewery as a card names it: romaji, else kanji; `null` if unknown. */
+  brewery: string | null
+  /** English prefecture name from the static area map, `null` if unknown. */
+  prefecture: string | null
 }
 
 interface PoolQueryRow {
   brand_id: number
   name_kanji: string
   name_romaji: string | null
+  brewery_kanji: string | null
+  brewery_romaji: string | null
+  area_id: number | null
   // pg returns numeric columns as strings — converted in poolRowToCandidate.
   f1: string
   f2: string
@@ -35,6 +43,8 @@ export function poolRowToCandidate(row: PoolQueryRow): FlavorCandidatePoolRow {
     brandId: row.brand_id,
     nameJa: row.name_kanji,
     nameRomaji: row.name_romaji,
+    brewery: row.brewery_romaji ?? row.brewery_kanji,
+    prefecture: row.area_id === null ? null : (getPrefectureNames(row.area_id)?.nameEn ?? null),
     f1: Number(row.f1),
     f2: Number(row.f2),
     f3: Number(row.f3),
@@ -51,9 +61,12 @@ export function poolRowToCandidate(row: PoolQueryRow): FlavorCandidatePoolRow {
 export const FLAVOR_CANDIDATE_POOL_LIMIT = 2000
 
 const SELECT_FLAVOR_CANDIDATE_POOL = `
-  SELECT b.brand_id, b.name_kanji, b.name_romaji, fc.f1, fc.f2, fc.f3, fc.f4, fc.f5, fc.f6
+  SELECT b.brand_id, b.name_kanji, b.name_romaji,
+         br.name_kanji AS brewery_kanji, br.name_romaji AS brewery_romaji, br.area_id,
+         fc.f1, fc.f2, fc.f3, fc.f4, fc.f5, fc.f6
   FROM flavor_charts fc
   JOIN brands b ON b.brand_id = fc.brand_id
+  LEFT JOIN breweries br ON br.brewery_id = b.brewery_id AND br.superseded_at IS NULL
   WHERE b.superseded_at IS NULL
   ORDER BY b.brand_id
   LIMIT $1
