@@ -64,28 +64,36 @@ clearJournal = () => document.cookie = 'yawaragi_journal_stub=;path=/;max-age=0'
 
 ## Recipe: force every scan result branch
 
-Requires the **#109 / PR #194** cookie-driven stub (`yawaragi_e2e_vision`). On `main` before that lands, `VISION_PROVIDER=e2e-stub` still works but only ever returns the fixed Dassai extraction (matched-brand / brewery-divergence).
+The cookie-driven stub (`yawaragi_e2e_vision`) returns whatever extraction you set; the rest of the pipeline is real: the Sakenowa lookup, the nearest-sake candidates and the outcome screen. Without the cookie the stub always returns 獺祭 / 旭酒造.
 
-1. Start dev with `VISION_PROVIDER=e2e-stub` (+ `RATE_LIMIT_BYPASS=1`).
-2. Go to `/en/scan`, accept the age gate.
-3. Run one `setScan(...)` line, then **upload any JPEG and submit**. Change the cookie and re-scan to switch branches (the cookie is read at submit time).
+1. Start dev with `VISION_PROVIDER=e2e-stub` (+ `RATE_LIMIT_BYPASS=1`). Without the env var the cookie is ignored and the scan calls Anthropic for real.
+2. Go to `/en/scan`, accept the age gate, and paste the cookie helpers above.
+3. Run one `setScan(...)` line, then give it **any** photo (desktop opens the "add a photo" panel; `e2e/fixtures/dassai-label.jpg` works). To switch branches, call `setScan` again, tap the bar's "Scan again" / "Not this one" and give a photo again. The cookie is read at submit time, so no reload is needed.
+4. Clear: `document.cookie = 'yawaragi_e2e_vision=;path=/;max-age=0'`.
+
+Every non-match lands on §5a's one outcome screen: kicker · "Scan again" in the bar, a status block, then the parts below, and "Type the name instead" last.
 
 | Branch | Console call | You should see |
 |---|---|---|
-| Candidate list — same brand, many breweries | `setScan('高砂','架空酒造銘柄')` | "Several sakes match this brand" — 4 tappable rows (kanji + romaji + prefecture) |
-| Candidate list — brewery, many brands | `setScan('架空純米','せんきん')` | "We matched the brewery: せんきん…" — 6 rows |
-| Matched, single (clean happy path) | `setScan('獺祭','獺祭')` | Normal result card + flavor chart + reverse hook, no divergence |
-| Matched-brand, brewery divergence | `setScan('獺祭','旭酒造')` | "We matched the brand, but the brewery… didn't match" card |
-| Matched-brewery, brand divergence | `setScan('架空純米','松緑酒造')` | Brewery matched, brand differs card |
-| No match (enriched) | `setScan('架空純米','架空酒造銘柄')` | What the AI "read" (with AI-extracted badge) + "not in catalogue yet" |
-| Confirm tier (0.60 ≤ conf < 0.85) | `setScan('獺祭','獺祭',0.72)` | Matched sake shown on a confirm-before-proceed card |
-| Retry tier (conf < 0.60) | `setScan('獺祭','獺祭',0.5)` | No lookup — "we couldn't read this label clearly" retry prompt |
+| Sure match (≥ 0.85) | `setScan('獺祭','獺祭')` | §5 card tagged "Sure match", flavor chart, cross-beverage line. No "Not sure?" row |
+| Sure match, label prints a renamed brewery (#388) | `setScan('獺祭','旭酒造')` | The same clean match. 旭酒造 is Dassai's name before June 2025 |
+| Best guess (0.60–0.84) | `setScan('而今','木屋正酒造',0.7)` | Card tagged "Best guess". Under the log area, "Not sure? 1 other candidate" opens Takasago 高砂 · Kiyamasa Shuzo · Mie · "Same brewery" |
+| Brand matched, brewery differs | `setScan('獺祭','高木酒造')` | "Partly matched — We found the sake, not its brewery", "What we read", one "Is it this one?" row |
+| Brewery matched, brand differs | `setScan('架空純米','松緑酒造')` | "Partly matched — We found the brewery, not the sake", "From this brewery" row |
+| Several fit, one name at several breweries | `setScan('高砂','架空酒造銘柄')` | "A few fit — Which one is it?", 2 rows with brewery · prefecture, "Same name · {brewery}" |
+| Several fit, one brewery's sakes | `setScan('架空純米','せんきん')` | Same screen, up to 3 of せんきん's 5 sakes, "Same brewery · same name" |
+| Not in the catalogue, something near | `setScan('十四代本丸','架空酒造零')` | "What we read" (editable, Read by AI badge), then "Did you mean" with Juyondai 十四代 · "Similar name" |
+| Not in the catalogue, nothing near | `setScan('架空銘柄零一','架空酒造零')` | The same screen with no "Did you mean". Nothing in the catalogue is close, and we don't invent a guess |
+| Unclear photo (< 0.60) | `setScan('獺祭','獺祭',0.5)` | "Unclear photo — We couldn't read this label", three tips. When most of this tab's recent matches (at least 2) were one sake: "This looks like {sake}" with Yes / No stacked (§5a, 45) |
 
-Confidence tiers (`src/lib/scan/confidence-tier.ts`, half-open): **auto ≥ 0.85** (auto-navigate) · **confirm 0.60–0.84** (matched sake behind a confirm step) · **retry < 0.60** (no lookup at all — just the "try a closer shot" prompt). Pick the `confidence` arg to land in the tier you want to see.
+Confidence tiers (`src/lib/scan/confidence-tier.ts`, half-open):
+- **≥ 0.85** — "Sure match".
+- **0.60–0.84** — "Best guess", with the "Not sure?" row when there are near candidates.
+- **< 0.60** — no lookup at all, only the unclear-photo screen.
 
-Verified against the live catalogue on 2026-07-07: `高砂` = 4 breweries, `せんきん` = 6 brands, `松緑酒造` = single-brand brewery, `架空純米` / `架空酒造銘柄` = absent. If Sakenowa data shifts, re-check counts with a query on `brands` / `breweries`.
+Verified against the live catalogue on 2026-10-10: 高砂 = 2 breweries, せんきん = 5 brands, 松緑酒造 = a single-brand brewery, 架空… = absent. The names in this table are checked with `resolveScannedLabel` against the mirror. If Sakenowa data shifts, re-check them the same way, or with a query on `brands` / `breweries`.
 
-**"Not this one?" affordance:** run the clean match, open the result's "See full details →", and the "Not this one? — scan again" link appears on `/sake/[brandId]` (it does **not** appear when you navigate to that page directly). `de`/`en`: repeat on `/de/…` for German (and to confirm `/de/sake/…` still rewrites to coming-soon).
+**Back-to-scan hint:** run a clean match, open "Full bottle page", and "Not the bottle you scanned? · Scan again" appears on `/sake/[brandId]`. It does **not** appear when you navigate to that page directly.
 
 ---
 
