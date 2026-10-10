@@ -6,12 +6,13 @@ import {
   backupsToPrune,
 } from '@/lib/collection/backup-storage'
 import type { CellarStore } from '@/lib/collection/cellar-store'
+import type { ExpressionStore } from '@/lib/collection/expression-store'
 import type { JournalStore } from '@/lib/taste/journal-store'
 import { buildCollectionExport } from '@/lib/taste/journal-export'
 
 /**
- * The daily backup (ADR-0024 §4): for each user, dump the journal and the
- * cellar, write them as one export-v2 file, then prune that user's backups to
+ * The daily backup (ADR-0024 §4): for each user, dump the journal, the cellar
+ * and their own bottlings, write them as one export file, then prune that user's backups to
  * the newest {@link BACKUPS_KEPT}.
  *
  * Pure over injected stores, storage and clock, so the job's contract —
@@ -30,6 +31,7 @@ export interface BackupUserResult {
   path?: string
   journal?: number
   cellar?: number
+  expressions?: number
   /** Records exported raw because the running code could not read them. */
   rejected?: number
   /** Older backups deleted by retention. */
@@ -42,17 +44,25 @@ export async function runCollectionBackup(args: {
   userIds: readonly string[]
   journal: JournalStore
   cellar: CellarStore
+  expressions: ExpressionStore
   storage: BackupStorage
   now: number
 }): Promise<BackupUserResult[]> {
   const results: BackupUserResult[] = []
   for (const userId of args.userIds) {
     try {
-      const [journal, cellar] = await Promise.all([
+      const [journal, cellar, expressions] = await Promise.all([
         args.journal.dump(userId),
         args.cellar.dump(userId),
+        args.expressions.dump(userId),
       ])
-      const doc = buildCollectionExport({ userId, journal, cellar, exportedAt: args.now })
+      const doc = buildCollectionExport({
+        userId,
+        journal,
+        cellar,
+        expressions,
+        exportedAt: args.now,
+      })
       const path = backupPath(userId, backupFileName(args.now))
       await args.storage.upload(path, `${JSON.stringify(doc, null, 2)}\n`)
 
@@ -66,6 +76,7 @@ export async function runCollectionBackup(args: {
         path,
         journal: doc.journal.length,
         cellar: doc.cellar.length,
+        expressions: doc.expressions.length,
         rejected: doc.rejected.length,
         pruned: stale.length,
       })

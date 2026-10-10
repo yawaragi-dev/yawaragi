@@ -1,6 +1,7 @@
 /**
  * Maintainer utility — the GDPR erasure path for one user's collection
- * (ADR-0009, ADR-0024): their journal, their cellar, AND their daily backups.
+ * (ADR-0009, ADR-0024, ADR-0025): their journal, their cellar, the bottlings
+ * they added themselves, AND their daily backups.
  *
  * Usage:
  *   pnpm journal:erase -- --user user_abc          # say what would be erased
@@ -16,8 +17,10 @@
  */
 import { BACKUP_BUCKET, backupPrefix } from '@/lib/collection/backup-storage'
 import { cellarKey } from '@/lib/collection/cellar-store'
+import { expressionsKey } from '@/lib/collection/expression-store'
 import { SupabaseBackupStorage } from '@/lib/collection/supabase-backup-storage'
 import { UpstashCellarStore } from '@/lib/collection/upstash-cellar-store'
+import { UpstashExpressionStore } from '@/lib/collection/upstash-expression-store'
 import { journalKey } from '@/lib/taste/journal-store'
 import { UpstashJournalStore } from '@/lib/taste/upstash-journal-store'
 
@@ -44,13 +47,20 @@ async function main(): Promise<number> {
 
   const journal = new UpstashJournalStore(url, token)
   const cellar = new UpstashCellarStore(url, token)
+  const expressions = new UpstashExpressionStore(url, token)
   const storage = new SupabaseBackupStorage(sbUrl, sbKey, BACKUP_BUCKET)
   const prefix = backupPrefix(userId)
-  const [j, c, backups] = await Promise.all([journal.dump(userId), cellar.dump(userId), storage.list(prefix)])
+  const [j, c, x, backups] = await Promise.all([
+    journal.dump(userId),
+    cellar.dump(userId),
+    expressions.dump(userId),
+    storage.list(prefix),
+  ])
 
   console.log(`${userId}:`)
   console.log(`  ${journalKey(userId)}: ${j.records.length + j.rejected.length} record(s)`)
   console.log(`  ${cellarKey(userId)}: ${c.records.length + c.rejected.length} record(s)`)
+  console.log(`  ${expressionsKey(userId)}: ${x.records.length + x.rejected.length} record(s)`)
   console.log(`  ${BACKUP_BUCKET}/${prefix}/: ${backups.length} backup(s)`)
 
   if (!argv.includes('--yes')) {
@@ -58,7 +68,7 @@ async function main(): Promise<number> {
     return 0
   }
 
-  await Promise.all([journal.clear(userId), cellar.clear(userId)])
+  await Promise.all([journal.clear(userId), cellar.clear(userId), expressions.clear(userId)])
   await storage.remove(backups.map((name) => `${prefix}/${name}`))
   console.log('Erased.')
   return 0

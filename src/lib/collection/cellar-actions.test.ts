@@ -1,12 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const h = vi.hoisted(() => ({ journal: null as unknown, cellar: null as unknown }))
+const h = vi.hoisted(() => ({
+  journal: null as unknown,
+  cellar: null as unknown,
+  expressions: null as unknown,
+}))
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn(async () => ({ userId: 'user_admin' })) }))
 vi.mock('@/lib/auth/maintainer', () => ({ currentUserIsMaintainer: vi.fn(async () => true) }))
 vi.mock('@/lib/sakenowa/lookup', () => ({ lookupBrand: vi.fn() }))
 vi.mock('@/lib/taste/get-journal-store', () => ({ getJournalStore: vi.fn(() => h.journal) }))
 vi.mock('@/lib/collection/get-cellar-store', () => ({ getCellarStore: vi.fn(() => h.cellar) }))
+vi.mock('@/lib/collection/get-expression-store', () => ({
+  getExpressionStore: vi.fn(() => h.expressions),
+}))
 
 import { currentUserIsMaintainer } from '@/lib/auth/maintainer'
 import {
@@ -16,6 +23,7 @@ import {
   removeFromCellar,
 } from '@/lib/collection/cellar-actions'
 import { InMemoryCellarStore } from '@/lib/collection/in-memory-cellar-store'
+import { InMemoryExpressionStore } from '@/lib/collection/in-memory-expression-store'
 import { lookupBrand } from '@/lib/sakenowa/lookup'
 import { InMemoryJournalStore } from '@/lib/taste/in-memory-journal-store'
 
@@ -26,6 +34,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   h.journal = new InMemoryJournalStore()
   h.cellar = new InMemoryCellarStore()
+  h.expressions = new InMemoryExpressionStore()
   vi.mocked(currentUserIsMaintainer).mockResolvedValue(true)
   vi.mocked(lookupBrand).mockResolvedValue({
     brandId: 7,

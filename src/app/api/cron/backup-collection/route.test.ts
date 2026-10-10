@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { type BackupRouteDeps, handleBackupRequest } from './route'
 import { InMemoryCellarStore } from '@/lib/collection/in-memory-cellar-store'
+import { InMemoryExpressionStore } from '@/lib/collection/in-memory-expression-store'
 import { InMemoryJournalStore } from '@/lib/taste/in-memory-journal-store'
 import type { BackupStorage } from '@/lib/collection/backup-storage'
 
@@ -31,6 +32,7 @@ const deps = (over: Partial<BackupRouteDeps> = {}): BackupRouteDeps => ({
   build: () => ({
     journal: new InMemoryJournalStore(),
     cellar: new InMemoryCellarStore(),
+    expressions: new InMemoryExpressionStore(),
     storage: storage(),
   }),
   now: () => Date.UTC(2026, 9, 5),
@@ -58,7 +60,7 @@ describe('/api/cron/backup-collection', () => {
     const res = await handleBackupRequest(request(`Bearer ${SECRET}`), () =>
       deps({
         userIds: ['user_a', 'user_b'],
-        build: () => ({ journal: new InMemoryJournalStore(), cellar: new InMemoryCellarStore(), storage: bucket }),
+        build: () => ({ journal: new InMemoryJournalStore(), cellar: new InMemoryCellarStore(), expressions: new InMemoryExpressionStore(), storage: bucket }),
       }),
     )
     expect(res.status).toBe(200)
@@ -74,7 +76,7 @@ describe('/api/cron/backup-collection', () => {
   it('answers 500 when any user failed, so the cron log shows red', async () => {
     const failing = { ...storage(), upload: async () => Promise.reject(new Error('down')) }
     const res = await handleBackupRequest(request(`Bearer ${SECRET}`), () =>
-      deps({ build: () => ({ journal: new InMemoryJournalStore(), cellar: new InMemoryCellarStore(), storage: failing }) }),
+      deps({ build: () => ({ journal: new InMemoryJournalStore(), cellar: new InMemoryCellarStore(), expressions: new InMemoryExpressionStore(), storage: failing }) }),
     )
     expect(res.status).toBe(500)
     expect((await res.json()).users[0]).toMatchObject({ ok: false, error: 'down' })

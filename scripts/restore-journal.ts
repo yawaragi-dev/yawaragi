@@ -29,6 +29,7 @@ import { BACKUP_BUCKET, backupPrefix } from '@/lib/collection/backup-storage'
 import { restoreCollection } from '@/lib/collection/restore-collection'
 import { SupabaseBackupStorage } from '@/lib/collection/supabase-backup-storage'
 import { UpstashCellarStore } from '@/lib/collection/upstash-cellar-store'
+import { UpstashExpressionStore } from '@/lib/collection/upstash-expression-store'
 import { parseCollectionExport } from '@/lib/schemas/journal-export'
 import { UpstashJournalStore } from '@/lib/taste/upstash-journal-store'
 
@@ -74,6 +75,7 @@ async function main(): Promise<number> {
 
   console.log(
     `File: ${doc.journal.length} journal entries, ${doc.cellar.length} cellar rows, ` +
+      `${doc.expressions.length} own bottlings, ` +
       `${doc.rejected.length} unreadable record(s), exported ${doc.exportedAt} for ${doc.userId}`,
   )
   if (argv.includes('--dry-run')) {
@@ -92,8 +94,12 @@ async function main(): Promise<number> {
     userId,
     journal: new UpstashJournalStore(url, token),
     cellar: new UpstashCellarStore(url, token),
+    expressions: new UpstashExpressionStore(url, token),
   })
-  console.log(`Restored ${counts.journal} journal entries and ${counts.cellar} cellar rows into ${userId}.`)
+  console.log(
+    `Restored ${counts.journal} journal entries, ${counts.cellar} cellar rows and ` +
+      `${counts.expressions} own bottlings into ${userId}.`,
+  )
   if (counts.skippedRejected > 0) {
     console.warn(`  ! ${counts.skippedRejected} unreadable record(s) left in the file, not restored.`)
   }

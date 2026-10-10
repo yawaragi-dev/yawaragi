@@ -2,7 +2,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Brand } from '@/lib/schemas/brand'
 import type { FlavorChart } from '@/lib/schemas/flavor-chart'
 
-const h = vi.hoisted(() => ({ journal: null as unknown, cellar: null as unknown }))
+const h = vi.hoisted(() => ({
+  journal: null as unknown,
+  cellar: null as unknown,
+  expressions: null as unknown,
+}))
 
 vi.mock('@clerk/nextjs/server', () => ({
   auth: vi.fn(async () => ({ userId: 'user_admin' })),
@@ -20,9 +24,13 @@ vi.mock('@/lib/taste/get-journal-store', () => ({
 vi.mock('@/lib/collection/get-cellar-store', () => ({
   getCellarStore: vi.fn(() => h.cellar),
 }))
+vi.mock('@/lib/collection/get-expression-store', () => ({
+  getExpressionStore: vi.fn(() => h.expressions),
+}))
 
 import { currentUserIsMaintainer } from '@/lib/auth/maintainer'
 import { InMemoryCellarStore } from '@/lib/collection/in-memory-cellar-store'
+import { InMemoryExpressionStore } from '@/lib/collection/in-memory-expression-store'
 import { lookupBrand, lookupFlavorChart } from '@/lib/sakenowa/lookup'
 import { InMemoryJournalStore } from '@/lib/taste/in-memory-journal-store'
 import { rateNewTasting, undoTasting, updateTasting } from '@/lib/taste/tasting-actions'
@@ -49,6 +57,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   h.journal = new InMemoryJournalStore()
   h.cellar = new InMemoryCellarStore()
+  h.expressions = new InMemoryExpressionStore()
   vi.mocked(currentUserIsMaintainer).mockResolvedValue(true)
   vi.mocked(lookupFlavorChart).mockResolvedValue(CHART)
   vi.mocked(lookupBrand).mockResolvedValue(BRAND)

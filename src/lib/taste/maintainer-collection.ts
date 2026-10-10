@@ -3,7 +3,9 @@ import 'server-only'
 import { auth } from '@clerk/nextjs/server'
 import { currentUserIsMaintainer } from '@/lib/auth/maintainer'
 import type { CellarStore } from '@/lib/collection/cellar-store'
+import type { ExpressionStore } from '@/lib/collection/expression-store'
 import { getCellarStore } from '@/lib/collection/get-cellar-store'
+import { getExpressionStore } from '@/lib/collection/get-expression-store'
 import { getJournalStore } from '@/lib/taste/get-journal-store'
 import type { JournalStore } from '@/lib/taste/journal-store'
 
@@ -22,6 +24,7 @@ export interface MaintainerCollection {
   userId: string
   journal: JournalStore
   cellar: CellarStore
+  expressions: ExpressionStore
 }
 
 export async function withMaintainerCollection<T>(
@@ -33,6 +36,7 @@ export async function withMaintainerCollection<T>(
   if (!userId) return { status: 'forbidden' }
   const journal = getJournalStore()
   const cellar = getCellarStore()
-  if (!journal || !cellar) return { status: 'unavailable' }
-  return run({ userId, journal, cellar })
+  const expressions = getExpressionStore()
+  if (!journal || !cellar || !expressions) return { status: 'unavailable' }
+  return run({ userId, journal, cellar, expressions })
 }
