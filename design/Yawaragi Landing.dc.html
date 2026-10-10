@@ -12,7 +12,7 @@
 <script src="_ds/nocturne-9c99b1eb-b42d-45c4-9cc2-5ee7dbf09ad5/_ds_bundle.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
 <style>
-:root{--color-bg:#1b1a19;--color-surface:#232221;--color-text:#e8e4dd;--color-accent:#cf8a6e;--color-divider:rgba(232,228,221,.14);--color-neutral-200:#2d2b29;--color-neutral-300:#383634;--color-neutral-400:#4a4744;--color-neutral-500:#8a867e;--color-neutral-600:#a8a49c;--color-neutral-700:#bdb9b1;--color-neutral-800:#d6d2ca;--color-accent-100:#2a201c;--color-accent-500:#b8735a;--color-accent-600:#cf8a6e;--color-accent-700:#e0a88f;--color-accent-800:#eec2ae;--shadow-sm:0 0 0 1px #302e2c;--shadow-md:0 0 0 1px #302e2c,0 10px 26px rgba(0,0,0,.42)}
+:root{--color-bg:#1b1a19;--color-surface:#232221;--color-text:#e8e4dd;--color-accent:#cf8a6e;--color-divider:rgba(232,228,221,.14);--color-neutral-200:#2d2b29;--color-neutral-300:#383634;--color-neutral-400:#4a4744;--color-neutral-500:#8a867e;--color-neutral-600:#a8a49c;--color-neutral-700:#bdb9b1;--color-neutral-800:#d6d2ca;--color-accent-100:#2a201c;--color-accent-500:#b8735a;--color-accent-600:#cf8a6e;--color-accent-700:#e0a88f;--color-accent-800:#eec2ae;--shadow-sm:0 0 0 1px #302e2c;--shadow-md:0 0 0 1px #302e2c,0 10px 26px rgba(0,0,0,.42);--shadow-lg:0 0 0 1px #363431,0 18px 44px rgba(0,0,0,.55);--color-raised:#2d2b29;--shadow-float:0 0 0 1px #4a4744,0 -10px 28px rgba(0,0,0,.45),0 18px 44px rgba(0,0,0,.55)}
 body{margin:0;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body)}
 a{color:var(--color-accent-700);text-decoration:none}
 a:hover{color:var(--color-accent-800)}
@@ -52,19 +52,16 @@ a:hover{color:var(--color-accent-800)}
     <section id="how" style="padding:clamp(28px,5vw,56px) 0;display:flex;flex-direction:column;gap:24px">
       <h2 style="margin:0;font-family:var(--font-heading);font-weight:500;font-size:clamp(24px,3.5vw,32px);letter-spacing:-.02em">Three things, done well</h2>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:18px">
-        <div style="display:flex;flex-direction:column;gap:10px;padding:20px;border-radius:var(--radius-lg);background:var(--color-surface);box-shadow:var(--shadow-sm)">
-          <i class="ph ph-camera" style="font-size:24px;color:var(--color-accent-600)"></i>
-          <div style="font-family:var(--font-heading);font-weight:500;font-size:17px">Identify</div>
-          <div style="font-size:14px;color:var(--color-neutral-700);line-height:1.55;text-wrap:pretty">Kanji, romaji or barcode — the camera reads whichever the bottle gives you. No camera? Use a photo or type the name.</div>
+        <div style="display:flex;flex-direction:column;gap:8px;padding:20px;border-radius:var(--radius-lg);background:var(--color-surface);box-shadow:var(--shadow-sm)">
+          <div style="display:flex;align-items:center;gap:10px"><i class="ph ph-camera" style="font-size:24px;color:var(--color-accent-600);flex:none"></i><div style="font-family:var(--font-heading);font-weight:500;font-size:17px">Identify</div></div>
+          <div style="font-size:14px;color:var(--color-neutral-700);line-height:1.55;text-wrap:pretty">Kanji or romaji — the camera reads whichever the bottle gives you. No camera? Use a photo, or type the name.</div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:10px;padding:20px;border-radius:var(--radius-lg);background:var(--color-surface);box-shadow:var(--shadow-sm)">
-          <i class="ph ph-star" style="font-size:24px;color:var(--color-accent-600)"></i>
-          <div style="font-family:var(--font-heading);font-weight:500;font-size:17px">Rate in one tap</div>
+        <div style="display:flex;flex-direction:column;gap:8px;padding:20px;border-radius:var(--radius-lg);background:var(--color-surface);box-shadow:var(--shadow-sm)">
+          <div style="display:flex;align-items:center;gap:10px"><i class="ph ph-star" style="font-size:24px;color:var(--color-accent-600);flex:none"></i><div style="font-family:var(--font-heading);font-weight:500;font-size:17px">Rate in one tap</div></div>
           <div style="font-size:14px;color:var(--color-neutral-700);line-height:1.55;text-wrap:pretty">The star is the save. Add a note if you want, or detailed tasting notes later.</div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:10px;padding:20px;border-radius:var(--radius-lg);background:var(--color-surface);box-shadow:var(--shadow-sm)">
-          <i class="ph ph-hexagon" style="font-size:24px;color:var(--color-accent-600)"></i>
-          <div style="font-family:var(--font-heading);font-weight:500;font-size:17px">Learn your palate</div>
+        <div style="display:flex;flex-direction:column;gap:8px;padding:20px;border-radius:var(--radius-lg);background:var(--color-surface);box-shadow:var(--shadow-sm)">
+          <div style="display:flex;align-items:center;gap:10px"><i class="ph ph-hexagon" style="font-size:24px;color:var(--color-accent-600);flex:none"></i><div style="font-family:var(--font-heading);font-weight:500;font-size:17px">Learn your palate</div></div>
           <div style="font-size:14px;color:var(--color-neutral-700);line-height:1.55;text-wrap:pretty">After three tastings it shows what you like — and why. Already know whisky or wine? Start from a drink you love.</div>
         </div>
       </div>
@@ -95,7 +92,7 @@ a:hover{color:var(--color-accent-800)}
   </footer>
 
   <sc-if value="{{ show }}">
-  <div role="region" aria-label="Cookie choices" style="position:fixed;left:50%;transform:translateX(-50%);bottom:16px;width:min(560px,calc(100% - 32px));max-height:calc(100vh - 32px);overflow-y:auto;box-sizing:border-box;padding:16px;border-radius:var(--radius-lg);background:var(--color-surface);box-shadow:var(--shadow-md);display:flex;flex-direction:column;gap:12px;z-index:10">
+  <div role="region" aria-label="Cookie choices" style="position:fixed;left:50%;transform:translateX(-50%);bottom:16px;width:min(560px,calc(100% - 32px));max-height:calc(100vh - 32px);overflow-y:auto;box-sizing:border-box;padding:16px;border-radius:var(--radius-lg);background:var(--color-raised);box-shadow:var(--shadow-float);display:flex;flex-direction:column;gap:12px;z-index:10">
     <div style="font-family:var(--font-heading);font-weight:500;font-size:15px">{{ title }}</div>
     <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.5;text-wrap:pretty">{{ body }}</div>
     <sc-if value="{{ custom }}">
@@ -112,9 +109,9 @@ a:hover{color:var(--color-accent-800)}
       </div>
     </sc-if>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
-      <button class="btn btn-secondary" style="height:42px;font-size:13px" onClick="{{ reject }}">Reject all</button>
-      <button class="btn btn-secondary" style="height:42px;font-size:13px" onClick="{{ middle }}">{{ middleLabel }}</button>
-      <button class="btn btn-secondary" style="height:42px;font-size:13px" onClick="{{ accept }}">Accept all</button>
+      <button class="btn btn-secondary" style="height:42px;font-size:13px;background:var(--color-neutral-300)" onClick="{{ reject }}">Reject all</button>
+      <button class="btn btn-secondary" style="height:42px;font-size:13px;background:var(--color-neutral-300)" onClick="{{ middle }}">{{ middleLabel }}</button>
+      <button class="btn btn-secondary" style="height:42px;font-size:13px;background:var(--color-neutral-300)" onClick="{{ accept }}">Accept all</button>
     </div>
   </div>
   </sc-if>

@@ -24,6 +24,8 @@
   --shadow-sm:0 0 0 1px #302e2c;
   --shadow-md:0 0 0 1px #302e2c, 0 10px 26px rgba(0,0,0,.42);
   --shadow-lg:0 0 0 1px #363431, 0 18px 44px rgba(0,0,0,.55);
+  --color-raised:#2d2b29;
+  --shadow-float:0 0 0 1px #4a4744, 0 -10px 28px rgba(0,0,0,.45), 0 18px 44px rgba(0,0,0,.55);
 }
 body{margin:0;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body)}
 a{color:var(--color-accent-700);text-decoration:none}a:hover{color:var(--color-accent-600)}
@@ -188,7 +190,7 @@ a{color:var(--color-accent-700);text-decoration:none}a:hover{color:var(--color-a
 
       <div style="display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm)">
         <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent-700)">Accent mark</div>
-        <div style="display:flex;align-items:center;gap:8px"><span style="width:2px;height:14px;background:var(--color-accent-500);display:block"></span><span style="font-family:var(--font-heading);font-weight:500;font-size:15px">Logged tonight</span></div>
+        <div style="display:flex;align-items:center;gap:8px"><span style="width:2px;height:14px;background:var(--color-accent-500);display:block"></span><span style="font-family:var(--font-heading);font-weight:500;font-size:15px">Logged</span></div>
         <div style="font-size:11px;color:var(--color-neutral-600);line-height:1.55;text-wrap:pretty">A 2px × 14px accent-500 rule before a heading marks the one thing on a screen that is yours or recommended. It replaces tinted fills; one per surface.</div>
       </div>
 
@@ -196,14 +198,14 @@ a{color:var(--color-accent-700);text-decoration:none}a:hover{color:var(--color-a
         <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent-700)">Log panel</div>
         <div style="border-radius:var(--radius-md);overflow:hidden;box-shadow:var(--shadow-sm)">
           <div style="padding:12px;background:var(--color-neutral-100);font-size:12px;color:var(--color-neutral-700)">Your take · Last logged 19 Sep · 4.5</div>
-          <div style="padding:12px;background:var(--color-accent-100);font-size:12px;color:var(--color-accent-800)">Logged tonight · 21:40 · 2nd time</div>
+          <div style="padding:12px;background:var(--color-accent-100);font-size:12px;color:var(--color-accent-800)">Logged · 21:40 · 2nd time</div>
         </div>
-        <div style="font-size:11px;color:var(--color-neutral-600);line-height:1.55;text-wrap:pretty">The bottom of the result card. neutral-100 before rating, accent-100 once saved — the only place the accent tints a surface. Note field, flavour chips and “Add detailed notes” appear only after the first star.</div>
+        <div style="font-size:11px;color:var(--color-neutral-600);line-height:1.55;text-wrap:pretty">The bottom of the result card. neutral-100 before rating, accent-100 once saved — the only place the accent tints a surface. Note field, quick chips, “Add detailed notes” · Done and “Delete tasting” appear only after the first star. Done folds the panel to one line on the result card and closes it on the bottle page.</div>
       </div>
 
       <div style="display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm)">
         <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent-700)">Chips</div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap"><span style="padding:6px 11px;border-radius:999px;background:var(--color-accent-600);color:#1b1a19;font-size:12px">Sour apple</span><span style="padding:6px 11px;border-radius:999px;border:1px solid var(--color-divider);color:var(--color-neutral-700);font-size:12px">Cider-like</span><span style="padding:6px 11px;border-radius:999px;border:1px solid var(--color-divider);color:var(--color-neutral-700);font-size:12px">Warm</span><span style="padding:6px 11px;border-radius:999px;background:var(--color-accent-600);color:#1b1a19;font-size:12px">With food</span></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap"><span style="padding:6px 11px;border-radius:999px;background:var(--color-accent-600);color:#1b1a19;font-size:12px">Rich</span><span style="padding:6px 11px;border-radius:999px;border:1px solid var(--color-divider);color:var(--color-neutral-700);font-size:12px">Floral</span><span style="padding:6px 11px;border-radius:999px;border:1px solid var(--color-divider);color:var(--color-neutral-700);font-size:12px">Chilled</span><span style="padding:6px 11px;border-radius:999px;border:1px solid var(--color-divider);color:var(--color-neutral-700);font-size:12px">Warm</span><span style="padding:6px 11px;border-radius:999px;background:var(--color-accent-600);color:#1b1a19;font-size:12px">With food</span></div>
         <div style="font-size:11px;color:var(--color-neutral-600);line-height:1.55;text-wrap:pretty">Pill, 36px min height, 12–13px. Selected: accent-600 fill, #1b1a19 ink. Unselected: divider outline, neutral-700 ink. Same component for single-choice and multi-choice; the label above says which (“pick any”).</div>
       </div>
 
@@ -230,8 +232,8 @@ a{color:var(--color-accent-700);text-decoration:none}a:hover{color:var(--color-a
 
       <div style="display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm)">
         <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent-700)">Notice</div>
-        <div style="padding:12px 14px;border-radius:var(--radius-md);background:#121110;color:#f6f2ea;display:flex;align-items:center;gap:10px"><i class="ph-fill ph-check-circle" style="font-size:19px;color:var(--color-accent-600)"></i><div style="flex:1;font-size:13px">Logged · palate updated</div><span style="color:var(--color-accent-700);font-size:12px">Undo</span></div>
-        <div style="font-size:11px;color:var(--color-neutral-600);line-height:1.55;text-wrap:pretty">Sits 96px above the bottom edge, clearing the tab bar, and disappears after about 3 seconds. One action at most: Undo for saves, View for adds to cellar or wishlist. The ground is the fixed camera colour #121110.</div>
+        <div style="padding:12px 14px;border-radius:var(--radius-md);background:var(--color-raised);box-shadow:var(--shadow-float);color:var(--color-text);display:flex;align-items:center;gap:10px"><i class="ph-fill ph-check-circle" style="font-size:19px;color:var(--color-accent-600)"></i><div style="flex:1;font-size:13px">Logged · palate updated</div><span style="color:var(--color-accent-700);font-size:12px">Undo</span></div>
+        <div style="font-size:11px;color:var(--color-neutral-600);line-height:1.55;text-wrap:pretty">Sits 96px above the bottom edge, clearing the tab bar, and stays 6.8 seconds. One action at most: Undo for saves, View for adds to cellar or wishlist. It is a floating surface (raised + shadow-float), like the cookie banner. On Undo the panel dims to 45% for 0.2s, then it and “You and this sake” update together.</div>
       </div>
 
       <div style="display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm)">
@@ -269,6 +271,72 @@ a{color:var(--color-accent-700);text-decoration:none}a:hover{color:var(--color-a
     </div>
   </section>
 
+  <section style="display:flex;flex-direction:column;gap:16px">
+    <h2 style="font-size:13px;margin:0;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-600);font-weight:500">Added in 1.5</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px">
+      <div style="display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm)">
+        <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent-700)">Provenance badge</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap"><span style="display:inline-flex;align-items:center;gap:4px;height:24px;padding:0 9px;border-radius:999px;border:1px solid var(--color-neutral-400);color:var(--color-neutral-700);font-size:11px;box-sizing:border-box"><i class="ph ph-scan" style="font-size:12px"></i>Read by AI</span><span style="display:inline-flex;align-items:center;gap:4px;height:24px;padding:0 9px;border-radius:999px;border:1px solid var(--color-neutral-400);color:var(--color-neutral-700);font-size:11px;box-sizing:border-box"><i class="ph ph-magic-wand" style="font-size:12px"></i>AI answer</span><span style="display:inline-flex;align-items:center;gap:4px;height:24px;padding:0 9px;border-radius:999px;border:1px solid var(--color-neutral-400);color:var(--color-neutral-700);font-size:11px;box-sizing:border-box"><i class="ph ph-arrows-left-right" style="font-size:12px"></i>Cross-beverage</span><span style="display:inline-flex;align-items:center;gap:4px;height:24px;padding:0 9px;border-radius:999px;border:1px solid var(--color-neutral-400);color:var(--color-neutral-700);font-size:11px;box-sizing:border-box"><i class="ph ph-pen-nib" style="font-size:12px"></i>AI-written</span></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><span class="tag tag-accent">Sure match</span><span class="tag tag-neutral">Junmai</span><span style="display:inline-flex;align-items:center;gap:4px;height:24px;padding:0 9px;border-radius:999px;border:1px solid var(--color-neutral-400);color:var(--color-neutral-700);font-size:11px;box-sizing:border-box"><i class="ph ph-scan" style="font-size:12px"></i>Read by AI</span></div>
+        <div style="font-size:11px;color:var(--color-neutral-700);line-height:1.55;text-wrap:pretty">One component, four kinds: <b style="font-weight:500">llmExtracted</b> “Read by AI”, <b style="font-weight:500">llmInferred</b> “AI answer”, <b style="font-weight:500">crossBeverageMap</b> “Cross-beverage”, <b style="font-weight:500">aiWritten</b> “AI-written”. Kinds differ by icon and word, never by colour. The third tag family: accent tint = the app’s claim, neutral fill = a fact about the sake, <b style="font-weight:500">neutral outline = machine-derived</b>. 24px pill, 1px neutral-400, neutral-700 ink, 11px. Tapping opens a §16 sheet for that source; confidence (e.g. 85%) lives in the sheet, not on the chip. Never takes the accent.</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm)">
+        <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent-700)">AI-written note</div>
+        <div style="display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:var(--radius-md);background:var(--color-bg);box-shadow:var(--shadow-sm)">
+          <span style="display:inline-flex;align-items:center;gap:4px;height:24px;padding:0 9px;border-radius:999px;border:1px solid var(--color-neutral-400);color:var(--color-neutral-700);font-size:11px;box-sizing:border-box"><i class="ph ph-pen-nib" style="font-size:12px"></i>AI-written</span>
+          <div style="font-size:13px;line-height:1.5;color:var(--color-neutral-800);text-wrap:pretty">Green apple and yoghurt up front, a long sour finish. Better warm.</div>
+          <div style="display:flex;gap:16px;font-size:12px"><a href="#">Improve</a><a href="#">Report</a></div>
+        </div>
+        <div style="font-size:11px;color:var(--color-neutral-700);line-height:1.55;text-wrap:pretty">Generated tasting notes always lead with the badge, and end with Improve · Report (12px accent-700 links, 44px tap rows in the build). The text itself is neutral-800, never italic — italic is reserved for the user’s own words and placeholders.</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm)">
+        <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent-700)">Floating surface</div>
+        <div style="padding:12px;border-radius:var(--radius-lg);background:var(--color-raised);box-shadow:var(--shadow-float);display:flex;flex-direction:column;gap:8px"><div style="font-family:var(--font-heading);font-weight:500;font-size:14px">Cookies and similar storage</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px"><span style="height:32px;border-radius:var(--radius-md);background:var(--color-neutral-300)"></span><span style="height:32px;border-radius:var(--radius-md);background:var(--color-neutral-300)"></span><span style="height:32px;border-radius:var(--radius-md);background:var(--color-neutral-300)"></span></div></div>
+        <div style="font-size:11px;color:var(--color-neutral-700);line-height:1.55;text-wrap:pretty">Anything that floats over scrolling content (cookie banner, notices): <code>--color-raised</code> #2d2b29 (neutral-200) with <code>--shadow-float</code> — a 1px neutral-400 ring, an upward shade and the lg drop. Buttons on it sit on neutral-300. Same on the landing. No scrim: the screen behind stays usable.</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm)">
+        <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent-700)">Caveat line</div>
+        <div style="font-size:11px;line-height:1.5;color:var(--color-neutral-700);max-width:200px">Latin spellings are machine transliterations, checked by hand where we can. <span style="display:inline-grid;place-items:center;width:20px;height:20px;margin:-4px 0;vertical-align:middle;color:var(--color-neutral-600)"><i class="ph ph-info" style="font-size:13px"></i></span></div>
+        <div style="font-size:11px;color:var(--color-neutral-700);line-height:1.55;text-wrap:pretty">11px neutral-700 (8.1:1 on surface, 8.9:1 on the ground). The ⓘ is inline after the last word and wraps with the text; its 20px box gets a 44px hit area from padding in the build. Never pinned to the far edge. Never at reduced opacity.</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm)">
+        <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent-700)">Horizontal row edge</div>
+        <div style="display:flex;gap:8px;overflow:hidden;-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 32px),transparent);mask-image:linear-gradient(to right,#000 calc(100% - 32px),transparent)"><span style="flex:none;padding:8px 10px;border-radius:var(--radius-md);background:var(--color-bg);box-shadow:var(--shadow-sm);font-size:12px">Kidoizumi Afuruu</span><span style="flex:none;padding:8px 10px;border-radius:var(--radius-md);background:var(--color-bg);box-shadow:var(--shadow-sm);font-size:12px">Kōshu 1984</span><span style="flex:none;padding:8px 10px;border-radius:var(--radius-md);background:var(--color-bg);box-shadow:var(--shadow-sm);font-size:12px">Kinteki Kitashizuku</span></div>
+        <div style="font-size:11px;color:var(--color-neutral-700);line-height:1.55;text-wrap:pretty">Rows that scroll sideways bleed to the screen edge and fade the last 32px with a mask. 48px trailing padding so the final item can scroll fully clear of the fade; snap to item starts (proximity). Every horizontal row uses this.</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm)">
+        <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent-700)">Tile vs button</div>
+        <div style="display:grid;grid-template-columns:1.6fr 1fr;gap:8px"><div style="min-height:70px;padding:10px 12px;border-radius:var(--radius-md);background:var(--color-bg);box-shadow:var(--shadow-sm);display:flex;flex-direction:column;justify-content:space-between;font-size:12px"><i class="ph ph-camera" style="font-size:20px;color:var(--color-accent-600)"></i>Scan a label</div><div style="min-height:70px;padding:10px 12px;border-radius:var(--radius-md);background:var(--color-bg);box-shadow:var(--shadow-sm);display:flex;flex-direction:column;justify-content:space-between;font-size:12px"><i class="ph ph-keyboard" style="font-size:20px;color:var(--color-neutral-700)"></i>Type it</div></div>
+        <button class="btn btn-primary" style="border-width:1.5px;height:44px;gap:7px"><i class="ph ph-camera" style="font-size:16px"></i>Scan a label</button>
+        <div style="font-size:11px;color:var(--color-neutral-700);line-height:1.55;text-wrap:pretty">Tiles are surfaces: filled, hairline edge, icon top-left, label bottom-left, 78px. Buttons are outlines with centred content. Only the Scan tile’s icon takes the accent. First run shows no tile row — the card’s button is the one action.</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm)">
+        <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent-700)">End of screen</div>
+        <div style="display:flex;flex-direction:column;gap:2px;font-size:12px;line-height:1.5;color:var(--color-neutral-600)"><div>Catalogue and flavour data · <a href="#">Powered by Sakenowa ↗</a></div><div style="display:flex;flex-wrap:wrap;column-gap:14px"><a href="#">Impressum</a><a href="#">Privacy notice</a><a href="#">Cookie settings</a><a href="#">Drink responsibly</a></div></div>
+        <div style="font-size:11px;color:var(--color-neutral-700);line-height:1.55;text-wrap:pretty">The last thing in every scrolling app screen: 28px above, left on the content column, 12px. Line 1 the Sakenowa credit, line 2 the legal links (6px vertical padding each). No divider. Not on the camera, sheets or Ask.</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm)">
+        <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent-700)">Tab placeholder</div>
+        <div style="padding:16px;border-radius:var(--radius-lg);background:var(--color-bg);box-shadow:var(--shadow-sm);display:flex;flex-direction:column;gap:6px"><div style="display:flex;align-items:center;gap:8px"><span style="width:2px;height:14px;background:var(--color-accent-500);display:block"></span><span style="font-family:var(--font-heading);font-weight:500;font-size:15px">Your palate is on its way</span></div><div style="font-size:13px;color:var(--color-neutral-700);line-height:1.5">This tab opens in a later release.</div></div>
+        <div style="font-size:11px;color:var(--color-neutral-700);line-height:1.55;text-wrap:pretty">Confirmed as built: under the tab’s 26px title, one surface card with the accent mark, a title and one line. No illustration, no button. Deleted when the screen ships.</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm)">
+        <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent-700)">Cellar control</div>
+        <div style="display:flex;height:44px;border-radius:var(--radius-md);border:1px solid var(--color-divider);overflow:hidden;box-sizing:border-box"><span style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;color:var(--color-accent-700)"><i class="ph-fill ph-stack" style="font-size:16px"></i>In cellar · 2<i class="ph ph-caret-right" style="font-size:12px"></i></span><span style="width:1px;background:var(--color-divider)"></span><span style="width:44px;display:grid;place-items:center"><i class="ph ph-plus" style="font-size:16px"></i></span></div>
+        <div style="font-size:11px;color:var(--color-neutral-700);line-height:1.55;text-wrap:pretty">Not owned: secondary “Add to cellar”. Owned: one outline split in two — the count is a link to the Cellar, “+” (aria “Add another bottle”) adds one and shows the notice.</div>
+      </div>
+
+    </div>
+  </section>
+
   <section style="display:flex;flex-direction:column;gap:12px">
     <h2 style="font-size:13px;margin:0;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-600);font-weight:500">Behaviour rules</h2>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px">
@@ -300,7 +368,7 @@ class Component extends DCLogic {
     return {
       yes: true,
       rules: [
-        { t: 'The star is the save', d: 'Rating on the result card creates the journal entry immediately. No Save step anywhere; every save shows an Undo notice for about 3 seconds.' },
+        { t: 'The star is the save', d: 'Rating on the result card creates the journal entry immediately. No Save step anywhere; every save shows an Undo notice for 6.8 seconds. After that, any tasting can be edited or deleted from “You and this sake” → Edit.' },
         { t: 'Ask to sign in after the first save', d: 'The first tasting, wishlist save or cellar add opens the sign-in sheet about 650ms later. The item is already stored on the phone. “Not now” stops the prompt for the session; the journal card stays as a quiet reminder.' },
         { t: 'Age by region', d: 'The gate states the drinking age for the detected region (Japan 20, US 21, UK 18, South Korea 19, elsewhere 18) and lets the user change it. These figures need legal review.' },
         { t: 'Contribute by default', d: 'Ratings and flavour words feed Yawaragi flavour charts anonymously, on by default. Disclosed on the sign-in sheet; switch in Account → Privacy. Written notes are shared only one by one, by choice. Captions name every source.' },
