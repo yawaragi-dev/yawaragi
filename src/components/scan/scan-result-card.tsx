@@ -124,13 +124,20 @@ export function ScanResultCard({
   isStale = false,
   logPanel,
 }: ScanResultCardProps) {
+  const tOutcome = useTranslations('scanOutcome')
+  // v1.5 §5 / ADR-0015's tiers: "Sure match" at ≥ 0.85, "Best guess" at
+  // 0.60–0.84 (below that the pipeline answers low_confidence instead).
+  const matchTag =
+    typeof extractionConfidence !== 'number'
+      ? null
+      : extractionConfidence >= 0.85
+        ? tOutcome('sureMatch')
+        : tOutcome('bestGuess')
   const t = useTranslations('scan.resultCard')
-  const tBadge = useTranslations('provenance.badge.llmExtracted')
   const tCrossBevBadge = useTranslations('provenance.badge.crossBeverageMap')
   const tProvenanceSheet = useTranslations('provenance.sheet')
   const tDisclaimer = useTranslations('heuristicDisclaimer')
   const tAttribution = useTranslations('sakenowaAttribution')
-  const tSake = useTranslations('sake.brand')
 
   // UX-C reverse cross-beverage hook (#164): if the matched sake has a
   // Sakenowa flavor chart, name the nearest curated Western exemplar below
@@ -196,93 +203,65 @@ export function ScanResultCard({
         which is what it always meant.
       */}
       <div className="@container">
-        <div
-          className={cn(
-            'grid gap-0',
-            photoUrl && '@md:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]',
-          )}
-        >
-          {photoUrl && (
-            // The photo keeps its true 3:4 aspect (matches the asset, so no
-            // crop); on desktop it's vertically centered in the column so a
-            // taller content side doesn't leave the photo stranded at the top.
-            <div className="p-4 @md:flex @md:items-center @md:p-5">
+        <div className="grid gap-0">
+          <div className={cn('flex flex-col gap-5 p-6', staleClass)}>
+            {/*
+              v1.5 §5 identity: the Latin name leads (21px), the kanji under it,
+              the brewery; then the tags — the match tag first, the card's one
+              accent tag — and, last, the Sakenowa credit. No provenance badge:
+              everything on the card is catalogue data; the model's reading
+              only chose the row (the badge appears where read text is shown,
+              §5a).
+            */}
+            <div className="flex items-start gap-4">
+            {photoUrl && (
+              // v1.5 §5 / rule 14: a 92×122 slot, only for the photo this
+              // session took — the bottle in the visitor's hand.
               <div
-                className="relative aspect-[3/4] w-full overflow-hidden rounded-xl bg-ash-200 shadow-yw-sm"
+                className="relative h-[122px] w-[92px] shrink-0 overflow-hidden rounded-xl bg-ash-200 shadow-yw-sm"
                 data-testid="scan-result-photo-frame"
               >
-                {/*
-                  Native <img> rather than next/image: in the scan flow the
-                  src is a blob: URL (client-only object URL, ADR-0015) which
-                  next/image can't accept; the hero passes a static path.
-                  Kept as one <img> path so both callers share it. The photo
-                  stays at full opacity across rescans (#190).
-                */}
+                {/* A blob: URL in the scan flow (next/image cannot take one);
+                    the landing hero passes a static path. Full opacity across
+                    rescans (#190). */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={photoUrl}
-                  alt={photoAlt}
-                  className="h-full w-full object-cover"
-                  data-testid="scan-result-photo"
-                />
+                <img src={photoUrl} alt={photoAlt} className="h-full w-full object-cover" data-testid="scan-result-photo" />
               </div>
-            </div>
-          )}
-
-          <div
-            className={cn(
-              'flex flex-col gap-5 p-6 @md:py-8 @md:pr-8',
-              photoUrl && '@md:pl-2',
-              staleClass,
             )}
-          >
-            <div className="flex items-center justify-end">
-              <SakenowaAttributionView
-                placement="inline"
-                poweredBy={tAttribution('poweredBy')}
-                linkLabel={tAttribution('linkLabel')}
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                <span
-                  className="text-title font-medium text-ink"
-                  lang="ja"
-                  data-testid="scan-result-name-kanji"
-                >
+            <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+              <span
+                className="text-title font-medium text-ink"
+                lang={sakeRomaji ? 'en' : 'ja'}
+                data-testid={sakeRomaji ? 'scan-result-name-romaji' : 'scan-result-name-kanji'}
+              >
+                {sakeRomaji ?? sakeKanji}
+              </span>
+              {sakeRomaji && (
+                <span className="text-subtle text-ash-700" lang="ja" data-testid="scan-result-name-kanji">
                   {sakeKanji}
                 </span>
-                {sakeRomaji && (
+              )}
+              <span className="text-meta text-ash-600" data-testid="scan-result-brewery">
+                {breweryRomaji ?? <span lang="ja">{breweryKanji}</span>}
+              </span>
+              {matchTag && (
+                <span className="mt-1.5 flex">
                   <span
-                    className="text-subtle text-ash-600"
-                    data-testid="scan-result-name-romaji"
+                    className="inline-flex min-h-7 items-center rounded-full bg-ginshu-100 px-2.5 text-meta font-medium text-ginshu-700"
+                    data-testid="scan-result-match-tag"
                   >
-                    {sakeRomaji}
+                    {matchTag}
                   </span>
-                )}
-                {typeof extractionConfidence === 'number' && (
-                  <ProvenanceBadgeView
-                    kind={resolveBadgeKind('llm_extracted')}
-                    label={tBadge('label')}
-                    explanation={tBadge('explanation')}
-                    sheetTitle={tBadge('sheetTitle')}
-                    closeLabel={tProvenanceSheet('closeLabel')}
-                    confidence={extractionConfidence}
-                    id="scan-result-extraction"
-                  />
-                )}
-              </div>
-              <div
-                className="flex flex-wrap items-baseline gap-1.5 text-meta text-ash-600"
-                data-testid="scan-result-brewery"
-              >
-                <span className="text-section-label uppercase text-ash-600">
-                  {tSake('breweryLabel')}
                 </span>
-                <span lang="ja">{breweryKanji}</span>
-                {breweryRomaji && <span>({breweryRomaji})</span>}
-              </div>
+              )}
+              <SakenowaAttributionView
+                placement="identity"
+                poweredBy={tAttribution('poweredBy')}
+                linkLabel={tAttribution('linkLabel')}
+                catalogueData={tAttribution('catalogueDataShort')}
+                className="mt-1"
+              />
+            </div>
             </div>
 
             {/* §5 puts the log panel straight under the identity, above the

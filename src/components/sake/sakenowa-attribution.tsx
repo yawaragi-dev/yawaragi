@@ -158,7 +158,8 @@ export function SakenowaAttributionView({
           href={SAKENOWA_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="underline underline-offset-4 hover:no-underline focus-visible:no-underline"
+          // The licence's phrase stays whole when the line wraps.
+          className="whitespace-nowrap underline underline-offset-4 hover:no-underline focus-visible:no-underline"
         >
           {poweredBy} ↗
         </a>
