@@ -24,11 +24,11 @@ import { entriesForExpression, resolveViewerJournal } from '@/lib/taste/viewer-j
  * else, so anyone else — or anyone who cannot keep a journal (ADR-0020) —
  * gets a 404. The page never says whether an id exists for someone else.
  *
- * **Only a bottling of a known sake, for now.** "Add your bottling" on the
- * sake page (§9) is the one way in that is built. A bottling with no sake —
- * what "Keep it anyway" and "Add it yourself" will create — has no line block,
- * no chart and no Sakenowa credit; that branch lands with those two entry
- * points.
+ * **Two kinds, one template.** A bottling of a sake the catalogue has ("Add
+ * your bottling", §9) links back to that sake and ends in the line block. A
+ * bottling with no sake ("Keep it anyway", §5a; "Add it yourself", §8) has
+ * nothing of the catalogue's on it: no line link, no line block, no chart, no
+ * Sakenowa credit above the fold or at the end of the screen (rule 15).
  *
  * **What this port leaves out, and why:**
  *
@@ -43,6 +43,7 @@ import { entriesForExpression, resolveViewerJournal } from '@/lib/taste/viewer-j
  */
 interface PageProps {
   params: Promise<{ locale: string; id: string }>
+  searchParams: Promise<Record<string, string | string[] | undefined>>
 }
 
 // Private to its author: never indexed, and the title names nothing.
@@ -61,30 +62,41 @@ async function lookupFlavorChartSafe(brandId: number): Promise<FlavorChart | nul
   }
 }
 
-export default async function BottlingPage({ params }: PageProps) {
+export default async function BottlingPage({ params, searchParams }: PageProps) {
   const { locale, id } = await params
+  // "Keep it anyway" and "Add it yourself" land here with `?rate=1`: the
+  // design sends them to §5's card to rate, and this page's panel is that card's.
+  const rateNow = (await searchParams).rate === '1'
   setRequestLocale(locale)
 
   const viewer = await resolveViewerJournal(await cookies())
   const bottling = viewer.canLog ? viewer.expressions.find((e) => e.id === id) : undefined
-  // See the header: a bottling with no sake is not reachable yet.
-  if (!bottling || bottling.brandId === null || bottling.line === null) notFound()
+  if (!bottling) notFound()
   const { brandId, line } = bottling
 
-  const [chart, t] = await Promise.all([lookupFlavorChartSafe(brandId), getTranslations('bottling')])
+  const [chart, t] = await Promise.all([
+    brandId === null ? null : lookupFlavorChartSafe(brandId),
+    getTranslations('bottling'),
+  ])
 
   const tastings = entriesForExpression(viewer.entries, bottling.id)
   const lastTasting = tastings[0]
-  const lineName = line.nameRomaji ?? line.nameKanji
-  const lineKanji = line.nameRomaji !== null ? line.nameKanji : null
+  const lineName = line ? (line.nameRomaji ?? line.nameKanji) : null
+  const lineKanji = line && line.nameRomaji !== null ? line.nameKanji : null
   // The visitor's other bottlings of the same sake (§9a.7: "Own bottlings of
-  // the same line appear here too, for their author").
-  const others = viewer.expressions.filter((e) => e.brandId === brandId && e.id !== bottling.id)
+  // the same line appear here too, for their author"). Without a sake there
+  // is no line for others to share.
+  const others =
+    brandId === null
+      ? []
+      : viewer.expressions.filter((e) => e.brandId === brandId && e.id !== bottling.id)
 
   return (
     <main
       className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-5 py-5"
       data-testid="bottling-page"
+      // Rule 15: with no sake, nothing on this screen is the catalogue's.
+      {...(brandId === null ? { 'data-no-catalogue-data': '' } : {})}
     >
       <ScreenBar title={bottling.name} />
 
@@ -94,27 +106,36 @@ export default async function BottlingPage({ params }: PageProps) {
           <h1 className="text-bottle-name font-medium text-ink" data-testid="bottling-name">
             {bottling.name}
           </h1>
-          <Link
-            href={{ pathname: '/sake/[brandId]', params: { brandId: String(brandId) } }}
-            className="inline-flex min-h-7 items-center gap-1 self-start rounded-sm text-subtle text-ginshu-700 hover:text-ginshu-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
-            data-testid="bottling-line-link"
-          >
-            <span>
-              {t.rich('bottlingOf', {
-                line: lineName,
-                kanji: () =>
-                  lineKanji ? (
-                    <span className="text-ash-600" lang="ja">
-                      {lineKanji}
-                    </span>
-                  ) : null,
-              })}
-            </span>
-            <CaretRight size={13} aria-hidden="true" />
-          </Link>
-          {/* The line's Latin name is a machine transliteration, as on the
-              sake's own page; the bottling's name is the visitor's own words. */}
-          {line.nameRomaji !== null && <RomajiDisclosure id={`bottling-${bottling.id}-romaji`} />}
+          {brandId !== null && lineName !== null ? (
+            <>
+              <Link
+                href={{ pathname: '/sake/[brandId]', params: { brandId: String(brandId) } }}
+                className="inline-flex min-h-7 items-center gap-1 self-start rounded-sm text-subtle text-ginshu-700 hover:text-ginshu-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+                data-testid="bottling-line-link"
+              >
+                <span>
+                  {t.rich('bottlingOf', {
+                    line: lineName,
+                    kanji: () =>
+                      lineKanji ? (
+                        <span className="text-ash-600" lang="ja">
+                          {lineKanji}
+                        </span>
+                      ) : null,
+                  })}
+                </span>
+                <CaretRight size={13} aria-hidden="true" />
+              </Link>
+              {/* The line's Latin name is a machine transliteration, as on the
+                  sake's own page; the bottling's name is the visitor's own words. */}
+              {lineKanji !== null && <RomajiDisclosure id={`bottling-${bottling.id}-romaji`} />}
+            </>
+          ) : (
+            // §9a, own bottling: "place = the brewery typed, else 'Added by you'".
+            <p className="text-body text-ash-600" data-testid="bottling-place">
+              {bottling.brewery ?? t('addedByYou')}
+            </p>
+          )}
           <p className="mt-1">
             <span
               className="inline-flex min-h-7 items-center rounded-full border border-ash-400 px-2.5 text-meta text-ash-700"
@@ -124,13 +145,14 @@ export default async function BottlingPage({ params }: PageProps) {
             </span>
           </p>
           <p className="text-subtle text-ash-700" data-testid="bottling-own-line">
-            {t('ownOfLine', { line: lineName })}
+            {lineName !== null ? t('ownOfLine', { line: lineName }) : t('ownNoLine')}
           </p>
         </div>
-        {/* §9a gives an own bottling no credit line. This one shows the sake's
-            name, which is Sakenowa's, so the above-the-fold credit stays
-            (CLAUDE.md, Sakenowa attribution). */}
-        <SakenowaAttribution placement="identity" />
+        {/* §9a gives an own bottling no credit line. One that belongs to a sake
+            shows that sake's name, which is Sakenowa's, so the above-the-fold
+            credit stays (CLAUDE.md, Sakenowa attribution). With no sake there
+            is nothing of Sakenowa's to credit. */}
+        {brandId !== null && <SakenowaAttribution placement="identity" />}
       </section>
 
       {/* -- §9a.3 Action row: §9's, without "Similar" ---------------------- */}
@@ -146,6 +168,7 @@ export default async function BottlingPage({ params }: PageProps) {
         }
         similar={null}
         cellar={null}
+        initiallyOpen={rateNow}
       />
 
       {/* -- §9a.4 You and this bottling ------------------------------------ */}
@@ -182,7 +205,10 @@ export default async function BottlingPage({ params }: PageProps) {
       )}
 
       {/* -- §9a.8 About the line ------------------------------------------- */}
-      <LineBlock brandId={brandId} lineName={lineName} lineKanji={lineKanji} chart={chart} />
+      {/* No sake, no line block — so no chart and no "Similar" (§9a). */}
+      {brandId !== null && lineName !== null && (
+        <LineBlock brandId={brandId} lineName={lineName} lineKanji={lineKanji} chart={chart} />
+      )}
     </main>
   )
 }

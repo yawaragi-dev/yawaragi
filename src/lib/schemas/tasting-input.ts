@@ -15,13 +15,19 @@ const Rating = z.number().min(0.5).max(5).multipleOf(0.5)
 /**
  * "Tap a star and it's logged" — a new tasting of one sake, rated. With an
  * `expressionId`, a tasting of that bottling of the sake (design v1.6 §9a:
- * "the tasting is stored on the bottling").
+ * "the tasting is stored on the bottling"). `brandId: null` is a bottling
+ * whose sake the catalogue lacks, so it must name the bottling.
  */
-export const RateTastingInputSchema = z.object({
-  brandId: z.number().int().positive(),
-  rating: Rating,
-  expressionId: z.string().min(1).max(64).optional(),
-})
+export const RateTastingInputSchema = z
+  .object({
+    brandId: z.number().int().positive().nullable(),
+    rating: Rating,
+    expressionId: z.string().min(1).max(64).optional(),
+  })
+  .refine((input) => input.brandId !== null || input.expressionId !== undefined, {
+    message: 'a tasting with no sake must name its bottling',
+    path: ['expressionId'],
+  })
 export type RateTastingInput = z.infer<typeof RateTastingInputSchema>
 
 /** The earliest tasting day the journal accepts. */

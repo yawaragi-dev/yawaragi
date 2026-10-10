@@ -1,8 +1,14 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { NextIntlClientProvider } from 'next-intl'
 import { describe, expect, it, vi } from 'vitest'
 import en from '~/messages/en.json'
-import { ScanOutcome } from './scan-outcome'
+
+const addOwnBottling = vi.fn()
+vi.mock('@/lib/collection/expression-actions', () => ({
+  addOwnBottling: (...a: unknown[]) => addOwnBottling(...a),
+}))
+
+const { ScanOutcome } = await import('./scan-outcome')
 
 function renderOutcome(props: Partial<Parameters<typeof ScanOutcome>[0]> = {}) {
   const onRescan = vi.fn()
@@ -57,5 +63,34 @@ describe('§5a — a scan outcome that is not a match', () => {
     expect(list.querySelectorAll('a')).toHaveLength(3)
     expect(list.textContent).toContain('Same brewery · closest name')
     expect(list.textContent).not.toMatch(/%/)
+  })
+
+  it('offers to keep an unmatched bottle anyway, with the name and brewery as the visitor fixed them', async () => {
+    addOwnBottling.mockResolvedValue({ status: 'ok', expressionId: 'x9' })
+    renderOutcome({
+      canKeep: true,
+      read: { name: 'SAWA NO HANA Kokoro', brewery: '友野酒造', badge: null },
+    })
+    const keep = screen.getByTestId('scan-outcome-keep')
+    expect(keep.textContent).toContain('Keep it anyway')
+    expect(keep.textContent).toContain('marked as your own entry')
+
+    fireEvent.change(screen.getByTestId('scan-outcome-read-name'), { target: { value: '澤の花' } })
+    fireEvent.change(screen.getByTestId('scan-outcome-read-brewery'), { target: { value: '伴野酒造' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Add this bottling' }))
+
+    await waitFor(() =>
+      expect(addOwnBottling).toHaveBeenCalledWith({ brandId: null, name: '澤の花', brewery: '伴野酒造' }),
+    )
+  })
+
+  it('does not offer to keep a bottle to a visitor who cannot keep a journal, or when nothing was read', () => {
+    renderOutcome({ read: { name: '澤の花', brewery: '伴野酒造', badge: null } })
+    expect(screen.queryByTestId('scan-outcome-keep')).toBeNull()
+  })
+
+  it('has nothing to keep without a name', () => {
+    renderOutcome({ canKeep: true, read: { name: '', brewery: '伴野酒造', badge: null } })
+    expect((screen.getByRole('button', { name: 'Add this bottling' }) as HTMLButtonElement).disabled).toBe(true)
   })
 })

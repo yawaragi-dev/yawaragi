@@ -87,6 +87,55 @@ test.describe('own bottling page', () => {
     await context.close()
   })
 
+  test('a bottle the catalogue does not know shows only what you gave it, and credits nobody else', async ({
+    browser,
+  }) => {
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([AGE_GATE_COOKIE, stub('populated')])
+    const page = await context.newPage()
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/en/bottling/stub-own')
+
+    // Design v1.6.1, screenshot 57.
+    await expect(page.getByTestId('bottling-name')).toHaveText('富久千代')
+    await expect(page.getByTestId('bottling-place')).toHaveText('盛田屋')
+    await expect(page.getByTestId('bottling-own-tag')).toHaveText('Your own entry')
+    await expect(page.getByTestId('bottling-own-line')).toHaveText(
+      'Not in the catalogue yet. Only you can see it, and we’ll link it to its sake if it turns up.',
+    )
+    await expect(page.getByTestId('bottle-rate-open')).toBeVisible()
+    await expect(page.getByTestId('bottle-history-empty')).toHaveText('Not tasted yet.')
+
+    // No sake behind it: no way to a sake's page, no line block, no chart.
+    await expect(page.getByTestId('bottling-line-link')).toHaveCount(0)
+    await expect(page.getByTestId('bottling-line-block')).toHaveCount(0)
+    // Rule 15: nothing here is Sakenowa's, so nothing credits them — neither
+    // above the fold nor in the end-of-screen block, whose links stay.
+    await expect(page.getByTestId('sakenowa-attribution-identity')).toHaveCount(0)
+    await expect(page.getByTestId('sakenowa-attribution-end')).toBeHidden()
+    await expect(page.getByText('Powered by Sakenowa').filter({ visible: true })).toHaveCount(0)
+    await expect(page.getByTestId('footer-imprint-link')).toBeVisible()
+
+    // ...while a bottling that does belong to a sake keeps the credit.
+    await page.goto('/en/bottling/stub-bottling')
+    await expect(page.getByTestId('sakenowa-attribution-end')).toBeVisible()
+
+    await context.close()
+  })
+
+  test('arriving to rate a bottle just kept opens the rating straight away', async ({ browser }) => {
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([AGE_GATE_COOKIE, stub('populated')])
+    const page = await context.newPage()
+    await page.goto('/en/bottling/stub-own?rate=1')
+
+    const panel = page.getByTestId('tasting-log-panel')
+    await expect(panel).toContainText('First time for you')
+    await expect(page.getByTestId('bottle-rate-open')).toHaveCount(0)
+
+    await context.close()
+  })
+
   test('is not there for anyone else', async ({ browser }) => {
     const context = await browser.newContext({ locale: 'en-US' })
     // Someone who can keep a journal, but has no such bottling...

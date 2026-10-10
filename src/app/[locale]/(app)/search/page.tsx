@@ -1,14 +1,17 @@
 import { CaretRight, MagnifyingGlass, XCircle } from '@phosphor-icons/react/dist/ssr'
 import { hasLocale } from 'next-intl'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
+import { cookies } from 'next/headers'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { FocusFieldAtEnd } from '@/components/search/focus-field-at-end'
 import { BackLink } from '@/components/layout/back-link'
+import { AddItYourselfRow } from '@/components/sake/add-unlisted-bottling'
 import { RomajiDisclosure } from '@/components/sake/romaji-disclosure'
 import { SakenowaAttribution } from '@/components/sake/sakenowa-attribution'
 import { getPathname, Link } from '@/i18n/navigation'
 import { routing } from '@/i18n/routing'
+import { resolveViewerJournal } from '@/lib/taste/viewer-journal'
 import {
   isCatalogueQuerySpecific,
   MAX_CATALOGUE_SEARCH_RESULTS,
@@ -41,9 +44,11 @@ import {
  * `search-brands.ts`: the per-row thumb (Sakenowa ships no images — #308 §7),
  * the "Tasted" tag and "Recently tasted" empty state (the journal is
  * maintainer-only per ADR-0020, so for almost every visitor both would always
- * be blank), and the dashed "Add {query} yourself" row (manual entry is §5's
- * Phase-2 "Added by you", and #162 forbids advertising a surface that does not
- * exist). The empty state says what the field is for instead.
+ * be blank). The empty state says what the field is for instead.
+ *
+ * The dashed "Add {query} yourself" row is in for a visitor who can keep a
+ * journal (design v1.6, ADR-0025): it saves the typed name as a bottling of
+ * their own and opens its page to rate.
  *
  * `<SakenowaAttribution />` is required — these are Sakenowa brand rows.
  *
@@ -79,6 +84,9 @@ function firstQueryValue(value: string | string[] | undefined): string {
   return value ?? ''
 }
 
+/** What the page shows before there is a query worth sending. */
+const NO_SEARCH: Awaited<ReturnType<typeof searchCatalogue>> = { kind: 'ok', matches: [] }
+
 export default async function SearchPage({ params, searchParams }: PageProps) {
   const { locale } = await params
   if (!hasLocale(routing.locales, locale)) notFound()
@@ -93,7 +101,10 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
   // `unavailable` rather than 500ing a screen whose field, empty state and
   // camera bridge all still work. See its docstring for why this surface
   // degrades where `/sake/*` does not.
-  const outcome = specific ? await searchCatalogue(query) : ({ kind: 'ok', matches: [] } as const)
+  const [outcome, viewer] = await Promise.all([
+    specific ? searchCatalogue(query) : NO_SEARCH,
+    cookies().then(resolveViewerJournal),
+  ])
   const matches = outcome.kind === 'ok' ? outcome.matches : []
 
   // Back goes to the scan screen for a cold deep-link: §8 is reached from
@@ -272,6 +283,12 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
           </div>
         </>
       )}
+
+      {/* §8: "With a query, a dashed row 'Add "{query}" yourself — Rate it
+          now, details later'". Whatever the search said — matches, none, or
+          the catalogue out of reach — the bottle in hand can still be kept.
+          Only for a visitor who can keep a journal (ADR-0020). */}
+      {specific && viewer.canLog && <AddItYourselfRow query={query} />}
     </main>
   )
 }

@@ -70,7 +70,8 @@ describe('adding your own bottling of a sake', () => {
     await addOwnBottling({ brandId: 12, name: 'Nama' })
     vi.mocked(lookupBrand).mockResolvedValue({ ...RIHAKU, brandId: 13, nameKanji: '而今' })
     await addOwnBottling({ brandId: 13, name: 'Nama' })
-    expect((await store().read(USER)).map((e) => e.brandId)).toEqual([12, 13])
+    // Added in the same millisecond, so their order is not the point.
+    expect((await store().read(USER)).map((e) => e.brandId).sort()).toEqual([12, 13])
   })
 
   it('refuses an empty or overlong name, and a sake not in the catalogue', async () => {
@@ -81,6 +82,30 @@ describe('adding your own bottling of a sake', () => {
     vi.mocked(lookupBrand).mockResolvedValue(null)
     expect(await addOwnBottling({ brandId: 999, name: 'Nama' })).toEqual({ status: 'not_found' })
     expect(await store().read(USER)).toEqual([])
+  })
+
+  it('keeps a bottle the catalogue does not know, with the brewery as read off the label', async () => {
+    const result = await addOwnBottling({ brandId: null, name: '富久千代', brewery: ' 盛田屋 ' })
+    expect(result.status).toBe('ok')
+    expect(lookupBrand).not.toHaveBeenCalled()
+
+    const [bottling] = await store().read(USER)
+    expect(bottling).toMatchObject({ own: true, brandId: null, line: null, name: '富久千代', brewery: '盛田屋' })
+  })
+
+  it('needs only the name: a blank brewery is left out', async () => {
+    await addOwnBottling({ brandId: null, name: '富久千代', brewery: '   ' })
+    const [bottling] = await store().read(USER)
+    expect(bottling!.brewery).toBeUndefined()
+  })
+
+  it('tells two bottles of the same name apart by their brewery', async () => {
+    const first = await addOwnBottling({ brandId: null, name: '旭', brewery: '甲酒造' })
+    const again = await addOwnBottling({ brandId: null, name: '旭', brewery: '甲酒造' })
+    const other = await addOwnBottling({ brandId: null, name: '旭', brewery: '乙酒造' })
+    expect(again).toEqual(first)
+    expect(other).not.toEqual(first)
+    expect(await store().read(USER)).toHaveLength(2)
   })
 
   it('stores nothing for someone who is not a maintainer', async () => {

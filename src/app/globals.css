@@ -327,3 +327,14 @@ body {
     animation: none !important;
   }
 }
+
+/*
+ * Design v1.6.1, rule 15: the end-of-screen block's first line — "Catalogue
+ * and flavor data · Powered by Sakenowa ↗" — shows only where the screen
+ * displays catalogue or chart data. A screen that shows none (a bottling the
+ * visitor added whose sake the catalogue lacks) marks itself, and the credit
+ * steps aside. See <FooterCredit />.
+ */
+[data-app-pane]:has([data-no-catalogue-data]) [data-footer-credit] {
+  display: none;
+}

@@ -65,7 +65,10 @@ export default async function AppShellLayout({ children }: { children: React.Rea
           this device, browser toolbars included. §4's camera does. Size
           containment is safe here: the pane's own size comes from the flex
           column, never from its content. */}
-      <main className="min-h-0 flex-1 overflow-y-auto overflow-x-clip overscroll-contain [container-type:size]">
+      <main
+        className="min-h-0 flex-1 overflow-y-auto overflow-x-clip overscroll-contain [container-type:size]"
+        data-app-pane=""
+      >
         {children}
         {/* Inside the scrolling pane, so the Impressum stays reachable from
             every app screen without a second fixed bar. See <LegalFooter />. */}

@@ -9,9 +9,11 @@ import { lookupBrand } from '@/lib/sakenowa/lookup'
 import { withMaintainerCollection } from '@/lib/taste/maintainer-collection'
 
 /**
- * "Add your bottling" (design v1.6 §9 and §5, ADR-0025): a User names a
- * bottling of a sake the catalogue has, and it becomes an own Expression
- * linked to that sake. Maintainer-only, behind the same gate as the journal
+ * Adding a bottling of your own (design v1.6, ADR-0025). With a sake — "Add
+ * your bottling" on §9 — it becomes an own Expression linked to that sake.
+ * Without one — "Keep it anyway" on a scan outcome (§5a), "Add it yourself" in
+ * search (§8) — it stands alone, with the brewery as read or typed, until the
+ * sake turns up in the catalogue. Maintainer-only, behind the same gate as the journal
  * (ADR-0020), and not rate-limited for the journal actions' reason.
  */
 export type AddOwnBottlingResult =
@@ -26,16 +28,21 @@ export async function addOwnBottling(input: AddOwnBottlingInput): Promise<AddOwn
   const parsed = AddOwnBottlingInputSchema.safeParse(input)
   if (!parsed.success) return { status: 'invalid_input' }
   const { brandId, name } = parsed.data
+  const brewery = parsed.data.brandId === null ? parsed.data.brewery || undefined : undefined
 
   return withMaintainerCollection(async ({ userId, expressions }) => {
-    const brand = await lookupBrand(brandId)
-    if (!brand) return { status: 'not_found' }
+    const brand = brandId === null ? null : await lookupBrand(brandId)
+    if (brandId !== null && !brand) return { status: 'not_found' }
 
-    // The same name under the same sake is the same bottling: a second tap,
-    // or coming back to add it again, lands on the one already there.
+    // The same name under the same sake — or the same name and brewery with no
+    // sake — is the same bottling: a second tap, or coming back to add it
+    // again, lands on the one already there.
     const sameName = name.toLocaleLowerCase()
     const existing = (await expressions.read(userId)).find(
-      (e) => e.brandId === brandId && e.name.toLocaleLowerCase() === sameName,
+      (e) =>
+        e.brandId === brandId &&
+        e.name.toLocaleLowerCase() === sameName &&
+        (e.brewery ?? '').toLocaleLowerCase() === (brewery ?? '').toLocaleLowerCase(),
     )
     if (existing) return { status: 'ok', expressionId: existing.id }
 
@@ -45,8 +52,9 @@ export async function addOwnBottling(input: AddOwnBottlingInput): Promise<AddOwn
       id: crypto.randomUUID(),
       own: true,
       brandId,
-      line: { nameKanji: brand.nameKanji, nameRomaji: brand.nameRomaji },
+      line: brand ? { nameKanji: brand.nameKanji, nameRomaji: brand.nameRomaji } : null,
       name,
+      ...(brewery ? { brewery } : {}),
       createdAt: now,
       updatedAt: now,
     }

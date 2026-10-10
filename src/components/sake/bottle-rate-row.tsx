@@ -32,7 +32,8 @@ export function BottleRateRow({
   cellar,
   initiallyOpen = false,
 }: {
-  brandId: number
+  /** The sake, or `null` for a bottling whose sake the catalogue lacks. */
+  brandId: number | null
   /** §9a: the bottling this page is about; its tastings are stored on it. */
   expressionId?: string
   /** The name the page shows; the delete confirmation names it. */
