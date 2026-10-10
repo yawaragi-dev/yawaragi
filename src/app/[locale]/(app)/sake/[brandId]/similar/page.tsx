@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { hasLocale } from 'next-intl'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
+import { RomajiDisclosure } from '@/components/sake/romaji-disclosure'
 import {
   SimilarSakeRow,
   type SimilarSakeRowStrings,
@@ -129,6 +130,13 @@ export default async function SimilarSakesPage({ params }: PageProps) {
       ) : (
         <>
           <p className="text-body text-ash-600">{t('intro')}</p>
+          {/* Each row's romaji is a Hepburn reading generated at ingest, not
+              Sakenowa's — so the column gets §16's disclosure once, as §8's
+              rows do, rather than a badge on every row (#370). Only when a
+              row actually shows romaji. */}
+          {similar.matches.some(({ brand }) => brand.nameRomaji !== null) && (
+            <RomajiDisclosure id="similar-romaji" />
+          )}
           {/* No gap: each row carries the prototype's bottom divider. */}
           <ol className="flex flex-col" data-testid="similar-sakes-list">
             {similar.matches.map(({ brand: match }) => {
