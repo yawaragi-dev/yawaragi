@@ -376,7 +376,8 @@
       "error": "Beim Vorbereiten deiner Vorschläge ist etwas schiefgelaufen. Bitte versuche es in ein paar Minuten erneut.",
       "sessionMissing": "Deine Browser-Sitzung konnte nicht vorbereitet werden. Bitte lade die Seite neu und versuche es erneut.",
       "backToSeed": "Zurück zum Ausgangs-Sake"
-    }
+    },
+    "barTitle": "Empfehlungen"
   },
   "sakenowaAttribution": {
     "poweredBy": "Bereitgestellt mit Daten von Sakenowa",

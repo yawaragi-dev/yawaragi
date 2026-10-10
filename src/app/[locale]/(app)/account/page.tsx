@@ -1,6 +1,7 @@
 import { Globe } from '@phosphor-icons/react/dist/ssr'
 import { Show } from '@clerk/nextjs'
 import { hasLocale } from 'next-intl'
+import { ScreenBar } from '@/components/layout/screen-header'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
@@ -81,7 +82,8 @@ export default async function AccountPage({ params }: PageProps) {
       className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-5 py-6"
       data-testid="account-page"
     >
-      <h1 className="text-title font-medium text-ink">{t('title')}</h1>
+      {/* v1.5 header rule: a non-tab screen — back · title. */}
+      <ScreenBar titleAs="h1" title={t('title')} />
 
       {/* §15's identity block. Signed out is the common case by design —
           ADR-0020 keeps sign-up shut to everyone but maintainers, and the

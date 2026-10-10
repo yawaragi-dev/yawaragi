@@ -4,6 +4,7 @@ import type { Metadata } from 'next'
 import { hasLocale } from 'next-intl'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { RomajiDisclosure } from '@/components/sake/romaji-disclosure'
+import { ScreenBar } from '@/components/layout/screen-header'
 import {
   SimilarSakeRow,
   type SimilarSakeRowStrings,
@@ -100,15 +101,8 @@ export default async function SimilarSakesPage({ params }: PageProps) {
       className="mx-auto flex w-full max-w-3xl flex-col gap-5 px-5 py-6"
       data-testid="similar-sakes-page"
     >
-      {/* §6's header is back · "Similar to {name}". The arrow is the SHELL's
-          now — rule 11 gives it to every screen that is not a tab main screen,
-          so a second one here would put two on the same top edge. What stays
-          is the title, which is the half §6 supplies. */}
-      <div className="flex items-center gap-1">
-        <h1 className="min-w-0 truncate text-title font-medium text-ink">
-          {t('title', { name: brand.nameKanji })}
-        </h1>
-      </div>
+      {/* §6's header: back · "Similar to {name}" (v1.5's header rule). */}
+      <ScreenBar titleAs="h1" title={t('title', { name: brand.nameRomaji ?? brand.nameKanji })} />
 
       {similar === null ? (
         <section className="flex flex-col gap-2" data-testid="similar-sakes-empty">

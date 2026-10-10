@@ -7,6 +7,7 @@ import { notFound } from 'next/navigation'
 import { Link } from '@/i18n/navigation'
 import { ColdStartChips, type ColdStartChipView } from '@/components/palate/cold-start-chips'
 import { HomeActionTiles } from '@/components/home/action-tiles'
+import { TabHeader } from '@/components/layout/screen-header'
 import { HomeFirstRunCard } from '@/components/home/first-run-card'
 import { HomeGreeting } from '@/components/home/greeting'
 import { HomePalateStrip } from '@/components/home/palate-strip'
@@ -178,7 +179,9 @@ export default async function HomeTabPage({ params }: PageProps) {
       className="mx-auto flex w-full max-w-3xl flex-col gap-5 px-5 py-6"
       data-testid="home-page"
     >
-      <HomeGreeting />
+      <TabHeader>
+        <HomeGreeting />
+      </TabHeader>
 
       {entries.length > 0 ? (
         <>

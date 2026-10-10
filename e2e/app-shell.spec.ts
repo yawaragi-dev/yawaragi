@@ -48,7 +48,7 @@ async function appPage(browser: import('@playwright/test').Browser) {
 }
 
 test.describe('app shell — tab bar', () => {
-  test('shows all four tabs on an app screen, and the wordmark still leads out', async ({
+  test('shows all four tabs on an app screen', async ({
     browser,
   }) => {
     const { context, page } = await appPage(browser)
@@ -66,7 +66,9 @@ test.describe('app shell — tab bar', () => {
       await expect(tabBar.getByTestId(testId)).toContainText(label)
     }
 
-    await expect(page.getByTestId('site-header').getByTestId('header-wordmark')).toBeVisible()
+    // No wordmark in the app (v1.5 header rule): the tab bar and each
+    // screen's own title say where you are.
+    await expect(page.getByTestId('header-wordmark')).toHaveCount(0)
 
     await context.close()
   })

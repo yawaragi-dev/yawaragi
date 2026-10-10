@@ -2,13 +2,9 @@ import { cookies } from 'next/headers'
 import { CookieBanner } from '@/components/legal/cookie-banner'
 import { getComplianceState } from '@/lib/legal/compliance-state'
 import { getTranslations } from 'next-intl/server'
-import { Header } from '@/components/layout/header'
 import { LegalFooter } from '@/components/layout/legal-footer'
 import { NoticeHost } from '@/components/journal/undo-notice'
 import { TabBar, type TabBarMessages } from '@/components/layout/tab-bar'
-import { getPathname } from '@/i18n/navigation'
-import { hasLocale } from 'next-intl'
-import { routing } from '@/i18n/routing'
 
 /**
  * The app shell — design v1.4 § "App structure" and rule 11.
@@ -43,14 +39,7 @@ import { routing } from '@/i18n/routing'
  * so the tab bar would sit behind the browser's own chrome until the user
  * scrolls. `dvh` tracks the visible area.
  */
-export default async function AppShellLayout({
-  children,
-  params,
-}: {
-  children: React.ReactNode
-  params: Promise<{ locale: string }>
-}) {
-  const { locale } = await params
+export default async function AppShellLayout({ children }: { children: React.ReactNode }) {
   const t = await getTranslations('tabs')
   const { consent } = getComplianceState(await cookies())
 
@@ -67,24 +56,12 @@ export default async function AppShellLayout({
       className="flex h-[100dvh] flex-col overflow-hidden overscroll-none"
       data-testid="app-shell"
     >
-      {/* The header is INSIDE the locked column, not above it: a sibling in
-          the parent layout would add its height to `100dvh` and the page
-          itself would scroll — the one thing rule 10 forbids. */}
-      {/* Rule 11's back arrow, on every screen but the four tab main ones —
-          `<ShellBackLink />` applies the exception, because a layout cannot
-          read the pathname. Home is the fallback for a cold deep link with no
-          history to pop: it is the app's front door, and rule 11 makes a tab
-          main screen the one place that never needs a way out of its own. */}
-      <Header
-        showAccount
-        showBack="auto"
-        backFallbackHref={getPathname({
-          locale: hasLocale(routing.locales, locale) ? locale : routing.defaultLocale,
-          href: '/home',
-        })}
-      />
+      {/* No shared header (design v1.5, App structure → Headers): each screen
+          owns its top — a tab main screen its title beside the avatar
+          (`<TabHeader />`), any other screen "back · title" (`<ScreenBar />`),
+          the camera and its outcomes their own rows. */}
       {/* A size container, so a screen can size itself to exactly the pane
-          with `cqh` — the space left between the header and the tab bar on
+          with `cqh` — the space above the tab bar on
           this device, browser toolbars included. §4's camera does. Size
           containment is safe here: the pane's own size comes from the flex
           column, never from its content. */}

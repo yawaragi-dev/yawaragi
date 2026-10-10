@@ -376,7 +376,8 @@
       "error": "Something went wrong while preparing your suggestions. Please try again in a few minutes.",
       "sessionMissing": "Your browser session couldn't be prepared. Please refresh the page and try again.",
       "backToSeed": "Back to the sake you started from"
-    }
+    },
+    "barTitle": "Recommendations"
   },
   "sakenowaAttribution": {
     "poweredBy": "Powered by Sakenowa",
