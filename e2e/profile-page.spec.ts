@@ -170,6 +170,17 @@ test.describe('/en/profile — §12 Palate', () => {
     await expect(page.getByTestId('heuristic-disclaimer-title')).toBeVisible()
     await expect(page.getByTestId('heuristic-disclaimer-body')).toBeAttached()
 
+    // v1.5 §12, before any pick: "Sakes to try next" is not empty — it shows
+    // three clear, different shapes from the catalogue, each saying what it
+    // stands out on, with the list's Sakenowa credit in its label row.
+    const tryNext = page.getByTestId('profile-recommendations')
+    await expect(tryNext).toBeVisible()
+    await expect(page.getByTestId('profile-recommendations-lead')).toHaveText(
+      'Three clear, different shapes to start with. Pick a drink above and these follow it.',
+    )
+    await expect(tryNext.getByRole('link', { name: /A clear shape:/ })).toHaveCount(3)
+    await expect(tryNext.getByRole('link', { name: /Powered by Sakenowa/ })).toBeVisible()
+
     // Picking one acknowledges the tap immediately (#184) and states what it
     // sketched. The action itself needs a live store, so what is asserted is
     // the feedback — which is the half that was missing from the old form.
