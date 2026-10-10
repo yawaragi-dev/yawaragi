@@ -195,6 +195,7 @@
     "brand": {
       "breweryLabel": "Brauerei",
       "littlePublished": "Wenig veröffentlicht",
+      "formerBrewery": "früher {name} <kanji></kanji>",
       "similarAction": "Ähnliche",
       "serveLabel": "Serviertemperatur",
       "serveEmpty": "Die Brauerei hat sich nicht festgelegt. Trage ein, bei welcher Temperatur du ihn trinkst, dann erscheint sie hier.",

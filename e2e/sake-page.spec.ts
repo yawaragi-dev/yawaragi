@@ -22,6 +22,7 @@ import {
   findAnyBrandId,
   findBrandWithFlavorChartId,
   findMatchedNoChartFixture,
+  findRenamedBreweryBrandId,
 } from './_db-fixtures'
 
 const AGE_GATE_COOKIE = {
@@ -33,11 +34,13 @@ const AGE_GATE_COOKIE = {
 let anyBrandId: number | null = null
 let brandWithChartId: number | null = null
 let brandWithoutChartId: number | null = null
+let renamedBreweryBrandId: number | null = null
 
 test.beforeAll(async () => {
   anyBrandId = await findAnyBrandId()
   brandWithChartId = await findBrandWithFlavorChartId()
   brandWithoutChartId = (await findMatchedNoChartFixture())?.brandId ?? null
+  renamedBreweryBrandId = await findRenamedBreweryBrandId()
 })
 
 /**
@@ -205,6 +208,32 @@ test.describe('sake brand page', () => {
       'bottle-shops',
     ]) {
       await expect(page.getByTestId(section)).toHaveCount(0)
+    }
+
+    await context.close()
+  })
+
+  test("shows the brewery name older bottles carry, when the brewery has renamed itself", async ({
+    browser,
+  }, testInfo) => {
+    testInfo.skip(renamedBreweryBrandId === null, 'DB-bound spec')
+
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([AGE_GATE_COOKIE])
+    const page = await context.newPage()
+    await page.setViewportSize({ width: 390, height: 844 })
+
+    // Dassai's brewery became 獺祭 in 2025; a bottle from before says 旭酒造.
+    await page.goto(`/en/sake/${renamedBreweryBrandId}`)
+    const former = page.getByTestId('bottle-former-brewery')
+    await expect(former).toHaveText('formerly Asahi Shuzō 旭酒造')
+    await expect(former.locator('[lang="ja"]')).toHaveText('旭酒造')
+
+    // A brewery with no rename on record says nothing of the kind.
+    await page.goto(`/en/sake/${anyBrandId}`)
+    await expect(page.getByTestId('sake-brand-page')).toBeVisible()
+    if (anyBrandId !== renamedBreweryBrandId) {
+      await expect(page.getByTestId('bottle-former-brewery')).toHaveCount(0)
     }
 
     await context.close()

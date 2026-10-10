@@ -195,6 +195,7 @@
     "brand": {
       "breweryLabel": "Brewery",
       "littlePublished": "Little published",
+      "formerBrewery": "formerly {name} <kanji></kanji>",
       "similarAction": "Similar",
       "serveLabel": "Serve it",
       "serveEmpty": "The brewery hasn't said. Log the temperature you drink it at and it will show here.",

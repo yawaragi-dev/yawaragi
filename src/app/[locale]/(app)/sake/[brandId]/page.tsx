@@ -10,6 +10,7 @@ import {
   lookupBreweryByBrand,
   lookupFlavorChart,
 } from '@/lib/sakenowa/lookup'
+import { formerBreweryNameOf } from '@/lib/sakenowa/former-brewery-names'
 import { getPrefectureNames } from '@/lib/sakenowa/prefecture'
 import { BottleHistory } from '@/components/sake/bottle-history'
 import { ScreenBar } from '@/components/layout/screen-header'
@@ -152,6 +153,9 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
   // Sakenowa's /areas endpoint publishes Japanese names only.
   const prefecture = showBrewery ? getPrefectureNames(brewery.areaId) : null
   const breweryRomaji = showBrewery ? brewery.nameRomaji : null
+  // v1.6 §9: the name older bottles carry, when a rename is on record — so
+  // the brewery on the bottle in hand appears somewhere on its page.
+  const formerBrewery = showBrewery ? formerBreweryNameOf(brewery) : null
   const showBrewerySection = showBrewery && siblings.length > 0
   const showRomajiDisclosure =
     romaji !== null ||
@@ -259,6 +263,14 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
                     </span>
                   </>
                 )}
+              </p>
+            )}
+            {formerBrewery && (
+              <p className="text-meta text-ash-600" data-testid="bottle-former-brewery">
+                {t.rich('formerBrewery', {
+                  name: formerBrewery.nameRomaji,
+                  kanji: () => <span lang="ja">{formerBrewery.nameKanji}</span>,
+                })}
               </p>
             )}
             {/*
