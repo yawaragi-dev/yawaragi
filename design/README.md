@@ -1,6 +1,6 @@
 # Handoff: Yawaragi mobile app (webview)
 
-**Design version 1.5 · 10 Oct 2026.** Source of truth is the Claude Design project; this folder is a snapshot. When a new version arrives, read the Changelog at the bottom first and implement only what changed. **If this README and the prototype disagree, the prototype wins** — and please report the mismatch.
+**Design version 1.6.1 · 10 Oct 2026.** Source of truth is the Claude Design project; this folder is a snapshot. When a new version arrives, read the Changelog at the bottom first and implement only what changed. **If this README and the prototype disagree, the prototype wins** — and please report the mismatch.
 
 ## Overview
 Yawaragi (和らぎ) is a sake companion app. You scan a bottle label or a restaurant menu, rate the sake with one tap, and build a journal. That journal also feeds a taste profile ("Palate") and a chat assistant ("Ask"). The main job is **identifying and assessing a sake at the table**. Logging is a side effect of rating.
@@ -37,8 +37,8 @@ Open `Yawaragi Mobile.dc.html` in a browser, served over HTTP (e.g. `npx serve .
 - **End of screen.** Every scrolling app screen ends with the same block (see "End-of-screen block" under Behaviour rules).
 
 ### Views
-`gate` (age) → [cookie banner, EU] → `home` · `scan` → `result` | `outcome` (§5a) | `menu` (deferred) · `search` · `similar` · `sake` (bottle page) · `collection` (journal / cellar / wishlist) · `palate` → `axis` (flavour detail) · `account` · `ask` → `askHistory` (flagged).
-Overlays: detailed-notes sheet, sign-in sheet, info sheets (cross-beverage, Japanese terms, serving temperatures, Read by AI), cookie banner, notice (toast), delete dialog.
+`gate` (age) → [cookie banner, EU] → `home` · `scan` → `result` | `outcome` (§5a) | `menu` (deferred) · `search` · `similar` · `sake` (bottle page, one per sake = line) → `bottling` (§9a) · `guide` → `guideEntry` (§18) · `collection` (journal / cellar / wishlist) · `palate` → `axis` (flavour detail) · `account` · `ask` → `askHistory` (flagged).
+Overlays: detailed-notes sheet, sign-in sheet, info sheets (cross-beverage, Japanese terms, serving temperatures, Read by AI, whole-line measure), cookie banner, notice (toast), delete dialog.
 
 ### Screenshot key
 Each screen below lists its reference screenshots (`screenshots/NN-*.png`, 390×844). Unless marked **JP** or **Ask on**, they show the v1 ship: EU, Ask off, Label only.
@@ -107,13 +107,14 @@ A normal scrolling web page, not locked to the screen. Build it in the **port MR
 - **Permission denied** (07): the frame area becomes a left-aligned panel — camera-slash icon 32px · "Camera is off" 21px · "Yawaragi needs the camera to read labels. You can allow it, or use a photo you already have." · secondary "Allow camera" · **primary "Choose a photo"** · ghost "Type the name instead". Buttons 46/46/44px.
 - **Desktop or no camera** (08): desktop icon · "No camera here" · "Add a photo of the label instead — from your files or a screenshot — or type the name." · dashed drop zone (140px, "Drop a label photo here, or click to choose") · ghost "Type the name instead".
 - **The gallery is a complete fallback**: same pipeline as the camera.
+- **"How to read a label"** (12px, underlined, under the hint; hidden while reading) → §18's label entry. (retaken 06, 1.6)
 - **Every "scan again" lands here** — this screen, with the live camera — on every device. It never opens the photo library directly; the gallery button on this screen does that.
 
-### 5. Result card (the core screen) · 09, 10, 29 (Ask on), 34 (Done), 40 (best guess) — retaken / new 1.5
+### 5. Result card (the core screen) · 09, 10, 29 (Ask on), 34 (Done), 40 (best guess), 54–55 (line only), 65 (own entry)
 Top bar: back (to the previous screen) · kicker ("Matched from your photo" / "From the catalogue" / "Your own entry") · ghost "Not this one" (to the camera, §4). The bar replaces the shared header on this screen. **There is no "Scan again" button under the card**: the top bar is the rescan, and the Scan tab is the bottom-edge equivalent.
 
 Card: surface, radius-lg, shadow-md.
-- **Identity:** photo slot 92×122 **only when matched from a photo, showing that session's capture**; otherwise the slot collapses and the text takes the width (rule 14). Name 21px/500 −0.02em, kanji 13px, brewery 12px. Tags: **the match tag first** (accent, the one accent tag): "Sure match" (confidence ≥ 0.85) or "Best guess" (0.60–0.84, ADR-0015), then type tags (neutral). Last line: **credit "Catalogue data · Powered by Sakenowa ↗"**, 11px neutral-700, link underlined in neutral-500 (§17's caption style). Hidden for your own entries.
+- **Identity:** photo slot 92×122 **only when matched from a photo, showing that session's capture**; otherwise the slot collapses and the text takes the width (rule 14). Name 21px/500 −0.02em, kanji 13px, brewery 12px. Tags: **the match tag first** (accent, the one accent tag): "Sure match" (confidence ≥ 0.85) or "Best guess" (0.60–0.84, ADR-0015), then type tags (neutral) — **only for a bottling**; a sake (line) has no grade or style from Sakenowa, so a line's card carries the match tag alone. **A grade or style tag with a guide entry is a button** (book icon 11px after the word, 44px tap area) → that §18 entry; tags without one stay plain. **A bottling** adds "A bottling of {line} {kanji} ›" (13px accent-700) under the brewery → the line's page. Last line: **credit "Catalogue data · Powered by Sakenowa ↗"**, 11px neutral-700, link underlined in neutral-500 (§17's caption style). Hidden for your own entries.
 - **No provenance badge on the matched card.** Everything it shows is catalogue data; the model's reading only chose the row. The badge appears where model-read text is displayed (§5a).
 - **Log panel** (below a divider, padding 14):
   - Before rating: neutral-100 background, "Your take" with the 2px accent mark, meta "Last logged {date} · {rating}" or "First time for you".
@@ -126,24 +127,27 @@ Card: surface, radius-lg, shadow-md.
   - **Done** answers "was it kept?": on the result card it folds the panel to one 52px line on accent-100 — check icon · "Logged · 4.0 · Very good — In your journal" · "Edit" (accent-700), which unfolds it. On the bottle page it closes the panel (§9).
   - **Delete tasting** confirms **inline**, inside the panel: a ground-coloured box with "Delete your 4.0 tasting of {name} from {DD.MM.YYYY}? This can't be undone." · ghost "Keep" · "Delete" (accent-100 fill, accent-700 border, as §15's dialog). After deleting, the notice "Tasting deleted" (no Undo — the confirmation was the safety). This is the per-record GDPR erasure path (ADR-0009).
   - Re-rating updates the same entry; notes and chips update live.
-- **Best guess** (0.60–0.84): under the card, a 44px row "Not sure? {n} other candidates" (list icon, caret) expands an inline list of candidate rows (§5a). No separate screen.
+- **Best guess** (0.60–0.84): under the card (above the chart), a 44px row "Not sure? {n} other candidate(s)" (list icon, caret), folded by default, expands an inline list of candidate rows (§5a) in place. No separate screen. Source: the nearest-sake lookup of §5a's "Did you mean" with the matched sake left out, up to 3; no row when there are none; never on a Sure match.
+- **Line only** (the scan matched the sake, not a bottling). **At launch every scan is this, and with no known bottlings the card is exactly v1.5's (09)** — no section, no "Add this bottling"; adding a bottling lives on §9. **When the line has bottlings** — catalogue ones, or the visitor's own — (54): under the card, "Is it one of these bottlings?" · lead "We matched the sake, not the exact bottling. Pick yours and the tasting lands on its page." · candidate rows (§5a style; the reason is grade · flags · polishing; own bottlings read "Your own entry") → that bottling's §5 card · dashed **"Add this bottling"** ("Just the name — the rest can wait"). It opens in place (55): "Bottling name" field prefilled with the line name · "Brewery, grade and size are optional — add them later in Detailed notes. Only you can see it." · primary "Add bottling" · ghost "Cancel". Saving switches the card to that own bottling ("Your own entry").
+- **A bottling's chart is its line's.** The caveat under the heading adds "Measured for the whole {line} line; bottlings vary."
 - **Below the card:**
   - **Flavour chart** — the shared component, §17.
   - **Cross-beverage line** under the chart: "Interesting if you like Lagavulin 16" (13px/500) + the **Cross-beverage** provenance badge + caveat "Cross-beverage estimate, not a tasting note." (11px neutral-700) with the ⓘ inline after it (§16), opening the explanation sheet.
   - **"Similar sakes"** button → §6. With Ask on, also "What goes with it" (opens Ask with the question sent).
-  - "Full bottle page" row (book icon, caret).
+  - "Full bottle page" row (book icon, caret); "Bottling page" for a bottling.
   - **Shelf row** (44px, 8px gap): the **cellar control** (see §9) · "Wishlist" / "On wishlist" (filled bookmark, accent-700).
   - The end-of-screen block.
-- **Added by you** (not in the catalogue): chart, cross-beverage, similar and bottle-page row are replaced by a dashed card "Added by you" / "Not in the catalogue yet, so there's no chart or bottle page. It still counts toward your palate, and we'll link it if the sake turns up later. Only you can see it." No "Add a label photo" — photos are discarded after reading.
+- **Added by you** (not in the catalogue — an **own bottling**, see §9a; 65): chart, cross-beverage and similar are replaced by a dashed card "Added by you" / "Not in the catalogue yet, so there's no flavour chart." + **only when it has a line:** " It counts toward your palate through its sake's chart." + " We'll link it if the sake turns up later. Only you can see it." · ghost "Open its page ›" → its §9a page. An own bottling with `line: null` has no axes and **does not feed the palate**. The end-of-screen block drops its line 1 (rule 15). No "Add a label photo" — photos are discarded after reading.
 
-### 5a. Scan outcomes (new in 1.5) · 41–49
+### 5a. Scan outcomes · 41–49 (retaken 1.6)
 The pipeline's outcomes stay as the pipeline produces them; the design does not collapse them to three. Two share the §5 card (`matched` ≥ 0.85 "Sure match", 0.60–0.84 "Best guess"). Everything else is **one screen, `outcome`, with one shared vocabulary**:
 - **Top bar** as §5: back · kicker · ghost **"Scan again"** (camera-rotate icon) → the camera, §4. **This replaces every inline "Scan again" button.**
 - **Status block:** 28px icon in neutral-600 (never accent — nothing here is good news), title 21px/500, one or two lines of 13px neutral-700.
 - **"What we read" card** (only when something was read): surface, radius-lg, shadow-sm. Section label "What we read" with the **Read by AI** badge at the right; editable fields **Name** and **Brewery** (44px, prefilled from the read, ground-coloured); hint "Misread? Fix it from the label and search again."; secondary "Search again" → §8 with the edited name. **No confidence on this screen** — the percentage is in the Read by AI sheet only.
+- **"Did you mean" (`no_match`)**: up to 3 catalogue sakes nearest the read by **name or brewery**, deterministic, no model call. Matching ignores grade words, polishing numbers, company forms (株式会社) and the 酒造 / 醸造 ending, and folds old/new kanji. **Nothing close → the section is absent**; never padded with weak matches. Reasons, exactly: "Similar name" · "Similar brewery name" · "Similar name and brewery" · "Same brewery" · "Same brewery · similar name".
 - **Candidate rows** (when there are any): section label, then rows — Latin name 15px + kanji 12px · brewery · prefecture 12px · a **reason in words** 12px neutral-700 ("Same brewery · closest name", "Similar name · brewery 伴野, not 友野") · caret. **No % tag and no accent**: a candidate is a guess and must not look like a match. Tap → §5 card. Up to 3.
-- **"Keep it anyway"** dashed card (whenever something was read): "Rate it and put it in your cellar now, with the name above. It's marked as your own entry, and we'll link it if the sake turns up in the catalogue." · secondary "Add this bottle" → §5 in "Your own entry" mode. Minimum to save: **a name** (prefilled); brewery optional.
-- Last: ghost "Type the name instead" → §8.
+- **"Keep it anyway"** dashed card (whenever something was read): "Rate it and put it in your cellar now, with the name above. It's marked as your own entry, and we'll link it if the sake turns up in the catalogue." · secondary **"Add this bottling"** → §5 in "Your own entry" mode. What it creates is an **own bottling** (§9a). Minimum to save: **a name** (prefilled); brewery optional.
+- Last: ghost "Type the name instead" → §8, then ghost **"How to read a label"** (book icon) → §18. Both on every outcome.
 
 | outcome | kicker | title | body (short) | parts |
 |---|---|---|---|---|
@@ -172,21 +176,26 @@ Only with Menu scan on. Unchanged from v1.0:
 - Ranked row: rank in the heading face (only #1 accent-600 with the mark) · matched name + glass price · name as printed + style (12px) · reason (13px, **2 lines then clamp**) · tags "{n}% for you" (accent ≥85), "★ {rating} · yours", "Good warm". Tap → result card.
 - "Couldn't match · 2" → search, filled in. Top scroll fade.
 
-### 8. Search ("Type it") · 18 (retaken 1.5)
+### 8. Search ("Type it") · 18, 56 (bottlings) — 1.6
 - 44px field, accent-500 border, autofocus, placeholder "Name, brewery or kanji".
 - Empty query: "Recently tasted". With a query: "{n} matches" (searches name, kana, brewery).
-- Rows 58px, **text only**: name + kanji · brewery · tags · "Tasted" accent tag if you've had it. Tap → result card. Matching covers the name as printed on the label, including an importer's product name, grade or age attached to it ("Rihaku Wandering Poet" → 李白). No visual change.
+- Rows 58px, **text only**: name + kanji · meta · "Tasted" accent tag if you've had it. Tap → result card. **Mixed and ranked by match; on a tie bottlings come first.** Meta: a bottling "Bottling · 李白 · {grade}"; a sake with catalogue bottlings "{brewery} · Sake · 3 bottlings"; **a sake with none (the launch state): the v1.5 row, brewery only** — a line has no grade tags to list. Matching covers the name as printed on the label, including an importer's product name, grade or age attached to it ("Rihaku Wandering Poet" → 李白). No visual change.
 - With a query, a dashed row "Add "{query}" yourself — Rate it now, details later" opens the result card in manual mode.
 
-### 9. Bottle page (one per sake) · 16, 17 (little published), 35 (panel open), 36 (in cellar), 37 (edit + delete) — retaken / new 1.5
+### 9. Bottle page (one per sake) · 16, 17 (little published), 35 (panel open), 36 (in cellar), 37 (edit + delete), 53 (bottlings), 62 (former name), 63 (no bottlings), 64 (own only)
 - Header: back · name (ellipsis). **Nothing else** — wishlist and cellar live in the content. **No sticky bottom bar** — the tab bar is the only thing on the bottom edge.
 - Order, personal to general:
-  1. **Identity**, text only (no bottle slot, rule 14): name 25px, kanji, brewery · place, tags; "Little published" neutral-outline tag when data is thin. Last line: **"Catalogue data · Powered by Sakenowa ↗"**, 11px neutral-700, underlined link, on the content column (x = the gutter, like every other line). This is the above-the-fold Sakenowa credit (see Answers, B8). Hidden for your own entries.
+  1. **Identity**, text only (no bottle slot, rule 14): name 25px, kanji, brewery · place, **a former brewery name when on record** ("formerly Asahi Shuzō 旭酒造", its own 12px neutral-600 line under the brewery; 62, on the line "Dassai 獺祭"), **no grade or style tags** (Sakenowa has none for a line; guide-linked tags appear only on bottlings) — the only tag a line page carries is "Little published"; "Little published" neutral-outline tag when data is thin. Last line: **"Catalogue data · Powered by Sakenowa ↗"**, 11px neutral-700, underlined link, on the content column (x = the gutter, like every other line). This is the above-the-fold Sakenowa credit (see Answers, B8). Hidden for your own entries.
   2. **Action rows** (padding 10px 20px 0, 8px gaps):
      - Closed: primary "Rate a new tasting" (44px, flex 1) · secondary "Similar" (→ §6). Under it: **cellar control** (flex 1) · wishlist icon button (44×44, bookmark; filled + accent-700 when saved).
      - **"Rate a new tasting" opens §5's log panel in place**, in its own card (surface, radius-lg, shadow-md), taking that row's slot. Under it the row becomes: "Similar" · cellar control · wishlist icon. **Done** closes the panel back to the closed rows; the tasting is already in "You and this sake".
-     - **Cellar control:** not owned → secondary "Add to cellar" (stack-plus). Owned → one outline split in two: **"In cellar · 2 ›"** (accent-700, a link to Collection → Cellar) | **"+"** (44px, aria "Add another bottle", adds one and shows the notice).
-  3. **You and this sake:** your entries (date block, stars, italic note) with a ghost **"Edit"** at the right of each. Edit opens that tasting in the panel (heading "Your tasting · 19 Sep", meta "Changes save as you go"): rating, note, chips, detailed notes, Done, Delete. Or "Not tasted yet."
+     - **Cellar control:** the count on a **line page includes its bottlings** (2 against Rihaku + 1 Wandering Poet → "In cellar · 3 ›"); on §9a it counts that bottling only. "+" adds to the row of the page you are on. Not owned → secondary "Add to cellar" (stack-plus). Owned → one outline split in two: **"In cellar · 2 ›"** (accent-700, a link to Collection → Cellar) | **"+"** (44px, aria "Add another bottle", adds one and shows the notice).
+  3. **You and this sake:** your entries (date block, stars, italic note; a bottling's tasting leads with the bottling name, 13px/500) with a ghost **"Edit"** at the right of each. Edit opens that tasting in the panel (heading "Your tasting · 19 Sep", meta "Changes save as you go"): rating, note, chips, detailed notes, Done, Delete. Or "Not tasted yet."
+  3a. **Bottlings** — three states, the first is launch:
+     - **None known (63):** no heading, no list; the dashed **"Add your bottling"** row stands alone, 14px under "You and this sake". It is the only place to start an own bottling of a known line.
+     - **Only the visitor's own (64):** heading **"Your bottlings"** + "{n} bottling(s)"; rows read "Your own entry" in the meta line; then "Add your bottling".
+     - **Catalogue bottlings (53):** heading **"Bottlings we know"** + "{n} bottlings"; catalogue rows first, then the visitor's own (meta "Your own entry"), then "Add your bottling".
+     Rows: product name 15px/500, grade · flags 12px, "Tasted" tag, caret → §9a. "Add your bottling" opens the same inline form as §5; saving opens the new own bottling's page.
   4. **Serve it:** six temperatures (5° 雪冷え, 10° 花冷え, 15° 涼冷え, 20° 常温, 40° ぬる燗, 50° 熱燗), recommended ones in accent-500, plus a sentence. Without data: "The brewery hasn't said…"
   5. **The sake:** 2-column spec grid (Rice, Polishing, Yeast, Starter, SMV, Acidity, Alcohol, Water). Unknown: "Not published", italic neutral-700.
   6. **Flavour:** the shared chart, §17 — the first mention on the page, so the heading is "Flavour chart (Sakenowa)".
@@ -196,7 +205,26 @@ Only with Menu scan on. Unchanged from v1.0:
   10. **Where to find it:** shop rows, or "Not tracked in any shop yet…"
   11. The end-of-screen block.
 - **Sections no bottle can fill yet are hidden, not stated** (today: Serve it, The sake, Goes with, What others noticed, Where to find it — #336–#340). Rule 4 still applies when data is missing for *one* bottle (e.g. the chart). The prototype shows them with sample data as the target.
-- The bottle-vs-line split (a page for a specific bottling) is answered in writing in the Answers appendix, B-Line; it is drawn in 1.6.
+- The bottling page is §9a.
+
+### 9a. Bottling page (new in 1.6) · 51, 52, 57 (own bottling)
+One template, §9's order, sections dropping out by what is known (rule 4: hidden, not stated). Naming per the B-Line table: "sake" = line, "bottling" = expression, "bottle" only for what you own.
+1. **Header:** back · bottling name. Nothing else.
+2. **Identity:** name 25px · **"A bottling of {line} {kanji} ›"** (13px accent-700, kanji neutral-600) → §9 · place · tags: grade first, then flags (Nama, Genshu, Sparkling, Koshu · {n} years), all neutral, guide-linked · credit line (catalogue bottlings).
+3. **Action rows:** §9's, **without "Similar"** — Similar is line-level and lives in the line block. Rate a new tasting opens the panel in place; the tasting is stored on the bottling.
+4. **You and this bottling** — §9's list for this bottling only.
+5. **Serve it** — only when known for the bottling.
+6. **The sake:** grid of Grade, Rice, Polishing, Starter, Yeast, ABV always ("Not published" italic), then SMV, Acidity, Size(s), Cask / Age only when known. One 11px source line under the grid ("Label · importer page"); a value read from a scan carries the Read by AI badge.
+7. **Other bottlings in this line:** horizontal row (rule 7) of text cards — product name 13px/500, grade · flags 11px — meta "{n} more". Own bottlings of the same line appear here too, for their author.
+8. **"About the {line} {kanji} line"**: one block, 1px divider border, radius-lg, padding 14 — title 15px/500 · caveat "Measured for the whole line; bottlings vary." + inline ⓘ (§16, *Measured for the whole line* sheet) · the §17 chart · "Sakes similar to {line} ›" (→ §6 for the line) · any ranking. **Nothing line-level sits outside it.**
+9. What others noticed (this bottling) · The brewery (story only; the line page has "Also from this brewery") · Where to find it · end-of-screen block (line 1 only when the page shows catalogue data — a catalogue bottling, or an own bottling with a line).
+
+**Own bottling (57)** — what "Keep it anyway", "Add {query} yourself" and "Add this bottling" create (B2):
+- Tag "Your own entry" (neutral outline) first; place = the brewery typed, else "Added by you"; no credit line.
+- One line, stated once: no line → "Not in the catalogue yet. Only you can see it, and we'll link it to its sake if it turns up."; with a line → "Your own bottling of {line}, not in the catalogue yet. Only you can see it."
+- No line → no line block, so no chart and no Similar. With a line → the line block shows, as for a catalogue bottling.
+- The spec grid shows the six fixed rows as "Not published" until §10 "About the sake" fills them; source "Your entry".
+- With no line, nothing on the page is Sakenowa's: **the end-of-screen block drops line 1** (rule 15).
 
 ### 10. Detailed notes (bottom sheet) · 11 (retaken 1.5), 38 (temperature sheet)
 - Up to 90% height. Header: "Detailed notes", progress ("3 of 5 parts filled" / "All optional"), primary "Done". Opened from the log panel, and from a journal row's "Full notes" chip (§11).
@@ -211,13 +239,13 @@ Only with Menu scan on. Unchanged from v1.0:
   - About the sake — **only for your own entries**: Rice, Polishing, Yeast, SMV. For catalogue sakes: "Rice, yeast and polishing come from the catalogue — see the bottle page." **Ships with manual entry**; until then neither line shows.
 - No Save button; everything persists as you go.
 
-### 11. Collection · 19, 20, 21 — retaken 1.5
+### 11. Collection · 19, 20, 21 — retaken 1.6
 - Header "Collection" 26px · search icon · avatar. Segmented: Journal · Cellar · Wishlist. **Wishlist is hidden until it ships**; never show an empty segment for an unbuilt feature.
 - **Which segment opens:** the last one used (stored on the device). A first visit opens Journal. Links that name a segment (Home's "All →", a notice's "View", the bottle page's "In cellar · n ›") keep naming it.
-- **Journal:** date block (18px day, 10px month) · **Latin name 16px, kanji 12px under it** · 11px stars at the right · italic note 12px neutral-700 · a **"Full notes"** neutral tag-button (list-checks icon, 28px, aligned with the name) on entries that have detailed notes, opening §10 for that tasting. Newest first; tapping the row opens the bottle page, where "Edit" lives. Rows are divided by 1px divider lines.
+- **Journal:** date block (18px day, 10px month) · **Latin name 16px, kanji 12px under it** — a bottling leads with the bottling name ("Rihaku Wandering Poet") with the line's kanji under it · 11px stars at the right · italic note 12px neutral-700 · a **"Full notes"** neutral tag-button (list-checks icon, 28px, aligned with the name) on entries that have detailed notes, opening §10 for that tasting. Newest first. **Tapping a row opens the page of what the tasting was logged against: a bottling's row → §9a, a sake's row → §9.** "Edit" lives there. Rows are divided by 1px divider lines.
   - Backup card (signed out, ≥1 entry, not dismissed): "{n} tastings, only on this phone" / "Sign in to back them up… Nothing is posted publicly." / "Back up journal" · "Not now". Signed in: "Backed up · {n} tastings".
   - Empty: "Your journal starts with one star" + "Scan a label".
-- **Cellar:** "{bottles} bottles · {open} open". Row, **text only**: name · "× n" · kanji · state line — "Unopened · keeps for months, cool and dark" (or "· nama, keep cold") · "Open {d} days · fridge" · drink soon "Open {d} days — best finished this week" (accent-700, hourglass, sorted first; ≥10 days, ≥5 for nama — **OPEN**). Actions: open → "Pour & rate" · "Finished"; unopened → "Open a bottle" · **"Remove one"** while there are several, "Remove" for the last. Each takes **one** bottle off the row. Brewery and *nama* appear when they are stored.
+- **Cellar:** "{bottles} bottles · {open} open". **One row per thing a bottle was logged against**: 2 bottles of Rihaku and 1 of Rihaku Wandering Poet are two rows ("Rihaku × 2", "Rihaku Wandering Poet × 1 · 720 ml"), never merged — they are different bottles. Row, **text only**: name (the bottling name when known) · "× n" (with size when stored: "× 2 · 720 ml") · kanji · state line — "Unopened · keeps for months, cool and dark" (or "· nama, keep cold") · "Open {d} days · fridge" · drink soon "Open {d} days — best finished this week" (accent-700, hourglass, sorted first; ≥10 days, ≥5 for nama — **OPEN**). Actions: open → "Pour & rate" · "Finished"; unopened → "Open a bottle" · **"Remove one"** while there are several, "Remove" for the last. Each takes **one** bottle off the row. Brewery and *nama* appear when they are stored.
 - **Wishlist:** "{n} sakes to try". Row: name · brewery · source ("Scanned at …" / "Saved from its bottle page"; with Ask on also "From Ask · …") · optional stock line. Actions: "Bought it" (→ cellar) · "Tried it" (→ result) · "Remove". **A sake leaves the wishlist once it's logged.**
 - Adding anywhere shows a notice ("Saved to wishlist" / "Added to your cellar" / "Another bottle added · 2 in cellar") with **View**.
 - Ends with the end-of-screen block.
@@ -230,7 +258,7 @@ Only with Menu scan on. Unchanged from v1.0:
 - **Under 3 tastings (23, 39, 50), in this order:**
   1. **Rating slot** — present **only once rating is available to the user**; absent today (the prototype's **Rating live** tweak). A 3px, 120px-wide three-segment bar plus one 12px line: "{n} more tastings and your first read appears. It learns from what you rate." No button.
   2. **"Start from a drink you know"** — the lead card (surface, radius-lg, shadow-sm, padding 16; also on first-run Home): accent mark + 19px title · "Pick one you already like. We'll sketch a starting palate from it now, and point you at sakes of the same shape." · chips Lagavulin 16 · Riesling Spätlese · Guinness · Fino sherry · Pinot Noir (36px). Picking one opens, under a divider, **"Starting sketch · from {drink}"** with the six axes as 4px bars (the §17 bar, no numbers) and its seed line, e.g. "Smoky and heavy — expect to like rich, dry, savoury sakes. Try kimoto or yamahai." The card always ends with the **caveat line inside it**: "Cross-beverage estimates, not tasting notes." + inline ⓘ (§16). Real ratings replace the seed from 3 tastings.
-  3. **"Sakes to try next"**: section label with **"Powered by Sakenowa ↗" folded into the label row at the right** (the §17 caption style) — that is its attribution, no separate row. A 12px lead: before a pick "Three clear, different shapes to start with. Pick a drink above and these follow it."; after "Closest to {drink} by flavour chart." Then **three cards**, not six rows: Latin name 15px + kanji 12px · brewery · prefecture 12px · a reason 13px ("Same shape as Lagavulin 16: rich and dry.") · two neutral tags, its strongest axes. Only what we know: axes, brewery, prefecture — no photo, grade or price.
+  3. **"Sakes to try next"**: section label with **"Powered by Sakenowa ↗" folded into the label row at the right** (the §17 caption style) — that is its attribution, no separate row. A 12px lead: before a pick "Three clear, different shapes to start with. Pick a drink above and these follow it."; after "Closest to {drink} by flavour chart." Then **three cards**, not six rows: Latin name 15px + kanji 12px · brewery · prefecture 12px · a reason 13px · two neutral tags. **Before a pick** the three are chosen editorially — aromatic (Floral up, Mild down), rich (Rich and Mellow up, Light down), dry (Dry and Light up, Floral down) — each measured against the catalogue average; reason "A clear shape: {axis} and {axis}." naming the two axes where it stands out most, and those are the tags. **After a pick**: "Same shape as Lagavulin 16: rich and dry.", tags = its strongest axes. Only what we know: axes, brewery, prefecture — no photo, grade or price.
   4. The end-of-screen block.
   - Removed from the early screen: the tip card "Rate a few different styles" and its "Scan a label" button (a scan does not feed the palate; the Scan tab is one tap away).
 - **3 or more (22):**
@@ -257,11 +285,12 @@ Unchanged from v1.0; build only when the flag is on.
   - **EU:** "No password. Nothing is posted publicly. Your ratings stay private unless you choose to share them."
   - **Japan:** "No password. Nothing is posted publicly. Your ratings help build flavour charts anonymously — you can turn this off in Account."
 
-### 15. Account · 26 (EU), 31 (JP)
+### 15. Account · 26 (EU), 31 (JP) — retaken 1.6
 - Signed in: avatar 52px · name 19px · "email · via Apple". Signed out: "Not signed in" card with "Your {n} tastings live only on this phone…" + "Sign in".
 - Groups (rows **min 50px, may grow**; icon neutral-600; value right-aligned neutral-700):
   - **Your journal:** Backup ("Synced just now" / "Off" → sign-in) · Export journal (CSV · JSON).
   - **Display:** **Language** — value "English", sub "Deutsch — coming soon", **not tappable** until DACH launch (then a real switch) · Sake names (Romaji + kanji → Romaji only → Kanji only) · Temperature (°C / °F) · Region & drinking age.
+  - **Learn:** **Sake guide** (book icon, sub "What the words on a label mean") → §18 index.
   - **Privacy:**
     - "Use my palate for Ask" toggle (default on; row hidden with Ask off).
     - **"Contribute to flavour charts"** toggle. **EU default off, Japan default on**; one tap either way. Off: "Off · your ratings stay private". On: "Sharing anonymously — ratings and flavour words, never notes or your name". Opting out changes only what they contribute, never what they see.
@@ -277,6 +306,8 @@ Unchanged from v1.0; build only when the flag is on.
 The canonical pattern for **every inferred or approximate claim**: a short caveat line in 11px neutral-700, an info button whose `aria-describedby` points at the caveat, and a bottom sheet with the full explanation. Scrim `rgba(0,0,0,.55)`, 19px title, close button.
 - **The ⓘ sits inline after the last word** and wraps with the text: a 20px box, `vertical-align: middle`, −4px vertical margin, its tap area padded to 44px. Never pinned to the far edge, never centred on a multi-line block. One rule for every caveat in the app.
 - **Contrast:** 11px neutral-700 measures **8.1:1 on `surface`** (#bdb9b1 on #232221) and 8.9:1 on the ground — well past AA. A reading of ~4.2:1 means something else is applied (≈65% opacity on the text or an ancestor, or the text resolving to neutral-500, which is 4.4:1 on surface). Caveat text never takes opacity. No token change.
+- **"Learn more in the Sake guide"** (ghost, book icon) is the last line of the Japanese-terms and Serving-temperatures sheets → the matching §18 entry. Other sheets don't get one until they have an entry.
+- **Measured for the whole line** (§9a): "Sakenowa charts a sake — the {line} line — not each bottling under its name. A ginjō and a genshu from the same line can taste quite different." · "Read the chart and Similar as the family resemblance. Your own rating and notes on this page are about this bottling only."
 - **Serving temperatures (38):** "Serving temperatures" · "Japanese names for how warm sake is served. The degrees are typical, not exact." · six rows (40px degrees column · kanji · romaji · one-line note), e.g. "15° 涼冷え suzuhie — Cool. Aroma opens, still fresh."
 - **Read by AI (48):** opened from the Read by AI badge. "An AI model read these words off your photo. It can misread a character or run two names together, so check them against the label." · "How sure it was: {85%}. Your photo is discarded once it has been read." The confidence percentage lives here.
 - **Cross-beverage (12):** "How cross-beverage works" · "We keep a hand-made map from well-known whiskies, wines, beers, spirits, fortified wines and ciders onto the same six flavour axes we use for sake." · "When a sake sits close to a drink on that map, we say so. It's an estimate of flavour shape, made by people — nobody tasted this sake next to that drink." · "It only seeds your palate. Your own ratings replace it as soon as you have three."
@@ -293,6 +324,27 @@ Used on the result card and the bottle page.
   - Sharing on: "No flavour chart yet. Four Yawaragi ratings build one — yours counts, anonymously."
   - Sharing off (EU default): "No flavour chart yet. Yawaragi users build one with four ratings — you can join in Account → Privacy."
   - **Interim, until the Account → Privacy setting and open rating exist:** "No flavour chart yet." alone. Restore the full string with the setting.
+
+### 18. Sake guide (new in 1.6) · 58 (index), 59 (entry), 60 (label entry), 61 (public)
+A reference for what a label and a bottle mean. **Working name "Sake guide"** (OPEN 10: collision check before it ships). Discovery and learning only: no purchase prompts, no health or effect claims, no model-written text.
+- **Where it lives — mostly in context, no tab:**
+  - a grade or style tag on §5, §9, §9a → its entry;
+  - "How to read a label" on the camera (§4) and every §5a outcome;
+  - "Learn more in the Sake guide" at the foot of §16 sheets that have an entry;
+  - **one home: Account → Learn → Sake guide** (the index). No Home card: Home stays the core loop. A landing section waits for the public decision (OPEN 9).
+- **Index (58):** back · title "Sake guide" 26px · meta "What the words on a label mean. Written by hand, with sources." · **"Start here"** card (surface, shadow-sm, accent mark) → How to read a label · groups **Grades · Styles and processes · Rice · Serving and tasting**, rows 58px min: title 15px/500 + kanji 12px · the two-line answer 12px neutral-700 (wraps; never clamped — German runs ~30% longer) · caret · end-of-screen block.
+- **Entry — its own page type, not a long §16 sheet** (59, 60): sheets are for one caveat; an entry has structure, links out and a list, and must be linkable and indexable if it goes public.
+  1. Top bar: back · ghost "All topics" (list icon) → index.
+  2. Group kicker 11px uppercase · **title 28px/500** (Latin) · **kanji 17px + romaji 13px italic** neutral-600.
+  3. **The answer:** heading face 17px/1.5, two lines or so. This is the line the index quotes.
+  4. **Facts** (optional): titled list, rows = term 14px/500 (104px column) · value 14px + kanji 13px · note 12px. "What it requires" for grades, "Where things sit" for the label, the six steps for temperatures, the six terms for flavour words (the §16 rule holds: English is an approximation of the brewers' term, never a translation).
+  5. **Detail** (optional): paragraphs 14px/1.6 neutral-800.
+  6. **Source line**, always: 11px "Source · {source}". Every fact is curated with a source.
+  7. **Related**: horizontal row (rule 7) — title 13px/500 + kanji 11px.
+  8. **"Sakes of this style"** ("From the catalogue"): §5a-style rows → §5. Built from **bottlings** whose grade or flags match — lines carry no grade — so at launch it is absent until bottlings are curated. **Always behind the age gate.**
+  9. End-of-screen block — **line 1 only when item 8 shows**; the entry itself is hand-written, not Sakenowa's. The index never shows line 1.
+- **Public or gated (OPEN 9) — drawn so either answer works (61, the *Sake guide public* tweak):** everything above item 8 is brand-free. Public mode = the same page **without the tab bar and without item 8**, under a 56px strip "Yawaragi 和らぎ" · secondary "Open the app" (→ the age gate). The prototype adds a gate link "Sake guide — what the words on a label mean" to show the entry route; if legal says gated, drop the strip and the link and nothing else changes.
+- **Copy rules:** EN and DE from day one; no fixed heights anywhere in an entry; titles wrap (balance), never truncate. The prototype's entries are sample text — production entries are written and sourced by hand.
 
 ## Behaviour rules
 1. **The star is the save.** No Save button anywhere. Every save shows an Undo notice for **6.8s**. Undo removes the entry in one step. **Done** says "finished" without saving anything. After Undo has gone, a tasting is edited or deleted from "You and this sake" → Edit (§9); delete confirms inline.
@@ -315,7 +367,7 @@ Used on the result card and the bottle page.
 12. **Floating surfaces** (cookie banner, notices): `--color-raised` with `--shadow-float`; no scrim. They never look like a card of the page.
 13. **Provenance.** Any displayed value from `llm_extracted`, `llm_inferred`, `cross_beverage_map` or generated text carries the ProvenanceBadge: a 24px neutral **outline** pill (1px neutral-400, neutral-700 ink, 11px, icon 12px). Kinds differ by **icon and word**, not colour: Read by AI (scan) · AI answer (magic-wand) · Cross-beverage (arrows-left-right) · AI-written (pen-nib). It never takes the accent. Tapping opens the §16 sheet for that source; confidence lives in that sheet. Tag families: accent tint = the app's claim, neutral fill = a fact, neutral outline = machine-derived. **AI-written** text (generated tasting notes, when built) starts with the badge and ends with "Improve · Report" links; the text is neutral-800, never italic.
 14. **No image, no slot.** Thumbs and bottle slots render only when there is an image. Today that is only §5's photo, for the session that took it. Rows without one are text-only; no permanent striped placeholders.
-15. **End-of-screen block.** Last in every scrolling app screen (not the camera, sheets or Ask): 28px above, left-aligned on the content column, 12px neutral-600. Line 1: "Catalogue and flavour data · Powered by Sakenowa ↗" (link). Line 2: Impressum · Privacy notice · Cookie settings · Drink responsibly — accent-700 links, 14px apart, 6px vertical padding, wrapping. No divider. Account shows line 2 only.
+15. **End-of-screen block.** Last in every scrolling app screen (not the camera, sheets or Ask): 28px above, left-aligned on the content column, 12px neutral-600. Line 1: "Catalogue and flavour data · Powered by Sakenowa ↗" — **shown only when the screen displays catalogue or chart data**; dropped on an own bottling with no line (§5, §9a), the Sake guide index and any entry without "Sakes of this style" (§18), so Sakenowa is never credited for hand-written or user-typed content (link). Line 2: Impressum · Privacy notice · Cookie settings · Drink responsibly — accent-700 links, 14px apart, 6px vertical padding, wrapping. No divider. Account shows line 2 only.
 
 ## State (per user)
 - `entries[]` {id, sakeId|name, date, rating (0.5 steps), note, tags[], detail{appearance, nose, palate scales 1–5, serve, verdict, specs if manual}}
@@ -383,14 +435,16 @@ Phosphor, regular and fill weights (`@phosphor-icons/web` 2.1.1). Sizes: 22 tab 
 5. **Ask:** which model, what context it gets, and the fallback when offline.
 6. **Tasting-notes wording:** it's modelled on professional tasting practice but must not name any certification body.
 7. **Sakenowa credit placement.** Design places the above-the-fold credit as the identity block's last line (§5, §9), not first in the page. Engineering's reading of the licence (CLAUDE.md) should confirm that this satisfies "above the fold on dedicated detail pages". Wording is fixed: "Powered by Sakenowa" plus the link.
-8. **Bottle-level data** (bottlings under a line): naming and behaviour answered in the appendix; the page is drawn in 1.6.
+8. **Bottle-level data — DRAWN (1.6; zero-bottling launch state 1.6.1).** §9a, plus §5, §8, §9, §11. Own entries are own bottlings (B2). Cellar freshness for nama still waits on 4.
+9. **Sake guide: public or behind the age gate.** Legal position pending; §18 is drawn for both. "Sakes of this style" stays gated either way.
+10. **Sake guide name.** "Sake guide" is a working name until the collision check.
 
 ## Files in this bundle
-- `Yawaragi Mobile.dc.html`: **the main prototype.** All screens, all behaviour. Logic is in the `class Component` block at the bottom. Tweaks: market, Ask, Menu scan, camera permission, iOS webview, two-tone bars, first run, **Scan outcome** (which §5a branch the next capture lands on) and **Rating live** (§12's rating slot).
+- `Yawaragi Mobile.dc.html`: **the main prototype.** All screens, all behaviour. Logic is in the `class Component` block at the bottom. Tweaks: market, Ask, Menu scan, camera permission, iOS webview, two-tone bars, first run, **Scan outcome** (which §5a branch the next capture lands on; 1.6 adds *Matched, line only*), **Rating live** (§12's rating slot) and **Sake guide public** (§18's pre-gate mode).
 - `Yawaragi Mobile (phone).html`: a self-contained single-file build of the same prototype. It opens directly on a phone.
 - `Yawaragi Tokens.dc.html`: the token and component reference (colour ramps, type scale, every component specimen, behaviour rules). "Added in 1.5" holds the provenance badge, AI-written note, floating surface, caveat line, horizontal row edge, tile vs button, end-of-screen block, tab placeholder and cellar control.
 - `Yawaragi Core Loop v2.dc.html`: decision record. It shows the result-card options (1a chosen), the thin-data states, and the colour exploration that led to Ginshu (turns 2–6).
-- `screenshots/`: 50 reference PNGs at 390×844 (index in the Decision log; each Screens section lists its own). 1.5 retook the changed ones and added 34–50.
+- `screenshots/`: 65 reference PNGs at 390×844 (index in the Decision log; each Screens section lists its own). 1.6 retook the changed ones and added 51–62.
 - `Yawaragi Landing.dc.html`: the public landing page, outside the app shell.
 - `Yawaragi Account.dc.html`: decision record. It shows the sign-in timing options (1a chosen) and the account screen spec (1c).
 - `support.js`: the prototype runtime (needed only to open the `.dc.html` files; don't port it).
@@ -414,6 +468,10 @@ Phosphor, regular and fill weights (`@phosphor-icons/web` 2.1.1). Sizes: 22 tab 
 - **Provenance as outline (v1.5).** The accent means "you are here / primary"; colour-coding four sources would need four hues the warm ramp doesn't have and would fail for colour-blind users anyway. Outline + icon + word stays legible and quiet. → rule 13.
 - **Floating surface (v1.5).** On the dark ground a surface-coloured overlay is indistinguishable from the cards scrolling under it; one raised step and an upward shade separate it without a scrim. → rule 12, §0, §2.
 - **No placeholders for images we will never have (v1.5).** Sakenowa returns no images; five striped boxes per list read as broken. → rule 14.
+- **Own entry = own bottling (v1.6).** One record kind instead of two: it gets the bottling page and its "not in the catalogue" treatment for free, and linking it to a line later is a field change, not a migration. → §5, §5a, §9a.
+- **Line-level data in one box (v1.6).** A bottling page that showed the line's chart loose would read as that bottle's profile. Fencing chart and Similar inside "About the {line} line" with the caveat keeps the claim honest. → §9a.
+- **Former brewery name on the sake page only (v1.6).** The card answers "what is this"; the page is where you check the bottle in hand. One line, no badge. → §9.
+- **Sake guide as pages, reached in context (v1.6).** Four tabs and rule 11 rule out a fifth; people arrive with a question in hand (a tag, a misread). One index home in Account; no Home card. → §18.
 
 ### Open items
 - **Landing page:** the hero needs a real app screenshot.
@@ -421,45 +479,45 @@ Phosphor, regular and fill weights (`@phosphor-icons/web` 2.1.1). Sizes: 22 tab 
 - **Legal wording:** Austria/Switzerland gate lines and the cookie category descriptions.
 
 ### Screenshots
-`screenshots/` holds 50 PNGs at 390×844 (1×), captured from the prototype.
+`screenshots/` holds 65 PNGs at 390×844 (1×), captured from the prototype.
 - **01–26 are the base: EU (Germany), Ask off, Label only.**
 - **27–32 are the variants where Japan or Ask-on differ.**
 - **33 is Menu scan** (deferred).
-- **34–50 are new in 1.5.** Retaken in 1.5: 02–06, 09–23, 25, 26, 28–31 (marked ●).
+- **34–50 are new in 1.5; 51–62 new in 1.6; 63–65 new in 1.6.1** (1.6.1 also retook 09, 16, 57, 61, 62). Retaken in 1.6: 04, 06, 09, 16, 18, 19, 20, 26, 44 (marked ●). Others differ only by the guide-linked tag icon and the extra journal row; the prototype wins.
 
 | # | Screen |
 |---|---|
 | 01 | Age gate (Germany, law line) |
-| 02 | Cookie banner over Home ● |
-| 03 | Cookie banner, Customise ● |
+| 02 | Cookie banner over Home |
+| 03 | Cookie banner, Customise |
 | 04 | Home ● |
-| 05 | Home, first run ● |
+| 05 | Home, first run |
 | 06 | Camera, label ● |
 | 07 | Camera, permission denied |
 | 08 | Camera, desktop / no camera |
 | 09 | Result, before rating ● |
-| 10 | Result, logged ● |
-| 11 | Detailed notes sheet ● |
-| 12 | Cross-beverage explanation sheet ● |
-| 13 | Japanese flavour terms sheet ● |
-| 14 | Two-tone bars fallback ● |
-| 15 | Similar sakes ● |
+| 10 | Result, logged |
+| 11 | Detailed notes sheet |
+| 12 | Cross-beverage explanation sheet |
+| 13 | Japanese flavour terms sheet |
+| 14 | Two-tone bars fallback |
+| 15 | Similar sakes |
 | 16 | Bottle page, well documented ● |
-| 17 | Bottle page, little published ● |
+| 17 | Bottle page, little published |
 | 18 | Search ● |
 | 19 | Journal ● |
 | 20 | Cellar ● |
-| 21 | Wishlist ● |
-| 22 | Palate, with chart opt-in card ● |
-| 23 | Palate, early (1 tasting) ● |
+| 21 | Wishlist |
+| 22 | Palate, with chart opt-in card |
+| 23 | Palate, early (1 tasting) |
 | 24 | Flavour detail (Rich) |
-| 25 | Sign-in sheet after first log ● |
+| 25 | Sign-in sheet after first log |
 | 26 | Account (EU, sharing off) ● |
 | 27 | JP: age gate (20) |
-| 28 | JP + Ask: Home, three tiles ● |
-| 29 | JP + Ask: Result with "What goes with it" ● |
-| 30 | JP + Ask: Palate, no opt-in card ● |
-| 31 | JP: Account, sharing on ● |
+| 28 | JP + Ask: Home, three tiles |
+| 29 | JP + Ask: Result with "What goes with it" |
+| 30 | JP + Ask: Palate, no opt-in card |
+| 31 | JP: Account, sharing on |
 | 32 | Ask chat |
 | 33 | Menu results (deferred) |
 | 34 | Result, logged, after Done (folded line) |
@@ -472,13 +530,28 @@ Phosphor, regular and fill weights (`@phosphor-icons/web` 2.1.1). Sizes: 22 tab 
 | 41 | Scan outcome: brand only |
 | 42 | Scan outcome: brewery only |
 | 43 | Scan outcome: several fit |
-| 44 | Scan outcome: not in the catalogue |
+| 44 | Scan outcome: not in the catalogue ● |
 | 45 | Scan outcome: unclear, recent scans agree |
 | 46 | Scan outcome: unclear, nothing read |
 | 47 | Scan outcome: rate limited |
 | 48 | Read by AI sheet over 44 |
 | 49 | Scan outcome: something went wrong |
 | 50 | Palate early, 0 tastings, rating not live (today's build) |
+| 51 | Bottling page (Rihaku Wandering Poet), top |
+| 52 | Bottling page: other bottlings + About the Rihaku line |
+| 53 | Bottle page (Rihaku): Bottlings we know + Add your bottling |
+| 54 | Result, line only: "Is it one of these bottlings?" |
+| 55 | Result, Add this bottling open |
+| 56 | Search "rihaku": bottlings first, then the sake |
+| 57 | Own bottling page (no line) |
+| 58 | Sake guide index |
+| 59 | Sake guide entry: Daiginjō |
+| 60 | Sake guide entry: How to read a label |
+| 61 | Sake guide entry, public mode (pre-gate) |
+| 62 | Bottle page, former brewery name, on the line "Dassai 獺祭" (1.6.1) |
+| 63 | Bottle page, no known bottlings: "Add your bottling" alone (launch state) |
+| 64 | Bottle page, own bottlings only: "Your bottlings" |
+| 65 | Result, own entry with no line (no palate line, no Sakenowa credit) |
 
 Screenshots that sit in sheets or overlays show the full screen behind them with the scrim.
 
@@ -568,7 +641,64 @@ Everything below is already folded into the Screens sections and the prototype; 
 
 ---
 
+## v1.6 · Answers to the engineering hand-back on v1.5
+Folded into the Screens sections and the prototype; this is the index.
+
+### Part A — verdicts
+- **A1 §5a "Did you mean"** — **Accept**, all of it: name-or-brewery nearest, deterministic, normalisation as listed, absent when nothing is close, the five reason phrasings, rows exactly §5a's. Now in §5a.
+- **A2 "Not sure? {n} other candidates"** — **Accept**, including the placement: above the chart is what "under the card" meant. Singular "1 other candidate". In §5.
+- **A3 "Sakes to try next" before a pick** — **Accept** the three editorial shapes, measured against the catalogue average, and "A clear shape: {axis} and {axis}." The tags follow the same two axes. In §12.
+- **A4 Renamed brewery** — **Accept**: the catalogue's current name on the card. The former name: B3.
+- **A5 recent-scans screen** — noted, thanks.
+
+### Part B — answers
+1. **B1 The bottling page** — drawn: §9a (51, 52, 57), "Other bottlings in this line" and "About the {line} line" with its caveat and sheet (§9a, §16), search rows (§8, 56), "Is it one of these bottlings?" and "Add this bottling" (§5, 54, 55), "Bottlings we know" on the line page (§9, 53), Journal and Cellar rows (§11, 19, 20). Prototype: search "rihaku", or the *Matched, line only* scan outcome.
+2. **B2 Own entry** — **an own bottling**, your lean. One record: `own: true`, `line: null | lineId`. It can be linked to a line later, gets §9a's "not in the catalogue" treatment, and an own bottling made under a known line ("Add this bottling") starts linked. Private to its author, as before.
+3. **B3 Former name** — **yes, on the sake page only**: its own 12px neutral-600 line under the brewery, "formerly Asahi Shuzō 旭酒造" (62). Not on the card. Hand-kept list, renames on record only — agreed.
+4. **B4 Sake guide** — drawn as §18.
+   1. *Where:* in context (tags, label links, sheet footers) plus one home, **Account → Learn**, with an index. No Home card, no landing section until 3 is settled.
+   2. *Sheet or page:* **its own page type** — title with kanji and romaji, the answer, facts, detail, source, related, sakes of this style. §16 sheets link to it; they don't grow into it.
+   3. *Gate:* drawn for both; public mode drops the tab bar and "Sakes of this style" and adds the "Open the app" strip. Tweak *Sake guide public*.
+   4. *Name:* **"Sake guide"** for now (plain, translates as "Sake-Leitfaden"); 酒の基本 stays a candidate for the JP market. Collision check before release (OPEN 10).
+   Your constraints are in §18's copy rules.
+5. **B5** — `github.md` lives at the project root and records the source repo and sync; it isn't part of this bundle and isn't needed to build. Nothing from v1.4 is open on our side; close the thread.
+
+## v1.6.1 · Answers to the follow-up on v1.6
+1. **Zero catalogue bottlings (launch).** §5: no section; the card is v1.5's. It appears only when the line has bottlings, catalogue or own. §9: "Add your bottling" stands alone (63). Own bottlings only: heading "Your bottlings" (64); with catalogue ones, own rows follow them under "Bottlings we know". §8: confirmed, the v1.5 row.
+2. **Line pages carry no grade or style tags**; guide-linked tags appear only on bottlings (and on a bottling's §5 card). 62 retaken on "Dassai 獺祭". 09 and 16 retaken without tags.
+3. **Cellar: one row per thing logged against** — two rows in your example. The line page's "In cellar · n" counts the line and its bottlings (3); a bottling page counts its own.
+4. **Fixed.** The palate sentence shows only for an own bottling with a line, reworded "It counts toward your palate through its sake's chart."
+5. **Fixed.** Rule 15: line 1 only where the screen shows catalogue or chart data. Dropped on 57, 61, 65, the guide index, and entries without "Sakes of this style".
+6. **Fixed, as you read it:** a bottling's row opens §9a, a sake's row opens §9.
+
 ## Changelog
+### 1.6.1 · 10 Oct 2026
+Follow-up on v1.6 (appendix "v1.6.1"). 5 screenshots retaken (09, 16, 57, 61, 62), 3 added (63–65).
+- **§5** — no type tags on a line; line-only section only when bottlings exist; own-entry palate line conditional; credit line dropped for own entries.
+- **§8** — zero-bottling row confirmed.
+- **§9** — no tags on a line; three bottling states; cellar count includes bottlings.
+- **§9a** — credit line rule.
+- **§11** — row destination sentence; cellar one row per logged thing.
+- **§18** — "Sakes of this style" from bottlings; credit line rule.
+- **Rule 15** — line 1 only with catalogue or chart data.
+
+### 1.6 · 10 Oct 2026
+Engineering hand-back on v1.5: Part A accepted, Part B answered (appendix "v1.6 · Answers"). Bottlings and the Sake guide drawn. 9 screenshots retaken, 12 added (51–62).
+- **App structure** — views `bottling`, `guide`, `guideEntry`.
+- **§4** — "How to read a label" link under the hint.
+- **§5** — guide-linked tags; "A bottling of {line} ›"; best-guess row spec (A2); line-only "Is it one of these bottlings?" + "Add this bottling"; line caveat on a bottling's chart; own-entry card copy + "Open its page".
+- **§5a** — "Did you mean" rules (A1); "Add this bottling"; "How to read a label" exit.
+- **§8** — mixed sake/bottling rows, bottlings first on a tie.
+- **§9** — former brewery name line; guide-linked tags; bottling labels in "You and this sake"; "Bottlings we know" + "Add your bottling".
+- **§9a (new)** — the bottling page and the own bottling.
+- **§11** — journal and cellar rows lead with the bottling name; cellar size in the count.
+- **§12** — editorial starter shapes and "A clear shape" reason (A3).
+- **§15** — Learn group with Sake guide.
+- **§16** — "Learn more" footers; *Measured for the whole line* sheet.
+- **§18 (new)** — the Sake guide: index, entry, entry points, public mode.
+- **Open decisions** — 8 drawn; new 9 (guide gating) and 10 (guide name).
+- **Files** — tweaks *Matched, line only* and *Sake guide public*.
+
 ### 1.5 · 10 Oct 2026
 Engineering hand-back on v1.4: every Part A item accepted or redrawn, every Part B question answered (appendix "v1.5 · Answers"). 26 screenshots retaken, 17 added (34–50).
 - **App structure** — header rule (no Sign out; per-screen bars on result/outcome), avatar signed-in cue, end-of-screen block.
