@@ -93,28 +93,24 @@ describe('ProvenanceBadgeView', () => {
     )
   })
 
-  it('renders no confidence indicator when the prop is omitted', () => {
-    render(<ProvenanceBadgeView kind="llmExtracted" {...baseViewProps} />)
-    expect(screen.queryByTestId('provenance-badge-confidence')).toBeNull()
-  })
-
-  it('renders a visible confidence percentage when the prop is supplied', () => {
+  it('carries no percentage on the chip — confidence lives in the explanation (v1.5 rule 13)', () => {
     render(
-      <ProvenanceBadgeView kind="llmExtracted" {...baseViewProps} confidence={0.83} />,
+      <ProvenanceBadgeView kind="llmExtracted" {...baseViewProps} confidenceText="83% sure" />,
     )
-    expect(screen.getByTestId('provenance-badge-confidence').textContent).toBe('83%')
+    expect(screen.getByTestId('provenance-badge').textContent).not.toMatch(/%/)
+    // Still reachable without opening anything: it is part of the described text.
+    expect(screen.getByTestId('provenance-badge-description').textContent).toContain('83% sure')
   })
 
-  it('clamps an out-of-range confidence so a sloppy upstream value never produces garbage UI', () => {
-    const { rerender } = render(
-      <ProvenanceBadgeView kind="llmExtracted" {...baseViewProps} confidence={1.5} />,
-    )
-    expect(screen.getByTestId('provenance-badge-confidence').textContent).toBe('100%')
-
-    rerender(
-      <ProvenanceBadgeView kind="llmExtracted" {...baseViewProps} confidence={-0.2} />,
-    )
-    expect(screen.getByTestId('provenance-badge-confidence').textContent).toBe('0%')
+  it('looks the same for every kind — neutral outline, told apart by icon and word, never colour', () => {
+    const { rerender } = render(<ProvenanceBadgeView kind="llmExtracted" {...baseViewProps} />)
+    const classOf = () => screen.getByTestId('provenance-badge').className
+    const extracted = classOf()
+    rerender(<ProvenanceBadgeView kind="crossBeverageMap" {...baseViewProps} />)
+    expect(classOf()).toBe(extracted)
+    // No hue in its fill, ink or border (the focus ring is the app-wide one).
+    expect(extracted).not.toMatch(/(?:bg|text|border)-(?:violet|sky|amber|ginshu)/)
+    expect(screen.getByTestId('provenance-badge').querySelector('svg')).not.toBeNull()
   })
 
   it('renders the German label when the locale wrapper supplies it', () => {

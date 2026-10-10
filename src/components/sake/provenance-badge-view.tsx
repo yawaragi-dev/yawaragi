@@ -1,5 +1,6 @@
 'use client'
 
+import { ArrowsLeftRight, MagicWand, Scan } from '@phosphor-icons/react/dist/ssr'
 import { Sheet, SheetTrigger } from '@/components/ui/sheet'
 import { InfoSheetPanel } from '@/components/ui/info-sheet'
 import type { BadgeKind } from '@/lib/provenance/policy'
@@ -47,7 +48,12 @@ interface ProvenanceBadgeViewProps {
   sheetTitle: string
   /** Accessible name for the sheet's close button. */
   closeLabel: string
-  confidence?: number
+  /**
+   * The model's confidence, already worded ("83% sure"). v1.5 rule 13: it
+   * leaves the chip and lives in the explanation — in the sheet, and in the
+   * described text a screen reader reaches without opening it.
+   */
+  confidenceText?: string
   /**
    * Unique per badge **instance**, not per kind.
    *
@@ -74,10 +80,16 @@ interface ProvenanceBadgeViewProps {
 // while the `dark:` halves were the only live values. Keeping both in a NEW
 // component is what CLAUDE.md forbids, and the dead siblings go as each
 // surface is ported; this PR ports this one. The rendered result is unchanged.
-const KIND_STYLES: Record<BadgeKind, string> = {
-  llmExtracted: 'border-violet-700 bg-violet-950 text-violet-100',
-  llmInferred: 'border-sky-700 bg-sky-950 text-sky-100',
-  crossBeverageMap: 'border-amber-700 bg-amber-950 text-amber-100',
+/**
+ * v1.5 rule 13: the kinds differ by **icon and word, not colour** — a neutral
+ * outline is the third tag family ("machine-derived"), and there is no room
+ * in the warm ramp for three more hues that would not compete with the
+ * accent. Read by AI (scan) · AI answer (magic wand) · Cross-beverage.
+ */
+const KIND_ICONS: Record<BadgeKind, typeof Scan> = {
+  llmExtracted: Scan,
+  llmInferred: MagicWand,
+  crossBeverageMap: ArrowsLeftRight,
 }
 
 export function ProvenanceBadgeView({
@@ -86,17 +98,12 @@ export function ProvenanceBadgeView({
   explanation,
   sheetTitle,
   closeLabel,
-  confidence,
+  confidenceText,
   id,
   className,
 }: ProvenanceBadgeViewProps) {
   const descriptionId = `provenance-badge-${id}-description`
-  // Clamp + format here so a caller passing a sloppy value (1.0001 out of a
-  // softmax) still renders cleanly.
-  const confidencePct =
-    typeof confidence === 'number'
-      ? Math.round(Math.max(0, Math.min(1, confidence)) * 100)
-      : undefined
+  const Icon = KIND_ICONS[kind]
 
   return (
     <>
@@ -106,10 +113,11 @@ export function ProvenanceBadgeView({
             <button
               type="button"
               aria-describedby={descriptionId}
+              // v1.5 rule 13: a 24px neutral outline pill — 1px neutral-400,
+              // neutral-700 ink, 11px, a 12px icon. It never takes the accent.
               className={cn(
-                'inline-flex cursor-pointer items-center gap-1 rounded-full border px-2 py-0.5 text-meta font-medium',
+                'inline-flex min-h-6 cursor-pointer items-center gap-1 rounded-full border border-ash-400 px-2 text-[11px] font-medium text-ash-700 transition-colors hover:text-ink',
                 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ginshu-600',
-                KIND_STYLES[kind],
                 className,
               )}
               data-testid="provenance-badge"
@@ -117,22 +125,20 @@ export function ProvenanceBadgeView({
             />
           }
         >
+          <Icon size={12} aria-hidden="true" />
           <span data-testid="provenance-badge-label">{label}</span>
-          {confidencePct !== undefined && (
-            <span
-              className="text-micro tabular-nums opacity-75"
-              data-testid="provenance-badge-confidence"
-            >
-              {confidencePct}%
-            </span>
-          )}
         </SheetTrigger>
         <InfoSheetPanel title={sheetTitle} closeLabel={closeLabel} id={`provenance-${id}`}>
           {explanation}
+          {confidenceText && (
+            <span className="mt-2 block text-meta text-ash-700" data-testid="provenance-badge-confidence">
+              {confidenceText}
+            </span>
+          )}
         </InfoSheetPanel>
       </Sheet>
       <span id={descriptionId} className="sr-only" data-testid="provenance-badge-description">
-        {explanation}
+        {confidenceText ? `${explanation} ${confidenceText}` : explanation}
       </span>
     </>
   )

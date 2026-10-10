@@ -63,7 +63,13 @@ export async function ProvenanceBadge({
       explanation={t('explanation')}
       sheetTitle={t('sheetTitle')}
       closeLabel={tSheet('closeLabel')}
-      confidence={confidence}
+      // Worded and clamped here, so a sloppy upstream value (1.0001 out of a
+      // softmax) still reads cleanly.
+      confidenceText={
+        typeof confidence === 'number'
+          ? tSheet('confidence', { pct: Math.round(Math.max(0, Math.min(1, confidence)) * 100) })
+          : undefined
+      }
       id={id}
       className={className}
     />

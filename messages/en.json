@@ -381,12 +381,12 @@
   "provenance": {
     "badge": {
       "llmExtracted": {
-        "label": "AI-extracted",
+        "label": "Read by AI",
         "explanation": "This value was read from an image or document by an AI model — treat it as a starting point, not a verified fact.",
         "sheetTitle": "Read by an AI model"
       },
       "llmInferred": {
-        "label": "AI-inferred",
+        "label": "AI answer",
         "explanation": "An AI model reasoned over reference data to produce this value. The underlying numbers are canonical; the interpretation is not.",
         "sheetTitle": "Reasoned by an AI model"
       },
@@ -403,7 +403,8 @@
       "body": "Sakenowa publishes each sake's name in Japanese. The Latin spelling beside it was produced by an AI model reading the Japanese, so it is an approximation of how the name sounds — not a second official name. The Japanese is the one the brewery uses, and it is what we match on."
     },
     "sheet": {
-      "closeLabel": "Close"
+      "closeLabel": "Close",
+      "confidence": "The model was {pct}% sure of this reading."
     }
   },
   "flavorAxis": {

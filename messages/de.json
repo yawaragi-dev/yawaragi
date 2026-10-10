@@ -381,12 +381,12 @@
   "provenance": {
     "badge": {
       "llmExtracted": {
-        "label": "KI-erkannt",
+        "label": "Von KI gelesen",
         "explanation": "Dieser Wert wurde von einem KI-Modell aus einem Bild oder Dokument abgelesen — eher ein Ausgangspunkt als eine geprüfte Angabe.",
         "sheetTitle": "Von einem KI-Modell abgelesen"
       },
       "llmInferred": {
-        "label": "KI-abgeleitet",
+        "label": "KI-Antwort",
         "explanation": "Ein KI-Modell hat über Referenzdaten geschlossen, um diesen Wert zu bilden. Die Grunddaten sind belastbar; die Interpretation nicht.",
         "sheetTitle": "Von einem KI-Modell erschlossen"
       },
@@ -403,7 +403,8 @@
       "body": "Sakenowa veröffentlicht den Namen jedes Sake auf Japanisch. Die lateinische Schreibweise daneben stammt von einem KI-Modell, das das Japanische gelesen hat — sie ist eine Annäherung an den Klang des Namens, kein zweiter offizieller Name. Das Japanische ist der Name, den die Brauerei verwendet, und danach gleichen wir ab."
     },
     "sheet": {
-      "closeLabel": "Schließen"
+      "closeLabel": "Schließen",
+      "confidence": "Das Modell war sich bei dieser Lesung zu {pct} % sicher."
     }
   },
   "flavorAxis": {
