@@ -58,8 +58,11 @@ export function requiresSakenowaAttribution(
  * - `end` — line 1 of v1.5's end-of-screen block (rule 15): "Catalogue and
  *   flavor data · Powered by Sakenowa ↗", rendered by the app shell's footer
  *   on every scrolling screen, directly under the screen's last content.
+ * - `identity` — a detail page's above-the-fold credit, v1.5 §9 / B8: the
+ *   identity block's last line, "Catalogue data · Powered by Sakenowa ↗",
+ *   11px neutral-700, on the content column.
  */
-export type SakenowaAttributionPlacement = 'above-fold' | 'inline' | 'end'
+export type SakenowaAttributionPlacement = 'above-fold' | 'inline' | 'end' | 'identity'
 
 interface SakenowaAttributionProps {
   placement: SakenowaAttributionPlacement
@@ -73,6 +76,9 @@ export async function SakenowaAttribution({ placement, className }: SakenowaAttr
       placement={placement}
       poweredBy={t('poweredBy')}
       linkLabel={t('linkLabel')}
+      catalogueData={
+        placement === 'identity' ? t('catalogueDataShort') : placement === 'end' ? t('catalogueData') : undefined
+      }
       className={className}
     />
   )
@@ -138,11 +144,15 @@ export function SakenowaAttributionView({
     )
   }
 
-  if (placement === 'end') {
-    // v1.5 rule 15, line 1: the lead-in, then "Powered by Sakenowa ↗" as the
-    // link — the licence's phrase stays visible and the link goes out.
+  if (placement === 'end' || placement === 'identity') {
+    // v1.5 rule 15 line 1, and §9's identity line: the lead-in, then "Powered
+    // by Sakenowa ↗" as the link — the licence's phrase stays visible and the
+    // link goes out.
     return (
-      <p className={cn('text-meta text-ash-600', className)} data-testid="sakenowa-attribution-end">
+      <p
+        className={cn(placement === 'end' ? 'text-meta text-ash-600' : 'text-[11px] leading-normal text-ash-700', className)}
+        data-testid={`sakenowa-attribution-${placement}`}
+      >
         {catalogueData ? `${catalogueData} · ` : null}
         <a
           href={SAKENOWA_URL}

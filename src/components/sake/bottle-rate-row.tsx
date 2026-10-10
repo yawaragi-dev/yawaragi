@@ -47,16 +47,16 @@ export function BottleRateRow({
 
   if (open) {
     // The panel takes the button's slot, right under the identity, and the
-    // cellar control moves up beside "Similar" — rather than "Similar" left
-    // alone in a row, with the panel opening below everything else.
+    // row under it becomes "Similar" · cellar control (v1.5 §9).
     return (
       <div className="flex flex-col gap-3">
         {/* "Done" closes the panel back to "Rate a new tasting"; the tasting
             is already in "You and this sake" below. */}
         <TastingLogPanel brandId={brandId} sakeName={sakeName} chart={chart} history={history} onDone={() => setOpen(false)} />
+        {/* v1.5 §9: under the open panel the row is Similar · cellar control. */}
         <div className="flex gap-2" data-testid="bottle-actions">
-          {cellar}
           {similar}
+          {cellar}
         </div>
       </div>
     )

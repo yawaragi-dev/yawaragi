@@ -169,8 +169,8 @@ describe('§5 log panel', () => {
     renderPanel({
       existing: { entryId: 'old', rating: 3.5, notes: 'Pear', tags: ['warm'], triedAt: Date.UTC(2026, 6, 18, 12), tastingNumber: 2 },
     })
-    expect(screen.getByText('Your tasting')).toBeTruthy()
-    expect(screen.getByTestId('tasting-log-meta').textContent).toBe('Tasted 18.07.2026')
+    expect(screen.getByText('Your tasting · 18.07.2026')).toBeTruthy()
+    expect(screen.getByTestId('tasting-log-meta').textContent).toBe('Changes save as you go')
     expect((screen.getByTestId('tasting-log-note') as HTMLTextAreaElement).value).toBe('Pear')
     expect(screen.getByTestId('tasting-tag-warm').getAttribute('aria-pressed')).toBe('true')
     expect(screen.queryByTestId('undo-notice')).toBeNull()

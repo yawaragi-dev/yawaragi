@@ -30,7 +30,7 @@ describe('a tasting in "You and this sake"', () => {
     expect(screen.queryByTestId('tasting-log-panel')).toBeNull()
 
     fireEvent.click(screen.getByRole('button', { name: 'Edit' }))
-    expect(screen.getByText('Your tasting')).toBeTruthy()
+    expect(screen.getByText('Your tasting · 18.07.2026')).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Delete tasting' })).toBeTruthy()
 
     fireEvent.click(screen.getByRole('button', { name: 'Done' }))

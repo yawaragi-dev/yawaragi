@@ -375,7 +375,8 @@
   "sakenowaAttribution": {
     "poweredBy": "Bereitgestellt mit Daten von Sakenowa",
     "linkLabel": "Sakenowa besuchen",
-    "catalogueData": "Katalog- und Geschmacksdaten"
+    "catalogueData": "Katalog- und Geschmacksdaten",
+    "catalogueDataShort": "Katalogdaten"
   },
   "provenance": {
     "badge": {
@@ -578,14 +579,14 @@
     "notTastedYet": "Noch nicht probiert.",
     "done": "Fertig",
     "inJournal": "Im Journal",
-    "yourTasting": "Deine Verkostung",
-    "tastedOn": "Verkostet am {date}",
     "edit": "Bearbeiten",
     "delete": "Verkostung löschen",
     "deleteConfirm": "Deine Verkostung von {name} ({rating}) vom {date} löschen? Das lässt sich nicht rückgängig machen.",
     "deleteYes": "Löschen",
     "deleteNo": "Behalten",
-    "deleted": "Verkostung gelöscht"
+    "deleted": "Verkostung gelöscht",
+    "yourTastingOn": "Deine Verkostung · {date}",
+    "savesAsYouGo": "Änderungen werden sofort gespeichert"
   },
   "cellar": {
     "add": "In den Keller",

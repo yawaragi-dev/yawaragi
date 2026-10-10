@@ -107,26 +107,19 @@ test.describe('sake brand page', () => {
       await expect(brewerySection.getByTestId('brewery-name-kanji')).toHaveAttribute('lang', 'ja')
     }
 
-    // Slice 7: Sakenowa attribution appears above the fold (above the brand
-    // kanji <h1>) — Sakenowa's licence forbids footer-only attribution.
-    const attribution = page.getByTestId('sakenowa-attribution-above-fold')
+    // The above-the-fold Sakenowa credit (v1.5 §9 / B8): the identity block's
+    // last line — after the sake's name, still above the fold at 390×844.
+    // A footer credit alone would not satisfy the licence reading (CLAUDE.md).
+    const attribution = page.getByTestId('bottle-identity').getByTestId('sakenowa-attribution-identity')
     await expect(attribution).toBeVisible()
-    await expect(attribution).toContainText('Powered by Sakenowa')
-    const attributionLink = attribution.getByRole('link', { name: 'Visit Sakenowa' })
+    await expect(attribution).toHaveText('Catalogue data · Powered by Sakenowa ↗')
+    const attributionLink = attribution.getByRole('link', { name: 'Powered by Sakenowa ↗' })
     await expect(attributionLink).toHaveAttribute('href', 'https://sakenowa.com')
     await expect(attributionLink).toHaveAttribute('target', '_blank')
     await expect(attributionLink).toHaveAttribute('rel', 'noopener noreferrer')
-
-    // DOM order: attribution before brand kanji, confirming "above the fold"
-    // is a structural guarantee, not just CSS. compareDocumentPosition's
-    // FOLLOWING bit (0x04) is set when the second arg follows the first.
-    const isAttributionBeforeKanji = await page.evaluate(() => {
-      const a = document.querySelector('[data-testid="sakenowa-attribution-above-fold"]')
-      const b = document.querySelector('[data-testid="brand-name-kanji"]')
-      if (!a || !b) return false
-      return (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0
-    })
-    expect(isAttributionBeforeKanji).toBe(true)
+    await page.setViewportSize({ width: 390, height: 844 })
+    const box = (await attribution.boundingBox())!
+    expect(box.y + box.height).toBeLessThanOrEqual(844)
 
     // Romaji provenance. The brand RECORD is Sakenowa-sourced and carries no
     // affordance; the romaji FIELDS are Hepburn romanisations produced by an
@@ -303,7 +296,7 @@ test.describe('sake brand page', () => {
 
     await page.getByTestId('bottle-history-edit-s1').click()
     const panel = page.getByTestId('tasting-log-panel')
-    await expect(panel).toContainText('Your tasting')
+    await expect(panel).toContainText('Your tasting · ')
     await expect(panel.getByTestId('tasting-log-note')).toHaveValue('Melon and white peach, gone in a clean line.')
 
     await panel.getByTestId('tasting-log-delete').click()
