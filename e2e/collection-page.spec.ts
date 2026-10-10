@@ -36,7 +36,7 @@ const journalStub = (mode: 'populated' | 'empty' | 'unavailable') => ({
 })
 
 test.describe('/en/collection — §11 Journal (ADR-0020, maintainer-only)', () => {
-  test('lists the tastings newest first, each a door to its bottle page', async ({
+  test('lists the tastings newest first, each a door to the page of what was tasted', async ({
     browser,
   }) => {
     const context = await browser.newContext({ locale: 'en-US' })
@@ -62,10 +62,16 @@ test.describe('/en/collection — §11 Journal (ADR-0020, maintainer-only)', () 
     // Each row is a door. The bottle page is where the rest of what we know
     // about a sake lives, and the journal is the one surface that knows the
     // visitor has met it.
-    await expect(page.getByTestId('journal-entry-link-1')).toHaveAttribute(
+    await expect(page.getByTestId('journal-entry-link-2')).toHaveAttribute(
       'href',
-      '/en/sake/1',
+      '/en/sake/2',
     )
+    // v1.6 §11: a tasting logged against a bottling leads with the bottling's
+    // name, the sake's kanji under it, and opens the bottling's page.
+    const bottlingRow = page.getByTestId('journal-entry-bottling-link-stub-bottling')
+    await expect(bottlingRow.getByTestId('journal-entry-bottling')).toHaveText('Jikon Nama 2025')
+    await expect(bottlingRow).toContainText('而今')
+    await expect(bottlingRow).toHaveAttribute('href', '/en/bottling/stub-bottling')
 
     // §11's "Full notes" chip on a row with detailed notes, and only there. It
     // opens §10's sheet for that tasting.

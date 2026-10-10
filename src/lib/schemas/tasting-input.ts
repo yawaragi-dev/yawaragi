@@ -12,10 +12,15 @@ import { QUICK_TAGS } from '@/lib/schemas/journal-entry'
 /** Same scale as a rating TasteEvent: 0.5–5 in half steps. */
 const Rating = z.number().min(0.5).max(5).multipleOf(0.5)
 
-/** "Tap a star and it's logged" — a new tasting of one sake, rated. */
+/**
+ * "Tap a star and it's logged" — a new tasting of one sake, rated. With an
+ * `expressionId`, a tasting of that bottling of the sake (design v1.6 §9a:
+ * "the tasting is stored on the bottling").
+ */
 export const RateTastingInputSchema = z.object({
   brandId: z.number().int().positive(),
   rating: Rating,
+  expressionId: z.string().min(1).max(64).optional(),
 })
 export type RateTastingInput = z.infer<typeof RateTastingInputSchema>
 

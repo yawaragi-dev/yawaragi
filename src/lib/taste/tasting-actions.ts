@@ -42,12 +42,12 @@ export type RateTastingResult =
   | {
       status: 'ok'
       entryId: string
-      /** This tasting's number for this sake: 1 for the first time, 2 for the second… */
+      /** This tasting's number for this sake (or this bottling): 1 for the first time, 2 for the second… */
       tastingNumber: number
       loggedAt: number
     }
   | { status: 'invalid_input' }
-  /** The brand id is not in the catalogue. */
+  /** The brand id is not in the catalogue, or the bottling is not the caller's. */
   | { status: 'not_found' }
   | { status: 'forbidden' }
   | { status: 'unavailable' }
@@ -62,11 +62,18 @@ export type TastingUpdateResult =
 export async function rateNewTasting(input: RateTastingInput): Promise<RateTastingResult> {
   const parsed = RateTastingInputSchema.safeParse(input)
   if (!parsed.success) return { status: 'invalid_input' }
-  const { brandId, rating } = parsed.data
+  const { brandId, rating, expressionId } = parsed.data
 
-  return withMaintainerCollection(async ({ userId, journal }) => {
-    const [brand, chart] = await Promise.all([lookupBrand(brandId), lookupFlavorChart(brandId)])
+  return withMaintainerCollection(async ({ userId, journal, expressions }) => {
+    const [brand, chart, bottlings] = await Promise.all([
+      lookupBrand(brandId),
+      lookupFlavorChart(brandId),
+      expressionId === undefined ? [] : expressions.read(userId),
+    ])
     if (brand == null) return { status: 'not_found' }
+    // The bottling has to be the caller's own, and a bottling of this sake.
+    const bottling = bottlings.find((e) => e.id === expressionId && e.brandId === brandId)
+    if (expressionId !== undefined && !bottling) return { status: 'not_found' }
 
     const now = Date.now()
     const entry: JournalEntry = {
@@ -84,14 +91,19 @@ export async function rateNewTasting(input: RateTastingInput): Promise<RateTasti
         occurredAt: now,
       },
       sake: { nameKanji: brand.nameKanji, nameRomaji: brand.nameRomaji },
+      ...(bottling ? { expression: { id: bottling.id, name: bottling.name } } : {}),
       triedAt: now,
       createdAt: now,
     }
     await journal.put(userId, entry)
 
     const entries = await journal.read(userId)
-    const tastingNumber = entries.filter(
-      (e) => e.event.kind === 'rating' && e.event.brandId === brandId,
+    // A bottling's tastings are counted on their own: "2nd time" is about
+    // what is in the glass.
+    const tastingNumber = entries.filter((e) =>
+      bottling
+        ? e.expression?.id === bottling.id
+        : e.event.kind === 'rating' && e.event.brandId === brandId,
     ).length
     return { status: 'ok', entryId: entry.id, tastingNumber, loggedAt: now }
   })

@@ -34,6 +34,9 @@ export const routing = defineRouting({
     '/account': '/account',
     '/sake/[brandId]': '/sake/[brandId]',
     '/sake/[brandId]/similar': '/sake/[brandId]/similar',
+    // §9a: one bottling a visitor added themselves (ADR-0025). The id is the
+    // Expression's, private to its author.
+    '/bottling/[id]': '/bottling/[id]',
     '/scan': '/scan',
     // §8 "Type it". Shares its spelling across locales: "search" is not the
     // visitor-facing word (the field's label is), and a localised path would

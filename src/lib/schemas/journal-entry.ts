@@ -34,6 +34,10 @@ import { type TasteEvent, TasteEventSchema } from '@/lib/schemas/taste-event'
 // v2 — `schemaVersion: 2`, plus optional `tags` (§5's quick chips), `detail`
 //      (§10's sheet) and `updatedAt`. Nothing renamed, so v1 → v2 only stamps
 //      the version.
+// v3 — `schemaVersion: 3`, plus optional `expression`: the bottling the
+//      tasting was logged against (ADR-0025). A rating's `brandId` may now be
+//      `null`, for a bottling whose Sake is unknown. Nothing renamed, so
+//      v2 → v3 only stamps the version.
 
 /**
  * §5's quick chips — the user's own one-tap notes about a tasting. Stable keys;
@@ -62,9 +66,10 @@ export type QuickTag = (typeof QUICK_TAGS)[number]
 export type AxisQuickTag = (typeof AXIS_QUICK_TAGS)[number]
 export type ContextQuickTag = (typeof CONTEXT_QUICK_TAGS)[number]
 
-export const JOURNAL_ENTRY_SCHEMA_VERSION = 2 as const
+export const JOURNAL_ENTRY_SCHEMA_VERSION = 3 as const
 
-export const JournalEntrySchema = z.object({
+export const JournalEntrySchema = z
+  .object({
   /** The record's stored-shape version (ADR-0024). Always the current one
    *  after a read — older records are upcast before they get here. */
   schemaVersion: z.literal(JOURNAL_ENTRY_SCHEMA_VERSION),
@@ -83,6 +88,14 @@ export const JournalEntrySchema = z.object({
     nameKanji: z.string().min(1),
     nameRomaji: z.string().nullable(),
   }),
+  /** The bottling this tasting was logged against, when it was one (design
+   *  v1.6: "the tasting is stored on the bottling"). `name` is denormalised
+   *  like `sake`, so the journal still reads if the bottling is removed.
+   *  Absent for a tasting of the Sake itself. With an `expression`, `sake`
+   *  holds the line's name — or, when the line is unknown, the bottling's own
+   *  name, so every surface that prints `sake` still has something true to
+   *  print. */
+  expression: z.object({ id: z.string().min(1), name: z.string().min(1) }).optional(),
   /** Free-text tasting note. Optional — a quick check-in has none. */
   notes: z.string().max(2000).optional(),
   /** §5's quick chips, each at most once. Absent when none are picked. */
@@ -103,16 +116,22 @@ export const JournalEntrySchema = z.object({
   /** Epoch ms — the last edit (re-rate, note, tags, detailed notes). Absent on
    *  an entry never edited since it was logged. */
   updatedAt: z.number().int().nonnegative().optional(),
-})
+  })
+  // A tasting is of something: a Sake (the event's brand), a bottling, or both.
+  .refine((e) => e.event.kind !== 'rating' || e.event.brandId !== null || e.expression !== undefined, {
+    message: 'a tasting with no sake must name its bottling',
+    path: ['expression'],
+  })
 
 export type JournalEntry = z.infer<typeof JournalEntrySchema>
 
-/** How a stored JournalEntry is read: v1 → v2 stamps the version, nothing else. */
+/** How a stored JournalEntry is read: each step so far only stamps the version. */
 export const JOURNAL_ENTRY_CODEC: VersionedRecordCodec<JournalEntry> = {
   kind: 'journal',
   current: JOURNAL_ENTRY_SCHEMA_VERSION,
   upcasters: {
     1: (record) => ({ ...record, schemaVersion: 2 }),
+    2: (record) => ({ ...record, schemaVersion: 3 }),
   },
   schema: JournalEntrySchema,
 }

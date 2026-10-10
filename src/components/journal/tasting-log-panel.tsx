@@ -70,6 +70,7 @@ const NOTE_DEBOUNCE_MS = 700
 
 export function TastingLogPanel({
   brandId,
+  expressionId,
   sakeName,
   chart,
   history,
@@ -79,6 +80,8 @@ export function TastingLogPanel({
   onDeleted,
 }: {
   brandId: number
+  /** Log against this bottling of the sake rather than the sake itself (§9a). */
+  expressionId?: string
   /** The sake's name as the page shows it — the delete confirmation names it. */
   sakeName: string
   /** This sake's flavor chart, or `null` without one. It picks the quick chips,
@@ -162,7 +165,7 @@ export function TastingLogPanel({
         changed()
         return
       }
-      const result = await rateNewTasting({ brandId, rating: value })
+      const result = await rateNewTasting({ brandId, rating: value, expressionId })
       if (result.status !== 'ok') {
         setRating(previous)
         setFailed(true)

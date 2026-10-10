@@ -112,7 +112,11 @@ test.describe('/en/home — §3 Home', () => {
     const recent = page.getByTestId('home-recent-tastings')
     await expect(recent).toBeVisible()
     await expect(page.getByTestId('home-recent-entry')).toHaveCount(3)
-    await expect(page.getByTestId('home-recent-link-1')).toHaveAttribute('href', '/en/sake/1')
+    await expect(page.getByTestId('home-recent-link-2')).toHaveAttribute('href', '/en/sake/2')
+    // A tasting of a bottling leads with the bottling and opens its page (v1.6).
+    const bottling = page.getByTestId('home-recent-bottling-link-stub-bottling')
+    await expect(bottling).toContainText('Jikon Nama 2025')
+    await expect(bottling).toHaveAttribute('href', '/en/bottling/stub-bottling')
     await expect(page.getByTestId('home-recent-all')).toContainText('3')
 
     // The palate strip restates §12's own title, computed the same way, so

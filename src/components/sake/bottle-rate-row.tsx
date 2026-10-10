@@ -24,6 +24,7 @@ import type { FlavorAxis } from '@/lib/schemas/flavor-chart'
  */
 export function BottleRateRow({
   brandId,
+  expressionId,
   sakeName,
   chart,
   history,
@@ -32,6 +33,8 @@ export function BottleRateRow({
   initiallyOpen = false,
 }: {
   brandId: number
+  /** §9a: the bottling this page is about; its tastings are stored on it. */
+  expressionId?: string
   /** The name the page shows; the delete confirmation names it. */
   sakeName: string
   chart: Readonly<Record<FlavorAxis, number>> | null
@@ -52,12 +55,14 @@ export function BottleRateRow({
       <div className="flex flex-col gap-3">
         {/* "Done" closes the panel back to "Rate a new tasting"; the tasting
             is already in "You and this sake" below. */}
-        <TastingLogPanel brandId={brandId} sakeName={sakeName} chart={chart} history={history} onDone={() => setOpen(false)} />
+        <TastingLogPanel brandId={brandId} expressionId={expressionId} sakeName={sakeName} chart={chart} history={history} onDone={() => setOpen(false)} />
         {/* v1.5 §9: under the open panel the row is Similar · cellar control. */}
-        <div className="flex gap-2" data-testid="bottle-actions">
-          {similar}
-          {cellar}
-        </div>
+        {(similar || cellar) && (
+          <div className="flex gap-2" data-testid="bottle-actions">
+            {similar}
+            {cellar}
+          </div>
+        )}
       </div>
     )
   }
@@ -80,7 +85,7 @@ export function BottleRateRow({
           ported (the shell header carries the wordmark). Until it is, the
           cellar control sits under the action row, as §5 places it under
           the card. */}
-      <div className="flex gap-2">{cellar}</div>
+      {cellar && <div className="flex gap-2">{cellar}</div>}
     </div>
   )
 }

@@ -13,6 +13,7 @@ import {
 import { formerBreweryNameOf } from '@/lib/sakenowa/former-brewery-names'
 import { getPrefectureNames } from '@/lib/sakenowa/prefecture'
 import { BottleHistory } from '@/components/sake/bottle-history'
+import { OwnBottlings } from '@/components/sake/own-bottlings'
 import { ScreenBar } from '@/components/layout/screen-header'
 import { BottleRateRow } from '@/components/sake/bottle-rate-row'
 import { BottleSection, NotPublished } from '@/components/sake/bottle-section'
@@ -67,6 +68,9 @@ import { entriesForBrand, resolveViewerJournal } from '@/lib/taste/viewer-journa
  *   empty state. For them "Similar" is the action row.
  * - **"Rate a new tasting" opens §5's panel in place** rather than a second
  *   result-card screen — see `<BottleRateRow />`.
+ * - **§9.3a "Bottlings we know".** Needs catalogue bottlings; Sakenowa has no
+ *   such level and none are curated. The visitor's own bottlings and "Add
+ *   your bottling" are in (`<OwnBottlings />`, design v1.6.1).
  * - **§9.4 Serve it, §9.5 The sake, §9.7 Goes with, §9.8 What others
  *   noticed, §9.10 Where to find it.** No source for any bottle; behind
  *   `FEATURES` until #340, #339, #336, #337 and #338.
@@ -138,6 +142,7 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
   // before the first tap ("Last logged 19 Sep · 4.5" / "First time for you").
   const tastings = viewer.canLog ? entriesForBrand(viewer.entries, brandId) : []
   const lastTasting = tastings[0]
+  const ownBottlings = viewer.expressions.filter((e) => e.brandId === brandId)
 
   // §9.1 draws the Latin name large with the Japanese beneath it — "Kidoizumi
   // AFS" over "木戸泉 AFS". That is §15's default name display (Romaji + kanji)
@@ -366,6 +371,21 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
       {/* -- §9.3 You and this sake ---------------------------------------- */}
       {viewer.canLog && (
         <BottleHistory brandId={brandId} chart={flavorChart} entries={tastings} locale={locale} />
+      )}
+
+      {/* -- §9.3a Bottlings ----------------------------------------------- */}
+      {/*
+        v1.6.1's launch states: "Add your bottling" alone (63), or "Your
+        bottlings" above it once the visitor has added one (64). "Bottlings we
+        know" needs catalogue bottlings, and there are none.
+      */}
+      {viewer.canLog && (
+        <OwnBottlings
+          brandId={brandId}
+          lineName={brand.nameRomaji ?? brand.nameKanji}
+          bottlings={ownBottlings}
+          tastedIds={new Set(tastings.flatMap((e) => (e.expression ? [e.expression.id] : [])))}
+        />
       )}
 
       {/* -- §9.4 Serve it ------------------------------------------------ */}

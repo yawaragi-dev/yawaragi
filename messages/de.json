@@ -586,6 +586,7 @@
     "error": "Das ließ sich gerade nicht speichern — versuch es noch einmal.",
     "rateNewTasting": "Neue Verkostung bewerten",
     "historyHeading": "Du und dieser Sake",
+    "historyHeadingBottling": "Du und diese Abfüllung",
     "historyCount": "{n, plural, one {# Verkostung} other {# Verkostungen}}",
     "notTastedYet": "Noch nicht probiert.",
     "done": "Fertig",
@@ -856,5 +857,32 @@
     "notThisOne": "Nicht dieser",
     "sureMatch": "Sicherer Treffer",
     "bestGuess": "Beste Vermutung"
+  },
+  "bottling": {
+    "addRowTitle": "Eigene Abfüllung hinzufügen",
+    "addRowHint": "Nur der Name — der Rest kann warten",
+    "nameLabel": "Name der Abfüllung",
+    "formHint": "Vorerst nur der Name. Nur du kannst ihn sehen.",
+    "add": "Abfüllung hinzufügen",
+    "adding": "Wird hinzugefügt …",
+    "cancel": "Abbrechen",
+    "error": "Das ließ sich gerade nicht hinzufügen — versuch es noch einmal.",
+    "yourBottlings": "Deine Abfüllungen",
+    "count": "{n, plural, one {# Abfüllung} other {# Abfüllungen}}",
+    "ownEntry": "Dein eigener Eintrag",
+    "tasted": "Verkostet",
+    "bottlingOf": "Eine Abfüllung von {line} <kanji></kanji>",
+    "ownOfLine": "Deine eigene Abfüllung von {line}, noch nicht im Katalog. Nur du kannst sie sehen.",
+    "otherBottlings": "Weitere Abfüllungen dieser Linie",
+    "more": "{n} weitere",
+    "lineBlockTitle": "Über die Linie {line} <kanji></kanji>",
+    "lineCaveat": "Für die ganze Linie gemessen; Abfüllungen unterscheiden sich.",
+    "similarToLine": "Sake ähnlich wie {line}",
+    "lineSheet": {
+      "triggerLabel": "Über diese Messung",
+      "title": "Für die ganze Linie gemessen",
+      "measured": "Sakenowa erfasst einen Sake — die Linie {line} — und nicht jede Abfüllung unter diesem Namen. Ein Ginjō und ein Genshu derselben Linie können recht unterschiedlich schmecken.",
+      "howToRead": "Lies das Diagramm und „Ähnliche“ als Familienähnlichkeit. Deine eigene Bewertung und deine Notizen auf dieser Seite gelten nur für diese Abfüllung."
+    }
   }
 }

@@ -10,7 +10,7 @@ import { InMemoryJournalStore } from '@/lib/taste/in-memory-journal-store'
 
 const TARGET = { f1: 0.2, f2: 0.6, f3: 0.6, f4: 0.4, f5: 0.1, f6: 0.3 }
 const entry = (id: string): JournalEntry => ({
-  schemaVersion: 2,
+  schemaVersion: 3,
   id,
   event: { kind: 'rating', rating: 4, brandId: 1, target: TARGET, occurredAt: 1 },
   sake: { nameKanji: '鍋島', nameRomaji: 'Nabeshima' },
