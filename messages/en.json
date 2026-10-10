@@ -878,6 +878,13 @@
     "lineBlockTitle": "About the {line} line <kanji></kanji>",
     "lineCaveat": "Measured for the whole line; bottlings vary.",
     "similarToLine": "Sakes similar to {line}",
+    "addedByYou": "Added by you",
+    "ownNoLine": "Not in the catalogue yet. Only you can see it, and we’ll link it to its sake if it turns up.",
+    "keepTitle": "Keep it anyway",
+    "keepBody": "Rate it now, with the name above. It’s marked as your own entry, and we’ll link it if the sake turns up in the catalogue.",
+    "addThisBottling": "Add this bottling",
+    "addYourself": "Add “{query}” yourself",
+    "addYourselfHint": "Rate it now, details later",
     "lineSheet": {
       "triggerLabel": "About this measurement",
       "title": "Measured for the whole line",

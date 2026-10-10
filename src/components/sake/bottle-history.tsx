@@ -27,7 +27,8 @@ export async function BottleHistory({
   locale,
   subject = 'sake',
 }: {
-  brandId: number
+  /** The sake, or `null` for a bottling whose sake the catalogue lacks. */
+  brandId: number | null
   /** The sake's chart, for the quick chips when a tasting is edited. */
   chart: FlavorChart | null
   /** This sake's entries, newest first. */

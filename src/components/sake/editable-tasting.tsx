@@ -22,7 +22,8 @@ export function EditableTasting({
   tasting,
   children,
 }: {
-  brandId: number
+  /** The sake, or `null` for a bottling whose sake the catalogue lacks. */
+  brandId: number | null
   sakeName: string
   chart: Readonly<Record<FlavorAxis, number>> | null
   tasting: ExistingTasting

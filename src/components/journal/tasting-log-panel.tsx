@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, useTransition } from 'react'
+import { useEffect, useId, useRef, useState, useTransition } from 'react'
 import { useFormatter, useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { CheckCircle, SlidersHorizontal, Trash } from '@phosphor-icons/react/dist/ssr'
@@ -79,7 +79,8 @@ export function TastingLogPanel({
   existing,
   onDeleted,
 }: {
-  brandId: number
+  /** The sake, or `null` for a bottling whose sake the catalogue lacks. */
+  brandId: number | null
   /** Log against this bottling of the sake rather than the sake itself (§9a). */
   expressionId?: string
   /** The sake's name as the page shows it — the delete confirmation names it. */
@@ -102,6 +103,8 @@ export function TastingLogPanel({
    *  "Your take", as after Undo. */
   onDeleted?: () => void
 }) {
+  // Several panels can be open on one page (each "Edit" row opens its own).
+  const uid = useId()
   const t = useTranslations('tasting')
   const tAxis = useTranslations('flavorAxis')
   const tNotes = useTranslations('detailedNotes')
@@ -354,14 +357,14 @@ export function TastingLogPanel({
         isUndoing && 'opacity-45',
       )}
       aria-busy={isUndoing || undefined}
-      aria-labelledby={`tasting-log-${brandId}-heading`}
+      aria-labelledby={`tasting-log-${uid}-heading`}
       data-testid="tasting-log-panel"
       data-logged={logged ? '' : undefined}
     >
       <div className="flex items-baseline justify-between gap-3">
         <div className="flex items-center gap-2">
           <span aria-hidden="true" className="block h-3.5 w-0.5 rounded-full bg-ginshu-500" />
-          <h3 id={`tasting-log-${brandId}-heading`} className="text-card-heading font-medium text-ink">
+          <h3 id={`tasting-log-${uid}-heading`} className="text-card-heading font-medium text-ink">
             {existing
               ? t('yourTastingOn', { date: europeanDay(tastingDayOf(existing.triedAt)) })
               : logged
@@ -397,11 +400,11 @@ export function TastingLogPanel({
 
       {logged ? (
         <div className="flex flex-col gap-2.5 motion-safe:animate-yw-fade" data-testid="tasting-log-after">
-          <label className="sr-only" htmlFor={`tasting-note-${brandId}`}>
+          <label className="sr-only" htmlFor={`tasting-note-${uid}`}>
             {t('noteLabel')}
           </label>
           <textarea
-            id={`tasting-note-${brandId}`}
+            id={`tasting-note-${uid}`}
             value={note}
             onChange={(e) => onNoteChange(e.target.value)}
             onBlur={(e) => saveNote(e.target.value)}

@@ -66,11 +66,11 @@ export async function rateNewTasting(input: RateTastingInput): Promise<RateTasti
 
   return withMaintainerCollection(async ({ userId, journal, expressions }) => {
     const [brand, chart, bottlings] = await Promise.all([
-      lookupBrand(brandId),
-      lookupFlavorChart(brandId),
+      brandId === null ? null : lookupBrand(brandId),
+      brandId === null ? null : lookupFlavorChart(brandId),
       expressionId === undefined ? [] : expressions.read(userId),
     ])
-    if (brand == null) return { status: 'not_found' }
+    if (brandId !== null && brand == null) return { status: 'not_found' }
     // The bottling has to be the caller's own, and a bottling of this sake.
     const bottling = bottlings.find((e) => e.id === expressionId && e.brandId === brandId)
     if (expressionId !== undefined && !bottling) return { status: 'not_found' }
@@ -90,7 +90,11 @@ export async function rateNewTasting(input: RateTastingInput): Promise<RateTasti
           : null,
         occurredAt: now,
       },
-      sake: { nameKanji: brand.nameKanji, nameRomaji: brand.nameRomaji },
+      // With no sake the bottling's own name stands in, so every surface that
+      // prints `sake` still has something true to print (JournalEntry v3).
+      sake: brand
+        ? { nameKanji: brand.nameKanji, nameRomaji: brand.nameRomaji }
+        : { nameKanji: bottling!.name, nameRomaji: null },
       ...(bottling ? { expression: { id: bottling.id, name: bottling.name } } : {}),
       triedAt: now,
       createdAt: now,

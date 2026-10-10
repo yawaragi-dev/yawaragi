@@ -473,6 +473,7 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
             title={tOutcome('brandOnly.title')}
             body={tOutcome('brandOnly.body', { line: view.sakeRomaji ?? view.sakeKanji })}
             onRescan={onPickClick}
+            canKeep={canLog}
             read={{
               name: view.extraction.name_ja,
               brewery: view.extraction.brewery_ja,
@@ -502,6 +503,7 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
             title={tOutcome('breweryOnly.title')}
             body={tOutcome('breweryOnly.body', { brewery: view.breweryRomaji ?? view.extraction.brewery_ja })}
             onRescan={onPickClick}
+            canKeep={canLog}
             read={{
               name: view.extraction.name_ja,
               brewery: view.extraction.brewery_ja,
@@ -533,6 +535,7 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
             title={tOutcome('ambiguous.title')}
             body={tOutcome('ambiguous.body')}
             onRescan={onPickClick}
+            canKeep={canLog}
             read={{
               name: view.extraction.name_ja,
               brewery: view.extraction.brewery_ja,
@@ -567,6 +570,7 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
             title={tOutcome('noMatch.title')}
             body={tOutcome('noMatch.body')}
             onRescan={onPickClick}
+            canKeep={canLog}
             read={{
               name: view.extraction.name_ja,
               brewery: view.extraction.brewery_ja,

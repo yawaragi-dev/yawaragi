@@ -129,9 +129,10 @@ export const STUB_CELLAR: readonly CellarBottle[] = [
 ]
 
 /**
- * One bottling the stubbed visitor added themselves, under the stub journal's
- * first sake, with one tasting logged against it (entry `s1` above).
- * Enough to draw §9a's page and §9's "Your bottlings" without a store.
+ * The bottlings the stubbed visitor added themselves: one under the stub
+ * journal's first sake, with one tasting logged against it (entry `s1`
+ * above), and one whose sake the catalogue lacks. Enough to draw both of
+ * §9a's pages and §9's "Your bottlings" without a store.
  */
 export const STUB_EXPRESSIONS: readonly Expression[] = [
   {
@@ -143,6 +144,19 @@ export const STUB_EXPRESSIONS: readonly Expression[] = [
     name: 'Jikon Nama 2025',
     createdAt: Date.UTC(2026, 6, 10),
     updatedAt: Date.UTC(2026, 6, 10),
+  },
+  // A bottle the catalogue does not know (design screenshot 57): no sake, the
+  // brewery as read off the label, nothing tasted yet.
+  {
+    schemaVersion: 1,
+    id: 'stub-own',
+    own: true,
+    brandId: null,
+    line: null,
+    name: '富久千代',
+    brewery: '盛田屋',
+    createdAt: Date.UTC(2026, 6, 12),
+    updatedAt: Date.UTC(2026, 6, 12),
   },
 ]
 

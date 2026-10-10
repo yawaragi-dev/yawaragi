@@ -190,6 +190,37 @@ test.describe('§8 search', () => {
     await context.close()
   })
 
+  test('someone who keeps a journal can add what they typed as a bottle of their own', async ({
+    browser,
+  }) => {
+    // No mirror needed: the row is about the bottle in hand, whatever the
+    // catalogue said — or could not say.
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([
+      AGE_GATE_COOKIE,
+      CONSENT_COOKIE,
+      { name: 'yawaragi_journal_stub', value: 'empty', url: BASE_URL },
+    ])
+    const page = await context.newPage()
+    await page.goto('/en/search?q=Fukuchiyo+Nama')
+
+    const row = page.getByTestId('search-add-yourself')
+    await expect(row).toContainText('Add “Fukuchiyo Nama” yourself')
+    await expect(row).toContainText('Rate it now, details later')
+
+    // Nothing to add before there is a name worth searching for.
+    await page.goto('/en/search')
+    await expect(page.getByTestId('search-add-yourself')).toHaveCount(0)
+    await context.close()
+
+    // And nobody else is offered a place to keep it (ADR-0020).
+    const visitor = await searchPage(browser)
+    await visitor.page.goto('/en/search?q=Fukuchiyo+Nama')
+    await expect(visitor.page.getByTestId('search-page')).toBeVisible()
+    await expect(visitor.page.getByTestId('search-add-yourself')).toHaveCount(0)
+    await visitor.context.close()
+  })
+
   test('clearing returns to the empty field, keeping the screen', async ({
     browser,
   }, testInfo) => {

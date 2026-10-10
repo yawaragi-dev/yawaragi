@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import NextLink from 'next/link'
 import { CameraRotate, CaretRight, Keyboard, MagnifyingGlass } from '@phosphor-icons/react/dist/ssr'
 import { Link } from '@/i18n/navigation'
+import { KeepItAnyway } from '@/components/sake/add-unlisted-bottling'
 
 /**
  * §5a — one screen for every scan outcome that is not a match (design v1.5).
@@ -21,10 +22,10 @@ import { Link } from '@/i18n/navigation'
  *   it lives in the Read by AI sheet;
  * - candidate rows, when there are any: a guess, so no percentage and no
  *   accent, and a reason in words;
+ * - "Keep it anyway", whenever something was read and the visitor can keep a
+ *   journal: the bottle is saved as their own bottling, with the name and
+ *   brewery as they stand in "What we read" (design v1.6, ADR-0025);
  * - "Type the name instead", last.
- *
- * Not yet: "Keep it anyway" — saving an unmatched bottle as your own entry
- * needs the bottle-level record (CONTEXT.md, Expression), which is not built.
  */
 
 export interface OutcomeCandidate {
@@ -57,6 +58,7 @@ export function ScanOutcome({
   read,
   candidates,
   tips,
+  canKeep = false,
   children,
 }: {
   testId: string
@@ -68,10 +70,16 @@ export function ScanOutcome({
   read?: OutcomeRead
   candidates?: { label: string; rows: readonly OutcomeCandidate[] }
   tips?: readonly { icon: ReactNode; text: string }[]
+  /** Offer "Keep it anyway" — only to a visitor who can keep a journal (ADR-0020). */
+  canKeep?: boolean
   /** Branch-specific actions under the status block (the consensus's Yes / No). */
   children?: ReactNode
 }) {
   const t = useTranslations('scanOutcome')
+  // The read, as the visitor has corrected it. Held here rather than in
+  // "What we read" because "Keep it anyway", further down, saves the same two.
+  const [name, setName] = useState(read?.name ?? '')
+  const [brewery, setBrewery] = useState(read?.brewery ?? '')
 
   return (
     <section className="flex flex-col gap-5" data-testid={testId}>
@@ -102,7 +110,15 @@ export function ScanOutcome({
 
       {children}
 
-      {read && <WhatWeRead read={read} />}
+      {read && (
+        <WhatWeRead
+          badge={read.badge}
+          name={name}
+          brewery={brewery}
+          onName={setName}
+          onBrewery={setBrewery}
+        />
+      )}
 
       {candidates && candidates.rows.length > 0 && (
         <div className="flex flex-col">
@@ -124,6 +140,8 @@ export function ScanOutcome({
         </ul>
       )}
 
+      {read && canKeep && <KeepItAnyway name={name} brewery={brewery} />}
+
       <Link
         href="/search"
         className="flex min-h-11 w-fit items-center gap-2 text-subtle font-medium text-ginshu-700 hover:text-ginshu-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
@@ -142,10 +160,20 @@ export function ScanOutcome({
  * on a page the back button returns from. A link, not a form: the whole scan
  * screen already sits inside the scan `<form>`, and forms do not nest.
  */
-function WhatWeRead({ read }: { read: OutcomeRead }) {
+function WhatWeRead({
+  badge,
+  name,
+  brewery,
+  onName,
+  onBrewery,
+}: {
+  badge: ReactNode
+  name: string
+  brewery: string
+  onName: (value: string) => void
+  onBrewery: (value: string) => void
+}) {
   const t = useTranslations('scanOutcome')
-  const [name, setName] = useState(read.name)
-  const [brewery, setBrewery] = useState(read.brewery)
   const field =
     'min-h-11 w-full rounded-md border border-divider bg-ground px-3 text-body text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600'
 
@@ -153,24 +181,25 @@ function WhatWeRead({ read }: { read: OutcomeRead }) {
     <div className="flex flex-col gap-3 rounded-xl bg-surface p-4 shadow-yw-sm" data-testid="scan-outcome-read">
       <div className="flex items-center justify-between gap-3">
         <span className="text-section-label uppercase text-ash-600">{t('whatWeRead')}</span>
-        {read.badge}
+        {badge}
       </div>
       <label className="flex flex-col gap-1.5">
         <span className="text-section-label uppercase text-ash-600">{t('name')}</span>
         <input
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={(e) => onName(e.target.value)}
           className={field}
           data-testid="scan-outcome-read-name"
         />
       </label>
       <label className="flex flex-col gap-1.5">
         <span className="text-section-label uppercase text-ash-600">{t('brewery')}</span>
-        {/* Not sent: §8 searches by name. Editable all the same — fixing it
-            is how a visitor checks the brewery against the label. */}
+        {/* Not sent to search: §8 searches by name. Editable all the same —
+            fixing it is how a visitor checks the brewery against the label,
+            and "Keep it anyway" saves it as it stands. */}
         <input
           value={brewery}
-          onChange={(e) => setBrewery(e.target.value)}
+          onChange={(e) => onBrewery(e.target.value)}
           className={field}
           lang="ja"
           data-testid="scan-outcome-read-brewery"

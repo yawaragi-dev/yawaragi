@@ -878,6 +878,13 @@
     "lineBlockTitle": "Über die Linie {line} <kanji></kanji>",
     "lineCaveat": "Für die ganze Linie gemessen; Abfüllungen unterscheiden sich.",
     "similarToLine": "Sake ähnlich wie {line}",
+    "addedByYou": "Von dir hinzugefügt",
+    "ownNoLine": "Noch nicht im Katalog. Nur du kannst es sehen, und wir verknüpfen es mit seinem Sake, sobald er auftaucht.",
+    "keepTitle": "Trotzdem behalten",
+    "keepBody": "Bewerte ihn jetzt, mit dem Namen oben. Er wird als dein eigener Eintrag markiert, und wir verknüpfen ihn, sobald der Sake im Katalog auftaucht.",
+    "addThisBottling": "Diese Abfüllung hinzufügen",
+    "addYourself": "„{query}“ selbst hinzufügen",
+    "addYourselfHint": "Jetzt bewerten, Details später",
     "lineSheet": {
       "triggerLabel": "Über diese Messung",
       "title": "Für die ganze Linie gemessen",

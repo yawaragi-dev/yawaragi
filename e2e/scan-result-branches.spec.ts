@@ -380,6 +380,38 @@ test.describe('scan result branches (#109 PR B)', () => {
     await context.close()
   })
 
+  test('no-match offers to keep the bottle anyway, only to a visitor who can keep a journal', async ({
+    browser,
+  }, testInfo) => {
+    testInfo.skip(!dbUp, 'Sakenowa mirror not populated — DB-bound spec')
+    const read = injectionCookie({ name_ja: '架空銘柄零一', brewery_ja: '架空酒造零', confidence: 0.95 })
+
+    const keeper = await scanPageWith(browser, [
+      read,
+      { name: 'yawaragi_journal_stub', value: 'empty', url: BASE_URL },
+    ])
+    await keeper.page.goto('/en/scan')
+    await keeper.page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
+    await expect(keeper.page.getByTestId('scan-result-no-match')).toBeVisible()
+    // §5a: the dashed card, after what was read and before "Type the name instead".
+    const keep = keeper.page.getByTestId('scan-outcome-keep')
+    await expect(keep).toContainText('Keep it anyway')
+    await expect(keep.getByTestId('scan-outcome-keep-add')).toHaveText('Add this bottling')
+    const keepBox = (await keep.boundingBox())!
+    const readBox = (await keeper.page.getByTestId('scan-outcome-read').boundingBox())!
+    const typeBox = (await keeper.page.getByTestId('scan-outcome-type-it').boundingBox())!
+    expect(readBox.y).toBeLessThan(keepBox.y)
+    expect(keepBox.y).toBeLessThan(typeBox.y)
+    await keeper.context.close()
+
+    const visitor = await scanPageWith(browser, [read])
+    await visitor.page.goto('/en/scan')
+    await visitor.page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
+    await expect(visitor.page.getByTestId('scan-result-no-match')).toBeVisible()
+    await expect(visitor.page.getByTestId('scan-outcome-keep')).toHaveCount(0)
+    await visitor.context.close()
+  })
+
   test('no-match offers the nearest catalogue sakes as guesses, with a reason in words', async ({
     browser,
   }, testInfo) => {

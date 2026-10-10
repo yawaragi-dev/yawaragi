@@ -135,6 +135,40 @@ describe('tapping a star', () => {
     expect(await journal().read(USER)).toEqual([])
   })
 
+  it('logs a tasting of a bottle the catalogue does not know, off the palate', async () => {
+    await expressions().put(USER, {
+      ...OWN_BOTTLING,
+      id: 'x2',
+      brandId: null,
+      line: null,
+      name: '富久千代',
+      brewery: '盛田屋',
+    })
+
+    const result = await rateNewTasting({ brandId: null, rating: 4, expressionId: 'x2' })
+    expect(result).toMatchObject({ status: 'ok', tastingNumber: 1 })
+    expect(lookupBrand).not.toHaveBeenCalled()
+
+    const [entry] = await journal().read(USER)
+    expect(entry).toMatchObject({
+      sake: { nameKanji: '富久千代', nameRomaji: null },
+      expression: { id: 'x2', name: '富久千代' },
+      // No sake, so no chart to take a position from: recorded and counted,
+      // skipped by the palate.
+      event: { kind: 'rating', rating: 4, brandId: null, target: null },
+    })
+  })
+
+  it('will not log a tasting of nothing: no sake and no bottling', async () => {
+    expect(await rateNewTasting({ brandId: null, rating: 4 })).toEqual({ status: 'invalid_input' })
+    // ...nor against a bottling that does belong to a sake, passed off as having none.
+    await expressions().put(USER, OWN_BOTTLING)
+    expect(await rateNewTasting({ brandId: null, rating: 4, expressionId: 'x1' })).toEqual({
+      status: 'not_found',
+    })
+    expect(await journal().read(USER)).toEqual([])
+  })
+
   it('stores nothing for someone who is not a maintainer', async () => {
     vi.mocked(currentUserIsMaintainer).mockResolvedValue(false)
     expect(await rateNewTasting({ brandId: 123, rating: 4 })).toEqual({ status: 'forbidden' })
