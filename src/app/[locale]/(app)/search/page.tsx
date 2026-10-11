@@ -8,7 +8,6 @@ import { FocusFieldAtEnd } from '@/components/search/focus-field-at-end'
 import { BackLink } from '@/components/layout/back-link'
 import { AddItYourselfRow } from '@/components/sake/add-unlisted-bottling'
 import { RomajiDisclosure } from '@/components/sake/romaji-disclosure'
-import { SakenowaAttribution } from '@/components/sake/sakenowa-attribution'
 import { getPathname, Link } from '@/i18n/navigation'
 import { routing } from '@/i18n/routing'
 import { resolveViewerJournal } from '@/lib/taste/viewer-journal'
@@ -50,7 +49,9 @@ import {
  * journal (design v1.6, ADR-0025): it saves the typed name as a bottling of
  * their own and opens its page to rate.
  *
- * `<SakenowaAttribution />` is required — these are Sakenowa brand rows.
+ * The rows are Sakenowa brand rows, and the credit for them is line 1 of the
+ * end-of-screen block, directly under the list (design v1.5 rule 15; CLAUDE.md
+ * "Sakenowa attribution", list screens). It hides when there are no rows.
  *
  * **The romaji on each row is not**, which is why `<RomajiDisclosure />` sits
  * beside it. Sakenowa publishes Japanese names only; `name_romaji` is a
@@ -116,6 +117,8 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
     <main
       className="mx-auto flex w-full max-w-3xl flex-col gap-5 px-5 py-6"
       data-testid="search-page"
+      // Rule 15: no rows on screen, nothing of the catalogue's to credit.
+      {...(matches.length === 0 ? { 'data-no-catalogue-data': '' } : {})}
     >
       {/* §8's top row: back · the field. `-ml-3` pulls the 44px target back so
           the glyph lines up with the page gutter. */}
@@ -273,12 +276,11 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
               />
             ))}
           </ol>
-          {/* Every row is a Sakenowa brand row, so attribution is not optional
-              (ADR-0014). Inline, because the list is the subject rather than
-              any single record — and next to it, the one part of each row that
-              is NOT Sakenowa's. */}
+          {/* The one part of each row that is NOT Sakenowa's. The rows
+              themselves are credited once, by the end-of-screen block right
+              under this list (rule 15) — search is a list screen, and a
+              second credit two lines above it said the same thing twice. */}
           <div className="flex flex-col gap-1.5">
-            <SakenowaAttribution placement="inline" />
             <RomajiDisclosure id="search-romaji" />
           </div>
         </>

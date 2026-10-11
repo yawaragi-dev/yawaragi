@@ -869,6 +869,8 @@
     "addRowHint": "Nur der Name — der Rest kann warten",
     "nameLabel": "Name der Abfüllung",
     "formHint": "Vorerst nur der Name. Nur du kannst ihn sehen.",
+    "breweryLabel": "Brauerei (optional)",
+    "formHintUnlisted": "Prüfe den Namen, bevor du ihn hinzufügst. Nur du kannst ihn sehen.",
     "add": "Abfüllung hinzufügen",
     "adding": "Wird hinzugefügt …",
     "cancel": "Abbrechen",

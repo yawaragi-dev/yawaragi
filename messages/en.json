@@ -869,6 +869,8 @@
     "addRowHint": "Just the name — the rest can wait",
     "nameLabel": "Bottling name",
     "formHint": "Just the name for now. Only you can see it.",
+    "breweryLabel": "Brewery (optional)",
+    "formHintUnlisted": "Check the name before you add it. Only you can see it.",
     "add": "Add bottling",
     "adding": "Adding…",
     "cancel": "Cancel",

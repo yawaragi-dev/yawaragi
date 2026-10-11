@@ -208,6 +208,21 @@ test.describe('§8 search', () => {
     await expect(row).toContainText('Add “Fukuchiyo Nama” yourself')
     await expect(row).toContainText('Rate it now, details later')
 
+    // A search query is not yet a name. The tap opens the naming form in
+    // place, with the query to confirm or correct — nothing is saved by it.
+    await row.click()
+    const name = page.getByTestId('search-add-yourself-name')
+    await expect(name).toBeFocused()
+    await expect(name).toHaveValue('Fukuchiyo Nama')
+    await name.fill('富久千代 生')
+    await expect(page.getByTestId('search-add-yourself-brewery')).toHaveValue('')
+    await expect(page.getByTestId('search-add-yourself-form')).toContainText('Only you can see it.')
+    await expect(page.getByTestId('search-add-yourself-submit')).toHaveText('Add bottling')
+    // Cancel puts the row back.
+    await page.getByTestId('search-add-yourself-cancel').click()
+    await expect(page.getByTestId('search-add-yourself-form')).toHaveCount(0)
+    await expect(page.getByTestId('search-add-yourself')).toBeVisible()
+
     // Nothing to add before there is a name worth searching for.
     await page.goto('/en/search')
     await expect(page.getByTestId('search-add-yourself')).toHaveCount(0)
@@ -255,7 +270,7 @@ test.describe('§8 search', () => {
     await context.close()
   })
 
-  test('renders Sakenowa attribution beside the rows (ADR-0014)', async ({
+  test('credits Sakenowa once, right under the rows, and not at all without rows (ADR-0014)', async ({
     browser,
   }, testInfo) => {
     testInfo.skip(!dbUp, 'Sakenowa mirror not populated — DB-bound spec')
@@ -263,11 +278,20 @@ test.describe('§8 search', () => {
 
     await page.goto('/en/search?q=yama')
 
-    // Every row is a Sakenowa brand row, and the licence does not accept
-    // footer-only credit.
-    const attribution = page.getByTestId('sakenowa-attribution-inline')
+    // Every row is a Sakenowa brand row. Search is a list screen, so the
+    // credit is line 1 of the end-of-screen block, directly under the list
+    // (rule 15) — once, not once there and once more two lines above it.
+    const attribution = page.getByTestId('sakenowa-attribution-end')
     await expect(attribution).toBeVisible()
     await expect(attribution).toContainText('Powered by Sakenowa')
+    await expect(page.getByText('Powered by Sakenowa').filter({ visible: true })).toHaveCount(1)
+    const lastRow = page.getByTestId('search-results').locator('li').last()
+    expect((await lastRow.boundingBox())!.y).toBeLessThan((await attribution.boundingBox())!.y)
+    // With no rows there is nothing of the catalogue's on screen to credit.
+    await page.goto('/en/search?q=zzzzqqqqxxxx')
+    await expect(page.getByTestId('search-no-match')).toBeVisible()
+    await expect(page.getByText('Powered by Sakenowa').filter({ visible: true })).toHaveCount(0)
+    await page.goto('/en/search?q=yama')
     // The kanji, ids and brewery names ARE canonical `sakenowa`, so no badge.
     await expect(page.getByTestId('provenance-badge')).toHaveCount(0)
     // The romaji is not. Sakenowa publishes Japanese only; `name_romaji` is a
