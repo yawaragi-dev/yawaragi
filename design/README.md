@@ -1,6 +1,6 @@
 # Handoff: Yawaragi mobile app (webview)
 
-**Design version 1.6.1 · 10 Oct 2026.** Source of truth is the Claude Design project; this folder is a snapshot. When a new version arrives, read the Changelog at the bottom first and implement only what changed. **If this README and the prototype disagree, the prototype wins** — and please report the mismatch.
+**Design version 1.6.2 · 11 Oct 2026.** Source of truth is the Claude Design project; this folder is a snapshot. When a new version arrives, read the Changelog at the bottom first and implement only what changed. **If this README and the prototype disagree, the prototype wins** — and please report the mismatch.
 
 ## Overview
 Yawaragi (和らぎ) is a sake companion app. You scan a bottle label or a restaurant menu, rate the sake with one tap, and build a journal. That journal also feeds a taste profile ("Palate") and a chat assistant ("Ask"). The main job is **identifying and assessing a sake at the table**. Logging is a side effect of rating.
@@ -479,11 +479,11 @@ Phosphor, regular and fill weights (`@phosphor-icons/web` 2.1.1). Sizes: 22 tab 
 - **Legal wording:** Austria/Switzerland gate lines and the cookie category descriptions.
 
 ### Screenshots
-`screenshots/` holds 65 PNGs at 390×844 (1×), captured from the prototype.
+`screenshots/` holds 70 PNGs at 390×844 (1×), captured from the prototype.
 - **01–26 are the base: EU (Germany), Ask off, Label only.**
 - **27–32 are the variants where Japan or Ask-on differ.**
 - **33 is Menu scan** (deferred).
-- **34–50 are new in 1.5; 51–62 new in 1.6; 63–65 new in 1.6.1** (1.6.1 also retook 09, 16, 57, 61, 62). Retaken in 1.6: 04, 06, 09, 16, 18, 19, 20, 26, 44 (marked ●). Others differ only by the guide-linked tag icon and the extra journal row; the prototype wins.
+- **34–50 are new in 1.5; 51–62 new in 1.6; 63–65 new in 1.6.1** (1.6.1 also retook 09, 16, 57, 61, 62); **66–70 new in 1.6.2** (1.6.2 also retook 06, 58). Retaken in 1.6: 04, 06, 09, 16, 18, 19, 20, 26, 44 (marked ●). Others differ only by the guide-linked tag icon and the extra journal row; the prototype wins.
 
 | # | Screen |
 |---|---|
@@ -492,7 +492,7 @@ Phosphor, regular and fill weights (`@phosphor-icons/web` 2.1.1). Sizes: 22 tab 
 | 03 | Cookie banner, Customise |
 | 04 | Home ● |
 | 05 | Home, first run |
-| 06 | Camera, label ● |
+| 06 | Camera, label: "How to read a label" replaces the hint (1.6.2) |
 | 07 | Camera, permission denied |
 | 08 | Camera, desktop / no camera |
 | 09 | Result, before rating ● |
@@ -544,7 +544,7 @@ Phosphor, regular and fill weights (`@phosphor-icons/web` 2.1.1). Sizes: 22 tab 
 | 55 | Result, Add this bottling open |
 | 56 | Search "rihaku": bottlings first, then the sake |
 | 57 | Own bottling page (no line) |
-| 58 | Sake guide index |
+| 58 | Learn index (was "Sake guide") |
 | 59 | Sake guide entry: Daiginjō |
 | 60 | Sake guide entry: How to read a label |
 | 61 | Sake guide entry, public mode (pre-gate) |
@@ -552,6 +552,11 @@ Phosphor, regular and fill weights (`@phosphor-icons/web` 2.1.1). Sizes: 22 tab 
 | 63 | Bottle page, no known bottlings: "Add your bottling" alone (launch state) |
 | 64 | Bottle page, own bottlings only: "Your bottlings" |
 | 65 | Result, own entry with no line (no palate line, no Sakenowa credit) |
+| 66 | Add to cellar sheet: count, size, nama (1.6.2) |
+| 67 | Cellar: one sake in two sizes is two rows (Katori 90) |
+| 68 | Own bottling with a sake: "This bottling" (Rename, Delete bottling) |
+| 69 | Own bottling: delete confirmation, tastings and bottles stay under the sake |
+| 70 | After delete: the sake page with "{name} deleted · Undo" |
 
 Screenshots that sit in sheets or overlays show the full screen behind them with the scrim.
 
@@ -739,3 +744,21 @@ Answers to the 14 engineering questions (see "v1.1" section). EU market mode, co
 
 ### 1.0 · 25 Sep 2026
 First full handoff. All screens, behaviour rules, Ginshu tokens. Decided: result-card rating saves (1a), sign-in after first save, chart contribution on by default.
+
+
+---
+
+## v1.6.2 · Answers to the engineering notes on v1.6.1
+Decisions below are spec, folded into the prototype; screenshots 66–70 show them.
+
+### Decisions
+1. **Rename and delete an own bottling (§9a).** Header stays bare. Last section before the end-of-screen block, own bottlings only: a "This bottling" group with two rows, **"Rename"** (opens the §8 naming form, prefilled) and **"Delete bottling"** (the §9 delete dialog, 37). On delete: if the bottling has a sake, its tastings and cellar bottles **fall back to the sake** and the dialog says so ("Your 3 tastings stay, under Rihaku."). With no sake, they **go with it** and the dialog states the counts. Undo notice 6.8s either way (rule 1): "{name} deleted · Undo" restores the bottling, its tastings and its cellar rows in one step and returns to its page. After delete you land on the sake page, or on Collection → Journal when there is no sake.
+2. **Size and nama live on "Add to cellar".** It opens a short sheet: count stepper (default 1) · size segmented 180 · 300 · 720 · 1800 ml (default 720) · "Nama (unpasteurised)" toggle, off. Primary "Add to cellar". Same sheet to edit a cellar row. Store on the cellar row: `{count, sizeMl, nama}`.
+   - **Row identity is thing + size + nama.** The same sake in 720 ml and 1.8 l is **two rows**; nama splits rows the same way (its drink-soon window differs). Adding a match for an unopened row raises its count; an opened row is never merged into. "In cellar · n" sums every row, as before. This refines v1.6.1's "one row per thing owned".
+   - The "+" beside "In cellar · n" opens the same sheet.
+3. **"The sake" grid on an own bottling: keep it out** until §10 gains "About the sake". Rule 4: hidden, not stated.
+4. **Credit on an own bottling with a sake: confirmed.** "Catalogue data · Powered by Sakenowa ↗" stays above the fold, under "A bottling of {sake} ›". No other Sakenowa line on that page except the end-of-screen block.
+5. **"How to read a label" on the camera.** It replaces the hint line under the viewfinder (Label mode only; Menu mode keeps its hint). 13px, accent-300, wraps to two lines if needed. At 390×844 with German the **viewfinder gives way** (it shrinks, min 260px tall); the top row, shutter row and tab bar never move.
+
+### Built differently — accepted
+All eight items are accepted as spec: "Learn" / "Wissen", public, site header (closes open decisions 9 and 10); the single Account row; source links with checked dates; "Learn more" opening a new tab with the new labels; the in-place naming form for "Add it yourself" (supersedes 65 as the landing); the add-bottling hint; the Sakenowa credit once in search; "yukihie" and "hanahie".
