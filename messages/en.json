@@ -454,7 +454,8 @@
       "triggerLabel": "About these flavor words",
       "title": "About these flavor words",
       "intro": "These six are Japanese brewers' terms. The English words are approximations, not translations — they point at the right idea without matching it exactly.",
-      "closeLabel": "Close"
+      "closeLabel": "Close",
+      "learnMore": "More about these six words"
     }
   },
   "privacy": {
@@ -780,7 +781,8 @@
         "joon": "Room temperature: the sake as it is, with nothing hidden or added.",
         "nurukan": "Lukewarm, a little above body heat. Rounder and softer; umami comes forward.",
         "atsukan": "Hot. Drier and sharper, best with fuller, savory sakes."
-      }
+      },
+      "learnMore": "More about serving temperatures"
     }
   },
   "scanOutcome": {
@@ -913,13 +915,15 @@
       "start": "Start here",
       "grades": "Grades",
       "styles": "Styles and processes",
-      "rice": "Rice"
+      "rice": "Rice",
+      "tasting": "Serving and tasting"
     },
     "groupKicker": {
       "start": "Reading a bottle",
       "grades": "Grade",
       "styles": "Style",
-      "rice": "Rice"
+      "rice": "Rice",
+      "tasting": "Tasting"
     },
     "entries": {
       "how-to-read-a-label": {
@@ -1378,6 +1382,99 @@
           "p1": "The white core is called shinpaku 心白: a loose, opaque pocket of starch at the centre of the grain, which kōji mould grows into easily. “Large” has a definition too: 26 grams or more per thousand grains.",
           "p2": "A variety may be named on a label only when it makes up more than half of the rice used, and the label must then give its share.",
           "p3": "Varieties differ in how readily they dissolve in the mash, and that shows in the sake. Each region has its own."
+        }
+      },
+      "serving-temperatures": {
+        "title": "Serving temperatures",
+        "answer": "Sake is served anywhere from about 5°C to 55°C, and each step has a Japanese name. The degrees are typical, not exact.",
+        "factsTitle": "From coldest to hottest",
+        "facts": {
+          "yukihie": {
+            "term": "5°C",
+            "value": "Snow-cold",
+            "note": "Much colder and it is hard to taste sake at all."
+          },
+          "hanahie": {
+            "term": "10°C",
+            "value": "Flower-cold"
+          },
+          "suzuhie": {
+            "term": "15°C",
+            "value": "Cool"
+          },
+          "joon": {
+            "term": "15–25°C",
+            "value": "Room temperature",
+            "note": "Kept out of the fridge and served as it is."
+          },
+          "hinatakan": {
+            "term": "30°C",
+            "value": "Warmed in the sun"
+          },
+          "hitohadakan": {
+            "term": "35°C",
+            "value": "Body temperature"
+          },
+          "nurukan": {
+            "term": "40°C",
+            "value": "Lukewarm"
+          },
+          "jokan": {
+            "term": "45°C",
+            "value": "Fairly warm",
+            "note": "Warmed sake is normally heated to about 42–45°C."
+          },
+          "atsukan": {
+            "term": "50°C",
+            "value": "Hot"
+          }
+        },
+        "detail": {
+          "p1": "Chilling suits fragrant and fresh sake. Ginjō and unpasteurised sake are usually served slightly chilled, at around 8–10°C, because their fruitiness and freshness are lost when warm.",
+          "p2": "Warming, kan 燗, is the traditional way to drink sake. Sweetness is sensed more strongly near body temperature while acidity hardly changes, so a sake that is low in sweetness and a little high in acidity, as junmai often is, comes into balance when warmed.",
+          "p3": "Heated too far, the alcohol turns strong and covers the sake’s delicate aromas."
+        }
+      },
+      "flavor-words": {
+        "title": "The six flavor words",
+        "answer": "Six Japanese brewers’ terms that Sakenowa uses to chart a sake’s flavor. The English words on Yawaragi’s charts are approximations of them, not translations.",
+        "factsTitle": "The six terms",
+        "facts": {
+          "f1": {
+            "term": "Floral",
+            "value": "Showy and aromatic",
+            "note": "Fruit and blossom on the nose. Not perfumed."
+          },
+          "f2": {
+            "term": "Mellow",
+            "value": "Deep in aroma and umami",
+            "note": "Fullness, not creaminess."
+          },
+          "f3": {
+            "term": "Rich",
+            "value": "Weighty",
+            "note": "Body, not tannin."
+          },
+          "f4": {
+            "term": "Mild",
+            "value": "Quiet on the nose",
+            "note": "Restrained, not neutral."
+          },
+          "f5": {
+            "term": "Dry",
+            "value": "Dry",
+            "note": "The closest of the six to a Western word."
+          },
+          "f6": {
+            "term": "Light",
+            "value": "Light and brisk",
+            "note": "A refreshing finish, with little left behind."
+          }
+        },
+        "detail": {
+          "p1": "Sakenowa is a Japanese sake community. It works the six values out by analysing what its users write about each sake, so a chart shows how people describe a sake. It is not a laboratory measurement.",
+          "p2": "The six do not line up with wine vocabulary. Read each English word as pointing at the right idea, not as matching it.",
+          "p3": "On Yawaragi the picture built from these six is the flavor chart (Sakenowa). The method and the data behind it are Sakenowa’s."
         }
       }
     }

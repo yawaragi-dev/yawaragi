@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import de from '~/messages/de.json'
 import en from '~/messages/en.json'
-import { GUIDE_ENTRIES, GUIDE_SLUGS, guideEntriesIn, isGuideSlug } from '@/lib/guide/entries'
+import { GUIDE_ENTRIES, GUIDE_SLUGS, guideEntriesIn, guideEntry, isGuideSlug } from '@/lib/guide/entries'
+import { SERVING_TEMPERATURE_TERMS } from '@/lib/schemas/detailed-notes'
+import { FLAVOR_AXES, FLAVOR_AXIS_ROMAJI } from '@/lib/schemas/flavor-chart'
 import { GUIDE_GROUPS } from '@/lib/schemas/guide-entry'
 
 type EntryMessages = {
@@ -65,6 +67,32 @@ describe('the Learn entries', () => {
     const text = JSON.stringify([en.learn, de.learn]).toLowerCase()
     for (const banned of ['buy now', 'healthy', 'gesund', 'kaufen', 'good for you']) {
       expect(text).not.toContain(banned)
+    }
+  })
+
+  it('names the six flavor words exactly as the charts do (ADR-0022)', () => {
+    const entry = guideEntry('flavor-words')
+    expect(entry.facts.map((f) => f.id)).toEqual([...FLAVOR_AXES])
+    for (const axis of FLAVOR_AXES) {
+      const fact = entry.facts.find((f) => f.id === axis)!
+      expect(fact.romaji).toBe(FLAVOR_AXIS_ROMAJI[axis])
+      expect(fact.kanji).toBe(en.flavorAxis[axis].kanji)
+      // The word on the page is the word on the chart, in both languages.
+      expect(catalogues.en['flavor-words']!.facts[axis]!.term).toBe(en.flavorAxis[axis].label)
+      expect(catalogues.de['flavor-words']!.facts[axis]!.term).toBe(de.flavorAxis[axis].label)
+    }
+  })
+
+  it('gives the serving temperatures the tasting sheet offers the same name and degrees', () => {
+    const facts = guideEntry('serving-temperatures').facts
+    for (const term of Object.values(SERVING_TEMPERATURE_TERMS)) {
+      const fact = facts.find((f) => f.kanji === term.kanji)
+      expect(fact, term.kanji).toBeDefined()
+      expect(fact!.romaji!.replace('-', ''), term.kanji).toBe(term.romaji)
+      // Room temperature is a range on the page; every other step is a number.
+      if (term.kanji !== '常温') {
+        expect(catalogues.en['serving-temperatures']!.facts[fact!.id]!.term).toBe(`${term.degrees}°C`)
+      }
     }
   })
 })

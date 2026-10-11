@@ -18,7 +18,7 @@ import { z } from 'zod'
 //
 // No personal data.
 
-export const GUIDE_GROUPS = ['start', 'grades', 'styles', 'rice'] as const
+export const GUIDE_GROUPS = ['start', 'grades', 'styles', 'rice', 'tasting'] as const
 export type GuideGroup = (typeof GUIDE_GROUPS)[number]
 
 const Slug = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)

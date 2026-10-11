@@ -283,6 +283,61 @@ const ENTRIES = [
       },
     ],
   },
+  {
+    slug: 'serving-temperatures',
+    group: 'tasting',
+    kanji: '冷やと燗',
+    romaji: 'hiya to kan',
+    facts: [
+      { id: 'yukihie', kanji: '雪冷え', romaji: 'yukihie' },
+      { id: 'hanahie', kanji: '花冷え', romaji: 'hanahie', note: false },
+      { id: 'suzuhie', kanji: '涼冷え', romaji: 'suzuhie', note: false },
+      { id: 'joon', kanji: '常温', romaji: 'jōon' },
+      { id: 'hinatakan', kanji: '日向燗', romaji: 'hinata-kan', note: false },
+      { id: 'hitohadakan', kanji: '人肌燗', romaji: 'hitohada-kan', note: false },
+      { id: 'nurukan', kanji: 'ぬる燗', romaji: 'nuru-kan', note: false },
+      { id: 'jokan', kanji: '上燗', romaji: 'jō-kan' },
+      { id: 'atsukan', kanji: '熱燗', romaji: 'atsu-kan', note: false },
+    ],
+    paragraphs: 3,
+    related: ['flavor-words', 'ginjo', 'nama'],
+    sources: [
+      GUIDE,
+      {
+        label: 'Nippon.com, “知っていると100倍おいしい酒のABC（10）温度で変わる日本酒の味” (16 July 2018)',
+        url: 'https://www.nippon.com/ja/guide-to-japan/gu002011/',
+      },
+      {
+        label: 'Japan Sake and Shochu Makers Association, “How to Serve Sake”',
+        url: 'https://japansake.or.jp/sake/en/basic/how-to-serve-sake/',
+      },
+    ],
+  },
+  {
+    slug: 'flavor-words',
+    group: 'tasting',
+    kanji: null,
+    romaji: null,
+    // The six axes, f1–f6 in Sakenowa's order. `entries.test.ts` holds these
+    // to the chart's own labels, kanji and romaji, so the page and the chart
+    // cannot drift apart (ADR-0022).
+    facts: [
+      { id: 'f1', kanji: '華やか', romaji: 'hanayaka' },
+      { id: 'f2', kanji: '芳醇', romaji: 'hojun' },
+      { id: 'f3', kanji: '重厚', romaji: 'juko' },
+      { id: 'f4', kanji: '穏やか', romaji: 'odayaka' },
+      { id: 'f5', kanji: 'ドライ', romaji: 'dry' },
+      { id: 'f6', kanji: '軽快', romaji: 'keikai' },
+    ],
+    paragraphs: 3,
+    related: ['serving-temperatures', 'grades'],
+    sources: [
+      {
+        label: 'Sakenowa, “さけのわデータ” (the data project’s documentation)',
+        url: 'https://muro.sakenowa.com/sakenowa-data',
+      },
+    ],
+  },
 ] as const satisfies ReadonlyArray<
   Omit<GuideEntry, 'source' | 'verifiedOn' | 'facts'> & {
     facts: ReadonlyArray<{ id: string; kanji?: string; romaji?: string; note?: boolean }>

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { NextIntlClientProvider } from 'next-intl'
 import { FLAVOR_AXES, FLAVOR_AXIS_ROMAJI } from '@/lib/schemas/flavor-chart'
 import type { FlavorAxisStrings } from './flavor-profile-view'
 import { FlavorTermsSheet } from './flavor-terms-sheet'
@@ -26,15 +27,19 @@ const strings = {
   intro:
     "These six are Japanese brewers' terms. The English words are approximations, not translations.",
   closeLabel: 'Close',
+  learnMore: 'More about these six words',
 }
 
 function renderSheet() {
   return render(
-    <FlavorTermsSheet
-      strings={strings}
-      axisStrings={EN as Record<string, FlavorAxisStrings>}
-      instanceId="x"
-    />,
+    // The sheet ends in a link to its Learn entry, and a link needs a locale.
+    <NextIntlClientProvider locale="en" messages={{}}>
+      <FlavorTermsSheet
+        strings={strings}
+        axisStrings={EN as Record<string, FlavorAxisStrings>}
+        instanceId="x"
+      />
+    </NextIntlClientProvider>,
   )
 }
 
@@ -101,5 +106,14 @@ describe('FlavorTermsSheet', () => {
     ).map((el) => el.getAttribute('data-testid'))
 
     expect(rendered).toEqual(FLAVOR_AXES.map((a) => `flavor-term-${a}`))
+  })
+
+  it('ends with a way to read more, without leaving the screen it was opened on', () => {
+    renderSheet()
+    fireEvent.click(screen.getByRole('button', { name: strings.triggerLabel }))
+    const more = screen.getByRole('link', { name: 'More about these six words' })
+    expect(more.getAttribute('href')).toBe('/en/learn/flavor-words')
+    // A new tab: the sheet sits over a scan result or a chart the visitor is reading.
+    expect(more.getAttribute('target')).toBe('_blank')
   })
 })
