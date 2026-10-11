@@ -333,8 +333,16 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
           initiallyOpen={rateNow}
           cellar={
             <CellarButton
-              brandId={brandId}
-              initialCount={viewer.cellar.find((b) => b.brandId === brandId)?.count ?? 0}
+              target={{ brandId }}
+              // v1.6.1 §9: a sake's page counts its bottlings' bottles too
+              // (2 of Rihaku + 1 Wandering Poet → "In cellar · 3"); "+" adds
+              // to the sake's own row.
+              initialCount={
+                viewer.cellar.find((b) => b.brandId === brandId && !b.expression)?.count ?? 0
+              }
+              alsoCounted={viewer.cellar
+                .filter((b) => b.brandId === brandId && b.expression)
+                .reduce((n, b) => n + b.count, 0)}
             />
           }
           history={

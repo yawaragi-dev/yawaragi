@@ -40,10 +40,31 @@ describe('cellar storage', () => {
     const store = new InMemoryCellarStore()
     await store.put('u', bottle(7))
     await store.put('u', bottle(8))
-    await store.remove('u', 7)
+    await store.remove('u', '7')
     expect((await store.read('u')).map((b) => b.brandId)).toEqual([8])
     await store.clear('u')
     expect(await store.read('u')).toEqual([])
+  })
+
+  it('reads a row written before bottlings existed, and keeps it under the key it was stored at', async () => {
+    const store = new InMemoryCellarStore()
+    const v1 = { ...bottle(7), schemaVersion: 1 }
+    store.putRaw('u', '7', JSON.stringify(v1))
+
+    const [row] = await store.read('u')
+    expect(row).toEqual(bottle(7))
+    // Another bottle of the same sake lands on that row, not beside it.
+    await store.put('u', { ...row!, count: 2 })
+    expect((await store.read('u')).map((b) => b.count)).toEqual([2])
+  })
+
+  it('keeps a bottling\'s bottles on a row of their own, beside the sake\'s', async () => {
+    const store = new InMemoryCellarStore()
+    await store.put('u', bottle(7))
+    await store.put('u', { ...bottle(7), expression: { id: 'x1', name: 'Jikon Nama 2025' } })
+    expect(await store.read('u')).toHaveLength(2)
+    await store.remove('u', 'x:x1')
+    expect((await store.read('u')).map((b) => b.expression)).toEqual([undefined])
   })
 
   it('keeps an unreadable row in the dump rather than losing it', async () => {
@@ -59,7 +80,7 @@ describe('cellar storage', () => {
     const { impl, commands } = fakeFetch([1, 1, 1])
     const store = new UpstashCellarStore('https://kv', 'tok', impl)
     await store.put('u', bottle(7))
-    await store.remove('u', 7)
+    await store.remove('u', '7')
     await store.clear('u')
     expect(commands).toEqual([
       ['HSET', 'cellar:user:u', '7', JSON.stringify(bottle(7))],

@@ -4,6 +4,7 @@ import type { Metadata } from 'next'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { CaretRight } from '@phosphor-icons/react/dist/ssr'
 import { Link } from '@/i18n/navigation'
+import { CellarButton } from '@/components/collection/cellar-button'
 import { ScreenBar } from '@/components/layout/screen-header'
 import { BottleHistory } from '@/components/sake/bottle-history'
 import { BottleRateRow } from '@/components/sake/bottle-rate-row'
@@ -36,9 +37,7 @@ import { entriesForExpression, resolveViewerJournal } from '@/lib/taste/viewer-j
  *   published" until §10's "About the sake" fills them. Nothing can fill them
  *   yet, so six empty rows would say nothing about this bottling — the same
  *   reasoning that keeps §9's sourceless sections behind `FEATURES`.
- * - **The cellar control and the wishlist.** A cellar row is keyed by sake
- *   today; "one row per thing a bottle was logged against" (v1.6.1) is
- *   CellarBottle v2, its own slice. Wishlist is not built anywhere.
+ * - **The wishlist.** Not built anywhere.
  * - **Rename and delete.** Not drawn. Tracked as a question for the designers.
  */
 interface PageProps {
@@ -167,7 +166,13 @@ export default async function BottlingPage({ params, searchParams }: PageProps) 
             : { kind: 'first' }
         }
         similar={null}
-        cellar={null}
+        // §9a: the count is this bottling's own row.
+        cellar={
+          <CellarButton
+            target={{ expressionId: bottling.id }}
+            initialCount={viewer.cellar.find((b) => b.expression?.id === bottling.id)?.count ?? 0}
+          />
+        }
         initiallyOpen={rateNow}
       />
 

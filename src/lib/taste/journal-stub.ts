@@ -96,11 +96,12 @@ const DAY = 24 * 60 * 60 * 1000
 /**
  * The Cellar under the same `populated` stub: one bottle open long enough to
  * be "best finished this week", one open two days, and two sealed bottles of a
- * third sake — every state §11 draws, against the same fixed instant.
+ * third sake — every state §11 draws, against the same fixed instant — plus
+ * one bottle of a bottling.
  */
 export const STUB_CELLAR: readonly CellarBottle[] = [
   {
-    schemaVersion: 1,
+    schemaVersion: 2,
     brandId: 2,
     sake: { nameKanji: '鍋島', nameRomaji: 'Nabeshima' },
     count: 1,
@@ -109,7 +110,7 @@ export const STUB_CELLAR: readonly CellarBottle[] = [
     updatedAt: STUB_JOURNAL_NOW - 2 * DAY,
   },
   {
-    schemaVersion: 1,
+    schemaVersion: 2,
     brandId: 3,
     sake: { nameKanji: '田酒', nameRomaji: 'Denshu' },
     count: 2,
@@ -118,13 +119,25 @@ export const STUB_CELLAR: readonly CellarBottle[] = [
     updatedAt: STUB_JOURNAL_NOW - 5 * DAY,
   },
   {
-    schemaVersion: 1,
+    schemaVersion: 2,
     brandId: 1,
     sake: { nameKanji: '而今', nameRomaji: 'Jikon' },
     count: 1,
     openedAt: STUB_JOURNAL_NOW - 12 * DAY,
     addedAt: STUB_JOURNAL_NOW - 30 * DAY,
     updatedAt: STUB_JOURNAL_NOW - 12 * DAY,
+  },
+  // A bottle of the stub's own bottling of the same sake: a row of its own,
+  // never merged with the sake's (design v1.6.1).
+  {
+    schemaVersion: 2,
+    brandId: 1,
+    expression: { id: 'stub-bottling', name: 'Jikon Nama 2025' },
+    sake: { nameKanji: '而今', nameRomaji: 'Jikon' },
+    count: 1,
+    openedAt: null,
+    addedAt: STUB_JOURNAL_NOW - 3 * DAY,
+    updatedAt: STUB_JOURNAL_NOW - 3 * DAY,
   },
 ]
 

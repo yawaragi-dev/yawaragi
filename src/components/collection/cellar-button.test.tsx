@@ -13,7 +13,7 @@ const { CellarButton } = await import('./cellar-button')
 function renderButton(initialCount: number) {
   render(
     <NextIntlClientProvider locale="en" messages={en} timeZone="UTC">
-      <CellarButton brandId={7} initialCount={initialCount} refreshOnSave={false} />
+      <CellarButton target={{ brandId: 7 }} initialCount={initialCount} refreshOnSave={false} />
     </NextIntlClientProvider>,
   )
 }
@@ -27,7 +27,7 @@ describe('the cellar control on a bottle', () => {
     addToCellar.mockResolvedValue({ status: 'ok', count: 1 })
     renderButton(0)
     fireEvent.click(screen.getByRole('button', { name: 'Add to cellar' }))
-    await waitFor(() => expect(addToCellar).toHaveBeenCalledWith(7))
+    await waitFor(() => expect(addToCellar).toHaveBeenCalledWith({ brandId: 7 }))
     expect(await screen.findByText('Added to your cellar')).toBeTruthy()
   })
 
@@ -43,8 +43,33 @@ describe('the cellar control on a bottle', () => {
     addToCellar.mockResolvedValue({ status: 'ok', count: 3 })
     renderButton(2)
     fireEvent.click(screen.getByRole('button', { name: 'Add another bottle' }))
-    await waitFor(() => expect(addToCellar).toHaveBeenCalledWith(7))
+    await waitFor(() => expect(addToCellar).toHaveBeenCalledWith({ brandId: 7 }))
     expect(await screen.findByText('Another bottle added · 3 in cellar')).toBeTruthy()
     expect(screen.getByRole('link', { name: /In cellar · 3/ })).toBeTruthy()
+  })
+
+  it('on a sake\'s page counts its bottlings\' bottles too, and still adds to the sake\'s own row', async () => {
+    addToCellar.mockResolvedValue({ status: 'ok', count: 3 })
+    render(
+      <NextIntlClientProvider locale="en" messages={en} timeZone="UTC">
+        <CellarButton target={{ brandId: 7 }} initialCount={2} alsoCounted={1} refreshOnSave={false} />
+      </NextIntlClientProvider>,
+    )
+    // 2 of the sake + 1 of a bottling.
+    expect(screen.getByRole('link', { name: /In cellar · 3/ })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Add another bottle' }))
+    await waitFor(() => expect(addToCellar).toHaveBeenCalledWith({ brandId: 7 }))
+    expect(await screen.findByText('Another bottle added · 4 in cellar')).toBeTruthy()
+  })
+
+  it('on a bottling\'s page adds a bottle of that bottling', async () => {
+    addToCellar.mockResolvedValue({ status: 'ok', count: 1 })
+    render(
+      <NextIntlClientProvider locale="en" messages={en} timeZone="UTC">
+        <CellarButton target={{ expressionId: 'x1' }} initialCount={0} refreshOnSave={false} />
+      </NextIntlClientProvider>,
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Add to cellar' }))
+    await waitFor(() => expect(addToCellar).toHaveBeenCalledWith({ expressionId: 'x1' }))
   })
 })

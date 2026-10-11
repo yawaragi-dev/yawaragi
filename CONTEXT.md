@@ -119,7 +119,7 @@ _Avoid_: Anchor (overloaded — the research doc's raw exemplars are also "ancho
 - A **User** has zero or more **TasteEvents**
 - A **User** has exactly one **TasteProfile**, derived from their **TasteEvents** (never stored as a snapshot)
 - A **Sake** has zero or more **Rankings** (at most one *overall*, at most one per its Brewery's Prefecture, both for the current month only)
-- A **User** has zero or more **Cellar** rows; a Cellar row refers to exactly one **Sake**
+- A **User** has zero or more **Cellar** rows; a Cellar row refers to exactly one **Sake**, or to one **Expression** the user added (one row per thing a bottle was logged against; a bottling's bottles are never merged into its Sake's row)
 - A **User** has zero or more **Wishlist** rows; a Wishlist row refers to exactly one **Sake** and disappears when that Sake is logged
 - **Collection** is the UI grouping of a User's **TastingJournal**, **Cellar** and **Wishlist**; it stores nothing itself
 - Every displayed record carries a **Provenance** (source + optional confidence)

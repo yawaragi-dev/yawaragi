@@ -20,16 +20,20 @@ export const DRINK_SOON_DAYS = 10
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
-export interface CellarSake {
-  brandId: number
+/** What a cellar row holds bottles of: a sake, or one bottling (ADR-0025). */
+export interface CellarSubject {
+  /** The sake, or the line the bottling belongs to; `null` when it has none. */
+  brandId: number | null
   nameKanji: string
   nameRomaji: string | null
+  /** The bottling, when the bottles are of one. */
+  expression?: { id: string; name: string }
 }
 
 /** "Add to cellar": a new row of one, or one more bottle on the existing row. */
 export function addBottle(
   existing: CellarBottle | undefined,
-  sake: CellarSake,
+  sake: CellarSubject,
   now: number,
 ): CellarBottle {
   if (existing) {
@@ -38,6 +42,7 @@ export function addBottle(
   return {
     schemaVersion: CELLAR_BOTTLE_SCHEMA_VERSION,
     brandId: sake.brandId,
+    ...(sake.expression ? { expression: sake.expression } : {}),
     sake: { nameKanji: sake.nameKanji, nameRomaji: sake.nameRomaji },
     count: 1,
     openedAt: null,

@@ -22,7 +22,7 @@ const row = (over: Partial<CellarBottle> = {}): CellarBottle => ({
 describe('adding to the cellar', () => {
   it('starts a sealed row of one', () => {
     expect(addBottle(undefined, SAKE, 1000)).toEqual({
-      schemaVersion: 1,
+      schemaVersion: 2,
       brandId: 7,
       sake: { nameKanji: '而今', nameRomaji: 'Jikon' },
       count: 1,

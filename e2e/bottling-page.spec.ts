@@ -52,6 +52,9 @@ test.describe('own bottling page', () => {
     await expect(page.getByTestId('bottle-rate-open')).toContainText('Rate a new tasting')
     await expect(page.getByTestId('similar-sakes-link')).toHaveCount(0)
 
+    // The cellar control counts this bottling's own bottles.
+    await expect(page.getByTestId('cellar-view')).toContainText('In cellar · 1')
+
     // §9a.4: this bottling's tastings only.
     const history = page.getByTestId('bottle-history')
     await expect(history).toContainText('You and this bottling')
@@ -104,6 +107,7 @@ test.describe('own bottling page', () => {
       'Not in the catalogue yet. Only you can see it, and we’ll link it to its sake if it turns up.',
     )
     await expect(page.getByTestId('bottle-rate-open')).toBeVisible()
+    await expect(page.getByTestId('cellar-add')).toHaveText('Add to cellar')
     await expect(page.getByTestId('bottle-history-empty')).toHaveText('Not tasted yet.')
 
     // No sake behind it: no way to a sake's page, no line block, no chart.
@@ -221,6 +225,9 @@ test.describe('bottlings on the sake page', () => {
     await expect(row).toContainText('Tasted')
     // The tasting logged against it leads with the bottling's name (v1.6 §9).
     await expect(page.getByTestId('bottle-history-bottling')).toHaveText('Jikon Nama 2025')
+    // v1.6.1 §9: the sake's page counts its bottlings' bottles too — one of
+    // the sake, one of the bottling.
+    await expect(page.getByTestId('cellar-view')).toContainText('In cellar · 2')
     // "Add your bottling" stays under the list.
     await expect(page.getByTestId('add-bottling-open')).toBeVisible()
 

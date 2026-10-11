@@ -6,9 +6,9 @@ import { CELLAR_BOTTLE_CODEC, type CellarBottle } from '@/lib/schemas/cellar-bot
  * port + in-memory + Upstash pattern as {@link JournalStore}, so the eventual
  * Postgres adapter (ADR-0024 §5) is a third implementation, not a refactor.
  *
- * One Redis hash per user, field = the Sakenowa brand id, value = a
- * JSON-encoded CellarBottle. Keyed by brand because the Cellar holds one row
- * per sake with a count, not one row per bottle.
+ * One Redis hash per user, field = `cellarRowKey(row)`, value = a
+ * JSON-encoded CellarBottle. One row per thing a bottle was logged against —
+ * a sake, or one bottling of it — with a count, not one row per bottle.
  *
  * Not `server-only`: holds the interface and pure helpers the in-memory double
  * reuses. The Upstash adapter carries the marker.
@@ -18,10 +18,10 @@ export interface CellarStore {
   read(userId: string): Promise<CellarBottle[]>
   /** Readable rows plus the raw records that could not be decoded. */
   dump(userId: string): Promise<StoreDump<CellarBottle>>
-  /** Upsert the row for `bottle.brandId`. */
+  /** Upsert the row under `cellarRowKey(bottle)`. */
   put(userId: string, bottle: CellarBottle): Promise<void>
-  /** Delete the row for one sake. No-op if absent. */
-  remove(userId: string, brandId: number): Promise<void>
+  /** Delete one row by its `cellarRowKey`. No-op if absent. */
+  remove(userId: string, rowKey: string): Promise<void>
   /** Erase the whole cellar (GDPR erasure). */
   clear(userId: string): Promise<void>
 }

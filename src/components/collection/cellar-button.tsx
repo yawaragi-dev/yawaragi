@@ -7,6 +7,7 @@ import { CaretRight, Plus, Stack, StackPlus } from '@phosphor-icons/react/dist/s
 import { ViewNotice } from '@/components/journal/undo-notice'
 import { Link } from '@/i18n/navigation'
 import { addToCellar } from '@/lib/collection/cellar-actions'
+import type { CellarTarget } from '@/lib/schemas/cellar-input'
 import { cn } from '@/lib/utils'
 
 const NOTICE_MS = 3400
@@ -22,23 +23,33 @@ const CELLAR_HREF = { pathname: '/collection', query: { tab: 'cellar' } } as con
  * bottle is its own labelled "+" button beside it. The count goes down from
  * the Cellar list, where the bottles are.
  *
+ * The count shown is the page's, not always the row's (design v1.6.1): a
+ * sake's page counts its bottlings' bottles too (`alsoCounted`), while "+"
+ * adds to the row of the page you are on.
+ *
  * Shows §11's notice, "Added to your cellar" / "Another bottle added · 2 in
  * cellar", with View → the Cellar segment.
  */
 export function CellarButton({
-  brandId,
+  target,
   initialCount,
+  alsoCounted = 0,
   refreshOnSave = true,
 }: {
-  brandId: number
-  /** Bottles of this sake already in the cellar; 0 when none. */
+  /** The sake, or the bottling, whose page this is: what "+" adds a bottle of. */
+  target: CellarTarget
+  /** Bottles already on this target's own row; 0 when none. */
   initialCount: number
+  /** Bottles on other rows that this page counts as well: a sake's page adds
+   *  its bottlings' bottles. */
+  alsoCounted?: number
   /** Re-render the page after adding (off on /scan, where nothing reads the cellar). */
   refreshOnSave?: boolean
 }) {
   const t = useTranslations('cellar')
   const router = useRouter()
-  const [count, setCount] = useState(initialCount)
+  const [rowCount, setRowCount] = useState(initialCount)
+  const count = rowCount + alsoCounted
   const [notice, setNotice] = useState<string | null>(null)
   const [failed, setFailed] = useState(false)
   const [isPending, startTransition] = useTransition()
@@ -49,13 +60,14 @@ export function CellarButton({
   function add() {
     setFailed(false)
     startTransition(async () => {
-      const result = await addToCellar(brandId)
+      const result = await addToCellar(target)
       if (result.status !== 'ok') {
         setFailed(true)
         return
       }
-      setCount(result.count)
-      setNotice(result.count > 1 ? t('addedAnother', { count: result.count }) : t('added'))
+      setRowCount(result.count)
+      const total = result.count + alsoCounted
+      setNotice(total > 1 ? t('addedAnother', { count: total }) : t('added'))
       clearTimeout(timer.current)
       timer.current = setTimeout(() => setNotice(null), NOTICE_MS)
       if (refreshOnSave) router.refresh()

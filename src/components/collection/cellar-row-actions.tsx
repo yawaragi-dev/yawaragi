@@ -10,19 +10,25 @@ import {
   openCellarBottle,
   removeFromCellar,
 } from '@/lib/collection/cellar-actions'
+import type { CellarTarget } from '@/lib/schemas/cellar-input'
 
 /**
- * A Cellar row's two buttons (§11). Open bottle: "Pour & rate" (to the bottle
- * page with §5's panel already open) · "Finished". Sealed: "Open a bottle" ·
+ * A Cellar row's two buttons (§11). Open bottle: "Pour & rate" (to the page of
+ * what the bottle is — the sake's, or the bottling's — with §5's panel already
+ * open) · "Finished". Sealed: "Open a bottle" ·
  * "Remove" — one bottle at a time, so it reads "Remove one" while there are
  * several. Each change re-renders the list from the store.
  */
 export function CellarRowActions({
-  brandId,
+  target,
+  rowKey,
   isOpen,
   count,
 }: {
-  brandId: number
+  /** The sake or the bottling this row holds bottles of. */
+  target: CellarTarget
+  /** The row's store key; it names the buttons for tests. */
+  rowKey: string
   isOpen: boolean
   /** Bottles on the row. */
   count: number
@@ -32,10 +38,10 @@ export function CellarRowActions({
   const [failed, setFailed] = useState(false)
   const [isPending, startTransition] = useTransition()
 
-  function run(action: (id: number) => Promise<{ status: string }>) {
+  function run(action: (target: CellarTarget) => Promise<{ status: string }>) {
     setFailed(false)
     startTransition(async () => {
-      const result = await action(brandId)
+      const result = await action(target)
       if (result.status !== 'ok') setFailed(true)
       else router.refresh()
     })
@@ -52,13 +58,21 @@ export function CellarRowActions({
         {isOpen ? (
           <>
             <Link
-              href={{
-                pathname: '/sake/[brandId]',
-                params: { brandId: String(brandId) },
-                query: { rate: '1' },
-              }}
+              href={
+                'expressionId' in target
+                  ? {
+                      pathname: '/bottling/[id]',
+                      params: { id: target.expressionId },
+                      query: { rate: '1' },
+                    }
+                  : {
+                      pathname: '/sake/[brandId]',
+                      params: { brandId: String(target.brandId) },
+                      query: { rate: '1' },
+                    }
+              }
               className={primary}
-              data-testid={`cellar-pour-${brandId}`}
+              data-testid={`cellar-pour-${rowKey}`}
             >
               <Star size={14} aria-hidden="true" />
               {t('pourAndRate')}
@@ -68,7 +82,7 @@ export function CellarRowActions({
               disabled={isPending}
               onClick={() => run(finishCellarBottle)}
               className={secondary}
-              data-testid={`cellar-finish-${brandId}`}
+              data-testid={`cellar-finish-${rowKey}`}
             >
               {t('finished')}
             </button>
@@ -80,7 +94,7 @@ export function CellarRowActions({
               disabled={isPending}
               onClick={() => run(openCellarBottle)}
               className={primary}
-              data-testid={`cellar-open-${brandId}`}
+              data-testid={`cellar-open-${rowKey}`}
             >
               <LockSimpleOpen size={14} aria-hidden="true" />
               {t('openBottle')}
@@ -90,7 +104,7 @@ export function CellarRowActions({
               disabled={isPending}
               onClick={() => run(removeFromCellar)}
               className={secondary}
-              data-testid={`cellar-remove-${brandId}`}
+              data-testid={`cellar-remove-${rowKey}`}
             >
               {count > 1 ? t('removeOne') : t('remove')}
             </button>
