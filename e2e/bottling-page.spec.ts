@@ -140,6 +140,51 @@ test.describe('own bottling page', () => {
     await context.close()
   })
 
+  test('ends with "This bottling": rename it, or delete it and be told what happens to what is logged', async ({
+    browser,
+  }) => {
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([AGE_GATE_COOKIE, stub('populated')])
+    const page = await context.newPage()
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/en/bottling/stub-bottling')
+
+    // Design v1.6.2, screenshot 68: the last section, after the line block.
+    const manage = page.getByTestId('bottling-manage')
+    await expect(manage.getByRole('heading', { name: 'This bottling' })).toBeVisible()
+    const blockBox = (await page.getByTestId('bottling-line-block').boundingBox())!
+    expect((await manage.boundingBox())!.y).toBeGreaterThan(blockBox.y + blockBox.height - 1)
+
+    // Rename opens the naming form in place, with the name as it is.
+    await page.getByTestId('bottling-rename-open').click()
+    await expect(page.getByTestId('bottling-rename-name')).toHaveValue('Jikon Nama 2025')
+    await expect(page.getByTestId('bottling-rename-submit')).toHaveText('Save')
+    // Its sake is the catalogue's, so its brewery is not the visitor's to set.
+    await expect(page.getByTestId('bottling-rename-brewery')).toHaveCount(0)
+    await page.getByTestId('bottling-rename-cancel').click()
+    await expect(page.getByTestId('bottling-rename-form')).toHaveCount(0)
+
+    // Delete asks first (69): one tasting and one bottle, which stay under the sake.
+    await page.getByTestId('bottling-delete-open').click()
+    await expect(page.getByTestId('bottling-delete-confirm')).toContainText(
+      'Delete Jikon Nama 2025? Your 1 tasting and 1 bottle stay, under Jikon.',
+    )
+    await page.getByTestId('bottling-delete-keep').click()
+    await expect(page.getByTestId('bottling-delete-confirm')).toHaveCount(0)
+    await expect(page.getByTestId('bottling-name')).toHaveText('Jikon Nama 2025')
+
+    // A bottle with no sake: nothing logged against the stub's, so it only asks;
+    // and its brewery can be corrected along with its name.
+    await page.goto('/en/bottling/stub-own')
+    await page.getByTestId('bottling-delete-open').click()
+    await expect(page.getByTestId('bottling-delete-confirm').locator('p').first()).toHaveText('Delete 富久千代?')
+    await page.getByTestId('bottling-delete-keep').click()
+    await page.getByTestId('bottling-rename-open').click()
+    await expect(page.getByTestId('bottling-rename-brewery')).toHaveValue('盛田屋')
+
+    await context.close()
+  })
+
   test('is not there for anyone else', async ({ browser }) => {
     const context = await browser.newContext({ locale: 'en-US' })
     // Someone who can keep a journal, but has no such bottling...

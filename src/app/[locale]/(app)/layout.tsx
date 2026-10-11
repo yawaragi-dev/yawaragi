@@ -4,6 +4,7 @@ import { getComplianceState } from '@/lib/legal/compliance-state'
 import { getTranslations } from 'next-intl/server'
 import { LegalFooter } from '@/components/layout/legal-footer'
 import { NoticeHost } from '@/components/journal/undo-notice'
+import { DeletedBottlingNotice } from '@/components/sake/deleted-bottling-notice'
 import { TabBar, type TabBarMessages } from '@/components/layout/tab-bar'
 
 /**
@@ -84,6 +85,8 @@ export default async function AppShellLayout({ children }: { children: React.Rea
       {/* Plain notices from components that unmount as they finish —
           "Tasting deleted" — see `announceNotice`. */}
       <NoticeHost />
+      {/* "{name} deleted · Undo" — shown on the page a delete lands on (v1.6.2). */}
+      <DeletedBottlingNotice />
       {/* Fixed, so it sits outside the scrolling pane and above the tab
           bar — §2 puts it 88px up for exactly that clearance. */}
       <CookieBanner initialDecision={consent} placement="app" />
