@@ -32,7 +32,26 @@
  *   charAccuracy = 1 - levenshtein(expected, actual) / max(len)   (codepoints)
  *   exactMatch   = (name_ja exact) AND (brewery_ja exact)
  * Reported: mean name_ja accuracy, mean brewery_ja accuracy, exact-match
- * rate, and median latency — one row per provider.
+ * rate, and median latency — one row per provider. Where an entry lists
+ * `also` readings, a field is scored against the best of them.
+ *
+ * # Resolution — did the scan land on the right sake
+ *
+ * Reading the label is half a scan. With `DATABASE_URL` set, each extraction
+ * also goes through `resolveScannedLabel` — the guards and the lookup cascade
+ * the scan action runs — and the row it lands on is compared with the entry's
+ * `expectedBrandIds`:
+ *
+ *   right     one sake, and it is the bottle
+ *   in list   several candidates, the bottle among them
+ *   wrong     a sake that is not the bottle (or any sake, for a bottle the
+ *             catalogue does not have)
+ *   none      no answer for a bottle the catalogue has
+ *
+ * A bottle the catalogue lacks is `right` when the scan says so. When both
+ * tiers are in the run, a `two-tier (as shipped)` row replays the scan
+ * action's rule — keep tier 1 only on a first-pass exact match, else take
+ * tier 2 — from the calls already made, so it costs nothing extra.
  *
  * # Rate-limit posture
  *
@@ -60,10 +79,16 @@ import {
   getVisionProvider,
   type VisionProviderKey,
 } from '@/lib/ai/vision/registry'
+import {
+  resolveScannedLabel,
+  type ResolveScannedLabelResult,
+} from '@/lib/sakenowa/resolve-scanned-label'
+import type { LabelScanExtraction } from '@/lib/schemas/label-scan-extraction'
 import { charAccuracy } from '~/evals/label-scan-jp/levenshtein'
 import {
   GroundTruthFileSchema,
   type GroundTruthEntry,
+  type PhotoView,
 } from '~/evals/label-scan-jp/schemas'
 
 const EVAL_DIR = fileURLToPath(new URL('../evals/label-scan-jp', import.meta.url))
@@ -84,8 +109,25 @@ const MIME_BY_EXT: Record<string, string> = {
   '.webp': 'image/webp',
 }
 
+type Verdict = 'right' | 'in_list' | 'wrong' | 'none'
+
+interface Resolution {
+  /** `resolveScannedLabel`'s kind, or `error` when the lookup threw. */
+  kind: ResolveScannedLabelResult['kind'] | 'error'
+  /** What the scan landed on, for the detail table. */
+  landedOn: string
+  verdict: Verdict
+}
+
+/** The provider keys the scan action runs, in order. */
+const TIER_1: VisionProviderKey = 'anthropic-haiku-4-5'
+const TIER_2: VisionProviderKey = 'anthropic-sonnet-4-6'
+
 interface PhotoResult {
   file: string
+  view?: PhotoView
+  /** Absent when the entry has no `expectedBrandIds` or there is no database. */
+  resolution?: Resolution
   nameAccuracy: number
   breweryAccuracy: number
   exactMatch: boolean
@@ -97,7 +139,8 @@ interface PhotoResult {
 }
 
 interface ProviderResult {
-  key: VisionProviderKey
+  /** A registry key, or the label of the replayed two-tier row. */
+  key: string
   photos: PhotoResult[]
   constructionError?: string
 }
@@ -165,6 +208,56 @@ interface CorpusEntry {
   groundTruth: GroundTruthEntry
 }
 
+/** The best score for one field over the expected reading and its `also` list. */
+function fieldAccuracy(expected: string, also: readonly string[] | undefined, actual: string): number {
+  return Math.max(...[expected, ...(also ?? [])].map((reading) => charAccuracy(reading, actual)))
+}
+
+/** Runs the scan action's matching on an extraction and judges where it landed. */
+async function resolveAndJudge(
+  extraction: LabelScanExtraction,
+  expectedBrandIds: readonly number[],
+): Promise<Resolution> {
+  let resolved: ResolveScannedLabelResult
+  try {
+    resolved = await resolveScannedLabel(extraction)
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    return { kind: 'error', landedOn: `lookup threw: ${message}`, verdict: 'none' }
+  }
+  const notInCatalogue = expectedBrandIds.length === 0
+
+  if (resolved.kind === 'no_match' || resolved.kind === 'low_confidence') {
+    return { kind: resolved.kind, landedOn: '—', verdict: notInCatalogue ? 'right' : 'none' }
+  }
+  if (resolved.kind === 'ambiguous') {
+    const names = resolved.candidates.map((c) => `${c.sake.brandId}:${c.sake.nameKanji}`)
+    const listed = resolved.candidates.some((c) => expectedBrandIds.includes(c.sake.brandId))
+    return { kind: 'ambiguous', landedOn: names.join(', '), verdict: listed ? 'in_list' : 'wrong' }
+  }
+  const { brandId, nameKanji } = resolved.sake
+  return {
+    kind: resolved.kind,
+    landedOn: `${brandId}:${nameKanji}`,
+    verdict: expectedBrandIds.includes(brandId) ? 'right' : 'wrong',
+  }
+}
+
+/**
+ * Replays the scan action's two-tier rule from the per-tier results: tier 1
+ * stands only on a first-pass exact match, anything else is tier 2's answer
+ * (and pays for both calls).
+ */
+function replayTwoTier(tier1: ProviderResult, tier2: ProviderResult): ProviderResult {
+  const tier2ByFile = new Map(tier2.photos.map((p) => [p.file, p]))
+  const photos = tier1.photos.map((first) => {
+    if (first.resolution?.kind === 'exact') return first
+    const second = tier2ByFile.get(first.file)
+    return second ? { ...second, latencyMs: first.latencyMs + second.latencyMs } : first
+  })
+  return { key: 'two-tier (as shipped)', photos }
+}
+
 /** Load a photo file into a Blob the way the scan action would receive it. */
 function fileToBlob(absPath: string): Blob {
   const bytes = readFileSync(absPath)
@@ -188,6 +281,10 @@ async function main() {
   const providerKeys = resolveProviderList()
   console.log(`Providers: ${providerKeys.join(', ')}`)
   console.log(`Throttle: ${THROTTLE_MS}ms between real-provider calls`)
+  const canResolve = Boolean(process.env.DATABASE_URL)
+  if (!canResolve) {
+    console.log(`DATABASE_URL is not set — scoring the extraction only, not where the scan lands.`)
+  }
   console.log(``)
 
   // ---- Build the corpus ----
@@ -284,18 +381,23 @@ async function main() {
     const photos: PhotoResult[] = []
     for (let i = 0; i < corpus.length; i++) {
       const { file, absPath, groundTruth: gt } = corpus[i]
-      process.stdout.write(`  ${file.padEnd(36)} ... `)
+      process.stdout.write(`  ${file.padEnd(62)} ... `)
       const blob = fileToBlob(absPath)
       const t0 = performance.now()
       try {
         const extraction = await provider.extractLabel(blob)
         const latencyMs = Math.round(performance.now() - t0)
-        const nameAccuracy = charAccuracy(gt.name_ja, extraction.name_ja)
-        const breweryAccuracy = charAccuracy(gt.brewery_ja, extraction.brewery_ja)
-        const exactMatch =
-          extraction.name_ja === gt.name_ja && extraction.brewery_ja === gt.brewery_ja
+        const nameAccuracy = fieldAccuracy(gt.name_ja, gt.also?.name_ja, extraction.name_ja)
+        const breweryAccuracy = fieldAccuracy(gt.brewery_ja, gt.also?.brewery_ja, extraction.brewery_ja)
+        const exactMatch = nameAccuracy === 1 && breweryAccuracy === 1
+        const resolution =
+          canResolve && gt.expectedBrandIds
+            ? await resolveAndJudge(extraction, gt.expectedBrandIds)
+            : undefined
         photos.push({
           file,
+          view: gt.view,
+          resolution,
           nameAccuracy,
           breweryAccuracy,
           exactMatch,
@@ -305,13 +407,14 @@ async function main() {
           extractedBreweryJa: extraction.brewery_ja,
         })
         console.log(
-          `${exactMatch ? 'EXACT' : '     '} name=${nameAccuracy.toFixed(2)} brewery=${breweryAccuracy.toFixed(2)} ${latencyMs}ms  → ${extraction.name_ja} / ${extraction.brewery_ja}`,
+          `${exactMatch ? 'EXACT' : '     '} name=${nameAccuracy.toFixed(2)} brewery=${breweryAccuracy.toFixed(2)} ${latencyMs}ms  → ${extraction.name_ja} / ${extraction.brewery_ja}${resolution ? `  ⇒ ${resolution.verdict} (${resolution.kind} ${resolution.landedOn})` : ''}`,
         )
       } catch (err) {
         const latencyMs = Math.round(performance.now() - t0)
         const message = err instanceof Error ? err.message : String(err)
         photos.push({
           file,
+          view: gt.view,
           nameAccuracy: 0,
           breweryAccuracy: 0,
           exactMatch: false,
@@ -331,8 +434,37 @@ async function main() {
     console.log(``)
   }
 
+  const tier1 = providerResults.find((r) => r.key === TIER_1 && !r.constructionError)
+  const tier2 = providerResults.find((r) => r.key === TIER_2 && !r.constructionError)
+  if (canResolve && tier1 && tier2) providerResults.push(replayTwoTier(tier1, tier2))
+
   printComparisonTable(providerResults, corpus.length)
+  if (canResolve) printResolutionTable(providerResults)
   printPerPhotoDetail(providerResults)
+  // The lookup holds a pg pool open; the run is over.
+  process.exit(0)
+}
+
+const VIEW_ORDER: readonly (PhotoView | 'all')[] = ['all', 'front', 'side', 'back_ja', 'back_import', 'other']
+
+/** One row per provider and view: where the scans landed. */
+function printResolutionTable(results: ProviderResult[]) {
+  console.log(`## Where the scan landed`)
+  console.log(``)
+  console.log(`| provider | view | photos | right | in list | wrong | none | right rate |`)
+  console.log(`|----------|------|--------|-------|---------|-------|------|------------|`)
+  for (const r of results) {
+    if (r.constructionError) continue
+    for (const view of VIEW_ORDER) {
+      const judged = r.photos.filter((p) => (view === 'all' || p.view === view) && p.resolution)
+      if (judged.length === 0) continue
+      const count = (verdict: Verdict) => judged.filter((p) => p.resolution?.verdict === verdict).length
+      console.log(
+        `| ${r.key} | ${view} | ${judged.length} | ${count('right')} | ${count('in_list')} | ${count('wrong')} | ${count('none')} | ${(count('right') / judged.length).toFixed(3)} |`,
+      )
+    }
+  }
+  console.log(``)
 }
 
 function printComparisonTable(results: ProviderResult[], corpusSize: number) {
@@ -366,14 +498,14 @@ function printPerPhotoDetail(results: ProviderResult[]) {
   console.log(`## Per-photo detail`)
   console.log(``)
   console.log(
-    `| provider | photo | status | name acc | brewery acc | exact | ms | extracted (name / brewery) |`,
+    `| provider | photo | status | name acc | brewery acc | exact | ms | extracted (name / brewery) | landed on |`,
   )
   console.log(
-    `|----------|-------|--------|----------|-------------|-------|-----|-----------------------------|`,
+    `|----------|-------|--------|----------|-------------|-------|-----|-----------------------------|-----------|`,
   )
   for (const r of results) {
     if (r.constructionError) {
-      console.log(`| ${r.key} | — | construction failed: ${r.constructionError} | — | — | — | — | — |`)
+      console.log(`| ${r.key} | — | construction failed: ${r.constructionError} | — | — | — | — | — | — |`)
       continue
     }
     for (const p of r.photos) {
@@ -381,8 +513,11 @@ function printPerPhotoDetail(results: ProviderResult[]) {
         p.status === 'ok'
           ? `${p.extractedNameJa} / ${p.extractedBreweryJa}`
           : `(${p.detail ?? 'error'})`
+      const landed = p.resolution
+        ? `${p.resolution.verdict} — ${p.resolution.kind} ${p.resolution.landedOn}`
+        : '—'
       console.log(
-        `| ${r.key} | ${p.file} | ${p.status} | ${p.nameAccuracy.toFixed(2)} | ${p.breweryAccuracy.toFixed(2)} | ${p.exactMatch ? 'yes' : 'no'} | ${p.latencyMs} | ${extracted} |`,
+        `| ${r.key} | ${p.file} | ${p.status} | ${p.nameAccuracy.toFixed(2)} | ${p.breweryAccuracy.toFixed(2)} | ${p.exactMatch ? 'yes' : 'no'} | ${p.latencyMs} | ${extracted} | ${landed} |`,
       )
     }
   }

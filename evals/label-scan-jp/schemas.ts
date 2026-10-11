@@ -52,10 +52,46 @@ export type PhotoRightsSource = z.infer<typeof PhotoRightsSourceSchema>
  * kana) or Latin verbatim, per the vision system prompt. They mirror the
  * `LabelScanExtraction` fields exactly so the metric compares like with like.
  */
+/**
+ * What the photo shows. A scan is only as good as the side of the bottle the
+ * visitor happened to point at, so the runner reports every metric per view.
+ *
+ * - `front` — the front label, square on.
+ * - `side` — the label turned to one side, part of it out of frame.
+ * - `back_ja` — a Japanese back or side label (the regulatory block).
+ * - `back_import` — the importer's German or French back label, which names
+ *   the sake and its maker in Latin script only. What a visitor in the EU
+ *   is as likely to photograph as the front.
+ * - `other` — anything else (a neck band, a cap).
+ */
+export const PhotoViewSchema = z.enum(['front', 'side', 'back_ja', 'back_import', 'other'])
+
+export type PhotoView = z.infer<typeof PhotoViewSchema>
+
 export const GroundTruthEntrySchema = z
   .object({
     name_ja: z.string().min(1),
     brewery_ja: z.string().min(1),
+    /** Groups the photos of one physical bottle, for the per-bottle table. */
+    bottle: z.string().min(1).optional(),
+    view: PhotoViewSchema.optional(),
+    /**
+     * The catalogue rows (`brands.brand_id`) a correct scan may land on.
+     * `[]` says the bottle is NOT in the catalogue, where the right answer is
+     * no match at all. Left out, the photo is scored on extraction only.
+     */
+    expectedBrandIds: z.array(z.number().int().positive()).optional(),
+    /**
+     * Other readings that are also right — a label that prints its brand in
+     * kanji, katakana and Latin has three correct answers. Accuracy is the
+     * best score over `name_ja` / `brewery_ja` and these.
+     */
+    also: z
+      .object({
+        name_ja: z.array(z.string().min(1)).optional(),
+        brewery_ja: z.array(z.string().min(1)).optional(),
+      })
+      .optional(),
     provenance: z.object({
       source: PhotoRightsSourceSchema,
       /**
