@@ -110,6 +110,32 @@ test.describe('own bottling page', () => {
     await expect(page.getByTestId('cellar-add')).toHaveText('Add to cellar')
     await expect(page.getByTestId('bottle-history-empty')).toHaveText('Not tasted yet.')
 
+    // v1.6.2 (screenshot 66): "Add to cellar" asks how many, what size, and
+    // whether it is nama, before anything is added.
+    await page.getByTestId('cellar-add').click()
+    const sheet = page.getByTestId('cellar-sheet')
+    await expect(sheet.getByRole('heading', { name: 'Add to cellar' })).toBeVisible()
+    await expect(sheet).toContainText('富久千代')
+    await expect(sheet.getByTestId('cellar-sheet-count')).toHaveText('1')
+    await expect(sheet.getByRole('radio', { name: '720 ml' })).toBeChecked()
+    for (const size of ['180 ml', '300 ml', '1800 ml']) {
+      await expect(sheet.getByRole('radio', { name: size })).not.toBeChecked()
+    }
+    const nama = sheet.getByRole('switch', { name: /Nama \(unpasteurised\)/ })
+    await expect(nama).toHaveAttribute('aria-checked', 'false')
+    await sheet.getByTestId('cellar-sheet-more').click()
+    await expect(sheet.getByTestId('cellar-sheet-count')).toHaveText('2')
+    await sheet.getByTestId('cellar-sheet-size-1800').click()
+    await expect(sheet.getByRole('radio', { name: '1800 ml' })).toBeChecked()
+    await nama.click()
+    await expect(nama).toHaveAttribute('aria-checked', 'true')
+    // The sheet fits the screen it opens on.
+    const box = (await sheet.boundingBox())!
+    expect(box.y).toBeGreaterThanOrEqual(0)
+    expect(box.y + box.height).toBeLessThanOrEqual(844)
+    await page.keyboard.press('Escape')
+    await expect(sheet).toHaveCount(0)
+
     // No sake behind it: no way to a sake's page, no line block, no chart.
     await expect(page.getByTestId('bottling-line-link')).toHaveCount(0)
     await expect(page.getByTestId('bottling-line-block')).toHaveCount(0)

@@ -17,10 +17,12 @@ const entry = (id: string, occurredAt: number): JournalEntry => ({
 })
 
 const bottle: CellarBottle = {
-  schemaVersion: 2,
+  schemaVersion: 3,
   brandId: 7,
   sake: { nameKanji: '而今', nameRomaji: 'Jikon' },
   count: 2,
+  sizeMl: null,
+  nama: false,
   openedAt: null,
   addedAt: 5,
   updatedAt: 5,

@@ -623,7 +623,21 @@
     "removeOne": "Eine entfernen",
     "emptyHeading": "Noch nichts im Keller",
     "emptyBody": "Flaschen, die du besitzt. Tipp bei einem Sake auf „In den Keller“, und wir sagen dir, wann eine offene Flasche aufgebraucht werden sollte.",
-    "error": "Das ließ sich gerade nicht ändern — versuch es noch einmal."
+    "error": "Das ließ sich gerade nicht ändern — versuch es noch einmal.",
+    "sheetEditTitle": "Flaschen bearbeiten",
+    "sheetBottles": "Flaschen",
+    "sheetFewer": "Eine Flasche weniger",
+    "sheetMore": "Eine Flasche mehr",
+    "sheetSize": "Größe",
+    "sheetSizeOption": "{ml} ml",
+    "sheetNama": "Nama (unpasteurisiert)",
+    "sheetNamaHint": "Kalt lagern. Ist sie offen, erinnern wir dich früher.",
+    "sheetSave": "Speichern",
+    "countBadgeSize": "× {count} · {ml} ml",
+    "unopenedNama": "Ungeöffnet · Nama, kalt lagern",
+    "openNama": "{days, plural, =0 {Heute geöffnet} one {Seit # Tag offen} other {Seit # Tagen offen}} · Nama, kalt lagern",
+    "edit": "Bearbeiten",
+    "addedMany": "{added, plural, one {Flasche hinzugefügt} other {# Flaschen hinzugefügt}} · {count} im Keller"
   },
   "detailedNotes": {
     "title": "Ausführliche Notizen",

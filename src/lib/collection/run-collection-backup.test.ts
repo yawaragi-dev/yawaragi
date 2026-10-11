@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { addBottle } from '@/lib/collection/cellar'
+import { newCellarRow } from '@/lib/collection/cellar'
 import type { BackupStorage } from '@/lib/collection/backup-storage'
 import { InMemoryCellarStore } from '@/lib/collection/in-memory-cellar-store'
 import { InMemoryExpressionStore } from '@/lib/collection/in-memory-expression-store'
@@ -57,7 +57,7 @@ async function stores() {
   })
   await journal.put('user_a', entry('e1'))
   journal.putRaw('user_a', 'broken', '{nope')
-  await cellar.put('user_a', addBottle(undefined, { brandId: 7, nameKanji: '而今', nameRomaji: null }, 1))
+  await cellar.put('user_a', newCellarRow({ brandId: 7, nameKanji: '而今', nameRomaji: null }, { sizeMl: 720, nama: false }, 1, 1))
   return { journal, cellar, expressions }
 }
 

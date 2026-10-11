@@ -24,15 +24,23 @@ import type { VersionedRecordCodec } from '@/lib/collection/versioned-record'
 //      added themselves (ADR-0025). Nothing renamed, so v1 → v2 only stamps the
 //      version, and a v1 row keeps the key it was stored under.
 //
-// *Nama* — it shortens the "drink soon" threshold from 10 days to 5 — and the
-// bottle's size ("× 2 · 720 ml") are still left out: nothing can set either
-// yet. The catalogue does not say, and no screen asks.
+// v3 — `sizeMl` and `nama`, set in the "Add to cellar" sheet (design v1.6.2,
+//      decision 2). A row's identity becomes thing + size + nama, and an open
+//      bottle lives on a row of its own, so "an opened row is never merged
+//      into". v2 → v3 fills `sizeMl: null` (nobody was asked) and
+//      `nama: false`; such a sealed row keeps the key it was stored under.
 //
 // GDPR (ADR-0009 RoPA, cellar row): account-linked personal data, keyed to the
 // Clerk user id, permanent until erased; lawful basis consent. Records
 // ownership only — no prices, shops or purchase data.
 
-export const CELLAR_BOTTLE_SCHEMA_VERSION = 2 as const
+export const CELLAR_BOTTLE_SCHEMA_VERSION = 3 as const
+
+/** The bottle sizes the sheet offers, in millilitres (design v1.6.2). */
+export const CELLAR_SIZES = [180, 300, 720, 1800] as const
+export type CellarSize = (typeof CELLAR_SIZES)[number]
+/** The size the sheet starts on: the four-gō bottle. */
+export const DEFAULT_CELLAR_SIZE: CellarSize = 720
 
 /** The most bottles of one sake a row holds. A typo guard, not a business rule. */
 export const MAX_CELLAR_COUNT = 99
@@ -55,7 +63,12 @@ export const CellarBottleSchema = z
       nameKanji: z.string().min(1),
       nameRomaji: z.string().nullable(),
     }),
-    /** Bottles on this row, open one included. A row at 0 is deleted instead. */
+    /** The bottle size, or `null` on a row added before the sheet asked. */
+    sizeMl: z.union([z.literal(180), z.literal(300), z.literal(720), z.literal(1800)]).nullable(),
+    /** Unpasteurised: keep it cold, and it is "best finished" sooner once
+     *  open. The User's own statement about their bottle. */
+    nama: z.boolean(),
+    /** Bottles on this row. A row at 0 is deleted instead. */
     count: z.number().int().min(1).max(MAX_CELLAR_COUNT),
     /** Epoch ms the open bottle was opened; `null` when every bottle is sealed. */
     openedAt: z.number().int().nonnegative().nullable(),
@@ -72,20 +85,40 @@ export const CellarBottleSchema = z
 export type CellarBottle = z.infer<typeof CellarBottleSchema>
 
 /**
- * The row's key in the store. A sake's row keeps the bare brand id every v1
- * row was written under, so no stored row moves; a bottling's row is keyed by
- * the bottling, with a prefix no brand id can collide with.
+ * What makes two bottles the same row (design v1.6.2): the thing — a sake, or
+ * one bottling of it — its size, and whether it is nama. Whether a bottle is
+ * open is not part of it; see {@link cellarRowKey}.
+ *
+ * A sake's or bottling's row with no size and not nama keeps the bare key
+ * every earlier row was written under, so no stored row moves.
  */
-export function cellarRowKey(row: Pick<CellarBottle, 'brandId' | 'expression'>): string {
-  return row.expression ? `x:${row.expression.id}` : String(row.brandId)
+export function cellarIdentityKey(
+  row: Pick<CellarBottle, 'brandId' | 'expression' | 'sizeMl' | 'nama'>,
+): string {
+  const thing = row.expression ? `x:${row.expression.id}` : String(row.brandId)
+  if (row.sizeMl === null && !row.nama) return thing
+  return `${thing}|${row.sizeMl ?? 'x'}|${row.nama ? 'n' : 's'}`
 }
 
-/** How a stored CellarBottle is read: v1 → v2 only stamps the version. */
+/**
+ * The row's key in the store: its identity, and `|open` for the row holding
+ * the open bottle. Sealed and open bottles of the same thing sit on two rows,
+ * so adding another bottle never lands on the open one.
+ */
+export function cellarRowKey(
+  row: Pick<CellarBottle, 'brandId' | 'expression' | 'sizeMl' | 'nama' | 'openedAt'>,
+): string {
+  return row.openedAt === null ? cellarIdentityKey(row) : `${cellarIdentityKey(row)}|open`
+}
+
+/** How a stored CellarBottle is read: v1 → v2 stamps the version; v2 → v3 adds
+ *  the two fields nobody had been asked for. */
 export const CELLAR_BOTTLE_CODEC: VersionedRecordCodec<CellarBottle> = {
   kind: 'cellar',
   current: CELLAR_BOTTLE_SCHEMA_VERSION,
   upcasters: {
     1: (record) => ({ ...record, schemaVersion: 2 }),
+    2: (record) => ({ ...record, schemaVersion: 3, sizeMl: null, nama: false }),
   },
   schema: CellarBottleSchema,
 }

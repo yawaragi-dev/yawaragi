@@ -58,9 +58,11 @@ async function seedBottlingOfASake(): Promise<string> {
     createdAt: 10,
   })
   const row = {
-    schemaVersion: 2,
+    schemaVersion: 3,
     brandId: 12,
     sake: { nameKanji: '李白', nameRomaji: 'Rihaku' },
+    sizeMl: null,
+    nama: false,
     openedAt: null,
     addedAt: 5,
     updatedAt: 5,
@@ -233,15 +235,43 @@ describe('deleting a bottling you added', () => {
     expect((await cellar().read(USER)).sort((a, b) => a.count - b.count)).toEqual(before.cellar)
   })
 
+  it('of a bottling whose bottle was opened before rows had sizes: nothing is left behind', async () => {
+    const added = await addOwnBottling({ brandId: 12, name: 'Harvest Moon' })
+    const id = added.status === 'ok' ? added.expressionId : ''
+    // As v2 stored it: the open bottle on the row keyed by the bottling alone.
+    cellar().putRaw(
+      USER,
+      `x:${id}`,
+      JSON.stringify({
+        schemaVersion: 2,
+        brandId: 12,
+        expression: { id, name: 'Harvest Moon' },
+        sake: { nameKanji: '李白', nameRomaji: 'Rihaku' },
+        count: 1,
+        openedAt: 5000,
+        addedAt: 5,
+        updatedAt: 5,
+      }),
+    )
+
+    expect((await deleteOwnBottling(id)).status).toBe('ok')
+    const rows = await cellar().read(USER)
+    // One row, the sake's, holding the open bottle — and no row of the bottling's.
+    expect(rows.map((r) => [r.expression, r.count, r.openedAt])).toEqual([[undefined, 1, 5000]])
+    expect((await cellar().dump(USER)).rejected).toEqual([])
+  })
+
   it('Undo takes away a cellar row the delete had to create', async () => {
     const added = await addOwnBottling({ brandId: 12, name: 'Harvest Moon' })
     const id = added.status === 'ok' ? added.expressionId : ''
     await cellar().put(USER, {
-      schemaVersion: 2,
+      schemaVersion: 3,
       brandId: 12,
       expression: { id, name: 'Harvest Moon' },
       sake: { nameKanji: '李白', nameRomaji: 'Rihaku' },
       count: 1,
+      sizeMl: null,
+      nama: false,
       openedAt: null,
       addedAt: 5,
       updatedAt: 5,

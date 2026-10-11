@@ -4,10 +4,11 @@ import { useEffect, useRef, useState, useTransition } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { CaretRight, Plus, Stack, StackPlus } from '@phosphor-icons/react/dist/ssr'
+import { CellarSheet } from '@/components/collection/cellar-sheet'
 import { ViewNotice } from '@/components/journal/undo-notice'
 import { Link } from '@/i18n/navigation'
 import { addToCellar } from '@/lib/collection/cellar-actions'
-import type { CellarTarget } from '@/lib/schemas/cellar-input'
+import type { CellarSheetValues, CellarTarget } from '@/lib/schemas/cellar-input'
 import { cn } from '@/lib/utils'
 
 const NOTICE_MS = 3400
@@ -27,18 +28,26 @@ const CELLAR_HREF = { pathname: '/collection', query: { tab: 'cellar' } } as con
  * sake's page counts its bottlings' bottles too (`alsoCounted`), while "+"
  * adds to the row of the page you are on.
  *
+ * **Both buttons open the sheet** (design v1.6.2, decision 2): "Add to
+ * cellar" and the "+" ask how many bottles, what size and whether they are
+ * nama, and nothing is added until the sheet's own button. The sheet starts
+ * on one 720 ml bottle, so the common case is still two taps.
+ *
  * Shows §11's notice, "Added to your cellar" / "Another bottle added · 2 in
  * cellar", with View → the Cellar segment.
  */
 export function CellarButton({
   target,
+  name,
   initialCount,
   alsoCounted = 0,
   refreshOnSave = true,
 }: {
   /** The sake, or the bottling, whose page this is: what "+" adds a bottle of. */
   target: CellarTarget
-  /** Bottles already on this target's own row; 0 when none. */
+  /** What the bottles are of; the sheet names it under its title. */
+  name: string
+  /** Bottles of this target already in the cellar, across sizes; 0 when none. */
   initialCount: number
   /** Bottles on other rows that this page counts as well: a sake's page adds
    *  its bottlings' bottles. */
@@ -52,26 +61,39 @@ export function CellarButton({
   const count = rowCount + alsoCounted
   const [notice, setNotice] = useState<string | null>(null)
   const [failed, setFailed] = useState(false)
+  const [sheetOpen, setSheetOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   useEffect(() => () => clearTimeout(timer.current), [])
 
-  function add() {
+  function add(values: CellarSheetValues) {
     setFailed(false)
     startTransition(async () => {
-      const result = await addToCellar(target)
+      const result = await addToCellar(target, values)
       if (result.status !== 'ok') {
         setFailed(true)
         return
       }
+      setSheetOpen(false)
       setRowCount(result.count)
       const total = result.count + alsoCounted
-      setNotice(total > 1 ? t('addedAnother', { count: total }) : t('added'))
+      setNotice(
+        total === values.count
+          ? t('added')
+          : values.count === 1
+            ? t('addedAnother', { count: total })
+            : t('addedMany', { added: values.count, count: total }),
+      )
       clearTimeout(timer.current)
       timer.current = setTimeout(() => setNotice(null), NOTICE_MS)
       if (refreshOnSave) router.refresh()
     })
+  }
+
+  function openSheet() {
+    setFailed(false)
+    setSheetOpen(true)
   }
 
   const inCellar = count > 0
@@ -93,9 +115,7 @@ export function CellarButton({
           </Link>
           <button
             type="button"
-            onClick={add}
-            disabled={isPending}
-            aria-busy={isPending || undefined}
+            onClick={openSheet}
             aria-label={t('addAnother')}
             title={t('addAnother')}
             className={cn(control, 'w-11 shrink-0 text-ink')}
@@ -107,9 +127,7 @@ export function CellarButton({
       ) : (
         <button
           type="button"
-          onClick={add}
-          disabled={isPending}
-          aria-busy={isPending || undefined}
+          onClick={openSheet}
           className={cn(control, 'px-4 text-ink')}
           data-testid="cellar-add"
         >
@@ -117,10 +135,17 @@ export function CellarButton({
           {t('add')}
         </button>
       )}
-      {failed && (
-        <p role="alert" className="text-meta text-ginshu-700" data-testid="cellar-add-error">
-          {t('error')}
-        </p>
+      {/* Mounted only while open, so it starts from the defaults each time. */}
+      {sheetOpen && (
+        <CellarSheet
+          open
+          onOpenChange={setSheetOpen}
+          mode="add"
+          name={name}
+          pending={isPending}
+          failed={failed}
+          onSubmit={add}
+        />
       )}
       {notice && <ViewNotice message={notice} viewLabel={t('view')} href={CELLAR_HREF} />}
     </div>

@@ -51,11 +51,13 @@ const tasting = (id: string, of?: Expression): JournalEntry => ({
 })
 
 const bottles = (count: number, of?: Expression, openedAt: number | null = null): CellarBottle => ({
-  schemaVersion: 2,
+  schemaVersion: 3,
   brandId: of ? of.brandId : 12,
   ...(of ? { expression: { id: of.id, name: of.name } } : {}),
   sake: of && of.brandId === null ? { nameKanji: of.name, nameRomaji: null } : RIHAKU,
   count,
+  sizeMl: null,
+  nama: false,
   openedAt,
   addedAt: 5,
   updatedAt: 5,
@@ -131,7 +133,8 @@ describe('deleting a bottling you added', () => {
       99,
     )
     expect(writes.putCellar[0]).toMatchObject({ brandId: 12, count: 2, openedAt: 77 })
-    expect(undo.createdCellarKeys).toEqual(['12'])
+    // An open bottle is on a row of its own, so it becomes the sake's open row.
+    expect(undo.createdCellarKeys).toEqual(['12|open'])
   })
 
   it('keeps one open bottle per row: the sake\'s own stays the open one', () => {

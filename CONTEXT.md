@@ -94,7 +94,7 @@ The Sakes a *User* wants to try but has not. Each row records **where the want c
 _Avoid_: Saved, Favourites (that implies having tried and liked them), Watchlist, To-try list
 
 **Nama** (生):
-Unpasteurised sake. Relevant to the domain only because it shortens **Cellar** freshness: a *nama* bottle hits "drink soon" at 5 days open rather than 10. Planned as a boolean on the Cellar row (CellarBottle v2, ADR-0024); not stored yet, because neither the catalogue nor any screen supplies it.
+Unpasteurised sake. Relevant to the domain only because it shortens **Cellar** freshness: a *nama* bottle hits "drink soon" at 5 days open rather than 10. A boolean on the Cellar row since CellarBottle v3, set by the user in the "Add to cellar" sheet (design v1.6.2); the catalogue does not supply it.
 _Avoid_: Fresh, Raw, Unpasteurised (correct, but *nama* is the term on the bottle)
 
 **Ranking**:
@@ -123,7 +123,7 @@ _Avoid_: Anchor (overloaded — the research doc's raw exemplars are also "ancho
 - A **User** has zero or more **TasteEvents**
 - A **User** has exactly one **TasteProfile**, derived from their **TasteEvents** (never stored as a snapshot)
 - A **Sake** has zero or more **Rankings** (at most one *overall*, at most one per its Brewery's Prefecture, both for the current month only)
-- A **User** has zero or more **Cellar** rows; a Cellar row refers to exactly one **Sake**, or to one **Expression** the user added (one row per thing a bottle was logged against; a bottling's bottles are never merged into its Sake's row)
+- A **User** has zero or more **Cellar** rows; a Cellar row refers to exactly one **Sake**, or to one **Expression** the user added (one row per thing, size and nama; a bottling's bottles are never merged into its Sake's row, and the open bottle sits on a row of its own)
 - A **User** has zero or more **Wishlist** rows; a Wishlist row refers to exactly one **Sake** and disappears when that Sake is logged
 - **Collection** is the UI grouping of a User's **TastingJournal**, **Cellar** and **Wishlist**; it stores nothing itself
 - Every displayed record carries a **Provenance** (source + optional confidence)

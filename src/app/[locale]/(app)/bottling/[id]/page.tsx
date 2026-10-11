@@ -16,6 +16,7 @@ import { SakenowaAttribution } from '@/components/sake/sakenowa-attribution'
 import type { FlavorChart } from '@/lib/schemas/flavor-chart'
 import { lookupFlavorChart } from '@/lib/sakenowa/lookup'
 import { bottlingHoldings } from '@/lib/collection/bottling-changes'
+import { bottlesOf } from '@/lib/collection/cellar'
 import { entriesForExpression, resolveViewerJournal } from '@/lib/taste/viewer-journal'
 
 /**
@@ -171,7 +172,8 @@ export default async function BottlingPage({ params, searchParams }: PageProps) 
         cellar={
           <CellarButton
             target={{ expressionId: bottling.id }}
-            initialCount={viewer.cellar.find((b) => b.expression?.id === bottling.id)?.count ?? 0}
+            name={bottling.name}
+            initialCount={bottlesOf(viewer.cellar, { expressionId: bottling.id })}
           />
         }
         initiallyOpen={rateNow}

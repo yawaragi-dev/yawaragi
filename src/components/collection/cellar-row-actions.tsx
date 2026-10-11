@@ -5,12 +5,15 @@ import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { LockSimpleOpen, Star } from '@phosphor-icons/react/dist/ssr'
 import { Link } from '@/i18n/navigation'
+import { CellarSheet } from '@/components/collection/cellar-sheet'
 import {
+  editCellarRow,
   finishCellarBottle,
   openCellarBottle,
   removeFromCellar,
 } from '@/lib/collection/cellar-actions'
-import type { CellarTarget } from '@/lib/schemas/cellar-input'
+import type { CellarSize } from '@/lib/schemas/cellar-bottle'
+import type { CellarSheetValues, CellarTarget } from '@/lib/schemas/cellar-input'
 
 /**
  * A Cellar row's two buttons (§11). Open bottle: "Pour & rate" (to the page of
@@ -18,32 +21,58 @@ import type { CellarTarget } from '@/lib/schemas/cellar-input'
  * open) · "Finished". Sealed: "Open a bottle" ·
  * "Remove" — one bottle at a time, so it reads "Remove one" while there are
  * several. Each change re-renders the list from the store.
+ *
+ * Then "Edit", which opens the "Add to cellar" sheet on this row's count, size
+ * and nama (design v1.6.2: "Same sheet to edit a cellar row"). The design
+ * does not say where that starts from; a third, quiet action keeps it on the
+ * row it changes.
  */
 export function CellarRowActions({
   target,
   rowKey,
+  name,
   isOpen,
   count,
+  sizeMl,
+  nama,
 }: {
   /** The sake or the bottling this row holds bottles of. */
   target: CellarTarget
-  /** The row's store key; it names the buttons for tests. */
+  /** The row's store key: what every action here acts on. */
   rowKey: string
+  /** The row's name, for the sheet. */
+  name: string
   isOpen: boolean
   /** Bottles on the row. */
   count: number
+  sizeMl: CellarSize | null
+  nama: boolean
 }) {
   const t = useTranslations('cellar')
   const router = useRouter()
   const [failed, setFailed] = useState(false)
+  const [sheetOpen, setSheetOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
 
-  function run(action: (target: CellarTarget) => Promise<{ status: string }>) {
+  function run(action: (rowKey: string) => Promise<{ status: string }>) {
     setFailed(false)
     startTransition(async () => {
-      const result = await action(target)
+      const result = await action(rowKey)
       if (result.status !== 'ok') setFailed(true)
       else router.refresh()
+    })
+  }
+
+  function saveEdit(values: CellarSheetValues) {
+    setFailed(false)
+    startTransition(async () => {
+      const result = await editCellarRow(rowKey, values)
+      if (result.status !== 'ok') {
+        setFailed(true)
+        return
+      }
+      setSheetOpen(false)
+      router.refresh()
     })
   }
 
@@ -110,8 +139,32 @@ export function CellarRowActions({
             </button>
           </>
         )}
+        <button
+          type="button"
+          disabled={isPending}
+          onClick={() => {
+            setFailed(false)
+            setSheetOpen(true)
+          }}
+          className={secondary}
+          data-testid={`cellar-edit-${rowKey}`}
+        >
+          {t('edit')}
+        </button>
       </div>
-      {failed && (
+      {sheetOpen && (
+        <CellarSheet
+          open
+          onOpenChange={setSheetOpen}
+          mode="edit"
+          name={name}
+          initial={{ count, sizeMl, nama }}
+          pending={isPending}
+          failed={failed}
+          onSubmit={saveEdit}
+        />
+      )}
+      {failed && !sheetOpen && (
         <p role="alert" className="text-meta text-ginshu-700">
           {t('error')}
         </p>

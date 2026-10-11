@@ -9,7 +9,9 @@ import { cn } from '@/lib/utils'
  * §11's Cellar segment. Reference screenshot 20.
  *
  * "{bottles} bottles · {open} open", then one row per thing a bottle was
- * logged against — a sake, or one bottling of it (design v1.6.1) — name,
+ * logged against, per size and kind — a sake or one bottling of it, 720 ml or
+ * 1.8 l, nama or not (design v1.6.2), and the open bottle apart from the
+ * sealed ones — name,
  * "× n", the state line, and two actions. Bottles to finish soon sort first
  * and say so in the accent with an hourglass; then the other open ones; then
  * the sealed ones (`sortCellar`). `now` comes from the page so the render is
@@ -76,10 +78,19 @@ export async function CellarList({
                   >
                     {name}
                   </span>
-                  {row.count > 1 && (
-                    <span className="shrink-0 text-meta text-ash-700">
-                      {t('countBadge', { count: row.count })}
+                  {/* v1.6.2 §11: "× 1 · 720 ml" once the row has a size. A row
+                      from before the sheet has none, and shows a count only
+                      when there is more than one bottle, as before. */}
+                  {row.sizeMl !== null ? (
+                    <span className="shrink-0 text-meta text-ash-700" data-testid="cellar-row-count">
+                      {t('countBadgeSize', { count: row.count, ml: row.sizeMl })}
                     </span>
+                  ) : (
+                    row.count > 1 && (
+                      <span className="shrink-0 text-meta text-ash-700" data-testid="cellar-row-count">
+                        {t('countBadge', { count: row.count })}
+                      </span>
+                    )
                   )}
                 </span>
                 {/* Latin name first, kanji under it — screenshot 20, and the
@@ -99,16 +110,19 @@ export async function CellarList({
                 >
                   <StateIcon size={14} aria-hidden="true" />
                   {f.kind === 'unopened'
-                    ? t('unopened')
+                    ? t(row.nama ? 'unopenedNama' : 'unopened')
                     : soon
                       ? t('drinkSoon', { days: f.days })
-                      : t('open', { days: f.days })}
+                      : t(row.nama ? 'openNama' : 'open', { days: f.days })}
                 </span>
                 <CellarRowActions
                   target={row.expression ? { expressionId: row.expression.id } : { brandId: row.brandId! }}
                   rowKey={rowKey}
+                  name={name}
                   isOpen={f.kind === 'open'}
                   count={row.count}
+                  sizeMl={row.sizeMl}
+                  nama={row.nama}
                 />
               </span>
             </li>
