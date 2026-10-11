@@ -262,7 +262,7 @@
       "title": "Etikett scannen",
       "torchLabel": "Licht",
       "frameTitle": "Richte die Kamera auf das Etikett",
-      "frameHint": "Kanji oder Romaji — was die Flasche hergibt.",
+      "readALabel": "Ein Etikett lesen",
       "workingTitle": "Etikett wird gelesen …",
       "workingHint": "Wird mit dem Katalog abgeglichen.",
       "shutterLabel": "Etikett aufnehmen",

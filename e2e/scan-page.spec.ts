@@ -78,6 +78,51 @@ test.describe('scan entry route', () => {
     await context.close()
   })
 
+  test('under the viewfinder, "How to read a label" opens the Learn entry, and the camera layout holds', async ({
+    browser,
+  }) => {
+    const context = await browser.newContext({
+      locale: 'en-US',
+      viewport: { width: 390, height: 844 },
+      hasTouch: true,
+      isMobile: true,
+    })
+    await context.addCookies([AGE_GATE_COOKIE])
+    const page = await context.newPage()
+    // A camera that is still starting: the viewfinder is up, whatever
+    // hardware the machine running this has.
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, 'mediaDevices', {
+        configurable: true,
+        value: { getUserMedia: () => new Promise(() => {}) },
+      })
+    })
+    await page.goto('/en/scan')
+
+    // Design v1.6.2 §4, screenshot 06: the link takes the hint's line.
+    const hint = page.getByTestId('scan-camera-hint')
+    await expect(hint).toContainText('Frame the bottle label')
+    const link = page.getByTestId('scan-camera-read-a-label')
+    await expect(link).toHaveText('How to read a label')
+    await expect(hint).not.toContainText('whichever the bottle gives you')
+
+    // The viewfinder keeps its drawn size and the shutter stays on screen:
+    // the link took a line that was already there.
+    const frame = (await page.getByTestId('scan-camera-frame').boundingBox())!
+    expect(Math.round(frame.height)).toBe(292)
+    const linkBox = (await link.boundingBox())!
+    expect(linkBox.y).toBeGreaterThan(frame.y + frame.height)
+    const shutter = (await page.getByTestId('scan-camera-shutter').boundingBox())!
+    expect(linkBox.y + linkBox.height).toBeLessThan(shutter.y)
+    expect(shutter.y + shutter.height).toBeLessThanOrEqual(844)
+
+    await link.click()
+    await expect(page).toHaveURL(/\/en\/learn\/how-to-read-a-label$/)
+    await expect(page.getByTestId('learn-entry')).toBeVisible()
+
+    await context.close()
+  })
+
   test('a refused camera still leaves a way to finish the scan', async ({ browser }) => {
     // A phone: touch is the primary input. A desktop never asks for the camera
     // at all (next spec), so there would be nothing to refuse.
