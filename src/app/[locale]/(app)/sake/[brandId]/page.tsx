@@ -18,6 +18,7 @@ import { ScreenBar } from '@/components/layout/screen-header'
 import { BottleRateRow } from '@/components/sake/bottle-rate-row'
 import { BottleSection, NotPublished } from '@/components/sake/bottle-section'
 import { CellarButton } from '@/components/collection/cellar-button'
+import { bottlesOf } from '@/lib/collection/cellar'
 import { BottleSlot } from '@/components/sake/bottle-slot'
 import { BreweryOtherSakes, listSiblingBrandsSafe } from '@/components/sake/brewery-other-sakes'
 import { FlavorChartView } from '@/components/sake/flavor-chart'
@@ -337,9 +338,9 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
               // v1.6.1 §9: a sake's page counts its bottlings' bottles too
               // (2 of Rihaku + 1 Wandering Poet → "In cellar · 3"); "+" adds
               // to the sake's own row.
-              initialCount={
-                viewer.cellar.find((b) => b.brandId === brandId && !b.expression)?.count ?? 0
-              }
+              name={brand.nameRomaji ?? brand.nameKanji}
+              // The sake's own bottles, across sizes; its bottlings' come on top.
+              initialCount={bottlesOf(viewer.cellar, { brandId })}
               alsoCounted={viewer.cellar
                 .filter((b) => b.brandId === brandId && b.expression)
                 .reduce((n, b) => n + b.count, 0)}

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { addBottle } from '@/lib/collection/cellar'
+import { newCellarRow } from '@/lib/collection/cellar'
 import { cellarKey } from '@/lib/collection/cellar-store'
 import { InMemoryCellarStore } from '@/lib/collection/in-memory-cellar-store'
 import { UpstashCellarStore } from '@/lib/collection/upstash-cellar-store'
@@ -7,7 +7,7 @@ import { CELLAR_BOTTLE_CODEC } from '@/lib/schemas/cellar-bottle'
 import { assertCodecComplete } from '@/lib/collection/versioned-record'
 
 const bottle = (brandId: number) =>
-  addBottle(undefined, { brandId, nameKanji: '而今', nameRomaji: 'Jikon' }, 1000)
+  newCellarRow({ brandId, nameKanji: '而今', nameRomaji: 'Jikon' }, { sizeMl: 720, nama: false }, 1, 1000)
 
 function fakeFetch(results: unknown[]) {
   const commands: string[][] = []
@@ -40,7 +40,7 @@ describe('cellar storage', () => {
     const store = new InMemoryCellarStore()
     await store.put('u', bottle(7))
     await store.put('u', bottle(8))
-    await store.remove('u', '7')
+    await store.remove('u', '7|720|s')
     expect((await store.read('u')).map((b) => b.brandId)).toEqual([8])
     await store.clear('u')
     expect(await store.read('u')).toEqual([])
@@ -48,11 +48,14 @@ describe('cellar storage', () => {
 
   it('reads a row written before bottlings existed, and keeps it under the key it was stored at', async () => {
     const store = new InMemoryCellarStore()
-    const v1 = { ...bottle(7), schemaVersion: 1 }
-    store.putRaw('u', '7', JSON.stringify(v1))
+    // A v1 row as it sits in Upstash: no size, no nama, keyed by the brand id.
+    const legacy: Record<string, unknown> = { ...bottle(7), schemaVersion: 1 }
+    delete legacy.sizeMl
+    delete legacy.nama
+    store.putRaw('u', '7', JSON.stringify(legacy))
 
     const [row] = await store.read('u')
-    expect(row).toEqual(bottle(7))
+    expect(row).toEqual({ ...bottle(7), sizeMl: null, nama: false })
     // Another bottle of the same sake lands on that row, not beside it.
     await store.put('u', { ...row!, count: 2 })
     expect((await store.read('u')).map((b) => b.count)).toEqual([2])
@@ -63,7 +66,7 @@ describe('cellar storage', () => {
     await store.put('u', bottle(7))
     await store.put('u', { ...bottle(7), expression: { id: 'x1', name: 'Jikon Nama 2025' } })
     expect(await store.read('u')).toHaveLength(2)
-    await store.remove('u', 'x:x1')
+    await store.remove('u', 'x:x1|720|s')
     expect((await store.read('u')).map((b) => b.expression)).toEqual([undefined])
   })
 
@@ -76,15 +79,15 @@ describe('cellar storage', () => {
     ])
   })
 
-  it('on Upstash, writes HSET keyed by brand id and never sets an expiry', async () => {
+  it('on Upstash, writes HSET keyed by the row key and never sets an expiry', async () => {
     const { impl, commands } = fakeFetch([1, 1, 1])
     const store = new UpstashCellarStore('https://kv', 'tok', impl)
     await store.put('u', bottle(7))
-    await store.remove('u', '7')
+    await store.remove('u', '7|720|s')
     await store.clear('u')
     expect(commands).toEqual([
-      ['HSET', 'cellar:user:u', '7', JSON.stringify(bottle(7))],
-      ['HDEL', 'cellar:user:u', '7'],
+      ['HSET', 'cellar:user:u', '7|720|s', JSON.stringify(bottle(7))],
+      ['HDEL', 'cellar:user:u', '7|720|s'],
       ['DEL', 'cellar:user:u'],
     ])
   })

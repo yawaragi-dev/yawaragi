@@ -170,37 +170,57 @@ test.describe('/en/collection?tab=cellar — §11 Cellar (ADR-0024)', () => {
     // No Wishlist: it is not built, and an option to nowhere is #162's dead end.
     await expect(page.getByTestId('collection-segment-wishlist')).toHaveCount(0)
 
-    // Bottles, not rows: 1 + 2 + 1, and 1 of a bottling.
-    await expect(page.getByTestId('cellar-summary')).toHaveText('5 bottles · 2 open')
+    // Bottles, not rows: 1 + 1 + 2 + 1, and 1 of a bottling.
+    await expect(page.getByTestId('cellar-summary')).toHaveText('6 bottles · 2 open')
 
-    // §11: "drink soon" sorts first and says so; sealed bottles last.
+    // §11: "drink soon" sorts first and says so; then the other open bottle;
+    // then the sealed ones, newest first.
     const rows = page.getByTestId('cellar-row')
-    await expect(rows).toHaveCount(4)
+    await expect(rows).toHaveCount(5)
     await expect(rows.nth(0)).toContainText('而今')
     await expect(rows.nth(0).getByTestId('cellar-state')).toHaveText(
       'Open 12 days — best finished this week',
     )
     await expect(rows.nth(1).getByTestId('cellar-state')).toHaveText('Open 2 days · fridge')
-    // v1.6.1 §11: one row per thing a bottle was logged against. A bottling's
-    // bottle has a row of its own, beside its sake's (而今, above), and leads
-    // with the bottling's name, the sake's kanji under it.
+
+    // v1.6.1 §11: a bottling's bottle has a row of its own, beside its sake's
+    // (而今, above), and leads with the bottling's name, the sake's kanji
+    // under it. v1.6.2: the count carries the size, and a nama bottle says so.
     const bottling = rows.nth(2)
     await expect(bottling.getByTestId('cellar-row-name')).toHaveText('Jikon Nama 2025')
     await expect(bottling).toContainText('而今')
-    await expect(bottling).toHaveAttribute('data-row-key', 'x:stub-bottling')
-    await expect(page.getByTestId('cellar-open-x:stub-bottling')).toBeVisible()
-    await expect(rows.nth(3)).toContainText('× 2')
+    await expect(bottling.getByTestId('cellar-row-count')).toHaveText('× 1 · 720 ml')
+    await expect(bottling.getByTestId('cellar-state')).toHaveText('Unopened · nama, keep cold')
+    await expect(page.getByTestId('cellar-open-x:stub-bottling|720|n')).toBeVisible()
+
+    // v1.6.2 (screenshot 67): the same sake in two sizes is two rows.
+    await expect(rows.nth(3)).toContainText('Denshu')
+    await expect(rows.nth(3).getByTestId('cellar-row-count')).toHaveText('× 2 · 720 ml')
     await expect(rows.nth(3).getByTestId('cellar-state')).toHaveText(
       'Unopened · keeps for months, cool and dark',
     )
+    await expect(rows.nth(4)).toContainText('Denshu')
+    await expect(rows.nth(4).getByTestId('cellar-row-count')).toHaveText('× 1 · 1800 ml')
 
     // Open: Pour & rate (to the bottle page with the panel open) · Finished.
     // Sealed: Open a bottle · Remove — one bottle at a time, so on a row of
     // two it says so.
-    await expect(page.getByTestId('cellar-pour-1')).toHaveAttribute('href', '/en/sake/1?rate=1')
-    await expect(page.getByTestId('cellar-finish-1')).toBeVisible()
-    await expect(page.getByTestId('cellar-open-3')).toBeVisible()
-    await expect(page.getByTestId('cellar-remove-3')).toHaveText('Remove one')
+    await expect(page.getByTestId('cellar-pour-1|720|s|open')).toHaveAttribute('href', '/en/sake/1?rate=1')
+    await expect(page.getByTestId('cellar-finish-1|720|s|open')).toBeVisible()
+    await expect(page.getByTestId('cellar-open-3|720|s')).toBeVisible()
+    await expect(page.getByTestId('cellar-remove-3|720|s')).toHaveText('Remove one')
+    await expect(page.getByTestId('cellar-remove-3|1800|n')).toHaveText('Remove')
+
+    // "Edit" opens the sheet on the row's own count, size and nama.
+    await page.getByTestId('cellar-edit-3|1800|n').click()
+    const sheet = page.getByTestId('cellar-sheet')
+    await expect(sheet).toContainText('Edit bottles')
+    await expect(sheet).toContainText('Denshu')
+    await expect(sheet.getByTestId('cellar-sheet-count')).toHaveText('1')
+    await expect(sheet.getByRole('radio', { name: '1800 ml' })).toBeChecked()
+    await expect(sheet.getByRole('switch', { name: /Nama/ })).toHaveAttribute('aria-checked', 'true')
+    await page.keyboard.press('Escape')
+    await expect(sheet).toHaveCount(0)
 
     await expect(page.getByText('Powered by Sakenowa')).toBeVisible()
     await context.close()

@@ -623,7 +623,21 @@
     "removeOne": "Remove one",
     "emptyHeading": "Nothing in the cellar",
     "emptyBody": "Bottles you own. Tap “Add to cellar” on any sake and we’ll tell you when an open one should be finished.",
-    "error": "Couldn’t change that just now — try again."
+    "error": "Couldn’t change that just now — try again.",
+    "sheetEditTitle": "Edit bottles",
+    "sheetBottles": "Bottles",
+    "sheetFewer": "One bottle fewer",
+    "sheetMore": "One bottle more",
+    "sheetSize": "Size",
+    "sheetSizeOption": "{ml} ml",
+    "sheetNama": "Nama (unpasteurised)",
+    "sheetNamaHint": "Keep it cold. We’ll nudge you sooner once it’s open.",
+    "sheetSave": "Save",
+    "countBadgeSize": "× {count} · {ml} ml",
+    "unopenedNama": "Unopened · nama, keep cold",
+    "openNama": "{days, plural, =0 {Opened today} one {Open # day} other {Open # days}} · nama, keep cold",
+    "edit": "Edit",
+    "addedMany": "{added, plural, one {Bottle added} other {# bottles added}} · {count} in cellar"
   },
   "detailedNotes": {
     "title": "Detailed notes",

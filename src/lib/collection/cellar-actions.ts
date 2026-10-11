@@ -1,29 +1,40 @@
 'use server'
 
 import {
+  type CellarChange,
   type CellarSubject,
-  addBottle,
-  finishBottle,
-  openBottle,
-  removeBottle,
+  addBottles,
+  applyCellarChange,
+  bottlesOf,
+  editRow,
+  finishOne,
+  openOne,
+  removeOne,
 } from '@/lib/collection/cellar'
+import { readSettledCellar, writeCellarChange } from '@/lib/collection/settled-cellar'
 import { type CellarBottle, cellarRowKey } from '@/lib/schemas/cellar-bottle'
-import { type CellarTarget, CellarTargetSchema } from '@/lib/schemas/cellar-input'
+import {
+  CellarRowKeySchema,
+  type CellarSheetValues,
+  CellarSheetValuesSchema,
+  type CellarTarget,
+  CellarTargetSchema,
+} from '@/lib/schemas/cellar-input'
 import { lookupBrand } from '@/lib/sakenowa/lookup'
 import { type MaintainerCollection, withMaintainerCollection } from '@/lib/taste/maintainer-collection'
 
 /**
- * The Cellar's write actions (design v1.4 §11, ADR-0024): add a bottle, open
- * one, finish one, remove one. Each is a read-modify-write of one row
- * through the pure rules in `cellar.ts`, behind the same maintainer gate as
- * the journal (ADR-0020). Not rate-limited, for the journal actions' reason.
+ * The Cellar's write actions (design v1.4 §11, v1.6.2; ADR-0024): add bottles
+ * from the sheet, open one, finish one, remove one, edit a row. Each reads the
+ * user's rows, works out the change with the pure rules in `cellar.ts`, and
+ * writes it — behind the same maintainer gate as the journal (ADR-0020). Not
+ * rate-limited, for the journal actions' reason.
  *
- * A row is a sake's, or one bottling's (design v1.6.1, ADR-0025): each action
- * takes a {@link CellarTarget} saying which.
+ * Adding names a {@link CellarTarget} — a sake, or a bottling — because the
+ * row may not exist yet. Everything else names the row it acts on by its key.
  *
- * Each returns the row's count afterwards (0 when the row is gone), which is
- * all the buttons need to relabel themselves ("In cellar · 2"); lists refresh
- * with `router.refresh()`.
+ * `count` in a result is how many bottles of that thing are in the cellar
+ * afterwards, across sizes and open or not: what "In cellar · n" shows.
  */
 export type CellarActionResult =
   | { status: 'ok'; count: number }
@@ -32,17 +43,11 @@ export type CellarActionResult =
   | { status: 'forbidden' }
   | { status: 'unavailable' }
 
-/** The store key of the row a target names. */
-function rowKeyOf(target: CellarTarget): string {
-  return 'expressionId' in target
-    ? cellarRowKey({ brandId: null, expression: { id: target.expressionId, name: '-' } })
-    : cellarRowKey({ brandId: target.brandId })
-}
-
-/** What a new row for this target holds bottles of, or `null` if there is no such thing. */
+/** What a target's rows hold bottles of, or `null` if there is no such thing. */
 async function subjectOf(
   target: CellarTarget,
   { userId, expressions }: MaintainerCollection,
+  rows: readonly CellarBottle[],
 ): Promise<CellarSubject | null> {
   if ('expressionId' in target) {
     // The bottling has to be the caller's own.
@@ -56,64 +61,73 @@ async function subjectOf(
       expression: { id: bottling.id, name: bottling.name },
     }
   }
+  // A row of this sake already knows its name; no lookup needed.
+  const known = rows.find((r) => r.brandId === target.brandId && !r.expression)
+  if (known) return { brandId: target.brandId, ...known.sake }
   const brand = await lookupBrand(target.brandId)
   if (!brand) return null
   return { brandId: brand.brandId, nameKanji: brand.nameKanji, nameRomaji: brand.nameRomaji }
 }
 
-/** "Add to cellar": a new row of one, or one more bottle on the row. */
-export async function addToCellar(target: CellarTarget): Promise<CellarActionResult> {
-  const parsed = CellarTargetSchema.safeParse(target)
-  if (!parsed.success) return { status: 'invalid_input' }
+/** The sheet's "Add to cellar": `count` sealed bottles of this size and kind. */
+export async function addToCellar(
+  target: CellarTarget,
+  values: CellarSheetValues,
+): Promise<CellarActionResult> {
+  const parsedTarget = CellarTargetSchema.safeParse(target)
+  const parsedValues = CellarSheetValuesSchema.safeParse(values)
+  if (!parsedTarget.success || !parsedValues.success) return { status: 'invalid_input' }
+  const { count, sizeMl, nama } = parsedValues.data
+
   return withMaintainerCollection(async (collection) => {
-    const { userId, cellar } = collection
-    const key = rowKeyOf(parsed.data)
-    const existing = (await cellar.read(userId)).find((b) => cellarRowKey(b) === key)
-    let next: CellarBottle
-    if (existing) {
-      // The row already knows what it holds; no lookup needed.
-      next = addBottle(existing, { brandId: existing.brandId, ...existing.sake }, Date.now())
-    } else {
-      const subject = await subjectOf(parsed.data, collection)
-      if (!subject) return { status: 'not_found' }
-      next = addBottle(undefined, subject, Date.now())
-    }
-    await cellar.put(userId, next)
-    return { status: 'ok', count: next.count }
+    const rows = await readSettledCellar(collection)
+    const subject = await subjectOf(parsedTarget.data, collection, rows)
+    if (!subject) return { status: 'not_found' }
+    const change = addBottles(rows, subject, { sizeMl, nama }, count, Date.now())
+    await writeCellarChange(collection, change)
+    return { status: 'ok', count: bottlesOf(applyCellarChange(rows, change), parsedTarget.data) }
   })
 }
 
 /** "Open a bottle". */
-export async function openCellarBottle(target: CellarTarget): Promise<CellarActionResult> {
-  return change(target, (row, now) => openBottle(row, now))
+export async function openCellarBottle(rowKey: string): Promise<CellarActionResult> {
+  return onRow(rowKey, openOne)
 }
 
-/** "Finished": one bottle fewer, the rest sealed; the last one takes the row. */
-export async function finishCellarBottle(target: CellarTarget): Promise<CellarActionResult> {
-  return change(target, (row, now) => finishBottle(row, now))
+/** "Finished": the open bottle is gone. */
+export async function finishCellarBottle(rowKey: string): Promise<CellarActionResult> {
+  return onRow(rowKey, finishOne)
 }
 
-/** "Remove": one bottle fewer; the last one takes the row. */
-export async function removeFromCellar(target: CellarTarget): Promise<CellarActionResult> {
-  return change(target, (row, now) => removeBottle(row, now))
+/** "Remove": one sealed bottle fewer; the last one takes the row. */
+export async function removeFromCellar(rowKey: string): Promise<CellarActionResult> {
+  return onRow(rowKey, removeOne)
 }
 
-async function change(
-  target: CellarTarget,
-  apply: (row: CellarBottle, now: number) => CellarBottle | null,
+/** The sheet, editing a row: a new count, size or nama. */
+export async function editCellarRow(
+  rowKey: string,
+  values: CellarSheetValues,
 ): Promise<CellarActionResult> {
-  const parsed = CellarTargetSchema.safeParse(target)
+  const parsed = CellarSheetValuesSchema.safeParse(values)
   if (!parsed.success) return { status: 'invalid_input' }
-  return withMaintainerCollection(async ({ userId, cellar }) => {
-    const key = rowKeyOf(parsed.data)
-    const row = (await cellar.read(userId)).find((b) => cellarRowKey(b) === key)
+  return onRow(rowKey, (rows, key, now) => editRow(rows, key, parsed.data, now))
+}
+
+async function onRow(
+  rowKey: string,
+  rule: (rows: readonly CellarBottle[], rowKey: string, now: number) => CellarChange,
+): Promise<CellarActionResult> {
+  const key = CellarRowKeySchema.safeParse(rowKey)
+  if (!key.success) return { status: 'invalid_input' }
+  return withMaintainerCollection(async (collection) => {
+    const rows = await readSettledCellar(collection)
+    const row = rows.find((r) => cellarRowKey(r) === key.data)
     if (!row) return { status: 'not_found' }
-    const next = apply(row, Date.now())
-    if (next === null) {
-      await cellar.remove(userId, key)
-      return { status: 'ok', count: 0 }
-    }
-    await cellar.put(userId, next)
-    return { status: 'ok', count: next.count }
+    const change = rule(rows, key.data, Date.now())
+    await writeCellarChange(collection, change)
+    const after = applyCellarChange(rows, change)
+    const thing = row.expression ? { expressionId: row.expression.id } : { brandId: row.brandId! }
+    return { status: 'ok', count: bottlesOf(after, thing) }
   })
 }

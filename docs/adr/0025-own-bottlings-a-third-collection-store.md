@@ -80,3 +80,13 @@ ADR-0024 §5 applies as written, with a third table of the same document shape: 
 - **Undo** restores the bottling, its tastings and its cellar rows as they were. The delete action returns that state to the browser, which holds it for the 6.8 seconds the notice shows and sends it back on Undo. Nothing is kept server-side: no soft-delete flag, no expiring key. Because it comes back from the client, `DeletedBottlingSchema` checks that every record in it belongs to the bottling being restored, so an undo cannot be used to write anything else.
 - These are the record's **rectification** and **per-record erasure** paths (ADR-0009), which until now needed `pnpm journal:erase` for the whole collection.
 
+## Amendment, 2026-10-11 — the cellar sheet (design v1.6.2)
+
+**CellarBottle v3** adds `sizeMl` (180, 300, 720 or 1800; `null` on a row from before anyone was asked) and `nama`. Both are set in the "Add to cellar" sheet and nowhere else.
+
+- **A row's identity is thing + size + nama.** The same sake in 720 ml and 1.8 l is two rows; nama splits rows the same way.
+- **The open bottle has a row of its own**, keyed `<identity>|open`, beside the sealed ones. That is how "an opened row is never merged into" holds: adding always lands on the sealed row. "Open a bottle" moves one bottle across; "Finished" takes it off the open row.
+- **No stored row moves.** A sealed row with no size and not nama keeps the bare key it was written under. The one exception is a pre-v3 row with an open bottle, which v2 kept on the sealed key: `settleOpenRows` moves it the first time any cellar action runs, and only ever looks at rows with no size.
+- The rules are pure functions over the user's rows (`cellar.ts`), returning the rows to write and the keys to remove.
+- *Nama* shortens "best finished this week" from 10 days open to 5. Both numbers are design open decision 4.
+

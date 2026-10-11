@@ -18,17 +18,35 @@ vi.mock('@/lib/collection/get-expression-store', () => ({
 import { currentUserIsMaintainer } from '@/lib/auth/maintainer'
 import {
   addToCellar,
+  editCellarRow,
   finishCellarBottle,
   openCellarBottle,
   removeFromCellar,
 } from '@/lib/collection/cellar-actions'
 import { InMemoryCellarStore } from '@/lib/collection/in-memory-cellar-store'
 import { InMemoryExpressionStore } from '@/lib/collection/in-memory-expression-store'
+import { cellarRowKey } from '@/lib/schemas/cellar-bottle'
 import { lookupBrand } from '@/lib/sakenowa/lookup'
 import { InMemoryJournalStore } from '@/lib/taste/in-memory-journal-store'
 
 const USER = 'user_admin'
 const cellar = () => h.cellar as InMemoryCellarStore
+const expressions = () => h.expressions as InMemoryExpressionStore
+const ONE = { count: 1, sizeMl: 720, nama: false } as const
+/** The cellar as [key, count] pairs. */
+const shelf = async () =>
+  Object.fromEntries((await cellar().read(USER)).map((r) => [cellarRowKey(r), r.count]))
+
+const bottling = {
+  schemaVersion: 1,
+  id: 'x1',
+  own: true,
+  brandId: 7,
+  line: { nameKanji: '而今', nameRomaji: 'Jikon' },
+  name: 'Jikon Nama 2025',
+  createdAt: 1,
+  updatedAt: 1,
+} as const
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -46,95 +64,120 @@ beforeEach(() => {
   })
 })
 
-describe('the cellar, from the buttons', () => {
-  it('adds a bottle with its name, then another to the same row', async () => {
-    expect(await addToCellar({ brandId: 7 })).toEqual({ status: 'ok', count: 1 })
-    expect(await addToCellar({ brandId: 7 })).toEqual({ status: 'ok', count: 2 })
-    const rows = await cellar().read(USER)
-    expect(rows).toHaveLength(1)
-    expect(rows[0]).toMatchObject({ sake: { nameKanji: '而今' }, count: 2, openedAt: null })
+describe('the cellar, from the sheet and the row buttons', () => {
+  it('adds the bottles the sheet asked for, with their size and kind, and counts them', async () => {
+    expect(await addToCellar({ brandId: 7 }, { count: 2, sizeMl: 1800, nama: true })).toEqual({
+      status: 'ok',
+      count: 2,
+    })
+    const [row] = await cellar().read(USER)
+    expect(row).toMatchObject({
+      sake: { nameKanji: '而今' },
+      sizeMl: 1800,
+      nama: true,
+      count: 2,
+      openedAt: null,
+    })
   })
 
-  it('opens, finishes one of two, and finishing the last takes the row', async () => {
-    await addToCellar({ brandId: 7 })
-    await addToCellar({ brandId: 7 })
-    await openCellarBottle({ brandId: 7 })
-    expect((await cellar().read(USER))[0]!.openedAt).toBeTypeOf('number')
-
-    expect(await finishCellarBottle({ brandId: 7 })).toEqual({ status: 'ok', count: 1 })
-    expect((await cellar().read(USER))[0]!.openedAt).toBeNull()
-    expect(await finishCellarBottle({ brandId: 7 })).toEqual({ status: 'ok', count: 0 })
-    expect(await cellar().read(USER)).toEqual([])
+  it('keeps the same sake in two sizes on two rows, and counts both', async () => {
+    await addToCellar({ brandId: 7 }, ONE)
+    const second = await addToCellar({ brandId: 7 }, { count: 1, sizeMl: 1800, nama: false })
+    expect(second).toEqual({ status: 'ok', count: 2 })
+    expect(await shelf()).toEqual({ '7|720|s': 1, '7|1800|s': 1 })
+    // The name is taken from the row already there: one catalogue lookup, not two.
+    expect(lookupBrand).toHaveBeenCalledTimes(1)
   })
 
-  it('removes one bottle at a time, and the row with the last one', async () => {
-    await addToCellar({ brandId: 7 })
-    await addToCellar({ brandId: 7 })
-    expect(await removeFromCellar({ brandId: 7 })).toEqual({ status: 'ok', count: 1 })
-    expect((await cellar().read(USER))[0]!.count).toBe(1)
-    expect(await removeFromCellar({ brandId: 7 })).toEqual({ status: 'ok', count: 0 })
-    expect(await cellar().read(USER)).toEqual([])
+  it('opens a bottle onto its own row, finishes it, and leaves the sealed ones', async () => {
+    await addToCellar({ brandId: 7 }, { ...ONE, count: 2 })
+    expect(await openCellarBottle('7|720|s')).toEqual({ status: 'ok', count: 2 })
+    expect(await shelf()).toEqual({ '7|720|s': 1, '7|720|s|open': 1 })
+
+    // Another bottle bought while one is open waits sealed beside it.
+    await addToCellar({ brandId: 7 }, ONE)
+    expect(await shelf()).toEqual({ '7|720|s': 2, '7|720|s|open': 1 })
+
+    expect(await finishCellarBottle('7|720|s|open')).toEqual({ status: 'ok', count: 2 })
+    expect(await shelf()).toEqual({ '7|720|s': 2 })
   })
 
-  it('refuses a sake not in the catalogue, a row that is not there, and a non-maintainer', async () => {
+  it('removes one sealed bottle at a time; the last one takes the row', async () => {
+    await addToCellar({ brandId: 7 }, { ...ONE, count: 2 })
+    expect(await removeFromCellar('7|720|s')).toEqual({ status: 'ok', count: 1 })
+    expect(await removeFromCellar('7|720|s')).toEqual({ status: 'ok', count: 0 })
+    expect(await shelf()).toEqual({})
+  })
+
+  it('edits a row from the sheet: a new size moves it, a new count stays put', async () => {
+    await addToCellar({ brandId: 7 }, ONE)
+    expect(await editCellarRow('7|720|s', { count: 3, sizeMl: 720, nama: false })).toEqual({
+      status: 'ok',
+      count: 3,
+    })
+    await editCellarRow('7|720|s', { count: 3, sizeMl: 300, nama: true })
+    expect(await shelf()).toEqual({ '7|300|n': 3 })
+  })
+
+  it('moves an open bottle from before the sheet onto its own row the first time anything is done', async () => {
+    // As v2 stored it: three bottles, one open, all on the row keyed by the brand.
+    cellar().putRaw(
+      USER,
+      '7',
+      JSON.stringify({
+        schemaVersion: 2,
+        brandId: 7,
+        sake: { nameKanji: '而今', nameRomaji: 'Jikon' },
+        count: 3,
+        openedAt: 5000,
+        addedAt: 1,
+        updatedAt: 1,
+      }),
+    )
+    expect(await finishCellarBottle('7|open')).toEqual({ status: 'ok', count: 2 })
+    expect(await shelf()).toEqual({ '7': 2 })
+  })
+
+  it('says not found for a row that is not there, and for a sake not in the catalogue', async () => {
+    expect(await openCellarBottle('7|720|s')).toEqual({ status: 'not_found' })
     vi.mocked(lookupBrand).mockResolvedValue(null)
-    expect(await addToCellar({ brandId: 9 })).toEqual({ status: 'not_found' })
-    expect(await openCellarBottle({ brandId: 9 })).toEqual({ status: 'not_found' })
+    expect(await addToCellar({ brandId: 999 }, ONE)).toEqual({ status: 'not_found' })
+  })
+
+  it('refuses what the sheet could not have sent', async () => {
+    // @ts-expect-error — not a size the sheet offers
+    expect(await addToCellar({ brandId: 7 }, { count: 1, sizeMl: 500, nama: false })).toEqual({
+      status: 'invalid_input',
+    })
+    expect(await addToCellar({ brandId: 7 }, { count: 0, sizeMl: 720, nama: false })).toEqual({
+      status: 'invalid_input',
+    })
+    // @ts-expect-error — not a target
+    expect(await addToCellar({}, ONE)).toEqual({ status: 'invalid_input' })
+    expect(await removeFromCellar('')).toEqual({ status: 'invalid_input' })
+  })
+
+  it('stores nothing for someone who is not a maintainer', async () => {
     vi.mocked(currentUserIsMaintainer).mockResolvedValue(false)
-    expect(await addToCellar({ brandId: 7 })).toEqual({ status: 'forbidden' })
+    expect(await addToCellar({ brandId: 7 }, ONE)).toEqual({ status: 'forbidden' })
+    expect(await cellar().read(USER)).toEqual([])
   })
 
   describe('bottles of a bottling you added', () => {
-    const expressions = () => h.expressions as InMemoryExpressionStore
-    const bottling = {
-      schemaVersion: 1,
-      id: 'x1',
-      own: true,
-      brandId: 7,
-      line: { nameKanji: '而今', nameRomaji: 'Jikon' },
-      name: 'Jikon Nama 2025',
-      createdAt: 1,
-      updatedAt: 1,
-    } as const
-
-    it('get a row of their own, apart from the sake\'s', async () => {
+    it('get a row of their own, apart from the sake\'s, and are counted apart', async () => {
       await expressions().put(USER, bottling)
-      await addToCellar({ brandId: 7 })
-      await addToCellar({ brandId: 7 })
-      expect(await addToCellar({ expressionId: 'x1' })).toEqual({ status: 'ok', count: 1 })
+      await addToCellar({ brandId: 7 }, { ...ONE, count: 2 })
+      expect(await addToCellar({ expressionId: 'x1' }, ONE)).toEqual({ status: 'ok', count: 1 })
 
-      const rows = await cellar().read(USER)
-      expect(
-        Object.fromEntries(rows.map((r) => [r.expression?.name ?? r.sake.nameRomaji, r.count])),
-      ).toEqual({ Jikon: 2, 'Jikon Nama 2025': 1 })
+      expect(await shelf()).toEqual({ '7|720|s': 2, 'x:x1|720|s': 1 })
       // The bottling's row still knows its sake, so the sake's page can count it.
-      expect(rows.find((r) => r.expression)).toMatchObject({ brandId: 7, sake: { nameKanji: '而今' } })
-    })
-
-    it('open and finish on their own row, leaving the sake\'s bottles alone', async () => {
-      await expressions().put(USER, bottling)
-      await addToCellar({ brandId: 7 })
-      await addToCellar({ expressionId: 'x1' })
-
-      await openCellarBottle({ expressionId: 'x1' })
-      let rows = await cellar().read(USER)
-      expect(rows.find((r) => r.expression)!.openedAt).not.toBeNull()
-      expect(rows.find((r) => !r.expression)!.openedAt).toBeNull()
-
-      expect(await finishCellarBottle({ expressionId: 'x1' })).toEqual({ status: 'ok', count: 0 })
-      rows = await cellar().read(USER)
-      expect(rows.map((r) => r.expression?.id ?? 'sake')).toEqual(['sake'])
+      const row = (await cellar().read(USER)).find((r) => r.expression)
+      expect(row).toMatchObject({ brandId: 7, sake: { nameKanji: '而今' } })
     })
 
     it('can be kept for a bottle whose sake the catalogue lacks', async () => {
-      await expressions().put(USER, {
-        ...bottling,
-        id: 'x2',
-        brandId: null,
-        line: null,
-        name: '富久千代',
-      })
-      expect(await addToCellar({ expressionId: 'x2' })).toEqual({ status: 'ok', count: 1 })
+      await expressions().put(USER, { ...bottling, id: 'x2', brandId: null, line: null, name: '富久千代' })
+      expect(await addToCellar({ expressionId: 'x2' }, ONE)).toEqual({ status: 'ok', count: 1 })
       expect(lookupBrand).not.toHaveBeenCalled()
       expect((await cellar().read(USER))[0]).toMatchObject({
         brandId: null,
@@ -144,15 +187,8 @@ describe('the cellar, from the buttons', () => {
     })
 
     it('cannot be added for a bottling that is not yours', async () => {
-      expect(await addToCellar({ expressionId: 'nope' })).toEqual({ status: 'not_found' })
+      expect(await addToCellar({ expressionId: 'nope' }, ONE)).toEqual({ status: 'not_found' })
       expect(await cellar().read(USER)).toEqual([])
-    })
-
-    it('refuses a target that is neither a sake nor a bottling, or both', async () => {
-      // @ts-expect-error — not a target
-      expect(await addToCellar({})).toEqual({ status: 'invalid_input' })
-      // Both at once: the type allows it structurally, the schema does not.
-      expect(await addToCellar({ brandId: 7, expressionId: 'x1' })).toEqual({ status: 'invalid_input' })
     })
   })
 })

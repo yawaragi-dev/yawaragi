@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { addBottle } from '@/lib/collection/cellar'
+import { newCellarRow } from '@/lib/collection/cellar'
 import { InMemoryCellarStore } from '@/lib/collection/in-memory-cellar-store'
 import { InMemoryExpressionStore } from '@/lib/collection/in-memory-expression-store'
 import { restoreCollection } from '@/lib/collection/restore-collection'
@@ -17,7 +17,7 @@ const entry = (id: string, at: number): JournalEntry => ({
   triedAt: at,
   createdAt: at,
 })
-const bottle = addBottle(undefined, { brandId: 7, nameKanji: '而今', nameRomaji: null }, 1)
+const bottle = newCellarRow({ brandId: 7, nameKanji: '而今', nameRomaji: null }, { sizeMl: 720, nama: false }, 1, 1)
 
 const bottling: Expression = {
   schemaVersion: 1,

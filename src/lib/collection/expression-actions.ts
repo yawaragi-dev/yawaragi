@@ -6,7 +6,7 @@ import {
   deleteBottlingWrites,
   renameBottlingWrites,
 } from '@/lib/collection/bottling-changes'
-import { cellarRowKey } from '@/lib/schemas/cellar-bottle'
+import { readSettledCellar } from '@/lib/collection/settled-cellar'
 import { EXPRESSION_SCHEMA_VERSION, type Expression, ExpressionSchema } from '@/lib/schemas/expression'
 import {
   type AddOwnBottlingInput,
@@ -104,7 +104,7 @@ export async function renameOwnBottling(
   const { expressionId, name } = parsed.data
 
   return withMaintainerCollection(async (collection) => {
-    const { userId, expressions, journal, cellar } = collection
+    const { userId, expressions, journal } = collection
     const existing = (await expressions.read(userId)).find((e) => e.id === expressionId)
     if (!existing) return { status: 'not_found' }
 
@@ -118,7 +118,7 @@ export async function renameOwnBottling(
     const checked = ExpressionSchema.safeParse(next)
     if (!checked.success) return { status: 'invalid_input' }
 
-    const [entries, rows] = await Promise.all([journal.read(userId), cellar.read(userId)])
+    const [entries, rows] = await Promise.all([journal.read(userId), readSettledCellar(collection)])
     await expressions.put(userId, checked.data)
     await apply(collection, renameBottlingWrites(checked.data, { entries, cellar: rows }, now))
     return { status: 'ok' }
@@ -143,11 +143,11 @@ export async function deleteOwnBottling(expressionId: string): Promise<DeleteOwn
     return { status: 'invalid_input' }
   }
   return withMaintainerCollection(async (collection) => {
-    const { userId, expressions, journal, cellar } = collection
+    const { userId, expressions, journal } = collection
     const existing = (await expressions.read(userId)).find((e) => e.id === expressionId)
     if (!existing) return { status: 'not_found' }
 
-    const [entries, rows] = await Promise.all([journal.read(userId), cellar.read(userId)])
+    const [entries, rows] = await Promise.all([journal.read(userId), readSettledCellar(collection)])
     const { writes, undo } = deleteBottlingWrites(existing, { entries, cellar: rows }, Date.now())
     await apply(collection, writes)
     // Last, so that a failure above leaves the bottling there to try again.
@@ -172,7 +172,7 @@ export async function restoreOwnBottling(
 
   // A row the delete created can only have been the sake's own.
   if (expression.brandId !== null) {
-    const sakeKeyPrefix = cellarRowKey({ brandId: expression.brandId })
+    const sakeKeyPrefix = String(expression.brandId)
     if (!createdCellarKeys.every((key) => key === sakeKeyPrefix || key.startsWith(`${sakeKeyPrefix}|`))) {
       return { status: 'invalid_input' }
     }
