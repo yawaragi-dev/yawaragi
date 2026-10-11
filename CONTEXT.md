@@ -15,6 +15,10 @@ Where it must be told apart from an **Expression**, call it the **Line** (design
 One bottling a Brewery sells under a name and a spec, within a **Sake** (line) or standing alone when the line is unknown — e.g. Rihaku "Wandering Poet", Junmai Ginjo, Yamada Nishiki 55%. Independent of bottle size and usually of vintage; an age statement (Daruma Masamune 3- / 5- / 10-year) makes separate Expressions. Sakenowa has no such level; ours are curated from labels and importer / brewery pages, each fact with its own source. In the UI: "bottling" (DE "Abfüllung"). Two kinds. An **own Expression** is one a *User* added themselves — "Add your bottling", "Keep it anyway", "Add it yourself" — with `own: true` and a line that may be unknown (`brandId: null`); it is private to its author, lives in the user's `ExpressionStore`, and is what the design calls an "own bottling" or "your own entry" (design v1.6 B2, ADR-0025). A **catalogue Expression** is curated and public; none exist yet, because nothing supplies them.
 _Avoid_: Product, Label, SKU, Variant
 
+**Learn**:
+The public reference on what a label and a bottle mean: an index and **GuideEntries** (one term or subject each — a grade, a process, a rice). Hand-written from named sources (`manual_curation`), outside the 18+ gate because it holds no sake data (ADR-0026). In the UI "Learn" (DE "Wissen"); the design's §18 calls it "Sake guide".
+_Avoid_: Sakepedia, Sake guide, Wiki
+
 **Bottle**:
 A physical bottle the user owns — a row in the Cellar, with a count and (later) a size. In the UI "bottle" (DE "Flasche") appears only for things the user owns ("Add to cellar", "Remove one"). Code: `CellarBottle`.
 _Avoid_: using "bottle" for a Sake or an Expression ("bottle page" in older design text means the Sake page)

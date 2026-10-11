@@ -53,6 +53,7 @@
   },
   "footer": {
     "imprintLink": "Impressum",
+    "learnLink": "Wissen",
     "privacyLink": "Datenschutz",
     "drinkResponsibly": "Trinke verantwortungsvoll",
     "label": "Rechtliches"
@@ -555,6 +556,8 @@
     "signInCta": "Anmelden",
     "groupDisplay": "Anzeige",
     "groupPrivacy": "Datenschutz",
+    "groupLearn": "Wissen",
+    "learnLabel": "Was die Wörter auf einem Etikett bedeuten",
     "groupAccount": "Konto",
     "languageLabel": "Sprache",
     "languageValue": "English",
@@ -783,6 +786,7 @@
   "scanOutcome": {
     "scanAgain": "Neu scannen",
     "typeInstead": "Stattdessen den Namen eintippen",
+    "howToReadALabel": "Ein Etikett lesen",
     "whatWeRead": "Was wir gelesen haben",
     "name": "Name",
     "brewery": "Brauerei",
@@ -890,6 +894,492 @@
       "title": "Für die ganze Linie gemessen",
       "measured": "Sakenowa erfasst einen Sake — die Linie {line} — und nicht jede Abfüllung unter diesem Namen. Ein Ginjō und ein Genshu derselben Linie können recht unterschiedlich schmecken.",
       "howToRead": "Lies das Diagramm und „Ähnliche“ als Familienähnlichkeit. Deine eigene Bewertung und deine Notizen auf dieser Seite gelten nur für diese Abfüllung."
+    }
+  },
+  "learn": {
+    "title": "Wissen",
+    "metaTitle": "Sake-Wissen | Yawaragi",
+    "metaDescription": "Was die Wörter auf einem Sake-Etikett bedeuten: Qualitätsstufen, Poliergrad, Gärstarter, unpasteurisierter, gereifter und schäumender Sake sowie Sake-Reis. Von Hand geschrieben, mit Quellen.",
+    "lead": "Was die Wörter auf einem Etikett bedeuten. Von Hand geschrieben, mit Quellen.",
+    "startHere": "Hier anfangen",
+    "allTopics": "Alle Themen",
+    "openApp": "App öffnen",
+    "sourceLabel": "Quelle",
+    "sourcesLabel": "Quellen",
+    "checked": "Am {date} mit den Quellen abgeglichen.",
+    "related": "Verwandt",
+    "entryMetaTitle": "{title} | Wissen | Yawaragi",
+    "groups": {
+      "start": "Hier anfangen",
+      "grades": "Qualitätsstufen",
+      "styles": "Stile und Verfahren",
+      "rice": "Reis"
+    },
+    "groupKicker": {
+      "start": "Eine Flasche lesen",
+      "grades": "Qualitätsstufe",
+      "styles": "Stil",
+      "rice": "Reis"
+    },
+    "entries": {
+      "how-to-read-a-label": {
+        "title": "Ein Etikett lesen",
+        "answer": "Die größten Schriftzeichen sind meist der Name des Sake, nicht die Brauerei. Qualitätsstufe, Poliergrad und die Einzelheiten stehen kleiner, oft auf dem Rückenetikett.",
+        "factsTitle": "Worauf du achten kannst",
+        "facts": {
+          "name": {
+            "term": "Name",
+            "value": "Die große Kalligrafie",
+            "note": "Der Name des Sake. Der Name der Brauerei steht klein neben ihrer Adresse."
+          },
+          "type": {
+            "term": "Sake",
+            "value": "Das gesetzliche Wort dafür",
+            "note": "Eines der beiden steht auf jeder Flasche."
+          },
+          "grade": {
+            "term": "Qualitätsstufe",
+            "value": "Junmai, Ginjō, Daiginjō, Honjōzō",
+            "note": "Einzeln oder kombiniert, wie hier. Fehlt ein solches Wort ganz, ist es einfacher Sake, Futsūshu 普通酒."
+          },
+          "polishing": {
+            "term": "Poliergrad",
+            "value": "Eine Prozentzahl",
+            "note": "Wie viel von jedem Korn nach dem Polieren übrig ist. 60 % heißt: 40 % wurden abgeschliffen."
+          },
+          "ingredients": {
+            "term": "Zutaten",
+            "value": "米, 米こうじ, manchmal 醸造アルコール",
+            "note": "Reis, Kōji-Reis und Braualkohol, wenn welcher zugesetzt wurde. Wasser wird nicht aufgeführt."
+          },
+          "alcohol": {
+            "term": "Alkohol",
+            "value": "Bei den meisten Sake um 15 度",
+            "note": "度 bedeutet Prozent. Unverdünnter Sake, Genshu, liegt höher."
+          },
+          "volume": {
+            "term": "Inhalt",
+            "value": "720 ml oder 1,8 l",
+            "note": "Die beiden üblichen Flaschen: 四合瓶 yongōbin und 一升瓶 isshōbin."
+          },
+          "date": {
+            "term": "Datum",
+            "value": "Ein Jahr und ein Monat",
+            "note": "Wann er für den Verkauf abgefüllt wurde, nicht wann er gebraut wurde. Seit der Änderung der Kennzeichnungsregeln von 2022 ist die Angabe freiwillig."
+          },
+          "maker": {
+            "term": "Brauerei",
+            "value": "Ein Name und eine Adresse",
+            "note": "酒造 shuzō und 醸造 jōzō bedeuten beide Brauerei."
+          },
+          "styles": {
+            "term": "Stilwörter",
+            "value": "Unpasteurisiert · unverdünnt · ungefiltert · Yamahai",
+            "note": "Kurze Wörter, oft in einer Ecke oder auf dem Halsetikett. Jedes hat hier eine eigene Seite."
+          }
+        },
+        "detail": {
+          "p1": "Ein Vorderetikett soll wiedererkannt werden, nicht gelesen: ein Name in Pinselschrift, manchmal sonst nichts. Die Angaben stehen auf dem Rückenetikett oder auf einem schmalen Streifen an der Seite.",
+          "p2": "Wenn du nur drei Dinge findest, dann die Qualitätsstufe, den Poliergrad und das Zeichen 生. Zusammen sagen sie ungefähr, wie der Sake gemacht wurde und ob er in den Kühlschrank gehört."
+        }
+      },
+      "grades": {
+        "title": "Die Qualitätsstufen im Überblick",
+        "answer": "Acht Bezeichnungen, die sich aus zwei Fragen ergeben: Wurde Braualkohol zugesetzt, und wie weit wurde der Reis poliert? Sake ohne eine davon ist Futsūshu, einfacher Sake.",
+        "factsTitle": "Die acht Bezeichnungen",
+        "facts": {
+          "junmai": {
+            "term": "Junmai",
+            "value": "Keine Vorgabe zum Poliergrad",
+            "note": "Nur Reis, Kōji und Wasser."
+          },
+          "tokubetsuJunmai": {
+            "term": "Tokubetsu Junmai",
+            "value": "60 % oder weniger, oder ein besonderes Verfahren",
+            "note": "Das Etikett muss sagen, was ihn besonders macht."
+          },
+          "junmaiGinjo": {
+            "term": "Junmai Ginjō",
+            "value": "60 % oder weniger"
+          },
+          "junmaiDaiginjo": {
+            "term": "Junmai Daiginjō",
+            "value": "50 % oder weniger"
+          },
+          "honjozo": {
+            "term": "Honjōzō",
+            "value": "70 % oder weniger",
+            "note": "Mit etwas Braualkohol, wie die drei darunter."
+          },
+          "tokubetsuHonjozo": {
+            "term": "Tokubetsu Honjōzō",
+            "value": "60 % oder weniger, oder ein besonderes Verfahren"
+          },
+          "ginjo": {
+            "term": "Ginjō",
+            "value": "60 % oder weniger",
+            "note": "Nach der Ginjō-Methode gebraut."
+          },
+          "daiginjo": {
+            "term": "Daiginjō",
+            "value": "50 % oder weniger",
+            "note": "Ginjō, noch weiter getrieben."
+          }
+        },
+        "detail": {
+          "p1": "Die Prozentzahlen sind Poliergrade: der Anteil jedes Korns, der nach dem Polieren übrig bleibt.",
+          "p2": "Für alle acht gelten drei Regeln. Der Reis muss geprüft und mindestens in Güteklasse 3 eingestuft sein. Kōji-Reis muss mindestens 15 % des Reises ausmachen. Zugesetzter Alkohol darf höchstens 10 % des Reisgewichts betragen.",
+          "p3": "Eine Qualitätsstufe ist ein Rezept, keine Rangliste. Eine niedrigere Zahl ist kein besserer Sake, nur ein anderer."
+        }
+      },
+      "junmai": {
+        "title": "Junmai",
+        "answer": "Nur aus Reis, Kōji und Wasser gebraut, ohne zugesetzten Braualkohol.",
+        "factsTitle": "Was dafür gilt",
+        "facts": {
+          "ingredients": {
+            "term": "Zutaten",
+            "value": "Reis, Kōji-Reis, Wasser",
+            "note": "Sonst nichts."
+          },
+          "polishing": {
+            "term": "Poliergrad",
+            "value": "Kein Mindestwert",
+            "note": "Auf dem Etikett steht er trotzdem."
+          },
+          "alcohol": {
+            "term": "Zugesetzter Alkohol",
+            "value": "Keiner"
+          }
+        },
+        "detail": {
+          "p1": "Das Wort verbindet sich mit den anderen Stufen. Junmai Ginjō und Junmai Daiginjō sind Ginjō und Daiginjō ohne zugesetzten Alkohol.",
+          "p2": "Weil nichts zugesetzt ist, zeigt Junmai-Sake den Geschmack von Reis und Kōji meist deutlicher als andere Arten."
+        }
+      },
+      "ginjo": {
+        "title": "Ginjō und Daiginjō",
+        "answer": "Reis, auf 60 % oder weniger poliert und nach der Ginjō-Methode gebraut. Beim Daiginjō wird auf 50 % oder weniger poliert.",
+        "factsTitle": "Was dafür gilt",
+        "facts": {
+          "ginjo": {
+            "term": "Ginjō",
+            "value": "Auf 60 % oder weniger poliert"
+          },
+          "daiginjo": {
+            "term": "Daiginjō",
+            "value": "Auf 50 % oder weniger poliert"
+          },
+          "method": {
+            "term": "Verfahren",
+            "value": "Ginjō-zukuri",
+            "note": "Eine langsame Gärung bei niedriger Temperatur."
+          },
+          "alcohol": {
+            "term": "Zugesetzter Alkohol",
+            "value": "Erlaubt, bis 10 % des Reisgewichts",
+            "note": "Ohne ihn: Junmai Ginjō, Junmai Daiginjō."
+          },
+          "aroma": {
+            "term": "Aroma",
+            "value": "Ginjō-ka",
+            "note": "Das fruchtige Aroma, für das das Verfahren bekannt ist."
+          }
+        },
+        "detail": {
+          "p1": "Beim Polieren werden die äußeren Schichten des Korns entfernt, in denen der größte Teil des Eiweißes sitzt. Zu viel Eiweiß ergibt raue, unreine Geschmacksnoten; was nach dem Polieren bleibt, ist vor allem Stärke.",
+          "p2": "Eine niedrigere Zahl ist kein besserer Sake, nur ein anderer."
+        }
+      },
+      "honjozo": {
+        "title": "Honjōzō",
+        "answer": "Reis, auf 70 % oder weniger poliert, mit einer kleinen, begrenzten Menge zugesetzten Braualkohols.",
+        "factsTitle": "Was dafür gilt",
+        "facts": {
+          "polishing": {
+            "term": "Poliergrad",
+            "value": "70 % oder weniger"
+          },
+          "alcohol": {
+            "term": "Zugesetzter Alkohol",
+            "value": "Bis 10 % des Reisgewichts",
+            "note": "Braualkohol: destillierter Alkohol, der der Maische vor dem Pressen zugesetzt wird."
+          },
+          "tokubetsu": {
+            "term": "Tokubetsu",
+            "value": "60 % oder weniger, oder ein besonderes Verfahren",
+            "note": "Das Etikett muss sagen, welches von beiden."
+          }
+        },
+        "detail": {
+          "p1": "In der Maische löst der Alkohol Aromen heraus. Er verdünnt zugleich, was aus Reis und Gärung stammt: Der Sake hat weniger Säure und Umami und wirkt leichter.",
+          "p2": "Er ist eine Zutat mit einer Obergrenze, keine Abkürzung. Über der Grenze darf ein Sake keine der acht Bezeichnungen tragen."
+        }
+      },
+      "polishing-ratio": {
+        "title": "Poliergrad",
+        "answer": "Der Anteil jedes Reiskorns, der nach dem Polieren übrig ist. 60 % heißt: 40 % wurden abgeschliffen.",
+        "factsTitle": "Die Grenzen je Stufe",
+        "facts": {
+          "honjozo": {
+            "term": "Honjōzō",
+            "value": "70 % oder weniger"
+          },
+          "ginjo": {
+            "term": "Ginjō",
+            "value": "60 % oder weniger"
+          },
+          "daiginjo": {
+            "term": "Daiginjō",
+            "value": "50 % oder weniger"
+          },
+          "junmai": {
+            "term": "Junmai",
+            "value": "Keine Grenze",
+            "note": "Wie hoch er auch ist, das Etikett nennt ihn."
+          },
+          "rounding": {
+            "term": "Bruchteile",
+            "value": "Werden abgerundet",
+            "note": "Ein Poliergrad von 60,9 % zählt als 60 %."
+          }
+        },
+        "detail": {
+          "p1": "In den äußeren Schichten eines Korns sitzt Eiweiß, und zu viel Eiweiß ergibt raue, unreine Geschmacksnoten, Zatsumi 雑味 genannt. Schleift man sie ab, bleibt der stärkehaltige Kern.",
+          "p2": "Die Zahl beschreibt den Reis, nicht das Ergebnis. Fachleute sehen in ihr einen Hinweis auf den Charakter eines Sake, kein Maß für seine Qualität."
+        }
+      },
+      "yeast-starters": {
+        "title": "Gärstarter: Sokujō, Kimoto, Yamahai",
+        "answer": "Vor der Hauptmaische ziehen Brauer die Hefe in einem kleinen Ansatz heran. Er braucht Milchsäure, um andere Mikroben fernzuhalten, und die drei Verfahren unterscheiden sich darin, woher diese Säure kommt.",
+        "factsTitle": "Drei Wege zum Start",
+        "facts": {
+          "sokujo": {
+            "term": "Sokujō",
+            "value": "Milchsäure wird zugesetzt",
+            "note": "Etwa zwei Wochen. Das Verfahren, mit dem heute der meiste Sake entsteht."
+          },
+          "kimoto": {
+            "term": "Kimoto",
+            "value": "Wilde Milchsäurebakterien bilden sie",
+            "note": "Etwa vier Wochen. Reis und Kōji werden zuerst mit Stangen zu einem Brei zerrieben."
+          },
+          "yamahai": {
+            "term": "Yamahai",
+            "value": "Wilde Milchsäurebakterien, ohne das Zerreiben",
+            "note": "Etwa vier Wochen. 1909 als einfacheres Kimoto entwickelt."
+          }
+        },
+        "detail": {
+          "p1": "Bei Kimoto und Yamahai beginnt der Ansatz kalt, bei etwa 8 °C, und wird langsam erwärmt. Zuerst kommen Milchsäurebakterien und säuern die Maische. Nach etwa zwei Wochen wird die Hefe zugegeben; Säure und Alkohol töten die Bakterien dann ab.",
+          "p2": "Bei Sokujō wird fertige Milchsäure zugesetzt, statt die Bakterien heranzuziehen. Das verkürzt den Ansatz um etwa zwei Wochen.",
+          "p3": "Die langsameren Verfahren ergeben meist einen volleren Körper und einen vielschichtigeren Geschmack; Sokujō ist meist leichter und feiner. Der Starter hat mit der Qualitätsstufe nichts zu tun: Ein Junmai Ginjō kann ein Kimoto sein."
+        }
+      },
+      "nama": {
+        "title": "Nama: unpasteurisierter Sake",
+        "answer": "Sake wird üblicherweise zweimal pasteurisiert, vor der Lagerung und bei der Abfüllung. Nama-Sake lässt einen oder beide Schritte aus. Das hält ihn frisch im Geschmack, und er muss kalt bleiben.",
+        "factsTitle": "Welche Erhitzung entfällt",
+        "facts": {
+          "namazake": {
+            "term": "Namazake",
+            "value": "Beide",
+            "note": "Nie pasteurisiert. Sein Etikett muss einen Lagerhinweis tragen."
+          },
+          "namachozo": {
+            "term": "Nama-chozō",
+            "value": "Die erste",
+            "note": "Unpasteurisiert gelagert, dann einmal bei der Abfüllung pasteurisiert."
+          },
+          "namazume": {
+            "term": "Nama-zume",
+            "value": "Die zweite",
+            "note": "Einmal vor der Lagerung pasteurisiert, dann ohne zweite Erhitzung abgefüllt."
+          },
+          "hiyaoroshi": {
+            "term": "Hiyaoroshi",
+            "value": "Die zweite",
+            "note": "Ein Nama-zume, der seit dem Winter reift und im Herbst erscheint."
+          }
+        },
+        "detail": {
+          "p1": "Beim Pasteurisieren wird Sake auf etwa 60–65 °C erhitzt. Das tötet Mikroben ab und stoppt die Enzyme, die den Sake sonst in der Flasche weiter verändern würden.",
+          "p2": "Weil seine Enzyme noch aktiv sind, schmeckt Namazake frisch und lebendig und hält sich nur im Kühlschrank."
+        }
+      },
+      "muroka": {
+        "title": "Muroka",
+        "answer": "„Ungefiltert“: Sake, bei dem die zweite Filtration entfällt, die mit Aktivkohle. Er ist trotzdem gepresst und klar, nicht trüb.",
+        "factsTitle": "Was das Wort umfasst",
+        "facts": {
+          "skipped": {
+            "term": "Entfällt",
+            "value": "Aktivkohle",
+            "note": "Kohle nimmt Farbe heraus und gleicht den Geschmack an."
+          },
+          "kept": {
+            "term": "Entfällt nicht",
+            "value": "Das Pressen",
+            "note": "Ein Tuch trennt den Sake weiterhin vom Trester, etwas Filtration gibt es also doch."
+          },
+          "looks": {
+            "term": "Aussehen",
+            "value": "Oft blassgelb"
+          },
+          "combined": {
+            "term": "Oft zusammen mit",
+            "value": "Unpasteurisiert und unverdünnt",
+            "note": "Drei Stilwörter in einem: Muroka, Nama, Genshu."
+          }
+        },
+        "detail": {
+          "p1": "Das Wort hat keine einheitlich festgelegte Bedeutung. Für die eine Brauerei heißt es: gar keine zweite Filtration, für die andere nur: keine Kohle.",
+          "p2": "Muroka-Sake gilt als voller im Geschmack: Er behält die feinen Partikel, Aromen und Geschmacksstoffe, die Kohle herausnehmen würde."
+        }
+      },
+      "genshu": {
+        "title": "Genshu",
+        "answer": "Unverdünnter Sake: Nach dem Pressen wird kein Wasser zugegeben, um den Alkohol zu senken.",
+        "factsTitle": "In Zahlen",
+        "facts": {
+          "usual": {
+            "term": "Die meisten Sake",
+            "value": "Auf etwa 15 % verdünnt"
+          },
+          "genshu": {
+            "term": "Genshu",
+            "value": "Meist über 17 %"
+          },
+          "rule": {
+            "term": "Die Regel",
+            "value": "Weniger als 1 % Veränderung",
+            "note": "Ein Sake darf noch Genshu heißen, wenn zugegebenes Wasser seinen Alkohol um weniger als einen Prozentpunkt ändert."
+          }
+        },
+        "detail": {
+          "p1": "Sake kommt mit etwa 17–20 % Alkohol aus der Presse. Ohne das Wasser behält Genshu diese Stärke und einen kräftigeren Geschmack."
+        }
+      },
+      "nigori": {
+        "title": "Nigori",
+        "answer": "Trüber Sake: Die Maische wird durch ein grobes Netz gepresst, sodass Reisteilchen und Hefe mit in die Flasche gelangen.",
+        "factsTitle": "Was dich erwartet",
+        "facts": {
+          "mesh": {
+            "term": "Trübung",
+            "value": "Hängt davon ab, wie grob das Netz ist"
+          },
+          "texture": {
+            "term": "Textur",
+            "value": "Dicker und cremiger, meist süßer"
+          },
+          "pasteurised": {
+            "term": "Pasteurisiert",
+            "value": "Heute meistens",
+            "note": "Früher wurde er unpasteurisiert verkauft, mit lebender Hefe."
+          },
+          "live": {
+            "term": "Lebender Nigori",
+            "value": "Gärt noch",
+            "note": "Ein unpasteurisierter Nigori, dessen Hefe in der Flasche weiterarbeitet. Deshalb perlt er."
+          }
+        },
+        "detail": {
+          "p1": "Nigori und Muroka sind verschiedene Dinge. Bei Muroka geht es um die Kohlefiltration nach dem Pressen, bei Nigori um das Netz an der Presse."
+        }
+      },
+      "koshu": {
+        "title": "Koshu: gereifter Sake",
+        "answer": "Sake, der Jahre statt Monate reift. Er wird von gelb zu bernsteinfarben und bekommt Aromen von Karamell, Trockenfrüchten, Nüssen und Sojasauce.",
+        "factsTitle": "Wie lange",
+        "facts": {
+          "usual": {
+            "term": "Die meisten Sake",
+            "value": "Sechs Monate bis ein Jahr vor dem Verkauf"
+          },
+          "koshu": {
+            "term": "Koshu",
+            "value": "Jahre",
+            "note": "Kein Gesetz legt eine Zahl fest. Der Brauereiverband schreibt in seinem Glossar „mehr als zwei Jahre“ und in seinem Leitfaden „mindestens drei“."
+          },
+          "printedAge": {
+            "term": "Ein aufgedrucktes Alter",
+            "value": "Ganze Jahre",
+            "note": "Bruchteile entfallen, und ein Verschnitt nennt das Alter seines jüngsten Teils."
+          },
+          "alsoWritten": {
+            "term": "Auch geschrieben",
+            "value": "Gereifter Sake, lange gereifter Sake"
+          }
+        },
+        "detail": {
+          "p1": "Farbe und Geschmack entstehen durch eine langsame Reaktion zwischen den Zuckern und den Aminosäuren im Sake, dieselbe, die Brot bräunt.",
+          "p2": "Koshu schmeckt leicht bitter und hat einen langen Nachhall. Bitterkeit ist bei Sake sonst nicht erwünscht; hier gehört sie zum Stil."
+        }
+      },
+      "sparkling": {
+        "title": "Schäumender Sake",
+        "answer": "Sake mit Perlen. Die Arten unterscheiden sich darin, woher die Kohlensäure kommt: zugesetzt, durch eine zweite Gärung entstanden oder noch im Entstehen, durch lebende Hefe in der Flasche.",
+        "factsTitle": "Vier Begriffe zum Unterscheiden",
+        "facts": {
+          "carbonated": {
+            "term": "Karbonisiert",
+            "value": "Die Kohlensäure wird zugesetzt",
+            "note": "Unter Druck, wenn der Sake fertig und gefiltert ist. Meist klar und meist pasteurisiert."
+          },
+          "secondFermentation": {
+            "term": "Zweite Gärung",
+            "value": "Gärt in der Flasche oder im geschlossenen Tank weiter",
+            "note": "Die Gärung wird früh gestoppt und unter Verschluss beendet; so bleibt die Kohlensäure gefangen. Der Bodensatz kann bleiben, für einen trüben Stil, oder entfernt werden."
+          },
+          "live": {
+            "term": "Lebender Nigori",
+            "value": "Gärt noch",
+            "note": "Nur grob gefiltert und unpasteurisiert abgefüllt, sodass Kōji und Hefe weiterarbeiten. Eine Winterspezialität."
+          },
+          "awa": {
+            "term": "Awa-Sake",
+            "value": "Ein zertifizierter Standard",
+            "note": "Perlen nur aus der Gärung, klar, pasteurisiert, mehr als 10 % Alkohol und 3,5 bar Druck bei 20 °C. Festgelegt von der Japan Awasake Association, gegründet 2016."
+          }
+        },
+        "detail": {
+          "p1": "Die Stärke schwankt stark. Viele schäumende Sake liegen zwischen 5 % und 12 % und sind leichter als stiller Sake; die süßen liegen um 6–8 %, und es gibt auch kräftige, trockene.",
+          "p2": "Wie schäumender Sake hergestellt wird, ist nicht streng geregelt, und einheitliche Etikettbegriffe gibt es dafür nicht. Das Rückenetikett und die Angaben der Brauerei geben Auskunft."
+        }
+      },
+      "sake-rice": {
+        "title": "Sake-Reis",
+        "answer": "Brauer bevorzugen Reis, der dafür gezüchtet wurde: große Körner mit weißem, stärkehaltigem Kern und wenig Eiweiß. Einige Sorten stehen immer wieder auf Etiketten.",
+        "factsTitle": "Vier Namen, die man kennen sollte",
+        "facts": {
+          "yamadaNishiki": {
+            "term": "Yamada Nishiki",
+            "value": "Hyōgo",
+            "note": "Der am meisten angebaute Sake-Reis. 1923 gekreuzt, seit 1936 von der Präfektur empfohlen."
+          },
+          "gohyakumangoku": {
+            "term": "Gohyakumangoku",
+            "value": "Niigata",
+            "note": "Der am zweithäufigsten angebaute."
+          },
+          "miyamaNishiki": {
+            "term": "Miyama Nishiki",
+            "value": "Nagano",
+            "note": "1978 benannt. Kälteverträglich, in Nagano und im Nordosten angebaut."
+          },
+          "omachi": {
+            "term": "Omachi",
+            "value": "Okayama",
+            "note": "1859 entdeckt und ein Vorfahr der ersten beiden. Fast alles davon wächst bis heute in Okayama."
+          }
+        },
+        "detail": {
+          "p1": "Der weiße Kern heißt Shinpaku 心白: eine lockere, undurchsichtige Stärketasche in der Mitte des Korns, in die der Kōji-Pilz leicht hineinwächst. Auch „groß“ ist definiert: 26 Gramm oder mehr je tausend Körner.",
+          "p2": "Eine Sorte darf nur dann auf dem Etikett stehen, wenn sie mehr als die Hälfte des verwendeten Reises ausmacht; das Etikett muss dann ihren Anteil nennen.",
+          "p3": "Die Sorten unterscheiden sich darin, wie leicht sie sich in der Maische lösen, und das zeigt sich im Sake. Jede Region hat ihre eigenen."
+        }
+      }
     }
   }
 }

@@ -1,4 +1,6 @@
 import type { Icon } from '@phosphor-icons/react'
+import { CaretRight } from '@phosphor-icons/react/dist/ssr'
+import { Link } from '@/i18n/navigation'
 import { cn } from '@/lib/utils'
 
 /**
@@ -17,9 +19,8 @@ import { cn } from '@/lib/utils'
  *   tappable** until DACH launch", and a row that looks tappable and is not is
  *   worse than one that never claimed to be.
  *
- * A *link* row will be a third when §15's remaining rows land; it is not here
- * yet because nothing in this slice navigates, and an unused variant is a
- * guess about the next slice rather than code.
+ * A *link* row is the third: {@link SettingsLinkRow}, where the whole row is
+ * the way to another screen.
  */
 export function SettingsRow({
   icon: RowIcon,
@@ -57,6 +58,43 @@ export function SettingsRow({
         {children}
       </span>
     </div>
+  )
+}
+
+/**
+ * A row that leads somewhere (§15's "Learn" row, design v1.6): the whole row
+ * is the link, with a caret at the right to say so.
+ */
+export function SettingsLinkRow({
+  icon: RowIcon,
+  label,
+  sub,
+  href,
+  testId,
+}: {
+  icon: Icon
+  label: string
+  sub?: string
+  href: React.ComponentProps<typeof Link>['href']
+  testId: string
+}) {
+  return (
+    <Link
+      href={href}
+      className={cn(
+        'flex min-h-[50px] items-center gap-3.5 px-4 py-2.5',
+        'border-b border-divider last:border-b-0',
+        'transition-colors hover:bg-ash-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ginshu-600',
+      )}
+      data-testid={testId}
+    >
+      <RowIcon size={20} className="shrink-0 text-ash-600" aria-hidden="true" />
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span className="text-body text-ink">{label}</span>
+        {sub && <span className="text-meta text-ash-600">{sub}</span>}
+      </span>
+      <CaretRight size={16} className="shrink-0 text-ash-600" aria-hidden="true" />
+    </Link>
   )
 }
 
