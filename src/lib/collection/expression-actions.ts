@@ -1,12 +1,23 @@
 'use server'
 
-import { EXPRESSION_SCHEMA_VERSION, type Expression } from '@/lib/schemas/expression'
+import {
+  type CollectionWrites,
+  type DeletedBottling,
+  deleteBottlingWrites,
+  renameBottlingWrites,
+} from '@/lib/collection/bottling-changes'
+import { cellarRowKey } from '@/lib/schemas/cellar-bottle'
+import { EXPRESSION_SCHEMA_VERSION, type Expression, ExpressionSchema } from '@/lib/schemas/expression'
 import {
   type AddOwnBottlingInput,
   AddOwnBottlingInputSchema,
+  type DeletedBottlingInput,
+  DeletedBottlingSchema,
+  type RenameOwnBottlingInput,
+  RenameOwnBottlingInputSchema,
 } from '@/lib/schemas/expression-input'
 import { lookupBrand } from '@/lib/sakenowa/lookup'
-import { withMaintainerCollection } from '@/lib/taste/maintainer-collection'
+import { type MaintainerCollection, withMaintainerCollection } from '@/lib/taste/maintainer-collection'
 
 /**
  * Adding a bottling of your own (design v1.6, ADR-0025). With a sake — "Add
@@ -60,5 +71,123 @@ export async function addOwnBottling(input: AddOwnBottlingInput): Promise<AddOwn
     }
     await expressions.put(userId, expression)
     return { status: 'ok', expressionId: expression.id }
+  })
+}
+
+/** Carry out a set of writes against the journal and the cellar. */
+async function apply({ userId, journal, cellar }: MaintainerCollection, writes: CollectionWrites) {
+  for (const entry of writes.putEntries) await journal.put(userId, entry)
+  for (const id of writes.removeEntryIds) await journal.remove(userId, id)
+  // Removes before puts: a delete folds a bottling's row into its sake's, and
+  // the two never share a key, but the order keeps that true by construction.
+  for (const key of writes.removeCellarKeys) await cellar.remove(userId, key)
+  for (const row of writes.putCellar) await cellar.put(userId, row)
+}
+
+export type RenameOwnBottlingResult =
+  | { status: 'ok' }
+  | { status: 'invalid_input' }
+  | { status: 'not_found' }
+  | { status: 'forbidden' }
+  | { status: 'unavailable' }
+
+/**
+ * "Rename" (design v1.6.2 §9a). The new name reaches every tasting and cellar
+ * row of the bottling, which each carry a copy of it. This is also the
+ * rectification path for the record (ADR-0009).
+ */
+export async function renameOwnBottling(
+  input: RenameOwnBottlingInput,
+): Promise<RenameOwnBottlingResult> {
+  const parsed = RenameOwnBottlingInputSchema.safeParse(input)
+  if (!parsed.success) return { status: 'invalid_input' }
+  const { expressionId, name } = parsed.data
+
+  return withMaintainerCollection(async (collection) => {
+    const { userId, expressions, journal, cellar } = collection
+    const existing = (await expressions.read(userId)).find((e) => e.id === expressionId)
+    if (!existing) return { status: 'not_found' }
+
+    const now = Date.now()
+    const next: Record<string, unknown> = { ...existing, name, updatedAt: now }
+    // The brewery is the visitor's to set only while there is no sake.
+    if (existing.brandId === null && parsed.data.brewery !== undefined) {
+      if (parsed.data.brewery) next.brewery = parsed.data.brewery
+      else delete next.brewery
+    }
+    const checked = ExpressionSchema.safeParse(next)
+    if (!checked.success) return { status: 'invalid_input' }
+
+    const [entries, rows] = await Promise.all([journal.read(userId), cellar.read(userId)])
+    await expressions.put(userId, checked.data)
+    await apply(collection, renameBottlingWrites(checked.data, { entries, cellar: rows }, now))
+    return { status: 'ok' }
+  })
+}
+
+export type DeleteOwnBottlingResult =
+  /** `undo` is what {@link restoreOwnBottling} takes to put it all back. */
+  | { status: 'ok'; undo: DeletedBottling }
+  | { status: 'invalid_input' }
+  | { status: 'not_found' }
+  | { status: 'forbidden' }
+  | { status: 'unavailable' }
+
+/**
+ * "Delete bottling" (design v1.6.2 §9a). With a sake, the bottling's tastings
+ * and cellar bottles fall back to the sake; with none, they go with it. The
+ * per-record erasure path for the record (ADR-0009).
+ */
+export async function deleteOwnBottling(expressionId: string): Promise<DeleteOwnBottlingResult> {
+  if (typeof expressionId !== 'string' || expressionId.length === 0 || expressionId.length > 64) {
+    return { status: 'invalid_input' }
+  }
+  return withMaintainerCollection(async (collection) => {
+    const { userId, expressions, journal, cellar } = collection
+    const existing = (await expressions.read(userId)).find((e) => e.id === expressionId)
+    if (!existing) return { status: 'not_found' }
+
+    const [entries, rows] = await Promise.all([journal.read(userId), cellar.read(userId)])
+    const { writes, undo } = deleteBottlingWrites(existing, { entries, cellar: rows }, Date.now())
+    await apply(collection, writes)
+    // Last, so that a failure above leaves the bottling there to try again.
+    await expressions.remove(userId, existing.id)
+    return { status: 'ok', undo }
+  })
+}
+
+export type RestoreOwnBottlingResult =
+  | { status: 'ok' }
+  | { status: 'invalid_input' }
+  | { status: 'forbidden' }
+  | { status: 'unavailable' }
+
+/** "Undo" after a delete: the bottling, its tastings and its cellar rows, as they were. */
+export async function restoreOwnBottling(
+  deleted: DeletedBottlingInput,
+): Promise<RestoreOwnBottlingResult> {
+  const parsed = DeletedBottlingSchema.safeParse(deleted)
+  if (!parsed.success) return { status: 'invalid_input' }
+  const { expression, entries, cellar: rows, createdCellarKeys } = parsed.data
+
+  // A row the delete created can only have been the sake's own.
+  if (expression.brandId !== null) {
+    const sakeKeyPrefix = cellarRowKey({ brandId: expression.brandId })
+    if (!createdCellarKeys.every((key) => key === sakeKeyPrefix || key.startsWith(`${sakeKeyPrefix}|`))) {
+      return { status: 'invalid_input' }
+    }
+  }
+
+  return withMaintainerCollection(async (collection) => {
+    const { userId, expressions } = collection
+    // The bottling first: its tastings and rows point at it.
+    await expressions.put(userId, expression)
+    await apply(collection, {
+      putEntries: entries,
+      removeEntryIds: [],
+      putCellar: rows,
+      removeCellarKeys: createdCellarKeys,
+    })
+    return { status: 'ok' }
   })
 }

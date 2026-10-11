@@ -72,3 +72,11 @@ ADR-0024 §5 applies as written, with a third table of the same document shape: 
 - ADR-0009's RoPA gains an Expressions row; the backup row and the Upstash vendor row name the third store.
 - The export envelope is at format 3. A format-3 file cannot be restored by a deployment older than this ADR; it refuses it rather than misreading it.
 - CONTEXT.md's **Expression** entry now distinguishes the own Expression (built) from the catalogue Expression (not built, no data source).
+
+## Amendment, 2026-10-11 — renaming and deleting (design v1.6.2)
+
+- **Rename** rewrites the bottling and every tasting and cellar row that carries its name. With no sake, the name also stands in for the sake's on those records, so it changes there too. For a bottle with no sake the brewery can be corrected in the same form.
+- **Delete** follows the sake: with one, the bottling's tastings lose the bottling and stay under the sake, and its cellar bottles join the sake's own row; with none, tastings and bottles go with the bottling. The rules are pure functions in `bottling-changes.ts`.
+- **Undo** restores the bottling, its tastings and its cellar rows as they were. The delete action returns that state to the browser, which holds it for the 6.8 seconds the notice shows and sends it back on Undo. Nothing is kept server-side: no soft-delete flag, no expiring key. Because it comes back from the client, `DeletedBottlingSchema` checks that every record in it belongs to the bottling being restored, so an undo cannot be used to write anything else.
+- These are the record's **rectification** and **per-record erasure** paths (ADR-0009), which until now needed `pnpm journal:erase` for the whole collection.
+

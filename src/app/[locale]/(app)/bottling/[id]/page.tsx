@@ -7,6 +7,7 @@ import { Link } from '@/i18n/navigation'
 import { CellarButton } from '@/components/collection/cellar-button'
 import { ScreenBar } from '@/components/layout/screen-header'
 import { BottleHistory } from '@/components/sake/bottle-history'
+import { BottlingManage } from '@/components/sake/bottling-manage'
 import { BottleRateRow } from '@/components/sake/bottle-rate-row'
 import { BottleSection } from '@/components/sake/bottle-section'
 import { LineBlock } from '@/components/sake/line-block'
@@ -14,6 +15,7 @@ import { RomajiDisclosure } from '@/components/sake/romaji-disclosure'
 import { SakenowaAttribution } from '@/components/sake/sakenowa-attribution'
 import type { FlavorChart } from '@/lib/schemas/flavor-chart'
 import { lookupFlavorChart } from '@/lib/sakenowa/lookup'
+import { bottlingHoldings } from '@/lib/collection/bottling-changes'
 import { entriesForExpression, resolveViewerJournal } from '@/lib/taste/viewer-journal'
 
 /**
@@ -38,7 +40,6 @@ import { entriesForExpression, resolveViewerJournal } from '@/lib/taste/viewer-j
  *   yet, so six empty rows would say nothing about this bottling — the same
  *   reasoning that keeps §9's sourceless sections behind `FEATURES`.
  * - **The wishlist.** Not built anywhere.
- * - **Rename and delete.** Not drawn. Tracked as a question for the designers.
  */
 interface PageProps {
   params: Promise<{ locale: string; id: string }>
@@ -214,6 +215,15 @@ export default async function BottlingPage({ params, searchParams }: PageProps) 
       {brandId !== null && lineName !== null && (
         <LineBlock brandId={brandId} lineName={lineName} lineKanji={lineKanji} chart={chart} />
       )}
+
+      {/* -- "This bottling" (v1.6.2): rename, delete — the last section ---- */}
+      <BottlingManage
+        expressionId={bottling.id}
+        name={bottling.name}
+        brewery={bottling.brewery}
+        sake={brandId !== null && lineName !== null ? { brandId, name: lineName } : null}
+        {...bottlingHoldings(bottling, { entries: viewer.entries, cellar: viewer.cellar })}
+      />
     </main>
   )
 }

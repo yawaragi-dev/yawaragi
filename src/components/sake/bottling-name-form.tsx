@@ -15,12 +15,17 @@ import { MAX_EXPRESSION_TEXT } from '@/lib/schemas/expression'
  * catalogue lacks: with no sake there is no brewery to take from the
  * catalogue, and the one on the label is worth keeping.
  *
+ * The same form renames a bottling (`mode="rename"`): the fields start from
+ * what is stored and the button says "Save".
+ *
  * The caller owns the saving (`onSubmit`) and says how it is going (`pending`,
  * `failed`); the form owns the two fields.
  */
 export function BottlingNameForm({
   initialName,
+  initialBrewery = '',
   withBrewery = false,
+  mode = 'add',
   pending,
   failed,
   onSubmit,
@@ -28,7 +33,10 @@ export function BottlingNameForm({
   testId,
 }: {
   initialName: string
+  initialBrewery?: string
   withBrewery?: boolean
+  /** `add` names a new bottling; `rename` edits one that exists (§9a, v1.6.2). */
+  mode?: 'add' | 'rename'
   pending: boolean
   failed: boolean
   onSubmit: (name: string, brewery: string) => void
@@ -40,7 +48,7 @@ export function BottlingNameForm({
   const nameId = useId()
   const breweryId = useId()
   const [name, setName] = useState(initialName)
-  const [brewery, setBrewery] = useState('')
+  const [brewery, setBrewery] = useState(initialBrewery)
   const trimmed = name.trim()
   const field =
     'min-h-11 rounded-lg border border-ash-300 bg-ground px-3 text-card-heading text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600'
@@ -91,7 +99,9 @@ export function BottlingNameForm({
           />
         </div>
       )}
-      <p className="text-meta text-ash-700">{t(withBrewery ? 'formHintUnlisted' : 'formHint')}</p>
+      {mode === 'add' && (
+        <p className="text-meta text-ash-700">{t(withBrewery ? 'formHintUnlisted' : 'formHint')}</p>
+      )}
       {failed && (
         <p className="text-meta text-ginshu-700" role="alert" data-testid={`${testId}-error`}>
           {t('error')}
@@ -105,7 +115,7 @@ export function BottlingNameForm({
           className="flex min-h-11 items-center justify-center rounded-xl border-[1.5px] border-ginshu-400 px-4 text-body font-medium text-ginshu-700 transition-colors hover:bg-ginshu-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600 disabled:opacity-50"
           data-testid={`${testId}-submit`}
         >
-          {pending ? t('adding') : t('add')}
+          {mode === 'rename' ? (pending ? t('saving') : t('save')) : pending ? t('adding') : t('add')}
         </button>
         <button
           type="button"

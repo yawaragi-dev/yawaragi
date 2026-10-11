@@ -17,7 +17,12 @@ vi.mock('@/lib/collection/get-expression-store', () => ({
 }))
 
 import { currentUserIsMaintainer } from '@/lib/auth/maintainer'
-import { addOwnBottling } from '@/lib/collection/expression-actions'
+import {
+  addOwnBottling,
+  deleteOwnBottling,
+  renameOwnBottling,
+  restoreOwnBottling,
+} from '@/lib/collection/expression-actions'
 import { InMemoryCellarStore } from '@/lib/collection/in-memory-cellar-store'
 import { InMemoryExpressionStore } from '@/lib/collection/in-memory-expression-store'
 import { lookupBrand } from '@/lib/sakenowa/lookup'
@@ -33,6 +38,37 @@ const RIHAKU: Brand = {
 }
 const USER = 'user_admin'
 const store = () => h.expressions as InMemoryExpressionStore
+const journal = () => h.journal as InMemoryJournalStore
+const cellar = () => h.cellar as InMemoryCellarStore
+
+const TARGET = { f1: 0.2, f2: 0.6, f3: 0.6, f4: 0.4, f5: 0.1, f6: 0.3 }
+
+/** A bottling of Rihaku with one tasting and one bottle, beside the sake's own two bottles. */
+async function seedBottlingOfASake(): Promise<string> {
+  const added = await addOwnBottling({ brandId: 12, name: 'Harvest Moon' })
+  if (added.status !== 'ok') throw new Error(added.status)
+  const id = added.expressionId
+  await journal().put(USER, {
+    schemaVersion: 3,
+    id: 't1',
+    event: { kind: 'rating', rating: 4, brandId: 12, target: TARGET, occurredAt: 10 },
+    sake: { nameKanji: '李白', nameRomaji: 'Rihaku' },
+    expression: { id, name: 'Harvest Moon' },
+    triedAt: 10,
+    createdAt: 10,
+  })
+  const row = {
+    schemaVersion: 2,
+    brandId: 12,
+    sake: { nameKanji: '李白', nameRomaji: 'Rihaku' },
+    openedAt: null,
+    addedAt: 5,
+    updatedAt: 5,
+  } as const
+  await cellar().put(USER, { ...row, count: 2 })
+  await cellar().put(USER, { ...row, count: 1, expression: { id, name: 'Harvest Moon' } })
+  return id
+}
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -112,5 +148,135 @@ describe('adding your own bottling of a sake', () => {
     vi.mocked(currentUserIsMaintainer).mockResolvedValue(false)
     expect(await addOwnBottling({ brandId: 12, name: 'Nama' })).toEqual({ status: 'forbidden' })
     expect(await store().read(USER)).toEqual([])
+  })
+})
+
+describe('renaming a bottling you added', () => {
+  it('changes the name everywhere it is printed', async () => {
+    const id = await seedBottlingOfASake()
+    expect(await renameOwnBottling({ expressionId: id, name: ' Wandering Poet ' })).toEqual({ status: 'ok' })
+
+    expect((await store().read(USER))[0]!.name).toBe('Wandering Poet')
+    expect((await journal().read(USER))[0]!.expression).toEqual({ id, name: 'Wandering Poet' })
+    expect((await cellar().read(USER)).find((r) => r.expression)!.expression!.name).toBe('Wandering Poet')
+  })
+
+  it('lets the brewery of a bottle with no sake be set, changed and cleared', async () => {
+    const added = await addOwnBottling({ brandId: null, name: '富久千代' })
+    const id = added.status === 'ok' ? added.expressionId : ''
+    await renameOwnBottling({ expressionId: id, name: '富久千代', brewery: '盛田屋' })
+    expect((await store().read(USER))[0]!.brewery).toBe('盛田屋')
+    await renameOwnBottling({ expressionId: id, name: '富久千代', brewery: '' })
+    expect((await store().read(USER))[0]!.brewery).toBeUndefined()
+  })
+
+  it('leaves the brewery of a bottling of a sake to the catalogue', async () => {
+    const id = await seedBottlingOfASake()
+    expect(await renameOwnBottling({ expressionId: id, name: 'Poet', brewery: '李白酒造' })).toEqual({ status: 'ok' })
+    expect((await store().read(USER))[0]!.brewery).toBeUndefined()
+  })
+
+  it('refuses an empty name and a bottling that is not yours', async () => {
+    const id = await seedBottlingOfASake()
+    expect(await renameOwnBottling({ expressionId: id, name: '  ' })).toEqual({ status: 'invalid_input' })
+    expect(await renameOwnBottling({ expressionId: 'nope', name: 'Poet' })).toEqual({ status: 'not_found' })
+  })
+})
+
+describe('deleting a bottling you added', () => {
+  it('of a sake: the bottling goes, its tasting and bottle stay under the sake', async () => {
+    const id = await seedBottlingOfASake()
+    const result = await deleteOwnBottling(id)
+    expect(result.status).toBe('ok')
+
+    expect(await store().read(USER)).toEqual([])
+    const [tasting] = await journal().read(USER)
+    expect(tasting!.expression).toBeUndefined()
+    expect(tasting!.event).toMatchObject({ brandId: 12, rating: 4 })
+    // 2 of the sake + 1 of the bottling, on the sake's one row.
+    expect((await cellar().read(USER)).map((r) => [r.expression, r.count])).toEqual([[undefined, 3]])
+  })
+
+  it('with no sake: its tastings and bottles go with it', async () => {
+    const added = await addOwnBottling({ brandId: null, name: '富久千代' })
+    const id = added.status === 'ok' ? added.expressionId : ''
+    await journal().put(USER, {
+      schemaVersion: 3,
+      id: 't9',
+      event: { kind: 'rating', rating: 4, brandId: null, target: null, occurredAt: 10 },
+      sake: { nameKanji: '富久千代', nameRomaji: null },
+      expression: { id, name: '富久千代' },
+      triedAt: 10,
+      createdAt: 10,
+    })
+    expect((await deleteOwnBottling(id)).status).toBe('ok')
+    expect(await store().read(USER)).toEqual([])
+    expect(await journal().read(USER)).toEqual([])
+  })
+
+  it('Undo puts the bottling, its tasting and both cellar rows back exactly as they were', async () => {
+    const id = await seedBottlingOfASake()
+    const before = {
+      expressions: await store().read(USER),
+      journal: await journal().read(USER),
+      cellar: (await cellar().read(USER)).sort((a, b) => a.count - b.count),
+    }
+
+    const deleted = await deleteOwnBottling(id)
+    if (deleted.status !== 'ok') throw new Error(deleted.status)
+    // The undo crosses to the browser and back, as plain JSON.
+    const undo = JSON.parse(JSON.stringify(deleted.undo))
+    expect(await restoreOwnBottling(undo)).toEqual({ status: 'ok' })
+
+    expect(await store().read(USER)).toEqual(before.expressions)
+    expect(await journal().read(USER)).toEqual(before.journal)
+    expect((await cellar().read(USER)).sort((a, b) => a.count - b.count)).toEqual(before.cellar)
+  })
+
+  it('Undo takes away a cellar row the delete had to create', async () => {
+    const added = await addOwnBottling({ brandId: 12, name: 'Harvest Moon' })
+    const id = added.status === 'ok' ? added.expressionId : ''
+    await cellar().put(USER, {
+      schemaVersion: 2,
+      brandId: 12,
+      expression: { id, name: 'Harvest Moon' },
+      sake: { nameKanji: '李白', nameRomaji: 'Rihaku' },
+      count: 1,
+      openedAt: null,
+      addedAt: 5,
+      updatedAt: 5,
+    })
+    const deleted = await deleteOwnBottling(id)
+    if (deleted.status !== 'ok') throw new Error(deleted.status)
+    expect((await cellar().read(USER)).map((r) => r.expression)).toEqual([undefined])
+
+    await restoreOwnBottling(JSON.parse(JSON.stringify(deleted.undo)))
+    expect((await cellar().read(USER)).map((r) => r.expression?.name)).toEqual(['Harvest Moon'])
+  })
+
+  it('an Undo cannot be used to write records that are not the bottling\'s own', async () => {
+    const id = await seedBottlingOfASake()
+    const deleted = await deleteOwnBottling(id)
+    if (deleted.status !== 'ok') throw new Error(deleted.status)
+    const undo = JSON.parse(JSON.stringify(deleted.undo))
+
+    // A tasting of something else, smuggled in.
+    const foreignEntry = { ...undo, entries: [{ ...undo.entries[0], id: 'evil', expression: { id: 'other', name: 'x' } }] }
+    expect(await restoreOwnBottling(foreignEntry)).toEqual({ status: 'invalid_input' })
+    // A cellar row of another sake.
+    const foreignRow = { ...undo, cellar: [{ ...undo.cellar[0], expression: undefined, brandId: 99 }] }
+    expect(await restoreOwnBottling(foreignRow)).toEqual({ status: 'invalid_input' })
+    // A row key to delete that is not the sake's.
+    expect(await restoreOwnBottling({ ...undo, createdCellarKeys: ['77'] })).toEqual({ status: 'invalid_input' })
+
+    expect(await store().read(USER)).toEqual([])
+  })
+
+  it('does nothing for a bottling that is not yours, or for someone who is not a maintainer', async () => {
+    expect(await deleteOwnBottling('nope')).toEqual({ status: 'not_found' })
+    const id = await seedBottlingOfASake()
+    vi.mocked(currentUserIsMaintainer).mockResolvedValue(false)
+    expect(await deleteOwnBottling(id)).toEqual({ status: 'forbidden' })
+    expect(await renameOwnBottling({ expressionId: id, name: 'Poet' })).toEqual({ status: 'forbidden' })
   })
 })
