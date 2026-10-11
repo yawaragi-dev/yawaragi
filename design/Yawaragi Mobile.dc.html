@@ -190,7 +190,7 @@ textarea::placeholder,input::placeholder{font-style:italic}
 
           <div style="position:relative;margin-top:24px;text-align:center;padding:0 40px;min-height:58px;box-sizing:border-box">
             <div style="font-family:var(--font-heading);font-weight:500;font-size:16px;color:#f6f2ea">{{ scanTitle }}</div>
-            <div style="font-size:12px;line-height:1.45;color:rgba(246,242,234,.7);margin-top:5px;text-wrap:balance">{{ scanHint }}</div>
+            <sc-if value="{{ camHintOn }}"><div style="font-size:12px;line-height:1.45;color:rgba(246,242,234,.7);margin-top:5px;text-wrap:balance">{{ scanHint }}</div></sc-if>
             <sc-if value="{{ camLabelLink }}"><button onClick="{{ openLabelGuide }}" style="margin-top:2px;min-height:32px;padding:0 6px;border:0;background:transparent;cursor:pointer;font-family:var(--font-body);font-size:12px;color:rgba(246,242,234,.85);text-decoration:underline;text-decoration-color:rgba(246,242,234,.35);text-underline-offset:3px">How to read a label</button></sc-if>
           </div>
         </div>
@@ -700,7 +700,7 @@ textarea::placeholder,input::placeholder{font-style:italic}
               </sc-for>
             </div>
           </sc-for>
-          <div style="font-size:11px;color:var(--color-neutral-600);line-height:1.5">Yawaragi · design 1.5 · <a href="#impressum">Impressum</a> · <a href="#terms">Terms</a> · <a href="#privacy">Privacy notice</a> · <a href="#">Drink responsibly</a></div>
+          <div style="font-size:11px;color:var(--color-neutral-600);line-height:1.5">Yawaragi · design 1.6.2 · <a href="#impressum">Impressum</a> · <a href="#terms">Terms</a> · <a href="#privacy">Privacy notice</a> · <a href="#">Drink responsibly</a></div>
         </div>
         <sc-if value="{{ acctDialog }}">
           <div style="position:absolute;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:24px;animation:yw-fade .2s ease-out;z-index:4">
@@ -1125,7 +1125,7 @@ textarea::placeholder,input::placeholder{font-style:italic}
             </div>
           </sc-if>
 
-          <div style="padding:24px 20px 0;display:flex;flex-direction:column;gap:11px">
+          <sc-if value="{{ bt.fromCatalogue }}"><div style="padding:24px 20px 0;display:flex;flex-direction:column;gap:11px">
             <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px"><h6 style="margin:0;font-size:11px;letter-spacing:.1em;color:var(--color-neutral-600)">The sake</h6></div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px 16px">
               <sc-for list="{{ bt.specs }}" as="sp" hint-placeholder-count="6">
@@ -1136,7 +1136,7 @@ textarea::placeholder,input::placeholder{font-style:italic}
               </sc-for>
             </div>
             <div style="font-size:11px;color:var(--color-neutral-700)">{{ bt.specSource }}</div>
-          </div>
+          </div></sc-if>
 
           <sc-if value="{{ bt.hasOthers }}">
             <div style="padding:24px 20px 0;display:flex;flex-direction:column;gap:10px">
@@ -1208,6 +1208,35 @@ textarea::placeholder,input::placeholder{font-style:italic}
               </sc-for>
             </div>
           </sc-if>
+          <sc-if value="{{ bt.isOwn }}">
+            <div style="padding:24px 20px 0;display:flex;flex-direction:column">
+              <h6 style="margin:0 0 4px;font-size:11px;letter-spacing:.1em;color:var(--color-neutral-600)">This bottling</h6>
+              <sc-if value="{{ bt.renaming }}">
+                <div style="display:flex;flex-direction:column;gap:8px;padding:8px 0 12px;animation:yw-fade .2s ease-out">
+                  <input class="input" aria-label="Bottling name" value="{{ bt.renameVal }}" onChange="{{ bt.setRename }}" style="height:44px"></input>
+                  <div style="display:flex;gap:8px">
+                    <button class="btn btn-ghost" style="flex:1;height:42px;font-size:13px" onClick="{{ bt.cancelEdit }}">Cancel</button>
+                    <button class="btn btn-primary" style="flex:1;height:42px;font-size:13px" onClick="{{ bt.saveRename }}">Save name</button>
+                  </div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ bt.notRenaming }}">
+                <button onClick="{{ bt.startRename }}" style="display:flex;align-items:center;gap:12px;min-height:50px;padding:0;border:0;background:transparent;cursor:pointer;text-align:left;font-family:var(--font-body);color:var(--color-text);font-size:14px;border-bottom:1px solid var(--color-divider)" style-hover="color:var(--color-accent-700)"><i class="ph ph-pencil-simple" style="font-size:18px;color:var(--color-neutral-600)"></i><span style="flex:1">Rename</span><i class="ph ph-caret-right" style="font-size:14px;color:var(--color-neutral-500)"></i></button>
+              </sc-if>
+              <sc-if value="{{ bt.notDeleting }}">
+                <button onClick="{{ bt.askDelete }}" style="display:flex;align-items:center;gap:12px;min-height:50px;padding:0;border:0;background:transparent;cursor:pointer;text-align:left;font-family:var(--font-body);color:var(--color-text);font-size:14px" style-hover="color:var(--color-accent-700)"><i class="ph ph-trash" style="font-size:18px;color:var(--color-neutral-600)"></i><span style="flex:1">Delete bottling</span></button>
+              </sc-if>
+              <sc-if value="{{ bt.deleting }}">
+                <div role="alert" style="margin-top:10px;padding:12px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm);display:flex;flex-direction:column;gap:10px;animation:yw-fade .2s ease-out">
+                  <div style="font-size:13px;line-height:1.5;text-wrap:pretty">{{ bt.deleteText }}</div>
+                  <div style="display:flex;gap:8px">
+                    <button class="btn btn-ghost" style="flex:1;height:40px;font-size:13px" onClick="{{ bt.cancelEdit }}">Keep it</button>
+                    <button onClick="{{ bt.confirmDelete }}" style="flex:1;height:40px;font-size:13px;border-radius:var(--radius-md);border:1px solid var(--color-accent-700);background:var(--color-accent-100);color:var(--color-accent-800);font-family:var(--font-body);cursor:pointer">Delete</button>
+                  </div>
+                </div>
+              </sc-if>
+            </div>
+          </sc-if>
           <div style="padding:0 20px 8px">
           <div style="padding-top:28px;display:flex;flex-direction:column;gap:2px;font-size:12px;line-height:1.5;color:var(--color-neutral-600)">
             <sc-if value="{{ bt.showCredit }}"><div>Catalogue and flavour data · <a href="https://sakenowa.com" target="_blank" rel="noopener">Powered by Sakenowa ↗</a></div></sc-if>
@@ -1231,7 +1260,7 @@ textarea::placeholder,input::placeholder{font-style:italic}
         </div>
         <div style="flex:1;min-height:0;overflow-y:auto;padding-bottom:20px;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 18px);mask-image:linear-gradient(to bottom,transparent 0,#000 18px)">
           <div style="padding:4px 22px 0;display:flex;flex-direction:column;gap:4px">
-            <div style="font-family:var(--font-heading);font-weight:500;font-size:26px;letter-spacing:-.02em">Sake guide</div>
+            <div style="font-family:var(--font-heading);font-weight:500;font-size:26px;letter-spacing:-.02em">Learn</div>
             <div style="font-size:13px;color:var(--color-neutral-600);text-wrap:pretty">What the words on a label mean. Written by hand, with sources.</div>
           </div>
           <div style="padding:18px 20px 0">
@@ -1749,6 +1778,37 @@ textarea::placeholder,input::placeholder{font-style:italic}
     </sc-if>
   </div>
 
+  <sc-if value="{{ cellarSheetOpen }}">
+    <div style="position:absolute;inset:0;background:rgba(0,0,0,.55);display:flex;flex-direction:column;justify-content:flex-end;z-index:6;animation:yw-fade .2s ease-out">
+      <button onClick="{{ closeCellarSheet }}" aria-label="Dismiss" style="flex:1;min-height:40px;border:0;background:transparent;cursor:pointer"></button>
+      <div role="dialog" aria-label="Add to cellar" style="background:var(--color-surface);border-radius:20px 20px 0 0;box-shadow:var(--shadow-lg);animation:yw-sheet .26s ease-out;padding:0 20px 24px;display:flex;flex-direction:column;gap:16px">
+        <div style="padding:10px 0 0;display:flex;justify-content:center"><span style="width:36px;height:4px;border-radius:2px;background:var(--color-neutral-400)"></span></div>
+        <div>
+          <div style="font-family:var(--font-heading);font-weight:500;font-size:21px;letter-spacing:-.015em">Add to cellar</div>
+          <div style="font-size:12px;color:var(--color-neutral-600);margin-top:2px;text-wrap:pretty">{{ csName }}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;min-height:50px;border-bottom:1px solid var(--color-divider)">
+          <span style="flex:1;font-size:14px">Bottles</span>
+          <div style="display:flex;align-items:center;gap:4px">
+            <button class="btn btn-secondary" disabled="{{ csMinusOff }}" aria-label="One fewer" style="width:40px;height:40px;padding:0" onClick="{{ csMinus }}"><i class="ph ph-minus" style="font-size:15px"></i></button>
+            <span aria-live="polite" style="min-width:32px;text-align:center;font-family:var(--font-heading);font-size:17px">{{ csCount }}</span>
+            <button class="btn btn-secondary" aria-label="One more" style="width:40px;height:40px;padding:0" onClick="{{ csPlus }}"><i class="ph ph-plus" style="font-size:15px"></i></button>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <span style="font-size:14px">Size</span>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <sc-for list="{{ csSizes }}" as="z" hint-placeholder-count="4"><button onClick="{{ z.pick }}" style="min-height:40px;padding:8px 13px;border-radius:999px;border:1px solid {{ z.border }};background:{{ z.bg }};color:{{ z.fg }};font-size:13px;font-family:var(--font-body);cursor:pointer">{{ z.label }}</button></sc-for>
+          </div>
+        </div>
+        <button role="switch" aria-checked="{{ csNamaOn }}" onClick="{{ csToggleNama }}" style="display:flex;align-items:center;gap:12px;min-height:56px;padding:0;border:0;border-top:1px solid var(--color-divider);background:transparent;cursor:pointer;text-align:left;font-family:var(--font-body);color:var(--color-text)">
+          <span style="flex:1;min-width:0"><span style="display:block;font-size:14px">Nama (unpasteurised)</span><span style="display:block;font-size:12px;color:var(--color-neutral-600);margin-top:2px">Keep it cold. We’ll nudge you sooner once it’s open.</span></span>
+          <span style="position:relative;width:42px;height:26px;border-radius:13px;background:{{ csNamaBg }};flex:none;transition:background .2s"><span style="position:absolute;top:3px;left:{{ csNamaX }};width:20px;height:20px;border-radius:50%;background:{{ csNamaKnob }};transition:left .15s"></span></span>
+        </button>
+        <button class="btn btn-primary btn-block" style="height:46px;font-size:14px;gap:7px" onClick="{{ csConfirm }}"><i class="ph ph-stack-plus" style="font-size:17px"></i>Add to cellar</button>
+      </div>
+    </div>
+  </sc-if>
   <sc-if value="{{ sheetOpen }}">
     <div style="position:absolute;inset:0;background:rgba(0,0,0,.55);display:flex;flex-direction:column;justify-content:flex-end;z-index:6;animation:yw-fade .2s ease-out">
       <button onClick="{{ closeSheet }}" aria-label="Dismiss" style="flex:1;min-height:40px;border:0;background:transparent;cursor:pointer"></button>
@@ -1940,7 +2000,7 @@ textarea::placeholder,input::placeholder{font-style:italic}
     <div style="position:absolute;left:18px;right:18px;bottom:96px;padding:12px 14px;border-radius:var(--radius-md);background:var(--color-raised);color:var(--color-text);display:flex;align-items:center;gap:10px;box-shadow:var(--shadow-float);animation:yw-rise .24s ease-out;z-index:5">
       <i class="ph-fill ph-check-circle" style="font-size:19px;color:var(--color-accent-600)"></i>
       <div style="flex:1;font-size:13px">{{ shelfMsgText }}</div>
-      <button class="btn" style="color:var(--color-accent-700);font-size:12px;padding-inline:2px" onClick="{{ shelfMsgGo }}">View</button>
+      <button class="btn" style="color:var(--color-accent-700);font-size:12px;padding-inline:2px" onClick="{{ shelfMsgGo }}">{{ shelfMsgAction }}</button>
     </div>
   </sc-if>
 
@@ -1979,7 +2039,7 @@ textarea::placeholder,input::placeholder{font-style:italic}
           </sc-for>
         </div>
         <div style="font-size:11px;color:var(--color-neutral-700);line-height:1.5">Flavour chart data <a href="https://sakenowa.com" target="_blank" rel="noopener">Powered by Sakenowa</a>, plus ratings from Yawaragi users who share them.</div>
-        <button class="btn btn-ghost" style="align-self:flex-start;height:40px;font-size:13px;gap:6px;padding-inline:0;margin:-4px 0 -8px" onClick="{{ learnAxes }}"><i class="ph ph-book-open-text" style="font-size:16px"></i>Learn more in the Sake guide</button>
+        <button class="btn btn-ghost" style="align-self:flex-start;height:40px;font-size:13px;gap:6px;padding-inline:0;margin:-4px 0 -8px" onClick="{{ learnAxes }}"><i class="ph ph-book-open-text" style="font-size:16px"></i>More about these six words<i class="ph ph-arrow-up-right" style="font-size:13px"></i></button>
       </div>
     </div>
   </sc-if>
@@ -2002,7 +2062,7 @@ textarea::placeholder,input::placeholder{font-style:italic}
             </div>
           </sc-for>
         </div>
-        <button class="btn btn-ghost" style="align-self:flex-start;height:40px;font-size:13px;gap:6px;padding-inline:0;margin:-4px 0 -8px" onClick="{{ learnTemps }}"><i class="ph ph-book-open-text" style="font-size:16px"></i>Learn more in the Sake guide</button>
+        <button class="btn btn-ghost" style="align-self:flex-start;height:40px;font-size:13px;gap:6px;padding-inline:0;margin:-4px 0 -8px" onClick="{{ learnTemps }}"><i class="ph ph-book-open-text" style="font-size:16px"></i>More about serving temperatures<i class="ph ph-arrow-up-right" style="font-size:13px"></i></button>
       </div>
     </div>
   </sc-if>
@@ -2116,7 +2176,7 @@ textarea::placeholder,input::placeholder{font-style:italic}
         <div style="font-size:34px;letter-spacing:.08em;color:var(--color-accent-700)" lang="ja">和らぎ</div>
         <div style="font-family:var(--font-heading);font-weight:500;font-size:32px;line-height:1.14;letter-spacing:-.02em;text-wrap:pretty">The water between sips.</div>
         <div style="font-size:14px;color:var(--color-neutral-700);max-width:290px;text-wrap:pretty">Scan a label, keep a tasting journal, and watch your own palate take shape.</div>
-        <sc-if value="{{ guidePublicOn }}"><button class="btn btn-ghost" style="align-self:flex-start;height:40px;font-size:13px;gap:6px;padding-inline:0" onClick="{{ openPublicGuide }}"><i class="ph ph-book-open-text" style="font-size:16px"></i>Sake guide — what the words on a label mean</button></sc-if>
+        <sc-if value="{{ guidePublicOn }}"><button class="btn btn-ghost" style="align-self:flex-start;height:40px;font-size:13px;gap:6px;padding-inline:0" onClick="{{ openPublicGuide }}"><i class="ph ph-book-open-text" style="font-size:16px"></i>Learn — what the words on a label mean</button></sc-if>
       </div>
       <sc-if value="{{ gateOpen }}" hint-placeholder-val="{{ true }}">
         <div style="display:flex;flex-direction:column;gap:10px">
@@ -2287,9 +2347,10 @@ const GUIDE = [
 const GUIDE_GROUPS = [['Grades', ['junmai', 'ginjo', 'daiginjo', 'honjozo']], ['Styles and processes', ['kimoto', 'yamahai', 'nama', 'genshu', 'muroka', 'nigori', 'koshu']], ['Rice', ['yamada', 'omachi', 'gohyakumangoku']], ['Serving and tasting', ['temps', 'axes']]]
 
 const CELLAR_SEED = [
-  { name: 'Kamoshibito Kuheiji', brewery: 'Banjō Jōzō · Aichi', count: 1, openedDaysAgo: 12, nama: false },
-  { name: 'Tamagawa Time Machine', brewery: 'Kinoshita Shuzō · Kyōto', count: 2, openedDaysAgo: null, nama: false },
-  { name: 'Katori 90', brewery: 'Terada Honke · Chiba', count: 1, openedDaysAgo: 3, nama: true },
+  { name: 'Kamoshibito Kuheiji', brewery: 'Banjō Jōzō · Aichi', count: 1, size: '720 ml', openedDaysAgo: 12, nama: false },
+  { name: 'Tamagawa Time Machine', brewery: 'Kinoshita Shuzō · Kyōto', count: 2, size: '720 ml', openedDaysAgo: null, nama: false },
+  { name: 'Katori 90', brewery: 'Terada Honke · Chiba', count: 1, size: '720 ml', openedDaysAgo: 3, nama: true },
+  { name: 'Katori 90', brewery: 'Terada Honke · Chiba', count: 1, size: '1800 ml', openedDaysAgo: null, nama: true },
   { name: 'Rihaku Wandering Poet', brewery: 'Rihaku Shuzō · Shimane', count: 2, size: '720 ml', openedDaysAgo: null, nama: false },
 ]
 const PAIRINGS = {
@@ -2629,8 +2690,8 @@ class Component extends DCLogic {
     this._ap = setTimeout(() => this.setAuth({ step: 'methods', reason }), 650)
   }
 
-  shelfNote(text, seg) {
-    this.setState({ shelfMsg: { text, seg } })
+  shelfNote(text, seg, undo) {
+    this.setState({ shelfMsg: { text, seg, undo: undo || null } })
     clearTimeout(this._sh); this._sh = setTimeout(() => this.setState({ shelfMsg: null }), 6800)
   }
 
@@ -2711,7 +2772,7 @@ class Component extends DCLogic {
     })
 
     const openEntry = (e) => { const f = findSake(e.name, s.own); this.setState({ view: f && f.bottling ? 'bottling' : 'sake', sakeName: e.name, skPanel: false }) }
-    const tagBtn = (label) => ({ label, hasEntry: !!TAG_GUIDE[label], noEntry: !TAG_GUIDE[label], aria: label + ' — open in the Sake guide', learn: () => this.setState({ view: 'guideEntry', guideKey: TAG_GUIDE[label] }) })
+    const tagBtn = (label) => ({ label, hasEntry: !!TAG_GUIDE[label], noEntry: !TAG_GUIDE[label], aria: label + ' — open in Learn', learn: () => this.setState({ view: 'guideEntry', guideKey: TAG_GUIDE[label] }) })
     const decorate = (e) => ({ ...e, kana: kanaOf(e.name, s.own), hasKana: !!kanaOf(e.name, s.own), stars: this.starsFor(e.rating), open: () => openEntry(e), openNotes: () => this.setState({ sheet: 'detail', dnEntry: e.id, dn: { open: 'App' } }) })
 
 
@@ -2838,7 +2899,7 @@ class Component extends DCLogic {
           ? 'We’ll pick what fits your palate from what’s listed.'
           : 'Kanji or romaji — whichever the bottle gives you.',
 
-      camLabelLink: !working && !menuMode,
+      camLabelLink: !working && !menuMode, camHintOn: !(!working && !menuMode),
       ...(() => {
         const pub = !!(s.gate && s.pubGuide)
         const open = (k) => this.setState({ view: 'guideEntry', guideKey: k })
@@ -2900,6 +2961,32 @@ class Component extends DCLogic {
               notes, hasNotes: notes.length > 0, notesMeta: b.notesMeta || '',
               hasBrewery: !!li.story, founded: li.founded || '', story: li.story || '', showCredit: !!ln || !b.own,
               shops, hasShops: shops.length > 0,
+              ...(() => {
+                const ed = s.btEdit && s.btEdit.name === name ? s.btEdit : null
+                const nT = s.entries.filter((e) => e.name === name).length
+                const nC = ((s.cellar || CELLAR_SEED).find((c) => c.name === name) || { count: 0 }).count
+                const cnt = [nT ? nT + (nT === 1 ? ' tasting' : ' tastings') : '', nC ? nC + (nC === 1 ? ' bottle' : ' bottles') : ''].filter(Boolean)
+                const yours = cnt.length ? 'Your ' + cnt.join(' and ') : ''
+                const moveTo = (to) => {
+                  const own = { ...(s.own || {}) }; const rec = own[name]; delete own[name]; if (to && rec && !b.line) own[to] = rec; if (to && rec && b.line && to !== b.line) own[to] = rec
+                  let cellar = (s.cellar || CELLAR_SEED).slice(); const c0 = cellar.find((c) => c.name === name)
+                  if (c0) { cellar = cellar.filter((c) => c.name !== name); if (to) { const c1 = cellar.find((c) => c.name === to); cellar = c1 ? cellar.map((c) => c.name === to ? { ...c, count: c.count + c0.count } : c) : [{ ...c0, name: to }, ...cellar] } }
+                  const entries = to ? s.entries.map((e) => e.name === name ? { ...e, name: to } : e) : s.entries.filter((e) => e.name !== name)
+                  return { own, cellar, entries }
+                }
+                const isRen = !!ed && ed.mode === 'rename', isDel = !!ed && ed.mode === 'delete'
+                return {
+                  renaming: isRen, notRenaming: !isRen, deleting: isDel, notDeleting: !isDel,
+                  renameVal: isRen ? ed.val : name,
+                  startRename: () => this.setState({ btEdit: { name, mode: 'rename', val: name } }),
+                  setRename: (e) => this.setState({ btEdit: { name, mode: 'rename', val: e.target.value } }),
+                  cancelEdit: () => this.setState({ btEdit: null }),
+                  saveRename: () => { const to = ((this.state.btEdit || {}).val || '').trim(); if (!to || to === name) { this.setState({ btEdit: null }); return } this.setState({ ...moveTo(to), sakeName: to, btEdit: null }); this.shelfNote('Renamed to ' + to, 'journal') },
+                  askDelete: () => this.setState({ btEdit: { name, mode: 'delete' } }),
+                  deleteText: 'Delete ' + name + '?' + (yours ? ' ' + yours + (ln ? ' stay, under ' + ln.name + '.' : ' go with it.') : ''),
+                  confirmDelete: () => { const to = ln ? ln.name : null; const snap = { own: s.own, cellar: s.cellar, entries: s.entries, view: s.view, tab: s.tab, sakeName: s.sakeName, btEdit: null }; this.setState({ ...moveTo(to), btEdit: null, ...(to ? { view: 'sake', sakeName: to } : { view: null, tab: 'collection', collection: 'journal' }) }); this.shelfNote(name + ' deleted', 'journal', snap) },
+                }
+              })(),
             }
           })(),
         }
@@ -3231,7 +3318,7 @@ class Component extends DCLogic {
               nav('Region & drinking age', (reg.short || reg.name) + ' · ' + reg.age + '+', 'ph-globe-hemisphere-east'),
             ] },
             { title: 'Learn', rows: [
-              nav('Sake guide', '', 'ph-book-open-text', () => this.setState({ view: 'guide' }), 'What the words on a label mean'),
+              nav('What the words on a label mean', '', 'ph-book-open-text', () => this.setState({ view: 'guide' })),
             ] },
             { title: 'Privacy', rows: [
               tog('Use my palate for Ask', 'Suggestions lean on what you’ve rated', 'ph-magic-wand', palate, () => this.setAcct({ palate: !palate })),
@@ -3256,6 +3343,7 @@ class Component extends DCLogic {
         const inCellar = cellar.find((c) => c.name === cur.name)
         const owned = cellar.filter((c) => c.name === cur.name || (view === 'sake' && (lineOf(c.name) || ((s.own || {})[c.name] || {}).line) === cur.name)).reduce((n, c) => n + c.count, 0)
         const setCellar = (next) => this.setState({ cellar: next })
+        const ck = (c) => c.name + '|' + (c.size || '') + '|' + (c.nama ? 1 : 0)
         const soon = (c) => c.openedDaysAgo !== null && (c.nama ? c.openedDaysAgo >= 5 : c.openedDaysAgo >= 10)
         const sorted = [...cellar].sort((a, b) => (soon(b) - soon(a)) || ((b.openedDaysAgo !== null) - (a.openedDaysAgo !== null)))
         const bottles = cellar.reduce((n, c) => n + c.count, 0)
@@ -3281,16 +3369,16 @@ class Component extends DCLogic {
               stateColor: hurry ? '#e0a88f' : '#bdb9b1',
               primaryLabel: isOpen ? 'Pour & rate' : 'Open a bottle',
               primaryIcon: isOpen ? 'ph-star' : 'ph-lock-simple-open',
-              primary: isOpen ? () => pour(c) : () => setCellar(cellar.map((x) => x.name === c.name ? { ...x, openedDaysAgo: 0 } : x)),
+              primary: isOpen ? () => pour(c) : () => setCellar(cellar.map((x) => ck(x) === ck(c) ? { ...x, openedDaysAgo: 0 } : x)),
               secondaryLabel: isOpen ? 'Finished' : c.count > 1 ? 'Remove one' : 'Remove',
               secondary: () => setCellar(c.count > 1
-                ? cellar.map((x) => x.name === c.name ? { ...x, count: x.count - 1, openedDaysAgo: isOpen ? null : x.openedDaysAgo } : x)
-                : cellar.filter((x) => x.name !== c.name)),
+                ? cellar.map((x) => ck(x) === ck(c) ? { ...x, count: x.count - 1, openedDaysAgo: isOpen ? null : x.openedDaysAgo } : x)
+                : cellar.filter((x) => ck(x) !== ck(c))),
             }
           }),
           wishRows: wish.map((w) => ({
             ...w, hasShop: !!w.shop,
-            bought: () => { this.setState({ wish: wish.filter((x) => x.name !== w.name), cellar: [...cellar.filter((x) => x.name !== w.name), { name: w.name, brewery: w.brewery, count: (cellar.find((x) => x.name === w.name) || { count: 0 }).count + 1, openedDaysAgo: null, nama: false }] }); this.shelfNote('Moved to your cellar', 'cellar') },
+            bought: () => { this.setState({ wish: wish.filter((x) => x.name !== w.name), cellar: [...cellar, { name: w.name, brewery: w.brewery, count: 1, size: '720 ml', openedDaysAgo: null, nama: false }] }); this.shelfNote('Moved to your cellar', 'cellar') },
             tried: () => { this.setState({ wish: wish.filter((x) => x.name !== w.name) }); pour(w) },
             remove: () => this.setState({ wish: wish.filter((x) => x.name !== w.name) }),
           })),
@@ -3308,14 +3396,32 @@ class Component extends DCLogic {
           goCellar: () => { this._hist = []; this.setState({ tab: 'collection', view: null, collection: 'cellar' }) },
           curCellarIcon: inCellar ? 'ph-fill ph-stack' : 'ph ph-stack-plus',
           curCellarColor: inCellar ? '#e0a88f' : 'var(--color-text)',
-          addCellarCur: () => {
-            setCellar(inCellar ? cellar.map((c) => c.name === cur.name ? { ...c, count: c.count + 1 } : c) : [{ name: cur.name, brewery: cur.brewery, count: 1, openedDaysAgo: null, nama: false }, ...cellar])
-            this.shelfNote(owned ? 'Another bottle added · ' + (owned + 1) + ' in cellar' : 'Added to your cellar', 'cellar')
-            this.promptAuth('cellar')
-          },
+          addCellarCur: () => this.setState({ cellarSheet: { count: 1, size: '720 ml', nama: false } }),
+          ...(() => {
+            const cs = s.cellarSheet || { count: 1, size: '720 ml', nama: false }
+            const set = (o) => this.setState({ cellarSheet: { ...cs, ...o } })
+            const chip = (on) => ({ border: on ? '#cf8a6e' : 'var(--color-divider)', bg: on ? '#cf8a6e' : 'transparent', fg: on ? '#1b1a19' : '#bdb9b1' })
+            return {
+              cellarSheetOpen: !!s.cellarSheet, closeCellarSheet: () => this.setState({ cellarSheet: null }),
+              csName: cur.name, csCount: cs.count, csMinusOff: cs.count <= 1,
+              csMinus: () => set({ count: Math.max(1, cs.count - 1) }), csPlus: () => set({ count: Math.min(24, cs.count + 1) }),
+              csSizes: ['180 ml', '300 ml', '720 ml', '1800 ml'].map((z) => ({ label: z, ...chip(cs.size === z), pick: () => set({ size: z }) })),
+              csNamaBg: cs.nama ? '#b8735a' : '#4a4744', csNamaKnob: cs.nama ? '#1b1a19' : '#bdb9b1', csNamaX: cs.nama ? '19px' : '3px', csNamaOn: cs.nama ? 'true' : 'false',
+              csToggleNama: () => set({ nama: !cs.nama }),
+              csConfirm: () => {
+                const row = { name: cur.name, brewery: cur.brewery, count: cs.count, size: cs.size, openedDaysAgo: null, nama: cs.nama }
+                const hit = cellar.find((c) => ck(c) === ck(row) && c.openedDaysAgo === null)
+                setCellar(hit ? cellar.map((c) => c === hit ? { ...c, count: c.count + cs.count } : c) : [row, ...cellar])
+                this.setState({ cellarSheet: null })
+                this.shelfNote(owned ? (cs.count === 1 ? 'Another bottle added' : cs.count + ' bottles added') + ' · ' + (owned + cs.count) + ' in cellar' : 'Added to your cellar', 'cellar')
+                this.promptAuth('cellar')
+              },
+            }
+          })(),
           shelfMsg: !!s.shelfMsg,
           shelfMsgText: s.shelfMsg ? s.shelfMsg.text : '',
-          shelfMsgGo: () => { const seg = s.shelfMsg && s.shelfMsg.seg; clearTimeout(this._sh); this.setState({ shelfMsg: null, tab: 'collection', view: null, collection: seg || 'journal' }) },
+          shelfMsgAction: s.shelfMsg && s.shelfMsg.undo ? 'Undo' : 'View',
+          shelfMsgGo: () => { const seg = s.shelfMsg && s.shelfMsg.seg; clearTimeout(this._sh); if (s.shelfMsg && s.shelfMsg.undo) { this._popping = true; this.setState({ ...s.shelfMsg.undo, shelfMsg: null }); return } this.setState({ shelfMsg: null, tab: 'collection', view: null, collection: seg || 'journal' }) },
         }
       })(),
       ...(() => {
