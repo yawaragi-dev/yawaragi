@@ -18,6 +18,7 @@ import {
   stopStream,
   supportsTorch,
 } from '@/lib/scan/camera'
+import { Link } from '@/i18n/navigation'
 import { cn } from '@/lib/utils'
 
 /**
@@ -305,9 +306,23 @@ export function CameraCapture({
             <p className="text-md-alt font-medium">
               {isWorking ? t('workingTitle') : t('frameTitle')}
             </p>
-            <p className="text-meta leading-relaxed text-camera-ink/70">
-              {isWorking ? t('workingHint') : t('frameHint')}
-            </p>
+            {isWorking ? (
+              <p className="text-meta leading-relaxed text-camera-ink/70">{t('workingHint')}</p>
+            ) : (
+              // v1.6.2 §4: "How to read a label" takes the hint's line — the
+              // one place on this screen with room for it. 13px, underlined,
+              // wrapping to two lines if German needs them; the frame above
+              // gives up the height, the shutter row never moves. A plain
+              // link: Learn is a page of its own (ADR-0026), and the camera
+              // is back one tap away.
+              <Link
+                href={{ pathname: '/learn/[slug]', params: { slug: 'how-to-read-a-label' } }}
+                className="rounded-sm py-1 text-subtle leading-snug text-camera-ink/80 underline decoration-camera-ink/40 underline-offset-4 hover:text-camera-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+                data-testid="scan-camera-read-a-label"
+              >
+                {t('readALabel')}
+              </Link>
+            )}
           </div>
         </div>
       ) : (

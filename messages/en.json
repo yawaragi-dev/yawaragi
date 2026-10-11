@@ -262,7 +262,7 @@
       "title": "Scan a label",
       "torchLabel": "Light",
       "frameTitle": "Frame the bottle label",
-      "frameHint": "Kanji or romaji — whichever the bottle gives you.",
+      "readALabel": "How to read a label",
       "workingTitle": "Reading the label…",
       "workingHint": "Matching it against the catalogue.",
       "shutterLabel": "Capture the label",
