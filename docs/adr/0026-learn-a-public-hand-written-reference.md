@@ -56,5 +56,6 @@ The gate's allowlist (`UNGATED_LOCALE_PATHS`) is exact-match; Learn adds one pre
 
 - ADR-0006's rule now reads: no **sake data** before the 18+ confirmation. Learn pages hold none, and a PR that puts some there breaks this ADR.
 - Adding an entry is a three-part change — `entries.ts`, `en.json`, `de.json` — and `entries.test.ts` fails if they disagree.
-- The in-app ways in are Account → Learn, "How to read a label" on every scan outcome, and the landing footer. §18's other entry points (the camera link, guide-linked grade tags, "Learn more" in info sheets) are not built: the first is a layout change on the tightest screen, the second needs catalogue bottlings, the third needs entries that do not exist yet.
+- The in-app ways in are Account → Learn, "How to read a label" on every scan outcome, the landing footer, and the last line of the flavor-terms and serving-temperature info sheets. Those two open the entry in a new tab: a sheet sits over a scan result or a half-filled tasting sheet, and a definition should not cost the visitor their place. §18's other entry points (the camera link, guide-linked grade tags) are not built: the first is a layout change on the tightest screen, the second needs catalogue bottlings.
+- The entry on the six flavor words explains Sakenowa's vocabulary and names Sakenowa as its source. It shows no sake's chart, so it stays on the public side of the line in §1.
 - No personal data is involved.

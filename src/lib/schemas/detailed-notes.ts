@@ -60,8 +60,10 @@ export type ServingTemperature = (typeof SERVING_TEMPERATURES)[number]
 export const SERVING_TEMPERATURE_TERMS: Readonly<
   Record<ServingTemperature, { kanji: string; romaji: string; degrees: number }>
 > = {
-  yukibie: { kanji: '雪冷え', romaji: 'yukibie', degrees: 5 },
-  hanabie: { kanji: '花冷え', romaji: 'hanabie', degrees: 10 },
+  // The keys are stored in tastings and stay as they are; the readings shown
+  // are ゆきひえ and はなひえ, as the Learn entry's source gives them.
+  yukibie: { kanji: '雪冷え', romaji: 'yukihie', degrees: 5 },
+  hanabie: { kanji: '花冷え', romaji: 'hanahie', degrees: 10 },
   suzuhie: { kanji: '涼冷え', romaji: 'suzuhie', degrees: 15 },
   joon: { kanji: '常温', romaji: 'jōon', degrees: 20 },
   nurukan: { kanji: 'ぬる燗', romaji: 'nurukan', degrees: 40 },

@@ -32,7 +32,7 @@ test.describe('Learn', () => {
     )
     // "Start here", then the groups.
     await expect(page.getByTestId('learn-start-here')).toContainText('How to read a label')
-    for (const group of ['Grades', 'Styles and processes', 'Rice']) {
+    for (const group of ['Grades', 'Styles and processes', 'Rice', 'Serving and tasting']) {
       await expect(page.getByRole('heading', { level: 2, name: group })).toBeVisible()
     }
     // Hand-written pages credit no catalogue (rule 15), and are not the app:
@@ -102,7 +102,7 @@ test.describe('Learn', () => {
       .getByTestId('learn-index')
       .locator('a[href^="/en/learn/"]')
       .evaluateAll((links) => links.map((a) => a.getAttribute('href')!))
-    expect(hrefs.length).toBeGreaterThanOrEqual(14)
+    expect(hrefs.length).toBeGreaterThanOrEqual(16)
     for (const href of hrefs) {
       expect((await page.goto(href))!.status(), href).toBe(200)
       await expect(page.getByTestId('learn-entry-sources')).toBeVisible()
@@ -121,6 +121,35 @@ test.describe('Learn', () => {
     await page.goto('/de/learn/junmai')
     await expect(page.getByTestId('coming-soon')).toBeVisible()
     await expect(page.getByTestId('learn-entry')).toHaveCount(0)
+    await context.close()
+  })
+
+  test('the six flavor words are the ones the charts use, each with its Japanese', async ({ browser }) => {
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([CONSENT_COOKIE])
+    const page = await context.newPage()
+    await page.goto('/en/learn/flavor-words')
+
+    await expect(page.getByTestId('learn-entry-answer')).toContainText('approximations of them, not translations')
+    const facts = page.getByTestId('learn-entry-facts')
+    for (const [word, written, reading] of [
+      ['Floral', '華やか', 'hanayaka'],
+      ['Mellow', '芳醇', 'hojun'],
+      ['Rich', '重厚', 'juko'],
+      ['Mild', '穏やか', 'odayaka'],
+      ['Dry', 'ドライ', 'dry'],
+      ['Light', '軽快', 'keikai'],
+    ] as const) {
+      const row = facts.locator('div').filter({ has: page.getByText(word, { exact: true }) }).first()
+      await expect(row).toContainText(written)
+      await expect(row).toContainText(reading)
+    }
+    // The trademark wording, and the source the six come from.
+    await expect(page.getByTestId('learn-entry-detail')).toContainText('flavor chart (Sakenowa)')
+    await expect(page.getByTestId('learn-entry-sources').getByRole('link')).toHaveAttribute(
+      'href',
+      'https://muro.sakenowa.com/sakenowa-data',
+    )
     await context.close()
   })
 

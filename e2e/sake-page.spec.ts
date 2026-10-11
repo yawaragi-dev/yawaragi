@@ -498,6 +498,12 @@ test.describe('sake brand page', () => {
     await expect(terms).toBeVisible()
     await expect(terms).toContainText('華やか')
     await expect(terms).toContainText('hanayaka')
+
+    // v1.6 §16: the sheet ends in a way to the Learn entry on the six words —
+    // in a new tab, so the page being read stays where it is.
+    const more = page.getByTestId('learn-more-flavor-words')
+    await expect(more).toHaveAttribute('href', '/en/learn/flavor-words')
+    await expect(more).toHaveAttribute('target', '_blank')
     await expect(page.getByText(/approximations, not translations/i)).toBeVisible()
 
     await context.close()

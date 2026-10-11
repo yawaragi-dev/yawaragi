@@ -102,8 +102,8 @@ describe('§10 detailed notes', () => {
     fireEvent.click(screen.getByTestId('detailed-notes-toggle-serve'))
     const chips = screen.getByRole('group', { name: 'Temperature' }).querySelectorAll('button[aria-pressed]')
     expect([...chips].map((c) => c.textContent)).toEqual([
-      'yukibie 5°',
-      'hanabie 10°',
+      'yukihie 5°',
+      'hanahie 10°',
       'suzuhie 15°',
       'jōon 20°',
       'nurukan 40°',

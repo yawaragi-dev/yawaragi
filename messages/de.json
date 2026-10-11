@@ -454,7 +454,8 @@
       "triggerLabel": "Über diese Geschmacksbegriffe",
       "title": "Über diese Geschmacksbegriffe",
       "intro": "Diese sechs sind japanische Brauer-Begriffe. Die deutschen Wörter sind Annäherungen, keine Übersetzungen — sie treffen die Richtung, aber nicht den genauen Sinn.",
-      "closeLabel": "Schließen"
+      "closeLabel": "Schließen",
+      "learnMore": "Mehr über diese sechs Wörter"
     }
   },
   "privacy": {
@@ -780,7 +781,8 @@
         "joon": "Zimmertemperatur: der Sake, wie er ist – nichts verdeckt, nichts hinzugefügt.",
         "nurukan": "Lauwarm, etwas über Körpertemperatur. Runder und weicher, das Umami tritt hervor.",
         "atsukan": "Heiß. Trockener und schärfer, am besten zu vollen, würzigen Sakes."
-      }
+      },
+      "learnMore": "Mehr über Serviertemperaturen"
     }
   },
   "scanOutcome": {
@@ -913,13 +915,15 @@
       "start": "Hier anfangen",
       "grades": "Qualitätsstufen",
       "styles": "Stile und Verfahren",
-      "rice": "Reis"
+      "rice": "Reis",
+      "tasting": "Servieren und Verkosten"
     },
     "groupKicker": {
       "start": "Eine Flasche lesen",
       "grades": "Qualitätsstufe",
       "styles": "Stil",
-      "rice": "Reis"
+      "rice": "Reis",
+      "tasting": "Verkostung"
     },
     "entries": {
       "how-to-read-a-label": {
@@ -1378,6 +1382,99 @@
           "p1": "Der weiße Kern heißt Shinpaku 心白: eine lockere, undurchsichtige Stärketasche in der Mitte des Korns, in die der Kōji-Pilz leicht hineinwächst. Auch „groß“ ist definiert: 26 Gramm oder mehr je tausend Körner.",
           "p2": "Eine Sorte darf nur dann auf dem Etikett stehen, wenn sie mehr als die Hälfte des verwendeten Reises ausmacht; das Etikett muss dann ihren Anteil nennen.",
           "p3": "Die Sorten unterscheiden sich darin, wie leicht sie sich in der Maische lösen, und das zeigt sich im Sake. Jede Region hat ihre eigenen."
+        }
+      },
+      "serving-temperatures": {
+        "title": "Serviertemperaturen",
+        "answer": "Sake wird zwischen etwa 5 °C und 55 °C serviert, und jede Stufe hat einen japanischen Namen. Die Gradzahlen sind Richtwerte, keine genauen Werte.",
+        "factsTitle": "Von kalt nach heiß",
+        "facts": {
+          "yukihie": {
+            "term": "5 °C",
+            "value": "Schneekalt",
+            "note": "Viel kälter, und Sake lässt sich kaum noch schmecken."
+          },
+          "hanahie": {
+            "term": "10 °C",
+            "value": "Blütenkalt"
+          },
+          "suzuhie": {
+            "term": "15 °C",
+            "value": "Kühl"
+          },
+          "joon": {
+            "term": "15–25 °C",
+            "value": "Zimmertemperatur",
+            "note": "Nicht im Kühlschrank aufbewahrt und so serviert, wie er ist."
+          },
+          "hinatakan": {
+            "term": "30 °C",
+            "value": "In der Sonne gewärmt"
+          },
+          "hitohadakan": {
+            "term": "35 °C",
+            "value": "Körpertemperatur"
+          },
+          "nurukan": {
+            "term": "40 °C",
+            "value": "Lauwarm"
+          },
+          "jokan": {
+            "term": "45 °C",
+            "value": "Recht warm",
+            "note": "Warmer Sake wird üblicherweise auf etwa 42–45 °C erhitzt."
+          },
+          "atsukan": {
+            "term": "50 °C",
+            "value": "Heiß"
+          }
+        },
+        "detail": {
+          "p1": "Kühlen passt zu duftigem und frischem Sake. Ginjō und unpasteurisierter Sake werden meist leicht gekühlt serviert, bei etwa 8–10 °C, weil ihre Fruchtigkeit und Frische in der Wärme verloren gehen.",
+          "p2": "Erwärmen, Kan 燗, ist die traditionelle Art, Sake zu trinken. Süße wird nahe der Körpertemperatur stärker wahrgenommen, während sich die Säure kaum ändert. Ein Sake mit wenig Süße und etwas mehr Säure, wie es Junmai oft ist, kommt deshalb erwärmt ins Gleichgewicht.",
+          "p3": "Wird er zu stark erhitzt, tritt der Alkohol hervor und überdeckt die feinen Aromen des Sake."
+        }
+      },
+      "flavor-words": {
+        "title": "Die sechs Geschmackswörter",
+        "answer": "Sechs japanische Brauerbegriffe, mit denen Sakenowa den Geschmack eines Sake abbildet. Die deutschen Wörter in den Diagrammen von Yawaragi sind Annäherungen daran, keine Übersetzungen.",
+        "factsTitle": "Die sechs Begriffe",
+        "facts": {
+          "f1": {
+            "term": "Blumig",
+            "value": "Auffällig und aromatisch",
+            "note": "Frucht und Blüte in der Nase. Nicht parfümiert."
+          },
+          "f2": {
+            "term": "Vollmundig",
+            "value": "Tief in Aroma und Umami",
+            "note": "Fülle, nicht Cremigkeit."
+          },
+          "f3": {
+            "term": "Kräftig",
+            "value": "Gewichtig",
+            "note": "Körper, nicht Tannin."
+          },
+          "f4": {
+            "term": "Mild",
+            "value": "Leise in der Nase",
+            "note": "Zurückhaltend, nicht neutral."
+          },
+          "f5": {
+            "term": "Trocken",
+            "value": "Trocken",
+            "note": "Von den sechs am nächsten an einem westlichen Wort."
+          },
+          "f6": {
+            "term": "Leicht",
+            "value": "Leicht und lebhaft",
+            "note": "Ein erfrischender Abgang, von dem wenig zurückbleibt."
+          }
+        },
+        "detail": {
+          "p1": "Sakenowa ist eine japanische Sake-Community. Sie errechnet die sechs Werte aus dem, was ihre Nutzer über jeden Sake schreiben. Ein Diagramm zeigt also, wie Menschen einen Sake beschreiben. Es ist keine Labormessung.",
+          "p2": "Die sechs decken sich nicht mit dem Weinvokabular. Lies jedes deutsche Wort als Hinweis auf die richtige Idee, nicht als deren Entsprechung.",
+          "p3": "Bei Yawaragi heißt das Bild aus diesen sechs das Flavor Chart (Sakenowa). Die Methode und die Daten dahinter stammen von Sakenowa."
         }
       }
     }

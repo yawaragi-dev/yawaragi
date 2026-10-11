@@ -13,6 +13,7 @@ import {
   Wind,
 } from '@phosphor-icons/react/dist/ssr'
 import { InfoSheet } from '@/components/ui/info-sheet'
+import { LearnMoreLink } from '@/components/learn/learn-more-link'
 import { Sheet, SheetClose, SheetContent, SheetTitle } from '@/components/ui/sheet'
 import {
   AROMAS,
@@ -412,6 +413,10 @@ export function DetailedNotesSheet({
                                   </div>
                                 ))}
                               </dl>
+                              <LearnMoreLink
+                                slug="serving-temperatures"
+                                label={t('temperatureTerms.learnMore')}
+                              />
                             </InfoSheet>
                           }
                         />

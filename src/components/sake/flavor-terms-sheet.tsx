@@ -1,5 +1,6 @@
 import { FLAVOR_AXES, FLAVOR_AXIS_ROMAJI } from '@/lib/schemas/flavor-chart'
 import { InfoSheet } from '@/components/ui/info-sheet'
+import { LearnMoreLink } from '@/components/learn/learn-more-link'
 import type { FlavorAxisStrings } from './flavor-profile-view'
 
 /**
@@ -28,6 +29,8 @@ export interface FlavorTermsStrings {
   /** The paragraph that does the actual disclosing. */
   intro: string
   closeLabel: string
+  /** The sheet's last line: a link to the Learn entry on the six words. */
+  learnMore: string
 }
 
 /** i18n keys under `flavorAxis.disclosure.*`. */
@@ -37,6 +40,7 @@ export const FLAVOR_TERMS_KEYS = [
   'title',
   'intro',
   'closeLabel',
+  'learnMore',
 ] as const
 
 /**
@@ -55,6 +59,7 @@ export function buildFlavorTermsStrings(
     title: read('title'),
     intro: read('intro'),
     closeLabel: read('closeLabel'),
+    learnMore: read('learnMore'),
   }
 }
 
@@ -106,6 +111,7 @@ export function FlavorTermsSheet({
           )
         })}
       </dl>
+      <LearnMoreLink slug="flavor-words" label={strings.learnMore} />
     </InfoSheet>
   )
 }

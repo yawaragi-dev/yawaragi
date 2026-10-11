@@ -29,6 +29,7 @@ const termsStrings = {
   title: 'About these flavor words',
   intro: 'These six are Japanese brewers\' terms.',
   closeLabel: 'Close',
+  learnMore: 'More about these six words',
 }
 
 describe('FlavorProfileView', () => {
