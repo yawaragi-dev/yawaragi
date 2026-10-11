@@ -3,7 +3,7 @@
 import { type ReactNode, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import NextLink from 'next/link'
-import { CameraRotate, CaretRight, Keyboard, MagnifyingGlass } from '@phosphor-icons/react/dist/ssr'
+import { BookOpen, CameraRotate, CaretRight, Keyboard, MagnifyingGlass } from '@phosphor-icons/react/dist/ssr'
 import { Link } from '@/i18n/navigation'
 import { KeepItAnyway } from '@/components/sake/add-unlisted-bottling'
 
@@ -25,7 +25,8 @@ import { KeepItAnyway } from '@/components/sake/add-unlisted-bottling'
  * - "Keep it anyway", whenever something was read and the visitor can keep a
  *   journal: the bottle is saved as their own bottling, with the name and
  *   brewery as they stand in "What we read" (design v1.6, ADR-0025);
- * - "Type the name instead", last.
+ * - "Type the name instead", then "How to read a label" (the Learn entry),
+ *   last.
  */
 
 export interface OutcomeCandidate {
@@ -149,6 +150,16 @@ export function ScanOutcome({
       >
         <Keyboard size={16} aria-hidden="true" />
         {t('typeInstead')}
+      </Link>
+      {/* v1.6 §5a: on every outcome. A misread is the moment someone most
+          wants to know where things sit on a label. */}
+      <Link
+        href={{ pathname: '/learn/[slug]', params: { slug: 'how-to-read-a-label' } }}
+        className="-mt-3 flex min-h-11 w-fit items-center gap-2 text-subtle font-medium text-ginshu-700 hover:text-ginshu-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+        data-testid="scan-outcome-read-a-label"
+      >
+        <BookOpen size={16} aria-hidden="true" />
+        {t('howToReadALabel')}
       </Link>
     </section>
   )

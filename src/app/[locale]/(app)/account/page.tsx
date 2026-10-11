@@ -1,4 +1,4 @@
-import { Globe } from '@phosphor-icons/react/dist/ssr'
+import { BookOpen, Globe } from '@phosphor-icons/react/dist/ssr'
 import { Show } from '@clerk/nextjs'
 import { hasLocale } from 'next-intl'
 import { ScreenBar } from '@/components/layout/screen-header'
@@ -7,7 +7,7 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { SignOutRow } from '@/components/account/sign-out-row'
 import { CookieSettingsRow } from '@/components/account/cookie-settings-row'
-import { SettingsGroup, SettingsRow } from '@/components/account/settings-row'
+import { SettingsGroup, SettingsLinkRow, SettingsRow } from '@/components/account/settings-row'
 import { Link } from '@/i18n/navigation'
 import { routing } from '@/i18n/routing'
 
@@ -117,6 +117,12 @@ export default async function AccountPage({ params }: PageProps) {
           sub={t('languageSub')}
           testId="account-language"
         />
+      </SettingsGroup>
+
+      {/* §15's "Learn" group (design v1.6): the one home of the reference
+          inside the app. It opens the public pages (ADR-0026). */}
+      <SettingsGroup title={t('groupLearn')} testId="account-group-learn">
+        <SettingsLinkRow icon={BookOpen} label={t('learnLabel')} href="/learn" testId="account-learn" />
       </SettingsGroup>
 
       <SettingsGroup title={t('groupPrivacy')} testId="account-group-privacy">

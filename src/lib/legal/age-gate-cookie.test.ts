@@ -5,6 +5,7 @@ import {
   ageGateCookieAttrs,
   hasAcceptedAgeGate,
   isGatedPath,
+  isPublicContentPath,
   type CookieJar,
 } from './age-gate-cookie'
 
@@ -141,4 +142,21 @@ describe('isGatedPath', () => {
   ])('treats %s as gated', (path) => {
     expect(isGatedPath(path)).toBe(true)
   })
+
+  // ADR-0026: "Learn" is education with no brand or flavor data, so it sits
+  // outside the 18+ gate — the index and every entry under it.
+  it.each(['/en/learn', '/en/learn/', '/en/learn/junmai', '/de/learn', '/de/learn/nama'])(
+    'treats the public reference page %s as ungated',
+    (path) => {
+      expect(isGatedPath(path)).toBe(false)
+      expect(isPublicContentPath(path)).toBe(true)
+    },
+  )
+
+  it.each(['/en/learning', '/en/sake/learn', '/en/home', '/learn'])(
+    'does not mistake %s for a public reference page',
+    (path) => {
+      expect(isPublicContentPath(path)).toBe(false)
+    },
+  )
 })

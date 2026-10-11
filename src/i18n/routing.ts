@@ -49,6 +49,11 @@ export const routing = defineRouting({
     // like the other app routes: the legal pages are localised because German
     // visitors bookmark /Impressum, but nobody bookmarks an app tab.
     '/home': '/home',
+    // "Learn": the public reference on what a label and a bottle mean (§18,
+    // ADR-0026). One spelling across locales, like the app routes: the entry
+    // slugs are romaji terms either way.
+    '/learn': '/learn',
+    '/learn/[slug]': '/learn/[slug]',
     '/collection': '/collection',
   },
 })

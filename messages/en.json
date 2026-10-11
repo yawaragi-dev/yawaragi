@@ -53,6 +53,7 @@
   },
   "footer": {
     "imprintLink": "Impressum",
+    "learnLink": "Learn",
     "privacyLink": "Privacy notice",
     "drinkResponsibly": "Drink responsibly",
     "label": "Legal"
@@ -555,6 +556,8 @@
     "signInCta": "Sign in",
     "groupDisplay": "Display",
     "groupPrivacy": "Privacy",
+    "groupLearn": "Learn",
+    "learnLabel": "What the words on a label mean",
     "groupAccount": "Account",
     "languageLabel": "Language",
     "languageValue": "English",
@@ -783,6 +786,7 @@
   "scanOutcome": {
     "scanAgain": "Scan again",
     "typeInstead": "Type the name instead",
+    "howToReadALabel": "How to read a label",
     "whatWeRead": "What we read",
     "name": "Name",
     "brewery": "Brewery",
@@ -890,6 +894,492 @@
       "title": "Measured for the whole line",
       "measured": "Sakenowa charts a sake — the {line} line — not each bottling under its name. A ginjō and a genshu from the same line can taste quite different.",
       "howToRead": "Read the chart and Similar as the family resemblance. Your own rating and notes on this page are about this bottling only."
+    }
+  },
+  "learn": {
+    "title": "Learn",
+    "metaTitle": "Learn about sake | Yawaragi",
+    "metaDescription": "What the words on a sake label mean: grades, polishing, yeast starters, unpasteurised, aged and sparkling sake, and sake rice. Written by hand, with sources.",
+    "lead": "What the words on a label mean. Written by hand, with sources.",
+    "startHere": "Start here",
+    "allTopics": "All topics",
+    "openApp": "Open the app",
+    "sourceLabel": "Source",
+    "sourcesLabel": "Sources",
+    "checked": "Checked against the sources on {date}.",
+    "related": "Related",
+    "entryMetaTitle": "{title} | Learn | Yawaragi",
+    "groups": {
+      "start": "Start here",
+      "grades": "Grades",
+      "styles": "Styles and processes",
+      "rice": "Rice"
+    },
+    "groupKicker": {
+      "start": "Reading a bottle",
+      "grades": "Grade",
+      "styles": "Style",
+      "rice": "Rice"
+    },
+    "entries": {
+      "how-to-read-a-label": {
+        "title": "How to read a label",
+        "answer": "The biggest characters are usually the sake’s name, not the brewery. The grade, the polishing ratio and the details sit smaller, often on the back label.",
+        "factsTitle": "What to look for",
+        "facts": {
+          "name": {
+            "term": "Name",
+            "value": "The large calligraphy",
+            "note": "The sake’s name. The brewery’s own name is printed small, next to its address."
+          },
+          "type": {
+            "term": "Sake",
+            "value": "The legal word for it",
+            "note": "One of the two is on every bottle."
+          },
+          "grade": {
+            "term": "Grade",
+            "value": "Junmai, ginjō, daiginjō, honjōzō",
+            "note": "Alone or combined, as here. No grade word at all means ordinary sake, futsūshu 普通酒."
+          },
+          "polishing": {
+            "term": "Polishing ratio",
+            "value": "A percentage",
+            "note": "How much of each grain is left after milling. 60% means 40% was milled away."
+          },
+          "ingredients": {
+            "term": "Ingredients",
+            "value": "米, 米こうじ, sometimes 醸造アルコール",
+            "note": "Rice, kōji rice, and brewer’s alcohol when it was added. Water is not listed."
+          },
+          "alcohol": {
+            "term": "Alcohol",
+            "value": "Around 15 度 for most sake",
+            "note": "度 is percent. Undiluted sake, genshu, runs higher."
+          },
+          "volume": {
+            "term": "Volume",
+            "value": "720 ml or 1.8 l",
+            "note": "The two common bottles: 四合瓶 yongōbin and 一升瓶 isshōbin."
+          },
+          "date": {
+            "term": "Date",
+            "value": "A year and a month",
+            "note": "When it was bottled for sale, not when it was brewed. Printing it became optional with the 2022 revision of the labelling standard."
+          },
+          "maker": {
+            "term": "Brewer",
+            "value": "A name and an address",
+            "note": "酒造 shuzō and 醸造 jōzō both mean brewery."
+          },
+          "styles": {
+            "term": "Style words",
+            "value": "Unpasteurised · undiluted · unfiltered · yamahai",
+            "note": "Short words, often in a corner or on a neck label. Each has its own page here."
+          }
+        },
+        "detail": {
+          "p1": "A front label is made to be recognised, not read: a name in brush calligraphy, sometimes nothing else. The facts are on the back label or on a narrow strip at the side.",
+          "p2": "If you can find only three things, find the grade, the polishing ratio and the character 生. Together they tell you roughly how the sake was made and whether it belongs in the fridge."
+        }
+      },
+      "grades": {
+        "title": "Grades at a glance",
+        "answer": "Eight grade names, built from two questions: was brewer’s alcohol added, and how far was the rice polished? Sake that carries none of them is futsūshu, ordinary sake.",
+        "factsTitle": "The eight designations",
+        "facts": {
+          "junmai": {
+            "term": "Junmai",
+            "value": "No polishing requirement",
+            "note": "Rice, kōji and water only."
+          },
+          "tokubetsuJunmai": {
+            "term": "Tokubetsu junmai",
+            "value": "60% or less, or a special method",
+            "note": "The label has to say what makes it special."
+          },
+          "junmaiGinjo": {
+            "term": "Junmai ginjō",
+            "value": "60% or less"
+          },
+          "junmaiDaiginjo": {
+            "term": "Junmai daiginjō",
+            "value": "50% or less"
+          },
+          "honjozo": {
+            "term": "Honjōzō",
+            "value": "70% or less",
+            "note": "With a little brewer’s alcohol, like the three below."
+          },
+          "tokubetsuHonjozo": {
+            "term": "Tokubetsu honjōzō",
+            "value": "60% or less, or a special method"
+          },
+          "ginjo": {
+            "term": "Ginjō",
+            "value": "60% or less",
+            "note": "Brewed with the ginjō method."
+          },
+          "daiginjo": {
+            "term": "Daiginjō",
+            "value": "50% or less",
+            "note": "Ginjō taken further."
+          }
+        },
+        "detail": {
+          "p1": "The percentages are polishing ratios: the share of each grain that remains after milling.",
+          "p2": "All eight share three rules. The rice must be inspected and graded 3 or better. Kōji rice must make up at least 15% of the rice. Any added alcohol may not exceed 10% of the rice’s weight.",
+          "p3": "A grade is a recipe, not a ranking. A lower number is not a better sake, only a different one."
+        }
+      },
+      "junmai": {
+        "title": "Junmai",
+        "answer": "Made only from rice, kōji and water, with no added brewer’s alcohol.",
+        "factsTitle": "What it requires",
+        "facts": {
+          "ingredients": {
+            "term": "Ingredients",
+            "value": "Rice, kōji rice, water",
+            "note": "Nothing else."
+          },
+          "polishing": {
+            "term": "Polishing",
+            "value": "No minimum",
+            "note": "The ratio is still printed on the label."
+          },
+          "alcohol": {
+            "term": "Added alcohol",
+            "value": "None"
+          }
+        },
+        "detail": {
+          "p1": "The word joins the other grades. Junmai ginjō and junmai daiginjō are ginjō and daiginjō made without added alcohol.",
+          "p2": "With nothing added, junmai sake tends to show the flavor of the rice and the kōji more than other kinds do."
+        }
+      },
+      "ginjo": {
+        "title": "Ginjō and daiginjō",
+        "answer": "Rice polished to 60% or less and brewed with the ginjō method. Daiginjō takes the polishing to 50% or less.",
+        "factsTitle": "What it requires",
+        "facts": {
+          "ginjo": {
+            "term": "Ginjō",
+            "value": "Polished to 60% or less"
+          },
+          "daiginjo": {
+            "term": "Daiginjō",
+            "value": "Polished to 50% or less"
+          },
+          "method": {
+            "term": "Method",
+            "value": "Ginjō-zukuri",
+            "note": "A slow fermentation at low temperature."
+          },
+          "alcohol": {
+            "term": "Added alcohol",
+            "value": "Allowed, up to 10% of the rice’s weight",
+            "note": "Without it: junmai ginjō, junmai daiginjō."
+          },
+          "aroma": {
+            "term": "Aroma",
+            "value": "Ginjō-ka",
+            "note": "The fruity aroma the method is known for."
+          }
+        },
+        "detail": {
+          "p1": "Polishing removes the outer layers of the grain, which hold most of its protein. Too much protein gives rough, unrefined flavors; what is left after polishing is mostly starch.",
+          "p2": "A lower number is not a better sake, only a different one."
+        }
+      },
+      "honjozo": {
+        "title": "Honjōzō",
+        "answer": "Rice polished to 70% or less, with a small, limited amount of brewer’s alcohol added.",
+        "factsTitle": "What it requires",
+        "facts": {
+          "polishing": {
+            "term": "Polishing",
+            "value": "70% or less"
+          },
+          "alcohol": {
+            "term": "Added alcohol",
+            "value": "Up to 10% of the rice’s weight",
+            "note": "Brewer’s alcohol: distilled alcohol, added to the mash before pressing."
+          },
+          "tokubetsu": {
+            "term": "Tokubetsu",
+            "value": "60% or less, or a special method",
+            "note": "The label has to say which."
+          }
+        },
+        "detail": {
+          "p1": "Added to the mash, the alcohol draws out aroma. It also thins what comes from the rice and the fermentation, so the sake has less acidity and umami and feels lighter.",
+          "p2": "It is an ingredient with a limit, not a shortcut. Above the limit a sake cannot carry any of the eight grade names."
+        }
+      },
+      "polishing-ratio": {
+        "title": "Polishing ratio",
+        "answer": "The percentage of each rice grain that is left after milling. 60% means 40% was milled away.",
+        "factsTitle": "The limits by grade",
+        "facts": {
+          "honjozo": {
+            "term": "Honjōzō",
+            "value": "70% or less"
+          },
+          "ginjo": {
+            "term": "Ginjō",
+            "value": "60% or less"
+          },
+          "daiginjo": {
+            "term": "Daiginjō",
+            "value": "50% or less"
+          },
+          "junmai": {
+            "term": "Junmai",
+            "value": "No limit",
+            "note": "Whatever the ratio is, the label states it."
+          },
+          "rounding": {
+            "term": "Fractions",
+            "value": "Rounded down",
+            "note": "A ratio of 60.9% counts as 60%."
+          }
+        },
+        "detail": {
+          "p1": "The outer layers of a grain hold protein, and too much protein gives rough, unrefined flavors, called zatsumi 雑味. Milling them away leaves the starchy centre.",
+          "p2": "The number describes the rice, not the result. Sake experts treat it as a pointer to a sake’s character, not as a measure of its quality."
+        }
+      },
+      "yeast-starters": {
+        "title": "Starters: sokujō, kimoto, yamahai",
+        "answer": "Before the main mash, brewers grow yeast in a small starter. It needs lactic acid to keep other microbes out, and the three methods differ in where that acid comes from.",
+        "factsTitle": "Three ways to start",
+        "facts": {
+          "sokujo": {
+            "term": "Sokujō",
+            "value": "Lactic acid is added",
+            "note": "About two weeks. The method most sake uses today."
+          },
+          "kimoto": {
+            "term": "Kimoto",
+            "value": "Wild lactic bacteria make it",
+            "note": "About four weeks. The rice and kōji are first ground to a paste with poles."
+          },
+          "yamahai": {
+            "term": "Yamahai",
+            "value": "Wild lactic bacteria, without the grinding",
+            "note": "About four weeks. Worked out in 1909 as a simpler kimoto."
+          }
+        },
+        "detail": {
+          "p1": "In kimoto and yamahai the starter begins cold, at about 8°C, and is warmed slowly. Lactic bacteria come first and sour the mash. The yeast is added about two weeks in, and the acid and the alcohol then kill the bacteria off.",
+          "p2": "Sokujō adds ready-made lactic acid instead of growing the bacteria, which takes about two weeks off the starter.",
+          "p3": "The slower methods tend to give a fuller body and a more complex flavor; sokujō tends to be lighter and more delicate. The starter is separate from the grade: a junmai ginjō can be a kimoto."
+        }
+      },
+      "nama": {
+        "title": "Nama: unpasteurised sake",
+        "answer": "Sake is normally pasteurised twice, before storage and at bottling. Nama sake skips one or both, which keeps it fresh-tasting and means it has to stay cold.",
+        "factsTitle": "Which heating is skipped",
+        "facts": {
+          "namazake": {
+            "term": "Namazake",
+            "value": "Both",
+            "note": "Never pasteurised. Its label has to carry a storage warning."
+          },
+          "namachozo": {
+            "term": "Nama-chozō",
+            "value": "The first",
+            "note": "Stored unpasteurised, then pasteurised once at bottling."
+          },
+          "namazume": {
+            "term": "Nama-zume",
+            "value": "The second",
+            "note": "Pasteurised once before storage, then bottled without a second heating."
+          },
+          "hiyaoroshi": {
+            "term": "Hiyaoroshi",
+            "value": "The second",
+            "note": "A nama-zume aged from winter and released in autumn."
+          }
+        },
+        "detail": {
+          "p1": "Pasteurising heats sake to about 60–65°C. It kills microbes and stops the enzymes that would otherwise keep changing the sake in the bottle.",
+          "p2": "With its enzymes still active, namazake tastes fresh and lively, and keeps only in the fridge."
+        }
+      },
+      "muroka": {
+        "title": "Muroka",
+        "answer": "“Unfiltered”: sake that skips the second filtration, the one with charcoal. It is still pressed and clear, not cloudy.",
+        "factsTitle": "What the word covers",
+        "facts": {
+          "skipped": {
+            "term": "Skipped",
+            "value": "Active charcoal",
+            "note": "Charcoal takes out color and adjusts flavor."
+          },
+          "kept": {
+            "term": "Not skipped",
+            "value": "Pressing",
+            "note": "A cloth still separates the sake from the lees, so some filtering does happen."
+          },
+          "looks": {
+            "term": "Looks",
+            "value": "Often pale yellow"
+          },
+          "combined": {
+            "term": "Often with",
+            "value": "Unpasteurised and undiluted",
+            "note": "Three style words in one: muroka, nama, genshu."
+          }
+        },
+        "detail": {
+          "p1": "The word has no single fixed meaning. For one brewer it means no secondary filtration at all, for another only no charcoal.",
+          "p2": "Muroka sake is considered fuller in flavor: it keeps the fine particles, aromas and flavors that charcoal would take out."
+        }
+      },
+      "genshu": {
+        "title": "Genshu",
+        "answer": "Undiluted sake: no water is added after pressing to bring the alcohol down.",
+        "factsTitle": "In numbers",
+        "facts": {
+          "usual": {
+            "term": "Most sake",
+            "value": "Diluted to around 15%"
+          },
+          "genshu": {
+            "term": "Genshu",
+            "value": "Usually over 17%"
+          },
+          "rule": {
+            "term": "The rule",
+            "value": "Less than 1% of change",
+            "note": "A sake may still be called genshu if added water changes its alcohol by less than one point."
+          }
+        },
+        "detail": {
+          "p1": "Sake comes off the press at around 17–20% alcohol. Without the water, genshu keeps that strength and a stronger taste."
+        }
+      },
+      "nigori": {
+        "title": "Nigori",
+        "answer": "Cloudy sake: the mash is pressed through a coarse mesh, so rice solids and yeast pass into the bottle.",
+        "factsTitle": "What to expect",
+        "facts": {
+          "mesh": {
+            "term": "Cloudiness",
+            "value": "Depends on how coarse the mesh is"
+          },
+          "texture": {
+            "term": "Texture",
+            "value": "Thicker and creamier, usually sweeter"
+          },
+          "pasteurised": {
+            "term": "Pasteurised",
+            "value": "Usually, today",
+            "note": "It used to be sold unpasteurised, with living yeast."
+          },
+          "live": {
+            "term": "Live nigori",
+            "value": "Still fermenting",
+            "note": "An unpasteurised nigori whose yeast keeps working in the bottle, so it is fizzy."
+          }
+        },
+        "detail": {
+          "p1": "Nigori and muroka are different things. Muroka is about the charcoal filtration after pressing; nigori is about the mesh at the press."
+        }
+      },
+      "koshu": {
+        "title": "Koshu: aged sake",
+        "answer": "Sake matured for years rather than months. It turns from yellow to amber and takes on aromas of caramel, dried fruit, nuts and soy sauce.",
+        "factsTitle": "How long",
+        "facts": {
+          "usual": {
+            "term": "Most sake",
+            "value": "Six months to a year before release"
+          },
+          "koshu": {
+            "term": "Koshu",
+            "value": "Years",
+            "note": "No law fixes a number. The makers’ association writes “more than two years” in its glossary and “at least three” in its guide."
+          },
+          "printedAge": {
+            "term": "A printed age",
+            "value": "Whole years",
+            "note": "Fractions are dropped, and a blend states the age of its youngest part."
+          },
+          "alsoWritten": {
+            "term": "Also written",
+            "value": "Matured sake, long-matured sake"
+          }
+        },
+        "detail": {
+          "p1": "The color and the flavor come from a slow reaction between the sugars and the amino acids in the sake, the same one that browns bread.",
+          "p2": "Koshu has a slightly bitter taste and a long finish. Bitterness is not usually wanted in sake; here it is part of the style."
+        }
+      },
+      "sparkling": {
+        "title": "Sparkling sake",
+        "answer": "Sake with bubbles. The kinds differ in where the gas comes from: injected, made by a second fermentation, or still being made by live yeast in the bottle.",
+        "factsTitle": "Four words to tell apart",
+        "facts": {
+          "carbonated": {
+            "term": "Carbonated",
+            "value": "The gas is injected",
+            "note": "Added under pressure once the sake is made and filtered. Usually clear, and usually pasteurised."
+          },
+          "secondFermentation": {
+            "term": "Second fermentation",
+            "value": "Fermented again in the bottle or a sealed tank",
+            "note": "Fermentation is stopped early and finished under seal, which traps the gas. The sediment can stay, for a cloudy style, or be removed."
+          },
+          "live": {
+            "term": "Live nigori",
+            "value": "Still fermenting",
+            "note": "Bottled after only a coarse filtering and unpasteurised, so kōji and yeast keep working. A winter seasonal."
+          },
+          "awa": {
+            "term": "Awa sake",
+            "value": "A certified standard",
+            "note": "Bubbles from fermentation only, clear, pasteurised, more than 10% alcohol, and 3.5 bar of pressure at 20°C. Set by the Japan Awasake Association, founded in 2016."
+          }
+        },
+        "detail": {
+          "p1": "Strength varies widely. Many sparkling sakes are between 5% and 12%, lighter than still sake; the sweet ones sit around 6–8%, and there are strong, dry ones too.",
+          "p2": "How sparkling sake is made is not tightly regulated, and there are no standard label terms for it. The back label and the maker’s own notes are the guide."
+        }
+      },
+      "sake-rice": {
+        "title": "Sake rice",
+        "answer": "Brewers prefer rice bred for the job: large grains with a white, starchy core and little protein. A few varieties appear on labels again and again.",
+        "factsTitle": "Four names to know",
+        "facts": {
+          "yamadaNishiki": {
+            "term": "Yamada Nishiki",
+            "value": "Hyōgo",
+            "note": "The most widely grown sake rice. Crossed in 1923, recommended by the prefecture since 1936."
+          },
+          "gohyakumangoku": {
+            "term": "Gohyakumangoku",
+            "value": "Niigata",
+            "note": "The second most widely grown."
+          },
+          "miyamaNishiki": {
+            "term": "Miyama Nishiki",
+            "value": "Nagano",
+            "note": "Named in 1978. Hardy in the cold, and grown across Nagano and the north-east."
+          },
+          "omachi": {
+            "term": "Omachi",
+            "value": "Okayama",
+            "note": "Found in 1859 and an ancestor of the first two. Nearly all of it is still grown in Okayama."
+          }
+        },
+        "detail": {
+          "p1": "The white core is called shinpaku 心白: a loose, opaque pocket of starch at the centre of the grain, which kōji mould grows into easily. “Large” has a definition too: 26 grams or more per thousand grains.",
+          "p2": "A variety may be named on a label only when it makes up more than half of the rice used, and the label must then give its share.",
+          "p3": "Varieties differ in how readily they dissolve in the mash, and that shows in the sake. Each region has its own."
+        }
+      }
     }
   }
 }

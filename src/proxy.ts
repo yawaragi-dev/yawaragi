@@ -10,7 +10,7 @@ import {
   readDebugUrlParam,
   setDebugCookie,
 } from '@/lib/debug/debug-mode'
-import { isGatedPath } from '@/lib/legal/age-gate-cookie'
+import { isGatedPath, isPublicContentPath } from '@/lib/legal/age-gate-cookie'
 import { canonicalGermanLegalRedirect } from '@/lib/legal/canonical-german-legal-paths'
 import { getComplianceState } from '@/lib/legal/compliance-state'
 import { ensureAnonymousSessionCookie } from '@/lib/session/middleware-issue'
@@ -105,12 +105,16 @@ function runIntlAndAgeGate(request: NextRequest) {
   }
 
   const { pathname } = request.nextUrl
-  if (!isGatedPath(pathname)) {
-    return withSessionCookie(request, intlResponse)
-  }
-
   const localeMatch = pathname.match(/^\/(en|de)(?=\/|$)/)
   const locale = localeMatch?.[1] ?? routing.defaultLocale
+
+  // "Learn" is public (ADR-0026) — but only in a launched locale. A German
+  // content page before the Impressum is in place is exactly what ADR-0008
+  // holds back, so `/de/learn` falls through to the coming-soon rewrite below.
+  const heldBackContent = isPublicContentPath(pathname) && !isLaunched(locale)
+  if (!isGatedPath(pathname) && !heldBackContent) {
+    return withSessionCookie(request, intlResponse)
+  }
 
   // For launched locales we honour the age-gate cookie; for non-launched
   // locales every gated path rewrites to the coming-soon landing regardless.

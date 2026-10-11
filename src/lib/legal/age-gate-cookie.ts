@@ -89,6 +89,33 @@ const UNGATED_LOCALE_PATHS: ReadonlySet<string> = new Set([
   '/sign-in',
 ])
 
+/**
+ * "Learn" — the reference pages on what a label and a bottle mean (design
+ * v1.6 §18, ADR-0026) — is public: `/learn` and every entry under it. They
+ * are education with no brand, flavor or recommendation data on them, which
+ * is what JMStV §6(5) has us gate, so there is nothing to put behind the 18+
+ * confirmation. Anything that would list sakes under an entry stays in the
+ * app, behind the gate.
+ *
+ * Public only in a launched locale, though: `/de/learn` is German-language
+ * content, and German pages wait for the Impressum (ADR-0008). The proxy
+ * checks that with {@link isPublicContentPath}.
+ */
+const PUBLIC_CONTENT_PREFIX = '/learn'
+
+function withoutLocalePrefix(pathname: string): string | null {
+  const localeMatch = pathname.match(LOCALE_PREFIX_REGEX)
+  if (!localeMatch) return null
+  const rest = pathname.slice(localeMatch[0].length)
+  return rest.length > 1 && rest.endsWith('/') ? rest.slice(0, -1) : rest
+}
+
+/** Whether a path is one of the public content pages (see above). */
+export function isPublicContentPath(pathname: string): boolean {
+  const rest = withoutLocalePrefix(pathname)
+  return rest === PUBLIC_CONTENT_PREFIX || (rest?.startsWith(`${PUBLIC_CONTENT_PREFIX}/`) ?? false)
+}
+
 export function isGatedPath(pathname: string): boolean {
   if (pathname === '/') return false
   if (pathname.startsWith('/_next/')) return false
@@ -103,14 +130,9 @@ export function isGatedPath(pathname: string): boolean {
   if (pathname === '/sitemap.xml') return false
   if (/\.[a-z0-9]+$/i.test(pathname)) return false
 
-  const localeMatch = pathname.match(LOCALE_PREFIX_REGEX)
-  if (!localeMatch) return true
-
-  const withoutLocale = pathname.slice(localeMatch[0].length)
-  const normalized =
-    withoutLocale.length > 1 && withoutLocale.endsWith('/')
-      ? withoutLocale.slice(0, -1)
-      : withoutLocale
+  const normalized = withoutLocalePrefix(pathname)
+  if (normalized === null) return true
+  if (isPublicContentPath(pathname)) return false
 
   return !UNGATED_LOCALE_PATHS.has(normalized)
 }

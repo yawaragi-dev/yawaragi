@@ -58,6 +58,14 @@ export async function LandingFooter() {
             {tFooter('privacyLink')}
           </Link>
           <CookieSettingsLink />
+          {/* The public reference (§18, ADR-0026). */}
+          <Link
+            href="/learn"
+            className="rounded-sm underline underline-offset-4 hover:text-ash-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+            data-testid="footer-learn-link"
+          >
+            {tFooter('learnLink')}
+          </Link>
           <span data-testid="landing-drink-responsibly">{t('drinkResponsibly')}</span>
         </nav>
       </div>
