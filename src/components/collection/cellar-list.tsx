@@ -2,13 +2,14 @@ import { getTranslations } from 'next-intl/server'
 import { Drop, HourglassMedium, LockSimple, Stack } from '@phosphor-icons/react/dist/ssr'
 import { CellarRowActions } from '@/components/collection/cellar-row-actions'
 import { cellarFreshness, cellarSummary, sortCellar } from '@/lib/collection/cellar'
-import type { CellarBottle } from '@/lib/schemas/cellar-bottle'
+import { type CellarBottle, cellarRowKey } from '@/lib/schemas/cellar-bottle'
 import { cn } from '@/lib/utils'
 
 /**
  * §11's Cellar segment. Reference screenshot 20.
  *
- * "{bottles} bottles · {open} open", then one row per sake: thumb, name,
+ * "{bottles} bottles · {open} open", then one row per thing a bottle was
+ * logged against — a sake, or one bottling of it (design v1.6.1) — name,
  * "× n", the state line, and two actions. Bottles to finish soon sort first
  * and say so in the accent with an hourglass; then the other open ones; then
  * the sealed ones (`sortCellar`). `now` comes from the page so the render is
@@ -52,12 +53,17 @@ export async function CellarList({
           const f = cellarFreshness(row, now)
           const soon = f.kind === 'open' && f.drinkSoon
           const StateIcon = f.kind === 'unopened' ? LockSimple : soon ? HourglassMedium : Drop
+          const rowKey = cellarRowKey(row)
+          // v1.6 §11: a bottling's row leads with the bottling name, the
+          // line's kanji under it — the journal's order.
+          const name = row.expression?.name ?? row.sake.nameRomaji ?? row.sake.nameKanji
+          const kanjiUnder = name !== row.sake.nameKanji ? row.sake.nameKanji : null
           return (
             <li
-              key={row.brandId}
+              key={rowKey}
               className="flex gap-3 border-b border-divider py-3"
               data-testid="cellar-row"
-              data-brand-id={row.brandId}
+              data-row-key={rowKey}
             >
               {/* No bottle thumb: v1.5 rule 14 — there is no image to show, and
                   a permanent striped placeholder is gone with it. */}
@@ -65,9 +71,10 @@ export async function CellarList({
                 <span className="flex items-baseline gap-2">
                   <span
                     className="min-w-0 flex-1 text-card-heading font-medium text-ink"
-                    lang={row.sake.nameRomaji ? 'en' : 'ja'}
+                    lang={row.expression ? undefined : row.sake.nameRomaji ? 'en' : 'ja'}
+                    data-testid="cellar-row-name"
                   >
-                    {row.sake.nameRomaji ?? row.sake.nameKanji}
+                    {name}
                   </span>
                   {row.count > 1 && (
                     <span className="shrink-0 text-meta text-ash-700">
@@ -78,9 +85,9 @@ export async function CellarList({
                 {/* Latin name first, kanji under it — screenshot 20, and the
                     journal list's order, so one sake reads the same in both
                     segments. */}
-                {row.sake.nameRomaji && (
+                {kanjiUnder && (
                   <span className="text-meta text-ash-600" lang="ja">
-                    {row.sake.nameKanji}
+                    {kanjiUnder}
                   </span>
                 )}
                 <span
@@ -97,7 +104,12 @@ export async function CellarList({
                       ? t('drinkSoon', { days: f.days })
                       : t('open', { days: f.days })}
                 </span>
-                <CellarRowActions brandId={row.brandId} isOpen={f.kind === 'open'} count={row.count} />
+                <CellarRowActions
+                  target={row.expression ? { expressionId: row.expression.id } : { brandId: row.brandId! }}
+                  rowKey={rowKey}
+                  isOpen={f.kind === 'open'}
+                  count={row.count}
+                />
               </span>
             </li>
           )

@@ -810,7 +810,7 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
                       does not read the cellar, so it starts at "Add to
                       cellar"; the first tap answers with the real count. */}
                   <div className="flex gap-2">
-                    <CellarButton brandId={view.brandId} initialCount={0} refreshOnSave={false} />
+                    <CellarButton target={{ brandId: view.brandId }} initialCount={0} refreshOnSave={false} />
                   </div>
                 </div>
               )

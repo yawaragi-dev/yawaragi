@@ -170,19 +170,27 @@ test.describe('/en/collection?tab=cellar — §11 Cellar (ADR-0024)', () => {
     // No Wishlist: it is not built, and an option to nowhere is #162's dead end.
     await expect(page.getByTestId('collection-segment-wishlist')).toHaveCount(0)
 
-    // Bottles, not rows: 1 + 2 + 1.
-    await expect(page.getByTestId('cellar-summary')).toHaveText('4 bottles · 2 open')
+    // Bottles, not rows: 1 + 2 + 1, and 1 of a bottling.
+    await expect(page.getByTestId('cellar-summary')).toHaveText('5 bottles · 2 open')
 
     // §11: "drink soon" sorts first and says so; sealed bottles last.
     const rows = page.getByTestId('cellar-row')
-    await expect(rows).toHaveCount(3)
+    await expect(rows).toHaveCount(4)
     await expect(rows.nth(0)).toContainText('而今')
     await expect(rows.nth(0).getByTestId('cellar-state')).toHaveText(
       'Open 12 days — best finished this week',
     )
     await expect(rows.nth(1).getByTestId('cellar-state')).toHaveText('Open 2 days · fridge')
-    await expect(rows.nth(2)).toContainText('× 2')
-    await expect(rows.nth(2).getByTestId('cellar-state')).toHaveText(
+    // v1.6.1 §11: one row per thing a bottle was logged against. A bottling's
+    // bottle has a row of its own, beside its sake's (而今, above), and leads
+    // with the bottling's name, the sake's kanji under it.
+    const bottling = rows.nth(2)
+    await expect(bottling.getByTestId('cellar-row-name')).toHaveText('Jikon Nama 2025')
+    await expect(bottling).toContainText('而今')
+    await expect(bottling).toHaveAttribute('data-row-key', 'x:stub-bottling')
+    await expect(page.getByTestId('cellar-open-x:stub-bottling')).toBeVisible()
+    await expect(rows.nth(3)).toContainText('× 2')
+    await expect(rows.nth(3).getByTestId('cellar-state')).toHaveText(
       'Unopened · keeps for months, cool and dark',
     )
 

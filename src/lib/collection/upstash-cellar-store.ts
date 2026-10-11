@@ -3,11 +3,11 @@ import 'server-only'
 import { type CellarStore, cellarKey, decodeCellarHash } from '@/lib/collection/cellar-store'
 import { UpstashHash } from '@/lib/collection/upstash-hash'
 import type { StoreDump } from '@/lib/collection/versioned-record'
-import type { CellarBottle } from '@/lib/schemas/cellar-bottle'
+import { type CellarBottle, cellarRowKey } from '@/lib/schemas/cellar-bottle'
 
 /**
  * Production {@link CellarStore}: a Redis hash per user on Upstash
- * (`cellar:user:<clerkUserId>`, field = brand id). Same REST plumbing and the
+ * (`cellar:user:<clerkUserId>`, field = the row's key). Same REST plumbing and the
  * same no-`EXPIRE` rule as the journal (ADR-0024).
  */
 export class UpstashCellarStore implements CellarStore {
@@ -26,11 +26,11 @@ export class UpstashCellarStore implements CellarStore {
   }
 
   async put(userId: string, bottle: CellarBottle): Promise<void> {
-    await this.hash.set(cellarKey(userId), String(bottle.brandId), JSON.stringify(bottle))
+    await this.hash.set(cellarKey(userId), cellarRowKey(bottle), JSON.stringify(bottle))
   }
 
-  async remove(userId: string, brandId: number): Promise<void> {
-    await this.hash.delete(cellarKey(userId), String(brandId))
+  async remove(userId: string, rowKey: string): Promise<void> {
+    await this.hash.delete(cellarKey(userId), rowKey)
   }
 
   async clear(userId: string): Promise<void> {

@@ -17,7 +17,7 @@ const entry = (id: string, occurredAt: number): JournalEntry => ({
 })
 
 const bottle: CellarBottle = {
-  schemaVersion: 1,
+  schemaVersion: 2,
   brandId: 7,
   sake: { nameKanji: '而今', nameRomaji: 'Jikon' },
   count: 2,

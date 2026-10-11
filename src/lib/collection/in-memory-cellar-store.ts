@@ -1,10 +1,10 @@
 import { type CellarStore, decodeCellarHash } from '@/lib/collection/cellar-store'
 import type { StoreDump } from '@/lib/collection/versioned-record'
-import type { CellarBottle } from '@/lib/schemas/cellar-bottle'
+import { type CellarBottle, cellarRowKey } from '@/lib/schemas/cellar-bottle'
 
 /**
  * In-memory {@link CellarStore} for unit tests (and only tests). Holds JSON
- * strings per brand id, like the Redis hash, so reads go through the same
+ * strings per row key, like the Redis hash, so reads go through the same
  * decode as Upstash, and {@link putRaw} can plant a record the code cannot read.
  */
 export class InMemoryCellarStore implements CellarStore {
@@ -19,11 +19,11 @@ export class InMemoryCellarStore implements CellarStore {
   }
 
   async put(userId: string, bottle: CellarBottle): Promise<void> {
-    this.putRaw(userId, String(bottle.brandId), JSON.stringify(bottle))
+    this.putRaw(userId, cellarRowKey(bottle), JSON.stringify(bottle))
   }
 
-  async remove(userId: string, brandId: number): Promise<void> {
-    this.hashes.get(userId)?.delete(String(brandId))
+  async remove(userId: string, rowKey: string): Promise<void> {
+    this.hashes.get(userId)?.delete(rowKey)
   }
 
   async clear(userId: string): Promise<void> {
