@@ -162,8 +162,9 @@ catalogue lookup → tables) runs, at no cost.
 ## Adding a candidate provider to the run
 
 Providers are named keys into the vision registry
-(`src/lib/ai/vision/registry.ts`): `anthropic-haiku-4-5`,
-`anthropic-sonnet-4-6`, `e2e-stub`. To compare a new vendor:
+(`src/lib/ai/vision/registry.ts`): `anthropic-haiku-4-5` and
+`anthropic-sonnet-4-6` (the two tiers the scan runs today),
+`anthropic-haiku-5-5` and `anthropic-sonnet-5-5` (candidates), `e2e-stub`. To compare a new vendor:
 
 1. **Register it.** Add a factory + key to `visionProviderFactories` in the
    registry (that's the vendor-swap seam the whole Phase 3 design protects —
@@ -244,6 +245,12 @@ Two tables print to stdout, both pastable into GitHub:
 
   `wrong` is the costly one: the visitor is shown a sake they are not holding.
   `none` only sends them to search.
+
+  **`right ungated`** is the `right` count with the model's self-reported
+  confidence read as 1. The scan drops any read below 0.60 before the lookup
+  runs, and models differ a great deal in how they score themselves; the gap
+  between `right` and `right ungated` is what that gate costs a given model.
+  The per-photo table prints each read's confidence after an `@`.
 
   When both Anthropic tiers are in the run, a **`two-tier (as shipped)`** row
   replays the scan action's rule from the calls already made — tier 1 stands

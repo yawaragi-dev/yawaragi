@@ -16,6 +16,10 @@ import type { VisionProvider } from './vision-provider'
  *   Haiku, but `scanAction`'s two-tier retry only invokes it on
  *   no_match / low_confidence / extraction_failed from tier-1, so the
  *   amortised cost stays close to Haiku on the happy path.
+ * - `anthropic-haiku-5-5` / `anthropic-sonnet-5-5`: the Claude 5 family,
+ *   registered as candidates so `pnpm eval label-scan-jp` can score them
+ *   against the tiers above on the same photos. Nothing selects them until
+ *   a tier constant below points at one.
  * - `e2e-stub`: deterministic non-production key the Playwright spec
  *   selects via `VISION_PROVIDER=e2e-stub`. Never the default; its
  *   `nodeEnv === 'production'` guard refuses to run in prod.
@@ -23,6 +27,8 @@ import type { VisionProvider } from './vision-provider'
 export type VisionProviderKey =
   | 'anthropic-haiku-4-5'
   | 'anthropic-sonnet-4-6'
+  | 'anthropic-haiku-5-5'
+  | 'anthropic-sonnet-5-5'
   | 'e2e-stub'
 
 export const DEFAULT_VISION_PROVIDER_KEY: VisionProviderKey = 'anthropic-haiku-4-5'
@@ -59,6 +65,16 @@ const visionProviderFactories: Record<VisionProviderKey, () => VisionProvider> =
     createAnthropicHaikuProvider({
       model: anthropic('claude-sonnet-4-6'),
       telemetryMetadata: { 'provider.key': 'anthropic-sonnet-4-6' },
+    }),
+  'anthropic-haiku-5-5': () =>
+    createAnthropicHaikuProvider({
+      model: anthropic('claude-haiku-5-5'),
+      telemetryMetadata: { 'provider.key': 'anthropic-haiku-5-5' },
+    }),
+  'anthropic-sonnet-5-5': () =>
+    createAnthropicHaikuProvider({
+      model: anthropic('claude-sonnet-5-5'),
+      telemetryMetadata: { 'provider.key': 'anthropic-sonnet-5-5' },
     }),
   'e2e-stub': () => createE2eStubVisionProvider(),
 }

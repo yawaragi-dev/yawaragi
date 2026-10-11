@@ -48,7 +48,9 @@
  *             catalogue does not have)
  *   none      no answer for a bottle the catalogue has
  *
- * A bottle the catalogue lacks is `right` when the scan says so. When both
+ * A bottle the catalogue lacks is `right` when the scan says so. `right
+ * ungated` is the same count with the model's self-reported confidence read
+ * as 1 — the gap between the two is what the confidence gate costs. When both
  * tiers are in the run, a `two-tier (as shipped)` row replays the scan
  * action's rule — keep tier 1 only on a first-pass exact match, else take
  * tier 2 — from the calls already made, so it costs nothing extra.
@@ -117,6 +119,12 @@ interface Resolution {
   /** What the scan landed on, for the detail table. */
   landedOn: string
   verdict: Verdict
+  /**
+   * The verdict with the confidence gate taken out (confidence read as 1).
+   * A read that is right but self-reported below the gate never reaches the
+   * lookup; this says what the lookup would have done with it.
+   */
+  ungatedVerdict: Verdict
 }
 
 /** The provider keys the scan action runs, in order. */
@@ -136,6 +144,8 @@ interface PhotoResult {
   detail?: string
   extractedNameJa?: string
   extractedBreweryJa?: string
+  /** The model's self-reported confidence, 0..1. */
+  confidence?: number
 }
 
 interface ProviderResult {
@@ -218,6 +228,15 @@ async function resolveAndJudge(
   extraction: LabelScanExtraction,
   expectedBrandIds: readonly number[],
 ): Promise<Resolution> {
+  const gated = await judge(extraction, expectedBrandIds)
+  const ungated = await judge({ ...extraction, confidence: 1 }, expectedBrandIds)
+  return { ...gated, ungatedVerdict: ungated.verdict }
+}
+
+async function judge(
+  extraction: LabelScanExtraction,
+  expectedBrandIds: readonly number[],
+): Promise<Omit<Resolution, 'ungatedVerdict'>> {
   let resolved: ResolveScannedLabelResult
   try {
     resolved = await resolveScannedLabel(extraction)
@@ -405,9 +424,10 @@ async function main() {
           status: 'ok',
           extractedNameJa: extraction.name_ja,
           extractedBreweryJa: extraction.brewery_ja,
+          confidence: extraction.confidence,
         })
         console.log(
-          `${exactMatch ? 'EXACT' : '     '} name=${nameAccuracy.toFixed(2)} brewery=${breweryAccuracy.toFixed(2)} ${latencyMs}ms  → ${extraction.name_ja} / ${extraction.brewery_ja}${resolution ? `  ⇒ ${resolution.verdict} (${resolution.kind} ${resolution.landedOn})` : ''}`,
+          `${exactMatch ? 'EXACT' : '     '} name=${nameAccuracy.toFixed(2)} brewery=${breweryAccuracy.toFixed(2)} ${latencyMs}ms  → ${extraction.name_ja} / ${extraction.brewery_ja} @${extraction.confidence.toFixed(2)}${resolution ? `  ⇒ ${resolution.verdict} (${resolution.kind} ${resolution.landedOn})` : ''}`,
         )
       } catch (err) {
         const latencyMs = Math.round(performance.now() - t0)
@@ -451,16 +471,17 @@ const VIEW_ORDER: readonly (PhotoView | 'all')[] = ['all', 'front', 'side', 'bac
 function printResolutionTable(results: ProviderResult[]) {
   console.log(`## Where the scan landed`)
   console.log(``)
-  console.log(`| provider | view | photos | right | in list | wrong | none | right rate |`)
-  console.log(`|----------|------|--------|-------|---------|-------|------|------------|`)
+  console.log(`| provider | view | photos | right | in list | wrong | none | right rate | right ungated |`)
+  console.log(`|----------|------|--------|-------|---------|-------|------|------------|---------------|`)
   for (const r of results) {
     if (r.constructionError) continue
     for (const view of VIEW_ORDER) {
       const judged = r.photos.filter((p) => (view === 'all' || p.view === view) && p.resolution)
       if (judged.length === 0) continue
       const count = (verdict: Verdict) => judged.filter((p) => p.resolution?.verdict === verdict).length
+      const ungatedRight = judged.filter((p) => p.resolution?.ungatedVerdict === 'right').length
       console.log(
-        `| ${r.key} | ${view} | ${judged.length} | ${count('right')} | ${count('in_list')} | ${count('wrong')} | ${count('none')} | ${(count('right') / judged.length).toFixed(3)} |`,
+        `| ${r.key} | ${view} | ${judged.length} | ${count('right')} | ${count('in_list')} | ${count('wrong')} | ${count('none')} | ${(count('right') / judged.length).toFixed(3)} | ${ungatedRight} |`,
       )
     }
   }
@@ -511,7 +532,7 @@ function printPerPhotoDetail(results: ProviderResult[]) {
     for (const p of r.photos) {
       const extracted =
         p.status === 'ok'
-          ? `${p.extractedNameJa} / ${p.extractedBreweryJa}`
+          ? `${p.extractedNameJa} / ${p.extractedBreweryJa} @${p.confidence?.toFixed(2)}`
           : `(${p.detail ?? 'error'})`
       const landed = p.resolution
         ? `${p.resolution.verdict} — ${p.resolution.kind} ${p.resolution.landedOn}`
