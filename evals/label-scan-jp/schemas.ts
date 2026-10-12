@@ -136,26 +136,36 @@ export const GroundTruthFileSchema = z.record(z.string().min(1), GroundTruthEntr
 export type GroundTruthFile = z.infer<typeof GroundTruthFileSchema>
 
 /**
- * A saved set of model reads: provider key → photo filename → what the model
- * returned. Written by `LABEL_SCAN_EVAL_RECORD`, read by
- * `LABEL_SCAN_EVAL_REPLAY`, so a change to the catalogue lookup can be scored
- * against the same reads without paying for the vision calls again.
+ * One model read of one photo, kept so the next run need not pay for it
+ * again. `photoSha` ties it to the photo's bytes: replace the photo and the
+ * read is stale.
  */
-export const RecordedReadSchema = z.union([
+export const SavedReadSchema = z.union([
   z.object({
+    photoSha: z.string().min(1),
     name_ja: z.string().min(1),
     brewery_ja: z.string().min(1),
     confidence: z.number().min(0).max(1),
     latencyMs: z.number().int().nonnegative(),
   }),
-  z.object({ error: z.string() }),
+  z.object({ photoSha: z.string().min(1), error: z.string() }),
 ])
 
-export type RecordedRead = z.infer<typeof RecordedReadSchema>
+export type SavedRead = z.infer<typeof SavedReadSchema>
 
-export const RecordingFileSchema = z.object({
-  recordedAt: z.string().min(1),
-  reads: z.record(z.string().min(1), z.record(z.string().min(1), RecordedReadSchema)),
+/**
+ * `recordings/reads.json`: provider key → the prompt fingerprint its reads
+ * were made with, and the reads by photo filename. A provider's reads are
+ * dropped as a whole when the prompt changes.
+ */
+export const SavedReadsFileSchema = z.object({
+  providers: z.record(
+    z.string().min(1),
+    z.object({
+      fingerprint: z.string().min(1),
+      reads: z.record(z.string().min(1), SavedReadSchema),
+    }),
+  ),
 })
 
-export type RecordingFile = z.infer<typeof RecordingFileSchema>
+export type SavedReadsFile = z.infer<typeof SavedReadsFileSchema>

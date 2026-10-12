@@ -51,18 +51,27 @@
  * A bottle the catalogue lacks is `right` when the scan says so. `right
  * ungated` is the same count with the model's self-reported confidence read
  * as 1 — the gap between the two is what the confidence gate costs. When both
- * tiers are in the run, a `two-tier (as shipped)` row replays the scan
+ * tiers of a pair are in the run, a `two-tier (…)` row replays the scan
  * action's rule — keep tier 1 only on a first-pass exact match, else take
  * tier 2 — from the calls already made, so it costs nothing extra.
  *
- * # Record and replay
+ * # Saved reads
  *
- * `LABEL_SCAN_EVAL_RECORD=<file>` saves every model read of the run.
- * `LABEL_SCAN_EVAL_REPLAY=<file>` scores a saved set instead of calling any
- * model: free, a few seconds, and the reads are identical between two runs —
- * so a change to the lookup shows as exactly its own effect, not as model
- * noise. Replay answers "what does the lookup do with these reads"; a change
- * to the prompt or the model needs a real run.
+ * Every model read is saved to `recordings/reads.json`, keyed by provider,
+ * prompt and photo, and reused by the next run: a model is only called for
+ * a photo it has not read with the current prompt. So a run after a lookup
+ * change costs nothing, a run after adding three photos costs three calls
+ * per provider, and a run after a prompt edit re-reads everything — which
+ * is what should cost money.
+ *
+ *   LABEL_SCAN_EVAL_OFFLINE=1  never call a model; a photo with no saved
+ *                              read counts as an error.
+ *   LABEL_SCAN_EVAL_FRESH=1    ignore saved reads and ask again (models are
+ *                              not deterministic; this is how to see by
+ *                              how much).
+ *
+ * Saved reads make two runs comparable: a lookup change shows as exactly
+ * its own effect, not as model noise.
  *
  * # Rate-limit posture
  *
@@ -79,6 +88,7 @@
  * `pnpm test`); this runner does not.
  */
 
+import { createHash } from 'node:crypto'
 import { readdirSync, readFileSync, existsSync, writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
@@ -94,16 +104,16 @@ import {
   resolveScannedLabel,
   type ResolveScannedLabelResult,
 } from '@/lib/sakenowa/resolve-scanned-label'
-import type { VisionProvider } from '@/lib/ai/vision/vision-provider'
+import { LABEL_SCAN_PROMPTS } from '@/lib/ai/vision/anthropic-haiku-provider'
 import type { LabelScanExtraction } from '@/lib/schemas/label-scan-extraction'
 import { charAccuracy } from '~/evals/label-scan-jp/levenshtein'
 import {
   GroundTruthFileSchema,
-  RecordingFileSchema,
+  SavedReadsFileSchema,
   type GroundTruthEntry,
   type PhotoView,
-  type RecordedRead,
-  type RecordingFile,
+  type SavedRead,
+  type SavedReadsFile,
 } from '~/evals/label-scan-jp/schemas'
 
 const EVAL_DIR = fileURLToPath(new URL('../evals/label-scan-jp', import.meta.url))
@@ -140,9 +150,14 @@ interface Resolution {
   ungatedVerdict: Verdict
 }
 
-/** The provider keys the scan action runs, in order. */
-const TIER_1: VisionProviderKey = 'anthropic-haiku-4-5'
-const TIER_2: VisionProviderKey = 'anthropic-sonnet-4-6'
+/**
+ * Tier pairs to replay the scan action's retry rule over: the pair it runs
+ * today, and the Claude 5 pair it could run instead.
+ */
+const TIER_PAIRS: readonly { label: string; tier1: VisionProviderKey; tier2: VisionProviderKey }[] = [
+  { label: 'two-tier (as shipped)', tier1: 'anthropic-haiku-4-5', tier2: 'anthropic-sonnet-4-6' },
+  { label: 'two-tier (Claude 5)', tier1: 'anthropic-haiku-5-5', tier2: 'anthropic-sonnet-5-5' },
+]
 
 interface PhotoResult {
   file: string
@@ -188,14 +203,24 @@ function isVisionProviderKey(value: string): value is VisionProviderKey {
   return (VISION_PROVIDER_KEYS as readonly string[]).includes(value)
 }
 
-/** A path from the env, taken relative to the eval directory unless absolute. */
-function evalPath(value: string | undefined): string | undefined {
-  if (!value || value.trim() === '') return undefined
-  return path.isAbsolute(value) ? value : path.join(EVAL_DIR, value)
+const SAVED_READS_PATH = path.join(EVAL_DIR, 'recordings', 'reads.json')
+const OFFLINE = process.env.LABEL_SCAN_EVAL_OFFLINE === '1'
+const FRESH = process.env.LABEL_SCAN_EVAL_FRESH === '1'
+
+const sha = (data: string | Uint8Array) => createHash('sha256').update(data).digest('hex').slice(0, 16)
+
+/**
+ * What a saved read was made with, besides the photo: the provider key (which
+ * names the model) and the prompt. A read is reused only while both hold.
+ */
+function providerFingerprint(key: string): string {
+  return key === 'e2e-stub' ? 'stub' : sha(`${LABEL_SCAN_PROMPTS.system}\n${LABEL_SCAN_PROMPTS.user}`)
 }
 
-const REPLAY_PATH = evalPath(process.env.LABEL_SCAN_EVAL_REPLAY)
-const RECORD_PATH = evalPath(process.env.LABEL_SCAN_EVAL_RECORD)
+function loadSavedReads(): SavedReadsFile {
+  if (!existsSync(SAVED_READS_PATH)) return { providers: {} }
+  return SavedReadsFileSchema.parse(JSON.parse(readFileSync(SAVED_READS_PATH, 'utf8')))
+}
 
 /** Resolve the provider list from env → config file → default. */
 function resolveProviderList(): VisionProviderKey[] {
@@ -289,29 +314,14 @@ async function judge(
  * stands only on a first-pass exact match, anything else is tier 2's answer
  * (and pays for both calls).
  */
-function replayTwoTier(tier1: ProviderResult, tier2: ProviderResult): ProviderResult {
+function replayTwoTier(label: string, tier1: ProviderResult, tier2: ProviderResult): ProviderResult {
   const tier2ByFile = new Map(tier2.photos.map((p) => [p.file, p]))
   const photos = tier1.photos.map((first) => {
     if (first.resolution?.kind === 'exact') return first
     const second = tier2ByFile.get(first.file)
     return second ? { ...second, latencyMs: first.latencyMs + second.latencyMs } : first
   })
-  return { key: 'two-tier (as shipped)', photos }
-}
-
-/**
- * A provider that returns saved reads. The runner hands it the filename as
- * the blob's text, since a replay never opens the photo.
- */
-function replayProvider(reads: Record<string, RecordedRead>): VisionProvider {
-  return {
-    async extractLabel(blob) {
-      const read = reads[await blob.text()]
-      if (!read) throw new Error('no recorded read for this photo')
-      if ('error' in read) throw new Error(read.error)
-      return { name_ja: read.name_ja, brewery_ja: read.brewery_ja, confidence: read.confidence, source: 'llm_extracted' }
-    },
-  }
+  return { key: label, photos }
 }
 
 /** Load a photo file into a Blob the way the scan action would receive it. */
@@ -334,19 +344,12 @@ async function main() {
   )
 
   // ---- Providers ----
-  const replay: RecordingFile | undefined = REPLAY_PATH
-    ? RecordingFileSchema.parse(JSON.parse(readFileSync(REPLAY_PATH, 'utf8')))
-    : undefined
-  // A replay scores every provider it holds unless the env narrows it.
-  const providerKeys: string[] =
-    replay && !process.env.LABEL_SCAN_EVAL_PROVIDERS ? Object.keys(replay.reads) : resolveProviderList()
+  const providerKeys = resolveProviderList()
   console.log(`Providers: ${providerKeys.join(', ')}`)
-  if (replay) {
-    console.log(`Replaying the reads recorded ${replay.recordedAt} — no model is called.`)
-  } else {
-    console.log(`Throttle: ${THROTTLE_MS}ms between real-provider calls`)
-  }
-  const recorded: RecordingFile['reads'] = {}
+  console.log(`Throttle: ${THROTTLE_MS}ms between real-provider calls`)
+  const saved = loadSavedReads()
+  if (OFFLINE) console.log(`Offline: saved reads only, no model is called.`)
+  if (FRESH) console.log(`Fresh: saved reads ignored, every photo is read again.`)
   const canResolve = Boolean(process.env.DATABASE_URL)
   if (!canResolve) {
     console.log(`DATABASE_URL is not set — scoring the extraction only, not where the scan lands.`)
@@ -435,7 +438,7 @@ async function main() {
     console.log(`## Provider: ${key}`)
     let provider
     try {
-      provider = replay ? replayProvider(replay.reads[key] ?? {}) : getVisionProvider(key as VisionProviderKey)
+      provider = getVisionProvider(key)
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
       console.log(`  construction failed: ${message}`)
@@ -444,25 +447,52 @@ async function main() {
       continue
     }
 
+    // Saved reads made with another prompt are of no use to this run.
+    const fingerprint = providerFingerprint(key)
+    const previous = saved.providers[key]
+    const reads: Record<string, SavedRead> = previous?.fingerprint === fingerprint ? previous.reads : {}
+    saved.providers[key] = { fingerprint, reads }
+    let reused = 0
+    let called = 0
+
     const photos: PhotoResult[] = []
     for (let i = 0; i < corpus.length; i++) {
       const { file, absPath, groundTruth: gt } = corpus[i]
       process.stdout.write(`  ${file.padEnd(62)} ... `)
       const blob = fileToBlob(absPath)
-      const reads = (recorded[key] ??= {})
+      const photoSha = sha(new Uint8Array(await blob.arrayBuffer()))
+      const reusable = FRESH ? undefined : reads[file]
+      const savedRead = reusable && reusable.photoSha === photoSha ? reusable : undefined
       const t0 = performance.now()
       try {
-        const extraction = await provider.extractLabel(replay ? new Blob([file]) : blob)
-        const recordedLatency = replay?.reads[key]?.[file]
-        const latencyMs =
-          recordedLatency && 'latencyMs' in recordedLatency
-            ? recordedLatency.latencyMs
-            : Math.round(performance.now() - t0)
-        reads[file] = {
-          name_ja: extraction.name_ja,
-          brewery_ja: extraction.brewery_ja,
-          confidence: extraction.confidence,
-          latencyMs,
+        let extraction: LabelScanExtraction
+        let latencyMs: number
+        if (savedRead && 'name_ja' in savedRead) {
+          extraction = {
+            name_ja: savedRead.name_ja,
+            brewery_ja: savedRead.brewery_ja,
+            confidence: savedRead.confidence,
+            source: 'llm_extracted',
+          }
+          latencyMs = savedRead.latencyMs
+          reused++
+        } else if (savedRead && !FRESH && OFFLINE) {
+          throw new Error(savedRead.error)
+        } else if (OFFLINE) {
+          throw new Error('no saved read for this photo and prompt')
+        } else {
+          if (called > 0 && key !== 'e2e-stub' && THROTTLE_MS > 0) await sleep(THROTTLE_MS)
+          called++
+          const callStart = performance.now()
+          extraction = await provider.extractLabel(blob)
+          latencyMs = Math.round(performance.now() - callStart)
+          reads[file] = {
+            photoSha,
+            name_ja: extraction.name_ja,
+            brewery_ja: extraction.brewery_ja,
+            confidence: extraction.confidence,
+            latencyMs,
+          }
         }
         const nameAccuracy = fieldAccuracy(gt.name_ja, gt.also?.name_ja, extraction.name_ja)
         const breweryAccuracy = fieldAccuracy(gt.brewery_ja, gt.also?.brewery_ja, extraction.brewery_ja)
@@ -490,7 +520,7 @@ async function main() {
       } catch (err) {
         const latencyMs = Math.round(performance.now() - t0)
         const message = err instanceof Error ? err.message : String(err)
-        reads[file] = { error: message }
+        if (!OFFLINE) reads[file] = { photoSha, error: message }
         photos.push({
           file,
           view: gt.view,
@@ -504,25 +534,19 @@ async function main() {
         console.log(`ERROR ${message}`)
       }
 
-      // Serial throttle — skip for the no-network stub and after the last photo.
-      if (!replay && key !== 'e2e-stub' && i < corpus.length - 1 && THROTTLE_MS > 0) {
-        await sleep(THROTTLE_MS)
-      }
     }
     providerResults.push({ key, photos })
+    console.log(`  ${reused} saved read(s) reused, ${called} model call(s).`)
     console.log(``)
   }
 
-  if (RECORD_PATH) {
-    const recording: RecordingFile = { recordedAt: new Date().toISOString().slice(0, 10), reads: recorded }
-    writeFileSync(RECORD_PATH, `${JSON.stringify(recording, null, 1)}\n`)
-    console.log(`Reads saved to ${RECORD_PATH}`)
-    console.log(``)
-  }
+  if (!OFFLINE) writeFileSync(SAVED_READS_PATH, `${JSON.stringify(saved, null, 1)}\n`)
 
-  const tier1 = providerResults.find((r) => r.key === TIER_1 && !r.constructionError)
-  const tier2 = providerResults.find((r) => r.key === TIER_2 && !r.constructionError)
-  if (canResolve && tier1 && tier2) providerResults.push(replayTwoTier(tier1, tier2))
+  for (const pair of TIER_PAIRS) {
+    const tier1 = providerResults.find((r) => r.key === pair.tier1 && !r.constructionError)
+    const tier2 = providerResults.find((r) => r.key === pair.tier2 && !r.constructionError)
+    if (canResolve && tier1 && tier2) providerResults.push(replayTwoTier(pair.label, tier1, tier2))
+  }
 
   printComparisonTable(providerResults, corpus.length)
   if (canResolve) printResolutionTable(providerResults)

@@ -18,6 +18,7 @@ import {
   findSakeByBrandOnlyFromPool,
   findSakeByBreweryOnlyFromPool,
   findSakeByExtractionFromPool,
+  findSakeByLatinBreweryFromPool,
   listRankingFromPool,
   listSiblingBrandsFromPool,
   lookupBrandFromPool,
@@ -1103,5 +1104,67 @@ describe('listSiblingBrandsFromPool', () => {
 
     const limited = await listSiblingBrandsFromPool(9001, pool, 1)
     expect(limited.map((b) => b.nameKanji)).toEqual(['諏訪美人'])
+  })
+})
+
+describe('matches the real-bottle eval surfaced (#110)', () => {
+  const INSERT_BRAND = `INSERT INTO brands
+         (brand_id, name, name_kanji, brewery_id, source, confidence, content_hash)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`
+
+  it("resolves an importer's back label: Latin name and Latin brewery both agree with one row", async () => {
+    await seedBrewery({ breweryId: 9501, name: '出羽桜酒造', nameKanji: '出羽桜酒造', areaId: 6 })
+    await pool.query('UPDATE breweries SET name_romaji = $1 WHERE brewery_id = $2', ['Dewazakura Shuzo', 9501])
+    await pool.query(INSERT_BRAND, [9001, 'Dewazakura', '出羽桜', 9501, 'sakenowa', null, 'hash-dewazakura-9001'])
+
+    const result = await findSakeByLatinBreweryFromPool(
+      { nameJa: 'DEWAZAKURA', breweryJa: 'Dewazakura Sake Brewery' },
+      pool,
+    )
+
+    expect(result.kind).toBe('exact')
+    if (result.kind !== 'exact') throw new Error('unreachable; for narrowing only')
+    expect(result.sake).toMatchObject({ brandId: 9001, nameKanji: '出羽桜' })
+  })
+
+  it('falls back to the brewery by its romaji when the back label names a product the catalogue lacks', async () => {
+    await seedBrewery({ breweryId: 9501, name: '出羽桜酒造', nameKanji: '出羽桜酒造', areaId: 6 })
+    await pool.query('UPDATE breweries SET name_romaji = $1 WHERE brewery_id = $2', ['Dewazakura Shuzo', 9501])
+    await pool.query(INSERT_BRAND, [9001, 'Dewazakura', '出羽桜', 9501, 'sakenowa', null, 'hash-dewazakura-9001'])
+
+    const result = await findSakeByLatinBreweryFromPool(
+      { nameJa: 'Yukimegami', breweryJa: 'Dewazakura Sake Brewery' },
+      pool,
+    )
+
+    expect(result.kind).toBe('matched_brewery_only')
+    if (result.kind !== 'matched_brewery_only') throw new Error('unreachable; for narrowing only')
+    expect(result.sake).toMatchObject({ brandId: 9001 })
+    expect(result.brandDivergence).toEqual({ extracted: 'Yukimegami', stored: '出羽桜' })
+  })
+
+  it('matches a name the label prints as line plus product (勝山 縁) on its line, the brewery agreeing', async () => {
+    await seedBrewery({ breweryId: 9501, name: '仙台伊澤家 勝山酒造', nameKanji: '仙台伊澤家 勝山酒造', areaId: 4 })
+    await pool.query(INSERT_BRAND, [9001, 'Katsuyama', '勝山', 9501, 'sakenowa', null, 'hash-katsuyama-9001'])
+    await pool.query(INSERT_BRAND, [9002, 'Senshomasamune', '戦勝政宗', 9501, 'sakenowa', null, 'hash-sensho-9002'])
+
+    const result = await findSakeByExtractionFromPool({ nameJa: '勝山 縁', breweryJa: '勝山酒造' }, pool)
+
+    expect(result.kind).toBe('exact')
+    if (result.kind !== 'exact') throw new Error('unreachable; for narrowing only')
+    expect(result.sake).toMatchObject({ brandId: 9001, nameKanji: '勝山' })
+  })
+
+  it("picks the one line of a brewery a partial read belongs to: 樽酒 under 長龍酒造 is 吉野杉の樽酒", async () => {
+    await seedBrewery({ breweryId: 9501, name: '長龍酒造', nameKanji: '長龍酒造', areaId: 29 })
+    await pool.query(INSERT_BRAND, [9001, 'Choryo', '長龍', 9501, 'sakenowa', null, 'hash-choryo-9001'])
+    await pool.query(INSERT_BRAND, [9002, 'Yoshinosugi no Taruzake', '吉野杉の樽酒', 9501, 'sakenowa', null, 'hash-taru-9002'])
+
+    const result = await findSakeByBreweryOnlyFromPool({ nameJa: '樽酒', breweryJa: '長龍酒造' }, pool)
+
+    expect(result.kind).toBe('matched_brewery_only')
+    if (result.kind !== 'matched_brewery_only') throw new Error('unreachable; for narrowing only')
+    expect(result.sake).toMatchObject({ brandId: 9002, nameKanji: '吉野杉の樽酒' })
+    expect(result.brandDivergence).toEqual({ extracted: '樽酒', stored: '吉野杉の樽酒' })
   })
 })

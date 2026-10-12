@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { expandLatinBrandVariants } from './lookup'
+import {
+  breweryKanjiAgrees,
+  expandLatinBrandVariants,
+  latinBreweryAgrees,
+  namesOverlapping,
+} from './lookup'
 
 /**
  * Pure-function unit tests for the Latin variant expansion used by the
@@ -115,5 +120,61 @@ describe('expandLatinBrandVariants', () => {
     // input. Order is not asserted (Set-backed); presence is.
     const out = expandLatinBrandVariants('Kizakura Perle')
     expect(new Set(out)).toEqual(new Set(['kizakura perle', 'kizakura', 'kizakuraperle']))
+  })
+})
+
+describe('latinBreweryAgrees', () => {
+  it("matches a back label's brewery with the catalogue's romaji whatever each calls a brewery", () => {
+    expect(latinBreweryAgrees('Rihaku Sake Brewery', 'Rihaku Shuzo')).toBe(true)
+    expect(latinBreweryAgrees('Miyoshino Sake Brewery Co.,Ltd', 'Miyoshino Jozo')).toBe(true)
+    expect(latinBreweryAgrees('Kobe Shushinkan', 'Kobe Shushinkan')).toBe(true)
+  })
+
+  it('matches when the label gives only part of the name: "Shiraki Brewery" is Shiraki Tsunesuke Shoten', () => {
+    expect(latinBreweryAgrees('Shiraki Brewery', 'Shiraki Tsunesuke Shoten')).toBe(true)
+  })
+
+  it('does not match an importer, a country or a different brewery', () => {
+    expect(latinBreweryAgrees('Ginza Berlin', 'Kiyosu Sakura Jozo')).toBe(false)
+    expect(latinBreweryAgrees('Hergestellt in Japan', 'Choryo Shuzo')).toBe(false)
+    expect(latinBreweryAgrees('Sanwa Shuzo', 'Miwa Shuzo')).toBe(false)
+  })
+
+  it('does not match on generic words alone, or against a brewery with no romaji', () => {
+    expect(latinBreweryAgrees('Sake Brewery Co., Ltd.', 'Rihaku Shuzo')).toBe(false)
+    expect(latinBreweryAgrees('Rihaku Sake Brewery', null)).toBe(false)
+  })
+})
+
+describe('namesOverlapping', () => {
+  const CHORYO_LINES = ['九々鱗', '稲の国の稲の酒', '長龍', '吉野杉の樽酒', '四季咲']
+
+  it('finds the one line a partial read belongs to: 樽酒 is 吉野杉の樽酒', () => {
+    expect(namesOverlapping('樽酒', CHORYO_LINES)).toEqual([3])
+  })
+
+  it('finds a line the read contains, product name and all: 瑞鷹 熊本城 holds 瑞鷹', () => {
+    expect(namesOverlapping('瑞鷹 熊本城', ['瑞鷹', '春酒', '華しずく'])).toEqual([0])
+  })
+
+  it('finds nothing for a read that is part of no line, or of one character', () => {
+    expect(namesOverlapping('濃姫の里', ['鬼ころし', '清須'])).toEqual([])
+    expect(namesOverlapping('雪', ['雪の十和田', '北秋田'])).toEqual([])
+  })
+
+  it('returns every line that fits, leaving the caller to see it is not one', () => {
+    expect(namesOverlapping('正宗', ['達磨正宗', 'ダルマ正宗', '淡墨桜'])).toEqual([0, 1])
+  })
+})
+
+describe('breweryKanjiAgrees', () => {
+  it('matches the stored name as written, without its space, or by one of its parts', () => {
+    expect(breweryKanjiAgrees('白木恒助商店', ['白木恒助商店'])).toBe(true)
+    expect(breweryKanjiAgrees('仙台伊澤家 勝山酒造', ['仙台伊澤家勝山酒造'])).toBe(true)
+    expect(breweryKanjiAgrees('仙台伊澤家 勝山酒造', ['勝山酒造'])).toBe(true)
+  })
+
+  it('does not match another brewery', () => {
+    expect(breweryKanjiAgrees('白木恒助商店', ['三輪酒造'])).toBe(false)
   })
 })

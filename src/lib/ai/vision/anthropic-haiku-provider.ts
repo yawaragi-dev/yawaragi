@@ -160,6 +160,12 @@ Return only what is visible on the label. Do not translate, do not romanise kanj
 const USER_PROMPT =
   'Read this sake bottle label and return the brand and brewery, preserving the script each is actually printed in (kanji / katakana / hiragana / Latin), plus a confidence score between 0 and 1. Follow the brand / SKU stripping and script-preservation rules in the system prompt.'
 
+/**
+ * The prompts as sent, for the eval runner: a saved model read is only
+ * reusable while the prompt it was made with is unchanged.
+ */
+export const LABEL_SCAN_PROMPTS = { system: SYSTEM_PROMPT, user: USER_PROMPT } as const
+
 export function createAnthropicHaikuProvider(
   options: AnthropicHaikuProviderOptions = {},
 ): VisionProvider {

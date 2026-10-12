@@ -11,6 +11,7 @@ import {
   findSakeByBrandOnlyFromPool,
   findSakeByBreweryOnlyFromPool,
   findSakeByExtractionFromPool,
+  findSakeByLatinBreweryFromPool,
 } from './lookup'
 import { getServerDbPool } from '../supabase/server-client'
 
@@ -64,6 +65,8 @@ export interface ScannedLabelLookupExecutor {
   findByExtraction(query: SakeLookupQuery): Promise<FindSakeByExtractionResult>
   findByBreweryOnly(query: SakeLookupQuery): Promise<BreweryOnlyLookupResult>
   findByBrandOnly(query: SakeLookupQuery): Promise<BrandOnlyLookupResult>
+  /** For a label whose brewery was read in Latin script. */
+  findByLatinBrewery(query: SakeLookupQuery): Promise<FindSakeByExtractionResult>
 }
 
 function poolExecutor(pool: Pool): ScannedLabelLookupExecutor {
@@ -71,6 +74,7 @@ function poolExecutor(pool: Pool): ScannedLabelLookupExecutor {
     findByExtraction: (query) => findSakeByExtractionFromPool(query, pool),
     findByBreweryOnly: (query) => findSakeByBreweryOnlyFromPool(query, pool),
     findByBrandOnly: (query) => findSakeByBrandOnlyFromPool(query, pool),
+    findByLatinBrewery: (query) => findSakeByLatinBreweryFromPool(query, pool),
   }
 }
 
@@ -153,42 +157,62 @@ function looksLikeSingleCharHallucination(name_ja: string): boolean {
 /**
  * Resolve a scanned label (vision extraction) to a Sakenowa brand.
  *
- * Guard ordering is load-bearing and preserved verbatim from the
- * pre-#198 scan-action pipeline:
- *   1. confidence-tier gate  — `retry` tier → low_confidence, no lookup.
- *   2. placeholder sentinel  — `不明` / `unknown` / … → low_confidence.
- *   3. Latin-brewery shape   — brewery_ja is Latin-only → low_confidence
- *                              (brand-field Latin is FINE; the 5th-pass
- *                              Latin lookup inside the cascade handles it).
- *   4. single-char rescue    — 1-char name_ja is junk, but the brewery
+ * Order:
+ *   1. placeholder sentinel  — `不明` / `unknown` / … → low_confidence.
+ *   2. Latin brewery         — the brewery was read in Latin script, as on
+ *                              an importer's back label → the Latin-brewery
+ *                              lookup, which leads with the brand and uses
+ *                              the brewery's romaji to confirm it.
+ *   3. single-char rescue    — 1-char name_ja is junk, but the brewery
  *                              may still resolve: brewery-only → then
  *                              field-swap brand-only on brewery_ja →
  *                              else low_confidence.
- *   5. full 5-pass cascade   — `findByExtraction`.
+ *   4. full cascade          — `findByExtraction`.
+ *   5. confidence gate       — a read the model scored in the `retry` tier
+ *                              is kept only where brand and brewery both
+ *                              matched one catalogue row (`exact`).
  *
- * `poolOrExecutor` is a `Pool` in production (bound to the three
- * `findSakeBy*FromPool` passes) or a fake `ScannedLabelLookupExecutor`
- * in unit tests.
+ * The gate comes last, and lets `exact` through, because a model's score of
+ * itself and a match in the catalogue are different evidence. A front label
+ * that shows no brewery gets a low score from a careful model even when it
+ * read the brand perfectly and knows who makes it; two fields agreeing with
+ * one row out of thousands is not something a misread does by accident.
+ * Anything short of that — brand only, brewery only, a list — still needs
+ * the model's own confidence behind it.
+ *
+ * `poolOrExecutor` is a `Pool` in production (bound to the `findSakeBy*FromPool`
+ * passes) or a fake `ScannedLabelLookupExecutor` in unit tests.
  */
 export async function resolveScannedLabel(
-  { name_ja, brewery_ja, confidence }: ScannedLabel,
+  label: ScannedLabel,
   poolOrExecutor: Pool | ScannedLabelLookupExecutor = getServerDbPool(),
 ): Promise<ResolveScannedLabelResult> {
   const executor = isExecutor(poolOrExecutor) ? poolOrExecutor : poolExecutor(poolOrExecutor)
+  const { confidence } = label
 
-  // 1. Confidence-tier gate. The retry tier short-circuits before any
-  // lookup — there's no point pinging Sakenowa when the model itself
-  // isn't confident enough to commit to a (name, brewery) pair.
   const tier = resolveConfidenceTier(confidence)
   debugAdd('ScanAction', `extraction confidence ${confidence.toFixed(2)} → tier "${tier}"`, {
     confidence,
     tier,
   })
-  if (tier === 'retry') {
+
+  const resolved = await resolveByShape(label, executor)
+  if (tier === 'retry' && resolved.kind !== 'exact' && resolved.kind !== 'low_confidence') {
+    debugAdd(
+      'ScanAction',
+      `retry-tier read resolved to ${resolved.kind}, short of an exact match — routing to low_confidence`,
+    )
     return { kind: 'low_confidence' }
   }
+  return resolved
+}
 
-  // 2. Placeholder-sentinel guard. Hard-coded routing to low_confidence
+/** Steps 1–4 of `resolveScannedLabel`: everything but the confidence gate. */
+async function resolveByShape(
+  { name_ja, brewery_ja, confidence }: ScannedLabel,
+  executor: ScannedLabelLookupExecutor,
+): Promise<ResolveScannedLabelResult> {
+  // 1. Placeholder-sentinel guard. Hard-coded routing to low_confidence
   // so a placeholder at 0.85 doesn't pass through as `auto` and feed the
   // Sakenowa lookup a query that can never match.
   if (isPlaceholderExtraction(name_ja) || isPlaceholderExtraction(brewery_ja)) {
@@ -201,22 +225,28 @@ export async function resolveScannedLabel(
     return { kind: 'low_confidence' }
   }
 
-  // 3. Latin-brewery guard. Latin in `name_ja` is FINE — the cascade's
-  // 5th-pass Latin lookup matches the ~110 Latin-only brands and the
-  // romaji column. Brewery names, however, are essentially always kanji
-  // in Sakenowa; Latin in brewery_ja is a strong signal the model
-  // misread something (rice-variety call-out, retailer name, …).
+  // 2. Latin brewery. An importer's back label names the maker in Latin
+  // only, and a model that follows the prompt returns it as printed. The
+  // kanji passes cannot use it, so it gets its own lookup. A one-character
+  // brand beside it leaves nothing to look up by.
   if (containsNoJapaneseScript(brewery_ja)) {
-    debugAdd(
-      'ScanAction',
-      'extraction.brewery_ja is Latin-only — routing to low_confidence (brewery names should be Japanese script)',
-      { name_ja, brewery_ja },
-      'warn',
-    )
-    return { kind: 'low_confidence' }
+    if (looksLikeSingleCharHallucination(name_ja)) {
+      debugAdd(
+        'ScanAction',
+        'one-character name_ja and a Latin-only brewery_ja — nothing to look up by, routing to low_confidence',
+        { name_ja, brewery_ja },
+        'warn',
+      )
+      return { kind: 'low_confidence' }
+    }
+    debugAdd('ScanAction', 'extraction.brewery_ja is Latin-only — using the Latin-brewery lookup', {
+      name_ja,
+      brewery_ja,
+    })
+    return executor.findByLatinBrewery({ nameJa: name_ja, breweryJa: brewery_ja })
   }
 
-  // 4. Single-character brand hallucination guard. A 1-char name_ja is a
+  // 3. Single-character brand hallucination guard. A 1-char name_ja is a
   // near-certain "high-confidence coherent garbage" signal. Before
   // retreating to low_confidence, try to rescue via the brewery.
   //
@@ -263,7 +293,7 @@ export async function resolveScannedLabel(
     return { kind: 'low_confidence' }
   }
 
-  // 5. Full 5-pass cascade (first-pass exact → brand-only → brewery-only
+  // 4. Full 5-pass cascade (first-pass exact → brand-only → brewery-only
   // → field-swap → Latin). Owns its own internal guard ordering.
   return executor.findByExtraction({ nameJa: name_ja, breweryJa: brewery_ja })
 }

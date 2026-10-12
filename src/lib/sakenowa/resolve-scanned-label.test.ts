@@ -74,12 +74,14 @@ function fakeExecutor(overrides: {
   byExtraction?: FindSakeByExtractionResult
   byBreweryOnly?: BreweryOnlyLookupResult
   byBrandOnly?: BrandOnlyLookupResult
+  byLatinBrewery?: FindSakeByExtractionResult
 }): ScannedLabelLookupExecutor {
   const NO_MATCH = { kind: 'no_match', query: { nameJa: '', breweryJa: '' } } as const
   return {
     findByExtraction: vi.fn().mockResolvedValue(overrides.byExtraction ?? NO_MATCH),
     findByBreweryOnly: vi.fn().mockResolvedValue(overrides.byBreweryOnly ?? NO_MATCH),
     findByBrandOnly: vi.fn().mockResolvedValue(overrides.byBrandOnly ?? NO_MATCH),
+    findByLatinBrewery: vi.fn().mockResolvedValue(overrides.byLatinBrewery ?? NO_MATCH),
   }
 }
 
@@ -90,17 +92,39 @@ function label(overrides: Partial<ScannedLabel> = {}): ScannedLabel {
 // --- Confidence-tier gate --------------------------------------------
 
 describe('resolveScannedLabel — confidence-tier gate', () => {
-  it('routes a retry-tier extraction to low_confidence without running any lookup', async () => {
+  it('keeps a read the model scored low when brand and brewery both match one catalogue row', async () => {
+    // A front label with no brewery on it: a careful model reads the brand,
+    // names the maker from what it knows, and scores itself 0.35 for the
+    // field it could not see. The catalogue agreeing on both is the evidence.
+    const executor = fakeExecutor({ byExtraction: { kind: 'exact', sake: DASSAI_BRAND } })
+
+    const result = await resolveScannedLabel(label({ confidence: 0.35 }), executor)
+
+    expect(result).toEqual({ kind: 'exact', sake: DASSAI_BRAND })
+  })
+
+  it('answers low_confidence for a low-scored read that matched on the brand alone', async () => {
+    const executor = fakeExecutor({
+      byExtraction: {
+        kind: 'matched_brand_only',
+        sake: DASSAI_BRAND,
+        brewery: ASAHI_SHUZO,
+        breweryDivergence: { extracted: '存在しない酒造', stored: '旭酒造' },
+        query: { nameJa: '獺祭', breweryJa: '存在しない酒造' },
+      },
+    })
+
+    const result = await resolveScannedLabel(label({ brewery_ja: '存在しない酒造', confidence: 0.4 }), executor)
+
+    expect(result.kind).toBe('low_confidence')
+  })
+
+  it('answers low_confidence, not "not in the catalogue", for a low-scored read that matched nothing', async () => {
     const executor = fakeExecutor({})
 
     const result = await resolveScannedLabel(label({ confidence: 0.4 }), executor)
 
     expect(result.kind).toBe('low_confidence')
-    // The whole point of the retry gate: Sakenowa is never pinged when
-    // the model isn't confident enough to commit to a (name, brewery).
-    expect(executor.findByExtraction).not.toHaveBeenCalled()
-    expect(executor.findByBreweryOnly).not.toHaveBeenCalled()
-    expect(executor.findByBrandOnly).not.toHaveBeenCalled()
   })
 
   it('lets a confirm-tier extraction (0.60 boundary) reach the cascade', async () => {
@@ -143,17 +167,29 @@ describe('resolveScannedLabel — placeholder sentinel guard', () => {
 
 // --- Latin-brewery shaping guard -------------------------------------
 
-describe('resolveScannedLabel — Latin-brewery guard', () => {
-  it('routes a Latin-only brewery_ja to low_confidence (brewery names are Japanese script)', async () => {
-    const executor = fakeExecutor({})
+describe('resolveScannedLabel — a brewery read in Latin script', () => {
+  it("resolves an importer's back label through the Latin-brewery lookup, not the kanji cascade", async () => {
+    const executor = fakeExecutor({ byLatinBrewery: { kind: 'exact', sake: DASSAI_BRAND } })
 
     const result = await resolveScannedLabel(
-      label({ brewery_ja: 'YAMADA NISHIKI', confidence: 0.9 }),
+      label({ name_ja: 'DASSAI', brewery_ja: 'Asahi Shuzo Co., Ltd.', confidence: 0.9 }),
       executor,
     )
 
-    expect(result.kind).toBe('low_confidence')
+    expect(result).toEqual({ kind: 'exact', sake: DASSAI_BRAND })
+    expect(executor.findByLatinBrewery).toHaveBeenCalledWith({ nameJa: 'DASSAI', breweryJa: 'Asahi Shuzo Co., Ltd.' })
     expect(executor.findByExtraction).not.toHaveBeenCalled()
+  })
+
+  it('reports no match when neither the brand nor the Latin brewery is in the catalogue', async () => {
+    const executor = fakeExecutor({})
+
+    const result = await resolveScannedLabel(
+      label({ name_ja: 'Nohime No Sato', brewery_ja: 'Ginza Berlin', confidence: 0.9 }),
+      executor,
+    )
+
+    expect(result.kind).toBe('no_match')
   })
 
   it('lets a Latin name_ja through to the cascade (Latin-only brands match on the 5th pass)', async () => {

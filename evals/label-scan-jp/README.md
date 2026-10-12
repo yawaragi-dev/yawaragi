@@ -130,6 +130,7 @@ Env the runner reads:
 - `DATABASE_URL` — the Sakenowa mirror. With it set, the runner also resolves
   each extraction against the catalogue (see "Where the scan landed"). Without
   it, only the extraction is scored.
+- `LABEL_SCAN_EVAL_OFFLINE=1` / `LABEL_SCAN_EVAL_FRESH=1` — see "Saved reads".
 - `LABEL_SCAN_EVAL_INCLUDE_SMOKE=1` — also score the synthetic smoke fixture
   even when real photos are present (normally it's only used as the fallback
   when `photos/` is empty).
@@ -145,6 +146,36 @@ requires the app's baseline env (`CLERK_SECRET_KEY`,
 > the suggest eval, which goes over HTTP); the condition resolves the
 > `server-only` marker to its empty shim exactly as the Next.js RSC bundler
 > does in production. See `scripts/eval.ts` for the full note.
+
+### Saved reads — what a run costs
+
+Every model read is saved to `recordings/reads.json`, keyed by **provider,
+prompt and photo**, and the next run reuses it. A model is called only for a
+photo it has not yet read with the current prompt:
+
+| what changed since the last run | model calls |
+|---------------------------------|-------------|
+| the catalogue lookup, the ground truth, nothing | none |
+| three new photos | three per provider |
+| a new provider key | one per photo, for that provider |
+| the vision prompt | every photo, every provider |
+
+```bash
+# the usual loop while working on the lookup: free, about half a minute
+LABEL_SCAN_EVAL_OFFLINE=1 LABEL_SCAN_EVAL_PROVIDERS=anthropic-haiku-4-5,anthropic-sonnet-4-6,anthropic-haiku-5-5,anthropic-sonnet-5-5 pnpm eval label-scan-jp
+```
+
+- `LABEL_SCAN_EVAL_OFFLINE=1` never calls a model; a photo without a saved
+  read counts as an error rather than as a charge.
+- `LABEL_SCAN_EVAL_FRESH=1` ignores the saved reads and asks again. Models are
+  not deterministic — between two fresh runs of the same tiers the `right`
+  count moved by one and `wrong` by five — so this is the way to see the
+  spread, and the only reason to pay twice.
+
+Because the reads are fixed, two runs differ only by what the code did with
+them: a lookup change shows as exactly its own effect. Commit `reads.json`
+with the change that produced it. Latency in a run of saved reads is the
+latency recorded when the read was made.
 
 ### Smoke test (no Anthropic credit)
 
@@ -180,7 +211,8 @@ Providers are named keys into the vision registry
 
 The runner is strictly serial (one provider, one photo at a time), so adding
 providers multiplies runtime by (providers × photos × throttle) — about ten
-minutes and roughly one US dollar for both Anthropic tiers over the 73 photos.
+minutes for two Anthropic tiers reading all 73 photos for the first time, and
+nothing once those reads are saved.
 
 ---
 
@@ -252,10 +284,12 @@ Two tables print to stdout, both pastable into GitHub:
   between `right` and `right ungated` is what that gate costs a given model.
   The per-photo table prints each read's confidence after an `@`.
 
-  When both Anthropic tiers are in the run, a **`two-tier (as shipped)`** row
-  replays the scan action's rule from the calls already made — tier 1 stands
-  only on a first-pass exact match, anything else is tier 2's answer. That row
-  is the number a visitor experiences; its latency adds both calls on a retry.
+  When both tiers of a pair are in the run, a **`two-tier (…)`** row replays
+  the scan action's rule from the reads already made — tier 1 stands only on a
+  first-pass exact match, anything else is tier 2's answer. `two-tier (as
+  shipped)` is the pair the scan runs today and the number a visitor
+  experiences; `two-tier (Claude 5)` is the candidate pair. Latency adds both
+  calls on a retry.
 
 This table reads character accuracy and catalogue resolution separately on
 purpose. A model can read 福寿 perfectly off a bottle whose catalogue row is
@@ -270,6 +304,7 @@ through the brand-only pass.
 - `schemas.ts` — Zod shapes the ground-truth file is parsed against.
 - `levenshtein.ts` / `levenshtein.test.ts` — the metric math + its unit test.
 - `photos/` — the corpus, at scan-action size.
+- `recordings/reads.json` — the saved model reads.
 - `fixtures/synthetic-smoke-label.jpg` — deterministic 1×1 JPEG smoke fixture
   (pipeline proof only — never a real eval photo).
 - `providers.json` — optional provider list (not committed; create if you want

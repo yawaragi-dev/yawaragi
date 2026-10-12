@@ -1,0 +1,2062 @@
+{
+ "providers": {
+  "anthropic-haiku-4-5": {
+   "fingerprint": "bea3356f1cce0d1a",
+   "reads": {
+    "amabuki_kimoto_junmai_daiginjo_clear.jpg": {
+     "photoSha": "f53cb9f7572e9238",
+     "name_ja": "雄町",
+     "brewery_ja": "雛鶴酒造",
+     "confidence": 0.85,
+     "latencyMs": 2301
+    },
+    "amabuki_kimoto_junmai_daiginjo_label.jpg": {
+     "photoSha": "48383f8f14c43bb5",
+     "name_ja": "天吹",
+     "brewery_ja": "天吹酒造",
+     "confidence": 0.92,
+     "latencyMs": 3068
+    },
+    "amabuki_kimoto_junmai_daiginjo_side.jpg": {
+     "photoSha": "a605ddfd902d915f",
+     "name_ja": "天吹",
+     "brewery_ja": "天吹酒造",
+     "confidence": 0.85,
+     "latencyMs": 1143
+    },
+    "amabuki_yamahai_junmai_omachi_from_top.jpg": {
+     "photoSha": "a2bfa8db39ba1791",
+     "name_ja": "AMABUKI",
+     "brewery_ja": "天吹酒造",
+     "confidence": 0.75,
+     "latencyMs": 1184
+    },
+    "amabuki_yamahai_junmai_omachi_front.jpg": {
+     "photoSha": "f9109ed20758228c",
+     "name_ja": "天弐",
+     "brewery_ja": "朝日酒造",
+     "confidence": 0.75,
+     "latencyMs": 1704
+    },
+    "amabuki_yamahai_junmai_omachi_front_2.jpg": {
+     "photoSha": "22ccc4ef4c57b03c",
+     "name_ja": "ABUEKI",
+     "brewery_ja": "十八盛酒造",
+     "confidence": 0.75,
+     "latencyMs": 2300
+    },
+    "amabuki_yamahai_junmai_omachi_label.jpg": {
+     "photoSha": "f1a27699263851fd",
+     "name_ja": "AMABUKI",
+     "brewery_ja": "天吹酒造",
+     "confidence": 0.85,
+     "latencyMs": 1654
+    },
+    "bekkaku_tokubetsu_honjozo_clear.jpg": {
+     "photoSha": "c934db3dfd2a4208",
+     "name_ja": "刈穂",
+     "brewery_ja": "合同会社秋田酒造",
+     "confidence": 0.85,
+     "latencyMs": 1730
+    },
+    "bekkaku_tokubetsu_honjozo_label.jpg": {
+     "photoSha": "f92242f91bd38e54",
+     "name_ja": "Bekkaku - Der \"Besondere\"",
+     "brewery_ja": "Kakuboshi",
+     "confidence": 0.85,
+     "latencyMs": 2055
+    },
+    "choryo_yoshinosugi_taruzake_clear.jpg": {
+     "photoSha": "ecaae4c21d46abed",
+     "name_ja": "樽酒",
+     "brewery_ja": "合同会社齋藤酒造",
+     "confidence": 0.92,
+     "latencyMs": 1748
+    },
+    "choryo_yoshinosugi_taruzake_label.jpg": {
+     "photoSha": "c2d0edea64326c0c",
+     "name_ja": "吉乃寿",
+     "brewery_ja": "JFC Deutschland GmbH",
+     "confidence": 0.75,
+     "latencyMs": 1856
+    },
+    "choryo_yoshinosugi_taruzake_label_ja.jpg": {
+     "photoSha": "964ef0c4e18c892a",
+     "error": "No object generated: response did not match schema."
+    },
+    "choryo_yoshinosugi_taruzake_side.jpg": {
+     "photoSha": "967e61ef92f95e68",
+     "name_ja": "樽",
+     "brewery_ja": "北酒造",
+     "confidence": 0.92,
+     "latencyMs": 1624
+    },
+    "daruma_masamune_almost_clear.jpg": {
+     "photoSha": "e85af846cb6b5f52",
+     "name_ja": "古酒",
+     "brewery_ja": "DARUMA-MASAMUNE",
+     "confidence": 0.75,
+     "latencyMs": 2092
+    },
+    "daruma_masamune_clear.jpg": {
+     "photoSha": "c103c0786ff87a61",
+     "name_ja": "古酒 DARUMA-MASAMUNE",
+     "brewery_ja": "丸眞正宗",
+     "confidence": 0.85,
+     "latencyMs": 1724
+    },
+    "daruma_masamune_label.jpg": {
+     "photoSha": "6d5a4680e373164b",
+     "name_ja": "DARUMA MASAMINE",
+     "brewery_ja": "白瀧酒造",
+     "confidence": 0.85,
+     "latencyMs": 1811
+    },
+    "dewazakura_yukimegami_clear.jpg": {
+     "photoSha": "e752e799fd6526d6",
+     "name_ja": "山河",
+     "brewery_ja": "富女神酒造",
+     "confidence": 0.85,
+     "latencyMs": 1728
+    },
+    "dewazakura_yukimegami_label_clear.jpg": {
+     "photoSha": "9e7182bd560934dc",
+     "name_ja": "DEWAZAKURA Yukimegami",
+     "brewery_ja": "出羽桜酒造",
+     "confidence": 0.9,
+     "latencyMs": 1861
+    },
+    "dewazakura_yukimegami_label_side.jpg": {
+     "photoSha": "381b2531bf58be58",
+     "name_ja": "DEWAZAKURA Yukimegami",
+     "brewery_ja": "出羽桜酒造",
+     "confidence": 0.85,
+     "latencyMs": 2471
+    },
+    "dewazakura_yukimegami_side.jpg": {
+     "photoSha": "30a72a78ee6c9b91",
+     "name_ja": "山桜",
+     "brewery_ja": "雪女神",
+     "confidence": 0.92,
+     "latencyMs": 1916
+    },
+    "fudoh_fusakogane_migaki_80_junmai_nama_nabedana_clearish.jpg": {
+     "photoSha": "bae56cacc0bb1533",
+     "name_ja": "獺祭",
+     "brewery_ja": "旭酒造",
+     "confidence": 0.85,
+     "latencyMs": 1659
+    },
+    "fudoh_fusakogane_migaki_80_junmai_nama_nabedana_label.jpg": {
+     "photoSha": "dbf6e5ab60df577d",
+     "name_ja": "NABEDANA",
+     "brewery_ja": "富田酒造",
+     "confidence": 0.75,
+     "latencyMs": 1709
+    },
+    "fukuju_awasaki_sparkling_clear.jpg": {
+     "photoSha": "ca4c7beb99a9bfad",
+     "name_ja": "あわ咲き",
+     "brewery_ja": "福寿",
+     "confidence": 0.85,
+     "latencyMs": 2105
+    },
+    "fukuju_awasaki_sparkling_label.jpg": {
+     "photoSha": "2a97335416a5ad71",
+     "name_ja": "Sake FUKUJU Awasaki Sparkling",
+     "brewery_ja": "UENO GOURMET",
+     "confidence": 0.85,
+     "latencyMs": 2046
+    },
+    "fukuju_awasaki_sparkling_side.jpg": {
+     "photoSha": "f1c8b06d9a95b7d4",
+     "name_ja": "あわ咲き",
+     "brewery_ja": "不明",
+     "confidence": 0.45,
+     "latencyMs": 1749
+    },
+    "fukuju_kobe_classic_clear.jpg": {
+     "photoSha": "f5f4d5a7f8210af9",
+     "name_ja": "鶴齢",
+     "brewery_ja": "鶴齢酒造",
+     "confidence": 0.75,
+     "latencyMs": 1615
+    },
+    "fukuju_kobe_classic_label.jpg": {
+     "photoSha": "f4d1a2cba9b34627",
+     "name_ja": "FUKUJU Kobe Classic",
+     "brewery_ja": "神戸酒造",
+     "confidence": 0.85,
+     "latencyMs": 1783
+    },
+    "hanatomoe_sugi_barrel_clear.jpg": {
+     "photoSha": "798d2bd70095f906",
+     "name_ja": "雅 ハナトモエ MASAMUNE",
+     "brewery_ja": "白糸酒造",
+     "confidence": 0.92,
+     "latencyMs": 2274
+    },
+    "hanatomoe_sugi_barrel_label.jpg": {
+     "photoSha": "e0a957faac5f465c",
+     "name_ja": "HANATOMOAE Sugi Barrel",
+     "brewery_ja": "Miyoshino Sake Brewery",
+     "confidence": 0.92,
+     "latencyMs": 1847
+    },
+    "hanatomoe_sugi_barrel_side.jpg": {
+     "photoSha": "da09f67a83b107f6",
+     "name_ja": "獺祭",
+     "brewery_ja": "旭酒造",
+     "confidence": 0.92,
+     "latencyMs": 1576
+    },
+    "hokushika_yuki_namachozo_clear.jpg": {
+     "photoSha": "5f80b503aad03b8b",
+     "name_ja": "北雪",
+     "brewery_ja": "北雪酒造",
+     "confidence": 0.75,
+     "latencyMs": 1865
+    },
+    "hokushika_yuki_namachozo_label.jpg": {
+     "photoSha": "825bb403e8369394",
+     "name_ja": "Yuki Ponjroozo Nama Chozo",
+     "brewery_ja": "Eden Food Express GmbH",
+     "confidence": 0.75,
+     "latencyMs": 1447
+    },
+    "hokushika_yuki_namachozo_side.jpg": {
+     "photoSha": "6cf50877e494699f",
+     "name_ja": "北の島",
+     "brewery_ja": "合同会社北の島酒造",
+     "confidence": 0.85,
+     "latencyMs": 1745
+    },
+    "ikekame_barrel_clear.jpg": {
+     "photoSha": "f3751767c735f1f3",
+     "name_ja": "IKEKAME BARREL",
+     "brewery_ja": "池亀酒造",
+     "confidence": 0.9,
+     "latencyMs": 1784
+    },
+    "ikekame_barrel_label.jpg": {
+     "photoSha": "639252e43e36652b",
+     "name_ja": "IKEKAME \"Barrel\"",
+     "brewery_ja": "池亀酒造",
+     "confidence": 0.85,
+     "latencyMs": 1841
+    },
+    "ikekame_junmai_ginjo_nama_clear.jpg": {
+     "photoSha": "0086c14de9b2b6e6",
+     "error": "No object generated: response did not match schema."
+    },
+    "ikekame_junmai_ginjo_nama_label.jpg": {
+     "photoSha": "9b6e9e8c005a6f2f",
+     "name_ja": "IKEKAME Junmai Ginjo Nama",
+     "brewery_ja": "池亀醸造",
+     "confidence": 0.92,
+     "latencyMs": 1822
+    },
+    "ikekame_junmai_ginjo_nama_side.jpg": {
+     "photoSha": "71caf840d7cb3451",
+     "name_ja": "秋鹿",
+     "brewery_ja": "秋鹿酒造",
+     "confidence": 0.85,
+     "latencyMs": 1732
+    },
+    "katsuyama_en_clear.jpg": {
+     "photoSha": "a89d79b27441c2cf",
+     "name_ja": "勝山 縁",
+     "brewery_ja": "勝山酒造",
+     "confidence": 0.85,
+     "latencyMs": 1817
+    },
+    "katsuyama_en_label_de.jpg": {
+     "photoSha": "aeafa5f818a315aa",
+     "name_ja": "KATSUYAMA En",
+     "brewery_ja": "勝山酒造",
+     "confidence": 0.85,
+     "latencyMs": 1899
+    },
+    "katsuyama_en_label_ja.jpg": {
+     "photoSha": "6925988816d20bdd",
+     "name_ja": "勝山 緑",
+     "brewery_ja": "仙台伊澤家 勝山酒造",
+     "confidence": 0.85,
+     "latencyMs": 1761
+    },
+    "miwa_shuzo_shirakawago_junmaishu_uwazumi_clear.jpg": {
+     "photoSha": "5b7ef4e8e2b0e171",
+     "name_ja": "SHIRAKAWAGO UWAZUMI",
+     "brewery_ja": "白川郷酒造",
+     "confidence": 0.85,
+     "latencyMs": 1848
+    },
+    "miwa_shuzo_shirakawago_junmaishu_uwazumi_label.jpg": {
+     "photoSha": "8f9eb7f1fb9a8f4a",
+     "name_ja": "MIWA SHUZO",
+     "brewery_ja": "美和酒造",
+     "confidence": 0.75,
+     "latencyMs": 1865
+    },
+    "mizumoto_hanatomoe_clear.jpg": {
+     "photoSha": "08924ab9dc0784db",
+     "name_ja": "HANATOMOE",
+     "brewery_ja": "美吉野醸造",
+     "confidence": 0.92,
+     "latencyMs": 1986
+    },
+    "mizumoto_hanatomoe_label.jpg": {
+     "photoSha": "426174ef8b0dad2d",
+     "name_ja": "HANATOMOE",
+     "brewery_ja": "Miyoshino Jozo",
+     "confidence": 0.85,
+     "latencyMs": 1788
+    },
+    "mizumoto_hanatomoe_side.jpg": {
+     "photoSha": "b398c9ecbd7dfc58",
+     "name_ja": "花ともえ",
+     "brewery_ja": "合同会社花野",
+     "confidence": 0.85,
+     "latencyMs": 1693
+    },
+    "ninki_gold_label_clear.jpg": {
+     "photoSha": "aea1ff2817f29be3",
+     "name_ja": "初",
+     "brewery_ja": "仁木一",
+     "confidence": 0.85,
+     "latencyMs": 1663
+    },
+    "ninki_gold_label_label.jpg": {
+     "photoSha": "5c83847ab6c1c8c5",
+     "name_ja": "NINKI Gold Label",
+     "brewery_ja": "Ninki Inc.",
+     "confidence": 0.85,
+     "latencyMs": 1786
+    },
+    "ninki_sparkling_junmai_daiginjo_clear.jpg": {
+     "photoSha": "d4019e7ae35ff4be",
+     "name_ja": "NINKI-ICHI",
+     "brewery_ja": "不明",
+     "confidence": 0.75,
+     "latencyMs": 1646
+    },
+    "ninki_sparkling_junmai_daiginjo_label.jpg": {
+     "photoSha": "5ea97580de144e0c",
+     "name_ja": "NINKI",
+     "brewery_ja": "Ninki Inc.",
+     "confidence": 0.85,
+     "latencyMs": 1747
+    },
+    "nohime_no_sato_kakushi_ginjo_clear.jpg": {
+     "photoSha": "3a2e2b8a6aeefb5d",
+     "name_ja": "隠し吟醸",
+     "brewery_ja": "京津桜酒造",
+     "confidence": 0.92,
+     "latencyMs": 1924
+    },
+    "nohime_no_sato_kakushi_ginjo_label.jpg": {
+     "photoSha": "0458503220197d9d",
+     "name_ja": "Nohime No Sato Kakushi Ginjo",
+     "brewery_ja": "不明",
+     "confidence": 0.65,
+     "latencyMs": 1990
+    },
+    "rihaku_dreamy_clouds_clear.jpg": {
+     "photoSha": "2c0f8e6a0eabfe7b",
+     "name_ja": "にごり Dreamy Clouds",
+     "brewery_ja": "リハク",
+     "confidence": 0.75,
+     "latencyMs": 1758
+    },
+    "rihaku_dreamy_clouds_label.jpg": {
+     "photoSha": "d4e1032c2e41474e",
+     "name_ja": "Sake RIHAKU Dreamy Clouds",
+     "brewery_ja": "Rihaku Sake Brewery",
+     "confidence": 0.92,
+     "latencyMs": 1904
+    },
+    "rihaku_dreamy_clouds_side.jpg": {
+     "photoSha": "bc0f17cdc2ab9baa",
+     "name_ja": "木白",
+     "brewery_ja": "徳岳酒造",
+     "confidence": 0.92,
+     "latencyMs": 1823
+    },
+    "rihaku_wandering_poet_clear.jpg": {
+     "photoSha": "97294c3bd76089cb",
+     "name_ja": "WANDERING POET",
+     "brewery_ja": "合同会社長野県白馬村",
+     "confidence": 0.85,
+     "latencyMs": 1739
+    },
+    "rihaku_wandering_poet_label_de.jpg": {
+     "photoSha": "c7c11d0166fc5bea",
+     "name_ja": "Sake RIHAKU Wandering Poet",
+     "brewery_ja": "Rihaku Sake Brewery",
+     "confidence": 0.92,
+     "latencyMs": 1839
+    },
+    "rihaku_wandering_poet_side.jpg": {
+     "photoSha": "3cad6f863d2ceb88",
+     "name_ja": "RIHAKU",
+     "brewery_ja": "玉泉堂",
+     "confidence": 0.85,
+     "latencyMs": 1849
+    },
+    "sanwa_shuzo_garyubai_junmai_ginjo_genshu_clear.jpg": {
+     "photoSha": "c5ebe0612a76b4d5",
+     "name_ja": "大七",
+     "brewery_ja": "山田錦",
+     "confidence": 0.85,
+     "latencyMs": 1103
+    },
+    "sanwa_shuzo_garyubai_junmai_ginjo_genshu_label.jpg": {
+     "photoSha": "7b35d927ebbe78fb",
+     "name_ja": "SANWA SHUZO",
+     "brewery_ja": "丸彦酒造",
+     "confidence": 0.7,
+     "latencyMs": 1707
+    },
+    "sawa_no_hana_kokoro_clear.jpg": {
+     "photoSha": "74d6e816e3c00419",
+     "name_ja": "花の舞",
+     "brewery_ja": "花の舞酒造",
+     "confidence": 0.75,
+     "latencyMs": 1593
+    },
+    "sawa_no_hana_kokoro_label.jpg": {
+     "photoSha": "2c771260d2b0f890",
+     "name_ja": "Sake SAWA NO HANA Kokoro",
+     "brewery_ja": "Tomono Shuizo Co., Ltd.",
+     "confidence": 0.85,
+     "latencyMs": 1917
+    },
+    "sawa_no_hana_kokoro_side.jpg": {
+     "photoSha": "2ac90d04cad8cf8a",
+     "name_ja": "幸介",
+     "brewery_ja": "幸口酒造",
+     "confidence": 0.85,
+     "latencyMs": 2380
+    },
+    "seki_no_ichi_junmai_daiginjo_clear.jpg": {
+     "photoSha": "d7b28eb1d25280c3",
+     "name_ja": "Impure Designs",
+     "brewery_ja": "関野一",
+     "confidence": 0.75,
+     "latencyMs": 1980
+    },
+    "seki_no_ichi_junmai_daiginjo_label_ja.jpg": {
+     "photoSha": "66126d376320519b",
+     "name_ja": "世嗣の一",
+     "brewery_ja": "世嗣の一酒造",
+     "confidence": 0.85,
+     "latencyMs": 1801
+    },
+    "shichiken_sparkling_dry_clear.jpg": {
+     "photoSha": "ab66983fdc4aa760",
+     "name_ja": "しちけん",
+     "brewery_ja": "山の霞",
+     "confidence": 0.85,
+     "latencyMs": 1788
+    },
+    "shichiken_sparkling_dry_label.jpg": {
+     "photoSha": "2a009ad4a0d7b8cc",
+     "name_ja": "SHICHIKEN Sparkling Dry",
+     "brewery_ja": "山梨県甲州市塩山",
+     "confidence": 0.75,
+     "latencyMs": 1866
+    },
+    "shichiken_sparkling_dry_side.jpg": {
+     "photoSha": "714b024f08c0377b",
+     "name_ja": "七賢",
+     "brewery_ja": "白州酒造",
+     "confidence": 0.85,
+     "latencyMs": 1746
+    },
+    "shichiken_sparkling_dry_top_band.jpg": {
+     "photoSha": "0e07cc1d47cc48af",
+     "name_ja": "YAMA NO KASUMI",
+     "brewery_ja": "不明",
+     "confidence": 0.45,
+     "latencyMs": 1675
+    },
+    "yamagata_masamune_clear.jpg": {
+     "photoSha": "a0bdceccca273bdf",
+     "name_ja": "山千",
+     "brewery_ja": "山形酒造",
+     "confidence": 0.85,
+     "latencyMs": 1936
+    },
+    "yamagata_masamune_label.jpg": {
+     "photoSha": "59f13997ed72d3f8",
+     "name_ja": "YAMAGATA MASAMUNE",
+     "brewery_ja": "Mitobe Sake Brewery",
+     "confidence": 0.85,
+     "latencyMs": 1929
+    },
+    "zuiyo_kumamoto_castle_junmai_back.jpg": {
+     "photoSha": "4e609d75edaacafb",
+     "name_ja": "玉龍",
+     "brewery_ja": "玉龍株式会社",
+     "confidence": 0.65,
+     "latencyMs": 1619
+    },
+    "zuiyo_kumamoto_castle_junmai_front.jpg": {
+     "photoSha": "17f9213db2f13260",
+     "name_ja": "純鷲 純米酒 熊本城",
+     "brewery_ja": "瑞鷲",
+     "confidence": 0.92,
+     "latencyMs": 1994
+    }
+   }
+  },
+  "anthropic-sonnet-4-6": {
+   "fingerprint": "bea3356f1cce0d1a",
+   "reads": {
+    "amabuki_kimoto_junmai_daiginjo_clear.jpg": {
+     "photoSha": "f53cb9f7572e9238",
+     "name_ja": "天吹",
+     "brewery_ja": "天吹酒造合資会社",
+     "confidence": 0.95,
+     "latencyMs": 2373
+    },
+    "amabuki_kimoto_junmai_daiginjo_label.jpg": {
+     "photoSha": "48383f8f14c43bb5",
+     "name_ja": "天吹",
+     "brewery_ja": "天吹酒造",
+     "confidence": 0.95,
+     "latencyMs": 2880
+    },
+    "amabuki_kimoto_junmai_daiginjo_side.jpg": {
+     "photoSha": "a605ddfd902d915f",
+     "name_ja": "天吹",
+     "brewery_ja": "天吹酒造",
+     "confidence": 0.95,
+     "latencyMs": 2409
+    },
+    "amabuki_yamahai_junmai_omachi_from_top.jpg": {
+     "photoSha": "a2bfa8db39ba1791",
+     "name_ja": "天吹",
+     "brewery_ja": "天吹酒造",
+     "confidence": 0.85,
+     "latencyMs": 2236
+    },
+    "amabuki_yamahai_junmai_omachi_front.jpg": {
+     "photoSha": "f9109ed20758228c",
+     "name_ja": "天鷹",
+     "brewery_ja": "天鷹酒造",
+     "confidence": 0.92,
+     "latencyMs": 2117
+    },
+    "amabuki_yamahai_junmai_omachi_front_2.jpg": {
+     "photoSha": "22ccc4ef4c57b03c",
+     "name_ja": "IMABUKI",
+     "brewery_ja": "今里酒造",
+     "confidence": 0.82,
+     "latencyMs": 2592
+    },
+    "amabuki_yamahai_junmai_omachi_label.jpg": {
+     "photoSha": "f1a27699263851fd",
+     "name_ja": "AMABUKI Marigold Cup",
+     "brewery_ja": "天吹酒造",
+     "confidence": 0.85,
+     "latencyMs": 2284
+    },
+    "bekkaku_tokubetsu_honjozo_clear.jpg": {
+     "photoSha": "c934db3dfd2a4208",
+     "name_ja": "別格",
+     "brewery_ja": "両国酒造",
+     "confidence": 0.82,
+     "latencyMs": 2163
+    },
+    "bekkaku_tokubetsu_honjozo_label.jpg": {
+     "photoSha": "f92242f91bd38e54",
+     "name_ja": "Bekkaku",
+     "brewery_ja": "角星",
+     "confidence": 0.72,
+     "latencyMs": 2044
+    },
+    "choryo_yoshinosugi_taruzake_clear.jpg": {
+     "photoSha": "ecaae4c21d46abed",
+     "name_ja": "樽酒",
+     "brewery_ja": "吉野杉",
+     "confidence": 0.72,
+     "latencyMs": 2201
+    },
+    "choryo_yoshinosugi_taruzake_label.jpg": {
+     "photoSha": "c2d0edea64326c0c",
+     "name_ja": "CHORYO",
+     "brewery_ja": "長龍酒造",
+     "confidence": 0.72,
+     "latencyMs": 2154
+    },
+    "choryo_yoshinosugi_taruzake_label_ja.jpg": {
+     "photoSha": "964ef0c4e18c892a",
+     "name_ja": "吉野杉の",
+     "brewery_ja": "不明",
+     "confidence": 0.5,
+     "latencyMs": 3203
+    },
+    "choryo_yoshinosugi_taruzake_side.jpg": {
+     "photoSha": "967e61ef92f95e68",
+     "name_ja": "樽酒",
+     "brewery_ja": "長龍酒造",
+     "confidence": 0.9,
+     "latencyMs": 2037
+    },
+    "daruma_masamune_almost_clear.jpg": {
+     "photoSha": "e85af846cb6b5f52",
+     "name_ja": "DARUMA-MASAMUNE",
+     "brewery_ja": "白木恒助商店",
+     "confidence": 0.85,
+     "latencyMs": 2323
+    },
+    "daruma_masamune_clear.jpg": {
+     "photoSha": "c103c0786ff87a61",
+     "name_ja": "DARUMA-MASAMUNE",
+     "brewery_ja": "白木恒助商店",
+     "confidence": 0.85,
+     "latencyMs": 3125
+    },
+    "daruma_masamune_label.jpg": {
+     "photoSha": "6d5a4680e373164b",
+     "name_ja": "DARUMA MASAMUNE",
+     "brewery_ja": "白木恒助商店",
+     "confidence": 0.85,
+     "latencyMs": 2265
+    },
+    "dewazakura_yukimegami_clear.jpg": {
+     "photoSha": "e752e799fd6526d6",
+     "name_ja": "出羽桜",
+     "brewery_ja": "出羽桜酒造",
+     "confidence": 0.92,
+     "latencyMs": 2338
+    },
+    "dewazakura_yukimegami_label_clear.jpg": {
+     "photoSha": "9e7182bd560934dc",
+     "name_ja": "出羽桜",
+     "brewery_ja": "出羽桜酒造",
+     "confidence": 0.9,
+     "latencyMs": 2152
+    },
+    "dewazakura_yukimegami_label_side.jpg": {
+     "photoSha": "381b2531bf58be58",
+     "name_ja": "DEWAZAKURA",
+     "brewery_ja": "出羽桜酒造",
+     "confidence": 0.82,
+     "latencyMs": 3911
+    },
+    "dewazakura_yukimegami_side.jpg": {
+     "photoSha": "30a72a78ee6c9b91",
+     "name_ja": "出羽桜",
+     "brewery_ja": "出羽桜酒造",
+     "confidence": 0.88,
+     "latencyMs": 3489
+    },
+    "fudoh_fusakogane_migaki_80_junmai_nama_nabedana_clearish.jpg": {
+     "photoSha": "bae56cacc0bb1533",
+     "name_ja": "不動",
+     "brewery_ja": "鍋店",
+     "confidence": 0.92,
+     "latencyMs": 2264
+    },
+    "fudoh_fusakogane_migaki_80_junmai_nama_nabedana_label.jpg": {
+     "photoSha": "dbf6e5ab60df577d",
+     "name_ja": "NABEDANA",
+     "brewery_ja": "鍋店",
+     "confidence": 0.72,
+     "latencyMs": 3125
+    },
+    "fukuju_awasaki_sparkling_clear.jpg": {
+     "photoSha": "ca4c7beb99a9bfad",
+     "name_ja": "あわ咲き",
+     "brewery_ja": "福寿酒造",
+     "confidence": 0.85,
+     "latencyMs": 2172
+    },
+    "fukuju_awasaki_sparkling_label.jpg": {
+     "photoSha": "2a97335416a5ad71",
+     "name_ja": "FUKUJU",
+     "brewery_ja": "神戸酒心館",
+     "confidence": 0.82,
+     "latencyMs": 2560
+    },
+    "fukuju_awasaki_sparkling_side.jpg": {
+     "photoSha": "f1c8b06d9a95b7d4",
+     "name_ja": "あわ咲き",
+     "brewery_ja": "白鶴酒造",
+     "confidence": 0.72,
+     "latencyMs": 3081
+    },
+    "fukuju_kobe_classic_clear.jpg": {
+     "photoSha": "f5f4d5a7f8210af9",
+     "name_ja": "福寿",
+     "brewery_ja": "神戸酒心館",
+     "confidence": 0.92,
+     "latencyMs": 2056
+    },
+    "fukuju_kobe_classic_label.jpg": {
+     "photoSha": "f4d1a2cba9b34627",
+     "name_ja": "FUKUJU",
+     "brewery_ja": "神戸酒心館",
+     "confidence": 0.85,
+     "latencyMs": 2923
+    },
+    "hanatomoe_sugi_barrel_clear.jpg": {
+     "photoSha": "798d2bd70095f906",
+     "name_ja": "ハナトモエ",
+     "brewery_ja": "剣菱酒造",
+     "confidence": 0.82,
+     "latencyMs": 2468
+    },
+    "hanatomoe_sugi_barrel_label.jpg": {
+     "photoSha": "e0a957faac5f465c",
+     "name_ja": "HANATOMOE",
+     "brewery_ja": "みよしの酒造",
+     "confidence": 0.9,
+     "latencyMs": 2950
+    },
+    "hanatomoe_sugi_barrel_side.jpg": {
+     "photoSha": "da09f67a83b107f6",
+     "name_ja": "花巴",
+     "brewery_ja": "美吉野醸造",
+     "confidence": 0.85,
+     "latencyMs": 2208
+    },
+    "hokushika_yuki_namachozo_clear.jpg": {
+     "photoSha": "5f80b503aad03b8b",
+     "name_ja": "雪",
+     "brewery_ja": "北鹿",
+     "confidence": 0.85,
+     "latencyMs": 2020
+    },
+    "hokushika_yuki_namachozo_label.jpg": {
+     "photoSha": "825bb403e8369394",
+     "name_ja": "HOKUSHIKA",
+     "brewery_ja": "北鹿",
+     "confidence": 0.7,
+     "latencyMs": 2026
+    },
+    "hokushika_yuki_namachozo_side.jpg": {
+     "photoSha": "6cf50877e494699f",
+     "name_ja": "北鹿 雪",
+     "brewery_ja": "北鹿",
+     "confidence": 0.85,
+     "latencyMs": 1954
+    },
+    "ikekame_barrel_clear.jpg": {
+     "photoSha": "f3751767c735f1f3",
+     "name_ja": "IKEKAME BARREL",
+     "brewery_ja": "池亀酒造",
+     "confidence": 0.85,
+     "latencyMs": 2009
+    },
+    "ikekame_barrel_label.jpg": {
+     "photoSha": "639252e43e36652b",
+     "name_ja": "IKEKAME",
+     "brewery_ja": "池亀酒造",
+     "confidence": 0.82,
+     "latencyMs": 1993
+    },
+    "ikekame_junmai_ginjo_nama_clear.jpg": {
+     "photoSha": "0086c14de9b2b6e6",
+     "name_ja": "黒牛",
+     "brewery_ja": "名手酒造店",
+     "confidence": 0.55,
+     "latencyMs": 1960
+    },
+    "ikekame_junmai_ginjo_nama_label.jpg": {
+     "photoSha": "9b6e9e8c005a6f2f",
+     "name_ja": "IKEKAME",
+     "brewery_ja": "池亀酒造",
+     "confidence": 0.85,
+     "latencyMs": 2128
+    },
+    "ikekame_junmai_ginjo_nama_side.jpg": {
+     "photoSha": "71caf840d7cb3451",
+     "name_ja": "くろかぶと",
+     "brewery_ja": "西出酒造",
+     "confidence": 0.82,
+     "latencyMs": 2002
+    },
+    "katsuyama_en_clear.jpg": {
+     "photoSha": "a89d79b27441c2cf",
+     "name_ja": "勝山 縁",
+     "brewery_ja": "仙台伊澤家勝山酒造",
+     "confidence": 0.9,
+     "latencyMs": 2162
+    },
+    "katsuyama_en_label_de.jpg": {
+     "photoSha": "aeafa5f818a315aa",
+     "name_ja": "KATSUYAMA En",
+     "brewery_ja": "勝山酒造",
+     "confidence": 0.85,
+     "latencyMs": 2207
+    },
+    "katsuyama_en_label_ja.jpg": {
+     "photoSha": "6925988816d20bdd",
+     "name_ja": "勝山 縁",
+     "brewery_ja": "仙台伊澤家 勝山酒造",
+     "confidence": 0.92,
+     "latencyMs": 2311
+    },
+    "miwa_shuzo_shirakawago_junmaishu_uwazumi_clear.jpg": {
+     "photoSha": "5b7ef4e8e2b0e171",
+     "name_ja": "白川郷",
+     "brewery_ja": "三輪酒造",
+     "confidence": 0.82,
+     "latencyMs": 1955
+    },
+    "miwa_shuzo_shirakawago_junmaishu_uwazumi_label.jpg": {
+     "photoSha": "8f9eb7f1fb9a8f4a",
+     "name_ja": "SHIRAKAWAGO",
+     "brewery_ja": "三輪酒造",
+     "confidence": 0.82,
+     "latencyMs": 2112
+    },
+    "mizumoto_hanatomoe_clear.jpg": {
+     "photoSha": "08924ab9dc0784db",
+     "name_ja": "HANATOMOE",
+     "brewery_ja": "美吉野醸造",
+     "confidence": 0.92,
+     "latencyMs": 1866
+    },
+    "mizumoto_hanatomoe_label.jpg": {
+     "photoSha": "426174ef8b0dad2d",
+     "name_ja": "HANATOMOE",
+     "brewery_ja": "吉野醸造",
+     "confidence": 0.9,
+     "latencyMs": 1975
+    },
+    "mizumoto_hanatomoe_side.jpg": {
+     "photoSha": "b398c9ecbd7dfc58",
+     "name_ja": "花巴",
+     "brewery_ja": "美吉野醸造",
+     "confidence": 0.88,
+     "latencyMs": 2083
+    },
+    "ninki_gold_label_clear.jpg": {
+     "photoSha": "aea1ff2817f29be3",
+     "name_ja": "人気一",
+     "brewery_ja": "人気酒造",
+     "confidence": 0.9,
+     "latencyMs": 1804
+    },
+    "ninki_gold_label_label.jpg": {
+     "photoSha": "5c83847ab6c1c8c5",
+     "name_ja": "NINKI",
+     "brewery_ja": "仁喜",
+     "confidence": 0.82,
+     "latencyMs": 1796
+    },
+    "ninki_sparkling_junmai_daiginjo_clear.jpg": {
+     "photoSha": "d4019e7ae35ff4be",
+     "name_ja": "NINKI-ICHI",
+     "brewery_ja": "二木酒造",
+     "confidence": 0.85,
+     "latencyMs": 1903
+    },
+    "ninki_sparkling_junmai_daiginjo_label.jpg": {
+     "photoSha": "5ea97580de144e0c",
+     "name_ja": "NINKI",
+     "brewery_ja": "仁木酒造",
+     "confidence": 0.82,
+     "latencyMs": 1787
+    },
+    "nohime_no_sato_kakushi_ginjo_clear.jpg": {
+     "photoSha": "3a2e2b8a6aeefb5d",
+     "name_ja": "隠し吟醸",
+     "brewery_ja": "清洲桜醸造",
+     "confidence": 0.88,
+     "latencyMs": 2148
+    },
+    "nohime_no_sato_kakushi_ginjo_label.jpg": {
+     "photoSha": "0458503220197d9d",
+     "name_ja": "Nohime No Sato",
+     "brewery_ja": "野姫",
+     "confidence": 0.55,
+     "latencyMs": 2020
+    },
+    "rihaku_dreamy_clouds_clear.jpg": {
+     "photoSha": "2c0f8e6a0eabfe7b",
+     "name_ja": "李白",
+     "brewery_ja": "李白酒造",
+     "confidence": 0.85,
+     "latencyMs": 1821
+    },
+    "rihaku_dreamy_clouds_label.jpg": {
+     "photoSha": "d4e1032c2e41474e",
+     "name_ja": "RIHAKU Dreamy Clouds",
+     "brewery_ja": "李白酒造",
+     "confidence": 0.9,
+     "latencyMs": 2001
+    },
+    "rihaku_dreamy_clouds_side.jpg": {
+     "photoSha": "bc0f17cdc2ab9baa",
+     "name_ja": "李白",
+     "brewery_ja": "李白酒造",
+     "confidence": 0.92,
+     "latencyMs": 1750
+    },
+    "rihaku_wandering_poet_clear.jpg": {
+     "photoSha": "97294c3bd76089cb",
+     "name_ja": "李白",
+     "brewery_ja": "李白酒造",
+     "confidence": 0.85,
+     "latencyMs": 1657
+    },
+    "rihaku_wandering_poet_label_de.jpg": {
+     "photoSha": "c7c11d0166fc5bea",
+     "name_ja": "Wandering Poet",
+     "brewery_ja": "李白酒造",
+     "confidence": 0.9,
+     "latencyMs": 1783
+    },
+    "rihaku_wandering_poet_side.jpg": {
+     "photoSha": "3cad6f863d2ceb88",
+     "name_ja": "李白",
+     "brewery_ja": "李白酒造",
+     "confidence": 0.95,
+     "latencyMs": 1722
+    },
+    "sanwa_shuzo_garyubai_junmai_ginjo_genshu_clear.jpg": {
+     "photoSha": "c5ebe0612a76b4d5",
+     "name_ja": "臥龍梅",
+     "brewery_ja": "三和酒造",
+     "confidence": 0.82,
+     "latencyMs": 2194
+    },
+    "sanwa_shuzo_garyubai_junmai_ginjo_genshu_label.jpg": {
+     "photoSha": "7b35d927ebbe78fb",
+     "name_ja": "臥龍梅",
+     "brewery_ja": "三和酒造",
+     "confidence": 0.82,
+     "latencyMs": 1894
+    },
+    "sawa_no_hana_kokoro_clear.jpg": {
+     "photoSha": "74d6e816e3c00419",
+     "name_ja": "澤乃花",
+     "brewery_ja": "伊藤酒造",
+     "confidence": 0.82,
+     "latencyMs": 1803
+    },
+    "sawa_no_hana_kokoro_label.jpg": {
+     "photoSha": "2c771260d2b0f890",
+     "name_ja": "SAWA NO HANA",
+     "brewery_ja": "友野酒造",
+     "confidence": 0.85,
+     "latencyMs": 1845
+    },
+    "sawa_no_hana_kokoro_side.jpg": {
+     "photoSha": "2ac90d04cad8cf8a",
+     "name_ja": "澤乃花",
+     "brewery_ja": "伴野酒造",
+     "confidence": 0.88,
+     "latencyMs": 1853
+    },
+    "seki_no_ichi_junmai_daiginjo_clear.jpg": {
+     "photoSha": "d7b28eb1d25280c3",
+     "name_ja": "SEKINO-ICHI",
+     "brewery_ja": "酔仙酒造",
+     "confidence": 0.82,
+     "latencyMs": 2073
+    },
+    "seki_no_ichi_junmai_daiginjo_label_ja.jpg": {
+     "photoSha": "66126d376320519b",
+     "name_ja": "世嬉の一",
+     "brewery_ja": "世嬉の一酒造",
+     "confidence": 0.92,
+     "latencyMs": 1964
+    },
+    "shichiken_sparkling_dry_clear.jpg": {
+     "photoSha": "ab66983fdc4aa760",
+     "name_ja": "七賢 山ノ霞",
+     "brewery_ja": "山梨銘醸",
+     "confidence": 0.92,
+     "latencyMs": 2098
+    },
+    "shichiken_sparkling_dry_label.jpg": {
+     "photoSha": "2a009ad4a0d7b8cc",
+     "name_ja": "SHICHIKEN",
+     "brewery_ja": "山梨銘醸",
+     "confidence": 0.85,
+     "latencyMs": 2369
+    },
+    "shichiken_sparkling_dry_side.jpg": {
+     "photoSha": "714b024f08c0377b",
+     "name_ja": "七賢",
+     "brewery_ja": "山梨銘醸",
+     "confidence": 0.92,
+     "latencyMs": 1862
+    },
+    "shichiken_sparkling_dry_top_band.jpg": {
+     "photoSha": "0e07cc1d47cc48af",
+     "name_ja": "YAMA NO KASUMI",
+     "brewery_ja": "富久錦",
+     "confidence": 0.7,
+     "latencyMs": 1952
+    },
+    "yamagata_masamune_clear.jpg": {
+     "photoSha": "a0bdceccca273bdf",
+     "name_ja": "山形正宗",
+     "brewery_ja": "水戸部酒造",
+     "confidence": 0.82,
+     "latencyMs": 2010
+    },
+    "yamagata_masamune_label.jpg": {
+     "photoSha": "59f13997ed72d3f8",
+     "name_ja": "YAMAGATA MASAMUNE",
+     "brewery_ja": "三佐正宗酒造",
+     "confidence": 0.85,
+     "latencyMs": 2222
+    },
+    "zuiyo_kumamoto_castle_junmai_back.jpg": {
+     "photoSha": "4e609d75edaacafb",
+     "name_ja": "瑞鷹",
+     "brewery_ja": "瑞鷹酒造",
+     "confidence": 0.82,
+     "latencyMs": 2129
+    },
+    "zuiyo_kumamoto_castle_junmai_front.jpg": {
+     "photoSha": "17f9213db2f13260",
+     "name_ja": "瑞鷹 熊本城",
+     "brewery_ja": "瑞鷹",
+     "confidence": 0.92,
+     "latencyMs": 2056
+    }
+   }
+  },
+  "anthropic-haiku-5-5": {
+   "fingerprint": "bea3356f1cce0d1a",
+   "reads": {
+    "amabuki_kimoto_junmai_daiginjo_clear.jpg": {
+     "photoSha": "f53cb9f7572e9238",
+     "name_ja": "天吹",
+     "brewery_ja": "天吹酒造",
+     "confidence": 0.92,
+     "latencyMs": 2178
+    },
+    "amabuki_kimoto_junmai_daiginjo_label.jpg": {
+     "photoSha": "48383f8f14c43bb5",
+     "name_ja": "天吹",
+     "brewery_ja": "天吹酒造",
+     "confidence": 0.8,
+     "latencyMs": 3733
+    },
+    "amabuki_kimoto_junmai_daiginjo_side.jpg": {
+     "photoSha": "a605ddfd902d915f",
+     "name_ja": "天吹",
+     "brewery_ja": "天吹酒造",
+     "confidence": 0.93,
+     "latencyMs": 2088
+    },
+    "amabuki_yamahai_junmai_omachi_from_top.jpg": {
+     "photoSha": "a2bfa8db39ba1791",
+     "name_ja": "天吹",
+     "brewery_ja": "天吹酒造",
+     "confidence": 0.72,
+     "latencyMs": 3130
+    },
+    "amabuki_yamahai_junmai_omachi_front.jpg": {
+     "photoSha": "f9109ed20758228c",
+     "name_ja": "天吹",
+     "brewery_ja": "天吹酒造",
+     "confidence": 0.8,
+     "latencyMs": 3102
+    },
+    "amabuki_yamahai_junmai_omachi_front_2.jpg": {
+     "photoSha": "22ccc4ef4c57b03c",
+     "name_ja": "MABUKI",
+     "brewery_ja": "CO., LTD. SAGA JAPAN",
+     "confidence": 0.45,
+     "latencyMs": 4391
+    },
+    "amabuki_yamahai_junmai_omachi_label.jpg": {
+     "photoSha": "f1a27699263851fd",
+     "name_ja": "AMABUKI",
+     "brewery_ja": "Amabuki",
+     "confidence": 0.75,
+     "latencyMs": 3285
+    },
+    "bekkaku_tokubetsu_honjozo_clear.jpg": {
+     "photoSha": "c934db3dfd2a4208",
+     "name_ja": "別格",
+     "brewery_ja": "西国",
+     "confidence": 0.6,
+     "latencyMs": 2770
+    },
+    "bekkaku_tokubetsu_honjozo_label.jpg": {
+     "photoSha": "f92242f91bd38e54",
+     "name_ja": "Bekkaku",
+     "brewery_ja": "Kakuboshi",
+     "confidence": 0.6,
+     "latencyMs": 2933
+    },
+    "choryo_yoshinosugi_taruzake_clear.jpg": {
+     "photoSha": "ecaae4c21d46abed",
+     "name_ja": "樽酒",
+     "brewery_ja": "酒造",
+     "confidence": 0.35,
+     "latencyMs": 5228
+    },
+    "choryo_yoshinosugi_taruzake_label.jpg": {
+     "photoSha": "c2d0edea64326c0c",
+     "name_ja": "CHORYO",
+     "brewery_ja": "Hergestellt in Japan",
+     "confidence": 0.3,
+     "latencyMs": 4103
+    },
+    "choryo_yoshinosugi_taruzake_label_ja.jpg": {
+     "photoSha": "964ef0c4e18c892a",
+     "name_ja": "吉野杉の",
+     "brewery_ja": "吉野杉",
+     "confidence": 0.2,
+     "latencyMs": 3626
+    },
+    "choryo_yoshinosugi_taruzake_side.jpg": {
+     "photoSha": "967e61ef92f95e68",
+     "name_ja": "樽酒",
+     "brewery_ja": "長龍酒造",
+     "confidence": 0.8,
+     "latencyMs": 2340
+    },
+    "daruma_masamune_almost_clear.jpg": {
+     "photoSha": "e85af846cb6b5f52",
+     "name_ja": "DARUMA-MASAMUNE",
+     "brewery_ja": "DARUMA-MASAMUNE",
+     "confidence": 0.35,
+     "latencyMs": 4637
+    },
+    "daruma_masamune_clear.jpg": {
+     "photoSha": "c103c0786ff87a61",
+     "name_ja": "DARUMA-MASAMUNE",
+     "brewery_ja": "白木恒助商店",
+     "confidence": 0.35,
+     "latencyMs": 6273
+    },
+    "daruma_masamune_label.jpg": {
+     "photoSha": "6d5a4680e373164b",
+     "name_ja": "DARUMA MASAMUNE",
+     "brewery_ja": "Shiraki Brewery",
+     "confidence": 0.8,
+     "latencyMs": 2780
+    },
+    "dewazakura_yukimegami_clear.jpg": {
+     "photoSha": "e752e799fd6526d6",
+     "name_ja": "獺祭",
+     "brewery_ja": "旭酒造",
+     "confidence": 0.8,
+     "latencyMs": 2999
+    },
+    "dewazakura_yukimegami_label_clear.jpg": {
+     "photoSha": "9e7182bd560934dc",
+     "name_ja": "雪女神",
+     "brewery_ja": "Dewazakura Sake Brewery",
+     "confidence": 0.75,
+     "latencyMs": 3834
+    },
+    "dewazakura_yukimegami_label_side.jpg": {
+     "photoSha": "381b2531bf58be58",
+     "name_ja": "Yukimegami",
+     "brewery_ja": "Dewazakura Sake Brewery",
+     "confidence": 0.7,
+     "latencyMs": 4299
+    },
+    "dewazakura_yukimegami_side.jpg": {
+     "photoSha": "30a72a78ee6c9b91",
+     "name_ja": "出羽桜",
+     "brewery_ja": "出羽桜酒造",
+     "confidence": 0.75,
+     "latencyMs": 3091
+    },
+    "fudoh_fusakogane_migaki_80_junmai_nama_nabedana_clearish.jpg": {
+     "photoSha": "bae56cacc0bb1533",
+     "name_ja": "不動",
+     "brewery_ja": "日本酒",
+     "confidence": 0.35,
+     "latencyMs": 5354
+    },
+    "fudoh_fusakogane_migaki_80_junmai_nama_nabedana_label.jpg": {
+     "photoSha": "dbf6e5ab60df577d",
+     "name_ja": "NABEDANA",
+     "brewery_ja": "FUDOH",
+     "confidence": 0.3,
+     "latencyMs": 3223
+    },
+    "fukuju_awasaki_sparkling_clear.jpg": {
+     "photoSha": "ca4c7beb99a9bfad",
+     "name_ja": "あわ咲き",
+     "brewery_ja": "FUKUJU",
+     "confidence": 0.8,
+     "latencyMs": 3500
+    },
+    "fukuju_awasaki_sparkling_label.jpg": {
+     "photoSha": "2a97335416a5ad71",
+     "name_ja": "FUKUJU",
+     "brewery_ja": "Kobe Shushinkan",
+     "confidence": 0.8,
+     "latencyMs": 3442
+    },
+    "fukuju_awasaki_sparkling_side.jpg": {
+     "photoSha": "f1c8b06d9a95b7d4",
+     "name_ja": "あわ咲き",
+     "brewery_ja": "判読困難",
+     "confidence": 0.55,
+     "latencyMs": 4768
+    },
+    "fukuju_kobe_classic_clear.jpg": {
+     "photoSha": "f5f4d5a7f8210af9",
+     "name_ja": "福寿",
+     "brewery_ja": "神戸酒心館",
+     "confidence": 0.5,
+     "latencyMs": 3949
+    },
+    "fukuju_kobe_classic_label.jpg": {
+     "photoSha": "f4d1a2cba9b34627",
+     "name_ja": "FUKUJU",
+     "brewery_ja": "Kobe Shushinkan",
+     "confidence": 0.85,
+     "latencyMs": 2851
+    },
+    "hanatomoe_sugi_barrel_clear.jpg": {
+     "photoSha": "798d2bd70095f906",
+     "name_ja": "HANATOMOE MASAMUNE",
+     "brewery_ja": "酒造",
+     "confidence": 0.35,
+     "latencyMs": 6540
+    },
+    "hanatomoe_sugi_barrel_label.jpg": {
+     "photoSha": "e0a957faac5f465c",
+     "name_ja": "HANATOMOE",
+     "brewery_ja": "Miyoshino Sake Brewery",
+     "confidence": 0.85,
+     "latencyMs": 2681
+    },
+    "hanatomoe_sugi_barrel_side.jpg": {
+     "photoSha": "da09f67a83b107f6",
+     "name_ja": "樽丸",
+     "brewery_ja": "美吉野醸造",
+     "confidence": 0.8,
+     "latencyMs": 3725
+    },
+    "hokushika_yuki_namachozo_clear.jpg": {
+     "photoSha": "5f80b503aad03b8b",
+     "name_ja": "雪",
+     "brewery_ja": "HOKUSHIKA",
+     "confidence": 0.6,
+     "latencyMs": 3515
+    },
+    "hokushika_yuki_namachozo_label.jpg": {
+     "photoSha": "825bb403e8369394",
+     "name_ja": "Yuki",
+     "brewery_ja": "HOKUSHIKA",
+     "confidence": 0.6,
+     "latencyMs": 3978
+    },
+    "hokushika_yuki_namachozo_side.jpg": {
+     "photoSha": "6cf50877e494699f",
+     "name_ja": "雪",
+     "brewery_ja": "北鹿",
+     "confidence": 0.75,
+     "latencyMs": 4511
+    },
+    "ikekame_barrel_clear.jpg": {
+     "photoSha": "f3751767c735f1f3",
+     "name_ja": "IKEKAME BARREL",
+     "brewery_ja": "IKEKAME SAKE BREWERY",
+     "confidence": 0.8,
+     "latencyMs": 3987
+    },
+    "ikekame_barrel_label.jpg": {
+     "photoSha": "639252e43e36652b",
+     "name_ja": "IKEKAME",
+     "brewery_ja": "Ikekame Shuzo",
+     "confidence": 0.8,
+     "latencyMs": 2825
+    },
+    "ikekame_junmai_ginjo_nama_clear.jpg": {
+     "photoSha": "0086c14de9b2b6e6",
+     "name_ja": "奥",
+     "brewery_ja": "酒造",
+     "confidence": 0.15,
+     "latencyMs": 5863
+    },
+    "ikekame_junmai_ginjo_nama_label.jpg": {
+     "photoSha": "9b6e9e8c005a6f2f",
+     "name_ja": "IKEKAME",
+     "brewery_ja": "Ikekame Shuzo",
+     "confidence": 0.85,
+     "latencyMs": 3199
+    },
+    "ikekame_junmai_ginjo_nama_side.jpg": {
+     "photoSha": "71caf840d7cb3451",
+     "name_ja": "くろかぶと",
+     "brewery_ja": "日本酒",
+     "confidence": 0.25,
+     "latencyMs": 5843
+    },
+    "katsuyama_en_clear.jpg": {
+     "photoSha": "a89d79b27441c2cf",
+     "name_ja": "勝山",
+     "brewery_ja": "渡辺酒造店",
+     "confidence": 0.6,
+     "latencyMs": 4417
+    },
+    "katsuyama_en_label_de.jpg": {
+     "photoSha": "aeafa5f818a315aa",
+     "name_ja": "KATSUYAMA En",
+     "brewery_ja": "Katsuyama Supreme Sake",
+     "confidence": 0.75,
+     "latencyMs": 3118
+    },
+    "katsuyama_en_label_ja.jpg": {
+     "photoSha": "6925988816d20bdd",
+     "name_ja": "勝山",
+     "brewery_ja": "勝山酒造",
+     "confidence": 0.9,
+     "latencyMs": 3045
+    },
+    "miwa_shuzo_shirakawago_junmaishu_uwazumi_clear.jpg": {
+     "photoSha": "5b7ef4e8e2b0e171",
+     "name_ja": "白川郷",
+     "brewery_ja": "醸造元 判読不可",
+     "confidence": 0.35,
+     "latencyMs": 5277
+    },
+    "miwa_shuzo_shirakawago_junmaishu_uwazumi_label.jpg": {
+     "photoSha": "8f9eb7f1fb9a8f4a",
+     "name_ja": "SHIRAKAWAGO",
+     "brewery_ja": "MIWA SHUZO",
+     "confidence": 0.8,
+     "latencyMs": 3852
+    },
+    "mizumoto_hanatomoe_clear.jpg": {
+     "photoSha": "08924ab9dc0784db",
+     "name_ja": "HANATOMOE",
+     "brewery_ja": "美吉野醸造",
+     "confidence": 0.85,
+     "latencyMs": 2729
+    },
+    "mizumoto_hanatomoe_label.jpg": {
+     "photoSha": "426174ef8b0dad2d",
+     "name_ja": "HANATOMOE",
+     "brewery_ja": "Miyoshino Jozo",
+     "confidence": 0.85,
+     "latencyMs": 2636
+    },
+    "mizumoto_hanatomoe_side.jpg": {
+     "photoSha": "b398c9ecbd7dfc58",
+     "name_ja": "花友恵",
+     "brewery_ja": "美吉野醸造",
+     "confidence": 0.8,
+     "latencyMs": 3360
+    },
+    "ninki_gold_label_clear.jpg": {
+     "photoSha": "aea1ff2817f29be3",
+     "name_ja": "人気一",
+     "brewery_ja": "?",
+     "confidence": 0.35,
+     "latencyMs": 4924
+    },
+    "ninki_gold_label_label.jpg": {
+     "photoSha": "5c83847ab6c1c8c5",
+     "name_ja": "NINKI",
+     "brewery_ja": "Ninki Inc.",
+     "confidence": 0.7,
+     "latencyMs": 3899
+    },
+    "ninki_sparkling_junmai_daiginjo_clear.jpg": {
+     "photoSha": "d4019e7ae35ff4be",
+     "name_ja": "NINKI-ICHI",
+     "brewery_ja": "NINKI-ICHI",
+     "confidence": 0.3,
+     "latencyMs": 5176
+    },
+    "ninki_sparkling_junmai_daiginjo_label.jpg": {
+     "photoSha": "5ea97580de144e0c",
+     "name_ja": "NINKI",
+     "brewery_ja": "Ninki Inc.",
+     "confidence": 0.85,
+     "latencyMs": 2531
+    },
+    "nohime_no_sato_kakushi_ginjo_clear.jpg": {
+     "photoSha": "3a2e2b8a6aeefb5d",
+     "name_ja": "濃姫の里",
+     "brewery_ja": "清洲桜醸造",
+     "confidence": 0.7,
+     "latencyMs": 4139
+    },
+    "nohime_no_sato_kakushi_ginjo_label.jpg": {
+     "photoSha": "0458503220197d9d",
+     "name_ja": "Nohime No Sato Kakushi",
+     "brewery_ja": "酒造",
+     "confidence": 0.3,
+     "latencyMs": 5174
+    },
+    "rihaku_dreamy_clouds_clear.jpg": {
+     "photoSha": "2c0f8e6a0eabfe7b",
+     "name_ja": "李白",
+     "brewery_ja": "李白酒造",
+     "confidence": 0.6,
+     "latencyMs": 3981
+    },
+    "rihaku_dreamy_clouds_label.jpg": {
+     "photoSha": "d4e1032c2e41474e",
+     "name_ja": "RIHAKU",
+     "brewery_ja": "Rihaku Sake Brewery",
+     "confidence": 0.8,
+     "latencyMs": 2928
+    },
+    "rihaku_dreamy_clouds_side.jpg": {
+     "photoSha": "bc0f17cdc2ab9baa",
+     "name_ja": "李白",
+     "brewery_ja": "李白酒造",
+     "confidence": 0.92,
+     "latencyMs": 2261
+    },
+    "rihaku_wandering_poet_clear.jpg": {
+     "photoSha": "97294c3bd76089cb",
+     "name_ja": "李白",
+     "brewery_ja": "増田徳兵衛商店",
+     "confidence": 0.6,
+     "latencyMs": 3887
+    },
+    "rihaku_wandering_poet_label_de.jpg": {
+     "photoSha": "c7c11d0166fc5bea",
+     "name_ja": "RIHAKU",
+     "brewery_ja": "Rihaku Sake Brewery",
+     "confidence": 0.8,
+     "latencyMs": 2640
+    },
+    "rihaku_wandering_poet_side.jpg": {
+     "photoSha": "3cad6f863d2ceb88",
+     "name_ja": "李白",
+     "brewery_ja": "李白酒造",
+     "confidence": 0.92,
+     "latencyMs": 2158
+    },
+    "sanwa_shuzo_garyubai_junmai_ginjo_genshu_clear.jpg": {
+     "photoSha": "c5ebe0612a76b4d5",
+     "name_ja": "臥龍梅",
+     "brewery_ja": "酒造",
+     "confidence": 0.45,
+     "latencyMs": 4995
+    },
+    "sanwa_shuzo_garyubai_junmai_ginjo_genshu_label.jpg": {
+     "photoSha": "7b35d927ebbe78fb",
+     "name_ja": "GARYUBAI",
+     "brewery_ja": "SANWA SHUZO",
+     "confidence": 0.6,
+     "latencyMs": 4548
+    },
+    "sawa_no_hana_kokoro_clear.jpg": {
+     "photoSha": "74d6e816e3c00419",
+     "name_ja": "澤乃花",
+     "brewery_ja": "澤乃花酒造",
+     "confidence": 0.4,
+     "latencyMs": 4916
+    },
+    "sawa_no_hana_kokoro_label.jpg": {
+     "photoSha": "2c771260d2b0f890",
+     "name_ja": "SAWA NO HANA",
+     "brewery_ja": "Tomono Shuzo",
+     "confidence": 0.8,
+     "latencyMs": 2986
+    },
+    "sawa_no_hana_kokoro_side.jpg": {
+     "photoSha": "2ac90d04cad8cf8a",
+     "name_ja": "澤乃花",
+     "brewery_ja": "伴野酒造",
+     "confidence": 0.85,
+     "latencyMs": 2323
+    },
+    "seki_no_ichi_junmai_daiginjo_clear.jpg": {
+     "photoSha": "d7b28eb1d25280c3",
+     "name_ja": "SEKINO-ICHI",
+     "brewery_ja": "関",
+     "confidence": 0.35,
+     "latencyMs": 4132
+    },
+    "seki_no_ichi_junmai_daiginjo_label_ja.jpg": {
+     "photoSha": "66126d376320519b",
+     "name_ja": "世嬉の一",
+     "brewery_ja": "世嬉の一酒造",
+     "confidence": 0.92,
+     "latencyMs": 2224
+    },
+    "shichiken_sparkling_dry_clear.jpg": {
+     "photoSha": "ab66983fdc4aa760",
+     "name_ja": "七賢",
+     "brewery_ja": "山梨銘醸",
+     "confidence": 0.85,
+     "latencyMs": 3750
+    },
+    "shichiken_sparkling_dry_label.jpg": {
+     "photoSha": "2a009ad4a0d7b8cc",
+     "name_ja": "SHICHIKEN",
+     "brewery_ja": "山梨銘醸",
+     "confidence": 0.8,
+     "latencyMs": 4784
+    },
+    "shichiken_sparkling_dry_side.jpg": {
+     "photoSha": "714b024f08c0377b",
+     "name_ja": "七賢",
+     "brewery_ja": "山梨銘醸",
+     "confidence": 0.7,
+     "latencyMs": 3595
+    },
+    "shichiken_sparkling_dry_top_band.jpg": {
+     "photoSha": "0e07cc1d47cc48af",
+     "name_ja": "YAMA NO KASUMI",
+     "brewery_ja": "Japan",
+     "confidence": 0.35,
+     "latencyMs": 4165
+    },
+    "yamagata_masamune_clear.jpg": {
+     "photoSha": "a0bdceccca273bdf",
+     "name_ja": "山形正宗",
+     "brewery_ja": "水戸部酒造",
+     "confidence": 0.55,
+     "latencyMs": 4692
+    },
+    "yamagata_masamune_label.jpg": {
+     "photoSha": "59f13997ed72d3f8",
+     "name_ja": "YAMAGATA MASAMUNE",
+     "brewery_ja": "Mitobe Sake Brewery",
+     "confidence": 0.85,
+     "latencyMs": 2953
+    },
+    "zuiyo_kumamoto_castle_junmai_back.jpg": {
+     "photoSha": "4e609d75edaacafb",
+     "name_ja": "?",
+     "brewery_ja": "瑞鷹",
+     "confidence": 0.2,
+     "latencyMs": 3181
+    },
+    "zuiyo_kumamoto_castle_junmai_front.jpg": {
+     "photoSha": "17f9213db2f13260",
+     "name_ja": "瑞鷹",
+     "brewery_ja": "瑞鷹",
+     "confidence": 0.9,
+     "latencyMs": 2773
+    }
+   }
+  },
+  "anthropic-sonnet-5-5": {
+   "fingerprint": "bea3356f1cce0d1a",
+   "reads": {
+    "amabuki_kimoto_junmai_daiginjo_clear.jpg": {
+     "photoSha": "f53cb9f7572e9238",
+     "name_ja": "天吹",
+     "brewery_ja": "天吹酒造",
+     "confidence": 0.9,
+     "latencyMs": 1788
+    },
+    "amabuki_kimoto_junmai_daiginjo_label.jpg": {
+     "photoSha": "48383f8f14c43bb5",
+     "name_ja": "天吹",
+     "brewery_ja": "天吹酒造",
+     "confidence": 0.82,
+     "latencyMs": 3341
+    },
+    "amabuki_kimoto_junmai_daiginjo_side.jpg": {
+     "photoSha": "a605ddfd902d915f",
+     "name_ja": "天吹",
+     "brewery_ja": "天吹酒造",
+     "confidence": 0.93,
+     "latencyMs": 1698
+    },
+    "amabuki_yamahai_junmai_omachi_from_top.jpg": {
+     "photoSha": "a2bfa8db39ba1791",
+     "name_ja": "天吹",
+     "brewery_ja": "天吹酒造",
+     "confidence": 0.7,
+     "latencyMs": 3020
+    },
+    "amabuki_yamahai_junmai_omachi_front.jpg": {
+     "photoSha": "f9109ed20758228c",
+     "name_ja": "天吹",
+     "brewery_ja": "天吹酒造",
+     "confidence": 0.8,
+     "latencyMs": 3126
+    },
+    "amabuki_yamahai_junmai_omachi_front_2.jpg": {
+     "photoSha": "22ccc4ef4c57b03c",
+     "name_ja": "天吹",
+     "brewery_ja": "天吹酒造",
+     "confidence": 0.6,
+     "latencyMs": 3801
+    },
+    "amabuki_yamahai_junmai_omachi_label.jpg": {
+     "photoSha": "f1a27699263851fd",
+     "name_ja": "AMABUKI",
+     "brewery_ja": "Amabuki",
+     "confidence": 0.6,
+     "latencyMs": 3275
+    },
+    "bekkaku_tokubetsu_honjozo_clear.jpg": {
+     "photoSha": "c934db3dfd2a4208",
+     "name_ja": "別格",
+     "brewery_ja": "両国酒造",
+     "confidence": 0.6,
+     "latencyMs": 4152
+    },
+    "bekkaku_tokubetsu_honjozo_label.jpg": {
+     "photoSha": "f92242f91bd38e54",
+     "name_ja": "Bekkaku",
+     "brewery_ja": "Kakuboshi",
+     "confidence": 0.6,
+     "latencyMs": 2752
+    },
+    "choryo_yoshinosugi_taruzake_clear.jpg": {
+     "photoSha": "ecaae4c21d46abed",
+     "name_ja": "吉野杉の樽酒",
+     "brewery_ja": "長龍酒造",
+     "confidence": 0.45,
+     "latencyMs": 3413
+    },
+    "choryo_yoshinosugi_taruzake_label.jpg": {
+     "photoSha": "c2d0edea64326c0c",
+     "name_ja": "Choryo",
+     "brewery_ja": "Choryo",
+     "confidence": 0.3,
+     "latencyMs": 4127
+    },
+    "choryo_yoshinosugi_taruzake_label_ja.jpg": {
+     "photoSha": "964ef0c4e18c892a",
+     "name_ja": "吉野杉",
+     "brewery_ja": "長龍酒造",
+     "confidence": 0.3,
+     "latencyMs": 4019
+    },
+    "choryo_yoshinosugi_taruzake_side.jpg": {
+     "photoSha": "967e61ef92f95e68",
+     "name_ja": "樽酒",
+     "brewery_ja": "長龍酒造",
+     "confidence": 0.88,
+     "latencyMs": 1124
+    },
+    "daruma_masamune_almost_clear.jpg": {
+     "photoSha": "e85af846cb6b5f52",
+     "name_ja": "DARUMA-MASAMUNE",
+     "brewery_ja": "DARUMA-MASAMUNE",
+     "confidence": 0.35,
+     "latencyMs": 6012
+    },
+    "daruma_masamune_clear.jpg": {
+     "photoSha": "c103c0786ff87a61",
+     "name_ja": "DARUMA-MASAMUNE",
+     "brewery_ja": "白木恒助商店",
+     "confidence": 0.35,
+     "latencyMs": 4513
+    },
+    "daruma_masamune_label.jpg": {
+     "photoSha": "6d5a4680e373164b",
+     "name_ja": "DARUMA MASAMUNE",
+     "brewery_ja": "Shiraki Brewery",
+     "confidence": 0.6,
+     "latencyMs": 3497
+    },
+    "dewazakura_yukimegami_clear.jpg": {
+     "photoSha": "e752e799fd6526d6",
+     "name_ja": "出羽桜",
+     "brewery_ja": "出羽桜酒造",
+     "confidence": 0.72,
+     "latencyMs": 3051
+    },
+    "dewazakura_yukimegami_label_clear.jpg": {
+     "photoSha": "9e7182bd560934dc",
+     "name_ja": "DEWAZAKURA",
+     "brewery_ja": "Dewazakura Sake Brewery",
+     "confidence": 0.6,
+     "latencyMs": 5104
+    },
+    "dewazakura_yukimegami_label_side.jpg": {
+     "photoSha": "381b2531bf58be58",
+     "name_ja": "DEWAZAKURA",
+     "brewery_ja": "Dewazakura Sake Brewery",
+     "confidence": 0.6,
+     "latencyMs": 3904
+    },
+    "dewazakura_yukimegami_side.jpg": {
+     "photoSha": "30a72a78ee6c9b91",
+     "name_ja": "出羽桜",
+     "brewery_ja": "出羽桜酒造",
+     "confidence": 0.8,
+     "latencyMs": 3044
+    },
+    "fudoh_fusakogane_migaki_80_junmai_nama_nabedana_clearish.jpg": {
+     "photoSha": "bae56cacc0bb1533",
+     "name_ja": "不動",
+     "brewery_ja": "鍋店",
+     "confidence": 0.6,
+     "latencyMs": 6812
+    },
+    "fudoh_fusakogane_migaki_80_junmai_nama_nabedana_label.jpg": {
+     "photoSha": "dbf6e5ab60df577d",
+     "name_ja": "Fudoh",
+     "brewery_ja": "Nabedana",
+     "confidence": 0.4,
+     "latencyMs": 3645
+    },
+    "fukuju_awasaki_sparkling_clear.jpg": {
+     "photoSha": "ca4c7beb99a9bfad",
+     "name_ja": "あわ咲き",
+     "brewery_ja": "FUKUJU",
+     "confidence": 0.6,
+     "latencyMs": 4186
+    },
+    "fukuju_awasaki_sparkling_label.jpg": {
+     "photoSha": "2a97335416a5ad71",
+     "name_ja": "FUKUJU",
+     "brewery_ja": "Kobe Shushinkan",
+     "confidence": 0.6,
+     "latencyMs": 3002
+    },
+    "fukuju_awasaki_sparkling_side.jpg": {
+     "photoSha": "f1c8b06d9a95b7d4",
+     "name_ja": "あわ咲き",
+     "brewery_ja": "一ノ蔵",
+     "confidence": 0.35,
+     "latencyMs": 5487
+    },
+    "fukuju_kobe_classic_clear.jpg": {
+     "photoSha": "f5f4d5a7f8210af9",
+     "name_ja": "福寿",
+     "brewery_ja": "神戸酒心館",
+     "confidence": 0.7,
+     "latencyMs": 2658
+    },
+    "fukuju_kobe_classic_label.jpg": {
+     "photoSha": "f4d1a2cba9b34627",
+     "name_ja": "FUKUJU",
+     "brewery_ja": "Kobe Shushinkan",
+     "confidence": 0.6,
+     "latencyMs": 3320
+    },
+    "hanatomoe_sugi_barrel_clear.jpg": {
+     "photoSha": "798d2bd70095f906",
+     "name_ja": "ハナトモエ",
+     "brewery_ja": "美吉野醸造",
+     "confidence": 0.65,
+     "latencyMs": 5750
+    },
+    "hanatomoe_sugi_barrel_label.jpg": {
+     "photoSha": "e0a957faac5f465c",
+     "name_ja": "HANATOMOE",
+     "brewery_ja": "Miyoshino Sake Brewery",
+     "confidence": 0.6,
+     "latencyMs": 3858
+    },
+    "hanatomoe_sugi_barrel_side.jpg": {
+     "photoSha": "da09f67a83b107f6",
+     "name_ja": "樽丸",
+     "brewery_ja": "美吉野醸造",
+     "confidence": 0.65,
+     "latencyMs": 3379
+    },
+    "hokushika_yuki_namachozo_clear.jpg": {
+     "photoSha": "5f80b503aad03b8b",
+     "name_ja": "雪",
+     "brewery_ja": "北鹿",
+     "confidence": 0.6,
+     "latencyMs": 1177
+    },
+    "hokushika_yuki_namachozo_label.jpg": {
+     "photoSha": "825bb403e8369394",
+     "name_ja": "HOKUSHIKA",
+     "brewery_ja": "HOKUSHIKA",
+     "confidence": 0.45,
+     "latencyMs": 3542
+    },
+    "hokushika_yuki_namachozo_side.jpg": {
+     "photoSha": "6cf50877e494699f",
+     "name_ja": "雪",
+     "brewery_ja": "北鹿",
+     "confidence": 0.8,
+     "latencyMs": 3443
+    },
+    "ikekame_barrel_clear.jpg": {
+     "photoSha": "f3751767c735f1f3",
+     "name_ja": "池亀",
+     "brewery_ja": "池亀酒造",
+     "confidence": 0.75,
+     "latencyMs": 4409
+    },
+    "ikekame_barrel_label.jpg": {
+     "photoSha": "639252e43e36652b",
+     "name_ja": "IKEKAME",
+     "brewery_ja": "Ikekame Shuzo",
+     "confidence": 0.6,
+     "latencyMs": 3013
+    },
+    "ikekame_junmai_ginjo_nama_clear.jpg": {
+     "photoSha": "0086c14de9b2b6e6",
+     "name_ja": "黒龍",
+     "brewery_ja": "黒龍酒造",
+     "confidence": 0.6,
+     "latencyMs": 2773
+    },
+    "ikekame_junmai_ginjo_nama_label.jpg": {
+     "photoSha": "9b6e9e8c005a6f2f",
+     "name_ja": "IKEKAME",
+     "brewery_ja": "Ikekame Shuzo",
+     "confidence": 0.6,
+     "latencyMs": 3235
+    },
+    "ikekame_junmai_ginjo_nama_side.jpg": {
+     "photoSha": "71caf840d7cb3451",
+     "name_ja": "黒兜",
+     "brewery_ja": "黒兜",
+     "confidence": 0.35,
+     "latencyMs": 8915
+    },
+    "katsuyama_en_clear.jpg": {
+     "photoSha": "a89d79b27441c2cf",
+     "name_ja": "勝山 縁",
+     "brewery_ja": "勝山酒造",
+     "confidence": 0.72,
+     "latencyMs": 3368
+    },
+    "katsuyama_en_label_de.jpg": {
+     "photoSha": "aeafa5f818a315aa",
+     "name_ja": "KATSUYAMA En",
+     "brewery_ja": "Katsuyama Supreme Sake",
+     "confidence": 0.6,
+     "latencyMs": 3408
+    },
+    "katsuyama_en_label_ja.jpg": {
+     "photoSha": "6925988816d20bdd",
+     "name_ja": "勝山 縁",
+     "brewery_ja": "勝山酒造",
+     "confidence": 0.88,
+     "latencyMs": 1962
+    },
+    "miwa_shuzo_shirakawago_junmaishu_uwazumi_clear.jpg": {
+     "photoSha": "5b7ef4e8e2b0e171",
+     "name_ja": "白川郷",
+     "brewery_ja": "三輪酒造",
+     "confidence": 0.5,
+     "latencyMs": 4360
+    },
+    "miwa_shuzo_shirakawago_junmaishu_uwazumi_label.jpg": {
+     "photoSha": "8f9eb7f1fb9a8f4a",
+     "name_ja": "Shirakawago",
+     "brewery_ja": "Miwa Shuzo",
+     "confidence": 0.5,
+     "latencyMs": 3261
+    },
+    "mizumoto_hanatomoe_clear.jpg": {
+     "photoSha": "08924ab9dc0784db",
+     "name_ja": "花巴",
+     "brewery_ja": "美吉野醸造",
+     "confidence": 0.9,
+     "latencyMs": 1848
+    },
+    "mizumoto_hanatomoe_label.jpg": {
+     "photoSha": "426174ef8b0dad2d",
+     "name_ja": "HANATOMOE",
+     "brewery_ja": "Miyoshino Jozo",
+     "confidence": 0.7,
+     "latencyMs": 3584
+    },
+    "mizumoto_hanatomoe_side.jpg": {
+     "photoSha": "b398c9ecbd7dfc58",
+     "name_ja": "花巴",
+     "brewery_ja": "美吉野醸造",
+     "confidence": 0.85,
+     "latencyMs": 1704
+    },
+    "ninki_gold_label_clear.jpg": {
+     "photoSha": "aea1ff2817f29be3",
+     "name_ja": "人気一",
+     "brewery_ja": "人気酒造",
+     "confidence": 0.7,
+     "latencyMs": 3995
+    },
+    "ninki_gold_label_label.jpg": {
+     "photoSha": "5c83847ab6c1c8c5",
+     "name_ja": "NINKI",
+     "brewery_ja": "Ninki",
+     "confidence": 0.6,
+     "latencyMs": 3204
+    },
+    "ninki_sparkling_junmai_daiginjo_clear.jpg": {
+     "photoSha": "d4019e7ae35ff4be",
+     "name_ja": "人気一",
+     "brewery_ja": "人気酒造",
+     "confidence": 0.6,
+     "latencyMs": 4778
+    },
+    "ninki_sparkling_junmai_daiginjo_label.jpg": {
+     "photoSha": "5ea97580de144e0c",
+     "name_ja": "NINKI",
+     "brewery_ja": "Ninki",
+     "confidence": 0.6,
+     "latencyMs": 2992
+    },
+    "nohime_no_sato_kakushi_ginjo_clear.jpg": {
+     "photoSha": "3a2e2b8a6aeefb5d",
+     "name_ja": "濃姫の里",
+     "brewery_ja": "清洲桜醸造",
+     "confidence": 0.62,
+     "latencyMs": 5137
+    },
+    "nohime_no_sato_kakushi_ginjo_label.jpg": {
+     "photoSha": "0458503220197d9d",
+     "name_ja": "Nohime No Sato",
+     "brewery_ja": "Ginza Berlin",
+     "confidence": 0.3,
+     "latencyMs": 3891
+    },
+    "rihaku_dreamy_clouds_clear.jpg": {
+     "photoSha": "2c0f8e6a0eabfe7b",
+     "name_ja": "李白",
+     "brewery_ja": "李白酒造",
+     "confidence": 0.7,
+     "latencyMs": 2492
+    },
+    "rihaku_dreamy_clouds_label.jpg": {
+     "photoSha": "d4e1032c2e41474e",
+     "name_ja": "RIHAKU",
+     "brewery_ja": "Rihaku Sake Brewery",
+     "confidence": 0.6,
+     "latencyMs": 3896
+    },
+    "rihaku_dreamy_clouds_side.jpg": {
+     "photoSha": "bc0f17cdc2ab9baa",
+     "name_ja": "李白",
+     "brewery_ja": "李白酒造",
+     "confidence": 0.93,
+     "latencyMs": 1583
+    },
+    "rihaku_wandering_poet_clear.jpg": {
+     "photoSha": "97294c3bd76089cb",
+     "name_ja": "李白",
+     "brewery_ja": "李白酒造",
+     "confidence": 0.72,
+     "latencyMs": 2841
+    },
+    "rihaku_wandering_poet_label_de.jpg": {
+     "photoSha": "c7c11d0166fc5bea",
+     "name_ja": "RIHAKU",
+     "brewery_ja": "Rihaku Sake Brewery",
+     "confidence": 0.6,
+     "latencyMs": 1697
+    },
+    "rihaku_wandering_poet_side.jpg": {
+     "photoSha": "3cad6f863d2ceb88",
+     "name_ja": "李白",
+     "brewery_ja": "李白酒造",
+     "confidence": 0.93,
+     "latencyMs": 1420
+    },
+    "sanwa_shuzo_garyubai_junmai_ginjo_genshu_clear.jpg": {
+     "photoSha": "c5ebe0612a76b4d5",
+     "name_ja": "臥龍梅",
+     "brewery_ja": "三和酒造",
+     "confidence": 0.6,
+     "latencyMs": 4005
+    },
+    "sanwa_shuzo_garyubai_junmai_ginjo_genshu_label.jpg": {
+     "photoSha": "7b35d927ebbe78fb",
+     "name_ja": "Garyubai",
+     "brewery_ja": "Sanwa Shuzo",
+     "confidence": 0.6,
+     "latencyMs": 3285
+    },
+    "sawa_no_hana_kokoro_clear.jpg": {
+     "photoSha": "74d6e816e3c00419",
+     "name_ja": "澤乃花",
+     "brewery_ja": "伴野酒造",
+     "confidence": 0.7,
+     "latencyMs": 4103
+    },
+    "sawa_no_hana_kokoro_label.jpg": {
+     "photoSha": "2c771260d2b0f890",
+     "name_ja": "SAWA NO HANA",
+     "brewery_ja": "Tomono Shuzo",
+     "confidence": 0.6,
+     "latencyMs": 3546
+    },
+    "sawa_no_hana_kokoro_side.jpg": {
+     "photoSha": "2ac90d04cad8cf8a",
+     "name_ja": "澤乃花",
+     "brewery_ja": "伴野酒造",
+     "confidence": 0.93,
+     "latencyMs": 1747
+    },
+    "seki_no_ichi_junmai_daiginjo_clear.jpg": {
+     "photoSha": "d7b28eb1d25280c3",
+     "name_ja": "SEKINO-ICHI",
+     "brewery_ja": "SEKINO-ICHI",
+     "confidence": 0.35,
+     "latencyMs": 6516
+    },
+    "seki_no_ichi_junmai_daiginjo_label_ja.jpg": {
+     "photoSha": "66126d376320519b",
+     "name_ja": "世嬉の一",
+     "brewery_ja": "世嬉の一酒造",
+     "confidence": 0.9,
+     "latencyMs": 1852
+    },
+    "shichiken_sparkling_dry_clear.jpg": {
+     "photoSha": "ab66983fdc4aa760",
+     "name_ja": "七賢",
+     "brewery_ja": "山梨銘醸",
+     "confidence": 0.8,
+     "latencyMs": 3338
+    },
+    "shichiken_sparkling_dry_label.jpg": {
+     "photoSha": "2a009ad4a0d7b8cc",
+     "name_ja": "SHICHIKEN",
+     "brewery_ja": "Yamanashi Meijo",
+     "confidence": 0.6,
+     "latencyMs": 3807
+    },
+    "shichiken_sparkling_dry_side.jpg": {
+     "photoSha": "714b024f08c0377b",
+     "name_ja": "七賢",
+     "brewery_ja": "山梨銘醸",
+     "confidence": 0.7,
+     "latencyMs": 3758
+    },
+    "shichiken_sparkling_dry_top_band.jpg": {
+     "photoSha": "0e07cc1d47cc48af",
+     "name_ja": "YAMA NO KASUMI",
+     "brewery_ja": "山梨銘醸",
+     "confidence": 0.4,
+     "latencyMs": 7051
+    },
+    "yamagata_masamune_clear.jpg": {
+     "photoSha": "a0bdceccca273bdf",
+     "name_ja": "山形正宗",
+     "brewery_ja": "水戸部酒造",
+     "confidence": 0.6,
+     "latencyMs": 4974
+    },
+    "yamagata_masamune_label.jpg": {
+     "photoSha": "59f13997ed72d3f8",
+     "name_ja": "YAMAGATA MASAMUNE",
+     "brewery_ja": "Mitobe Sake Brewery",
+     "confidence": 0.6,
+     "latencyMs": 3133
+    },
+    "zuiyo_kumamoto_castle_junmai_back.jpg": {
+     "photoSha": "4e609d75edaacafb",
+     "name_ja": "瑞鷹",
+     "brewery_ja": "瑞鷹",
+     "confidence": 0.35,
+     "latencyMs": 2568
+    },
+    "zuiyo_kumamoto_castle_junmai_front.jpg": {
+     "photoSha": "17f9213db2f13260",
+     "name_ja": "熊本城",
+     "brewery_ja": "瑞鷹",
+     "confidence": 0.8,
+     "latencyMs": 3300
+    }
+   }
+  }
+ }
+}

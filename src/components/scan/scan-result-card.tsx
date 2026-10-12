@@ -131,8 +131,9 @@ export function ScanResultCard({
   otherCandidates,
 }: ScanResultCardProps) {
   const tOutcome = useTranslations('scanOutcome')
-  // v1.5 §5 / ADR-0015's tiers: "Sure match" at ≥ 0.85, "Best guess" at
-  // 0.60–0.84 (below that the pipeline answers low_confidence instead).
+  // v1.5 §5 / ADR-0015's tiers: "Sure match" at ≥ 0.85, "Best guess" below.
+  // Under 0.60 the pipeline answers low_confidence, except where the read
+  // matched one catalogue row on brand and brewery both — still a best guess.
   const matchTag =
     typeof extractionConfidence !== 'number'
       ? null

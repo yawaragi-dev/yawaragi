@@ -661,12 +661,13 @@
     "bottle": "ikekame-kurokabuto",
     "view": "back_import",
     "expectedBrandIds": [
-      1123
+      1123,
+      952
     ],
     "provenance": {
       "source": "maintainer_own_bottle",
       "rightsCleared": true,
-      "notes": "Ikekame Kurokabuto junmai ginjo nama, 720 ml — its own catalogue row; heavy brush calligraphy. This photo: the importer's German or French back label."
+      "notes": "Ikekame Kurokabuto junmai ginjo nama, 720 ml — its own catalogue row; heavy brush calligraphy. This photo: the importer's German or French back label. This label never names Kurokabuto, only \"IKEKAME Junmai Ginjo Nama\", so the brewery's main line 池亀 is as right an answer as 黒兜."
     }
   },
   "ikekame_junmai_ginjo_nama_side.jpg": {
