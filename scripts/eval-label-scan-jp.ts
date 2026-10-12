@@ -157,6 +157,7 @@ interface Resolution {
  */
 const TIER_PAIRS: readonly { label: string; tier1: VisionProviderKey; tier2: VisionProviderKey }[] = [
   { label: 'two-tier (as shipped)', tier1: DEFAULT_VISION_PROVIDER_KEY, tier2: TIER_2_VISION_PROVIDER_KEY },
+  { label: 'two-tier (tier 1 at low effort)', tier1: 'anthropic-haiku-5-5-low', tier2: TIER_2_VISION_PROVIDER_KEY },
   { label: 'two-tier (Haiku 4.5 → Sonnet 4.6)', tier1: 'anthropic-haiku-4-5', tier2: 'anthropic-sonnet-4-6' },
 ]
 

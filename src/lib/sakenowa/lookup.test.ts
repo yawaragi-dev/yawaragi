@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
+import type { Brand } from '@/lib/schemas/brand'
 import {
   breweryKanjiAgrees,
+  collapseSameReading,
   expandLatinBrandVariants,
   latinBreweryAgrees,
   namesOverlapping,
@@ -196,5 +198,26 @@ describe('romajiKey', () => {
   it('keeps different names different', () => {
     expect(romajiKey('Sanwa')).not.toBe(romajiKey('Miwa'))
     expect(romajiKey('Fukuju')).not.toBe(romajiKey('Fukujukai'))
+  })
+})
+
+describe('collapseSameReading', () => {
+  const brand = (brandId: number, nameKanji: string, nameRomaji: string | null, breweryId = 1159): { sake: Brand } => ({
+    sake: { brandId, name: nameKanji, nameKanji, nameRomaji, breweryId, source: 'sakenowa' },
+  })
+
+  it('counts one sake the catalogue lists in two scripts as one, keeping the kanji row: 達磨正宗 and ダルマ正宗', () => {
+    const collapsed = collapseSameReading([brand(2780, 'ダルマ正宗', 'Daruma Masamune'), brand(2692, '達磨正宗', 'Daruma Masamune')])
+
+    expect(collapsed.map((c) => c.sake.brandId)).toEqual([2692])
+  })
+
+  it('keeps sakes with different readings, and sakes of different breweries, apart', () => {
+    expect(collapseSameReading([brand(1, '福寿', 'Fukuju'), brand(2, 'あわ咲き', 'Awasaki')])).toHaveLength(2)
+    expect(collapseSameReading([brand(1, '白鹿', 'Hakushika', 10), brand(2, '白鹿', 'Hakushika', 11)])).toHaveLength(2)
+  })
+
+  it('never merges rows that have no reading to compare', () => {
+    expect(collapseSameReading([brand(1, '甲', null), brand(2, '乙', null)])).toHaveLength(2)
   })
 })

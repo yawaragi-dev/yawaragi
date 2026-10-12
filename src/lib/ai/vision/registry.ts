@@ -28,6 +28,8 @@ export type VisionProviderKey =
   | 'anthropic-sonnet-4-6'
   | 'anthropic-haiku-5-5'
   | 'anthropic-sonnet-5-5'
+  | 'anthropic-haiku-5-5-low'
+  | 'anthropic-sonnet-5-5-low'
   | 'e2e-stub'
 
 export const DEFAULT_VISION_PROVIDER_KEY: VisionProviderKey = 'anthropic-haiku-5-5'
@@ -74,6 +76,20 @@ const visionProviderFactories: Record<VisionProviderKey, () => VisionProvider> =
     createAnthropicHaikuProvider({
       model: anthropic('claude-sonnet-5-5'),
       telemetryMetadata: { 'provider.key': 'anthropic-sonnet-5-5' },
+    }),
+  // The same two models at low reasoning effort — eval candidates for a
+  // faster scan.
+  'anthropic-haiku-5-5-low': () =>
+    createAnthropicHaikuProvider({
+      model: anthropic('claude-haiku-5-5'),
+      effort: 'low',
+      telemetryMetadata: { 'provider.key': 'anthropic-haiku-5-5-low' },
+    }),
+  'anthropic-sonnet-5-5-low': () =>
+    createAnthropicHaikuProvider({
+      model: anthropic('claude-sonnet-5-5'),
+      effort: 'low',
+      telemetryMetadata: { 'provider.key': 'anthropic-sonnet-5-5-low' },
     }),
   'e2e-stub': () => createE2eStubVisionProvider(),
 }

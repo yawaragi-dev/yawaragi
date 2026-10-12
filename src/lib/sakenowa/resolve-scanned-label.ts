@@ -274,6 +274,39 @@ function namedBy(otherNames: readonly string[], brands: readonly Brand[]): Brand
   return undefined
 }
 
+/**
+ * Is this a sake the catalogue does not have, from a brewery it does?
+ *
+ * The list is that brewery's lines, and nothing the label prints — the name
+ * the model chose or any other — is one of them or part of one; nor is the
+ * name just the brewery's own (NINKI under 人気酒造, where a list of its
+ * lines is the right question). The label printing a second name is what
+ * says the first was read, not imagined. Then "not in the catalogue" is the
+ * honest answer, and it is the one that lets the visitor keep the bottle as
+ * their own; the brewery's other sakes still reach them as suggestions.
+ */
+function isAnotherSakeOfTheBrewery(
+  label: ScannedLabel,
+  list: Extract<ResolveScannedLabelResult, { kind: 'ambiguous' }>,
+): boolean {
+  const [first] = list.candidates
+  if (!first || list.candidates.some((c) => c.brewery.breweryId !== first.brewery.breweryId)) return false
+
+  const printed = [label.name_ja, ...(label.other_names ?? [])]
+  const lines = list.candidates.map((c) => c.sake)
+  const namesALine = printed.some(
+    (name) =>
+      lines.some((line) => namesBrand(name, line)) ||
+      namesOverlapping(name, lines.map((line) => line.nameKanji)).length > 0,
+  )
+  if (namesALine) return false
+
+  const { nameKanji, nameRomaji } = first.brewery
+  const isTheHouseName =
+    nameKanji.includes(label.name_ja) || latinKeys(label.name_ja).some((key) => romajiKey(nameRomaji ?? '').includes(key))
+  return !isTheHouseName
+}
+
 interface WithOtherNames {
   resolved: ResolveScannedLabelResult
   /**
@@ -330,7 +363,9 @@ async function withOtherNames(
 
   if (resolved.kind === 'ambiguous') {
     const named = namedBy(otherNames, resolved.candidates.map((c) => c.sake))
-    if (!named) return { resolved, corroborated: false }
+    if (!named) {
+      return { resolved: isAnotherSakeOfTheBrewery(label, resolved) ? { kind: 'no_match', query: resolved.query } : resolved, corroborated: false }
+    }
     debugAdd('ScanAction', `another name on the label settles the list on "${named.nameKanji}"`, { otherNames })
     return { resolved: { kind: 'exact', sake: named }, corroborated: true }
   }
@@ -339,6 +374,9 @@ async function withOtherNames(
     const retried = await resolveByShape({ ...label, name_ja: name }, executor)
     if (retried.kind !== 'no_match' && retried.kind !== 'low_confidence') {
       debugAdd('ScanAction', `name_ja "${label.name_ja}" found nothing; the label's other name "${name}" did`)
+      if (retried.kind === 'ambiguous' && isAnotherSakeOfTheBrewery(label, retried)) {
+        return { resolved: { kind: 'no_match', query: retried.query }, corroborated: false }
+      }
       return { resolved: retried, corroborated: false }
     }
   }

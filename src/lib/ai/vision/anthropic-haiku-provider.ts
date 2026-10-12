@@ -77,6 +77,12 @@ export interface AnthropicHaikuProviderOptions {
    * non-strings with a console warning. See `TracedCallContext.metadata`.
    */
   telemetryMetadata?: Record<string, string>
+  /**
+   * How much the model reasons before answering (Claude 5 models think by
+   * default, which is most of a scan's latency). Omitted, the model's own
+   * default applies. Not accepted by the Claude 4.5 models.
+   */
+  effort?: 'low' | 'medium' | 'high'
 }
 
 // The system prompt teaches the model the difference between the
@@ -181,6 +187,7 @@ export function createAnthropicHaikuProvider(
   // throws when the provider is actually used (tests don't need it).
   const model = options.model
   const telemetryMetadata = options.telemetryMetadata
+  const effort = options.effort
   // Memoised so production cold start logs once, not on every scan.
   // Per-factory rather than module-level so vitest can assert "warn
   // fired" on a fresh provider per test without a beforeEach reset.
@@ -248,6 +255,7 @@ export function createAnthropicHaikuProvider(
           schemaDescription:
             'Sake label extraction: name and brewery in original script, other names printed for the sake, plus confidence.',
           system: SYSTEM_PROMPT,
+          ...(effort ? { providerOptions: { anthropic: { effort } } } : {}),
           messages: [
             {
               role: 'user',

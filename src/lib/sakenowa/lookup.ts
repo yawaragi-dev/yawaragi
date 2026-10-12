@@ -600,7 +600,9 @@ export async function findSakeByExtractionFromPool(
         : byLatin.kind === 'ambiguous'
           ? byLatin.candidates
           : []
-    const agreeing = candidates.filter((c) => breweryKanjiAgrees(c.brewery.nameKanji, breweryVariants))
+    const agreeing = collapseSameReading(
+      candidates.filter((c) => breweryKanjiAgrees(c.brewery.nameKanji, breweryVariants)),
+    )
     if (agreeing.length === 1) {
       debugAdd('Sakenowa', `Latin name and kanji brewery both match "${agreeing[0].sake.nameKanji}"`)
       return { kind: 'exact', sake: agreeing[0].sake }
@@ -713,6 +715,29 @@ export async function findSakeByExtractionFromPool(
   }
 
   return { kind: 'no_match', query }
+}
+
+/**
+ * The catalogue sometimes lists one sake twice under one brewery, once per
+ * script: 達磨正宗 and ダルマ正宗, both read "Daruma Masamune". Asking the
+ * visitor to choose between them is asking nothing, so rows of one brewery
+ * with one reading count as one — the kanji spelling, else the older row.
+ */
+export function collapseSameReading<T extends { sake: Brand }>(candidates: readonly T[]): T[] {
+  const HAS_KANJI = /[一-鿿]/
+  const groups = new Map<string, T>()
+  for (const candidate of candidates) {
+    const { sake } = candidate
+    const reading = sake.nameRomaji ?? null
+    const key = reading === null ? `id:${sake.brandId}` : `${sake.breweryId}:${romajiKey(reading)}`
+    const kept = groups.get(key)
+    const better =
+      kept === undefined ||
+      (HAS_KANJI.test(sake.nameKanji) && !HAS_KANJI.test(kept.sake.nameKanji)) ||
+      (HAS_KANJI.test(sake.nameKanji) === HAS_KANJI.test(kept.sake.nameKanji) && sake.brandId < kept.sake.brandId)
+    if (better) groups.set(key, candidate)
+  }
+  return [...groups.values()]
 }
 
 /**
@@ -1147,8 +1172,8 @@ export async function findSakeByLatinBreweryFromPool(
       : byBrand
   }
   if (byBrand.kind === 'ambiguous') {
-    const agreeing = byBrand.candidates.filter((c) =>
-      latinBreweryAgrees(query.breweryJa, c.brewery.nameRomaji ?? null),
+    const agreeing = collapseSameReading(
+      byBrand.candidates.filter((c) => latinBreweryAgrees(query.breweryJa, c.brewery.nameRomaji ?? null)),
     )
     return agreeing.length === 1 ? { kind: 'exact', sake: agreeing[0].sake } : byBrand
   }
