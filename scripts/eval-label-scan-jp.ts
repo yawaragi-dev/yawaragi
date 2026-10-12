@@ -540,6 +540,8 @@ async function main() {
     console.log(``)
   }
 
+  // The stub reads nothing; keeping its answers would only churn the file.
+  delete saved.providers['e2e-stub']
   if (!OFFLINE) writeFileSync(SAVED_READS_PATH, `${JSON.stringify(saved, null, 1)}\n`)
 
   for (const pair of TIER_PAIRS) {
