@@ -215,7 +215,7 @@ On 2026-10-12 (79 photos, 33 bottles):
 | Different bottles, second photo has no single answer | 688 | 0 guesses across breweries, 2 within one brewery (both the right sake) |
 | Same bottle, second photo has no single answer | 14 | 13 right with both reads, 0 wrong, 1 still nothing |
 
-Seven of those 13 are bottles the catalogue lacks, where "no guess" is the right answer; six are real rescues (Choryo's cut-off side label, both Ninki back labels, the Sekinoichi front). The sample is small: 70 of 79 photos already give one sake alone.
+Eight of those 13 are bottles the catalogue lacks, where "no guess" is the right answer; five are real rescues (Choryo's cut-off side label twice, the two Ninki back labels, the Sekinoichi front). The sample is small: 70 of 79 photos already give one sake alone.
 
 ## Adding a candidate provider to the run
 
