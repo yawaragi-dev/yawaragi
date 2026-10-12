@@ -16,11 +16,14 @@ import {
   rowToRanking,
 } from './db'
 import {
+  expandBrandLineVariants,
   expandBrandVariants,
   expandBreweryVariants,
   expandPossibleBrandVariants,
+  stripOperationalSuffix,
 } from './brewery-variants'
 import { withFormerBreweryNames } from './former-brewery-names'
+import { kanaToRomaji } from './kana-romaji'
 import { publicQuery } from '../supabase/public-query'
 import { getServerDbPool } from '../supabase/server-client'
 
@@ -382,6 +385,12 @@ const SELECT_BRANDS_AND_BREWERIES_BY_BRAND_KANJI = `
 // multi-brand breweries return 2+ rows and either route to the
 // same-name preference (mono-brand main line) or ambiguous.
 //
+// The query returns every line of the brewery (LIMIT 60; the largest
+// brewery in the mirror has 18), because the choices below — which line
+// the read is part of, which is the brewery's namesake — are wrong if
+// made on the first five. Only the list shown to the visitor is cut to
+// `MAX_LIST_CANDIDATES`.
+//
 // ORDER BY puts the brand-name-equals-brewery-name row first when
 // it exists. This is the "main brand" for mono-brand breweries
 // like 沢の鶴 (Sakenowa Brand 2008 under Brewery 576, same name) —
@@ -418,7 +427,7 @@ const SELECT_BRANDS_AND_BREWERIES_BY_BREWERY_KANJI = `
   ORDER BY
     (CASE WHEN br.name_kanji = b.name_kanji THEN 0 ELSE 1 END),
     br.brand_id
-  LIMIT 5
+  LIMIT 60
 `
 
 // Latin brand lookup: matches against both Sakenowa's published `name`
@@ -458,12 +467,22 @@ const SELECT_BRANDS_AND_BREWERIES_BY_LATIN_NAME = `
     b.confidence         AS brewery_confidence
   FROM brands br
   JOIN breweries b ON b.brewery_id = br.brewery_id
-  WHERE (LOWER(br.name) = ANY($1::text[]) OR LOWER(br.name_romaji) = ANY($1::text[]))
+  -- $2 holds the same candidates as romaji keys (see romajiKey): spacing,
+  -- hyphens, macrons and long-vowel spelling removed from both sides, so a
+  -- label's FUDOH or GARYUBAI meets the stored Fudō and Garyuubai.
+  WHERE (
+         LOWER(br.name) = ANY($1::text[])
+      OR LOWER(br.name_romaji) = ANY($1::text[])
+      OR regexp_replace(regexp_replace(regexp_replace(translate(LOWER(br.name_romaji), 'āīūēōâîûêô', 'aiueoaiueo'), '[^a-z0-9]', '', 'g'), 'o[ouh]', 'o', 'g'), 'uu', 'u', 'g') = ANY($2::text[])
+    )
     AND br.superseded_at IS NULL
     AND b.superseded_at IS NULL
   ORDER BY br.brand_id
   LIMIT 5
 `
+
+/** How many sakes a "which of these?" list offers. */
+const MAX_LIST_CANDIDATES = 5
 
 interface BrandWithBreweryRow {
   brand_brand_id: number
@@ -553,6 +572,52 @@ export async function findSakeByExtractionFromPool(
     }
   }
 
+  // First pass returned 0. A label often prints line and product as one
+  // name (`勝山 縁`, `七賢 山ノ霞`) where the catalogue holds the line. Try
+  // each part as the brand, still requiring the brewery to agree — that
+  // agreement is what makes a part safe to match on.
+  const lineVariants = expandBrandLineVariants(query.nameJa)
+  if (lineVariants.length > 0) {
+    debugAdd('Sakenowa', `first-pass missed; trying the name's parts {${lineVariants.join('|')}} with the same brewery`)
+    const { rows: lineRows } = await publicQuery<BrandWithBreweryRow>(
+      'brands',
+      SELECT_BRANDS_BY_KANJI_EXTRACTION,
+      [lineVariants, breweryVariants],
+      pool,
+    )
+    if (lineRows.length === 1) {
+      return { kind: 'exact', sake: brandFromJoinedRow(lineRows[0]) }
+    }
+    if (lineRows.length >= 2) {
+      return {
+        kind: 'ambiguous',
+        candidates: lineRows.map((r) => ({ sake: brandFromJoinedRow(r), brewery: breweryFromJoinedRow(r) })),
+        query,
+      }
+    }
+  }
+
+  // Still nothing, and the brand was read in Latin (DARUMA-MASAMUNE beside a
+  // kanji brewery). The first pass compares kanji with kanji, so run its
+  // rule on the Latin name: a row whose name matches in Latin AND whose
+  // brewery is the one read is both fields agreeing.
+  if (asLatinName(query.nameJa) !== null) {
+    const byLatin = await findSakeByLatinBrandFromPool(query, pool)
+    const candidates =
+      byLatin.kind === 'matched_brand_only'
+        ? [{ sake: byLatin.sake, brewery: byLatin.brewery }]
+        : byLatin.kind === 'ambiguous'
+          ? byLatin.candidates
+          : []
+    const agreeing = collapseSameReading(
+      candidates.filter((c) => breweryKanjiAgrees(c.brewery.nameKanji, breweryVariants)),
+    )
+    if (agreeing.length === 1) {
+      debugAdd('Sakenowa', `Latin name and kanji brewery both match "${agreeing[0].sake.nameKanji}"`)
+      return { kind: 'exact', sake: agreeing[0].sake }
+    }
+  }
+
   // First pass returned 0. Delegate to the brand-only second pass
   // (also reachable from scan-action.ts when a field-swap is
   // suspected).
@@ -584,7 +649,7 @@ export async function findSakeByExtractionFromPool(
   //   - ambiguous + Latin doesn't run → return brewery-only ambiguous
   //   - no_match → fall through to field-swap pass below
   if (breweryOnly.kind === 'ambiguous') {
-    if (containsLatinAlpha(query.nameJa) && !containsJapaneseScript(query.nameJa)) {
+    if (asLatinName(query.nameJa) !== null) {
       debugAdd(
         'Sakenowa',
         `brewery-only returned ambiguous; name_ja is Latin-shaped → trying Latin pass before falling back`,
@@ -650,7 +715,7 @@ export async function findSakeByExtractionFromPool(
   // Sakenowa's 110 Latin-only brands or a kanji brand whose model
   // output landed in romaji. Case-insensitive match against
   // `brands.name`.
-  if (containsLatinAlpha(query.nameJa) && !containsJapaneseScript(query.nameJa)) {
+  if (asLatinName(query.nameJa) !== null) {
     debugAdd('Sakenowa', `kanji + kana passes missed; trying Latin-name lookup on "${query.nameJa}"`)
     const latinMatch = await findSakeByLatinBrandFromPool(query, pool)
     if (latinMatch.kind === 'matched_brand_only' || latinMatch.kind === 'ambiguous') {
@@ -659,6 +724,51 @@ export async function findSakeByExtractionFromPool(
   }
 
   return { kind: 'no_match', query }
+}
+
+/**
+ * The catalogue sometimes lists one sake twice under one brewery, once per
+ * script: 達磨正宗 and ダルマ正宗, both read "Daruma Masamune". Asking the
+ * visitor to choose between them is asking nothing, so rows of one brewery
+ * with one reading count as one — the kanji spelling, else the older row.
+ */
+export function collapseSameReading<T extends { sake: Brand }>(candidates: readonly T[]): T[] {
+  const HAS_KANJI = /[一-鿿]/
+  const groups = new Map<string, T>()
+  for (const candidate of candidates) {
+    const { sake } = candidate
+    const reading = sake.nameRomaji ?? null
+    const key = reading === null ? `id:${sake.brandId}` : `${sake.breweryId}:${romajiKey(reading)}`
+    const kept = groups.get(key)
+    const better =
+      kept === undefined ||
+      (HAS_KANJI.test(sake.nameKanji) && !HAS_KANJI.test(kept.sake.nameKanji)) ||
+      (HAS_KANJI.test(sake.nameKanji) === HAS_KANJI.test(kept.sake.nameKanji) && sake.brandId < kept.sake.brandId)
+    if (better) groups.set(key, candidate)
+  }
+  return [...groups.values()]
+}
+
+/**
+ * The first pass's brewery rule, for rows already in hand: the stored name
+ * equals a variant as written, with its spaces removed, or in one of its
+ * space-separated parts.
+ */
+export function breweryKanjiAgrees(stored: string, variants: readonly string[]): boolean {
+  const parts = stored.split(/[\s　]+/)
+  return variants.includes(stored) || variants.includes(parts.join('')) || parts.some((p) => variants.includes(p))
+}
+
+/**
+ * Which of a brewery's brand names the read is part of, or contains. A label
+ * read as 樽酒 under 長龍酒造 is that brewery's 吉野杉の樽酒 and none of its
+ * other lines. Names of one character are ignored on both sides.
+ */
+export function namesOverlapping(read: string, storedNames: readonly string[]): number[] {
+  const reads = expandBrandVariants(read).filter((r) => Array.from(r).length >= 2)
+  return storedNames.flatMap((stored, index) =>
+    Array.from(stored).length >= 2 && reads.some((r) => stored.includes(r) || r.includes(stored)) ? [index] : [],
+  )
 }
 
 const JAPANESE_SCRIPT_REGEX_LOOKUP = /[぀-ゟ゠-ヿ一-鿿]/
@@ -670,6 +780,17 @@ function containsJapaneseScript(value: string): boolean {
 
 function containsLatinAlpha(value: string): boolean {
   return LATIN_ALPHA_REGEX.test(value)
+}
+
+/**
+ * The name as Latin letters, if it can be compared with the catalogue's
+ * romaji: a name read in Latin script as it is, a name read in kana
+ * (ハナトモエ, a furigana くろかぶと) sounded out. `null` for a name with
+ * kanji in it, which has no reading we can derive.
+ */
+function asLatinName(value: string): string | null {
+  if (containsLatinAlpha(value) && !containsJapaneseScript(value)) return value
+  return kanaToRomaji(value)
 }
 
 /**
@@ -810,8 +931,12 @@ const SAKE_GRADE_TOKENS = new Set<string>([
 export function expandLatinBrandVariants(text: string): string[] {
   const trimmed = text.trim()
   if (trimmed.length === 0) return []
-  const lower = trimmed.toLowerCase()
-  const variants = new Set<string>([lower])
+  const verbatim = trimmed.toLowerCase()
+  // A hyphen is a word break: labels write DARUMA-MASAMUNE and NINKI-ICHI,
+  // the catalogue's romaji writes words or runs them together. The verbatim
+  // form stays a candidate for the names that do carry one (`Shangri-la`).
+  const lower = verbatim.replace(/[-‐‑–—]+/g, ' ').replace(/\s+/g, ' ').trim()
+  const variants = new Set<string>([verbatim, lower])
   // First-word strip: "Kizakura Perle" → also try "Kizakura". 4-char
   // floor so we don't match noise like "Big River" → "Big". Skip the
   // strip entirely if the first word is a sake grade / style token
@@ -872,7 +997,7 @@ export async function findSakeByLatinBrandFromPool(
   query: SakeLookupQuery,
   pool: Pool,
 ): Promise<BrandOnlyLookupResult> {
-  const candidates = expandLatinBrandVariants(query.nameJa)
+  const candidates = expandLatinBrandVariants(asLatinName(query.nameJa) ?? '')
   if (candidates.length === 0) return { kind: 'no_match', query }
   debugAdd(
     'Sakenowa',
@@ -882,7 +1007,7 @@ export async function findSakeByLatinBrandFromPool(
   const { rows } = await publicQuery<BrandWithBreweryRow>(
     'brands',
     SELECT_BRANDS_AND_BREWERIES_BY_LATIN_NAME,
-    [candidates],
+    [candidates, [...new Set(candidates.map(romajiKey))]],
     pool,
   )
   debugAdd('Sakenowa', `latin-name lookup returned ${rows.length} row(s)`)
@@ -917,6 +1042,178 @@ export async function findSakeByLatinBrand(
   query: SakeLookupQuery,
 ): Promise<BrandOnlyLookupResult> {
   return findSakeByLatinBrandFromPool(query, getServerDbPool())
+}
+
+// Brewery by its Latin name — for a label that names the maker in Latin
+// only, which is every importer's back label in the EU. Compared with the
+// LLM-derived `breweries.name_romaji` (97 % of rows have one). Same
+// ordering and bound as the kanji brewery-only pass.
+const SELECT_BRANDS_AND_BREWERIES_BY_BREWERY_ROMAJI = `
+  SELECT
+    br.brand_id          AS brand_brand_id,
+    br.name              AS brand_name,
+    br.name_kanji        AS brand_name_kanji,
+    br.name_romaji       AS brand_name_romaji,
+    br.brewery_id        AS brand_brewery_id,
+    br.source            AS brand_source,
+    br.confidence        AS brand_confidence,
+    b.brewery_id         AS brewery_brewery_id,
+    b.name               AS brewery_name,
+    b.name_kanji         AS brewery_name_kanji,
+    b.name_romaji        AS brewery_name_romaji,
+    b.area_id            AS brewery_area_id,
+    b.source             AS brewery_source,
+    b.confidence         AS brewery_confidence
+  FROM brands br
+  JOIN breweries b ON b.brewery_id = br.brewery_id
+  WHERE regexp_replace(regexp_replace(regexp_replace(translate(LOWER(b.name_romaji), 'āīūēōâîûêô', 'aiueoaiueo'), '[^a-z0-9]', '', 'g'), 'o[ouh]', 'o', 'g'), 'uu', 'u', 'g') = ANY($1::text[])
+    AND br.superseded_at IS NULL
+    AND b.superseded_at IS NULL
+  ORDER BY
+    (CASE WHEN br.name_kanji = b.name_kanji THEN 0 ELSE 1 END),
+    br.brand_id
+  LIMIT 60
+`
+
+/**
+ * Words a Latin brewery name carries that say "this is a brewery" and no
+ * more. A back label writes "Dewazakura Sake Brewery" where the catalogue's
+ * romaji is "Dewazakura Shuzo"; with these dropped both are "dewazakura".
+ */
+const GENERIC_BREWERY_WORDS = new Set<string>([
+  'sake',
+  'brewery',
+  'breweries',
+  'brewing',
+  'shuzo',
+  'shuzou',
+  'shuzoten',
+  'jozo',
+  'jouzo',
+  'shoten',
+  'co',
+  'ltd',
+  'inc',
+  'corp',
+  'corporation',
+  'company',
+  'the',
+])
+
+/**
+ * A Latin name reduced to what two spellings of one Japanese word share:
+ * lowercase, no spaces, hyphens or macrons, and long vowels written short.
+ * `Fudoh`, `Fudō` and `Fudou` are all `fudo`; `Garyuubai` and `GARYUBAI`
+ * are `garyubai`. Mirrored in SQL by the lookups that compare with it.
+ */
+export function romajiKey(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]/g, '')
+    .replace(/o[ouh]/g, 'o')
+    .replace(/uu/g, 'u')
+}
+
+/** The words of a Latin brewery name that identify it, as romaji keys. */
+export function latinBreweryCore(text: string): string[] {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .split(/[^a-z0-9]+/)
+    .filter((word) => word.length > 0 && !GENERIC_BREWERY_WORDS.has(word))
+    .map(romajiKey)
+}
+
+/**
+ * Does a brewery read in Latin off a label name the same brewery as the
+ * catalogue's romaji? True when the identifying words of one are all among
+ * the other's: "Rihaku Sake Brewery" and "Rihaku Shuzo", "Shiraki Brewery"
+ * and "Shiraki Tsunesuke Shoten". An importer ("Ginza Berlin"), a country
+ * or the brand repeated in the brewery field agrees with nothing.
+ */
+export function latinBreweryAgrees(extracted: string, storedRomaji: string | null): boolean {
+  if (storedRomaji === null) return false
+  const a = latinBreweryCore(extracted)
+  const b = latinBreweryCore(storedRomaji)
+  if (a.length === 0 || b.length === 0) return false
+  const [shorter, longer] = a.length <= b.length ? [a, b] : [b, a]
+  return shorter.every((word) => longer.includes(word))
+}
+
+/** The romaji keys to look a Latin brewery name up under. */
+function latinBreweryCandidates(text: string): string[] {
+  const core = latinBreweryCore(text).join('')
+  if (core.length === 0) return []
+  return [core, ...['shuzo', 'jozo', 'shuzoten', 'shoten', 'sakebrewery'].map((suffix) => romajiKey(core + suffix))]
+}
+
+/**
+ * The lookup for a label whose brewery was read in Latin script.
+ *
+ * Kanji brewery names cannot be compared with it, so the brand leads: by
+ * kanji or kana when the brand was read in Japanese script, by Latin name
+ * otherwise. The Latin brewery then does what the kanji brewery does in the
+ * first pass — where it agrees with the stored romaji of exactly one
+ * candidate, both fields have matched one row and the result is `exact`.
+ * Where the brand finds nothing, the brewery's romaji alone may still name a
+ * one-line brewery.
+ */
+export async function findSakeByLatinBreweryFromPool(
+  query: SakeLookupQuery,
+  pool: Pool,
+): Promise<FindSakeByExtractionResult> {
+  // Kanji and kana names are looked up as written first; a kana name that
+  // is no row's name is then sounded out and compared with the romaji.
+  const nameIsLatin = containsLatinAlpha(query.nameJa) && !containsJapaneseScript(query.nameJa)
+  let byBrand = nameIsLatin
+    ? await findSakeByLatinBrandFromPool(query, pool)
+    : await findSakeByBrandOnlyFromPool(query, pool)
+  if (byBrand.kind === 'no_match' && !nameIsLatin && asLatinName(query.nameJa) !== null) {
+    byBrand = await findSakeByLatinBrandFromPool(query, pool)
+  }
+
+  if (byBrand.kind === 'matched_brand_only') {
+    return latinBreweryAgrees(query.breweryJa, byBrand.brewery.nameRomaji ?? null)
+      ? { kind: 'exact', sake: byBrand.sake }
+      : byBrand
+  }
+  if (byBrand.kind === 'ambiguous') {
+    const agreeing = collapseSameReading(
+      byBrand.candidates.filter((c) => latinBreweryAgrees(query.breweryJa, c.brewery.nameRomaji ?? null)),
+    )
+    return agreeing.length === 1 ? { kind: 'exact', sake: agreeing[0].sake } : byBrand
+  }
+
+  const candidates = latinBreweryCandidates(query.breweryJa)
+  if (candidates.length === 0) return { kind: 'no_match', query }
+  debugAdd('Sakenowa', `brand missed; brewery-by-romaji lookup on {${candidates.join('|')}}`)
+  const { rows } = await publicQuery<BrandWithBreweryRow>(
+    'brands',
+    SELECT_BRANDS_AND_BREWERIES_BY_BREWERY_ROMAJI,
+    [candidates],
+    pool,
+  )
+  if (rows.length === 0) return { kind: 'no_match', query }
+  if (rows.length === 1) {
+    const brand = brandFromJoinedRow(rows[0])
+    return {
+      kind: 'matched_brewery_only',
+      sake: brand,
+      brewery: breweryFromJoinedRow(rows[0]),
+      brandDivergence: { extracted: query.nameJa, stored: brand.nameKanji },
+      query,
+    }
+  }
+  return {
+    kind: 'ambiguous',
+    candidates: rows
+      .slice(0, MAX_LIST_CANDIDATES)
+      .map((r) => ({ sake: brandFromJoinedRow(r), brewery: breweryFromJoinedRow(r) })),
+    query,
+  }
 }
 
 /**
@@ -975,7 +1272,49 @@ export async function findSakeByBreweryOnlyFromPool(
     }
   }
 
-  // 2+ brands under this brewery. Prefer the row where the brand
+  // 2+ brands under this brewery. If the brand that was read is part of
+  // exactly one of their names, that is the bottle: the read is short of
+  // the stored name, so it stays a divergence the visitor confirms.
+  const overlapping = namesOverlapping(
+    query.nameJa,
+    breweryOnlyRows.map((r) => r.brand_name_kanji),
+  )
+  if (overlapping.length === 1) {
+    const matched = breweryOnlyRows[overlapping[0]]
+    const brand = brandFromJoinedRow(matched)
+    debugAdd('Sakenowa', `brewery-only found ${breweryOnlyRows.length} brands; "${query.nameJa}" is part of only "${brand.nameKanji}"`)
+    return {
+      kind: 'matched_brewery_only',
+      sake: brand,
+      brewery: breweryFromJoinedRow(matched),
+      brandDivergence: { extracted: query.nameJa, stored: brand.nameKanji },
+      query,
+    }
+  }
+
+  // The read is the brewery's own name without its suffix (世嬉の一 under
+  // 世嬉の一酒造), and one line is named after the brewery in Latin where the
+  // catalogue writes it in another script (せきのいち, "Sekinoichi").
+  const stem = stripOperationalSuffix(breweryOnlyRows[0].brewery_name_kanji)
+  if (stem !== null && expandBrandVariants(query.nameJa).includes(stem)) {
+    const breweryKey = latinBreweryCore(breweryOnlyRows[0].brewery_name_romaji ?? '').join('')
+    const namesakes = breweryOnlyRows.filter(
+      (r) => breweryKey.length > 0 && r.brand_name_romaji !== null && romajiKey(r.brand_name_romaji) === breweryKey,
+    )
+    if (namesakes.length === 1) {
+      const brand = brandFromJoinedRow(namesakes[0])
+      debugAdd('Sakenowa', `"${query.nameJa}" is the brewery's own name; its namesake line is "${brand.nameKanji}"`)
+      return {
+        kind: 'matched_brewery_only',
+        sake: brand,
+        brewery: breweryFromJoinedRow(namesakes[0]),
+        brandDivergence: { extracted: query.nameJa, stored: brand.nameKanji },
+        query,
+      }
+    }
+  }
+
+  // Otherwise prefer the row where the brand
   // shares the brewery's kanji — the "main brand" for mono-brand
   // breweries (沢の鶴, Brewery 576 / Brand 2008 in Sakenowa; same
   // pattern for 賀茂泉, 大七, plenty of others). The SQL ORDER BY
@@ -1009,7 +1348,7 @@ export async function findSakeByBreweryOnlyFromPool(
 
   return {
     kind: 'ambiguous',
-    candidates: breweryOnlyRows.map((r) => ({
+    candidates: breweryOnlyRows.slice(0, MAX_LIST_CANDIDATES).map((r) => ({
       sake: brandFromJoinedRow(r),
       brewery: breweryFromJoinedRow(r),
     })),

@@ -197,18 +197,18 @@ function stubEmptyRequestContext() {
 
 /**
  * `getVisionProvider` in scan-action.ts is called with the tier's
- * registry key. This helper wires two calls: the first (`anthropic-haiku-4-5`)
- * returns the tier-1 provider, the second (`anthropic-sonnet-4-6`)
+ * registry key. This helper wires two calls: the first (`anthropic-haiku-5-5`)
+ * returns the tier-1 provider, the second (`anthropic-sonnet-5-5`)
  * returns the tier-2 provider. When only one tier is passed the second
  * call rejects loudly — that's the assertion that tier-2 was NOT
  * needed (the tier-1 result short-circuits to `matched`).
  */
 function stubVisionTiers(tier1: MockLanguageModelV3, tier2?: MockLanguageModelV3) {
   getVisionProviderMock.mockImplementation((key) => {
-    if (key === 'anthropic-haiku-4-5') {
+    if (key === 'anthropic-haiku-5-5') {
       return createAnthropicHaikuProvider({ model: tier1, nodeEnv: 'test' })
     }
-    if (key === 'anthropic-sonnet-4-6') {
+    if (key === 'anthropic-sonnet-5-5') {
       if (!tier2) {
         // Fails loudly if the tier-2 branch was reached unexpectedly.
         return {
@@ -434,7 +434,7 @@ describe('scanAction — vision-tier states', () => {
 
     expect(state.status).toBe('low_confidence')
     // low_confidence is a retryable tier-1 status, so tier-2 runs too.
-    expect(getVisionProviderMock).toHaveBeenCalledWith('anthropic-sonnet-4-6')
+    expect(getVisionProviderMock).toHaveBeenCalledWith('anthropic-sonnet-5-5')
     expect(resolveScannedLabelMock).toHaveBeenCalledTimes(2)
   })
 
@@ -488,7 +488,7 @@ describe('scanAction — Sakenowa lookup states', () => {
     }
     // Tier-1 matched → tier-2 provider is never constructed.
     expect(getVisionProviderMock).toHaveBeenCalledTimes(1)
-    expect(getVisionProviderMock).toHaveBeenCalledWith('anthropic-haiku-4-5')
+    expect(getVisionProviderMock).toHaveBeenCalledWith('anthropic-haiku-5-5')
   })
 
   it('lists the other candidates under a best guess, never the match itself', async () => {
@@ -545,8 +545,8 @@ describe('scanAction — Sakenowa lookup states', () => {
     expect(state.status).toBe('no_match')
     // The two-tier retry rules retry every non-matched tier-1 outcome
     // — so both tiers ran (tier-1 no_match → tier-2 no_match).
-    expect(getVisionProviderMock).toHaveBeenCalledWith('anthropic-haiku-4-5')
-    expect(getVisionProviderMock).toHaveBeenCalledWith('anthropic-sonnet-4-6')
+    expect(getVisionProviderMock).toHaveBeenCalledWith('anthropic-haiku-5-5')
+    expect(getVisionProviderMock).toHaveBeenCalledWith('anthropic-sonnet-5-5')
     expect(resolveScannedLabelMock).toHaveBeenCalledTimes(2)
   })
 
@@ -615,7 +615,7 @@ describe('scanAction — Sakenowa lookup states', () => {
       expect(state.sakeRomaji).toBe('Dassai')
     }
     // Retry logic ran (tier-1 matched_brand_only → tier-2).
-    expect(getVisionProviderMock).toHaveBeenCalledWith('anthropic-sonnet-4-6')
+    expect(getVisionProviderMock).toHaveBeenCalledWith('anthropic-sonnet-5-5')
   })
 
   it('returns matched_brewery_only with brand divergence when only the brewery-only fallback resolves', async () => {
@@ -750,8 +750,8 @@ describe('scanAction — two-tier Haiku → Sonnet retry', () => {
       expect(state.breweryRomaji).toBe('Asahi Shuzo')
     }
     // Both tiers were constructed.
-    expect(getVisionProviderMock).toHaveBeenCalledWith('anthropic-haiku-4-5')
-    expect(getVisionProviderMock).toHaveBeenCalledWith('anthropic-sonnet-4-6')
+    expect(getVisionProviderMock).toHaveBeenCalledWith('anthropic-haiku-5-5')
+    expect(getVisionProviderMock).toHaveBeenCalledWith('anthropic-sonnet-5-5')
   })
 
   it('does NOT retry with tier-2 when tier-1 returns a clean matched (cost-protection invariant)', async () => {
@@ -775,7 +775,7 @@ describe('scanAction — two-tier Haiku → Sonnet retry', () => {
     // ONLY the Haiku key was requested. If a refactor swapped in a
     // stricter tier-1 → always-retry rule, this call count would fail.
     expect(getVisionProviderMock).toHaveBeenCalledTimes(1)
-    expect(getVisionProviderMock).toHaveBeenCalledWith('anthropic-haiku-4-5')
+    expect(getVisionProviderMock).toHaveBeenCalledWith('anthropic-haiku-5-5')
   })
 })
 

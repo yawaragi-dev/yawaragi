@@ -32,7 +32,46 @@
  *   charAccuracy = 1 - levenshtein(expected, actual) / max(len)   (codepoints)
  *   exactMatch   = (name_ja exact) AND (brewery_ja exact)
  * Reported: mean name_ja accuracy, mean brewery_ja accuracy, exact-match
- * rate, and median latency — one row per provider.
+ * rate, and median latency — one row per provider. Where an entry lists
+ * `also` readings, a field is scored against the best of them.
+ *
+ * # Resolution — did the scan land on the right sake
+ *
+ * Reading the label is half a scan. With `DATABASE_URL` set, each extraction
+ * also goes through `resolveScannedLabel` — the guards and the lookup cascade
+ * the scan action runs — and the row it lands on is compared with the entry's
+ * `expectedBrandIds`:
+ *
+ *   right     one sake, and it is the bottle
+ *   in list   several candidates, the bottle among them
+ *   wrong     a sake that is not the bottle (or any sake, for a bottle the
+ *             catalogue does not have)
+ *   none      no answer for a bottle the catalogue has
+ *
+ * A bottle the catalogue lacks is `right` when the scan says so. `right
+ * ungated` is the same count with the model's self-reported confidence read
+ * as 1 — the gap between the two is what the confidence gate costs. When both
+ * tiers of a pair are in the run, a `two-tier (…)` row replays the scan
+ * action's rule — keep tier 1 only on a first-pass exact match, else take
+ * tier 2 — from the calls already made, so it costs nothing extra.
+ *
+ * # Saved reads
+ *
+ * Every model read is saved to `recordings/reads.json`, keyed by provider,
+ * prompt and photo, and reused by the next run: a model is only called for
+ * a photo it has not read with the current prompt. So a run after a lookup
+ * change costs nothing, a run after adding three photos costs three calls
+ * per provider, and a run after a prompt edit re-reads everything — which
+ * is what should cost money.
+ *
+ *   LABEL_SCAN_EVAL_OFFLINE=1  never call a model; a photo with no saved
+ *                              read counts as an error.
+ *   LABEL_SCAN_EVAL_FRESH=1    ignore saved reads and ask again (models are
+ *                              not deterministic; this is how to see by
+ *                              how much).
+ *
+ * Saved reads make two runs comparable: a lookup change shows as exactly
+ * its own effect, not as model noise.
  *
  * # Rate-limit posture
  *
@@ -49,21 +88,33 @@
  * `pnpm test`); this runner does not.
  */
 
-import { readdirSync, readFileSync, existsSync } from 'node:fs'
+import { createHash } from 'node:crypto'
+import { readdirSync, readFileSync, existsSync, writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import { performance } from 'node:perf_hooks'
 
 import {
   DEFAULT_VISION_PROVIDER_KEY,
+  TIER_2_VISION_PROVIDER_KEY,
   VISION_PROVIDER_KEYS,
   getVisionProvider,
   type VisionProviderKey,
 } from '@/lib/ai/vision/registry'
+import {
+  resolveScannedLabel,
+  type ResolveScannedLabelResult,
+} from '@/lib/sakenowa/resolve-scanned-label'
+import { LABEL_SCAN_PROMPTS } from '@/lib/ai/vision/anthropic-haiku-provider'
+import type { LabelScanExtraction } from '@/lib/schemas/label-scan-extraction'
 import { charAccuracy } from '~/evals/label-scan-jp/levenshtein'
 import {
   GroundTruthFileSchema,
+  SavedReadsFileSchema,
   type GroundTruthEntry,
+  type PhotoView,
+  type SavedRead,
+  type SavedReadsFile,
 } from '~/evals/label-scan-jp/schemas'
 
 const EVAL_DIR = fileURLToPath(new URL('../evals/label-scan-jp', import.meta.url))
@@ -84,8 +135,37 @@ const MIME_BY_EXT: Record<string, string> = {
   '.webp': 'image/webp',
 }
 
+type Verdict = 'right' | 'in_list' | 'wrong' | 'none'
+
+interface Resolution {
+  /** `resolveScannedLabel`'s kind, or `error` when the lookup threw. */
+  kind: ResolveScannedLabelResult['kind'] | 'error'
+  /** What the scan landed on, for the detail table. */
+  landedOn: string
+  verdict: Verdict
+  /**
+   * The verdict with the confidence gate taken out (confidence read as 1).
+   * A read that is right but self-reported below the gate never reaches the
+   * lookup; this says what the lookup would have done with it.
+   */
+  ungatedVerdict: Verdict
+}
+
+/**
+ * Tier pairs to replay the scan action's retry rule over: the pair it runs
+ * today, and the pair it ran until 2026-10-12.
+ */
+const TIER_PAIRS: readonly { label: string; tier1: VisionProviderKey; tier2: VisionProviderKey }[] = [
+  { label: 'two-tier (as shipped)', tier1: DEFAULT_VISION_PROVIDER_KEY, tier2: TIER_2_VISION_PROVIDER_KEY },
+  { label: 'two-tier (tier 1 at low effort)', tier1: 'anthropic-haiku-5-5-low', tier2: TIER_2_VISION_PROVIDER_KEY },
+  { label: 'two-tier (Haiku 4.5 → Sonnet 4.6)', tier1: 'anthropic-haiku-4-5', tier2: 'anthropic-sonnet-4-6' },
+]
+
 interface PhotoResult {
   file: string
+  view?: PhotoView
+  /** Absent when the entry has no `expectedBrandIds` or there is no database. */
+  resolution?: Resolution
   nameAccuracy: number
   breweryAccuracy: number
   exactMatch: boolean
@@ -94,10 +174,15 @@ interface PhotoResult {
   detail?: string
   extractedNameJa?: string
   extractedBreweryJa?: string
+  /** The other names the model read off the label. */
+  otherNames?: string[]
+  /** The model's self-reported confidence, 0..1. */
+  confidence?: number
 }
 
 interface ProviderResult {
-  key: VisionProviderKey
+  /** A registry key, or the label of the replayed two-tier row. */
+  key: string
   photos: PhotoResult[]
   constructionError?: string
 }
@@ -120,6 +205,25 @@ function mean(values: number[]): number {
 
 function isVisionProviderKey(value: string): value is VisionProviderKey {
   return (VISION_PROVIDER_KEYS as readonly string[]).includes(value)
+}
+
+const SAVED_READS_PATH = path.join(EVAL_DIR, 'recordings', 'reads.json')
+const OFFLINE = process.env.LABEL_SCAN_EVAL_OFFLINE === '1'
+const FRESH = process.env.LABEL_SCAN_EVAL_FRESH === '1'
+
+const sha = (data: string | Uint8Array) => createHash('sha256').update(data).digest('hex').slice(0, 16)
+
+/**
+ * What a saved read was made with, besides the photo: the provider key (which
+ * names the model) and the prompt. A read is reused only while both hold.
+ */
+function providerFingerprint(key: string): string {
+  return key === 'e2e-stub' ? 'stub' : sha(`${LABEL_SCAN_PROMPTS.system}\n${LABEL_SCAN_PROMPTS.user}`)
+}
+
+function loadSavedReads(): SavedReadsFile {
+  if (!existsSync(SAVED_READS_PATH)) return { providers: {} }
+  return SavedReadsFileSchema.parse(JSON.parse(readFileSync(SAVED_READS_PATH, 'utf8')))
 }
 
 /** Resolve the provider list from env → config file → default. */
@@ -165,6 +269,65 @@ interface CorpusEntry {
   groundTruth: GroundTruthEntry
 }
 
+/** The best score for one field over the expected reading and its `also` list. */
+function fieldAccuracy(expected: string, also: readonly string[] | undefined, actual: string): number {
+  return Math.max(...[expected, ...(also ?? [])].map((reading) => charAccuracy(reading, actual)))
+}
+
+/** Runs the scan action's matching on an extraction and judges where it landed. */
+async function resolveAndJudge(
+  extraction: LabelScanExtraction,
+  expectedBrandIds: readonly number[],
+): Promise<Resolution> {
+  const gated = await judge(extraction, expectedBrandIds)
+  const ungated = await judge({ ...extraction, confidence: 1 }, expectedBrandIds)
+  return { ...gated, ungatedVerdict: ungated.verdict }
+}
+
+async function judge(
+  extraction: LabelScanExtraction,
+  expectedBrandIds: readonly number[],
+): Promise<Omit<Resolution, 'ungatedVerdict'>> {
+  let resolved: ResolveScannedLabelResult
+  try {
+    resolved = await resolveScannedLabel(extraction)
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    return { kind: 'error', landedOn: `lookup threw: ${message}`, verdict: 'none' }
+  }
+  const notInCatalogue = expectedBrandIds.length === 0
+
+  if (resolved.kind === 'no_match' || resolved.kind === 'low_confidence') {
+    return { kind: resolved.kind, landedOn: '—', verdict: notInCatalogue ? 'right' : 'none' }
+  }
+  if (resolved.kind === 'ambiguous') {
+    const names = resolved.candidates.map((c) => `${c.sake.brandId}:${c.sake.nameKanji}`)
+    const listed = resolved.candidates.some((c) => expectedBrandIds.includes(c.sake.brandId))
+    return { kind: 'ambiguous', landedOn: names.join(', '), verdict: listed ? 'in_list' : 'wrong' }
+  }
+  const { brandId, nameKanji } = resolved.sake
+  return {
+    kind: resolved.kind,
+    landedOn: `${brandId}:${nameKanji}`,
+    verdict: expectedBrandIds.includes(brandId) ? 'right' : 'wrong',
+  }
+}
+
+/**
+ * Replays the scan action's two-tier rule from the per-tier results: tier 1
+ * stands only on a first-pass exact match, anything else is tier 2's answer
+ * (and pays for both calls).
+ */
+function replayTwoTier(label: string, tier1: ProviderResult, tier2: ProviderResult): ProviderResult {
+  const tier2ByFile = new Map(tier2.photos.map((p) => [p.file, p]))
+  const photos = tier1.photos.map((first) => {
+    if (first.resolution?.kind === 'exact') return first
+    const second = tier2ByFile.get(first.file)
+    return second ? { ...second, latencyMs: first.latencyMs + second.latencyMs } : first
+  })
+  return { key: label, photos }
+}
+
 /** Load a photo file into a Blob the way the scan action would receive it. */
 function fileToBlob(absPath: string): Blob {
   const bytes = readFileSync(absPath)
@@ -188,6 +351,13 @@ async function main() {
   const providerKeys = resolveProviderList()
   console.log(`Providers: ${providerKeys.join(', ')}`)
   console.log(`Throttle: ${THROTTLE_MS}ms between real-provider calls`)
+  const saved = loadSavedReads()
+  if (OFFLINE) console.log(`Offline: saved reads only, no model is called.`)
+  if (FRESH) console.log(`Fresh: saved reads ignored, every photo is read again.`)
+  const canResolve = Boolean(process.env.DATABASE_URL)
+  if (!canResolve) {
+    console.log(`DATABASE_URL is not set — scoring the extraction only, not where the scan lands.`)
+  }
   console.log(``)
 
   // ---- Build the corpus ----
@@ -281,21 +451,66 @@ async function main() {
       continue
     }
 
+    // Saved reads made with another prompt are of no use to this run.
+    const fingerprint = providerFingerprint(key)
+    const previous = saved.providers[key]
+    const reads: Record<string, SavedRead> = previous?.fingerprint === fingerprint ? previous.reads : {}
+    saved.providers[key] = { fingerprint, reads }
+    let reused = 0
+    let called = 0
+
     const photos: PhotoResult[] = []
     for (let i = 0; i < corpus.length; i++) {
       const { file, absPath, groundTruth: gt } = corpus[i]
-      process.stdout.write(`  ${file.padEnd(36)} ... `)
+      process.stdout.write(`  ${file.padEnd(62)} ... `)
       const blob = fileToBlob(absPath)
+      const photoSha = sha(new Uint8Array(await blob.arrayBuffer()))
+      const reusable = FRESH ? undefined : reads[file]
+      const savedRead = reusable && reusable.photoSha === photoSha ? reusable : undefined
       const t0 = performance.now()
       try {
-        const extraction = await provider.extractLabel(blob)
-        const latencyMs = Math.round(performance.now() - t0)
-        const nameAccuracy = charAccuracy(gt.name_ja, extraction.name_ja)
-        const breweryAccuracy = charAccuracy(gt.brewery_ja, extraction.brewery_ja)
-        const exactMatch =
-          extraction.name_ja === gt.name_ja && extraction.brewery_ja === gt.brewery_ja
+        let extraction: LabelScanExtraction
+        let latencyMs: number
+        if (savedRead && 'name_ja' in savedRead) {
+          extraction = {
+            name_ja: savedRead.name_ja,
+            brewery_ja: savedRead.brewery_ja,
+            other_names: savedRead.other_names,
+            confidence: savedRead.confidence,
+            source: 'llm_extracted',
+          }
+          latencyMs = savedRead.latencyMs
+          reused++
+        } else if (savedRead && !FRESH && OFFLINE) {
+          throw new Error(savedRead.error)
+        } else if (OFFLINE) {
+          throw new Error('no saved read for this photo and prompt')
+        } else {
+          if (called > 0 && key !== 'e2e-stub' && THROTTLE_MS > 0) await sleep(THROTTLE_MS)
+          called++
+          const callStart = performance.now()
+          extraction = await provider.extractLabel(blob)
+          latencyMs = Math.round(performance.now() - callStart)
+          reads[file] = {
+            photoSha,
+            name_ja: extraction.name_ja,
+            brewery_ja: extraction.brewery_ja,
+            other_names: extraction.other_names,
+            confidence: extraction.confidence,
+            latencyMs,
+          }
+        }
+        const nameAccuracy = fieldAccuracy(gt.name_ja, gt.also?.name_ja, extraction.name_ja)
+        const breweryAccuracy = fieldAccuracy(gt.brewery_ja, gt.also?.brewery_ja, extraction.brewery_ja)
+        const exactMatch = nameAccuracy === 1 && breweryAccuracy === 1
+        const resolution =
+          canResolve && gt.expectedBrandIds
+            ? await resolveAndJudge(extraction, gt.expectedBrandIds)
+            : undefined
         photos.push({
           file,
+          view: gt.view,
+          resolution,
           nameAccuracy,
           breweryAccuracy,
           exactMatch,
@@ -303,15 +518,19 @@ async function main() {
           status: 'ok',
           extractedNameJa: extraction.name_ja,
           extractedBreweryJa: extraction.brewery_ja,
+          otherNames: extraction.other_names,
+          confidence: extraction.confidence,
         })
         console.log(
-          `${exactMatch ? 'EXACT' : '     '} name=${nameAccuracy.toFixed(2)} brewery=${breweryAccuracy.toFixed(2)} ${latencyMs}ms  → ${extraction.name_ja} / ${extraction.brewery_ja}`,
+          `${exactMatch ? 'EXACT' : '     '} name=${nameAccuracy.toFixed(2)} brewery=${breweryAccuracy.toFixed(2)} ${latencyMs}ms  → ${extraction.name_ja} / ${extraction.brewery_ja}${extraction.other_names?.length ? ` [+ ${extraction.other_names.join(', ')}]` : ''} @${extraction.confidence.toFixed(2)}${resolution ? `  ⇒ ${resolution.verdict} (${resolution.kind} ${resolution.landedOn})` : ''}`,
         )
       } catch (err) {
         const latencyMs = Math.round(performance.now() - t0)
         const message = err instanceof Error ? err.message : String(err)
+        if (!OFFLINE) reads[file] = { photoSha, error: message }
         photos.push({
           file,
+          view: gt.view,
           nameAccuracy: 0,
           breweryAccuracy: 0,
           exactMatch: false,
@@ -322,17 +541,50 @@ async function main() {
         console.log(`ERROR ${message}`)
       }
 
-      // Serial throttle — skip for the no-network stub and after the last photo.
-      if (key !== 'e2e-stub' && i < corpus.length - 1 && THROTTLE_MS > 0) {
-        await sleep(THROTTLE_MS)
-      }
     }
     providerResults.push({ key, photos })
+    console.log(`  ${reused} saved read(s) reused, ${called} model call(s).`)
     console.log(``)
   }
 
+  // The stub reads nothing; keeping its answers would only churn the file.
+  delete saved.providers['e2e-stub']
+  if (!OFFLINE) writeFileSync(SAVED_READS_PATH, `${JSON.stringify(saved, null, 1)}\n`)
+
+  for (const pair of TIER_PAIRS) {
+    const tier1 = providerResults.find((r) => r.key === pair.tier1 && !r.constructionError)
+    const tier2 = providerResults.find((r) => r.key === pair.tier2 && !r.constructionError)
+    if (canResolve && tier1 && tier2) providerResults.push(replayTwoTier(pair.label, tier1, tier2))
+  }
+
   printComparisonTable(providerResults, corpus.length)
+  if (canResolve) printResolutionTable(providerResults)
   printPerPhotoDetail(providerResults)
+  // The lookup holds a pg pool open; the run is over.
+  process.exit(0)
+}
+
+const VIEW_ORDER: readonly (PhotoView | 'all')[] = ['all', 'front', 'side', 'back_ja', 'back_import', 'other']
+
+/** One row per provider and view: where the scans landed. */
+function printResolutionTable(results: ProviderResult[]) {
+  console.log(`## Where the scan landed`)
+  console.log(``)
+  console.log(`| provider | view | photos | right | in list | wrong | none | right rate | right ungated |`)
+  console.log(`|----------|------|--------|-------|---------|-------|------|------------|---------------|`)
+  for (const r of results) {
+    if (r.constructionError) continue
+    for (const view of VIEW_ORDER) {
+      const judged = r.photos.filter((p) => (view === 'all' || p.view === view) && p.resolution)
+      if (judged.length === 0) continue
+      const count = (verdict: Verdict) => judged.filter((p) => p.resolution?.verdict === verdict).length
+      const ungatedRight = judged.filter((p) => p.resolution?.ungatedVerdict === 'right').length
+      console.log(
+        `| ${r.key} | ${view} | ${judged.length} | ${count('right')} | ${count('in_list')} | ${count('wrong')} | ${count('none')} | ${(count('right') / judged.length).toFixed(3)} | ${ungatedRight} |`,
+      )
+    }
+  }
+  console.log(``)
 }
 
 function printComparisonTable(results: ProviderResult[], corpusSize: number) {
@@ -366,23 +618,26 @@ function printPerPhotoDetail(results: ProviderResult[]) {
   console.log(`## Per-photo detail`)
   console.log(``)
   console.log(
-    `| provider | photo | status | name acc | brewery acc | exact | ms | extracted (name / brewery) |`,
+    `| provider | photo | status | name acc | brewery acc | exact | ms | extracted (name / brewery) | landed on |`,
   )
   console.log(
-    `|----------|-------|--------|----------|-------------|-------|-----|-----------------------------|`,
+    `|----------|-------|--------|----------|-------------|-------|-----|-----------------------------|-----------|`,
   )
   for (const r of results) {
     if (r.constructionError) {
-      console.log(`| ${r.key} | — | construction failed: ${r.constructionError} | — | — | — | — | — |`)
+      console.log(`| ${r.key} | — | construction failed: ${r.constructionError} | — | — | — | — | — | — |`)
       continue
     }
     for (const p of r.photos) {
       const extracted =
         p.status === 'ok'
-          ? `${p.extractedNameJa} / ${p.extractedBreweryJa}`
+          ? `${p.extractedNameJa} / ${p.extractedBreweryJa}${p.otherNames?.length ? ` [+ ${p.otherNames.join(', ')}]` : ''} @${p.confidence?.toFixed(2)}`
           : `(${p.detail ?? 'error'})`
+      const landed = p.resolution
+        ? `${p.resolution.verdict} — ${p.resolution.kind} ${p.resolution.landedOn}`
+        : '—'
       console.log(
-        `| ${r.key} | ${p.file} | ${p.status} | ${p.nameAccuracy.toFixed(2)} | ${p.breweryAccuracy.toFixed(2)} | ${p.exactMatch ? 'yes' : 'no'} | ${p.latencyMs} | ${extracted} |`,
+        `| ${r.key} | ${p.file} | ${p.status} | ${p.nameAccuracy.toFixed(2)} | ${p.breweryAccuracy.toFixed(2)} | ${p.exactMatch ? 'yes' : 'no'} | ${p.latencyMs} | ${extracted} | ${landed} |`,
       )
     }
   }

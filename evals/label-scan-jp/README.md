@@ -12,34 +12,44 @@ the metric-math unit test (`levenshtein.test.ts`).
 
 ---
 
-## 🚧 MAINTAINER TODO: add 20 real bottle-label photos with cleared rights
+## The corpus
 
-**The harness is complete and runs today, but the photo corpus is empty.** An
-agent cannot source or rights-clear real photographs — that is inherently a
-human task. Until you add photos, the runner falls back to a single synthetic
-smoke fixture and prints a `DEGRADED CORPUS` banner.
+**79 photos of 33 bottles**, all taken by the maintainer on a phone the way a
+visitor would: in the hand, a little off-angle, sometimes with condensation on
+the glass. 73 are of 27 bottles at home in ordinary room light; 6 are single
+front shots of bottles on a shop shelf, added after the lookup had been tuned
+on the first 73 and scored once, untouched — all six landed on the right sake. Each bottle was shot from several
+sides, because a scan is only as good as the side the visitor points at:
 
-To finish the AC, add **20 real JP sake-bottle-label photos**:
+| view | photos | what it shows |
+|------|--------|---------------|
+| `front` | 36 | the front label, square on |
+| `side` | 12 | the label turned to one side |
+| `back_ja` | 4 | a Japanese back or side label (the regulatory block) |
+| `back_import` | 26 | the importer's German or French back label — sake and maker in Latin script only |
+| `other` | 1 | a neck band |
 
-1. **Get 20 photos of sake bottle labels.** Cleanest source: photograph
-   bottles you own (you hold the copyright in your own photo outright).
-   Public-domain / CC-licensed product shots are also fine if the licence
-   genuinely permits this use.
-   - **Bottle labels ONLY. Never a person / face** — CLAUDE.md's Art. 9
-     "no special-category / biometric data" rule. The scan flow is bottle
-     labels, full stop.
-2. **Drop each file into `photos/`.** Supported extensions: `.jpg`, `.jpeg`,
-   `.png`, `.webp`. Pick a readable filename, e.g. `dassai.jpg`.
-3. **Add a matching entry to `ground-truth.json`**, keyed by the exact
-   filename (see the convention below). Fill `name_ja`, `brewery_ja`, and the
-   `provenance` block, and set `provenance.rightsCleared: true` only once the
-   rights actually exist.
-4. **Re-run** `pnpm eval label-scan-jp`. The `DEGRADED` banner disappears at
-   20 rights-cleared real photos.
+The set is hard on purpose. It holds foil and brush-calligraphy brand marks,
+a cup printed on clear glass, two boxes rather than bottles, sub-lines that
+are their own catalogue row (あわ咲き, 黒兜, 別格), a brand the catalogue spells
+in hiragana where the label uses kanji (せきのいち), and two bottles the
+catalogue does not have at all, where the right answer is no match.
 
-The two `PLACEHOLDER-*` entries already in `ground-truth.json` are copy-paste
-templates — they reference no file and are marked `rightsCleared: false`, so
-the runner skips them. Delete them once you have real entries.
+Photos are stored **as the scan action receives them**: longer edge 1024 px,
+JPEG quality 0.85 — the numbers in `src/lib/scan/downscale.ts`. Scoring the
+4K originals would flatter the model. The re-encode also drops the EXIF block,
+so no location or device data is in the repo.
+
+### Adding a photo
+
+1. Photograph a bottle — **label only, never a person or a face** (CLAUDE.md,
+   Art. 9). Dark glass reflects whoever holds the phone, in a shop especially:
+   look at the bare glass before committing and blur a reflection.
+2. Downscale it to a 1024 px longer edge at JPEG quality 0.85, re-encoding so
+   the EXIF block is gone, and drop it into `photos/`.
+3. Add an entry to `ground-truth.json` keyed by the filename.
+4. Find the catalogue row it should land on (`brands.brand_id`) and list it in
+   `expectedBrandIds` — or `[]` if the catalogue does not have the bottle.
 
 ---
 
@@ -53,6 +63,10 @@ provenance**:
   "dassai.jpg": {
     "name_ja": "獺祭",           // brand (銘柄), original script, SKU modifiers stripped
     "brewery_ja": "旭酒造",       // brewery, original script, legal-form suffixes stripped
+    "bottle": "dassai-45",        // groups the photos of one physical bottle
+    "view": "front",              // front | side | back_ja | back_import | other
+    "expectedBrandIds": [887],    // catalogue rows a correct scan may land on; [] = not in the catalogue
+    "also": { "name_ja": ["DASSAI"] }, // other readings that are also right (optional)
     "provenance": {
       "source": "maintainer_own_bottle", // see the source enum below
       "rightsCleared": true,             // MUST be true for a real photo to be scored
@@ -70,6 +84,11 @@ provenance**:
   is printed in (kanji / katakana / hiragana / Latin), strip grade/polishing/
   style modifiers from the brand, strip legal-form markers (株式会社 etc.) from
   the brewery.
+- `also` exists because a label that prints its brand in kanji, katakana and
+  Latin has three correct readings; a field is scored against the best of them.
+  Keep it to what the label actually prints.
+- `expectedBrandIds` is what turns "did it read the label" into "did the scan
+  land on the right sake". Left out, the photo is scored on extraction only.
 - The shape is validated by `schemas.ts` (`GroundTruthFileSchema`) at start-up.
   A malformed entry crashes with a readable Zod error rather than a silent
   metric miscalculation.
@@ -82,6 +101,7 @@ Every entry's `provenance.source` is drawn from a closed enum
 | source | meaning | `attribution` |
 |--------|---------|---------------|
 | `maintainer_own_bottle` | you photographed a bottle you own | optional |
+| `maintainer_shop_photo` | you photographed a bottle on a shop shelf | optional |
 | `public_domain` | PD product shot (age or explicit dedication) | recommended (source URL) |
 | `cc0` | CC0-dedicated image | recommended (source URL) |
 | `cc_by` | CC-BY image | **required** (source URL + attribution line) |
@@ -108,9 +128,13 @@ pnpm eval label-scan-jp
 Env the runner reads:
 
 - `LABEL_SCAN_EVAL_PROVIDERS` — comma-separated registry keys to compare
-  (e.g. `anthropic-haiku-4-5,anthropic-sonnet-4-6`). Optional.
+  (e.g. `anthropic-haiku-5-5,anthropic-sonnet-5-5`). Optional.
 - `LABEL_SCAN_EVAL_THROTTLE_MS` — sleep between real-provider calls
   (default `1000`). Keeps a 20-photo run from bursting the Anthropic API.
+- `DATABASE_URL` — the Sakenowa mirror. With it set, the runner also resolves
+  each extraction against the catalogue (see "Where the scan landed"). Without
+  it, only the extraction is scored.
+- `LABEL_SCAN_EVAL_OFFLINE=1` / `LABEL_SCAN_EVAL_FRESH=1` — see "Saved reads".
 - `LABEL_SCAN_EVAL_INCLUDE_SMOKE=1` — also score the synthetic smoke fixture
   even when real photos are present (normally it's only used as the fallback
   when `photos/` is empty).
@@ -127,40 +151,77 @@ requires the app's baseline env (`CLERK_SECRET_KEY`,
 > `server-only` marker to its empty shim exactly as the Next.js RSC bundler
 > does in production. See `scripts/eval.ts` for the full note.
 
+### Saved reads — what a run costs
+
+Every model read is saved to `recordings/reads.json`, keyed by **provider,
+prompt and photo**, and the next run reuses it. A model is called only for a
+photo it has not yet read with the current prompt:
+
+| what changed since the last run | model calls |
+|---------------------------------|-------------|
+| the catalogue lookup, the ground truth, nothing | none |
+| three new photos | three per provider |
+| a new provider key | one per photo, for that provider |
+| the vision prompt | every photo, every provider |
+
+```bash
+# the usual loop while working on the lookup: free, about half a minute
+LABEL_SCAN_EVAL_OFFLINE=1 LABEL_SCAN_EVAL_PROVIDERS=anthropic-haiku-5-5,anthropic-sonnet-5-5 pnpm eval label-scan-jp
+```
+
+- `LABEL_SCAN_EVAL_OFFLINE=1` never calls a model; a photo without a saved
+  read counts as an error rather than as a charge.
+- `LABEL_SCAN_EVAL_FRESH=1` ignores the saved reads and asks again. Models are
+  not deterministic — between two fresh runs of the same tiers the `right`
+  count moved by one and `wrong` by five — so this is the way to see the
+  spread, and the only reason to pay twice.
+
+The file holds the reads of the two tiers the scan runs. The tiers before them
+(`anthropic-haiku-4-5`, `anthropic-sonnet-4-6`) were last read with an earlier
+prompt, so naming them in a run reads every photo again.
+
+Because the reads are fixed, two runs differ only by what the code did with
+them: a lookup change shows as exactly its own effect. Commit `reads.json`
+with the change that produced it. Latency in a run of saved reads is the
+latency recorded when the read was made.
+
 ### Smoke test (no Anthropic credit)
 
 ```bash
 LABEL_SCAN_EVAL_PROVIDERS=e2e-stub pnpm eval label-scan-jp
 ```
 
-The `e2e-stub` provider returns a fixed Dassai extraction with no network I/O.
-Its ground truth matches verbatim, so the smoke run reports a `1.00` exact
-match and proves the whole pipeline (corpus discovery → Blob → `extractLabel`
-→ metric → table) works end-to-end.
+The `e2e-stub` provider returns a fixed Dassai extraction with no network I/O,
+so every real photo scores as a wrong answer — which is the point: it proves
+the whole pipeline (corpus discovery → Blob → `extractLabel` → metric →
+catalogue lookup → tables) runs, at no cost.
 
 ---
 
 ## Adding a candidate provider to the run
 
 Providers are named keys into the vision registry
-(`src/lib/ai/vision/registry.ts`): `anthropic-haiku-4-5`,
-`anthropic-sonnet-4-6`, `e2e-stub`. To compare a new vendor:
+(`src/lib/ai/vision/registry.ts`): `anthropic-haiku-5-5` and
+`anthropic-sonnet-5-5` (the two tiers the scan runs today),
+`anthropic-haiku-4-5` and `anthropic-sonnet-4-6` (the tiers before them, kept
+for comparison), `e2e-stub`. To compare a new vendor:
 
 1. **Register it.** Add a factory + key to `visionProviderFactories` in the
    registry (that's the vendor-swap seam the whole Phase 3 design protects —
    a new vendor is a registry entry implementing `VisionProvider`, not a
    rewrite). The new key flows into `VISION_PROVIDER_KEYS` automatically.
 2. **List it in the run**, either:
-   - `LABEL_SCAN_EVAL_PROVIDERS=anthropic-haiku-4-5,<new-key> pnpm eval label-scan-jp`, or
+   - `LABEL_SCAN_EVAL_PROVIDERS=anthropic-haiku-5-5,<new-key> pnpm eval label-scan-jp`, or
    - create `evals/label-scan-jp/providers.json` — a JSON array of keys, e.g.
-     `["anthropic-haiku-4-5", "anthropic-sonnet-4-6"]`. Env wins over the file;
-     the file wins over the default (`anthropic-haiku-4-5` alone).
+     `["anthropic-haiku-5-5", "anthropic-sonnet-5-5"]`. Env wins over the file;
+     the file wins over the default (the tier-1 key alone).
 3. **Re-run** and paste the multi-row comparison table into the finetune/
    failover writeup. Unknown keys abort before any paid call.
 
 The runner is strictly serial (one provider, one photo at a time), so adding
-providers multiplies runtime by (providers × photos × throttle) — expect a few
-minutes for two real providers over 20 photos.
+providers multiplies runtime by (providers × photos × throttle) — about ten
+minutes for two Anthropic tiers reading all 73 photos for the first time, and
+nothing once those reads are saved.
 
 ---
 
@@ -181,6 +242,8 @@ charAccuracy = 1 - levenshtein(expected, actual) / max(len(expected), len(actual
   (a common failure: returning the full label including SKU modifiers instead
   of the stripped brand).
 - **Exact-match** for a photo = `name_ja` exact **and** `brewery_ja` exact.
+- Where the entry lists `also` readings, each field takes its best score over
+  the expected reading and those.
 
 Per provider the table reports the **mean** name accuracy, **mean** brewery
 accuracy, the **exact-match rate** (fraction of photos both-fields-exact), and
@@ -209,18 +272,48 @@ Two tables print to stdout, both pastable into GitHub:
   the retailer 柴田屋酒店 as the brewery") is diagnosable directly from the
   table without opening Langfuse.
 
-If fewer than 20 rights-cleared real photos are present, a `DEGRADED CORPUS`
-banner prints above the tables. **Treat the numbers as a wiring check, not a
-provider ranking, until the corpus is full.**
+- **Where the scan landed** (needs `DATABASE_URL`) — one row per provider and
+  view. Each extraction goes through `resolveScannedLabel`, the same guards and
+  lookup cascade the scan action runs, and the result is judged against
+  `expectedBrandIds`:
+
+  | verdict | meaning |
+  |---------|---------|
+  | `right` | one sake, and it is the bottle — or, for a bottle the catalogue lacks, no match |
+  | `in list` | several candidates, the bottle among them |
+  | `wrong` | a sake that is not the bottle |
+  | `none` | no answer for a bottle the catalogue has |
+
+  `wrong` is the costly one: the visitor is shown a sake they are not holding.
+  `none` only sends them to search.
+
+  **`right ungated`** is the `right` count with the model's self-reported
+  confidence read as 1. The scan drops any read below 0.60 before the lookup
+  runs, and models differ a great deal in how they score themselves; the gap
+  between `right` and `right ungated` is what that gate costs a given model.
+  The per-photo table prints each read's confidence after an `@`.
+
+  When both tiers of a pair are in the run, a **`two-tier (…)`** row replays
+  the scan action's rule from the reads already made — tier 1 stands only on a
+  first-pass exact match, anything else is tier 2's answer. `two-tier (as
+  shipped)` is the pair the scan runs today and the number a visitor
+  experiences; `two-tier (Haiku 4.5 → Sonnet 4.6)` is the pair before it. Latency adds both
+  calls on a retry.
+
+This table reads character accuracy and catalogue resolution separately on
+purpose. A model can read 福寿 perfectly off a bottle whose catalogue row is
+あわ咲き, and a model can misread a brewery and still land on the right sake
+through the brand-only pass.
 
 ---
 
 ## Files
 
-- `ground-truth.json` — filename → `{ name_ja, brewery_ja, provenance }`.
+- `ground-truth.json` — filename → `{ name_ja, brewery_ja, bottle, view, expectedBrandIds, also, provenance }`.
 - `schemas.ts` — Zod shapes the ground-truth file is parsed against.
 - `levenshtein.ts` / `levenshtein.test.ts` — the metric math + its unit test.
-- `photos/` — **maintainer drops real photos here** (empty today).
+- `photos/` — the corpus, at scan-action size.
+- `recordings/reads.json` — the saved model reads.
 - `fixtures/synthetic-smoke-label.jpg` — deterministic 1×1 JPEG smoke fixture
   (pipeline proof only — never a real eval photo).
 - `providers.json` — optional provider list (not committed; create if you want

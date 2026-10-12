@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { expandLatinBrandVariants } from './lookup'
+import type { Brand } from '@/lib/schemas/brand'
+import {
+  breweryKanjiAgrees,
+  collapseSameReading,
+  expandLatinBrandVariants,
+  latinBreweryAgrees,
+  namesOverlapping,
+  romajiKey,
+} from './lookup'
 
 /**
  * Pure-function unit tests for the Latin variant expansion used by the
@@ -32,6 +40,14 @@ describe('expandLatinBrandVariants', () => {
     // stood in the way. "sawa" alone is not the line.
     expect(expandLatinBrandVariants('SAWA NO HANA Kokoro')).toEqual(
       expect.arrayContaining(['sawa no hana kokoro', 'sawa no hana', 'sawanohana']),
+    )
+  })
+
+  it('reads a hyphen as a word break: "DARUMA-MASAMUNE" also tries "daruma masamune" and "darumamasamune"', () => {
+    // Labels hyphenate their Latin (DARUMA-MASAMUNE, NINKI-ICHI); the
+    // catalogue's romaji is written as words or run together.
+    expect(expandLatinBrandVariants('DARUMA-MASAMUNE')).toEqual(
+      expect.arrayContaining(['daruma-masamune', 'daruma masamune', 'darumamasamune']),
     )
   })
 
@@ -107,5 +123,101 @@ describe('expandLatinBrandVariants', () => {
     // input. Order is not asserted (Set-backed); presence is.
     const out = expandLatinBrandVariants('Kizakura Perle')
     expect(new Set(out)).toEqual(new Set(['kizakura perle', 'kizakura', 'kizakuraperle']))
+  })
+})
+
+describe('latinBreweryAgrees', () => {
+  it("matches a back label's brewery with the catalogue's romaji whatever each calls a brewery", () => {
+    expect(latinBreweryAgrees('Rihaku Sake Brewery', 'Rihaku Shuzo')).toBe(true)
+    expect(latinBreweryAgrees('Miyoshino Sake Brewery Co.,Ltd', 'Miyoshino Jozo')).toBe(true)
+    expect(latinBreweryAgrees('Kobe Shushinkan', 'Kobe Shushinkan')).toBe(true)
+  })
+
+  it('matches when the label gives only part of the name: "Shiraki Brewery" is Shiraki Tsunesuke Shoten', () => {
+    expect(latinBreweryAgrees('Shiraki Brewery', 'Shiraki Tsunesuke Shoten')).toBe(true)
+  })
+
+  it('does not match an importer, a country or a different brewery', () => {
+    expect(latinBreweryAgrees('Ginza Berlin', 'Kiyosu Sakura Jozo')).toBe(false)
+    expect(latinBreweryAgrees('Hergestellt in Japan', 'Choryo Shuzo')).toBe(false)
+    expect(latinBreweryAgrees('Sanwa Shuzo', 'Miwa Shuzo')).toBe(false)
+  })
+
+  it('does not match on generic words alone, or against a brewery with no romaji', () => {
+    expect(latinBreweryAgrees('Sake Brewery Co., Ltd.', 'Rihaku Shuzo')).toBe(false)
+    expect(latinBreweryAgrees('Rihaku Sake Brewery', null)).toBe(false)
+  })
+})
+
+describe('namesOverlapping', () => {
+  const CHORYO_LINES = ['九々鱗', '稲の国の稲の酒', '長龍', '吉野杉の樽酒', '四季咲']
+
+  it('finds the one line a partial read belongs to: 樽酒 is 吉野杉の樽酒', () => {
+    expect(namesOverlapping('樽酒', CHORYO_LINES)).toEqual([3])
+  })
+
+  it('finds a line the read contains, product name and all: 瑞鷹 熊本城 holds 瑞鷹', () => {
+    expect(namesOverlapping('瑞鷹 熊本城', ['瑞鷹', '春酒', '華しずく'])).toEqual([0])
+  })
+
+  it('finds nothing for a read that is part of no line, or of one character', () => {
+    expect(namesOverlapping('濃姫の里', ['鬼ころし', '清須'])).toEqual([])
+    expect(namesOverlapping('雪', ['雪の十和田', '北秋田'])).toEqual([])
+  })
+
+  it('returns every line that fits, leaving the caller to see it is not one', () => {
+    expect(namesOverlapping('正宗', ['達磨正宗', 'ダルマ正宗', '淡墨桜'])).toEqual([0, 1])
+  })
+})
+
+describe('breweryKanjiAgrees', () => {
+  it('matches the stored name as written, without its space, or by one of its parts', () => {
+    expect(breweryKanjiAgrees('白木恒助商店', ['白木恒助商店'])).toBe(true)
+    expect(breweryKanjiAgrees('仙台伊澤家 勝山酒造', ['仙台伊澤家勝山酒造'])).toBe(true)
+    expect(breweryKanjiAgrees('仙台伊澤家 勝山酒造', ['勝山酒造'])).toBe(true)
+  })
+
+  it('does not match another brewery', () => {
+    expect(breweryKanjiAgrees('白木恒助商店', ['三輪酒造'])).toBe(false)
+  })
+})
+
+describe('romajiKey', () => {
+  it('gives one key to the spellings of a long vowel: Fudoh, Fudō, Fudou', () => {
+    expect(romajiKey('Fudoh')).toBe('fudo')
+    expect(romajiKey('Fudō')).toBe('fudo')
+    expect(romajiKey('FUDOU')).toBe('fudo')
+    expect(romajiKey('Garyuubai')).toBe(romajiKey('GARYUBAI'))
+  })
+
+  it('ignores spacing and hyphens: Yoshino Sugi, YOSHINOSUGI, Ninki-Ichi', () => {
+    expect(romajiKey('Yoshino Sugi')).toBe(romajiKey('YOSHINOSUGI'))
+    expect(romajiKey('NINKI-ICHI')).toBe(romajiKey('Ninkiichi'))
+  })
+
+  it('keeps different names different', () => {
+    expect(romajiKey('Sanwa')).not.toBe(romajiKey('Miwa'))
+    expect(romajiKey('Fukuju')).not.toBe(romajiKey('Fukujukai'))
+  })
+})
+
+describe('collapseSameReading', () => {
+  const brand = (brandId: number, nameKanji: string, nameRomaji: string | null, breweryId = 1159): { sake: Brand } => ({
+    sake: { brandId, name: nameKanji, nameKanji, nameRomaji, breweryId, source: 'sakenowa' },
+  })
+
+  it('counts one sake the catalogue lists in two scripts as one, keeping the kanji row: 達磨正宗 and ダルマ正宗', () => {
+    const collapsed = collapseSameReading([brand(2780, 'ダルマ正宗', 'Daruma Masamune'), brand(2692, '達磨正宗', 'Daruma Masamune')])
+
+    expect(collapsed.map((c) => c.sake.brandId)).toEqual([2692])
+  })
+
+  it('keeps sakes with different readings, and sakes of different breweries, apart', () => {
+    expect(collapseSameReading([brand(1, '福寿', 'Fukuju'), brand(2, 'あわ咲き', 'Awasaki')])).toHaveLength(2)
+    expect(collapseSameReading([brand(1, '白鹿', 'Hakushika', 10), brand(2, '白鹿', 'Hakushika', 11)])).toHaveLength(2)
+  })
+
+  it('never merges rows that have no reading to compare', () => {
+    expect(collapseSameReading([brand(1, '甲', null), brand(2, '乙', null)])).toHaveLength(2)
   })
 })

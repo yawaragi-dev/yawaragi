@@ -11,7 +11,15 @@ import {
   findSakeByBrandOnlyFromPool,
   findSakeByBreweryOnlyFromPool,
   findSakeByExtractionFromPool,
+  expandLatinBrandVariants,
+  findSakeByLatinBreweryFromPool,
+  listSiblingBrandsFromPool,
+  namesOverlapping,
+  romajiKey,
 } from './lookup'
+import type { Brand } from '@/lib/schemas/brand'
+import { expandBrandVariants } from './brewery-variants'
+import { kanaToRomaji } from './kana-romaji'
 import { getServerDbPool } from '../supabase/server-client'
 
 // ---------- resolveScannedLabel ----------
@@ -47,7 +55,8 @@ import { getServerDbPool } from '../supabase/server-client'
  * tests free of the `source` provenance ceremony — a scanned label is,
  * for matching purposes, a (name, brewery, confidence) triple.
  */
-export type ScannedLabel = Pick<LabelScanExtraction, 'name_ja' | 'brewery_ja' | 'confidence'>
+export type ScannedLabel = Pick<LabelScanExtraction, 'name_ja' | 'brewery_ja' | 'confidence'> &
+  Pick<Partial<LabelScanExtraction>, 'other_names'>
 
 export type ResolveScannedLabelResult = FindSakeByExtractionResult | { kind: 'low_confidence' }
 
@@ -64,6 +73,10 @@ export interface ScannedLabelLookupExecutor {
   findByExtraction(query: SakeLookupQuery): Promise<FindSakeByExtractionResult>
   findByBreweryOnly(query: SakeLookupQuery): Promise<BreweryOnlyLookupResult>
   findByBrandOnly(query: SakeLookupQuery): Promise<BrandOnlyLookupResult>
+  /** For a label whose brewery was read in Latin script. */
+  findByLatinBrewery(query: SakeLookupQuery): Promise<FindSakeByExtractionResult>
+  /** The other sakes of the same brewery, for picking a sub-line. */
+  listSiblings(brandId: number): Promise<readonly Brand[]>
 }
 
 function poolExecutor(pool: Pool): ScannedLabelLookupExecutor {
@@ -71,8 +84,13 @@ function poolExecutor(pool: Pool): ScannedLabelLookupExecutor {
     findByExtraction: (query) => findSakeByExtractionFromPool(query, pool),
     findByBreweryOnly: (query) => findSakeByBreweryOnlyFromPool(query, pool),
     findByBrandOnly: (query) => findSakeByBrandOnlyFromPool(query, pool),
+    findByLatinBrewery: (query) => findSakeByLatinBreweryFromPool(query, pool),
+    listSiblings: (brandId) => listSiblingBrandsFromPool(brandId, pool, SIBLING_LIMIT),
   }
 }
+
+/** Enough to hold every line of the largest brewery in the catalogue. */
+const SIBLING_LIMIT = 60
 
 function isExecutor(x: Pool | ScannedLabelLookupExecutor): x is ScannedLabelLookupExecutor {
   return 'findByExtraction' in x
@@ -153,42 +171,235 @@ function looksLikeSingleCharHallucination(name_ja: string): boolean {
 /**
  * Resolve a scanned label (vision extraction) to a Sakenowa brand.
  *
- * Guard ordering is load-bearing and preserved verbatim from the
- * pre-#198 scan-action pipeline:
- *   1. confidence-tier gate  — `retry` tier → low_confidence, no lookup.
- *   2. placeholder sentinel  — `不明` / `unknown` / … → low_confidence.
- *   3. Latin-brewery shape   — brewery_ja is Latin-only → low_confidence
- *                              (brand-field Latin is FINE; the 5th-pass
- *                              Latin lookup inside the cascade handles it).
- *   4. single-char rescue    — 1-char name_ja is junk, but the brewery
+ * Order:
+ *   1. placeholder sentinel  — `不明` / `unknown` / … → low_confidence.
+ *   2. Latin brewery         — the brewery was read in Latin script, as on
+ *                              an importer's back label → the Latin-brewery
+ *                              lookup, which leads with the brand and uses
+ *                              the brewery's romaji to confirm it.
+ *   3. single-char rescue    — 1-char name_ja is junk, but the brewery
  *                              may still resolve: brewery-only → then
  *                              field-swap brand-only on brewery_ja →
  *                              else low_confidence.
- *   5. full 5-pass cascade   — `findByExtraction`.
+ *   4. full cascade          — `findByExtraction`.
+ *   5. other names           — the product name or second script the
+ *                              label prints picks a more specific line
+ *                              of the same brewery, settles a list, or
+ *                              is tried as the brand after a miss.
+ *   6. confidence gate       — a read the model scored in the `retry` tier
+ *                              is kept only where brand and brewery both
+ *                              matched one catalogue row (`exact`, or the
+ *                              brewery plus a brand that is part of the
+ *                              stored name), or where the label named
+ *                              the result a second time.
  *
- * `poolOrExecutor` is a `Pool` in production (bound to the three
- * `findSakeBy*FromPool` passes) or a fake `ScannedLabelLookupExecutor`
- * in unit tests.
+ * The gate comes last, and lets `exact` through, because a model's score of
+ * itself and a match in the catalogue are different evidence. A front label
+ * that shows no brewery gets a low score from a careful model even when it
+ * read the brand perfectly and knows who makes it; two fields agreeing with
+ * one row out of thousands is not something a misread does by accident.
+ * Anything short of that — brand only, brewery only, a list — still needs
+ * the model's own confidence behind it.
+ *
+ * `poolOrExecutor` is a `Pool` in production (bound to the `findSakeBy*FromPool`
+ * passes) or a fake `ScannedLabelLookupExecutor` in unit tests.
  */
 export async function resolveScannedLabel(
-  { name_ja, brewery_ja, confidence }: ScannedLabel,
+  label: ScannedLabel,
   poolOrExecutor: Pool | ScannedLabelLookupExecutor = getServerDbPool(),
 ): Promise<ResolveScannedLabelResult> {
   const executor = isExecutor(poolOrExecutor) ? poolOrExecutor : poolExecutor(poolOrExecutor)
+  const { confidence } = label
 
-  // 1. Confidence-tier gate. The retry tier short-circuits before any
-  // lookup — there's no point pinging Sakenowa when the model itself
-  // isn't confident enough to commit to a (name, brewery) pair.
   const tier = resolveConfidenceTier(confidence)
   debugAdd('ScanAction', `extraction confidence ${confidence.toFixed(2)} → tier "${tier}"`, {
     confidence,
     tier,
   })
-  if (tier === 'retry') {
+
+  const { resolved, corroborated } = await withOtherNames(label, await resolveByShape(label, executor), executor)
+  if (tier === 'retry' && resolved.kind !== 'low_confidence' && !bothFieldsAgree(resolved) && !corroborated) {
+    debugAdd(
+      'ScanAction',
+      `retry-tier read resolved to ${resolved.kind}, short of an exact match — routing to low_confidence`,
+    )
     return { kind: 'low_confidence' }
   }
+  return resolved
+}
 
-  // 2. Placeholder-sentinel guard. Hard-coded routing to low_confidence
+/**
+ * Did brand and brewery both point at this one row? An exact match, or a
+ * brewery match where the brand that was read is part of the stored name
+ * (吉野杉 under 長龍酒造 for 吉野杉の樽酒) — a label cut off by the frame.
+ */
+function bothFieldsAgree(resolved: Exclude<ResolveScannedLabelResult, { kind: 'low_confidence' }>): boolean {
+  if (resolved.kind === 'exact') return true
+  return (
+    resolved.kind === 'matched_brewery_only' &&
+    namesOverlapping(resolved.brandDivergence.extracted, [resolved.brandDivergence.stored]).length === 1
+  )
+}
+
+/** The romaji keys a name printed on a label may be stored under; none for kanji. */
+function latinKeys(name: string): string[] {
+  const kana = kanaToRomaji(name)
+  if (kana !== null) return [romajiKey(kana)]
+  if (!containsNoJapaneseScript(name)) return []
+  // The lookup's own variants: "Awasaki Sparkling" is also "awasaki".
+  return [...new Set(expandLatinBrandVariants(name).map(romajiKey))].filter((key) => key.length >= 3)
+}
+
+const storedKeys = (brand: Brand) =>
+  [brand.name, brand.nameRomaji].flatMap((stored) => (stored == null ? [] : [romajiKey(stored)]))
+
+/** Is `name`, as printed on a label, the catalogue's name for `brand`? */
+function namesBrand(name: string, brand: Brand): boolean {
+  if (expandBrandVariants(name).includes(brand.nameKanji)) return true
+  // Kana and Latin are compared by sound: a furigana くろかぶと has no kanji row.
+  const stored = storedKeys(brand)
+  return latinKeys(name).some((key) => stored.includes(key))
+}
+
+/**
+ * The one brand of `brands` that some other name names, whole name for whole
+ * name. Undefined if no name singles one out. A product word that is only
+ * part of a stored name is not enough: ゆき beside 雪 is not 雪の十和田.
+ */
+function namedBy(otherNames: readonly string[], brands: readonly Brand[]): Brand | undefined {
+  for (const name of otherNames) {
+    const named = brands.filter((b) => namesBrand(name, b))
+    if (named.length === 1) return named[0]
+  }
+  return undefined
+}
+
+/**
+ * Is this a sake the catalogue does not have, from a brewery it does?
+ *
+ * The list is that brewery's lines, and nothing the label prints — the name
+ * the model chose or any other — is one of them or part of one; nor is the
+ * name just the brewery's own (NINKI under 人気酒造, where a list of its
+ * lines is the right question). The label printing a second name is what
+ * says the first was read, not imagined. Then "not in the catalogue" is the
+ * honest answer, and it is the one that lets the visitor keep the bottle as
+ * their own; the brewery's other sakes still reach them as suggestions.
+ */
+async function isAnotherSakeOfTheBrewery(
+  label: ScannedLabel,
+  list: Extract<ResolveScannedLabelResult, { kind: 'ambiguous' }>,
+  executor: ScannedLabelLookupExecutor,
+): Promise<boolean> {
+  const [first] = list.candidates
+  if (!first || list.candidates.some((c) => c.brewery.breweryId !== first.brewery.breweryId)) return false
+
+  const printed = [label.name_ja, ...otherNamesOf(label)]
+  // Every line of the brewery, not only the few the list shows.
+  const lines = [first.sake, ...(await executor.listSiblings(first.sake.brandId))]
+  const namesALine = printed.some(
+    (name) =>
+      lines.some((line) => namesBrand(name, line)) ||
+      namesOverlapping(name, lines.map((line) => line.nameKanji)).length > 0,
+  )
+  if (namesALine) return false
+
+  const { nameKanji, nameRomaji } = first.brewery
+  const isTheHouseName =
+    nameKanji.includes(label.name_ja) || latinKeys(label.name_ja).some((key) => romajiKey(nameRomaji ?? '').includes(key))
+  return !isTheHouseName
+}
+
+/** More names than this is a model listing the whole label; the rest add nothing. */
+const MAX_OTHER_NAMES = 8
+
+/** The label's other names, usable: non-empty, not the name itself, capped. */
+function otherNamesOf(label: ScannedLabel): string[] {
+  return (label.other_names ?? []).filter((n) => n.trim() !== '' && n !== label.name_ja).slice(0, MAX_OTHER_NAMES)
+}
+
+interface WithOtherNames {
+  resolved: ResolveScannedLabelResult
+  /**
+   * The label named the result a second time: the matched sake in another
+   * script, or a sibling line of the same brewery. Independent evidence,
+   * which the confidence gate accepts in place of the model's own score.
+   */
+  corroborated: boolean
+}
+
+/**
+ * Step 5: what the label's other names add to a result.
+ *
+ * - One sake was found, and another name is that sake in a second script
+ *   (不動 beside "Fudoh", 黒兜 beside くろかぶと) or names another line of the
+ *   same brewery (別格 beside 両國): the result is corroborated.
+ * - One sake was found by a name read in Latin, and another name names a
+ *   sibling line: the sibling is the bottle. Latin on a sake label is the
+ *   house mark or an importer's "Sake BRAND Product" title, so the other
+ *   name is the more specific of the two (あわ咲き for "FUKUJU" beside
+ *   あわ咲き or "Awasaki"). Where the model chose a name in Japanese script,
+ *   that name stands — which of two printed names is the product is not
+ *   something the catalogue can tell us.
+ * - A list was found: the candidate another name names is the answer, and
+ *   an exact one — brand or brewery gave the list, a second name settled it.
+ * - Nothing was found: each other name is tried as the brand, in order.
+ */
+async function withOtherNames(
+  label: ScannedLabel,
+  resolved: ResolveScannedLabelResult,
+  executor: ScannedLabelLookupExecutor,
+): Promise<WithOtherNames> {
+  const otherNames = otherNamesOf(label)
+  if (otherNames.length === 0) return { resolved, corroborated: false }
+
+  if (resolved.kind === 'exact' || resolved.kind === 'matched_brand_only' || resolved.kind === 'matched_brewery_only') {
+    const sameSakeAgain = otherNames.some((name) => namesBrand(name, resolved.sake))
+    const sibling = namedBy(otherNames, await executor.listSiblings(resolved.sake.brandId))
+    if (!sibling) return { resolved, corroborated: sameSakeAgain }
+    if (!containsNoJapaneseScript(label.name_ja)) return { resolved, corroborated: true }
+
+    debugAdd('ScanAction', `the label also names the sibling line "${sibling.nameKanji}" — preferring it to the Latin mark`, {
+      matched: resolved.sake.nameKanji,
+      otherNames,
+    })
+    if (resolved.kind === 'matched_brewery_only') {
+      return {
+        resolved: { ...resolved, sake: sibling, brandDivergence: { ...resolved.brandDivergence, stored: sibling.nameKanji } },
+        corroborated: true,
+      }
+    }
+    return { resolved: { ...resolved, sake: sibling }, corroborated: true }
+  }
+
+  if (resolved.kind === 'ambiguous') {
+    const named = namedBy(otherNames, resolved.candidates.map((c) => c.sake))
+    if (!named) {
+      const unlisted = await isAnotherSakeOfTheBrewery(label, resolved, executor)
+      return { resolved: unlisted ? { kind: 'no_match', query: resolved.query } : resolved, corroborated: false }
+    }
+    debugAdd('ScanAction', `another name on the label settles the list on "${named.nameKanji}"`, { otherNames })
+    return { resolved: { kind: 'exact', sake: named }, corroborated: true }
+  }
+
+  for (const name of otherNames) {
+    const retried = await resolveByShape({ ...label, name_ja: name }, executor)
+    if (retried.kind !== 'no_match' && retried.kind !== 'low_confidence') {
+      debugAdd('ScanAction', `name_ja "${label.name_ja}" found nothing; the label's other name "${name}" did`)
+      if (retried.kind === 'ambiguous' && (await isAnotherSakeOfTheBrewery(label, retried, executor))) {
+        return { resolved: { kind: 'no_match', query: retried.query }, corroborated: false }
+      }
+      return { resolved: retried, corroborated: false }
+    }
+  }
+  return { resolved, corroborated: false }
+}
+
+/** Steps 1–4 of `resolveScannedLabel`: everything but the confidence gate. */
+async function resolveByShape(
+  { name_ja, brewery_ja, confidence }: ScannedLabel,
+  executor: ScannedLabelLookupExecutor,
+): Promise<ResolveScannedLabelResult> {
+  // 1. Placeholder-sentinel guard. Hard-coded routing to low_confidence
   // so a placeholder at 0.85 doesn't pass through as `auto` and feed the
   // Sakenowa lookup a query that can never match.
   if (isPlaceholderExtraction(name_ja) || isPlaceholderExtraction(brewery_ja)) {
@@ -201,22 +412,28 @@ export async function resolveScannedLabel(
     return { kind: 'low_confidence' }
   }
 
-  // 3. Latin-brewery guard. Latin in `name_ja` is FINE — the cascade's
-  // 5th-pass Latin lookup matches the ~110 Latin-only brands and the
-  // romaji column. Brewery names, however, are essentially always kanji
-  // in Sakenowa; Latin in brewery_ja is a strong signal the model
-  // misread something (rice-variety call-out, retailer name, …).
+  // 2. Latin brewery. An importer's back label names the maker in Latin
+  // only, and a model that follows the prompt returns it as printed. The
+  // kanji passes cannot use it, so it gets its own lookup. A one-character
+  // brand beside it leaves nothing to look up by.
   if (containsNoJapaneseScript(brewery_ja)) {
-    debugAdd(
-      'ScanAction',
-      'extraction.brewery_ja is Latin-only — routing to low_confidence (brewery names should be Japanese script)',
-      { name_ja, brewery_ja },
-      'warn',
-    )
-    return { kind: 'low_confidence' }
+    if (looksLikeSingleCharHallucination(name_ja)) {
+      debugAdd(
+        'ScanAction',
+        'one-character name_ja and a Latin-only brewery_ja — nothing to look up by, routing to low_confidence',
+        { name_ja, brewery_ja },
+        'warn',
+      )
+      return { kind: 'low_confidence' }
+    }
+    debugAdd('ScanAction', 'extraction.brewery_ja is Latin-only — using the Latin-brewery lookup', {
+      name_ja,
+      brewery_ja,
+    })
+    return executor.findByLatinBrewery({ nameJa: name_ja, breweryJa: brewery_ja })
   }
 
-  // 4. Single-character brand hallucination guard. A 1-char name_ja is a
+  // 3. Single-character brand hallucination guard. A 1-char name_ja is a
   // near-certain "high-confidence coherent garbage" signal. Before
   // retreating to low_confidence, try to rescue via the brewery.
   //
@@ -263,7 +480,7 @@ export async function resolveScannedLabel(
     return { kind: 'low_confidence' }
   }
 
-  // 5. Full 5-pass cascade (first-pass exact → brand-only → brewery-only
+  // 4. Full 5-pass cascade (first-pass exact → brand-only → brewery-only
   // → field-swap → Latin). Owns its own internal guard ordering.
   return executor.findByExtraction({ nameJa: name_ja, breweryJa: brewery_ja })
 }

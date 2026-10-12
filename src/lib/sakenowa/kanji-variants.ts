@@ -100,6 +100,11 @@ const VARIANT_GROUPS: ReadonlyArray<ReadonlyArray<string>> = [
   // Respond / accept — appears in older brand names
   // (大應 / 大応 family).
   ['應', '応'],
+  // Not an old/new pair, but the same equivalence in practice: the
+  // particle "no" is printed 乃 on a label as often as の, and the
+  // catalogue holds one of the two (澤の花 for a label reading 澤乃花,
+  // 越乃寒梅 for a read of 越の寒梅).
+  ['乃', 'の'],
 ] as const
 
 // Build a map from each character to its sibling forms (every other

@@ -8,25 +8,1407 @@
       "notes": "PIPELINE SMOKE FIXTURE — NOT a real eval photo. A deterministic 1x1 JPEG in fixtures/ used only to prove `pnpm eval label-scan-jp` runs end-to-end. Its ground truth matches what the `e2e-stub` provider returns verbatim (獺祭 / 旭酒造), so the smoke run reports a 1.00 exact-match and demonstrates the metric wiring. Real vision providers must NOT be judged on this image — run them against photos/ only. Does not count toward the 20-photo corpus target."
     }
   },
-
-  "PLACEHOLDER-01-dassai.jpg": {
-    "name_ja": "獺祭",
-    "brewery_ja": "旭酒造",
+  "rihaku_wandering_poet_clear.jpg": {
+    "name_ja": "李白",
+    "brewery_ja": "李白酒造",
+    "bottle": "rihaku-wandering-poet",
+    "view": "front",
+    "expectedBrandIds": [
+      846
+    ],
     "provenance": {
       "source": "maintainer_own_bottle",
-      "rightsCleared": false,
-      "notes": "PLACEHOLDER — copy-paste template, NOT a real entry. There is no PLACEHOLDER-01-dassai.jpg on disk and rightsCleared is false, so the runner skips it. To make it real: (1) add photos/dassai.jpg (a photo you took of a bottle you own), (2) rename this key to `dassai.jpg`, (3) set rightsCleared: true, (4) replace this note with a one-line description of the bottle/photo."
+      "rightsCleared": true,
+      "notes": "Rihaku \"Wandering Poet\" junmai ginjo, 300 ml. This photo: front label."
     }
   },
-
-  "PLACEHOLDER-02-hakkaisan.jpg": {
-    "name_ja": "八海山",
-    "brewery_ja": "八海醸造",
+  "rihaku_wandering_poet_label_de.jpg": {
+    "name_ja": "李白",
+    "brewery_ja": "李白酒造",
+    "bottle": "rihaku-wandering-poet",
+    "view": "back_import",
+    "expectedBrandIds": [
+      846
+    ],
     "provenance": {
-      "source": "public_domain",
-      "rightsCleared": false,
-      "attribution": "PLACEHOLDER — e.g. https://commons.wikimedia.org/wiki/File:... (record the exact source URL + licence here)",
-      "notes": "PLACEHOLDER — copy-paste template, NOT a real entry. Same rules as PLACEHOLDER-01. For public-domain / CC sources, fill `attribution` with the exact source URL and licence and confirm the licence actually permits this use before setting rightsCleared: true."
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Rihaku \"Wandering Poet\" junmai ginjo, 300 ml. This photo: the importer's German or French back label."
+    }
+  },
+  "rihaku_wandering_poet_side.jpg": {
+    "name_ja": "李白",
+    "brewery_ja": "李白酒造",
+    "bottle": "rihaku-wandering-poet",
+    "view": "side",
+    "expectedBrandIds": [
+      846
+    ],
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Rihaku \"Wandering Poet\" junmai ginjo, 300 ml. This photo: label turned to one side."
+    }
+  },
+  "amabuki_kimoto_junmai_daiginjo_clear.jpg": {
+    "name_ja": "天吹",
+    "brewery_ja": "天吹酒造",
+    "bottle": "amabuki-kimoto-jdg",
+    "view": "front",
+    "expectedBrandIds": [
+      973
+    ],
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Amabuki kimoto junmai daiginjo Omachi, 720 ml. This photo: front label."
+    }
+  },
+  "amabuki_kimoto_junmai_daiginjo_label.jpg": {
+    "name_ja": "天吹",
+    "brewery_ja": "天吹酒造",
+    "bottle": "amabuki-kimoto-jdg",
+    "view": "back_import",
+    "expectedBrandIds": [
+      973
+    ],
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Amabuki kimoto junmai daiginjo Omachi, 720 ml. This photo: the importer's German or French back label."
+    }
+  },
+  "amabuki_kimoto_junmai_daiginjo_side.jpg": {
+    "name_ja": "天吹",
+    "brewery_ja": "天吹酒造",
+    "bottle": "amabuki-kimoto-jdg",
+    "view": "side",
+    "expectedBrandIds": [
+      973
+    ],
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Amabuki kimoto junmai daiginjo Omachi, 720 ml. This photo: label turned to one side."
+    }
+  },
+  "amabuki_yamahai_junmai_omachi_from_top.jpg": {
+    "name_ja": "天吹",
+    "brewery_ja": "天吹酒造",
+    "bottle": "amabuki-yamahai-cup",
+    "view": "front",
+    "expectedBrandIds": [
+      973
+    ],
+    "also": {
+      "name_ja": [
+        "AMABUKI"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Amabuki yamahai junmai Omachi \"Marigold\" cup, 180 ml — print on clear glass. This photo: front label."
+    }
+  },
+  "amabuki_yamahai_junmai_omachi_front.jpg": {
+    "name_ja": "天吹",
+    "brewery_ja": "天吹酒造",
+    "bottle": "amabuki-yamahai-cup",
+    "view": "front",
+    "expectedBrandIds": [
+      973
+    ],
+    "also": {
+      "name_ja": [
+        "AMABUKI"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Amabuki yamahai junmai Omachi \"Marigold\" cup, 180 ml — print on clear glass. This photo: front label."
+    }
+  },
+  "amabuki_yamahai_junmai_omachi_front_2.jpg": {
+    "name_ja": "天吹",
+    "brewery_ja": "天吹酒造",
+    "bottle": "amabuki-yamahai-cup",
+    "view": "front",
+    "expectedBrandIds": [
+      973
+    ],
+    "also": {
+      "name_ja": [
+        "AMABUKI"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Amabuki yamahai junmai Omachi \"Marigold\" cup, 180 ml — print on clear glass. This photo: front label."
+    }
+  },
+  "amabuki_yamahai_junmai_omachi_label.jpg": {
+    "name_ja": "天吹",
+    "brewery_ja": "天吹酒造",
+    "bottle": "amabuki-yamahai-cup",
+    "view": "back_import",
+    "expectedBrandIds": [
+      973
+    ],
+    "also": {
+      "name_ja": [
+        "AMABUKI"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Amabuki yamahai junmai Omachi \"Marigold\" cup, 180 ml — print on clear glass. This photo: the importer's German or French back label."
+    }
+  },
+  "bekkaku_tokubetsu_honjozo_clear.jpg": {
+    "name_ja": "別格",
+    "brewery_ja": "角星",
+    "bottle": "bekkaku",
+    "view": "front",
+    "expectedBrandIds": [
+      69
+    ],
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Bekkaku tokubetsu honjozo, 720 ml — the brewery is named on the front only by its crest line 金紋両國. This photo: front label."
+    }
+  },
+  "bekkaku_tokubetsu_honjozo_label.jpg": {
+    "name_ja": "別格",
+    "brewery_ja": "角星",
+    "bottle": "bekkaku",
+    "view": "back_import",
+    "expectedBrandIds": [
+      69
+    ],
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Bekkaku tokubetsu honjozo, 720 ml — the brewery is named on the front only by its crest line 金紋両國. This photo: the importer's German or French back label."
+    }
+  },
+  "choryo_yoshinosugi_taruzake_clear.jpg": {
+    "name_ja": "吉野杉の樽酒",
+    "brewery_ja": "長龍酒造",
+    "bottle": "choryo-tarusake",
+    "view": "front",
+    "expectedBrandIds": [
+      2120
+    ],
+    "also": {
+      "name_ja": [
+        "樽酒"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Choryo Yoshinosugi no Taruzake, 300 ml. This photo: front label."
+    }
+  },
+  "choryo_yoshinosugi_taruzake_label.jpg": {
+    "name_ja": "吉野杉の樽酒",
+    "brewery_ja": "長龍酒造",
+    "bottle": "choryo-tarusake",
+    "view": "back_import",
+    "expectedBrandIds": [
+      2120
+    ],
+    "also": {
+      "name_ja": [
+        "樽酒"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Choryo Yoshinosugi no Taruzake, 300 ml. This photo: the importer's German or French back label."
+    }
+  },
+  "choryo_yoshinosugi_taruzake_label_ja.jpg": {
+    "name_ja": "吉野杉の樽酒",
+    "brewery_ja": "長龍酒造",
+    "bottle": "choryo-tarusake",
+    "view": "back_ja",
+    "expectedBrandIds": [
+      2120
+    ],
+    "also": {
+      "name_ja": [
+        "樽酒"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Choryo Yoshinosugi no Taruzake, 300 ml. This photo: Japanese back or side label."
+    }
+  },
+  "choryo_yoshinosugi_taruzake_side.jpg": {
+    "name_ja": "吉野杉の樽酒",
+    "brewery_ja": "長龍酒造",
+    "bottle": "choryo-tarusake",
+    "view": "side",
+    "expectedBrandIds": [
+      2120
+    ],
+    "also": {
+      "name_ja": [
+        "樽酒"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Choryo Yoshinosugi no Taruzake, 300 ml. This photo: label turned to one side."
+    }
+  },
+  "daruma_masamune_almost_clear.jpg": {
+    "name_ja": "達磨正宗",
+    "brewery_ja": "白木恒助商店",
+    "bottle": "daruma-masamune",
+    "view": "front",
+    "expectedBrandIds": [
+      2692,
+      2780
+    ],
+    "also": {
+      "name_ja": [
+        "DARUMA-MASAMUNE",
+        "DARUMA MASAMUNE"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Daruma Masamune aged-sake set (3/5/10 years) — the BOX, whose front names the sake in Latin only. This photo: front label. The catalogue lists this sake twice, as 達磨正宗 and ダルマ正宗."
+    }
+  },
+  "daruma_masamune_clear.jpg": {
+    "name_ja": "達磨正宗",
+    "brewery_ja": "白木恒助商店",
+    "bottle": "daruma-masamune",
+    "view": "front",
+    "expectedBrandIds": [
+      2692,
+      2780
+    ],
+    "also": {
+      "name_ja": [
+        "DARUMA-MASAMUNE",
+        "DARUMA MASAMUNE"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Daruma Masamune aged-sake set (3/5/10 years) — the BOX, whose front names the sake in Latin only. This photo: front label. The catalogue lists this sake twice, as 達磨正宗 and ダルマ正宗."
+    }
+  },
+  "daruma_masamune_label.jpg": {
+    "name_ja": "達磨正宗",
+    "brewery_ja": "白木恒助商店",
+    "bottle": "daruma-masamune",
+    "view": "back_import",
+    "expectedBrandIds": [
+      2692,
+      2780
+    ],
+    "also": {
+      "name_ja": [
+        "DARUMA-MASAMUNE",
+        "DARUMA MASAMUNE"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Daruma Masamune aged-sake set (3/5/10 years) — the BOX, whose front names the sake in Latin only. This photo: the importer's German or French back label. The catalogue lists this sake twice, as 達磨正宗 and ダルマ正宗."
+    }
+  },
+  "dewazakura_yukimegami_clear.jpg": {
+    "name_ja": "出羽桜",
+    "brewery_ja": "出羽桜酒造",
+    "bottle": "dewazakura-yukimegami",
+    "view": "front",
+    "expectedBrandIds": [
+      135
+    ],
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Dewazakura Yukimegami junmai daiginjo, 720 ml. This photo: front label."
+    }
+  },
+  "dewazakura_yukimegami_label_clear.jpg": {
+    "name_ja": "出羽桜",
+    "brewery_ja": "出羽桜酒造",
+    "bottle": "dewazakura-yukimegami",
+    "view": "back_import",
+    "expectedBrandIds": [
+      135
+    ],
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Dewazakura Yukimegami junmai daiginjo, 720 ml. This photo: the importer's German or French back label."
+    }
+  },
+  "dewazakura_yukimegami_label_side.jpg": {
+    "name_ja": "出羽桜",
+    "brewery_ja": "出羽桜酒造",
+    "bottle": "dewazakura-yukimegami",
+    "view": "back_import",
+    "expectedBrandIds": [
+      135
+    ],
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Dewazakura Yukimegami junmai daiginjo, 720 ml. This photo: the importer's German or French back label."
+    }
+  },
+  "dewazakura_yukimegami_side.jpg": {
+    "name_ja": "出羽桜",
+    "brewery_ja": "出羽桜酒造",
+    "bottle": "dewazakura-yukimegami",
+    "view": "side",
+    "expectedBrandIds": [
+      135
+    ],
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Dewazakura Yukimegami junmai daiginjo, 720 ml. This photo: label turned to one side."
+    }
+  },
+  "fudoh_fusakogane_migaki_80_junmai_nama_nabedana_clearish.jpg": {
+    "name_ja": "不動",
+    "brewery_ja": "鍋店",
+    "bottle": "fudoh",
+    "view": "front",
+    "expectedBrandIds": [
+      312
+    ],
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Fudoh Fusakogane migaki 80 junmai nama genshu, 720 ml — foil brand characters. This photo: front label."
+    }
+  },
+  "fudoh_fusakogane_migaki_80_junmai_nama_nabedana_label.jpg": {
+    "name_ja": "不動",
+    "brewery_ja": "鍋店",
+    "bottle": "fudoh",
+    "view": "back_import",
+    "expectedBrandIds": [
+      312
+    ],
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Fudoh Fusakogane migaki 80 junmai nama genshu, 720 ml — foil brand characters. This photo: the importer's German or French back label."
+    }
+  },
+  "fukuju_awasaki_sparkling_clear.jpg": {
+    "name_ja": "あわ咲き",
+    "brewery_ja": "神戸酒心館",
+    "bottle": "fukuju-awasaki",
+    "view": "front",
+    "expectedBrandIds": [
+      3434
+    ],
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Fukuju Awasaki sparkling junmai, 300 ml — its own catalogue row, not 福寿. This photo: front label."
+    }
+  },
+  "fukuju_awasaki_sparkling_label.jpg": {
+    "name_ja": "あわ咲き",
+    "brewery_ja": "神戸酒心館",
+    "bottle": "fukuju-awasaki",
+    "view": "back_import",
+    "expectedBrandIds": [
+      3434
+    ],
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Fukuju Awasaki sparkling junmai, 300 ml — its own catalogue row, not 福寿. This photo: the importer's German or French back label."
+    }
+  },
+  "fukuju_awasaki_sparkling_side.jpg": {
+    "name_ja": "あわ咲き",
+    "brewery_ja": "神戸酒心館",
+    "bottle": "fukuju-awasaki",
+    "view": "side",
+    "expectedBrandIds": [
+      3434
+    ],
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Fukuju Awasaki sparkling junmai, 300 ml — its own catalogue row, not 福寿. This photo: label turned to one side."
+    }
+  },
+  "fukuju_kobe_classic_clear.jpg": {
+    "name_ja": "福寿",
+    "brewery_ja": "神戸酒心館",
+    "bottle": "fukuju-kobe-classic",
+    "view": "front",
+    "expectedBrandIds": [
+      769
+    ],
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Fukuju junmai ginjo \"Kobe Classic\", 300 ml. This photo: front label."
+    }
+  },
+  "fukuju_kobe_classic_label.jpg": {
+    "name_ja": "福寿",
+    "brewery_ja": "神戸酒心館",
+    "bottle": "fukuju-kobe-classic",
+    "view": "back_import",
+    "expectedBrandIds": [
+      769
+    ],
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Fukuju junmai ginjo \"Kobe Classic\", 300 ml. This photo: the importer's German or French back label."
+    }
+  },
+  "hanatomoe_sugi_barrel_clear.jpg": {
+    "name_ja": "花巴",
+    "brewery_ja": "美吉野醸造",
+    "bottle": "hanatomoe-sugi-barrel",
+    "view": "front",
+    "expectedBrandIds": [
+      793
+    ],
+    "also": {
+      "name_ja": [
+        "ハナトモエ",
+        "HANATOMOE"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Hanatomoe \"Sugi Barrel\" taru junmai, 300 ml — the big characters are 樽丸, the brand is printed in katakana and Latin. This photo: front label."
+    }
+  },
+  "hanatomoe_sugi_barrel_label.jpg": {
+    "name_ja": "花巴",
+    "brewery_ja": "美吉野醸造",
+    "bottle": "hanatomoe-sugi-barrel",
+    "view": "back_import",
+    "expectedBrandIds": [
+      793
+    ],
+    "also": {
+      "name_ja": [
+        "ハナトモエ",
+        "HANATOMOE"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Hanatomoe \"Sugi Barrel\" taru junmai, 300 ml — the big characters are 樽丸, the brand is printed in katakana and Latin. This photo: the importer's German or French back label."
+    }
+  },
+  "hanatomoe_sugi_barrel_side.jpg": {
+    "name_ja": "花巴",
+    "brewery_ja": "美吉野醸造",
+    "bottle": "hanatomoe-sugi-barrel",
+    "view": "side",
+    "expectedBrandIds": [
+      793
+    ],
+    "also": {
+      "name_ja": [
+        "ハナトモエ",
+        "HANATOMOE"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Hanatomoe \"Sugi Barrel\" taru junmai, 300 ml — the big characters are 樽丸, the brand is printed in katakana and Latin. This photo: label turned to one side."
+    }
+  },
+  "hokushika_yuki_namachozo_clear.jpg": {
+    "name_ja": "雪",
+    "brewery_ja": "北鹿",
+    "bottle": "hokushika-yuki",
+    "view": "front",
+    "expectedBrandIds": [],
+    "also": {
+      "name_ja": [
+        "北鹿",
+        "HOKUSHIKA YUKI",
+        "北鹿 雪"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Hokushika \"Yuki\" honjozo namachozo, 300 ml — NOT in the catalogue (北鹿 has five other rows). This photo: front label."
+    }
+  },
+  "hokushika_yuki_namachozo_label.jpg": {
+    "name_ja": "雪",
+    "brewery_ja": "北鹿",
+    "bottle": "hokushika-yuki",
+    "view": "back_import",
+    "expectedBrandIds": [],
+    "also": {
+      "name_ja": [
+        "北鹿",
+        "HOKUSHIKA YUKI",
+        "北鹿 雪"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Hokushika \"Yuki\" honjozo namachozo, 300 ml — NOT in the catalogue (北鹿 has five other rows). This photo: the importer's German or French back label."
+    }
+  },
+  "hokushika_yuki_namachozo_side.jpg": {
+    "name_ja": "雪",
+    "brewery_ja": "北鹿",
+    "bottle": "hokushika-yuki",
+    "view": "side",
+    "expectedBrandIds": [],
+    "also": {
+      "name_ja": [
+        "北鹿",
+        "HOKUSHIKA YUKI",
+        "北鹿 雪"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Hokushika \"Yuki\" honjozo namachozo, 300 ml — NOT in the catalogue (北鹿 has five other rows). This photo: label turned to one side."
+    }
+  },
+  "ikekame_barrel_clear.jpg": {
+    "name_ja": "池亀",
+    "brewery_ja": "池亀酒造",
+    "bottle": "ikekame-barrel",
+    "view": "front",
+    "expectedBrandIds": [
+      952
+    ],
+    "also": {
+      "name_ja": [
+        "IKEKAME"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Ikekame \"Barrel\" junmai daiginjo, 720 ml — brand characters are a pale watermark behind Latin text. This photo: front label."
+    }
+  },
+  "ikekame_barrel_label.jpg": {
+    "name_ja": "池亀",
+    "brewery_ja": "池亀酒造",
+    "bottle": "ikekame-barrel",
+    "view": "back_import",
+    "expectedBrandIds": [
+      952
+    ],
+    "also": {
+      "name_ja": [
+        "IKEKAME"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Ikekame \"Barrel\" junmai daiginjo, 720 ml — brand characters are a pale watermark behind Latin text. This photo: the importer's German or French back label."
+    }
+  },
+  "ikekame_junmai_ginjo_nama_clear.jpg": {
+    "name_ja": "黒兜",
+    "brewery_ja": "池亀酒造",
+    "bottle": "ikekame-kurokabuto",
+    "view": "front",
+    "expectedBrandIds": [
+      1123
+    ],
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Ikekame Kurokabuto junmai ginjo nama, 720 ml — its own catalogue row; heavy brush calligraphy. This photo: front label."
+    }
+  },
+  "ikekame_junmai_ginjo_nama_label.jpg": {
+    "name_ja": "黒兜",
+    "brewery_ja": "池亀酒造",
+    "bottle": "ikekame-kurokabuto",
+    "view": "back_import",
+    "expectedBrandIds": [
+      1123,
+      952
+    ],
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Ikekame Kurokabuto junmai ginjo nama, 720 ml — its own catalogue row; heavy brush calligraphy. This photo: the importer's German or French back label. This label never names Kurokabuto, only \"IKEKAME Junmai Ginjo Nama\", so the brewery's main line 池亀 is as right an answer as 黒兜."
+    }
+  },
+  "ikekame_junmai_ginjo_nama_side.jpg": {
+    "name_ja": "黒兜",
+    "brewery_ja": "池亀酒造",
+    "bottle": "ikekame-kurokabuto",
+    "view": "side",
+    "expectedBrandIds": [
+      1123
+    ],
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Ikekame Kurokabuto junmai ginjo nama, 720 ml — its own catalogue row; heavy brush calligraphy. This photo: label turned to one side."
+    }
+  },
+  "katsuyama_en_clear.jpg": {
+    "name_ja": "勝山",
+    "brewery_ja": "仙台伊澤家 勝山酒造",
+    "bottle": "katsuyama-en",
+    "view": "front",
+    "expectedBrandIds": [
+      60
+    ],
+    "also": {
+      "name_ja": [
+        "勝山 縁",
+        "勝山縁"
+      ],
+      "brewery_ja": [
+        "仙台伊澤家勝山酒造",
+        "勝山酒造"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Katsuyama \"En\" tokubetsu junmai, 720 ml. This photo: front label."
+    }
+  },
+  "katsuyama_en_label_de.jpg": {
+    "name_ja": "勝山",
+    "brewery_ja": "仙台伊澤家 勝山酒造",
+    "bottle": "katsuyama-en",
+    "view": "back_import",
+    "expectedBrandIds": [
+      60
+    ],
+    "also": {
+      "name_ja": [
+        "勝山 縁",
+        "勝山縁"
+      ],
+      "brewery_ja": [
+        "仙台伊澤家勝山酒造",
+        "勝山酒造"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Katsuyama \"En\" tokubetsu junmai, 720 ml. This photo: the importer's German or French back label."
+    }
+  },
+  "katsuyama_en_label_ja.jpg": {
+    "name_ja": "勝山",
+    "brewery_ja": "仙台伊澤家 勝山酒造",
+    "bottle": "katsuyama-en",
+    "view": "back_ja",
+    "expectedBrandIds": [
+      60
+    ],
+    "also": {
+      "name_ja": [
+        "勝山 縁",
+        "勝山縁"
+      ],
+      "brewery_ja": [
+        "仙台伊澤家勝山酒造",
+        "勝山酒造"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Katsuyama \"En\" tokubetsu junmai, 720 ml. This photo: Japanese back or side label."
+    }
+  },
+  "miwa_shuzo_shirakawago_junmaishu_uwazumi_clear.jpg": {
+    "name_ja": "白川郷",
+    "brewery_ja": "三輪酒造",
+    "bottle": "shirakawago-uwazumi",
+    "view": "front",
+    "expectedBrandIds": [
+      583
+    ],
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Miwa Shuzo Shirakawago junmai uwazumi, 300 ml — brand in seal-style characters. This photo: front label."
+    }
+  },
+  "miwa_shuzo_shirakawago_junmaishu_uwazumi_label.jpg": {
+    "name_ja": "白川郷",
+    "brewery_ja": "三輪酒造",
+    "bottle": "shirakawago-uwazumi",
+    "view": "back_import",
+    "expectedBrandIds": [
+      583
+    ],
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Miwa Shuzo Shirakawago junmai uwazumi, 300 ml — brand in seal-style characters. This photo: the importer's German or French back label."
+    }
+  },
+  "mizumoto_hanatomoe_clear.jpg": {
+    "name_ja": "花巴",
+    "brewery_ja": "美吉野醸造",
+    "bottle": "hanatomoe-mizumoto",
+    "view": "front",
+    "expectedBrandIds": [
+      793
+    ],
+    "also": {
+      "name_ja": [
+        "HANATOMOE"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Hanatomoe mizumoto junmai nama, 720 ml. This photo: front label."
+    }
+  },
+  "mizumoto_hanatomoe_label.jpg": {
+    "name_ja": "花巴",
+    "brewery_ja": "美吉野醸造",
+    "bottle": "hanatomoe-mizumoto",
+    "view": "back_import",
+    "expectedBrandIds": [
+      793
+    ],
+    "also": {
+      "name_ja": [
+        "HANATOMOE"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Hanatomoe mizumoto junmai nama, 720 ml. This photo: the importer's German or French back label."
+    }
+  },
+  "mizumoto_hanatomoe_side.jpg": {
+    "name_ja": "花巴",
+    "brewery_ja": "美吉野醸造",
+    "bottle": "hanatomoe-mizumoto",
+    "view": "side",
+    "expectedBrandIds": [
+      793
+    ],
+    "also": {
+      "name_ja": [
+        "HANATOMOE"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Hanatomoe mizumoto junmai nama, 720 ml. This photo: label turned to one side."
+    }
+  },
+  "ninki_gold_label_clear.jpg": {
+    "name_ja": "人気一",
+    "brewery_ja": "人気酒造",
+    "bottle": "ninki-gold",
+    "view": "front",
+    "expectedBrandIds": [
+      190,
+      191
+    ],
+    "also": {
+      "name_ja": [
+        "ニンキイチ",
+        "NINKI-ICHI",
+        "ゴールド人気",
+        "人気"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Ninki-ichi \"Gold\" junmai daiginjo, 720 ml — brand is a stylised mark plus katakana. This photo: front label. ゴールド人気 has its own catalogue row beside the line 人気一; either is the bottle."
+    }
+  },
+  "ninki_gold_label_label.jpg": {
+    "name_ja": "人気一",
+    "brewery_ja": "人気酒造",
+    "bottle": "ninki-gold",
+    "view": "back_import",
+    "expectedBrandIds": [
+      190,
+      191
+    ],
+    "also": {
+      "name_ja": [
+        "ニンキイチ",
+        "NINKI-ICHI",
+        "ゴールド人気",
+        "人気"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Ninki-ichi \"Gold\" junmai daiginjo, 720 ml — brand is a stylised mark plus katakana. This photo: the importer's German or French back label. ゴールド人気 has its own catalogue row beside the line 人気一; either is the bottle."
+    }
+  },
+  "ninki_sparkling_junmai_daiginjo_clear.jpg": {
+    "name_ja": "人気一",
+    "brewery_ja": "人気酒造",
+    "bottle": "ninki-sparkling",
+    "view": "front",
+    "expectedBrandIds": [
+      191
+    ],
+    "also": {
+      "name_ja": [
+        "NINKI-ICHI",
+        "人気"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Ninki-ichi sparkling junmai ginjo, 300 ml — stylised mark plus Latin only. This photo: front label."
+    }
+  },
+  "ninki_sparkling_junmai_daiginjo_label.jpg": {
+    "name_ja": "人気一",
+    "brewery_ja": "人気酒造",
+    "bottle": "ninki-sparkling",
+    "view": "back_import",
+    "expectedBrandIds": [
+      191
+    ],
+    "also": {
+      "name_ja": [
+        "NINKI-ICHI",
+        "人気"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Ninki-ichi sparkling junmai ginjo, 300 ml — stylised mark plus Latin only. This photo: the importer's German or French back label."
+    }
+  },
+  "nohime_no_sato_kakushi_ginjo_clear.jpg": {
+    "name_ja": "濃姫の里",
+    "brewery_ja": "清洲桜醸造",
+    "bottle": "nohime-kakushi-ginjo",
+    "view": "front",
+    "expectedBrandIds": [],
+    "also": {
+      "name_ja": [
+        "濃姫の里 隠し吟醸",
+        "隠し吟醸"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Nohime no Sato Kakushi Ginjo, 180 ml — NOT in the catalogue (清洲桜醸造 has three other rows). This photo: front label."
+    }
+  },
+  "nohime_no_sato_kakushi_ginjo_label.jpg": {
+    "name_ja": "濃姫の里",
+    "brewery_ja": "清洲桜醸造",
+    "bottle": "nohime-kakushi-ginjo",
+    "view": "back_import",
+    "expectedBrandIds": [],
+    "also": {
+      "name_ja": [
+        "濃姫の里 隠し吟醸",
+        "隠し吟醸"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Nohime no Sato Kakushi Ginjo, 180 ml — NOT in the catalogue (清洲桜醸造 has three other rows). This photo: the importer's German or French back label."
+    }
+  },
+  "rihaku_dreamy_clouds_clear.jpg": {
+    "name_ja": "李白",
+    "brewery_ja": "李白酒造",
+    "bottle": "rihaku-dreamy-clouds",
+    "view": "front",
+    "expectedBrandIds": [
+      846
+    ],
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Rihaku \"Dreamy Clouds\" tokubetsu junmai nigori, 300 ml. This photo: front label."
+    }
+  },
+  "rihaku_dreamy_clouds_label.jpg": {
+    "name_ja": "李白",
+    "brewery_ja": "李白酒造",
+    "bottle": "rihaku-dreamy-clouds",
+    "view": "back_import",
+    "expectedBrandIds": [
+      846
+    ],
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Rihaku \"Dreamy Clouds\" tokubetsu junmai nigori, 300 ml. This photo: the importer's German or French back label."
+    }
+  },
+  "rihaku_dreamy_clouds_side.jpg": {
+    "name_ja": "李白",
+    "brewery_ja": "李白酒造",
+    "bottle": "rihaku-dreamy-clouds",
+    "view": "side",
+    "expectedBrandIds": [
+      846
+    ],
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Rihaku \"Dreamy Clouds\" tokubetsu junmai nigori, 300 ml. This photo: label turned to one side."
+    }
+  },
+  "sanwa_shuzo_garyubai_junmai_ginjo_genshu_clear.jpg": {
+    "name_ja": "臥龍梅",
+    "brewery_ja": "三和酒造",
+    "bottle": "garyubai",
+    "view": "front",
+    "expectedBrandIds": [
+      608
+    ],
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Garyubai junmai ginjo genshu Yamada Nishiki, 720 ml. This photo: front label."
+    }
+  },
+  "sanwa_shuzo_garyubai_junmai_ginjo_genshu_label.jpg": {
+    "name_ja": "臥龍梅",
+    "brewery_ja": "三和酒造",
+    "bottle": "garyubai",
+    "view": "back_import",
+    "expectedBrandIds": [
+      608
+    ],
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Garyubai junmai ginjo genshu Yamada Nishiki, 720 ml. This photo: the importer's German or French back label."
+    }
+  },
+  "sawa_no_hana_kokoro_clear.jpg": {
+    "name_ja": "澤の花",
+    "brewery_ja": "伴野酒造",
+    "bottle": "sawa-no-hana",
+    "view": "front",
+    "expectedBrandIds": [
+      538
+    ],
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Sawa no Hana \"Hanagokoro\" karakuchi junmai, 720 ml — foil brand characters. This photo: front label."
+    }
+  },
+  "sawa_no_hana_kokoro_label.jpg": {
+    "name_ja": "澤の花",
+    "brewery_ja": "伴野酒造",
+    "bottle": "sawa-no-hana",
+    "view": "back_import",
+    "expectedBrandIds": [
+      538
+    ],
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Sawa no Hana \"Hanagokoro\" karakuchi junmai, 720 ml — foil brand characters. This photo: the importer's German or French back label."
+    }
+  },
+  "sawa_no_hana_kokoro_side.jpg": {
+    "name_ja": "澤の花",
+    "brewery_ja": "伴野酒造",
+    "bottle": "sawa-no-hana",
+    "view": "side",
+    "expectedBrandIds": [
+      538
+    ],
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Sawa no Hana \"Hanagokoro\" karakuchi junmai, 720 ml — foil brand characters. This photo: label turned to one side."
+    }
+  },
+  "seki_no_ichi_junmai_daiginjo_clear.jpg": {
+    "name_ja": "世嬉の一",
+    "brewery_ja": "世嬉の一酒造",
+    "bottle": "seki-no-ichi",
+    "view": "front",
+    "expectedBrandIds": [
+      1134
+    ],
+    "also": {
+      "name_ja": [
+        "せきのいち",
+        "SEKINO-ICHI"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Sekinoichi junmai daiginjo 40, 300 ml — the catalogue spells the brand in hiragana (せきのいち); the front is an abstract mark plus Latin. This photo: front label."
+    }
+  },
+  "seki_no_ichi_junmai_daiginjo_label_ja.jpg": {
+    "name_ja": "世嬉の一",
+    "brewery_ja": "世嬉の一酒造",
+    "bottle": "seki-no-ichi",
+    "view": "back_ja",
+    "expectedBrandIds": [
+      1134
+    ],
+    "also": {
+      "name_ja": [
+        "せきのいち",
+        "SEKINO-ICHI"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Sekinoichi junmai daiginjo 40, 300 ml — the catalogue spells the brand in hiragana (せきのいち); the front is an abstract mark plus Latin. This photo: Japanese back or side label."
+    }
+  },
+  "shichiken_sparkling_dry_clear.jpg": {
+    "name_ja": "七賢",
+    "brewery_ja": "山梨銘醸",
+    "bottle": "shichiken-sparkling",
+    "view": "front",
+    "expectedBrandIds": [
+      535
+    ],
+    "also": {
+      "name_ja": [
+        "七賢 山ノ霞",
+        "山ノ霞"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Shichiken \"Yama no Kasumi\" sparkling, 360 ml. This photo: front label."
+    }
+  },
+  "shichiken_sparkling_dry_label.jpg": {
+    "name_ja": "七賢",
+    "brewery_ja": "山梨銘醸",
+    "bottle": "shichiken-sparkling",
+    "view": "back_import",
+    "expectedBrandIds": [
+      535
+    ],
+    "also": {
+      "name_ja": [
+        "七賢 山ノ霞",
+        "山ノ霞"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Shichiken \"Yama no Kasumi\" sparkling, 360 ml. This photo: the importer's German or French back label."
+    }
+  },
+  "shichiken_sparkling_dry_side.jpg": {
+    "name_ja": "七賢",
+    "brewery_ja": "山梨銘醸",
+    "bottle": "shichiken-sparkling",
+    "view": "side",
+    "expectedBrandIds": [
+      535
+    ],
+    "also": {
+      "name_ja": [
+        "七賢 山ノ霞",
+        "山ノ霞"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Shichiken \"Yama no Kasumi\" sparkling, 360 ml. This photo: label turned to one side."
+    }
+  },
+  "shichiken_sparkling_dry_top_band.jpg": {
+    "name_ja": "七賢",
+    "brewery_ja": "山梨銘醸",
+    "bottle": "shichiken-sparkling",
+    "view": "other",
+    "expectedBrandIds": [
+      535
+    ],
+    "also": {
+      "name_ja": [
+        "七賢 山ノ霞",
+        "山ノ霞"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Shichiken \"Yama no Kasumi\" sparkling, 360 ml. This photo: neck band only."
+    }
+  },
+  "yamagata_masamune_clear.jpg": {
+    "name_ja": "山形正宗",
+    "brewery_ja": "水戸部酒造",
+    "bottle": "yamagata-masamune",
+    "view": "front",
+    "expectedBrandIds": [
+      149
+    ],
+    "also": {
+      "name_ja": [
+        "ヤマガタマサムネ"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Yamagata Masamune junmai ginjo Omachi, 720 ml — block-graphic brand characters. This photo: front label."
+    }
+  },
+  "yamagata_masamune_label.jpg": {
+    "name_ja": "山形正宗",
+    "brewery_ja": "水戸部酒造",
+    "bottle": "yamagata-masamune",
+    "view": "back_import",
+    "expectedBrandIds": [
+      149
+    ],
+    "also": {
+      "name_ja": [
+        "ヤマガタマサムネ"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Yamagata Masamune junmai ginjo Omachi, 720 ml — block-graphic brand characters. This photo: the importer's German or French back label."
+    }
+  },
+  "zuiyo_kumamoto_castle_junmai_back.jpg": {
+    "name_ja": "瑞鷹",
+    "brewery_ja": "瑞鷹",
+    "bottle": "zuiyo-kumamoto-castle",
+    "view": "back_ja",
+    "expectedBrandIds": [
+      986
+    ],
+    "also": {
+      "name_ja": [
+        "瑞鷹 熊本城",
+        "熊本城"
+      ],
+      "brewery_ja": [
+        "瑞鷹酒造"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Zuiyo junmai \"Kumamoto Castle\", 720 ml — the BOX; the label prints the maker as 瑞鷹株式会社, the catalogue as 瑞鷹酒造. This photo: Japanese back or side label."
+    }
+  },
+  "zuiyo_kumamoto_castle_junmai_front.jpg": {
+    "name_ja": "瑞鷹",
+    "brewery_ja": "瑞鷹",
+    "bottle": "zuiyo-kumamoto-castle",
+    "view": "front",
+    "expectedBrandIds": [
+      986
+    ],
+    "also": {
+      "name_ja": [
+        "瑞鷹 熊本城",
+        "熊本城"
+      ],
+      "brewery_ja": [
+        "瑞鷹酒造"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Zuiyo junmai \"Kumamoto Castle\", 720 ml — the BOX; the label prints the maker as 瑞鷹株式会社, the catalogue as 瑞鷹酒造. This photo: front label."
+    }
+  },
+  "kawatsuru_umami_front.jpg": {
+    "name_ja": "UMAMI",
+    "brewery_ja": "川鶴酒造",
+    "bottle": "kawatsuru-umami",
+    "view": "front",
+    "expectedBrandIds": [
+      9000000
+    ],
+    "also": {
+      "name_ja": [
+        "うまみ"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Kawatsuru UMAMI, a collaboration with the retailer 柴田屋酒店, whose name is printed beside the brewery's. Photographed on a shop shelf, added 2026-10-12 after the lookup was tuned on the first 73 photos. The bare glass above the label is blurred: it reflected the person taking the photo."
+    }
+  },
+  "kizakura_perle_front_clearish.jpg": {
+    "name_ja": "黄桜",
+    "brewery_ja": "黄桜",
+    "bottle": "kizakura-perle",
+    "view": "front",
+    "expectedBrandIds": [
+      2057
+    ],
+    "also": {
+      "name_ja": [
+        "KIZAKURA",
+        "Kizakura",
+        "キザクラ",
+        "キザクラ ペルル",
+        "KIZAKURA perle",
+        "Kizakura Perle"
+      ],
+      "brewery_ja": [
+        "黄桜酒造"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Kizakura Perle, a wine-yeast sake; the brand is printed in katakana and Latin only, the maker not at all. Photographed on a shop shelf, added 2026-10-12 after the lookup was tuned on the first 73 photos. The bare glass above the label is blurred: it reflected the person taking the photo."
+    }
+  },
+  "koshi_no_kanbai_white_label_front_unclear.jpg": {
+    "name_ja": "越乃寒梅",
+    "brewery_ja": "石本酒造",
+    "bottle": "koshi-no-kanbai-white",
+    "view": "front",
+    "expectedBrandIds": [
+      384
+    ],
+    "also": {
+      "name_ja": [
+        "KOSHI NO KANBAI"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Koshi no Kanbai \"White Label\" futsushu; the label is half out of frame behind a shelf rail, with an importer sticker on the neck. Photographed on a shop shelf, added 2026-10-12 after the lookup was tuned on the first 73 photos."
+    }
+  },
+  "nanbu_bijin_red_front_clear.jpg": {
+    "name_ja": "南部美人",
+    "brewery_ja": "南部美人",
+    "bottle": "nanbu-bijin-red",
+    "view": "front",
+    "expectedBrandIds": [
+      32
+    ],
+    "also": {
+      "name_ja": [
+        "NANBU BIJIN"
+      ],
+      "brewery_ja": [
+        "南部美人酒造"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Nanbu Bijin tokubetsu junmai, the red label; the line sells several grades that differ mostly by label colour, all one catalogue row. Photographed on a shop shelf, added 2026-10-12 after the lookup was tuned on the first 73 photos."
+    }
+  },
+  "sawanotsuru_junmai_yamadanishiki_front_clearish.jpg": {
+    "name_ja": "沢の鶴",
+    "brewery_ja": "沢の鶴",
+    "bottle": "sawanotsuru-yamadanishiki",
+    "view": "front",
+    "expectedBrandIds": [
+      2008
+    ],
+    "also": {
+      "name_ja": [
+        "沢の鶴 山田錦"
+      ],
+      "brewery_ja": [
+        "沢の鶴酒造"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Sawanotsuru junmai Yamada Nishiki; the rice variety 山田錦 is the largest text on the label, the brand small beside it. Photographed on a shop shelf, added 2026-10-12 after the lookup was tuned on the first 73 photos."
+    }
+  },
+  "tanigawadake_chokara_junmai_front_clear.jpg": {
+    "name_ja": "谷川岳",
+    "brewery_ja": "永井酒造",
+    "bottle": "tanigawadake-chokara",
+    "view": "front",
+    "expectedBrandIds": [
+      273
+    ],
+    "also": {
+      "name_ja": [
+        "TANIGAWADAKE",
+        "Tanigawadake"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Tanigawadake chokara junmai; brush calligraphy on a dark label. Photographed on a shop shelf, added 2026-10-12 after the lookup was tuned on the first 73 photos. The bare glass above the label is blurred: it reflected the person taking the photo."
     }
   }
 }

@@ -1,0 +1,53 @@
+name: Model review reminder
+
+# Opens an issue once a quarter asking whether the pinned Claude model ids
+# are still the right ones. Model ids are string literals in the code, so
+# nothing else notices when a newer family ships: the scan ran on a model
+# two generations old for months before an eval run showed it.
+#
+# The issue is the whole feature. It is skipped while a previous reminder is
+# still open, so an unanswered one does not pile up duplicates.
+
+on:
+  schedule:
+    # 07:00 UTC on the 1st of January, April, July and October.
+    - cron: '0 7 1 1,4,7,10 *'
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  remind:
+    name: Open the review issue
+    runs-on: ubuntu-latest
+    steps:
+      - name: Open the issue unless one is already open
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          TITLE: 'Review the pinned Claude model ids'
+        run: |
+          open=$(gh issue list --state open --search "\"$TITLE\" in:title" --json number --jq 'length')
+          if [ "$open" != "0" ]; then
+            echo "A reminder is already open; not opening another."
+            exit 0
+          fi
+          gh issue create --title "$TITLE" --body "$(cat <<'BODY'
+          Quarterly reminder, opened by `.github/workflows/model-review-reminder.yml`.
+
+          Model ids are pinned as string literals, so nothing fails when a newer Claude family ships. Check the current line-up at https://docs.anthropic.com/en/docs/about-claude/models and compare it with what the code names:
+
+          - Label scan, both tiers: `src/lib/ai/vision/registry.ts`
+          - Suggestions: `src/lib/suggest/suggest-action.ts`
+          - Romaji ingest: `src/lib/sakenowa/romaji.ts`
+
+          If something newer exists:
+
+          1. Register it as a candidate in the vision registry and run `pnpm eval label-scan-jp` with the current and the new keys side by side.
+          2. Run `pnpm eval suggest-jp` before and after changing the suggest model, and re-check its prompt-cache hit ratio: the minimum cacheable size differs per model.
+          3. Switch on the numbers, and record them in the PR.
+
+          Nothing newer, or the numbers say stay? Close this with one line saying so.
+          BODY
+          )"

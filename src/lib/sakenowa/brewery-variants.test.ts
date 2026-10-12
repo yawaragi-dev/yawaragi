@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  expandBrandLineVariants,
   expandBrandVariants,
   expandBreweryVariants,
   expandPossibleBrandVariants,
@@ -176,5 +177,23 @@ describe('expandBrandVariants', () => {
 
   it('handles empty input safely', () => {
     expect(expandBrandVariants('')).toEqual([''])
+  })
+})
+
+describe('expandBrandLineVariants', () => {
+  it('offers each part of a name the label prints as line plus product: 七賢 山ノ霞 → 七賢, 山ノ霞', () => {
+    expect(expandBrandLineVariants('七賢 山ノ霞')).toEqual(expect.arrayContaining(['七賢', '山ノ霞']))
+  })
+
+  it('splits on a full-width space too, and carries kanji variants: 両国　別格 → 両國', () => {
+    expect(expandBrandLineVariants('両国　別格')).toEqual(expect.arrayContaining(['両国', '両國', '別格']))
+  })
+
+  it('offers nothing for a name with no space — there is no part to try', () => {
+    expect(expandBrandLineVariants('獺祭')).toEqual([])
+  })
+
+  it('leaves out one-character parts, which match too much', () => {
+    expect(expandBrandLineVariants('勝山 縁')).toEqual(['勝山'])
   })
 })

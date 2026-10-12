@@ -143,6 +143,11 @@ describe('isKanjiVariant', () => {
     expect(isKanjiVariant('國宝', '国寶')).toBe(true)
   })
 
+  it('treats the particle 乃 and its kana の as one: a label printing 澤乃花 is the catalogue\'s 澤の花', () => {
+    expect(isKanjiVariant('澤乃花', '澤の花')).toBe(true)
+    expect(isKanjiVariant('越の寒梅', '越乃寒梅')).toBe(true)
+  })
+
   it('handles empty strings safely', () => {
     expect(isKanjiVariant('', '')).toBe(true)
     expect(isKanjiVariant('蔵王', '')).toBe(false)

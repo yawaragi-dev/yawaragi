@@ -487,6 +487,8 @@ Verified on the Tanigawa-dake bottle: Haiku returned `天向 / 天向酒造` →
 
 **Cost shape.** Most scans (clear bottles) stay single-tier on cheap Haiku. Hard bottles pay ~6× the per-scan cost (Haiku + Sonnet) but actually succeed. The amortised cost depends on how many real-world bottles are §24-shaped; eval harness #110 will measure.
 
+**Update 2026-10-12.** The two tiers are now Haiku 5.5 and Sonnet 5.5 (PR #407); the rule above is unchanged. On the real-bottle eval tier 1's answer stood on about half the scans and was right every time it stood; the old pair's tier 1 stood on 5 of 73 and was wrong on 3 of them. See §27.
+
 **Tracking.** Two-tier shipped in PR #128 (`feat(scan): two-tier vision — Haiku first, Sonnet on failure`). Provider registry key: `anthropic-sonnet-4-6`. The retry site references `TIER_2_VISION_PROVIDER_KEY` from the registry so the swap point is one named constant.
 
 ---
@@ -571,6 +573,33 @@ Real product value beyond category-coverage: many DACH visitors genuinely can't 
 The category-expansion question (does Yawaragi eventually catalogue shochu / awamori too?) is Phase 4+. Sakenowa doesn't cover those — would need a different data source, separate ingest, separate flavour vocabulary. Worth flagging as a strategic direction; not in scope here.
 
 **Tracking.** Documented here. Follow-up feature issue: [#131](https://github.com/yawaragi-dev/yawaragi/issues/131) (`is_sake` schema field + `not_sake` state).
+
+---
+
+## 27. Reads that were right and thrown away — the real-bottle eval (2026-10-12)
+
+**What it is.** The first measurement on real bottles (`evals/label-scan-jp/`, 73 photos of 27 bottles, PR #407) found the old pipeline landing on the right sake on 40 photos. Most of the misses were not misreads. The model had read the label correctly and one of our own rules discarded it, or the catalogue held the name in a form the lookup did not try.
+
+**The obstacles, each with its fix (all implemented in PR #407):**
+
+- **The importer's back label.** Every bottle sold in the EU carries one, with the maker in Latin script only. The Latin-brewery guard treated that as a misread and answered "couldn't read". Now `findSakeByLatinBreweryFromPool`: the brand leads, the Latin brewery is compared with the catalogue's romaji, and both agreeing is an exact match.
+- **Confidence as a gate before the lookup.** A careful model scores itself low when the front label shows no brewery, even with the brand read perfectly. The gate now runs after the lookup and lets through a read that matched one row on both fields, or that the label names twice.
+- **The prompt told the model to drop the product name.** The catalogue often lists a sub-line as its own sake (あわ咲き under 福寿's brewery, 黒兜 under 池亀's). The read now carries `other_names` — the product name and the brand in any other script.
+- **Line plus product as one name** (`勝山 縁`), **乃 for の**, **hyphenated Latin**, **long vowels** (`FUDOH` against `Fudō`), **kana for a kanji row** (`ハナトモエ` for 花巴, by sound), **a brewery's own name where the catalogue spells its line in kana** (世嬉の一 / せきのいち).
+- **One sake listed twice** in the catalogue under one brewery and one reading (達磨正宗 / ダルマ正宗) produced a list of two.
+- **A sake the catalogue lacks, from a brewery it has**, produced a list of that brewery's other sakes. It now answers "not in the catalogue" when nothing printed is one of them and the label prints a second name.
+- **Wrong romaji in the catalogue.** Of the breweries and brands in the set, four had a wrong LLM transliteration (鍋店 "Nabeya", 北鹿 "Kitashika", 黒兜 "Kurogane", 越乃寒梅 "Koshino Kanume"); the first three are curated in migration 0014. The catalogue-wide problem is #130.
+
+**Status.** Implemented. On the saved reads the shipped pair lands on the right sake on 74 of 79 photos, with one wrong sake.
+
+**What is still open:**
+
+- A confident misread into a sake that exists: 黒兜 in heavy brush read as 黒龍. No rule here catches it; a second photo would (#408).
+- A label that names only the brewery's house mark (`NINKI`) yields a list of its lines.
+- A sake the catalogue lacks is answered honestly but not found; #409 is about finding it through the importer's article code.
+- Self-consistent invention: a model that misreads a brand and then "prints" the same wrong name in Latin among the other names would pass as named twice. Not seen in 158 reads; the prompt asks for names verbatim.
+
+**Tracking.** PR #407. Measure any change to the lookup with `LABEL_SCAN_EVAL_OFFLINE=1 pnpm eval label-scan-jp`, which costs nothing.
 
 ---
 
