@@ -134,3 +134,28 @@ export type GroundTruthEntry = z.infer<typeof GroundTruthEntrySchema>
 export const GroundTruthFileSchema = z.record(z.string().min(1), GroundTruthEntrySchema)
 
 export type GroundTruthFile = z.infer<typeof GroundTruthFileSchema>
+
+/**
+ * A saved set of model reads: provider key → photo filename → what the model
+ * returned. Written by `LABEL_SCAN_EVAL_RECORD`, read by
+ * `LABEL_SCAN_EVAL_REPLAY`, so a change to the catalogue lookup can be scored
+ * against the same reads without paying for the vision calls again.
+ */
+export const RecordedReadSchema = z.union([
+  z.object({
+    name_ja: z.string().min(1),
+    brewery_ja: z.string().min(1),
+    confidence: z.number().min(0).max(1),
+    latencyMs: z.number().int().nonnegative(),
+  }),
+  z.object({ error: z.string() }),
+])
+
+export type RecordedRead = z.infer<typeof RecordedReadSchema>
+
+export const RecordingFileSchema = z.object({
+  recordedAt: z.string().min(1),
+  reads: z.record(z.string().min(1), z.record(z.string().min(1), RecordedReadSchema)),
+})
+
+export type RecordingFile = z.infer<typeof RecordingFileSchema>

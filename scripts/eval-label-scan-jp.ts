@@ -55,6 +55,15 @@
  * action's rule — keep tier 1 only on a first-pass exact match, else take
  * tier 2 — from the calls already made, so it costs nothing extra.
  *
+ * # Record and replay
+ *
+ * `LABEL_SCAN_EVAL_RECORD=<file>` saves every model read of the run.
+ * `LABEL_SCAN_EVAL_REPLAY=<file>` scores a saved set instead of calling any
+ * model: free, a few seconds, and the reads are identical between two runs —
+ * so a change to the lookup shows as exactly its own effect, not as model
+ * noise. Replay answers "what does the lookup do with these reads"; a change
+ * to the prompt or the model needs a real run.
+ *
  * # Rate-limit posture
  *
  * Strictly serial: one provider at a time, one photo at a time, `await`ed.
@@ -70,7 +79,7 @@
  * `pnpm test`); this runner does not.
  */
 
-import { readdirSync, readFileSync, existsSync } from 'node:fs'
+import { readdirSync, readFileSync, existsSync, writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import { performance } from 'node:perf_hooks'
@@ -85,12 +94,16 @@ import {
   resolveScannedLabel,
   type ResolveScannedLabelResult,
 } from '@/lib/sakenowa/resolve-scanned-label'
+import type { VisionProvider } from '@/lib/ai/vision/vision-provider'
 import type { LabelScanExtraction } from '@/lib/schemas/label-scan-extraction'
 import { charAccuracy } from '~/evals/label-scan-jp/levenshtein'
 import {
   GroundTruthFileSchema,
+  RecordingFileSchema,
   type GroundTruthEntry,
   type PhotoView,
+  type RecordedRead,
+  type RecordingFile,
 } from '~/evals/label-scan-jp/schemas'
 
 const EVAL_DIR = fileURLToPath(new URL('../evals/label-scan-jp', import.meta.url))
@@ -174,6 +187,15 @@ function mean(values: number[]): number {
 function isVisionProviderKey(value: string): value is VisionProviderKey {
   return (VISION_PROVIDER_KEYS as readonly string[]).includes(value)
 }
+
+/** A path from the env, taken relative to the eval directory unless absolute. */
+function evalPath(value: string | undefined): string | undefined {
+  if (!value || value.trim() === '') return undefined
+  return path.isAbsolute(value) ? value : path.join(EVAL_DIR, value)
+}
+
+const REPLAY_PATH = evalPath(process.env.LABEL_SCAN_EVAL_REPLAY)
+const RECORD_PATH = evalPath(process.env.LABEL_SCAN_EVAL_RECORD)
 
 /** Resolve the provider list from env → config file → default. */
 function resolveProviderList(): VisionProviderKey[] {
@@ -277,6 +299,21 @@ function replayTwoTier(tier1: ProviderResult, tier2: ProviderResult): ProviderRe
   return { key: 'two-tier (as shipped)', photos }
 }
 
+/**
+ * A provider that returns saved reads. The runner hands it the filename as
+ * the blob's text, since a replay never opens the photo.
+ */
+function replayProvider(reads: Record<string, RecordedRead>): VisionProvider {
+  return {
+    async extractLabel(blob) {
+      const read = reads[await blob.text()]
+      if (!read) throw new Error('no recorded read for this photo')
+      if ('error' in read) throw new Error(read.error)
+      return { name_ja: read.name_ja, brewery_ja: read.brewery_ja, confidence: read.confidence, source: 'llm_extracted' }
+    },
+  }
+}
+
 /** Load a photo file into a Blob the way the scan action would receive it. */
 function fileToBlob(absPath: string): Blob {
   const bytes = readFileSync(absPath)
@@ -297,9 +334,19 @@ async function main() {
   )
 
   // ---- Providers ----
-  const providerKeys = resolveProviderList()
+  const replay: RecordingFile | undefined = REPLAY_PATH
+    ? RecordingFileSchema.parse(JSON.parse(readFileSync(REPLAY_PATH, 'utf8')))
+    : undefined
+  // A replay scores every provider it holds unless the env narrows it.
+  const providerKeys: string[] =
+    replay && !process.env.LABEL_SCAN_EVAL_PROVIDERS ? Object.keys(replay.reads) : resolveProviderList()
   console.log(`Providers: ${providerKeys.join(', ')}`)
-  console.log(`Throttle: ${THROTTLE_MS}ms between real-provider calls`)
+  if (replay) {
+    console.log(`Replaying the reads recorded ${replay.recordedAt} — no model is called.`)
+  } else {
+    console.log(`Throttle: ${THROTTLE_MS}ms between real-provider calls`)
+  }
+  const recorded: RecordingFile['reads'] = {}
   const canResolve = Boolean(process.env.DATABASE_URL)
   if (!canResolve) {
     console.log(`DATABASE_URL is not set — scoring the extraction only, not where the scan lands.`)
@@ -388,7 +435,7 @@ async function main() {
     console.log(`## Provider: ${key}`)
     let provider
     try {
-      provider = getVisionProvider(key)
+      provider = replay ? replayProvider(replay.reads[key] ?? {}) : getVisionProvider(key as VisionProviderKey)
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
       console.log(`  construction failed: ${message}`)
@@ -402,10 +449,21 @@ async function main() {
       const { file, absPath, groundTruth: gt } = corpus[i]
       process.stdout.write(`  ${file.padEnd(62)} ... `)
       const blob = fileToBlob(absPath)
+      const reads = (recorded[key] ??= {})
       const t0 = performance.now()
       try {
-        const extraction = await provider.extractLabel(blob)
-        const latencyMs = Math.round(performance.now() - t0)
+        const extraction = await provider.extractLabel(replay ? new Blob([file]) : blob)
+        const recordedLatency = replay?.reads[key]?.[file]
+        const latencyMs =
+          recordedLatency && 'latencyMs' in recordedLatency
+            ? recordedLatency.latencyMs
+            : Math.round(performance.now() - t0)
+        reads[file] = {
+          name_ja: extraction.name_ja,
+          brewery_ja: extraction.brewery_ja,
+          confidence: extraction.confidence,
+          latencyMs,
+        }
         const nameAccuracy = fieldAccuracy(gt.name_ja, gt.also?.name_ja, extraction.name_ja)
         const breweryAccuracy = fieldAccuracy(gt.brewery_ja, gt.also?.brewery_ja, extraction.brewery_ja)
         const exactMatch = nameAccuracy === 1 && breweryAccuracy === 1
@@ -432,6 +490,7 @@ async function main() {
       } catch (err) {
         const latencyMs = Math.round(performance.now() - t0)
         const message = err instanceof Error ? err.message : String(err)
+        reads[file] = { error: message }
         photos.push({
           file,
           view: gt.view,
@@ -446,11 +505,18 @@ async function main() {
       }
 
       // Serial throttle — skip for the no-network stub and after the last photo.
-      if (key !== 'e2e-stub' && i < corpus.length - 1 && THROTTLE_MS > 0) {
+      if (!replay && key !== 'e2e-stub' && i < corpus.length - 1 && THROTTLE_MS > 0) {
         await sleep(THROTTLE_MS)
       }
     }
     providerResults.push({ key, photos })
+    console.log(``)
+  }
+
+  if (RECORD_PATH) {
+    const recording: RecordingFile = { recordedAt: new Date().toISOString().slice(0, 10), reads: recorded }
+    writeFileSync(RECORD_PATH, `${JSON.stringify(recording, null, 1)}\n`)
+    console.log(`Reads saved to ${RECORD_PATH}`)
     console.log(``)
   }
 

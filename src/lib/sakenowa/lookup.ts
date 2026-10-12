@@ -16,6 +16,7 @@ import {
   rowToRanking,
 } from './db'
 import {
+  expandBrandLineVariants,
   expandBrandVariants,
   expandBreweryVariants,
   expandPossibleBrandVariants,
@@ -553,6 +554,31 @@ export async function findSakeByExtractionFromPool(
     }
   }
 
+  // First pass returned 0. A label often prints line and product as one
+  // name (`勝山 縁`, `七賢 山ノ霞`) where the catalogue holds the line. Try
+  // each part as the brand, still requiring the brewery to agree — that
+  // agreement is what makes a part safe to match on.
+  const lineVariants = expandBrandLineVariants(query.nameJa)
+  if (lineVariants.length > 0) {
+    debugAdd('Sakenowa', `first-pass missed; trying the name's parts {${lineVariants.join('|')}} with the same brewery`)
+    const { rows: lineRows } = await publicQuery<BrandWithBreweryRow>(
+      'brands',
+      SELECT_BRANDS_BY_KANJI_EXTRACTION,
+      [lineVariants, breweryVariants],
+      pool,
+    )
+    if (lineRows.length === 1) {
+      return { kind: 'exact', sake: brandFromJoinedRow(lineRows[0]) }
+    }
+    if (lineRows.length >= 2) {
+      return {
+        kind: 'ambiguous',
+        candidates: lineRows.map((r) => ({ sake: brandFromJoinedRow(r), brewery: breweryFromJoinedRow(r) })),
+        query,
+      }
+    }
+  }
+
   // First pass returned 0. Delegate to the brand-only second pass
   // (also reachable from scan-action.ts when a field-swap is
   // suspected).
@@ -810,8 +836,12 @@ const SAKE_GRADE_TOKENS = new Set<string>([
 export function expandLatinBrandVariants(text: string): string[] {
   const trimmed = text.trim()
   if (trimmed.length === 0) return []
-  const lower = trimmed.toLowerCase()
-  const variants = new Set<string>([lower])
+  const verbatim = trimmed.toLowerCase()
+  // A hyphen is a word break: labels write DARUMA-MASAMUNE and NINKI-ICHI,
+  // the catalogue's romaji writes words or runs them together. The verbatim
+  // form stays a candidate for the names that do carry one (`Shangri-la`).
+  const lower = verbatim.replace(/[-‐‑–—]+/g, ' ').replace(/\s+/g, ' ').trim()
+  const variants = new Set<string>([verbatim, lower])
   // First-word strip: "Kizakura Perle" → also try "Kizakura". 4-char
   // floor so we don't match noise like "Big River" → "Big". Skip the
   // strip entirely if the first word is a sake grade / style token

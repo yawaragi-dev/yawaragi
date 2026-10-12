@@ -35,6 +35,14 @@ describe('expandLatinBrandVariants', () => {
     )
   })
 
+  it('reads a hyphen as a word break: "DARUMA-MASAMUNE" also tries "daruma masamune" and "darumamasamune"', () => {
+    // Labels hyphenate their Latin (DARUMA-MASAMUNE, NINKI-ICHI); the
+    // catalogue's romaji is written as words or run together.
+    expect(expandLatinBrandVariants('DARUMA-MASAMUNE')).toEqual(
+      expect.arrayContaining(['daruma-masamune', 'daruma masamune', 'darumamasamune']),
+    )
+  })
+
   it('drops grade words wherever they sit before taking the leading words', () => {
     expect(expandLatinBrandVariants('Yamagata Masamune Junmai Ginjo Omachi')).toEqual(
       expect.arrayContaining(['yamagata masamune']),

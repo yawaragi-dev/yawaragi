@@ -123,3 +123,19 @@ export function expandPossibleBrandVariants(text: string): string[] {
   )
   return [...new Set(all)]
 }
+
+/**
+ * The parts of a brand name the label prints as line plus product —
+ * `勝山 縁`, `七賢 山ノ霞`, `瑞鷹 熊本城` — each as a brand candidate. The
+ * catalogue holds the line (勝山), so the whole string matches nothing.
+ *
+ * Empty for a name with no space. One-character parts (雪, 縁) are left
+ * out: a single kanji matches too much to be evidence. Only safe where the
+ * brewery has to agree as well, which is how the first pass uses it; a part
+ * on its own would send `久保田 千寿` to whichever row is named 千寿.
+ */
+export function expandBrandLineVariants(text: string): string[] {
+  const parts = text.split(/[\s　]+/).filter((part) => Array.from(part).length >= 2)
+  if (parts.length === 0 || parts.join('') === text) return []
+  return [...new Set(parts.flatMap(expandBrandVariants))]
+}
