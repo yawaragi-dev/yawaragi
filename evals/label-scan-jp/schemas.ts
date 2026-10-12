@@ -145,6 +145,7 @@ export const SavedReadSchema = z.union([
     photoSha: z.string().min(1),
     name_ja: z.string().min(1),
     brewery_ja: z.string().min(1),
+    other_names: z.array(z.string()).optional(),
     confidence: z.number().min(0).max(1),
     latencyMs: z.number().int().nonnegative(),
   }),

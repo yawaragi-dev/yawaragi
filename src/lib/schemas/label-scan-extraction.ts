@@ -26,6 +26,17 @@ export const LabelScanExtractionSchema = withProvenance(z.literal('llm_extracted
   .extend({
     name_ja: z.string().min(1),
     brewery_ja: z.string().min(1),
+    /**
+     * Every other name the label prints for this sake: the product or
+     * sub-line beside the brand (縁, あわ咲き, "Gold"), and the brand in
+     * another script (HANATOMOE beside 花巴, a furigana reading). The
+     * catalogue often holds a sub-line as its own row, and a brand the
+     * model misreads in brush kanji is often printed legibly in kana or
+     * Latin beside it; the lookup uses these to pick the more specific row
+     * or to recover a miss. Optional: absent on reads made before the field
+     * existed and from providers that do not fill it.
+     */
+    other_names: z.array(z.string().min(1)).max(6).optional(),
   })
   .extend({
     confidence: z.number().min(0).max(1),

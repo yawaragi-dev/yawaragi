@@ -9,17 +9,16 @@ import type { VisionProvider } from './vision-provider'
 /**
  * Named keys into the vision-provider registry.
  *
- * - `anthropic-haiku-4-5`: tier-1 default. Cheap, fast, handles clear
- *   bottles (UMAMI-style Latin, well-lit kanji on plain backgrounds).
- * - `anthropic-sonnet-4-6`: tier-2 fallback. Materially better at
- *   brush-style calligraphic kanji and busy backgrounds. ~5x cost vs
- *   Haiku, but `scanAction`'s two-tier retry only invokes it on
- *   no_match / low_confidence / extraction_failed from tier-1, so the
- *   amortised cost stays close to Haiku on the happy path.
- * - `anthropic-haiku-5-5` / `anthropic-sonnet-5-5`: the Claude 5 family,
- *   registered as candidates so `pnpm eval label-scan-jp` can score them
- *   against the tiers above on the same photos. Nothing selects them until
- *   a tier constant below points at one.
+ * - `anthropic-haiku-5-5`: tier 1. Its answer stands when brand and
+ *   brewery both match one catalogue row; on the real-bottle eval that is
+ *   about half of all scans, at well under a tenth of a cent each.
+ * - `anthropic-sonnet-5-5`: tier 2, asked whenever tier 1's answer does
+ *   not stand. Reads brush calligraphy better; about fifteen times the
+ *   price of tier 1 per scan.
+ * - `anthropic-haiku-4-5` / `anthropic-sonnet-4-6`: the tiers until
+ *   2026-10-12, kept so `pnpm eval label-scan-jp` can still score them.
+ *   The Claude 5 pair found more bottles, showed a wrong sake far less
+ *   often, and cost about half as much per scan (PR #407).
  * - `e2e-stub`: deterministic non-production key the Playwright spec
  *   selects via `VISION_PROVIDER=e2e-stub`. Never the default; its
  *   `nodeEnv === 'production'` guard refuses to run in prod.
@@ -31,13 +30,13 @@ export type VisionProviderKey =
   | 'anthropic-sonnet-5-5'
   | 'e2e-stub'
 
-export const DEFAULT_VISION_PROVIDER_KEY: VisionProviderKey = 'anthropic-haiku-4-5'
+export const DEFAULT_VISION_PROVIDER_KEY: VisionProviderKey = 'anthropic-haiku-5-5'
 
 // Tier-2 retry provider used by `scanAction` when tier-1 (Haiku) can't
 // resolve the bottle. Exported as a named constant so the retry site
 // and the registry are kept in sync (changing this string also changes
 // the registry entry both refer to).
-export const TIER_2_VISION_PROVIDER_KEY: VisionProviderKey = 'anthropic-sonnet-4-6'
+export const TIER_2_VISION_PROVIDER_KEY: VisionProviderKey = 'anthropic-sonnet-5-5'
 
 /**
  * Registry — string key to factory function. We register factories rather

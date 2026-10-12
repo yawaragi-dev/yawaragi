@@ -7,6 +7,7 @@ import type { Locale } from '@/i18n/routing'
 import { routing } from '@/i18n/routing'
 import {
   getVisionProvider,
+  DEFAULT_VISION_PROVIDER_KEY,
   TIER_2_VISION_PROVIDER_KEY,
 } from '@/lib/ai/vision/registry'
 import type { VisionProvider } from '@/lib/ai/vision/vision-provider'
@@ -55,7 +56,7 @@ import { classifyScanOutcome } from './scan-outcome'
  *   - The hardcoded extraction is gone. The action now calls
  *     `getDefaultVisionProvider().extractLabel(blob)` against the real
  *     downscaled JPEG. The default registry key is
- *     `anthropic-haiku-4-5`; the Playwright spec overrides with
+ *     `DEFAULT_VISION_PROVIDER_KEY`; the Playwright spec overrides with
  *     `VISION_PROVIDER=e2e-stub` so CI does not burn Anthropic credit.
  *   - The rate-limit gate still runs BEFORE the vision call — there is
  *     no path that reaches the paid model without first paying the
@@ -228,12 +229,13 @@ async function runScanAction(
       return { status: 'rate_limited', retryAfterSec: rateLimit.retryAfterSec }
     }
 
-    // Two-tier vision strategy. Tier 1 is Haiku 4.5 — cheap, fast,
-    // sufficient for clear bottles (UMAMI-style Latin, well-lit
-    // kanji on plain backgrounds). Tier 2 is Sonnet 4.6 — materially
-    // better at brush-style calligraphic kanji on busy backgrounds,
-    // ~5x cost per call. Retry on every tier-1 status EXCEPT a
-    // clean `matched` (first-pass exact):
+    // Two-tier vision strategy. Tier 1 is the cheap model
+    // (`DEFAULT_VISION_PROVIDER_KEY`), sufficient for clear bottles.
+    // Tier 2 (`TIER_2_VISION_PROVIDER_KEY`) is materially better at
+    // brush-style calligraphic kanji on busy backgrounds, at many times
+    // the cost per call. The examples below date from the Haiku 4.5 /
+    // Sonnet 4.6 pair; the rule is unchanged. Retry on every tier-1
+    // status EXCEPT a clean `matched` (first-pass exact):
     //
     //   - `no_match` / `low_confidence` / `extraction_failed`:
     //     no result at all from tier-1.
@@ -266,7 +268,7 @@ async function runScanAction(
     // just re-read the same extraction at higher cost. `rate_limited`
     // and `invalid_input` never reach this branch.
     const tier1Result = await extractAndLookupWithProvider(
-      getVisionProvider('anthropic-haiku-4-5'),
+      getVisionProvider(DEFAULT_VISION_PROVIDER_KEY),
       image,
       localeRaw,
     )

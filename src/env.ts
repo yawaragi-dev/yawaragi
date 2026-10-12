@@ -15,7 +15,7 @@ const empty = <T extends z.ZodTypeAny>(schema: T) =>
 
 const Env = z.object({
   // Tightened to required by Phase 3 / S3 (#108). The vision provider
-  // (Anthropic Haiku 4.5 via AI SDK) reads the key at module load through
+  // (Anthropic Haiku 5.5 via AI SDK) reads the key at module load through
   // the `anthropic` provider factory; an empty/missing key is a fatal
   // mis-deploy of the only paid-LLM surface in Phase 3. Same fail-at-
   // env.parse pattern as `CLERK_SECRET_KEY` (PR #92) — keep the failure
@@ -100,7 +100,7 @@ const Env = z.object({
   UPSTASH_REDIS_REST_TOKEN: empty(z.string().optional()),
   // -------- Phase 3 / S3 — vision provider seam (#108) ----------------
   // Named key into the vision-provider registry. Default is
-  // `anthropic-haiku-4-5`. The eventual second vendor (Phase 4-ish
+  // `anthropic-haiku-5-5`. The eventual second vendor (Phase 4-ish
   // failover slice) lands as a new registry entry + an env-var swap
   // here, not a code rewrite of the scan action. Validated against the
   // registry's known keys at first use, not at env.parse time, so a

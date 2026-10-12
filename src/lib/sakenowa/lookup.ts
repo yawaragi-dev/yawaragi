@@ -23,6 +23,7 @@ import {
   stripOperationalSuffix,
 } from './brewery-variants'
 import { withFormerBreweryNames } from './former-brewery-names'
+import { kanaToRomaji } from './kana-romaji'
 import { publicQuery } from '../supabase/public-query'
 import { getServerDbPool } from '../supabase/server-client'
 
@@ -591,7 +592,7 @@ export async function findSakeByExtractionFromPool(
   // kanji brewery). The first pass compares kanji with kanji, so run its
   // rule on the Latin name: a row whose name matches in Latin AND whose
   // brewery is the one read is both fields agreeing.
-  if (containsLatinAlpha(query.nameJa) && !containsJapaneseScript(query.nameJa)) {
+  if (asLatinName(query.nameJa) !== null) {
     const byLatin = await findSakeByLatinBrandFromPool(query, pool)
     const candidates =
       byLatin.kind === 'matched_brand_only'
@@ -637,7 +638,7 @@ export async function findSakeByExtractionFromPool(
   //   - ambiguous + Latin doesn't run → return brewery-only ambiguous
   //   - no_match → fall through to field-swap pass below
   if (breweryOnly.kind === 'ambiguous') {
-    if (containsLatinAlpha(query.nameJa) && !containsJapaneseScript(query.nameJa)) {
+    if (asLatinName(query.nameJa) !== null) {
       debugAdd(
         'Sakenowa',
         `brewery-only returned ambiguous; name_ja is Latin-shaped → trying Latin pass before falling back`,
@@ -703,7 +704,7 @@ export async function findSakeByExtractionFromPool(
   // Sakenowa's 110 Latin-only brands or a kanji brand whose model
   // output landed in romaji. Case-insensitive match against
   // `brands.name`.
-  if (containsLatinAlpha(query.nameJa) && !containsJapaneseScript(query.nameJa)) {
+  if (asLatinName(query.nameJa) !== null) {
     debugAdd('Sakenowa', `kanji + kana passes missed; trying Latin-name lookup on "${query.nameJa}"`)
     const latinMatch = await findSakeByLatinBrandFromPool(query, pool)
     if (latinMatch.kind === 'matched_brand_only' || latinMatch.kind === 'ambiguous') {
@@ -745,6 +746,17 @@ function containsJapaneseScript(value: string): boolean {
 
 function containsLatinAlpha(value: string): boolean {
   return LATIN_ALPHA_REGEX.test(value)
+}
+
+/**
+ * The name as Latin letters, if it can be compared with the catalogue's
+ * romaji: a name read in Latin script as it is, a name read in kana
+ * (ハナトモエ, a furigana くろかぶと) sounded out. `null` for a name with
+ * kanji in it, which has no reading we can derive.
+ */
+function asLatinName(value: string): string | null {
+  if (containsLatinAlpha(value) && !containsJapaneseScript(value)) return value
+  return kanaToRomaji(value)
 }
 
 /**
@@ -951,7 +963,7 @@ export async function findSakeByLatinBrandFromPool(
   query: SakeLookupQuery,
   pool: Pool,
 ): Promise<BrandOnlyLookupResult> {
-  const candidates = expandLatinBrandVariants(query.nameJa)
+  const candidates = expandLatinBrandVariants(asLatinName(query.nameJa) ?? '')
   if (candidates.length === 0) return { kind: 'no_match', query }
   debugAdd(
     'Sakenowa',
@@ -1119,10 +1131,15 @@ export async function findSakeByLatinBreweryFromPool(
   query: SakeLookupQuery,
   pool: Pool,
 ): Promise<FindSakeByExtractionResult> {
+  // Kanji and kana names are looked up as written first; a kana name that
+  // is no row's name is then sounded out and compared with the romaji.
   const nameIsLatin = containsLatinAlpha(query.nameJa) && !containsJapaneseScript(query.nameJa)
-  const byBrand = nameIsLatin
+  let byBrand = nameIsLatin
     ? await findSakeByLatinBrandFromPool(query, pool)
     : await findSakeByBrandOnlyFromPool(query, pool)
+  if (byBrand.kind === 'no_match' && !nameIsLatin && asLatinName(query.nameJa) !== null) {
+    byBrand = await findSakeByLatinBrandFromPool(query, pool)
+  }
 
   if (byBrand.kind === 'matched_brand_only') {
     return latinBreweryAgrees(query.breweryJa, byBrand.brewery.nameRomaji ?? null)

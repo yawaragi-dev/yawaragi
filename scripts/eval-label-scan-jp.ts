@@ -96,6 +96,7 @@ import { performance } from 'node:perf_hooks'
 
 import {
   DEFAULT_VISION_PROVIDER_KEY,
+  TIER_2_VISION_PROVIDER_KEY,
   VISION_PROVIDER_KEYS,
   getVisionProvider,
   type VisionProviderKey,
@@ -152,11 +153,11 @@ interface Resolution {
 
 /**
  * Tier pairs to replay the scan action's retry rule over: the pair it runs
- * today, and the Claude 5 pair it could run instead.
+ * today, and the pair it ran until 2026-10-12.
  */
 const TIER_PAIRS: readonly { label: string; tier1: VisionProviderKey; tier2: VisionProviderKey }[] = [
-  { label: 'two-tier (as shipped)', tier1: 'anthropic-haiku-4-5', tier2: 'anthropic-sonnet-4-6' },
-  { label: 'two-tier (Claude 5)', tier1: 'anthropic-haiku-5-5', tier2: 'anthropic-sonnet-5-5' },
+  { label: 'two-tier (as shipped)', tier1: DEFAULT_VISION_PROVIDER_KEY, tier2: TIER_2_VISION_PROVIDER_KEY },
+  { label: 'two-tier (Haiku 4.5 → Sonnet 4.6)', tier1: 'anthropic-haiku-4-5', tier2: 'anthropic-sonnet-4-6' },
 ]
 
 interface PhotoResult {
@@ -172,6 +173,8 @@ interface PhotoResult {
   detail?: string
   extractedNameJa?: string
   extractedBreweryJa?: string
+  /** The other names the model read off the label. */
+  otherNames?: string[]
   /** The model's self-reported confidence, 0..1. */
   confidence?: number
 }
@@ -471,6 +474,7 @@ async function main() {
           extraction = {
             name_ja: savedRead.name_ja,
             brewery_ja: savedRead.brewery_ja,
+            other_names: savedRead.other_names,
             confidence: savedRead.confidence,
             source: 'llm_extracted',
           }
@@ -490,6 +494,7 @@ async function main() {
             photoSha,
             name_ja: extraction.name_ja,
             brewery_ja: extraction.brewery_ja,
+            other_names: extraction.other_names,
             confidence: extraction.confidence,
             latencyMs,
           }
@@ -512,10 +517,11 @@ async function main() {
           status: 'ok',
           extractedNameJa: extraction.name_ja,
           extractedBreweryJa: extraction.brewery_ja,
+          otherNames: extraction.other_names,
           confidence: extraction.confidence,
         })
         console.log(
-          `${exactMatch ? 'EXACT' : '     '} name=${nameAccuracy.toFixed(2)} brewery=${breweryAccuracy.toFixed(2)} ${latencyMs}ms  → ${extraction.name_ja} / ${extraction.brewery_ja} @${extraction.confidence.toFixed(2)}${resolution ? `  ⇒ ${resolution.verdict} (${resolution.kind} ${resolution.landedOn})` : ''}`,
+          `${exactMatch ? 'EXACT' : '     '} name=${nameAccuracy.toFixed(2)} brewery=${breweryAccuracy.toFixed(2)} ${latencyMs}ms  → ${extraction.name_ja} / ${extraction.brewery_ja}${extraction.other_names?.length ? ` [+ ${extraction.other_names.join(', ')}]` : ''} @${extraction.confidence.toFixed(2)}${resolution ? `  ⇒ ${resolution.verdict} (${resolution.kind} ${resolution.landedOn})` : ''}`,
         )
       } catch (err) {
         const latencyMs = Math.round(performance.now() - t0)
@@ -624,7 +630,7 @@ function printPerPhotoDetail(results: ProviderResult[]) {
     for (const p of r.photos) {
       const extracted =
         p.status === 'ok'
-          ? `${p.extractedNameJa} / ${p.extractedBreweryJa} @${p.confidence?.toFixed(2)}`
+          ? `${p.extractedNameJa} / ${p.extractedBreweryJa}${p.otherNames?.length ? ` [+ ${p.otherNames.join(', ')}]` : ''} @${p.confidence?.toFixed(2)}`
           : `(${p.detail ?? 'error'})`
       const landed = p.resolution
         ? `${p.resolution.verdict} — ${p.resolution.kind} ${p.resolution.landedOn}`

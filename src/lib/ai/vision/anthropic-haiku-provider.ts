@@ -155,10 +155,16 @@ CRITICAL — script and field-identity rules:
    - Label shows "獺" but the rest of the brand kanji is blurred → name_ja: "獺", brewery_ja: <…>, confidence: 0.3
    - Label is a sake bottle but ALL text is unreadable → name_ja: <best Latin guess from shape or "?">, brewery_ja: <…>, confidence: 0.15
 
+OTHER NAMES (other_names). After choosing name_ja, list every OTHER name the label prints for this same sake, verbatim, one per entry, at most 5:
+   - the product or sub-line name printed beside the brand — 縁 on a 勝山 label, 山ノ霞 on a 七賢 label, あわ咲き, "Awasaki", "Gold", "Barrel", "Wandering Poet". On an importer's back label the title line usually reads "Sake BRAND Product" (e.g. "Sake FUKUJU Awasaki Sparkling") or (PRODUCT NAME) "MAKER": put the brand in name_ja and the product words in other_names.
+   - the same brand in another script — HANATOMOE or ハナトモエ beside 花巴, a small kana reading (furigana) beside brush kanji such as くろかぶと, the Latin spelling under the kanji.
+   - any second large name on the label you did not choose as the brand.
+   Do NOT list grades (純米吟醸, Junmai Daiginjo), rice varieties, polishing ratios, volume, alcohol, dates, the brewery, the importer, or slogans. Leave the list empty when the label prints no other name. The catalogue often lists a sub-line as its own sake, so these names decide which one the bottle is.
+
 Return only what is visible on the label. Do not translate, do not romanise kanji into Latin, do not transliterate kana into kanji, do not invent any field. If the image is not a sake label at all, lower the confidence score significantly rather than producing a plausible-sounding guess.`
 
 const USER_PROMPT =
-  'Read this sake bottle label and return the brand and brewery, preserving the script each is actually printed in (kanji / katakana / hiragana / Latin), plus a confidence score between 0 and 1. Follow the brand / SKU stripping and script-preservation rules in the system prompt.'
+  'Read this sake bottle label and return the brand and brewery, preserving the script each is actually printed in (kanji / katakana / hiragana / Latin), the other names printed for the same sake, plus a confidence score between 0 and 1. Follow the brand / SKU stripping and script-preservation rules in the system prompt.'
 
 /**
  * The prompts as sent, for the eval runner: a saved model read is only
@@ -240,7 +246,7 @@ export function createAnthropicHaikuProvider(
           schema: LabelScanExtractionSchema,
           schemaName: 'LabelScanExtraction',
           schemaDescription:
-            'Sake label extraction: name and brewery in original Japanese script, plus confidence.',
+            'Sake label extraction: name and brewery in original script, other names printed for the sake, plus confidence.',
           system: SYSTEM_PROMPT,
           messages: [
             {
@@ -270,6 +276,7 @@ export function createAnthropicHaikuProvider(
       debugAdd('Vision', `model returned in ${elapsedMs}ms`, {
         name_ja: extraction.name_ja,
         brewery_ja: extraction.brewery_ja,
+        other_names: extraction.other_names,
         confidence: extraction.confidence,
       })
 

@@ -46,7 +46,7 @@ flowchart TD
   LL --> Scan["[locale]/scan<br/>(Phase 3 / S4 PR A, live)"]
   Scan --> ScanAction["lib/scan/scan-action"]
   ScanAction --> RateLimit["lib/rate-limit<br/>yawaragi_session + Upstash"]
-  ScanAction --> Vision["lib/ai/vision<br/>(Haiku 4.5 → Sonnet 4.6 retry)"]
+  ScanAction --> Vision["lib/ai/vision<br/>(Haiku 5.5 → Sonnet 5.5 retry)"]
   ScanAction --> Lookup
   ScanAction --> ReverseLookup["lib/cross-beverage/<br/>reverse-lookup<br/>(UX-C, live)"]
   Sake --> Lookup["lib/sakenowa/lookup"]

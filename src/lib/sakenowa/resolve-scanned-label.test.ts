@@ -75,6 +75,7 @@ function fakeExecutor(overrides: {
   byBreweryOnly?: BreweryOnlyLookupResult
   byBrandOnly?: BrandOnlyLookupResult
   byLatinBrewery?: FindSakeByExtractionResult
+  siblings?: readonly Brand[]
 }): ScannedLabelLookupExecutor {
   const NO_MATCH = { kind: 'no_match', query: { nameJa: '', breweryJa: '' } } as const
   return {
@@ -82,6 +83,7 @@ function fakeExecutor(overrides: {
     findByBreweryOnly: vi.fn().mockResolvedValue(overrides.byBreweryOnly ?? NO_MATCH),
     findByBrandOnly: vi.fn().mockResolvedValue(overrides.byBrandOnly ?? NO_MATCH),
     findByLatinBrewery: vi.fn().mockResolvedValue(overrides.byLatinBrewery ?? NO_MATCH),
+    listSiblings: vi.fn().mockResolvedValue(overrides.siblings ?? []),
   }
 }
 
@@ -406,5 +408,147 @@ describe('resolveScannedLabel — main cascade passthrough', () => {
     // low_confidence ("couldn't read the label") — the two drive
     // different UI copy.
     expect(result.kind).toBe('no_match')
+  })
+})
+
+// --- The label's other names -----------------------------------------
+
+describe("resolveScannedLabel — the label's other names", () => {
+  const FUKUJU: Brand = { brandId: 769, name: '福寿', nameKanji: '福寿', nameRomaji: 'Fukuju', breweryId: 568, source: 'sakenowa' }
+  const AWASAKI: Brand = { brandId: 3434, name: 'あわ咲き', nameKanji: 'あわ咲き', nameRomaji: 'Awasaki', breweryId: 568, source: 'sakenowa' }
+  const NINKIICHI: Brand = { brandId: 191, name: '人気一', nameKanji: '人気一', nameRomaji: 'Ninkiichi', breweryId: 128, source: 'sakenowa' }
+  const GOLD_NINKI: Brand = { brandId: 190, name: 'ゴールド人気', nameKanji: 'ゴールド人気', nameRomaji: 'Gold Ninki', breweryId: 128, source: 'sakenowa' }
+
+  it('on an importer label, lands on the sub-line it names, not the brand: "FUKUJU" with "Awasaki Sparkling" is あわ咲き', async () => {
+    const executor = fakeExecutor({ byLatinBrewery: { kind: 'exact', sake: FUKUJU }, siblings: [AWASAKI] })
+
+    const result = await resolveScannedLabel(
+      label({ name_ja: 'FUKUJU', brewery_ja: 'Kobe Shushinkan', other_names: ['Awasaki Sparkling'] }),
+      executor,
+    )
+
+    expect(result).toEqual({ kind: 'exact', sake: AWASAKI })
+  })
+
+  it('prefers the sub-line printed in Japanese to a house mark read in Latin: "FUKUJU" beside あわ咲き', async () => {
+    const executor = fakeExecutor({ byExtraction: { kind: 'exact', sake: FUKUJU }, siblings: [AWASAKI] })
+
+    const result = await resolveScannedLabel(
+      label({ name_ja: 'FUKUJU', brewery_ja: '神戸酒心館', other_names: ['あわ咲き'] }),
+      executor,
+    )
+
+    expect(result).toEqual({ kind: 'exact', sake: AWASAKI })
+  })
+
+  it('does not take a product word that is only part of a stored name for that line: ゆき is not 雪の十和田', async () => {
+    const TOWADA: Brand = { brandId: 1786, name: '雪の十和田', nameKanji: '雪の十和田', nameRomaji: 'Yuki no Towada', breweryId: 61, source: 'sakenowa' }
+    const KITAAKITA: Brand = { brandId: 89, name: '北秋田', nameKanji: '北秋田', nameRomaji: 'Kitaakita', breweryId: 61, source: 'sakenowa' }
+    const list: FindSakeByExtractionResult = {
+      kind: 'ambiguous',
+      candidates: [
+        { sake: KITAAKITA, brewery: ASAHI_SHUZO },
+        { sake: TOWADA, brewery: ASAHI_SHUZO },
+      ],
+      query: { nameJa: '雪', breweryJa: '北鹿' },
+    }
+    const executor = fakeExecutor({ byBreweryOnly: list })
+
+    const result = await resolveScannedLabel(label({ name_ja: '雪', brewery_ja: '北鹿', other_names: ['ゆき', 'YUKI'] }), executor)
+
+    expect(result.kind).toBe('ambiguous')
+  })
+
+  it('on a Japanese label, keeps the name the model chose when another name is a sibling line', async () => {
+    const executor = fakeExecutor({ byExtraction: { kind: 'exact', sake: FUKUJU }, siblings: [AWASAKI] })
+
+    const result = await resolveScannedLabel(label({ name_ja: '福寿', brewery_ja: '神戸酒心館', other_names: ['あわ咲き'] }), executor)
+
+    expect(result).toEqual({ kind: 'exact', sake: FUKUJU })
+  })
+
+  it('stays on the matched sake when no sibling carries any of the other names', async () => {
+    const executor = fakeExecutor({ byLatinBrewery: { kind: 'exact', sake: FUKUJU }, siblings: [AWASAKI] })
+
+    const result = await resolveScannedLabel(
+      label({ name_ja: 'FUKUJU', brewery_ja: 'Kobe Shushinkan', other_names: ['Kobe Classic'] }),
+      executor,
+    )
+
+    expect(result).toEqual({ kind: 'exact', sake: FUKUJU })
+  })
+
+  const brandOnly = (sake: Brand): FindSakeByExtractionResult => ({
+    kind: 'matched_brand_only',
+    sake,
+    brewery: ASAHI_SHUZO,
+    breweryDivergence: { extracted: '存在しない酒造', stored: '旭酒造' },
+    query: { nameJa: sake.nameKanji, breweryJa: '存在しない酒造' },
+  })
+
+  it('keeps a low-scored brand-only match when the label names that sake again in another script', async () => {
+    // 不動 in foil, the brewery guessed wrong, and "Fudoh" printed underneath.
+    const FUDO: Brand = { brandId: 312, name: '不動', nameKanji: '不動', nameRomaji: 'Fudō', breweryId: 224, source: 'sakenowa' }
+    const executor = fakeExecutor({ byExtraction: brandOnly(FUDO) })
+
+    const result = await resolveScannedLabel(
+      label({ name_ja: '不動', brewery_ja: '存在しない酒造', other_names: ['Fudoh'], confidence: 0.55 }),
+      executor,
+    )
+
+    expect(result.kind).toBe('matched_brand_only')
+  })
+
+  it('keeps a low-scored brand-only match when another name on the label is a sibling line of the same brewery', async () => {
+    const BEKKAKU: Brand = { brandId: 69, name: '別格', nameKanji: '別格', nameRomaji: 'Bekkaku', breweryId: 48, source: 'sakenowa' }
+    const RYOKOKU: Brand = { brandId: 3686, name: '両國', nameKanji: '両國', nameRomaji: 'Ryokoku', breweryId: 48, source: 'sakenowa' }
+    const executor = fakeExecutor({ byExtraction: brandOnly(BEKKAKU), siblings: [RYOKOKU] })
+
+    const result = await resolveScannedLabel(
+      label({ name_ja: '別格', brewery_ja: '存在しない酒造', other_names: ['両国'], confidence: 0.55 }),
+      executor,
+    )
+
+    expect(result).toMatchObject({ kind: 'matched_brand_only', sake: BEKKAKU })
+  })
+
+  it('still answers low_confidence for a low-scored brand-only match the label does not name twice', async () => {
+    const executor = fakeExecutor({ byExtraction: brandOnly(FUKUJU) })
+
+    const result = await resolveScannedLabel(
+      label({ name_ja: '福寿', brewery_ja: '存在しない酒造', other_names: ['純米吟醸'], confidence: 0.55 }),
+      executor,
+    )
+
+    expect(result.kind).toBe('low_confidence')
+  })
+
+  it('settles a list on the candidate another name names', async () => {
+    const executor = fakeExecutor({
+      byExtraction: {
+        kind: 'ambiguous',
+        candidates: [
+          { sake: NINKIICHI, brewery: ASAHI_SHUZO },
+          { sake: GOLD_NINKI, brewery: ASAHI_SHUZO },
+        ],
+        query: { nameJa: 'NINKI', breweryJa: '人気酒造' },
+      },
+    })
+
+    // ニンキイチ is no row's name as written; sounded out it is "Ninkiichi".
+    const result = await resolveScannedLabel(label({ name_ja: 'NINKI', other_names: ['ニンキイチ'] }), executor)
+
+    expect(result).toEqual({ kind: 'exact', sake: NINKIICHI })
+  })
+
+  it('tries the other names as the brand when the brand that was read finds nothing', async () => {
+    const executor = fakeExecutor({})
+    vi.mocked(executor.findByExtraction).mockImplementation(async (query) =>
+      query.nameJa === 'ハナトモエ' ? { kind: 'exact', sake: DASSAI_BRAND } : { kind: 'no_match', query },
+    )
+
+    const result = await resolveScannedLabel(label({ name_ja: '樽丸', other_names: ['ハナトモエ'] }), executor)
+
+    expect(result).toEqual({ kind: 'exact', sake: DASSAI_BRAND })
   })
 })

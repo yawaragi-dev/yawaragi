@@ -124,7 +124,7 @@ pnpm eval label-scan-jp
 Env the runner reads:
 
 - `LABEL_SCAN_EVAL_PROVIDERS` — comma-separated registry keys to compare
-  (e.g. `anthropic-haiku-4-5,anthropic-sonnet-4-6`). Optional.
+  (e.g. `anthropic-haiku-5-5,anthropic-sonnet-5-5`). Optional.
 - `LABEL_SCAN_EVAL_THROTTLE_MS` — sleep between real-provider calls
   (default `1000`). Keeps a 20-photo run from bursting the Anthropic API.
 - `DATABASE_URL` — the Sakenowa mirror. With it set, the runner also resolves
@@ -162,7 +162,7 @@ photo it has not yet read with the current prompt:
 
 ```bash
 # the usual loop while working on the lookup: free, about half a minute
-LABEL_SCAN_EVAL_OFFLINE=1 LABEL_SCAN_EVAL_PROVIDERS=anthropic-haiku-4-5,anthropic-sonnet-4-6,anthropic-haiku-5-5,anthropic-sonnet-5-5 pnpm eval label-scan-jp
+LABEL_SCAN_EVAL_OFFLINE=1 LABEL_SCAN_EVAL_PROVIDERS=anthropic-haiku-5-5,anthropic-sonnet-5-5 pnpm eval label-scan-jp
 ```
 
 - `LABEL_SCAN_EVAL_OFFLINE=1` never calls a model; a photo without a saved
@@ -171,6 +171,10 @@ LABEL_SCAN_EVAL_OFFLINE=1 LABEL_SCAN_EVAL_PROVIDERS=anthropic-haiku-4-5,anthropi
   not deterministic — between two fresh runs of the same tiers the `right`
   count moved by one and `wrong` by five — so this is the way to see the
   spread, and the only reason to pay twice.
+
+The file holds the reads of the two tiers the scan runs. The tiers before them
+(`anthropic-haiku-4-5`, `anthropic-sonnet-4-6`) were last read with an earlier
+prompt, so naming them in a run reads every photo again.
 
 Because the reads are fixed, two runs differ only by what the code did with
 them: a lookup change shows as exactly its own effect. Commit `reads.json`
@@ -193,19 +197,20 @@ catalogue lookup → tables) runs, at no cost.
 ## Adding a candidate provider to the run
 
 Providers are named keys into the vision registry
-(`src/lib/ai/vision/registry.ts`): `anthropic-haiku-4-5` and
-`anthropic-sonnet-4-6` (the two tiers the scan runs today),
-`anthropic-haiku-5-5` and `anthropic-sonnet-5-5` (candidates), `e2e-stub`. To compare a new vendor:
+(`src/lib/ai/vision/registry.ts`): `anthropic-haiku-5-5` and
+`anthropic-sonnet-5-5` (the two tiers the scan runs today),
+`anthropic-haiku-4-5` and `anthropic-sonnet-4-6` (the tiers before them, kept
+for comparison), `e2e-stub`. To compare a new vendor:
 
 1. **Register it.** Add a factory + key to `visionProviderFactories` in the
    registry (that's the vendor-swap seam the whole Phase 3 design protects —
    a new vendor is a registry entry implementing `VisionProvider`, not a
    rewrite). The new key flows into `VISION_PROVIDER_KEYS` automatically.
 2. **List it in the run**, either:
-   - `LABEL_SCAN_EVAL_PROVIDERS=anthropic-haiku-4-5,<new-key> pnpm eval label-scan-jp`, or
+   - `LABEL_SCAN_EVAL_PROVIDERS=anthropic-haiku-5-5,<new-key> pnpm eval label-scan-jp`, or
    - create `evals/label-scan-jp/providers.json` — a JSON array of keys, e.g.
-     `["anthropic-haiku-4-5", "anthropic-sonnet-4-6"]`. Env wins over the file;
-     the file wins over the default (`anthropic-haiku-4-5` alone).
+     `["anthropic-haiku-5-5", "anthropic-sonnet-5-5"]`. Env wins over the file;
+     the file wins over the default (the tier-1 key alone).
 3. **Re-run** and paste the multi-row comparison table into the finetune/
    failover writeup. Unknown keys abort before any paid call.
 
@@ -288,7 +293,7 @@ Two tables print to stdout, both pastable into GitHub:
   the scan action's rule from the reads already made — tier 1 stands only on a
   first-pass exact match, anything else is tier 2's answer. `two-tier (as
   shipped)` is the pair the scan runs today and the number a visitor
-  experiences; `two-tier (Claude 5)` is the candidate pair. Latency adds both
+  experiences; `two-tier (Haiku 4.5 → Sonnet 4.6)` is the pair before it. Latency adds both
   calls on a retry.
 
 This table reads character accuracy and catalogue resolution separately on
