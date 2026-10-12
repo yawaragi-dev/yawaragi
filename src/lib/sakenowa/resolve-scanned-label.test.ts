@@ -441,6 +441,19 @@ describe("resolveScannedLabel — the label's other names", () => {
     expect(result).toEqual({ kind: 'exact', sake: AWASAKI })
   })
 
+  it('lets a product name pick its line when only the voicing differs: TARUSAKE for a stored Taruzake', async () => {
+    const CHORYO: Brand = { brandId: 797, name: '長龍', nameKanji: '長龍', nameRomaji: 'Choryo', breweryId: 594, source: 'sakenowa' }
+    const TARUZAKE: Brand = { brandId: 2120, name: '吉野杉の樽酒', nameKanji: '吉野杉の樽酒', nameRomaji: 'Yoshinosugi no Taruzake', breweryId: 594, source: 'sakenowa' }
+    const executor = fakeExecutor({ byLatinBrewery: { kind: 'exact', sake: CHORYO }, siblings: [TARUZAKE] })
+
+    const result = await resolveScannedLabel(
+      label({ name_ja: 'CHORYO', brewery_ja: 'CHORYO', other_names: ['YOSHINOSUGI NO TARUSAKE'], confidence: 0.4 }),
+      executor,
+    )
+
+    expect(result).toEqual({ kind: 'exact', sake: TARUZAKE })
+  })
+
   it('does not take a product word that is only part of a stored name for that line: ゆき is not 雪の十和田', async () => {
     const TOWADA: Brand = { brandId: 1786, name: '雪の十和田', nameKanji: '雪の十和田', nameRomaji: 'Yuki no Towada', breweryId: 61, source: 'sakenowa' }
     const KITAAKITA: Brand = { brandId: 89, name: '北秋田', nameKanji: '北秋田', nameRomaji: 'Kitaakita', breweryId: 61, source: 'sakenowa' }
