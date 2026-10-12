@@ -25,6 +25,8 @@ import {
   lookupBreweryByBrandFromPool,
   lookupFlavorChartFromPool,
 } from './lookup'
+import { forgetRomajiIndex } from './romaji-index'
+import { searchCatalogueFromPool } from './search-brands'
 
 const TEST_DATABASE_URL = process.env.TEST_DATABASE_URL
 
@@ -70,6 +72,9 @@ afterAll(async () => {
 beforeEach(async () => {
   await pool.query('RESET ROLE')
   await cleanFixtures()
+  // Each test seeds its own catalogue; the Latin-name index must not
+  // remember the last one.
+  forgetRomajiIndex(pool)
 })
 
 async function seedBrewery(opts: {
@@ -1206,5 +1211,51 @@ describe('matches the real-bottle eval surfaced (#110)', () => {
     if (result.kind !== 'matched_brewery_only') throw new Error('unreachable; for narrowing only')
     expect(result.sake).toMatchObject({ brandId: 9002, nameKanji: '吉野杉の樽酒' })
     expect(result.brandDivergence).toEqual({ extracted: '樽酒', stored: '吉野杉の樽酒' })
+  })
+})
+
+describe('Latin names, however they are spelled', () => {
+  const INSERT_BRAND = `INSERT INTO brands
+         (brand_id, name, name_kanji, brewery_id, source, confidence, content_hash)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`
+
+  async function seedSawaNoHana(): Promise<void> {
+    await seedBrewery({ breweryId: 9501, name: '伴野酒造', nameKanji: '伴野酒造', areaId: 20 })
+    await pool.query('UPDATE breweries SET name_romaji = $1 WHERE brewery_id = $2', ['Tomono Shuzo', 9501])
+    await pool.query(INSERT_BRAND, [9001, '澤の花', '澤の花', 9501, 'sakenowa', null, 'hash-sawa-9001'])
+    await pool.query('UPDATE brands SET name_romaji = $1 WHERE brand_id = $2', ['Sawa no Hana', 9001])
+    forgetRomajiIndex(pool)
+  }
+
+  it('search finds "Sawa no Hana" typed as one word, in another romanisation, and in kana', async () => {
+    await seedSawaNoHana()
+
+    for (const typed of ['sawanohana', 'SAWA-NO-HANA', 'sawa no hana', 'さわのはな']) {
+      const found = await searchCatalogueFromPool(typed, pool)
+      expect(found.map((r) => r.brandId), typed).toEqual([9001])
+    }
+  })
+
+  it('search finds a sake by its brewery spelled another way: "tomono syuzou"', async () => {
+    await seedSawaNoHana()
+
+    expect((await searchCatalogueFromPool('tomono syuzou', pool)).map((r) => r.brandId)).toEqual([9001])
+  })
+
+  it('a scan matches a label that voices what the catalogue does not, when the brewery agrees', async () => {
+    await seedBrewery({ breweryId: 9501, name: '長龍酒造', nameKanji: '長龍酒造', areaId: 29 })
+    await pool.query('UPDATE breweries SET name_romaji = $1 WHERE brewery_id = $2', ['Choryo Shuzo', 9501])
+    await pool.query(INSERT_BRAND, [9001, '吉野杉の樽酒', '吉野杉の樽酒', 9501, 'sakenowa', null, 'hash-taru-9001'])
+    await pool.query('UPDATE brands SET name_romaji = $1 WHERE brand_id = $2', ['Yoshino Sugi no Tarusake', 9001])
+    forgetRomajiIndex(pool)
+
+    const result = await findSakeByLatinBreweryFromPool(
+      { nameJa: 'YOSHINOSUGI NO TARUZAKE', breweryJa: 'Choryo Shuzo' },
+      pool,
+    )
+
+    expect(result.kind).toBe('exact')
+    if (result.kind !== 'exact') throw new Error('unreachable; for narrowing only')
+    expect(result.sake).toMatchObject({ brandId: 9001 })
   })
 })

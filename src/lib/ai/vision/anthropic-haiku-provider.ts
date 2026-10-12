@@ -83,6 +83,11 @@ export interface AnthropicHaikuProviderOptions {
    * default applies. Not accepted by the Claude 4.5 models.
    */
   effort?: 'low' | 'medium' | 'high'
+  /**
+   * Called with the tokens each call used. The eval runner adds them up to
+   * say what a run cost; the scan itself has no use for it.
+   */
+  onUsage?: (usage: { inputTokens: number; outputTokens: number }) => void
 }
 
 // The system prompt teaches the model the difference between the
@@ -240,7 +245,7 @@ export function createAnthropicHaikuProvider(
       })
 
       const start = Date.now()
-      const { object } = await tracedGenerateObject(
+      const { object, usage } = await tracedGenerateObject(
         {
           functionId: 'scan-extract-label',
           metadata: {
@@ -272,6 +277,7 @@ export function createAnthropicHaikuProvider(
         },
       )
       const elapsedMs = Date.now() - start
+      options.onUsage?.({ inputTokens: usage.inputTokens ?? 0, outputTokens: usage.outputTokens ?? 0 })
 
       // `generateObject` already runs the schema parse, so `object` is
       // semantically `LabelScanExtraction`. The traced wrapper returns

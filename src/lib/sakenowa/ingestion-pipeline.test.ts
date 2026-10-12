@@ -341,10 +341,11 @@ describe('ingestBrands', () => {
 
     expect(summary).toEqual({ added: 2, updated: 0, unchanged: 0, total: 2 })
     // Both rows were classified as added → both reached the enrichment.
+    // …each said to be a sake, so the model reads a name, not characters.
     expect(calls).toEqual([
       [
-        { id: 1, nameKanji: '獺祭' },
-        { id: 2, nameKanji: '久保田' },
+        { id: 1, nameKanji: '獺祭', kind: 'sake' },
+        { id: 2, nameKanji: '久保田', kind: 'sake' },
       ],
     ])
     // Romaji landed in the upsert.

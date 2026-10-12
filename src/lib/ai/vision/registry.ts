@@ -2,7 +2,7 @@ import 'server-only'
 
 import { anthropic } from '@ai-sdk/anthropic'
 import { env } from '@/env'
-import { createAnthropicHaikuProvider } from './anthropic-haiku-provider'
+import { createAnthropicHaikuProvider, type AnthropicHaikuProviderOptions } from './anthropic-haiku-provider'
 import { createE2eStubVisionProvider } from './e2e-stub-provider'
 import type { VisionProvider } from './vision-provider'
 
@@ -52,41 +52,49 @@ export const TIER_2_VISION_PROVIDER_KEY: VisionProviderKey = 'anthropic-sonnet-5
  * matching the "Haiku" file name is now historical; the provider is
  * model-parameterised.
  */
-const visionProviderFactories: Record<VisionProviderKey, () => VisionProvider> = {
+type ProviderExtras = Pick<AnthropicHaikuProviderOptions, 'onUsage'>
+
+const visionProviderFactories: Record<VisionProviderKey, (extras?: ProviderExtras) => VisionProvider> = {
   // Phase 4 / S4 (#141): factories tag each construction with its
   // registry key as a telemetry attribute, so Langfuse traces (and
   // any future OTel sink) can group calls by provider. Inline rather
   // than computed so the key↔factory binding stays a static literal
   // that a grep can find.
-  'anthropic-haiku-4-5': () =>
+  'anthropic-haiku-4-5': (extras) =>
     createAnthropicHaikuProvider({
+      ...extras,
       telemetryMetadata: { 'provider.key': 'anthropic-haiku-4-5' },
     }),
-  'anthropic-sonnet-4-6': () =>
+  'anthropic-sonnet-4-6': (extras) =>
     createAnthropicHaikuProvider({
+      ...extras,
       model: anthropic('claude-sonnet-4-6'),
       telemetryMetadata: { 'provider.key': 'anthropic-sonnet-4-6' },
     }),
-  'anthropic-haiku-5-5': () =>
+  'anthropic-haiku-5-5': (extras) =>
     createAnthropicHaikuProvider({
+      ...extras,
       model: anthropic('claude-haiku-5-5'),
       telemetryMetadata: { 'provider.key': 'anthropic-haiku-5-5' },
     }),
-  'anthropic-sonnet-5-5': () =>
+  'anthropic-sonnet-5-5': (extras) =>
     createAnthropicHaikuProvider({
+      ...extras,
       model: anthropic('claude-sonnet-5-5'),
       telemetryMetadata: { 'provider.key': 'anthropic-sonnet-5-5' },
     }),
   // The same two models at low reasoning effort — eval candidates for a
   // faster scan.
-  'anthropic-haiku-5-5-low': () =>
+  'anthropic-haiku-5-5-low': (extras) =>
     createAnthropicHaikuProvider({
+      ...extras,
       model: anthropic('claude-haiku-5-5'),
       effort: 'low',
       telemetryMetadata: { 'provider.key': 'anthropic-haiku-5-5-low' },
     }),
-  'anthropic-sonnet-5-5-low': () =>
+  'anthropic-sonnet-5-5-low': (extras) =>
     createAnthropicHaikuProvider({
+      ...extras,
       model: anthropic('claude-sonnet-5-5'),
       effort: 'low',
       telemetryMetadata: { 'provider.key': 'anthropic-sonnet-5-5-low' },
@@ -151,9 +159,9 @@ export function getDefaultVisionProvider(): VisionProvider {
  * outside non-production; in every other environment the env is unset
  * (or a real key) and the requested key is honored verbatim.
  */
-export function getVisionProvider(key: VisionProviderKey): VisionProvider {
+export function getVisionProvider(key: VisionProviderKey, extras?: ProviderExtras): VisionProvider {
   if (key !== 'e2e-stub' && resolveVisionProviderKey() === 'e2e-stub') {
     return visionProviderFactories['e2e-stub']()
   }
-  return visionProviderFactories[key]()
+  return visionProviderFactories[key](extras)
 }
