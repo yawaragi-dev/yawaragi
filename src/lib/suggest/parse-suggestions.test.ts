@@ -44,6 +44,17 @@ describe('parseSuggestionsFromText', () => {
     expect(result[0].name_romaji.value).toBe('Dassai')
   })
 
+  it('keeps a suggestion whose cross-beverage note is written as null', () => {
+    // Haiku 5.5 writes the absent field as `null` rather than leaving it
+    // out; about one answer in fifteen came back with every row like this,
+    // and the visitor was told nothing matched.
+    const result = parseSuggestionsFromText(
+      JSON.stringify([{ ...validRow, cross_beverage_descriptor: null }]),
+    )
+    expect(result).toHaveLength(1)
+    expect(result[0].cross_beverage_descriptor).toBeUndefined()
+  })
+
   it('returns [] for an empty array (honest no-match path)', () => {
     expect(parseSuggestionsFromText('[]')).toEqual([])
   })

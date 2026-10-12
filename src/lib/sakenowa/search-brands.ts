@@ -2,6 +2,9 @@ import 'server-only'
 import type { Pool } from 'pg'
 import { publicQuery } from '@/lib/supabase/public-query'
 import { getServerDbPool } from '@/lib/supabase/server-client'
+import { kanaToRomaji } from '@/lib/sakenowa/kana-romaji'
+import { getRomajiIndex, type RomajiIndex } from '@/lib/sakenowa/romaji-index'
+import { looseRomajiKey, romajiKey } from '@/lib/sakenowa/romaji-key'
 
 /**
  * Deterministic sake search over the public `brands` mirror (ADR-0010, pg-direct)
@@ -319,6 +322,62 @@ const CATALOGUE_CANDIDATE_WINDOW = 200
 // the one with unit tests, because a `CASE` is unreachable without a database.
 // Ties still fall back to the picker's shortest-name-first, so one query
 // always produces one list.
+/**
+ * The query as Latin letters, if it has a sound to compare: Latin as typed,
+ * kana sounded out. `null` for anything with kanji in it.
+ */
+function latinFormOf(query: string): string | null {
+  const trimmed = query.trim()
+  if (/^[\x20-\x7e\u00c0-\u017f]+$/.test(trimmed) && /[A-Za-z]/.test(trimmed)) return trimmed
+  return kanaToRomaji(trimmed)
+}
+
+/** A key shorter than this matches too much to be worth adding rows for. */
+const MIN_KEY_LENGTH = 3
+
+/**
+ * Sakes a plain text match cannot see: the ones whose Latin name, or whose
+ * brewery's, contains the query once both are reduced to a romaji key
+ * (`romaji-key.ts`) — `sawanohana` for "Sawa no Hana", `fudoh` for "Fudō",
+ * `sitiken` for "Shichiken", さわのはな for either.
+ *
+ * Only when that finds nothing is voicing ignored too (`taruzake` for a
+ * stored "Tarusake"), and then only for a name the query starts or equals:
+ * the loose key is too loose to match in the middle of a word.
+ */
+export function latinKeyMatchIds(query: string, index: RomajiIndex): number[] {
+  const latin = latinFormOf(query)
+  if (latin === null) return []
+  const key = romajiKey(latin)
+  if (key.length < MIN_KEY_LENGTH) return []
+
+  const strict = index.entries
+    .filter((e) => e.brandKeys.some((k) => k.includes(key)) || (e.breweryKey !== null && e.breweryKey.includes(key)))
+    .map((e) => e.brandId)
+  if (strict.length > 0) return strict
+
+  const loose = looseRomajiKey(latin)
+  if (loose.length < MIN_KEY_LENGTH + 1) return []
+  return index.entries.filter((e) => e.looseBrandKeys.some((k) => k.startsWith(loose))).map((e) => e.brandId)
+}
+
+const SEARCH_CATALOGUE_BY_IDS = `
+  SELECT
+    b.brand_id,
+    b.name_kanji,
+    b.name_romaji,
+    br.name_kanji  AS brewery_kanji,
+    br.name_romaji AS brewery_romaji
+  FROM brands b
+  LEFT JOIN breweries br
+    ON br.brewery_id = b.brewery_id
+   AND br.superseded_at IS NULL
+  WHERE b.superseded_at IS NULL
+    AND b.brand_id = ANY($1::int[])
+  ORDER BY char_length(b.name_kanji) ASC, b.name_kanji ASC, b.brand_id ASC
+  LIMIT $2
+`
+
 const SEARCH_CATALOGUE = `
   SELECT
     b.brand_id,
@@ -395,10 +454,26 @@ export async function searchCatalogueFromPool(
     pool,
   )
 
+  // Plus the rows only a romaji key can find — another spacing, another
+  // spelling of a long vowel, another romanisation, kana for a kanji name.
+  const seen = new Set(rows.map((row) => row.brand_id))
+  const byKey = latinKeyMatchIds(query, await getRomajiIndex(pool)).filter((id) => !seen.has(id))
+  const extra =
+    byKey.length === 0
+      ? []
+      : (
+          await publicQuery<CatalogueSearchRow>(
+            'brands',
+            SEARCH_CATALOGUE_BY_IDS,
+            [byKey, CATALOGUE_CANDIDATE_WINDOW],
+            pool,
+          )
+        ).rows
+
   // Fetch a window, rank it, then cut. Ranking after the cut would only
   // reorder rows the database had already chosen for an unrelated reason —
   // see `CATALOGUE_CANDIDATE_WINDOW`.
-  return rankCatalogueMatches(query, rows.map(toCatalogueResult)).slice(0, capped)
+  return rankCatalogueMatches(query, [...rows, ...extra].map(toCatalogueResult)).slice(0, capped)
 }
 
 /**
@@ -465,9 +540,15 @@ export function rankCatalogueMatches(
 
 function catalogueTier(result: CatalogueSearchResult, needle: string): number {
   const names = [result.nameKanji, result.nameRomaji ?? ''].map((value) => value.toLowerCase())
-  if (names.some((value) => value === needle)) return 0
-  if (names.some((value) => value.startsWith(needle))) return 1
-  if (names.some((value) => value.includes(needle))) return 2
+  // The same three tiers on the romaji key, so "sawanohana" names Sawa no
+  // Hana exactly rather than merely matching it somewhere.
+  const latin = latinFormOf(needle)
+  const key = latin === null ? '' : romajiKey(latin)
+  const nameKey = key.length >= MIN_KEY_LENGTH && result.nameRomaji ? romajiKey(result.nameRomaji) : null
+
+  if (names.some((value) => value === needle) || nameKey === key) return 0
+  if (names.some((value) => value.startsWith(needle)) || nameKey?.startsWith(key)) return 1
+  if (names.some((value) => value.includes(needle)) || nameKey?.includes(key)) return 2
   return 3
 }
 

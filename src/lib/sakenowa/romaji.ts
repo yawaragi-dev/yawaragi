@@ -17,7 +17,7 @@ import { z } from 'zod'
  * editorial and lives in `brands.name_romaji` / `breweries.name_romaji`
  * (nullable, populated by this module during `pnpm ingest`).
  *
- * Calls Anthropic Haiku 4.5 via the AI SDK with a `generateObject`
+ * Calls `ROMAJI_MODEL` via the AI SDK with a `generateObject`
  * structured-output schema. Concurrency is capped so we don't fan out
  * 3000 simultaneous calls at the model — a smaller batch keeps the
  * fan-out friendly to Anthropic's rate limits while still finishing
@@ -29,26 +29,29 @@ import { z } from 'zod'
  * call that's under $15 total.
  */
 
-const PROMPT = `You produce a single-line Latin-alphabet (Hepburn romanisation) display name for a Japanese sake brand or brewery.
+// The first prompt asked for "Hepburn romanisation" of the name alone, and
+// the model read the kanji one at a time: 北鹿 came back "Kitashika" for
+// Hokushika, 花巴 "Hanaba" for Hanatomoe, 黄桜 "Kiou" for Kizakura. Checked
+// against 54 names whose reading is printed on their labels (2026-10-12), it
+// got 34 right. Sake names are proper names with fixed and often irregular
+// readings, so the prompt now says so, and the caller says what the name is
+// a name of and where it is from — which is what lets a model recognise it.
+// With that and Sonnet 5.5: 51 of 54.
+const PROMPT = `You give the Latin-alphabet name of a Japanese sake or sake brewery, as the brewery itself writes it.
 
-Rules:
-- Use Hepburn romanisation with macrons OMITTED (write "Hakkaisan", not "Hakkaisan" with a macron — plain ASCII letters only).
-- Title Case the name ("Asahi Shuzo", "Kubota", "Hakkaisan").
-- Strip legal-form suffixes from brewery names: 株式会社 → drop, 有限会社 → drop, 合資会社 → drop, 合同会社 → drop.
-- KEEP operational suffixes that are part of the core brewery name: 酒造 → "Shuzo", 醸造 → "Jozo", 酒造場 → "Shuzojo", 酒造店 → "Shuzo-ten".
-- If the input has multiple kanji-blocks separated by spaces, preserve that separation in the output as well (e.g. "獺祭 純米大吟醸" would romanise to "Dassai Junmai Daiginjo" — but this function is only called on already-clean brand / brewery names, so multi-block inputs should be rare).
-- Do not add explanatory text, English translations, or alternative readings — just the single Hepburn name.
+These are proper names with fixed readings, and many are irregular. Do not read the kanji one at a time. If you recognise the sake or the brewery — from the name, and from the brewery and prefecture when they are given — use its real reading: 十四代 is Juyondai, 新政 is Aramasa, 而今 is Jikon, 飛露喜 is Hiroki, 醸し人九平次 is Kamoshibito Kuheiji, 作 is Zaku. Compounds usually voice their second word: 樽酒 is Taruzake, 酒蔵 is Sakagura.
 
-Examples:
-- 獺祭 → Dassai
-- 旭酒造 → Asahi Shuzo
-- 旭酒造株式会社 → Asahi Shuzo
-- 久保田 → Kubota
-- 朝日酒造 → Asahi Shuzo  (yes, two different breweries can share a romanisation — that's why we never join on romaji)
-- 八海山 → Hakkaisan
-- 八海醸造 → Hakkai Jozo
-- 黒龍 → Kokuryu
-- 黒龍酒造 → Kokuryu Shuzo`
+Format:
+- Hepburn, plain ASCII letters, no macrons ("Kokuryu", not "Kokuryū").
+- Title Case, words separated the way the name is said ("Koshi no Kanbai", "Nanbu Bijin").
+- A sake's name is the name alone. It never ends in "Shuzo" or "Jozo", even when the sake is named after its brewery: 出羽桜 is "Dewazakura", its brewery 出羽桜酒造 is "Dewazakura Shuzo".
+- For a brewery, drop legal forms (株式会社, 有限会社, 合資会社, 合同会社) and keep the rest: 酒造 is "Shuzo", 醸造 is "Jozo", 酒造店 is "Shuzoten", 酒造場 is "Shuzojo", 商店 is "Shoten".
+- Only the name. No explanation, no translation, no alternatives.
+
+Two different names can have the same Latin form (旭酒造 and 朝日酒造 are both "Asahi Shuzo"); that is expected.`
+
+/** The model new and changed rows are read with. Sonnet, because a reading is kept for good. */
+export const ROMAJI_MODEL = 'claude-sonnet-5-5'
 
 const ResponseSchema = z.object({
   romaji: z
@@ -58,18 +61,30 @@ const ResponseSchema = z.object({
 })
 
 /**
- * Transliterate one kanji name. Throws on AI SDK exhausted retries or
- * empty output — the caller decides whether to surface as a hard
- * failure or fall back to `null`.
+ * What the model is asked: the name, what it is a name of, and where it is
+ * from. Exported for the unit test — the context is the point of it.
  */
-async function transliterateOne(nameKanji: string): Promise<string> {
+export function transliterationRequest(item: TransliterationItem): string {
+  if (!item.kind) return item.nameKanji
+  const lines = [`${item.kind === 'sake' ? 'Sake' : 'Brewery'}: ${item.nameKanji}`]
+  if (item.kind === 'sake' && item.breweryKanji) lines.push(`Brewery: ${item.breweryKanji}`)
+  if (item.prefecture) lines.push(`Prefecture: ${item.prefecture}`)
+  return lines.join('\n')
+}
+
+/**
+ * Transliterate one name. Throws on AI SDK exhausted retries or empty
+ * output — the caller decides whether to surface as a hard failure or
+ * fall back to `null`.
+ */
+async function transliterateOne(_nameKanji: string, item: TransliterationItem, model: string): Promise<string> {
   const { object } = await generateObject({
-    model: anthropic('claude-haiku-4-5'),
+    model: anthropic(model),
     schema: ResponseSchema,
     schemaName: 'RomajiTransliteration',
-    schemaDescription: 'Hepburn-romanised Latin display name for a Japanese sake brand or brewery.',
+    schemaDescription: 'The Latin-alphabet name of a Japanese sake or sake brewery, as the brewery writes it.',
     system: PROMPT,
-    messages: [{ role: 'user', content: nameKanji }],
+    messages: [{ role: 'user', content: transliterationRequest(item) }],
   })
   return object.romaji.trim()
 }
@@ -79,6 +94,12 @@ export interface TransliterationItem {
   id: number
   /** Japanese name to transliterate. */
   nameKanji: string
+  /** What the name is a name of. Omitted, the model is given the name alone. */
+  kind?: 'sake' | 'brewery'
+  /** For a sake: its brewery, in Japanese. */
+  breweryKanji?: string
+  /** Where it is made, in Japanese (秋田県) or Latin. */
+  prefecture?: string
 }
 
 export interface TransliterationResult {
@@ -101,7 +122,9 @@ export interface TransliterateBatchOptions {
    * Per-item override for the LLM call. Tests pass a mock; production
    * callers omit it and the default `transliterateOne` runs.
    */
-  call?: (nameKanji: string) => Promise<string>
+  call?: (nameKanji: string, item: TransliterationItem) => Promise<string>
+  /** Model id for the default call. Defaults to {@link ROMAJI_MODEL}. */
+  model?: string
   /** Optional progress callback fired after each completion. */
   onProgress?: (completed: number, total: number) => void
 }
@@ -125,7 +148,8 @@ export async function transliterateBatch(
   opts: TransliterateBatchOptions = {},
 ): Promise<TransliterationResult[]> {
   const concurrency = Math.max(1, opts.concurrency ?? 8)
-  const call = opts.call ?? transliterateOne
+  const model = opts.model ?? ROMAJI_MODEL
+  const call = opts.call ?? ((nameKanji: string, item: TransliterationItem) => transliterateOne(nameKanji, item, model))
   const results: TransliterationResult[] = new Array(items.length)
   let nextIndex = 0
   let completed = 0
@@ -139,7 +163,7 @@ export async function transliterateBatch(
         results[i] = { id: item.id, nameRomaji: null }
       } else {
         try {
-          const romaji = await call(item.nameKanji)
+          const romaji = await call(item.nameKanji, item)
           results[i] = { id: item.id, nameRomaji: romaji }
         } catch (err) {
           results[i] = {

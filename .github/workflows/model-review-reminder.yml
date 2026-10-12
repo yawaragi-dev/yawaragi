@@ -39,7 +39,7 @@ jobs:
           Model ids are pinned as string literals, so nothing fails when a newer Claude family ships. Check the current line-up at https://docs.anthropic.com/en/docs/about-claude/models and compare it with what the code names:
 
           - Label scan, both tiers: `src/lib/ai/vision/registry.ts`
-          - Suggestions: `src/lib/suggest/suggest-action.ts`
+          - Suggestions: `src/lib/suggest/suggest-model.ts`
           - Romaji ingest: `src/lib/sakenowa/romaji.ts`
 
           If something newer exists:

@@ -39,6 +39,7 @@ Naming history: previously "Kanpai"; renamed to avoid collision with KANPAI Lond
 - `pnpm typecheck` — tsc --noEmit
 - `pnpm migrate` — apply pending SQL files in `supabase/migrations/` to `DATABASE_URL`
 - `pnpm ingest` — refresh Sakenowa data into Supabase
+- `pnpm romaji:regenerate` — re-read the catalogue's Latin names with the current transliteration prompt and model. Without flags it only says what a run would cost; `-- --yes` reads the names (paid) and writes a report; `-- --apply <report>` writes the changed names to `DATABASE_URL`. Curated readings in `name_romaji_overrides` always win.
 - `pnpm eval` — run eval golden sets
 - `pnpm journal:export` — export a maintainer's collection (tasting journal, cellar and the bottlings they added themselves) to JSON, export `formatVersion: 3` per ADR-0024 and ADR-0025 (GDPR portability + the durability backstop for Upstash-of-record). Defaults to the sole `MAINTAINER_USER_IDS` entry; `-- --user <clerkUserId>` / `-- --out <path>` to override. **Output contains personal data** — gitignored by pattern, delete it once used.
 - `pnpm journal:restore` — write an export or a daily backup back into Upstash (`-- --file <path>`, or `-- --backup latest`; `--from` picks whose backups, `--user` retargets the write, `--dry-run` only validates). Idempotent upsert, never deletes. The daily backup itself is `/api/cron/backup-collection` (Vercel Cron, `CRON_SECRET`) → private Supabase Storage bucket `collection-backups`, newest 30 kept (ADR-0024).
@@ -51,8 +52,8 @@ To drive any scan/suggest UI state in dev without a bottle photo or paid API cal
 Claude model ids are pinned as string literals, so nothing fails when a newer family ships — check them rather than trusting them:
 
 - Label scan, both tiers: `src/lib/ai/vision/registry.ts` (`DEFAULT_VISION_PROVIDER_KEY`, `TIER_2_VISION_PROVIDER_KEY`)
-- Suggestions: `src/lib/suggest/suggest-action.ts`
-- Romaji ingest: `src/lib/sakenowa/romaji.ts`
+- Suggestions: `src/lib/suggest/suggest-model.ts` (`SUGGEST_MODEL`)
+- Romaji ingest: `src/lib/sakenowa/romaji.ts` (`ROMAJI_MODEL`)
 
 A model change is made on eval numbers, not on a version number: register the new model as a candidate, run `pnpm eval label-scan-jp` (73 real bottle photos) or `pnpm eval suggest-jp` with old and new side by side, and put the table in the PR. `.github/workflows/model-review-reminder.yml` opens an issue each quarter asking for this check.
 

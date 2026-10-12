@@ -26,6 +26,7 @@ import type {
   SakenowaFlavorTag,
   SakenowaRankingsPayload,
 } from './client'
+import { getPrefectureNames } from './prefecture'
 import { transliterateBatch as defaultTransliterateBatch } from './romaji'
 import type {
   AreasDB,
@@ -323,7 +324,7 @@ async function enrichBrandsWithRomaji(
   if (brands.length === 0 || deps.transliterateBatch === null) return brands
   const fn = deps.transliterateBatch ?? defaultTransliterateBatch
   const results = await fn(
-    brands.map((b) => ({ id: b.brandId, nameKanji: b.nameKanji })),
+    brands.map((b) => ({ id: b.brandId, nameKanji: b.nameKanji, kind: 'sake' as const })),
     { onProgress: deps.onRomajiProgress },
   )
   return brands.map((brand, i) => ({
@@ -388,7 +389,12 @@ async function enrichBreweriesWithRomaji(
   if (breweries.length === 0 || deps.transliterateBatch === null) return breweries
   const fn = deps.transliterateBatch ?? defaultTransliterateBatch
   const results = await fn(
-    breweries.map((b) => ({ id: b.breweryId, nameKanji: b.nameKanji })),
+    breweries.map((b) => ({
+      id: b.breweryId,
+      nameKanji: b.nameKanji,
+      kind: 'brewery' as const,
+      prefecture: getPrefectureNames(b.areaId)?.nameEn,
+    })),
     { onProgress: deps.onRomajiProgress },
   )
   return breweries.map((brewery, i) => ({

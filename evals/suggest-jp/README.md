@@ -54,7 +54,9 @@ An LLM that returns 5 brands where 2 are in the ground truth set of
 8 gets 2/8 = 0.25 — a fair reflection that some brands were on-point
 and others were divergent-but-not-wrong.
 
-## Prompt-cache signal (Haiku 4.5)
+## Prompt-cache signal
+
+The model is `SUGGEST_MODEL` in `src/lib/suggest/suggest-model.ts`, Haiku 5.5 since 2026-10-12 (cached prefix 6897 tokens, hit ratio 0.80). The numbers below were taken on Haiku 4.5; the mechanism is the same.
 
 The eval output reports `cache read`, `cache write`, and a
 `cache hit ratio` per query and in the summary. These are load-
@@ -111,8 +113,9 @@ Short version:
 
 ## Adding a model / tool-set variant
 
-The MVP has one row — `claude-haiku-4-5` + `sakenowa-mcp +
-mapCrossBeverage`. To compare a new configuration:
+The runner has one row — `SUGGEST_MODEL` + `sakenowa-mcp +
+mapCrossBeverage`. To compare a model, change `SUGGEST_MODEL`, restart
+the dev server and run again; for anything larger:
 
 1. Duplicate `scripts/eval-suggest-jp.ts` (or thread a `variant`
    argument) so the runner can dispatch to a modified

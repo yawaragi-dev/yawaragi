@@ -24,6 +24,10 @@ import {
 } from './brewery-variants'
 import { withFormerBreweryNames } from './former-brewery-names'
 import { kanaToRomaji } from './kana-romaji'
+import { getRomajiIndex } from './romaji-index'
+import { looseRomajiKey, romajiKey } from './romaji-key'
+
+export { romajiKey } from './romaji-key'
 import { publicQuery } from '../supabase/public-query'
 import { getServerDbPool } from '../supabase/server-client'
 
@@ -467,13 +471,14 @@ const SELECT_BRANDS_AND_BREWERIES_BY_LATIN_NAME = `
     b.confidence         AS brewery_confidence
   FROM brands br
   JOIN breweries b ON b.brewery_id = br.brewery_id
-  -- $2 holds the same candidates as romaji keys (see romajiKey): spacing,
-  -- hyphens, macrons and long-vowel spelling removed from both sides, so a
-  -- label's FUDOH or GARYUBAI meets the stored Fudō and Garyuubai.
+  -- $2 holds the ids of the rows whose Latin name has the same romaji key as
+  -- a candidate (see romaji-key.ts and romaji-index.ts): spacing, hyphens,
+  -- long vowels and the romanisation system are compared away in one place,
+  -- in TypeScript, rather than re-implemented here.
   WHERE (
          LOWER(br.name) = ANY($1::text[])
       OR LOWER(br.name_romaji) = ANY($1::text[])
-      OR regexp_replace(regexp_replace(regexp_replace(translate(LOWER(br.name_romaji), 'āīūēōâîûêô', 'aiueoaiueo'), '[^a-z0-9]', '', 'g'), 'o[ouh]', 'o', 'g'), 'uu', 'u', 'g') = ANY($2::text[])
+      OR br.brand_id = ANY($2::int[])
     )
     AND br.superseded_at IS NULL
     AND b.superseded_at IS NULL
@@ -609,9 +614,12 @@ export async function findSakeByExtractionFromPool(
         : byLatin.kind === 'ambiguous'
           ? byLatin.candidates
           : []
-    const agreeing = collapseSameReading(
-      candidates.filter((c) => breweryKanjiAgrees(c.brewery.nameKanji, breweryVariants)),
-    )
+    const agrees = (c: { brewery: Brewery }) => breweryKanjiAgrees(c.brewery.nameKanji, breweryVariants)
+    let agreeing = collapseSameReading(candidates.filter(agrees))
+    if (agreeing.length === 0) {
+      // Nothing as spelled; voicing ignored, the brewery still has to agree.
+      agreeing = collapseSameReading((await listBrandsByLooseLatinName(query.nameJa, pool)).filter(agrees))
+    }
     if (agreeing.length === 1) {
       debugAdd('Sakenowa', `Latin name and kanji brewery both match "${agreeing[0].sake.nameKanji}"`)
       return { kind: 'exact', sake: agreeing[0].sake }
@@ -1007,7 +1015,7 @@ export async function findSakeByLatinBrandFromPool(
   const { rows } = await publicQuery<BrandWithBreweryRow>(
     'brands',
     SELECT_BRANDS_AND_BREWERIES_BY_LATIN_NAME,
-    [candidates, [...new Set(candidates.map(romajiKey))]],
+    [candidates, (await getRomajiIndex(pool)).brandIdsNamed(candidates.map(romajiKey))],
     pool,
   )
   debugAdd('Sakenowa', `latin-name lookup returned ${rows.length} row(s)`)
@@ -1038,6 +1046,48 @@ export async function findSakeByLatinBrandFromPool(
   }
 }
 
+const SELECT_BRANDS_AND_BREWERIES_BY_IDS = `
+  SELECT
+    br.brand_id          AS brand_brand_id,
+    br.name              AS brand_name,
+    br.name_kanji        AS brand_name_kanji,
+    br.name_romaji       AS brand_name_romaji,
+    br.brewery_id        AS brand_brewery_id,
+    br.source            AS brand_source,
+    br.confidence        AS brand_confidence,
+    b.brewery_id         AS brewery_brewery_id,
+    b.name               AS brewery_name,
+    b.name_kanji         AS brewery_name_kanji,
+    b.name_romaji        AS brewery_name_romaji,
+    b.area_id            AS brewery_area_id,
+    b.source             AS brewery_source,
+    b.confidence         AS brewery_confidence
+  FROM brands br
+  JOIN breweries b ON b.brewery_id = br.brewery_id
+  WHERE br.brand_id = ANY($1::int[])
+    AND br.superseded_at IS NULL
+    AND b.superseded_at IS NULL
+  ORDER BY br.brand_id
+  LIMIT 20
+`
+
+/**
+ * Sakes whose Latin name matches with voicing ignored ({@link looseRomajiKey}).
+ * Candidates only — a caller must have other evidence before using one.
+ */
+async function listBrandsByLooseLatinName(
+  nameJa: string,
+  pool: Pool,
+): Promise<{ sake: Brand; brewery: Brewery }[]> {
+  const latin = asLatinName(nameJa)
+  if (latin === null) return []
+  const keys = [...new Set(expandLatinBrandVariants(latin).map(looseRomajiKey))].filter((k) => k.length >= 4)
+  const ids = (await getRomajiIndex(pool)).brandIdsNamed(keys, { loose: true })
+  if (ids.length === 0) return []
+  const { rows } = await publicQuery<BrandWithBreweryRow>('brands', SELECT_BRANDS_AND_BREWERIES_BY_IDS, [ids], pool)
+  return rows.map((r) => ({ sake: brandFromJoinedRow(r), brewery: breweryFromJoinedRow(r) }))
+}
+
 export async function findSakeByLatinBrand(
   query: SakeLookupQuery,
 ): Promise<BrandOnlyLookupResult> {
@@ -1066,7 +1116,7 @@ const SELECT_BRANDS_AND_BREWERIES_BY_BREWERY_ROMAJI = `
     b.confidence         AS brewery_confidence
   FROM brands br
   JOIN breweries b ON b.brewery_id = br.brewery_id
-  WHERE regexp_replace(regexp_replace(regexp_replace(translate(LOWER(b.name_romaji), 'āīūēōâîûêô', 'aiueoaiueo'), '[^a-z0-9]', '', 'g'), 'o[ouh]', 'o', 'g'), 'uu', 'u', 'g') = ANY($1::text[])
+  WHERE b.brewery_id = ANY($1::int[])
     AND br.superseded_at IS NULL
     AND b.superseded_at IS NULL
   ORDER BY
@@ -1099,22 +1149,6 @@ const GENERIC_BREWERY_WORDS = new Set<string>([
   'company',
   'the',
 ])
-
-/**
- * A Latin name reduced to what two spellings of one Japanese word share:
- * lowercase, no spaces, hyphens or macrons, and long vowels written short.
- * `Fudoh`, `Fudō` and `Fudou` are all `fudo`; `Garyuubai` and `GARYUBAI`
- * are `garyubai`. Mirrored in SQL by the lookups that compare with it.
- */
-export function romajiKey(text: string): string {
-  return text
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]/g, '')
-    .replace(/o[ouh]/g, 'o')
-    .replace(/uu/g, 'u')
-}
 
 /** The words of a Latin brewery name that identify it, as romaji keys. */
 export function latinBreweryCore(text: string): string[] {
@@ -1187,13 +1221,25 @@ export async function findSakeByLatinBreweryFromPool(
     return agreeing.length === 1 ? { kind: 'exact', sake: agreeing[0].sake } : byBrand
   }
 
+  // The brand found nothing as spelled. Try it with voicing ignored
+  // (`Taruzake` for a stored `Tarusake`) — acceptable only because the
+  // brewery has to agree as well.
+  const voiced = collapseSameReading(
+    (await listBrandsByLooseLatinName(query.nameJa, pool)).filter((c) =>
+      latinBreweryAgrees(query.breweryJa, c.brewery.nameRomaji ?? null),
+    ),
+  )
+  if (voiced.length === 1) return { kind: 'exact', sake: voiced[0].sake }
+
   const candidates = latinBreweryCandidates(query.breweryJa)
   if (candidates.length === 0) return { kind: 'no_match', query }
   debugAdd('Sakenowa', `brand missed; brewery-by-romaji lookup on {${candidates.join('|')}}`)
+  const breweryIds = (await getRomajiIndex(pool)).breweryIdsNamed(candidates)
+  if (breweryIds.length === 0) return { kind: 'no_match', query }
   const { rows } = await publicQuery<BrandWithBreweryRow>(
     'brands',
     SELECT_BRANDS_AND_BREWERIES_BY_BREWERY_ROMAJI,
-    [candidates],
+    [breweryIds],
     pool,
   )
   if (rows.length === 0) return { kind: 'no_match', query }

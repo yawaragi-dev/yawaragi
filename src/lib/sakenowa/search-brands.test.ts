@@ -4,11 +4,13 @@ import {
   MAX_CATALOGUE_SEARCH_RESULTS,
   escapeLikePattern,
   isCatalogueQuerySpecific,
+  latinKeyMatchIds,
   rankCatalogueMatches,
   searchCatalogueFromPool,
   searchFallbacks,
   stripLabelQualifiers,
 } from '@/lib/sakenowa/search-brands'
+import { buildRomajiIndex } from '@/lib/sakenowa/romaji-index'
 
 /**
  * Pure-function + short-circuit unit tests: the transforms that don't need a
@@ -250,6 +252,74 @@ describe('rankCatalogueMatches', () => {
     rankCatalogueMatches('男山', input)
 
     expect(input.map((r) => r.nameKanji)).toEqual(['秘蔵男山', '男山'])
+  })
+})
+
+describe('rankCatalogueMatches — Latin as the visitor spells it', () => {
+  const row = (brandId: number, nameKanji: string, nameRomaji: string) => ({
+    brandId,
+    nameKanji,
+    nameRomaji,
+    breweryKanji: null,
+    breweryRomaji: null,
+  })
+
+  it('treats "sawanohana" as naming Sawa no Hana, above a sake that only contains it', () => {
+    const named = row(1, '澤の花', 'Sawa no Hana')
+    const contains = row(2, '澤の花 ひまり', 'Sawa no Hana Himari')
+
+    expect(rankCatalogueMatches('sawanohana', [contains, named]).map((r) => r.brandId)).toEqual([1, 2])
+  })
+
+  it('treats "fudoh" and "hudo" as naming Fudō', () => {
+    const fudo = row(1, '不動', 'Fudō')
+    const other = row(2, '一念不動', 'Ichinen Fudō')
+
+    expect(rankCatalogueMatches('fudoh', [other, fudo]).map((r) => r.brandId)).toEqual([1, 2])
+    expect(rankCatalogueMatches('hudo', [other, fudo]).map((r) => r.brandId)).toEqual([1, 2])
+  })
+
+  it('treats kana as naming the sake it sounds out: はなともえ is Hanatomoe', () => {
+    const hanatomoe = row(1, '花巴', 'Hanatomoe')
+    const other = row(2, '花の舞', 'Hana no Mai')
+
+    expect(rankCatalogueMatches('はなともえ', [other, hanatomoe]).map((r) => r.brandId)).toEqual([1, 2])
+  })
+})
+
+describe('latinKeyMatchIds — rows a plain text match cannot see', () => {
+  const index = buildRomajiIndex([
+    { brand_id: 1, brewery_id: 10, name: '澤の花', name_romaji: 'Sawa no Hana', brewery_romaji: 'Tomono Shuzo' },
+    { brand_id: 2, brewery_id: 11, name: '不動', name_romaji: 'Fudō', brewery_romaji: 'Nabedana' },
+    { brand_id: 3, brewery_id: 12, name: '吉野杉の樽酒', name_romaji: 'Yoshino Sugi no Tarusake', brewery_romaji: 'Choryo Shuzo' },
+    { brand_id: 4, brewery_id: 13, name: '七賢', name_romaji: 'Shichiken', brewery_romaji: 'Yamanashi Meijo' },
+  ])
+
+  it('finds a name typed without its spaces, or with them where the catalogue has none', () => {
+    expect(latinKeyMatchIds('sawanohana', index)).toEqual([1])
+    expect(latinKeyMatchIds('shichi ken', index)).toEqual([4])
+  })
+
+  it('finds a name in another spelling of its long vowel or another romanisation', () => {
+    expect(latinKeyMatchIds('fudoh', index)).toEqual([2])
+    expect(latinKeyMatchIds('sitiken', index)).toEqual([4])
+  })
+
+  it('finds a sake by its brewery spelled the visitor\'s way', () => {
+    expect(latinKeyMatchIds('chouryou', index)).toEqual([3])
+  })
+
+  it('finds a name typed in kana', () => {
+    expect(latinKeyMatchIds('さわのはな', index)).toEqual([1])
+  })
+
+  it('falls back to ignoring voicing only when nothing matches as spelled: taruzake', () => {
+    expect(latinKeyMatchIds('yoshinosugi no taruzake', index)).toEqual([3])
+  })
+
+  it('finds nothing for kanji, or for a key too short to mean anything', () => {
+    expect(latinKeyMatchIds('不動', index)).toEqual([])
+    expect(latinKeyMatchIds('fu', index)).toEqual([])
   })
 })
 

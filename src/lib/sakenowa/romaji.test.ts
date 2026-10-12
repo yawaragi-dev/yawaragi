@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { transliterateBatch } from './romaji'
+import { transliterateBatch, transliterationRequest } from './romaji'
 
 describe('transliterateBatch', () => {
   it('returns one result per input, in the same order', async () => {
@@ -110,5 +110,20 @@ describe('transliterateBatch', () => {
     const result = await transliterateBatch([], { call })
     expect(result).toEqual([])
     expect(call).not.toHaveBeenCalled()
+  })
+})
+
+describe('transliterationRequest', () => {
+  it('tells the model what the name is a name of and where it is from', () => {
+    expect(
+      transliterationRequest({ id: 1, nameKanji: '黒兜', kind: 'sake', breweryKanji: '池亀酒造', prefecture: 'Fukuoka' }),
+    ).toBe('Sake: 黒兜\nBrewery: 池亀酒造\nPrefecture: Fukuoka')
+    expect(transliterationRequest({ id: 2, nameKanji: '北鹿', kind: 'brewery', prefecture: 'Akita' })).toBe(
+      'Brewery: 北鹿\nPrefecture: Akita',
+    )
+  })
+
+  it('sends the bare name when the caller knows nothing else', () => {
+    expect(transliterationRequest({ id: 3, nameKanji: '獺祭' })).toBe('獺祭')
   })
 })

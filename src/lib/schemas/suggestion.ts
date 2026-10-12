@@ -117,7 +117,13 @@ export const SuggestionSchema = z.object({
   name_ja: NameJaField,
   name_romaji: NameRomajiField,
   reason: ReasonField,
-  cross_beverage_descriptor: CrossBeverageDescriptorField.optional(),
+  // A model may write the absent field as `null` instead of leaving it
+  // out (Haiku 5.5 does). Treated as absent: rejecting the row would drop
+  // a good suggestion over a field it does not have.
+  cross_beverage_descriptor: z.preprocess(
+    (v) => (v === null ? undefined : v),
+    CrossBeverageDescriptorField.optional(),
+  ),
   // `z.preprocess` normalises `null` (the MCP wire shape for "no flavor
   // chart in the mirror") into `undefined` so the `.optional()` seam
   // treats it identically to a missing key. The fan-out layer in

@@ -80,8 +80,17 @@ describe('curated romaji (migration 0013)', () => {
       `SELECT kind, id, name_romaji FROM name_romaji_overrides WHERE id = ANY($1::int[]) ORDER BY kind, id`,
       [[986, 973, 793, 952, 190, 766, 756, 629, 384]],
     )
-    expect(rows).toHaveLength(9)
+    // By kind and id: a brand and a brewery can share a number (384 is the
+    // brewery 伴野酒造 here and, since migration 0015, the sake 越乃寒梅).
+    const seeded = rows.map((r) => `${r.kind}:${r.id}`)
+    expect(seeded).toEqual(
+      expect.arrayContaining([
+        'brand:986', 'brand:973', 'brand:793', 'brand:952', 'brand:190',
+        'brewery:766', 'brewery:756', 'brewery:629', 'brewery:384',
+      ]),
+    )
     expect(rows.find((r) => r.kind === 'brand' && r.id === 986)?.name_romaji).toBe('Zuiyo')
+    expect(rows.find((r) => r.kind === 'brand' && r.id === 384)?.name_romaji).toBe('Koshi no Kanbai')
   })
 
   it('is not readable by the anon role', async () => {

@@ -20,6 +20,7 @@ import {
 import type { Brand } from '@/lib/schemas/brand'
 import { expandBrandVariants } from './brewery-variants'
 import { kanaToRomaji } from './kana-romaji'
+import { looseRomajiKey } from './romaji-key'
 import { getServerDbPool } from '../supabase/server-client'
 
 // ---------- resolveScannedLabel ----------
@@ -271,7 +272,25 @@ function namedBy(otherNames: readonly string[], brands: readonly Brand[]): Brand
     const named = brands.filter((b) => namesBrand(name, b))
     if (named.length === 1) return named[0]
   }
+  // No name fits as spelled. `brands` are already the lines of one matched
+  // brewery or one short list, so voicing may be ignored here: a label's
+  // TARUSAKE is the catalogue's Taruzake.
+  for (const name of otherNames) {
+    const keys = looseLatinKeys(name)
+    const named = brands.filter((b) =>
+      [b.name, b.nameRomaji].some((stored) => stored != null && /[A-Za-z]/.test(stored) && keys.includes(looseRomajiKey(stored))),
+    )
+    if (named.length === 1) return named[0]
+  }
   return undefined
+}
+
+/** {@link latinKeys} with voicing ignored; whole names only, and not short ones. */
+function looseLatinKeys(name: string): string[] {
+  const latin = kanaToRomaji(name) ?? (containsNoJapaneseScript(name) ? name : null)
+  if (latin === null) return []
+  const key = looseRomajiKey(latin)
+  return key.length >= 6 ? [key] : []
 }
 
 /**

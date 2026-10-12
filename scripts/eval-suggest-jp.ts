@@ -41,6 +41,7 @@ import { performance } from 'node:perf_hooks'
 import { GROUND_TRUTH } from '~/evals/suggest-jp/ground-truth'
 import { QUERIES } from '~/evals/suggest-jp/queries'
 import { GroundTruthListSchema, QueryListSchema } from '~/evals/suggest-jp/schemas'
+import { SUGGEST_MODEL, SUGGEST_MODEL_PRICES } from '@/lib/suggest/suggest-model'
 import type { SuggestActionState } from '@/lib/suggest/suggest-action-state'
 
 interface QueryResult {
@@ -91,7 +92,7 @@ async function main() {
 
   console.log(`# suggest-jp eval — ${new Date().toISOString()}`)
   console.log(`Base URL: ${BASE_URL}`)
-  console.log(`Model: claude-haiku-4-5`)
+  console.log(`Model: ${SUGGEST_MODEL}`)
   console.log(`Tool set: sakenowa-mcp + mapCrossBeverage`)
   console.log(`Queries: ${queries.length}`)
   console.log(``)
@@ -204,7 +205,7 @@ async function main() {
   const medianLatency = median(okLatencies.length ? okLatencies : results.map((r) => r.latencyMs))
 
   console.log(
-    `| claude-haiku-4-5 | sakenowa-mcp+mapCrossBeverage | ${queries.length} | ${ok.length} | ${noMatch} | ${rateLimited} | ${errored} | ${meanRecall3} | ${meanRecall5} | ${medianLatency} |`,
+    `| ${SUGGEST_MODEL} | sakenowa-mcp+mapCrossBeverage | ${queries.length} | ${ok.length} | ${noMatch} | ${rateLimited} | ${errored} | ${meanRecall3} | ${meanRecall5} | ${medianLatency} |`,
   )
 
   const usageResults = results.filter((r) => r.inputTokens != null)
@@ -216,18 +217,13 @@ async function main() {
     const totalNoCache = totalInput - totalCacheRead - totalCacheWrite
     const overallHitRatio = totalInput > 0 ? totalCacheRead / totalInput : 0
 
-    // Anthropic Claude Haiku 4.5 pricing (2026-01 cutoff — verify at
-    // https://www.anthropic.com/pricing before quoting):
-    //   input          $1.00 / MTok
-    //   output         $5.00 / MTok
-    //   cache write    $1.25 / MTok  (125% of input)
-    //   cache read     $0.10 / MTok  (10% of input)
-    // The rough-USD column below assumes these; adjust the constants
-    // if Anthropic changes the sheet.
-    const RATE_INPUT = 1.0
-    const RATE_OUTPUT = 5.0
-    const RATE_CACHE_WRITE = 1.25
-    const RATE_CACHE_READ = 0.1
+    // List prices live beside the model id; cache writes cost 125% of
+    // input and cache reads 10%.
+    const price = SUGGEST_MODEL_PRICES[SUGGEST_MODEL] ?? { input: NaN, output: NaN }
+    const RATE_INPUT = price.input
+    const RATE_OUTPUT = price.output
+    const RATE_CACHE_WRITE = price.input * 1.25
+    const RATE_CACHE_READ = price.input * 0.1
     const costUsd =
       (totalNoCache * RATE_INPUT +
         totalCacheWrite * RATE_CACHE_WRITE +
@@ -239,7 +235,7 @@ async function main() {
     console.log(`## Token usage + cost`)
     console.log(``)
     console.log(
-      `| queries | input | output | cache read | cache write | no-cache input | cache hit ratio | est. USD (Haiku 4.5) |`,
+      `| queries | input | output | cache read | cache write | no-cache input | cache hit ratio | est. USD (${SUGGEST_MODEL}) |`,
     )
     console.log(
       `|---------|-------|--------|------------|-------------|----------------|-----------------|-----------------------|`,

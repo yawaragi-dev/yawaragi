@@ -187,6 +187,19 @@ interface ProviderResult {
   constructionError?: string
 }
 
+/**
+ * US dollars per million tokens, input / output: list prices on 2026-10-12.
+ * A provider missing here is reported in tokens only.
+ */
+const PRICES: Partial<Record<VisionProviderKey, readonly [number, number]>> = {
+  'anthropic-haiku-4-5': [1, 5],
+  'anthropic-sonnet-4-6': [3, 15],
+  'anthropic-haiku-5-5': [0.1, 0.5],
+  'anthropic-sonnet-5-5': [2, 10],
+  'anthropic-haiku-5-5-low': [0.1, 0.5],
+  'anthropic-sonnet-5-5-low': [2, 10],
+}
+
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
 function median(values: number[]): number {
@@ -440,9 +453,15 @@ async function main() {
 
   for (const key of providerKeys) {
     console.log(`## Provider: ${key}`)
+    const spent = { inputTokens: 0, outputTokens: 0 }
     let provider
     try {
-      provider = getVisionProvider(key)
+      provider = getVisionProvider(key, {
+        onUsage: (u) => {
+          spent.inputTokens += u.inputTokens
+          spent.outputTokens += u.outputTokens
+        },
+      })
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
       console.log(`  construction failed: ${message}`)
@@ -543,7 +562,14 @@ async function main() {
 
     }
     providerResults.push({ key, photos })
-    console.log(`  ${reused} saved read(s) reused, ${called} model call(s).`)
+    const price = PRICES[key]
+    const dollars = price ? (spent.inputTokens * price[0] + spent.outputTokens * price[1]) / 1e6 : null
+    console.log(
+      `  ${reused} saved read(s) reused, ${called} model call(s)` +
+        (called > 0
+          ? `: ${spent.inputTokens} tokens in, ${spent.outputTokens} out${dollars === null ? '' : `, about $${dollars.toFixed(3)} at list prices`}.`
+          : '.'),
+    )
     console.log(``)
   }
 
