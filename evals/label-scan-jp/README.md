@@ -14,14 +14,16 @@ the metric-math unit test (`levenshtein.test.ts`).
 
 ## The corpus
 
-**73 photos of 27 bottles**, all the maintainer's own, taken on a phone in
-ordinary room light the way a visitor would: in the hand, a little off-angle,
-sometimes with condensation on the glass. Each bottle was shot from several
+**79 photos of 33 bottles**, all taken by the maintainer on a phone the way a
+visitor would: in the hand, a little off-angle, sometimes with condensation on
+the glass. 73 are of 27 bottles at home in ordinary room light; 6 are single
+front shots of bottles on a shop shelf, added after the lookup had been tuned
+on the first 73 and scored once, untouched — all six landed on the right sake. Each bottle was shot from several
 sides, because a scan is only as good as the side the visitor points at:
 
 | view | photos | what it shows |
 |------|--------|---------------|
-| `front` | 30 | the front label, square on |
+| `front` | 36 | the front label, square on |
 | `side` | 12 | the label turned to one side |
 | `back_ja` | 4 | a Japanese back or side label (the regulatory block) |
 | `back_import` | 26 | the importer's German or French back label — sake and maker in Latin script only |
@@ -40,8 +42,9 @@ so no location or device data is in the repo.
 
 ### Adding a photo
 
-1. Photograph a bottle you own — **label only, never a person or a face**
-   (CLAUDE.md, Art. 9).
+1. Photograph a bottle — **label only, never a person or a face** (CLAUDE.md,
+   Art. 9). Dark glass reflects whoever holds the phone, in a shop especially:
+   look at the bare glass before committing and blur a reflection.
 2. Downscale it to a 1024 px longer edge at JPEG quality 0.85, re-encoding so
    the EXIF block is gone, and drop it into `photos/`.
 3. Add an entry to `ground-truth.json` keyed by the filename.
@@ -98,6 +101,7 @@ Every entry's `provenance.source` is drawn from a closed enum
 | source | meaning | `attribution` |
 |--------|---------|---------------|
 | `maintainer_own_bottle` | you photographed a bottle you own | optional |
+| `maintainer_shop_photo` | you photographed a bottle on a shop shelf | optional |
 | `public_domain` | PD product shot (age or explicit dedication) | recommended (source URL) |
 | `cc0` | CC0-dedicated image | recommended (source URL) |
 | `cc_by` | CC-BY image | **required** (source URL + attribution line) |

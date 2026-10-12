@@ -1281,5 +1281,134 @@
       "rightsCleared": true,
       "notes": "Zuiyo junmai \"Kumamoto Castle\", 720 ml — the BOX; the label prints the maker as 瑞鷹株式会社, the catalogue as 瑞鷹酒造. This photo: front label."
     }
+  },
+  "kawatsuru_umami_front.jpg": {
+    "name_ja": "UMAMI",
+    "brewery_ja": "川鶴酒造",
+    "bottle": "kawatsuru-umami",
+    "view": "front",
+    "expectedBrandIds": [
+      9000000
+    ],
+    "also": {
+      "name_ja": [
+        "うまみ"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Kawatsuru UMAMI, a collaboration with the retailer 柴田屋酒店, whose name is printed beside the brewery's. Photographed on a shop shelf, added 2026-10-12 after the lookup was tuned on the first 73 photos. The bare glass above the label is blurred: it reflected the person taking the photo."
+    }
+  },
+  "kizakura_perle_front_clearish.jpg": {
+    "name_ja": "黄桜",
+    "brewery_ja": "黄桜",
+    "bottle": "kizakura-perle",
+    "view": "front",
+    "expectedBrandIds": [
+      2057
+    ],
+    "also": {
+      "name_ja": [
+        "KIZAKURA",
+        "Kizakura",
+        "キザクラ",
+        "キザクラ ペルル",
+        "KIZAKURA perle",
+        "Kizakura Perle"
+      ],
+      "brewery_ja": [
+        "黄桜酒造"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Kizakura Perle, a wine-yeast sake; the brand is printed in katakana and Latin only, the maker not at all. Photographed on a shop shelf, added 2026-10-12 after the lookup was tuned on the first 73 photos. The bare glass above the label is blurred: it reflected the person taking the photo."
+    }
+  },
+  "koshi_no_kanbai_white_label_front_unclear.jpg": {
+    "name_ja": "越乃寒梅",
+    "brewery_ja": "石本酒造",
+    "bottle": "koshi-no-kanbai-white",
+    "view": "front",
+    "expectedBrandIds": [
+      384
+    ],
+    "also": {
+      "name_ja": [
+        "KOSHI NO KANBAI"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Koshi no Kanbai \"White Label\" futsushu; the label is half out of frame behind a shelf rail, with an importer sticker on the neck. Photographed on a shop shelf, added 2026-10-12 after the lookup was tuned on the first 73 photos."
+    }
+  },
+  "nanbu_bijin_red_front_clear.jpg": {
+    "name_ja": "南部美人",
+    "brewery_ja": "南部美人",
+    "bottle": "nanbu-bijin-red",
+    "view": "front",
+    "expectedBrandIds": [
+      32
+    ],
+    "also": {
+      "name_ja": [
+        "NANBU BIJIN"
+      ],
+      "brewery_ja": [
+        "南部美人酒造"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Nanbu Bijin tokubetsu junmai, the red label; the line sells several grades that differ mostly by label colour, all one catalogue row. Photographed on a shop shelf, added 2026-10-12 after the lookup was tuned on the first 73 photos."
+    }
+  },
+  "sawanotsuru_junmai_yamadanishiki_front_clearish.jpg": {
+    "name_ja": "沢の鶴",
+    "brewery_ja": "沢の鶴",
+    "bottle": "sawanotsuru-yamadanishiki",
+    "view": "front",
+    "expectedBrandIds": [
+      2008
+    ],
+    "also": {
+      "name_ja": [
+        "沢の鶴 山田錦"
+      ],
+      "brewery_ja": [
+        "沢の鶴酒造"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Sawanotsuru junmai Yamada Nishiki; the rice variety 山田錦 is the largest text on the label, the brand small beside it. Photographed on a shop shelf, added 2026-10-12 after the lookup was tuned on the first 73 photos."
+    }
+  },
+  "tanigawadake_chokara_junmai_front_clear.jpg": {
+    "name_ja": "谷川岳",
+    "brewery_ja": "永井酒造",
+    "bottle": "tanigawadake-chokara",
+    "view": "front",
+    "expectedBrandIds": [
+      273
+    ],
+    "also": {
+      "name_ja": [
+        "TANIGAWADAKE",
+        "Tanigawadake"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Tanigawadake chokara junmai; brush calligraphy on a dark label. Photographed on a shop shelf, added 2026-10-12 after the lookup was tuned on the first 73 photos. The bare glass above the label is blurred: it reflected the person taking the photo."
+    }
   }
 }

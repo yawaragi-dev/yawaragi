@@ -22,6 +22,9 @@ import { z } from 'zod'
  * - `maintainer_own_bottle` — the maintainer photographed a bottle they own.
  *   The default and cleanest source: the maintainer holds the copyright in
  *   their own photograph outright.
+ * - `maintainer_shop_photo` — the maintainer photographed a bottle on a shop
+ *   shelf. The photograph is theirs all the same; the bottle is not. Glass
+ *   in a shop reflects whoever holds the phone, so check for it and blur.
  * - `public_domain` — a product shot in the public domain (age, or an
  *   explicit PD dedication). `attribution` records where it came from.
  * - `cc0` / `cc_by` — Creative-Commons-licensed. `cc_by` REQUIRES a filled
@@ -34,6 +37,7 @@ import { z } from 'zod'
  */
 export const PhotoRightsSourceSchema = z.enum([
   'maintainer_own_bottle',
+  'maintainer_shop_photo',
   'public_domain',
   'cc0',
   'cc_by',

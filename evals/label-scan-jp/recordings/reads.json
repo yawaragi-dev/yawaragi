@@ -714,6 +714,65 @@
      ],
      "confidence": 0.9,
      "latencyMs": 2681
+    },
+    "kawatsuru_umami_front.jpg": {
+     "photoSha": "e9815189eed8000a",
+     "name_ja": "UMAMI",
+     "brewery_ja": "川鶴酒造",
+     "other_names": [
+      "うまみ"
+     ],
+     "confidence": 0.9,
+     "latencyMs": 3258
+    },
+    "kizakura_perle_front_clearish.jpg": {
+     "photoSha": "ff3aed9b1f550143",
+     "name_ja": "KIZAKURA",
+     "brewery_ja": "黄桜",
+     "other_names": [
+      "perle",
+      "ペルル"
+     ],
+     "confidence": 0.75,
+     "latencyMs": 4976
+    },
+    "koshi_no_kanbai_white_label_front_unclear.jpg": {
+     "photoSha": "71e59ed18754a769",
+     "name_ja": "越乃寒梅",
+     "brewery_ja": "石本酒造",
+     "other_names": [
+      "KOSHI NO KANBAI"
+     ],
+     "confidence": 0.75,
+     "latencyMs": 4248
+    },
+    "nanbu_bijin_red_front_clear.jpg": {
+     "photoSha": "724e3db0c6b0774c",
+     "name_ja": "南部美人",
+     "brewery_ja": "西田酒造店",
+     "other_names": [
+      "NANBU BIJIN"
+     ],
+     "confidence": 0.6,
+     "latencyMs": 4804
+    },
+    "sawanotsuru_junmai_yamadanishiki_front_clearish.jpg": {
+     "photoSha": "dd465b39285f8de2",
+     "name_ja": "沢の鶴",
+     "brewery_ja": "沢の鶴",
+     "other_names": [],
+     "confidence": 0.75,
+     "latencyMs": 3820
+    },
+    "tanigawadake_chokara_junmai_front_clear.jpg": {
+     "photoSha": "f4cac8d5a137ff62",
+     "name_ja": "谷川岳",
+     "brewery_ja": "永井酒造",
+     "other_names": [
+      "TANIGAWA DAKE"
+     ],
+     "confidence": 0.5,
+     "latencyMs": 5702
     }
    }
   },
@@ -1440,6 +1499,67 @@
      ],
      "confidence": 0.85,
      "latencyMs": 1409
+    },
+    "kawatsuru_umami_front.jpg": {
+     "photoSha": "e9815189eed8000a",
+     "name_ja": "うまみ",
+     "brewery_ja": "川鶴酒造",
+     "other_names": [
+      "UMAMI"
+     ],
+     "confidence": 0.85,
+     "latencyMs": 1969
+    },
+    "kizakura_perle_front_clearish.jpg": {
+     "photoSha": "ff3aed9b1f550143",
+     "name_ja": "KIZAKURA perle",
+     "brewery_ja": "黄桜",
+     "other_names": [
+      "キザクラ ペルル",
+      "perle",
+      "Hi-Fruity,Light & Smooth"
+     ],
+     "confidence": 0.72,
+     "latencyMs": 5330
+    },
+    "koshi_no_kanbai_white_label_front_unclear.jpg": {
+     "photoSha": "71e59ed18754a769",
+     "name_ja": "越乃寒梅",
+     "brewery_ja": "石本酒造",
+     "other_names": [
+      "KOSHI NO KANBAI",
+      "WHITE LABEL"
+     ],
+     "confidence": 0.6,
+     "latencyMs": 3777
+    },
+    "nanbu_bijin_red_front_clear.jpg": {
+     "photoSha": "724e3db0c6b0774c",
+     "name_ja": "南部美人",
+     "brewery_ja": "南部美人",
+     "other_names": [
+      "NANBU BIJIN"
+     ],
+     "confidence": 0.8,
+     "latencyMs": 1577
+    },
+    "sawanotsuru_junmai_yamadanishiki_front_clearish.jpg": {
+     "photoSha": "dd465b39285f8de2",
+     "name_ja": "沢の鶴",
+     "brewery_ja": "沢の鶴",
+     "other_names": [],
+     "confidence": 0.72,
+     "latencyMs": 3774
+    },
+    "tanigawadake_chokara_junmai_front_clear.jpg": {
+     "photoSha": "f4cac8d5a137ff62",
+     "name_ja": "谷川岳",
+     "brewery_ja": "永井酒造",
+     "other_names": [
+      "TANIGAWA DAKE"
+     ],
+     "confidence": 0.55,
+     "latencyMs": 5281
     }
    }
   },
