@@ -385,6 +385,12 @@ const SELECT_BRANDS_AND_BREWERIES_BY_BRAND_KANJI = `
 // multi-brand breweries return 2+ rows and either route to the
 // same-name preference (mono-brand main line) or ambiguous.
 //
+// The query returns every line of the brewery (LIMIT 60; the largest
+// brewery in the mirror has 18), because the choices below — which line
+// the read is part of, which is the brewery's namesake — are wrong if
+// made on the first five. Only the list shown to the visitor is cut to
+// `MAX_LIST_CANDIDATES`.
+//
 // ORDER BY puts the brand-name-equals-brewery-name row first when
 // it exists. This is the "main brand" for mono-brand breweries
 // like 沢の鶴 (Sakenowa Brand 2008 under Brewery 576, same name) —
@@ -421,7 +427,7 @@ const SELECT_BRANDS_AND_BREWERIES_BY_BREWERY_KANJI = `
   ORDER BY
     (CASE WHEN br.name_kanji = b.name_kanji THEN 0 ELSE 1 END),
     br.brand_id
-  LIMIT 5
+  LIMIT 60
 `
 
 // Latin brand lookup: matches against both Sakenowa's published `name`
@@ -474,6 +480,9 @@ const SELECT_BRANDS_AND_BREWERIES_BY_LATIN_NAME = `
   ORDER BY br.brand_id
   LIMIT 5
 `
+
+/** How many sakes a "which of these?" list offers. */
+const MAX_LIST_CANDIDATES = 5
 
 interface BrandWithBreweryRow {
   brand_brand_id: number
@@ -1063,7 +1072,7 @@ const SELECT_BRANDS_AND_BREWERIES_BY_BREWERY_ROMAJI = `
   ORDER BY
     (CASE WHEN br.name_kanji = b.name_kanji THEN 0 ELSE 1 END),
     br.brand_id
-  LIMIT 5
+  LIMIT 60
 `
 
 /**
@@ -1200,7 +1209,9 @@ export async function findSakeByLatinBreweryFromPool(
   }
   return {
     kind: 'ambiguous',
-    candidates: rows.map((r) => ({ sake: brandFromJoinedRow(r), brewery: breweryFromJoinedRow(r) })),
+    candidates: rows
+      .slice(0, MAX_LIST_CANDIDATES)
+      .map((r) => ({ sake: brandFromJoinedRow(r), brewery: breweryFromJoinedRow(r) })),
     query,
   }
 }
@@ -1337,7 +1348,7 @@ export async function findSakeByBreweryOnlyFromPool(
 
   return {
     kind: 'ambiguous',
-    candidates: breweryOnlyRows.map((r) => ({
+    candidates: breweryOnlyRows.slice(0, MAX_LIST_CANDIDATES).map((r) => ({
       sake: brandFromJoinedRow(r),
       brewery: breweryFromJoinedRow(r),
     })),

@@ -285,15 +285,17 @@ function namedBy(otherNames: readonly string[], brands: readonly Brand[]): Brand
  * honest answer, and it is the one that lets the visitor keep the bottle as
  * their own; the brewery's other sakes still reach them as suggestions.
  */
-function isAnotherSakeOfTheBrewery(
+async function isAnotherSakeOfTheBrewery(
   label: ScannedLabel,
   list: Extract<ResolveScannedLabelResult, { kind: 'ambiguous' }>,
-): boolean {
+  executor: ScannedLabelLookupExecutor,
+): Promise<boolean> {
   const [first] = list.candidates
   if (!first || list.candidates.some((c) => c.brewery.breweryId !== first.brewery.breweryId)) return false
 
-  const printed = [label.name_ja, ...(label.other_names ?? [])]
-  const lines = list.candidates.map((c) => c.sake)
+  const printed = [label.name_ja, ...otherNamesOf(label)]
+  // Every line of the brewery, not only the few the list shows.
+  const lines = [first.sake, ...(await executor.listSiblings(first.sake.brandId))]
   const namesALine = printed.some(
     (name) =>
       lines.some((line) => namesBrand(name, line)) ||
@@ -305,6 +307,14 @@ function isAnotherSakeOfTheBrewery(
   const isTheHouseName =
     nameKanji.includes(label.name_ja) || latinKeys(label.name_ja).some((key) => romajiKey(nameRomaji ?? '').includes(key))
   return !isTheHouseName
+}
+
+/** More names than this is a model listing the whole label; the rest add nothing. */
+const MAX_OTHER_NAMES = 8
+
+/** The label's other names, usable: non-empty, not the name itself, capped. */
+function otherNamesOf(label: ScannedLabel): string[] {
+  return (label.other_names ?? []).filter((n) => n.trim() !== '' && n !== label.name_ja).slice(0, MAX_OTHER_NAMES)
 }
 
 interface WithOtherNames {
@@ -339,7 +349,7 @@ async function withOtherNames(
   resolved: ResolveScannedLabelResult,
   executor: ScannedLabelLookupExecutor,
 ): Promise<WithOtherNames> {
-  const otherNames = (label.other_names ?? []).filter((n) => n.trim() !== '' && n !== label.name_ja)
+  const otherNames = otherNamesOf(label)
   if (otherNames.length === 0) return { resolved, corroborated: false }
 
   if (resolved.kind === 'exact' || resolved.kind === 'matched_brand_only' || resolved.kind === 'matched_brewery_only') {
@@ -364,7 +374,8 @@ async function withOtherNames(
   if (resolved.kind === 'ambiguous') {
     const named = namedBy(otherNames, resolved.candidates.map((c) => c.sake))
     if (!named) {
-      return { resolved: isAnotherSakeOfTheBrewery(label, resolved) ? { kind: 'no_match', query: resolved.query } : resolved, corroborated: false }
+      const unlisted = await isAnotherSakeOfTheBrewery(label, resolved, executor)
+      return { resolved: unlisted ? { kind: 'no_match', query: resolved.query } : resolved, corroborated: false }
     }
     debugAdd('ScanAction', `another name on the label settles the list on "${named.nameKanji}"`, { otherNames })
     return { resolved: { kind: 'exact', sake: named }, corroborated: true }
@@ -374,7 +385,7 @@ async function withOtherNames(
     const retried = await resolveByShape({ ...label, name_ja: name }, executor)
     if (retried.kind !== 'no_match' && retried.kind !== 'low_confidence') {
       debugAdd('ScanAction', `name_ja "${label.name_ja}" found nothing; the label's other name "${name}" did`)
-      if (retried.kind === 'ambiguous' && isAnotherSakeOfTheBrewery(label, retried)) {
+      if (retried.kind === 'ambiguous' && (await isAnotherSakeOfTheBrewery(label, retried, executor))) {
         return { resolved: { kind: 'no_match', query: retried.query }, corroborated: false }
       }
       return { resolved: retried, corroborated: false }

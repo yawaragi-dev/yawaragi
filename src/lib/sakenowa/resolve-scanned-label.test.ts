@@ -548,15 +548,18 @@ describe("resolveScannedLabel — the label's other names", () => {
     const line = (brandId: number, nameKanji: string, nameRomaji: string): Brand => ({
       brandId, name: nameKanji, nameKanji, nameRomaji, breweryId: 61, source: 'sakenowa',
     })
+    const KITAAKITA = line(89, '北秋田', 'Kitaakita')
+    const TOWADA = line(1786, '雪の十和田', 'Yuki no Towada')
+    // The list shows the visitor a few lines; the brewery has more.
     const lines = (query: { nameJa: string; breweryJa: string }): FindSakeByExtractionResult => ({
       kind: 'ambiguous',
-      candidates: [line(89, '北秋田', 'Kitaakita'), line(1786, '雪の十和田', 'Yuki no Towada')].map((sake) => ({ sake, brewery: HOKUSHIKA })),
+      candidates: [{ sake: KITAAKITA, brewery: HOKUSHIKA }],
       query,
     })
 
     it('answers "not in the catalogue" when nothing the label prints is one of the brewery\'s lines', async () => {
       const query = { nameJa: '隠し吟醸', breweryJa: '北鹿' }
-      const executor = fakeExecutor({ byExtraction: lines(query) })
+      const executor = fakeExecutor({ siblings: [TOWADA], byExtraction: lines(query) })
 
       const result = await resolveScannedLabel(label({ name_ja: '隠し吟醸', brewery_ja: '北鹿', other_names: ['濃姫の里'] }), executor)
 
@@ -564,7 +567,7 @@ describe("resolveScannedLabel — the label's other names", () => {
     })
 
     it('keeps the list when the name that was read is only the brewery\'s own', async () => {
-      const executor = fakeExecutor({ byLatinBrewery: lines({ nameJa: 'HOKUSHIKA', breweryJa: 'Hokushika' }) })
+      const executor = fakeExecutor({ siblings: [TOWADA], byLatinBrewery: lines({ nameJa: 'HOKUSHIKA', breweryJa: 'Hokushika' }) })
 
       const result = await resolveScannedLabel(
         label({ name_ja: 'HOKUSHIKA', brewery_ja: 'Hokushika', other_names: ['Sparkling'] }),
@@ -575,15 +578,15 @@ describe("resolveScannedLabel — the label's other names", () => {
     })
 
     it('keeps the list when the label prints no second name — one unmatched string may be a misread', async () => {
-      const executor = fakeExecutor({ byExtraction: lines({ nameJa: '隠し吟醸', breweryJa: '北鹿' }) })
+      const executor = fakeExecutor({ siblings: [TOWADA], byExtraction: lines({ nameJa: '隠し吟醸', breweryJa: '北鹿' }) })
 
       const result = await resolveScannedLabel(label({ name_ja: '隠し吟醸', brewery_ja: '北鹿' }), executor)
 
       expect(result.kind).toBe('ambiguous')
     })
 
-    it('keeps the list when what was read is part of one of the lines', async () => {
-      const executor = fakeExecutor({ byExtraction: lines({ nameJa: '十和田', breweryJa: '北鹿' }) })
+    it('keeps the list when what was read is part of a line the list does not even show', async () => {
+      const executor = fakeExecutor({ siblings: [TOWADA], byExtraction: lines({ nameJa: '十和田', breweryJa: '北鹿' }) })
 
       const result = await resolveScannedLabel(label({ name_ja: '十和田', brewery_ja: '北鹿', other_names: ['TOWADA'] }), executor)
 
