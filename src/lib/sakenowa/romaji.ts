@@ -17,7 +17,7 @@ import { z } from 'zod'
  * editorial and lives in `brands.name_romaji` / `breweries.name_romaji`
  * (nullable, populated by this module during `pnpm ingest`).
  *
- * Calls Anthropic Haiku 4.5 via the AI SDK with a `generateObject`
+ * Calls `ROMAJI_MODEL` via the AI SDK with a `generateObject`
  * structured-output schema. Concurrency is capped so we don't fan out
  * 3000 simultaneous calls at the model — a smaller batch keeps the
  * fan-out friendly to Anthropic's rate limits while still finishing

@@ -19,6 +19,7 @@ import {
   type SuggestSeed,
 } from './suggest-action-state'
 import { classifySuggestOutcome } from './suggest-outcome'
+import { SUGGEST_MODEL } from './suggest-model'
 import { buildSuggestToolSet } from './tool-set'
 
 /**
@@ -221,7 +222,7 @@ async function runSuggestAction(seed: SuggestSeed): Promise<SuggestActionState> 
       let totalToolCalls = 0
       try {
         debugAdd('SuggestAction', 'starting tool loop', {
-          model: 'claude-haiku-4-5',
+          model: SUGGEST_MODEL,
           ...(seed.kind === 'brand'
             ? { seedBrandId: seed.brandId }
             : { seedQuery: seed.query }),
@@ -243,7 +244,7 @@ async function runSuggestAction(seed: SuggestSeed): Promise<SuggestActionState> 
             },
           },
           {
-            model: anthropic('claude-haiku-4-5'),
+            model: anthropic(SUGGEST_MODEL),
             tools,
             stopWhen: isStepCount(6),
             // The system prompt rides in `instructions` as a
@@ -286,7 +287,14 @@ async function runSuggestAction(seed: SuggestSeed): Promise<SuggestActionState> 
             // probe against `/api/debug/eval-suggest` and inspect the
             // `usage totals` debug entry.
             //
-            // Post-recipe-refresh results (#175/#176 fix, 2026-07-06):
+            // Haiku 5.5 (the model since 2026-10-12): the same prefix
+            // measures 6897 tokens and is cached — 80% hit ratio, 15 of 15
+            // queries answered, recall@5 0.50, median 8.9 s and $0.02 a run,
+            // against 0.49, 13.1 s and $0.19 on Haiku 4.5 the same day. Its
+            // documented minimum was not looked up; if the prefix shrinks,
+            // check the eval's cache read column again.
+            //
+            // Earlier, on Haiku 4.5 (#175/#176 fix, 2026-07-06):
             //   - 72-76% cache hit ratio across a 15-query eval run
             //     (down slightly from S7's 77% because topK=30 responses
             //     are larger and per-request output variance grew)
@@ -432,6 +440,14 @@ async function runSuggestAction(seed: SuggestSeed): Promise<SuggestActionState> 
         debugAdd('SuggestAction', `parsed ${suggestions.length} suggestions`, {
           brandIds: suggestions.map((s) => s.brandId.value),
         })
+        // An answer that was written but yielded no rows is a format the
+        // parser does not know, not "no such sake". Keep the text in the
+        // debug log so the next such format can be read off it.
+        if (suggestions.length === 0 && (llmResult.text ?? '').trim().length > 0) {
+          debugAdd('SuggestAction', 'final text held no parseable rows', {
+            text: (llmResult.text ?? '').slice(0, 4000),
+          })
+        }
       } catch (err) {
         // parseSuggestionsFromText itself doesn't throw (parses defensively);
         // catch is a belt-and-suspenders against a future refactor.
