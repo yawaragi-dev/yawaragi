@@ -80,7 +80,7 @@ export interface ScannedLabelLookupExecutor {
   listSiblings(brandId: number): Promise<readonly Brand[]>
 }
 
-function poolExecutor(pool: Pool): ScannedLabelLookupExecutor {
+export function poolExecutor(pool: Pool): ScannedLabelLookupExecutor {
   return {
     findByExtraction: (query) => findSakeByExtractionFromPool(query, pool),
     findByBreweryOnly: (query) => findSakeByBreweryOnlyFromPool(query, pool),
@@ -93,7 +93,7 @@ function poolExecutor(pool: Pool): ScannedLabelLookupExecutor {
 /** Enough to hold every line of the largest brewery in the catalogue. */
 const SIBLING_LIMIT = 60
 
-function isExecutor(x: Pool | ScannedLabelLookupExecutor): x is ScannedLabelLookupExecutor {
+export function isExecutor(x: Pool | ScannedLabelLookupExecutor): x is ScannedLabelLookupExecutor {
   return 'findByExtraction' in x
 }
 
@@ -105,7 +105,7 @@ function isExecutor(x: Pool | ScannedLabelLookupExecutor): x is ScannedLabelLook
  */
 const JAPANESE_SCRIPT_REGEX = /[぀-ゟ゠-ヿ一-鿿]/
 
-function containsNoJapaneseScript(value: string): boolean {
+export function containsNoJapaneseScript(value: string): boolean {
   return !JAPANESE_SCRIPT_REGEX.test(value)
 }
 
@@ -140,7 +140,7 @@ const PLACEHOLDER_EXTRACTIONS = new Set([
   '？',
 ])
 
-function isPlaceholderExtraction(value: string): boolean {
+export function isPlaceholderExtraction(value: string): boolean {
   return PLACEHOLDER_EXTRACTIONS.has(value.trim())
 }
 
@@ -243,7 +243,7 @@ function bothFieldsAgree(resolved: Exclude<ResolveScannedLabelResult, { kind: 'l
 }
 
 /** The romaji keys a name printed on a label may be stored under; none for kanji. */
-function latinKeys(name: string): string[] {
+export function latinKeys(name: string): string[] {
   const kana = kanaToRomaji(name)
   if (kana !== null) return [romajiKey(kana)]
   if (!containsNoJapaneseScript(name)) return []
@@ -255,7 +255,7 @@ const storedKeys = (brand: Brand) =>
   [brand.name, brand.nameRomaji].flatMap((stored) => (stored == null ? [] : [romajiKey(stored)]))
 
 /** Is `name`, as printed on a label, the catalogue's name for `brand`? */
-function namesBrand(name: string, brand: Brand): boolean {
+export function namesBrand(name: string, brand: Brand): boolean {
   if (expandBrandVariants(name).includes(brand.nameKanji)) return true
   // Kana and Latin are compared by sound: a furigana くろかぶと has no kanji row.
   const stored = storedKeys(brand)
@@ -332,7 +332,7 @@ async function isAnotherSakeOfTheBrewery(
 const MAX_OTHER_NAMES = 8
 
 /** The label's other names, usable: non-empty, not the name itself, capped. */
-function otherNamesOf(label: ScannedLabel): string[] {
+export function otherNamesOf(label: ScannedLabel): string[] {
   return (label.other_names ?? []).filter((n) => n.trim() !== '' && n !== label.name_ja).slice(0, MAX_OTHER_NAMES)
 }
 

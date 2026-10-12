@@ -21,6 +21,21 @@ export interface ScanCandidate {
 }
 
 /**
+ * A sake the scan reached only with the help of the visitor's previous
+ * photo (#408): a guess resting on two photos, shown beside this photo's
+ * own outcome and never in place of it.
+ */
+export interface BothPhotosGuess {
+  brandId: number
+  sakeHref: string
+  nameKanji: string
+  nameRomaji: string | null
+  breweryKanji: string | null
+  breweryRomaji: string | null
+  prefectureName: string | null
+}
+
+/**
  * Tagged-union state returned by `scanAction`. Lives in its own module
  * because Next's `'use server'` rule forbids non-async exports from an
  * actions file — only async functions are allowed. Types and constants
@@ -142,6 +157,8 @@ type ScanActionStateBase =
        * Guesses, not matches — the screen never styles them as one.
        */
       candidates: readonly ScanCandidate[]
+      /** Set when this photo and the previous one together point at a sake. */
+      bothPhotos?: BothPhotosGuess
     }
   /**
    * Disambiguation list state. Multiple Sakenowa brands match the
@@ -180,6 +197,8 @@ type ScanActionStateBase =
          */
         prefectureName: string | null
       }[]
+      /** Set when this photo and the previous one together point at a sake. */
+      bothPhotos?: BothPhotosGuess
     }
   /**
    * Phase 3 / S2 (#107): the per-visitor rate limit on the vision-scan
@@ -221,6 +240,8 @@ type ScanActionStateBase =
   | {
       status: 'low_confidence'
       extraction: LabelScanExtraction
+      /** Set when this photo and the previous one together point at a sake. */
+      bothPhotos?: BothPhotosGuess
     }
   /**
    * Catch-all for unhandled throws inside the action — Anthropic API

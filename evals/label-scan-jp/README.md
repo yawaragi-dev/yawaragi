@@ -198,6 +198,25 @@ catalogue lookup → tables) runs, at no cost.
 
 ---
 
+## Two photos of one bottle — `pnpm eval label-scan-pairs`
+
+A scan that does not settle on one sake is remembered for a few minutes, and the next photo is resolved with both reads (#408). `pnpm eval label-scan-pairs` measures that rule on this corpus. It calls no model: it replays the saved reads of the shipped tier pair through the real lookup, for every ordered pair of photos ("first scan A, second scan B"). It needs `DATABASE_URL` and nothing else.
+
+It answers two questions:
+
+- **Different bottles.** A second photo's own answer is never changed, so this counts how often the earlier read still put a guess beside it. Across different breweries that must be never, and the run exits non-zero if it happens. Two bottles of one brewery share a field, so a guess can appear; each is listed.
+- **The same bottle.** Of the second scans with no single answer of their own, how many get the right sake from the two reads together.
+
+On 2026-10-12 (79 photos, 33 bottles):
+
+| | pairs | result |
+|---|---|---|
+| Second photo gives one sake by itself, earlier read not consulted | 5,460 | unchanged by rule |
+| Different bottles, second photo has no single answer | 688 | 0 guesses across breweries, 2 within one brewery (both the right sake) |
+| Same bottle, second photo has no single answer | 14 | 13 right with both reads, 0 wrong, 1 still nothing |
+
+Seven of those 13 are bottles the catalogue lacks, where "no guess" is the right answer; six are real rescues (Choryo's cut-off side label, both Ninki back labels, the Sekinoichi front). The sample is small: 70 of 79 photos already give one sake alone.
+
 ## Adding a candidate provider to the run
 
 Providers are named keys into the vision registry

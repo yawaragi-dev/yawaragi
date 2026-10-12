@@ -96,6 +96,12 @@ vi.mock('@/lib/sakenowa/nearest-brands', () => ({
   findNearestBrands: vi.fn().mockResolvedValue([]),
 }))
 
+// #408: the rules for combining two photos are unit-tested in
+// `resolve-with-earlier-read.test.ts`; here it is a seam.
+vi.mock('@/lib/sakenowa/resolve-with-earlier-read', () => ({
+  resolveWithEarlierRead: vi.fn().mockResolvedValue(null),
+}))
+
 vi.mock('@/lib/rate-limit/config-gate', () => ({
   // Return null by default so the action skips rate-limit enforcement
   // (as if env is unset in non-production). Individual tests override
@@ -109,6 +115,7 @@ import { createAnthropicHaikuProvider } from '@/lib/ai/vision/anthropic-haiku-pr
 import { resolveScannedLabel } from '@/lib/sakenowa/resolve-scanned-label'
 import { lookupBreweryByBrand } from '@/lib/sakenowa/lookup'
 import { findNearestBrands } from '@/lib/sakenowa/nearest-brands'
+import { resolveWithEarlierRead } from '@/lib/sakenowa/resolve-with-earlier-read'
 import { assertRateLimitConfig } from '@/lib/rate-limit/config-gate'
 import { scanAction } from './scan-action'
 import { INITIAL_SCAN_ACTION_STATE } from './scan-action-state'
@@ -291,6 +298,8 @@ const RETRY_TIER_EXTRACTION = {
   brewery_ja: '旭酒造',
   confidence: 0.4,
 }
+
+const EARLIER_READ = JSON.stringify({ name_ja: '人気一', brewery_ja: '人気酒造', other_names: [], confidence: 0.7 })
 
 // --- Input validation ------------------------------------------------
 
@@ -706,6 +715,91 @@ describe('scanAction — Sakenowa lookup states', () => {
 })
 
 // --- Two-tier retry --------------------------------------------------
+
+describe('scanAction — a second photo, with what the first one read (#408)', () => {
+  const resolveWithEarlierReadMock = vi.mocked(resolveWithEarlierRead)
+  afterEach(() => {
+    vi.clearAllMocks()
+    resolveWithEarlierReadMock.mockResolvedValue(null)
+  })
+
+  function secondScan(earlierRead: string | null) {
+    stubEmptyRequestContext()
+    stubVisionTiers(mockModelReturning(DASSAI_EXTRACTION), mockModelReturning(DASSAI_EXTRACTION))
+    const formData = jpegFormData()
+    if (earlierRead !== null) formData.set('earlierRead', earlierRead)
+    return scanAction(INITIAL_SCAN_ACTION_STATE, formData)
+  }
+  const noMatch = { kind: 'no_match' as const, query: { nameJa: '獺祭', breweryJa: '旭酒造' } }
+
+  it('puts the sake both photos point at beside the outcome, which stays what it was', async () => {
+    resolveScannedLabelMock.mockResolvedValue(noMatch)
+    resolveWithEarlierReadMock.mockResolvedValue({ sake: DASSAI_BRAND })
+    lookupBreweryByBrandMock.mockResolvedValue(ASAHI_SHUZO)
+
+    const state = await secondScan(EARLIER_READ)
+
+    expect(state.status).toBe('no_match')
+    expect(state.status === 'no_match' && state.bothPhotos).toMatchObject({
+      brandId: DASSAI_BRAND.brandId,
+      sakeHref: `/en/sake/${DASSAI_BRAND.brandId}?from=scan`,
+      nameKanji: '獺祭',
+      breweryKanji: '旭酒造',
+    })
+  })
+
+  it('does not consult the earlier read when this photo gives one sake', async () => {
+    resolveScannedLabelMock.mockResolvedValue({ kind: 'exact', sake: DASSAI_BRAND })
+
+    const state = await secondScan(EARLIER_READ)
+
+    expect(state.status).toBe('matched')
+    expect(resolveWithEarlierReadMock).not.toHaveBeenCalled()
+  })
+
+  it('is an ordinary scan when no earlier read came with it', async () => {
+    resolveScannedLabelMock.mockResolvedValue(noMatch)
+
+    const state = await secondScan(null)
+
+    expect(state.status).toBe('no_match')
+    expect(resolveWithEarlierReadMock).not.toHaveBeenCalled()
+  })
+
+  it('ignores an earlier read that is not what the form sends', async () => {
+    resolveScannedLabelMock.mockResolvedValue(noMatch)
+
+    for (const junk of ['not json', '{"name_ja":""}', JSON.stringify({ name_ja: 'x'.repeat(500), brewery_ja: 'y', confidence: 1 })]) {
+      const state = await secondScan(junk)
+      expect(state.status).toBe('no_match')
+    }
+    expect(resolveWithEarlierReadMock).not.toHaveBeenCalled()
+  })
+
+  it('keeps the scan when combining the two reads fails', async () => {
+    resolveScannedLabelMock.mockResolvedValue(noMatch)
+    resolveWithEarlierReadMock.mockRejectedValue(new Error('connection reset'))
+
+    const state = await secondScan(EARLIER_READ)
+
+    expect(state.status).toBe('no_match')
+    expect(state.status === 'no_match' && state.bothPhotos).toBeUndefined()
+  })
+
+  it('never sends the earlier read to the vision model', async () => {
+    resolveScannedLabelMock.mockResolvedValue(noMatch)
+    const model = mockModelReturning(DASSAI_EXTRACTION)
+    stubEmptyRequestContext()
+    stubVisionTiers(model, model)
+    const formData = jpegFormData()
+    formData.set('earlierRead', EARLIER_READ)
+
+    await scanAction(INITIAL_SCAN_ACTION_STATE, formData)
+
+    expect(model.doGenerateCalls.length).toBeGreaterThan(0)
+    expect(JSON.stringify(model.doGenerateCalls.map((call) => call.prompt))).not.toContain('人気一')
+  })
+})
 
 describe('scanAction — two-tier Haiku → Sonnet retry', () => {
   afterEach(() => {

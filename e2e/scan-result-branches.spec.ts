@@ -474,6 +474,72 @@ test.describe('scan result branches (#109 PR B)', () => {
     await context.close()
   })
 
+  test('a photo of another side is read together with the last one (#408)', async ({ browser }, testInfo) => {
+    testInfo.skip(!dbUp, 'Sakenowa mirror not available — DB-bound spec')
+    const consent = {
+      name: 'yawaragi_consent',
+      value: JSON.stringify({ version: 1, analytics: false, marketing: false }),
+      url: BASE_URL,
+    }
+    // Front label: the line and its maker, read with some doubt — a best guess.
+    const { context, page } = await scanPageWith(browser, [
+      injectionCookie({ name_ja: '人気一', brewery_ja: '人気酒造', confidence: 0.7 }),
+      consent,
+    ])
+    await page.goto('/en/scan')
+    await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
+    const firstCard = page.getByTestId('scan-result-card')
+    await firstCard.waitFor({ state: 'visible' }).catch(() => {})
+    testInfo.skip(!(await firstCard.isVisible()), '人気一 / 人気酒造 no longer resolves in the mirror — refresh the fixture')
+
+    // Back at the camera, the visitor is told the next photo will not stand alone.
+    await page.getByTestId('scan-result-match-rescan').click()
+    await expect(page.getByTestId('scan-camera-both-photos')).toContainText('read together with your last one')
+
+    // Importer's back label: the house mark only, which is every line of the brewery.
+    await context.addCookies([injectionCookie({ name_ja: 'NINKI', brewery_ja: 'Ninki', confidence: 0.9 })])
+    await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
+
+    // This photo's own outcome stands — a list — with the two-photo guess beside it.
+    await expect(page.getByTestId('scan-result-ambiguous')).toBeVisible()
+    const guess = page.getByTestId('scan-outcome-both-photos')
+    await expect(guess).toContainText('人気一')
+    await expect(guess).toContainText('Your last photo and this one fit this sake')
+    await expect(page.getByTestId('scan-outcome-other-side')).toHaveCount(0)
+
+    await guess.getByRole('link').click()
+    await expect(page).toHaveURL(/\/en\/sake\/\d+\?from=scan/)
+    await context.close()
+  })
+
+  test('a photo of another bottle is not given the last bottle\'s sake (#408)', async ({ browser }, testInfo) => {
+    testInfo.skip(!dbUp, 'Sakenowa mirror not available — DB-bound spec')
+    const { context, page } = await scanPageWith(browser, [
+      injectionCookie({ name_ja: '人気一', brewery_ja: '人気酒造', confidence: 0.7 }),
+      {
+        name: 'yawaragi_consent',
+        value: JSON.stringify({ version: 1, analytics: false, marketing: false }),
+        url: BASE_URL,
+      },
+    ])
+    await page.goto('/en/scan')
+    await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
+    const firstCard = page.getByTestId('scan-result-card')
+    await firstCard.waitFor({ state: 'visible' }).catch(() => {})
+    testInfo.skip(!(await firstCard.isVisible()), '人気一 / 人気酒造 no longer resolves in the mirror — refresh the fixture')
+    await page.getByTestId('scan-result-match-rescan').click()
+
+    // Another bottle altogether, and one the catalogue lacks.
+    await context.addCookies([injectionCookie({ name_ja: '架空銘柄零一', brewery_ja: '架空酒造零', confidence: 0.95 })])
+    await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
+
+    await expect(page.getByTestId('scan-result-no-match')).toBeVisible()
+    await expect(page.getByTestId('scan-outcome-both-photos')).toHaveCount(0)
+    // …and the screen says a second photo may help.
+    await expect(page.getByTestId('scan-outcome-other-side')).toBeVisible()
+    await context.close()
+  })
+
   test('ambiguous disambiguation — tapping a candidate lands on the right sake page', async ({
     browser,
   }, testInfo) => {

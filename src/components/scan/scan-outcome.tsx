@@ -20,6 +20,13 @@ import { KeepItAnyway } from '@/components/sake/add-unlisted-bottling'
  *   editable fields — the read is often almost right and the visitor can see
  *   the label — and "Search again" with the edited name. No confidence here;
  *   it lives in the Read by AI sheet;
+ * - "From both photos", when this photo and the visitor's previous one
+ *   together point at a sake (#408): one candidate row above the read. A
+ *   guess resting on two photos, so it sits beside the outcome and does not
+ *   replace it — the two photos may be two bottles;
+ * - a line suggesting another side of the bottle, on the outcomes where a
+ *   second photo can help. No button: the bar's "Scan again" is the rescan,
+ *   and the next photo is read together with this one without being asked;
  * - candidate rows, when there are any: a guess, so no percentage and no
  *   accent, and a reason in words;
  * - "Keep it anyway", whenever something was read and the visitor can keep a
@@ -59,6 +66,8 @@ export function ScanOutcome({
   read,
   candidates,
   tips,
+  bothPhotos,
+  suggestOtherSide = false,
   canKeep = false,
   children,
 }: {
@@ -71,6 +80,10 @@ export function ScanOutcome({
   read?: OutcomeRead
   candidates?: { label: string; rows: readonly OutcomeCandidate[] }
   tips?: readonly { icon: ReactNode; text: string }[]
+  /** The sake this photo and the previous one together point at (#408). */
+  bothPhotos?: OutcomeCandidate
+  /** Say that another side of the bottle may help. Not shown beside `bothPhotos`. */
+  suggestOtherSide?: boolean
   /** Offer "Keep it anyway" — only to a visitor who can keep a journal (ADR-0020). */
   canKeep?: boolean
   /** Branch-specific actions under the status block (the consensus's Yes / No). */
@@ -107,7 +120,19 @@ export function ScanOutcome({
           {title}
         </h2>
         <div className="text-subtle leading-normal text-ash-700">{body}</div>
+        {suggestOtherSide && !bothPhotos && (
+          <p className="text-subtle leading-normal text-ash-700" data-testid="scan-outcome-other-side">
+            {t('otherSide')}
+          </p>
+        )}
       </div>
+
+      {bothPhotos && (
+        <div className="flex flex-col">
+          <span className="text-section-label uppercase text-ash-600">{t('bothPhotos.label')}</span>
+          <CandidateRows rows={[bothPhotos]} testId="scan-outcome-both-photos" />
+        </div>
+      )}
 
       {children}
 

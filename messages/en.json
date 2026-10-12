@@ -808,6 +808,12 @@
     "brewery": "Brewery",
     "misreadHint": "Misread? Fix it from the label and search again.",
     "searchAgain": "Search again",
+    "otherSide": "Scan another side of the bottle and we read both photos together.",
+    "bothPhotos": {
+      "label": "From both photos",
+      "reason": "Your last photo and this one fit this sake",
+      "cameraNotice": "This photo is read together with your last one."
+    },
     "brandOnly": {
       "kicker": "Partly matched",
       "title": "We found the sake, not its brewery",

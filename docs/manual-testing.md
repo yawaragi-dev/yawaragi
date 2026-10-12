@@ -86,6 +86,15 @@ Every non-match lands on §5a's one outcome screen: kicker · "Scan again" in th
 | Not in the catalogue, nothing near | `setScan('架空銘柄零一','架空酒造零')` | The same screen with no "Did you mean". Nothing in the catalogue is close, and we don't invent a guess |
 | Unclear photo (< 0.60) | `setScan('獺祭','獺祭',0.5)` | "Unclear photo — We couldn't read this label", three tips. When most of this tab's recent matches (at least 2) were one sake: "This looks like {sake}" with Yes / No stacked (§5a, 45) |
 
+**Two photos of one bottle (#408).** A scan that did not settle on one sake is remembered for five minutes, in the tab only, and the next photo is resolved with both reads. The next photo's own answer always stands; the earlier read can only add a "From both photos" row beside it.
+
+1. `setScan('人気一','人気酒造',0.7)`, give a photo: a Best-guess card for Ninkiichi.
+2. Tap "Not this one". The camera says "This photo is read together with your last one."
+3. `setScan('NINKI','Ninki')`, give a photo: "A few fit" as before, and above "What we read" a **From both photos** row: Ninkiichi 人気一 · "Your last photo and this one fit this sake".
+4. Another bottle instead: after step 2 run `setScan('架空銘柄零一','架空酒造零')`. "Not in the catalogue", no "From both photos" row, and the line "Scan another side of the bottle and we read both photos together."
+
+The rule is measured on the eval photos with `pnpm eval label-scan-pairs` (no model calls).
+
 Confidence tiers (`src/lib/scan/confidence-tier.ts`, half-open):
 - **≥ 0.85** — "Sure match".
 - **0.60–0.84** — "Best guess", with the "Not sure?" row when there are near candidates.

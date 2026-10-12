@@ -21,10 +21,12 @@ import {
   resolveScannedLabel,
   type ResolveScannedLabelResult,
 } from '@/lib/sakenowa/resolve-scanned-label'
+import { resolveWithEarlierRead } from '@/lib/sakenowa/resolve-with-earlier-read'
 import { findNearestBrands, type NearestBrand } from '@/lib/sakenowa/nearest-brands'
 import { getPrefectureNames } from '@/lib/sakenowa/prefecture'
 import type { Brand } from '@/lib/schemas/brand'
 import type { Brewery } from '@/lib/schemas/brewery'
+import { parseEarlierScanRead, type EarlierScanRead } from '@/lib/schemas/earlier-scan-read'
 import type { LabelScanExtraction } from '@/lib/schemas/label-scan-extraction'
 import type { ScanActionState, ScanCandidate } from './scan-action-state'
 import { CONFIDENCE_AUTO_THRESHOLD } from './confidence-tier'
@@ -208,6 +210,11 @@ async function runScanAction(
       debugAdd('ScanAction', `invalid_input: unsupported locale "${String(localeRaw)}"`, undefined, 'warn')
       return { status: 'invalid_input', reason: 'unsupported_locale' }
     }
+    // #408: what the previous scan in this tab read, if the visitor is
+    // photographing another side. Never passed to the vision call — the
+    // photo is read blind — and consulted only after this scan has its own
+    // answer. Malformed or absent is the same as a first scan.
+    const earlierRead = parseEarlierScanRead(formData.get('earlierRead'))
 
     // Rate-limit gate. Post-#161 middleware refactor: reads the
     // `yawaragi_session` cookie the proxy stamped before render and
@@ -295,8 +302,12 @@ async function runScanAction(
         'scan.tier2Used': true,
         'scan.tier2Provider': TIER_2_VISION_PROVIDER_KEY,
       })
-      return withNearestCandidates(
-        await extractAndLookupWithProvider(getVisionProvider(TIER_2_VISION_PROVIDER_KEY), image, localeRaw),
+      return withEarlierRead(
+        await withNearestCandidates(
+          await extractAndLookupWithProvider(getVisionProvider(TIER_2_VISION_PROVIDER_KEY), image, localeRaw),
+          localeRaw,
+        ),
+        earlierRead,
         localeRaw,
       )
     }
@@ -306,7 +317,7 @@ async function runScanAction(
       'scan.tier1Status': tier1Result.status,
       'scan.tier2Used': false,
     })
-    return withNearestCandidates(tier1Result, localeRaw)
+    return withEarlierRead(await withNearestCandidates(tier1Result, localeRaw), earlierRead, localeRaw)
   })
 
   // Attach the accumulated trace to the response. Stripped when debug
@@ -343,6 +354,53 @@ async function withNearestCandidates(state: ScanActionState, locale: Locale): Pr
     return { ...state, otherCandidates: others.map(toCandidate) }
   }
   return state
+}
+
+/**
+ * #408: a scan that did not land on one sake, looked at again with what the
+ * visitor's previous photo read. The rules — this photo's own answer always
+ * stands, the earlier read only fills a gap, and only for the same bottle —
+ * live in `resolveWithEarlierRead`. Here the guess is attached BESIDE the
+ * outcome, which is left exactly as it was: the two photos may be two
+ * bottles, and then the outcome is the true answer and the guess is not.
+ *
+ * Never fails the scan: a lookup error here costs the guess, nothing else.
+ */
+async function withEarlierRead(
+  state: ScanActionState,
+  earlierRead: EarlierScanRead | null,
+  locale: Locale,
+): Promise<ScanActionState> {
+  if (earlierRead === null) return state
+  if (state.status !== 'no_match' && state.status !== 'ambiguous' && state.status !== 'low_confidence') {
+    recordActionMetadata({ 'scan.earlierRead': 'not_needed' })
+    return state
+  }
+  try {
+    const own = await resolveScannedLabel(state.extraction)
+    const guess = await resolveWithEarlierRead(state.extraction, own, earlierRead)
+    recordActionMetadata({ 'scan.earlierRead': guess ? 'guess' : 'no_guess' })
+    if (!guess) return state
+
+    const brewery = await lookupBreweryByBrand(guess.sake.brandId)
+    return {
+      ...state,
+      bothPhotos: {
+        brandId: guess.sake.brandId,
+        sakeHref: sakeHrefFor(guess.sake.brandId, locale),
+        nameKanji: guess.sake.nameKanji,
+        nameRomaji: bestRomaji(guess.sake),
+        breweryKanji: brewery?.nameKanji ?? null,
+        breweryRomaji: brewery ? bestRomaji(brewery) : null,
+        prefectureName: brewery ? (getPrefectureNames(brewery.areaId)?.nameEn ?? null) : null,
+      },
+    }
+  } catch (err) {
+    debugAdd('ScanAction', 'combining with the earlier read threw; keeping this scan as it is', {
+      message: err instanceof Error ? err.message.slice(0, 300) : String(err),
+    }, 'warn')
+    return state
+  }
 }
 
 /**
