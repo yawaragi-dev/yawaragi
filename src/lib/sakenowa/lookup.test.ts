@@ -4,6 +4,7 @@ import {
   expandLatinBrandVariants,
   latinBreweryAgrees,
   namesOverlapping,
+  romajiKey,
 } from './lookup'
 
 /**
@@ -176,5 +177,24 @@ describe('breweryKanjiAgrees', () => {
 
   it('does not match another brewery', () => {
     expect(breweryKanjiAgrees('白木恒助商店', ['三輪酒造'])).toBe(false)
+  })
+})
+
+describe('romajiKey', () => {
+  it('gives one key to the spellings of a long vowel: Fudoh, Fudō, Fudou', () => {
+    expect(romajiKey('Fudoh')).toBe('fudo')
+    expect(romajiKey('Fudō')).toBe('fudo')
+    expect(romajiKey('FUDOU')).toBe('fudo')
+    expect(romajiKey('Garyuubai')).toBe(romajiKey('GARYUBAI'))
+  })
+
+  it('ignores spacing and hyphens: Yoshino Sugi, YOSHINOSUGI, Ninki-Ichi', () => {
+    expect(romajiKey('Yoshino Sugi')).toBe(romajiKey('YOSHINOSUGI'))
+    expect(romajiKey('NINKI-ICHI')).toBe(romajiKey('Ninkiichi'))
+  })
+
+  it('keeps different names different', () => {
+    expect(romajiKey('Sanwa')).not.toBe(romajiKey('Miwa'))
+    expect(romajiKey('Fukuju')).not.toBe(romajiKey('Fukujukai'))
   })
 })

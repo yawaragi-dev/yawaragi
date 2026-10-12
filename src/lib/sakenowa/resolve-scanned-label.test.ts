@@ -119,6 +119,22 @@ describe('resolveScannedLabel — confidence-tier gate', () => {
     expect(result.kind).toBe('low_confidence')
   })
 
+  it('keeps a low-scored read whose brand is part of the one line its brewery matched (a label cut off by the frame)', async () => {
+    const executor = fakeExecutor({
+      byExtraction: {
+        kind: 'matched_brewery_only',
+        sake: { ...DASSAI_BRAND, nameKanji: '吉野杉の樽酒' },
+        brewery: ASAHI_SHUZO,
+        brandDivergence: { extracted: '吉野杉', stored: '吉野杉の樽酒' },
+        query: { nameJa: '吉野杉', breweryJa: '旭酒造' },
+      },
+    })
+
+    const result = await resolveScannedLabel(label({ name_ja: '吉野杉', confidence: 0.3 }), executor)
+
+    expect(result.kind).toBe('matched_brewery_only')
+  })
+
   it('answers low_confidence, not "not in the catalogue", for a low-scored read that matched nothing', async () => {
     const executor = fakeExecutor({})
 

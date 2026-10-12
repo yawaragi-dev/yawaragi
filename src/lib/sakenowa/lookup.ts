@@ -20,6 +20,7 @@ import {
   expandBrandVariants,
   expandBreweryVariants,
   expandPossibleBrandVariants,
+  stripOperationalSuffix,
 } from './brewery-variants'
 import { withFormerBreweryNames } from './former-brewery-names'
 import { publicQuery } from '../supabase/public-query'
@@ -459,7 +460,14 @@ const SELECT_BRANDS_AND_BREWERIES_BY_LATIN_NAME = `
     b.confidence         AS brewery_confidence
   FROM brands br
   JOIN breweries b ON b.brewery_id = br.brewery_id
-  WHERE (LOWER(br.name) = ANY($1::text[]) OR LOWER(br.name_romaji) = ANY($1::text[]))
+  -- $2 holds the same candidates as romaji keys (see romajiKey): spacing,
+  -- hyphens, macrons and long-vowel spelling removed from both sides, so a
+  -- label's FUDOH or GARYUBAI meets the stored Fudō and Garyuubai.
+  WHERE (
+         LOWER(br.name) = ANY($1::text[])
+      OR LOWER(br.name_romaji) = ANY($1::text[])
+      OR regexp_replace(regexp_replace(regexp_replace(translate(LOWER(br.name_romaji), 'āīūēōâîûêô', 'aiueoaiueo'), '[^a-z0-9]', '', 'g'), 'o[ouh]', 'o', 'g'), 'uu', 'u', 'g') = ANY($2::text[])
+    )
     AND br.superseded_at IS NULL
     AND b.superseded_at IS NULL
   ORDER BY br.brand_id
@@ -953,7 +961,7 @@ export async function findSakeByLatinBrandFromPool(
   const { rows } = await publicQuery<BrandWithBreweryRow>(
     'brands',
     SELECT_BRANDS_AND_BREWERIES_BY_LATIN_NAME,
-    [candidates],
+    [candidates, [...new Set(candidates.map(romajiKey))]],
     pool,
   )
   debugAdd('Sakenowa', `latin-name lookup returned ${rows.length} row(s)`)
@@ -1012,7 +1020,7 @@ const SELECT_BRANDS_AND_BREWERIES_BY_BREWERY_ROMAJI = `
     b.confidence         AS brewery_confidence
   FROM brands br
   JOIN breweries b ON b.brewery_id = br.brewery_id
-  WHERE LOWER(b.name_romaji) = ANY($1::text[])
+  WHERE regexp_replace(regexp_replace(regexp_replace(translate(LOWER(b.name_romaji), 'āīūēōâîûêô', 'aiueoaiueo'), '[^a-z0-9]', '', 'g'), 'o[ouh]', 'o', 'g'), 'uu', 'u', 'g') = ANY($1::text[])
     AND br.superseded_at IS NULL
     AND b.superseded_at IS NULL
   ORDER BY
@@ -1046,12 +1054,31 @@ const GENERIC_BREWERY_WORDS = new Set<string>([
   'the',
 ])
 
-/** The words of a Latin brewery name that identify it, lowercased. */
+/**
+ * A Latin name reduced to what two spellings of one Japanese word share:
+ * lowercase, no spaces, hyphens or macrons, and long vowels written short.
+ * `Fudoh`, `Fudō` and `Fudou` are all `fudo`; `Garyuubai` and `GARYUBAI`
+ * are `garyubai`. Mirrored in SQL by the lookups that compare with it.
+ */
+export function romajiKey(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]/g, '')
+    .replace(/o[ouh]/g, 'o')
+    .replace(/uu/g, 'u')
+}
+
+/** The words of a Latin brewery name that identify it, as romaji keys. */
 export function latinBreweryCore(text: string): string[] {
   return text
     .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
     .split(/[^a-z0-9]+/)
     .filter((word) => word.length > 0 && !GENERIC_BREWERY_WORDS.has(word))
+    .map(romajiKey)
 }
 
 /**
@@ -1070,11 +1097,11 @@ export function latinBreweryAgrees(extracted: string, storedRomaji: string | nul
   return shorter.every((word) => longer.includes(word))
 }
 
-/** The romaji spellings to look a Latin brewery name up under. */
+/** The romaji keys to look a Latin brewery name up under. */
 function latinBreweryCandidates(text: string): string[] {
-  const core = latinBreweryCore(text).join(' ')
+  const core = latinBreweryCore(text).join('')
   if (core.length === 0) return []
-  return [core, ...['shuzo', 'jozo', 'shuzoten', 'shoten', 'sake brewery'].map((suffix) => `${core} ${suffix}`)]
+  return [core, ...['shuzo', 'jozo', 'shuzoten', 'shoten', 'sakebrewery'].map((suffix) => romajiKey(core + suffix))]
 }
 
 /**
@@ -1209,6 +1236,28 @@ export async function findSakeByBreweryOnlyFromPool(
       brewery: breweryFromJoinedRow(matched),
       brandDivergence: { extracted: query.nameJa, stored: brand.nameKanji },
       query,
+    }
+  }
+
+  // The read is the brewery's own name without its suffix (世嬉の一 under
+  // 世嬉の一酒造), and one line is named after the brewery in Latin where the
+  // catalogue writes it in another script (せきのいち, "Sekinoichi").
+  const stem = stripOperationalSuffix(breweryOnlyRows[0].brewery_name_kanji)
+  if (stem !== null && expandBrandVariants(query.nameJa).includes(stem)) {
+    const breweryKey = latinBreweryCore(breweryOnlyRows[0].brewery_name_romaji ?? '').join('')
+    const namesakes = breweryOnlyRows.filter(
+      (r) => breweryKey.length > 0 && r.brand_name_romaji !== null && romajiKey(r.brand_name_romaji) === breweryKey,
+    )
+    if (namesakes.length === 1) {
+      const brand = brandFromJoinedRow(namesakes[0])
+      debugAdd('Sakenowa', `"${query.nameJa}" is the brewery's own name; its namesake line is "${brand.nameKanji}"`)
+      return {
+        kind: 'matched_brewery_only',
+        sake: brand,
+        brewery: breweryFromJoinedRow(namesakes[0]),
+        brandDivergence: { extracted: query.nameJa, stored: brand.nameKanji },
+        query,
+      }
     }
   }
 

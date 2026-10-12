@@ -12,6 +12,7 @@ import {
   findSakeByBreweryOnlyFromPool,
   findSakeByExtractionFromPool,
   findSakeByLatinBreweryFromPool,
+  namesOverlapping,
 } from './lookup'
 import { getServerDbPool } from '../supabase/server-client'
 
@@ -170,7 +171,9 @@ function looksLikeSingleCharHallucination(name_ja: string): boolean {
  *   4. full cascade          — `findByExtraction`.
  *   5. confidence gate       — a read the model scored in the `retry` tier
  *                              is kept only where brand and brewery both
- *                              matched one catalogue row (`exact`).
+ *                              matched one catalogue row (`exact`, or the
+ *                              brewery plus a brand that is part of the
+ *                              stored name).
  *
  * The gate comes last, and lets `exact` through, because a model's score of
  * itself and a match in the catalogue are different evidence. A front label
@@ -197,7 +200,7 @@ export async function resolveScannedLabel(
   })
 
   const resolved = await resolveByShape(label, executor)
-  if (tier === 'retry' && resolved.kind !== 'exact' && resolved.kind !== 'low_confidence') {
+  if (tier === 'retry' && resolved.kind !== 'low_confidence' && !bothFieldsAgree(resolved)) {
     debugAdd(
       'ScanAction',
       `retry-tier read resolved to ${resolved.kind}, short of an exact match — routing to low_confidence`,
@@ -205,6 +208,19 @@ export async function resolveScannedLabel(
     return { kind: 'low_confidence' }
   }
   return resolved
+}
+
+/**
+ * Did brand and brewery both point at this one row? An exact match, or a
+ * brewery match where the brand that was read is part of the stored name
+ * (吉野杉 under 長龍酒造 for 吉野杉の樽酒) — a label cut off by the frame.
+ */
+function bothFieldsAgree(resolved: Exclude<ResolveScannedLabelResult, { kind: 'low_confidence' }>): boolean {
+  if (resolved.kind === 'exact') return true
+  return (
+    resolved.kind === 'matched_brewery_only' &&
+    namesOverlapping(resolved.brandDivergence.extracted, [resolved.brandDivergence.stored]).length === 1
+  )
 }
 
 /** Steps 1–4 of `resolveScannedLabel`: everything but the confidence gate. */

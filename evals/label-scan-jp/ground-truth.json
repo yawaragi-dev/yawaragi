@@ -278,7 +278,8 @@
     "bottle": "daruma-masamune",
     "view": "front",
     "expectedBrandIds": [
-      2692
+      2692,
+      2780
     ],
     "also": {
       "name_ja": [
@@ -289,7 +290,7 @@
     "provenance": {
       "source": "maintainer_own_bottle",
       "rightsCleared": true,
-      "notes": "Daruma Masamune aged-sake set (3/5/10 years) — the BOX, whose front names the sake in Latin only. This photo: front label."
+      "notes": "Daruma Masamune aged-sake set (3/5/10 years) — the BOX, whose front names the sake in Latin only. This photo: front label. The catalogue lists this sake twice, as 達磨正宗 and ダルマ正宗."
     }
   },
   "daruma_masamune_clear.jpg": {
@@ -298,7 +299,8 @@
     "bottle": "daruma-masamune",
     "view": "front",
     "expectedBrandIds": [
-      2692
+      2692,
+      2780
     ],
     "also": {
       "name_ja": [
@@ -309,7 +311,7 @@
     "provenance": {
       "source": "maintainer_own_bottle",
       "rightsCleared": true,
-      "notes": "Daruma Masamune aged-sake set (3/5/10 years) — the BOX, whose front names the sake in Latin only. This photo: front label."
+      "notes": "Daruma Masamune aged-sake set (3/5/10 years) — the BOX, whose front names the sake in Latin only. This photo: front label. The catalogue lists this sake twice, as 達磨正宗 and ダルマ正宗."
     }
   },
   "daruma_masamune_label.jpg": {
@@ -318,7 +320,8 @@
     "bottle": "daruma-masamune",
     "view": "back_import",
     "expectedBrandIds": [
-      2692
+      2692,
+      2780
     ],
     "also": {
       "name_ja": [
@@ -329,7 +332,7 @@
     "provenance": {
       "source": "maintainer_own_bottle",
       "rightsCleared": true,
-      "notes": "Daruma Masamune aged-sake set (3/5/10 years) — the BOX, whose front names the sake in Latin only. This photo: the importer's German or French back label."
+      "notes": "Daruma Masamune aged-sake set (3/5/10 years) — the BOX, whose front names the sake in Latin only. This photo: the importer's German or French back label. The catalogue lists this sake twice, as 達磨正宗 and ダルマ正宗."
     }
   },
   "dewazakura_yukimegami_clear.jpg": {
@@ -847,6 +850,7 @@
     "bottle": "ninki-gold",
     "view": "front",
     "expectedBrandIds": [
+      190,
       191
     ],
     "also": {
@@ -860,7 +864,7 @@
     "provenance": {
       "source": "maintainer_own_bottle",
       "rightsCleared": true,
-      "notes": "Ninki-ichi \"Gold\" junmai daiginjo, 720 ml — brand is a stylised mark plus katakana. This photo: front label."
+      "notes": "Ninki-ichi \"Gold\" junmai daiginjo, 720 ml — brand is a stylised mark plus katakana. This photo: front label. ゴールド人気 has its own catalogue row beside the line 人気一; either is the bottle."
     }
   },
   "ninki_gold_label_label.jpg": {
@@ -869,6 +873,7 @@
     "bottle": "ninki-gold",
     "view": "back_import",
     "expectedBrandIds": [
+      190,
       191
     ],
     "also": {
@@ -882,7 +887,7 @@
     "provenance": {
       "source": "maintainer_own_bottle",
       "rightsCleared": true,
-      "notes": "Ninki-ichi \"Gold\" junmai daiginjo, 720 ml — brand is a stylised mark plus katakana. This photo: the importer's German or French back label."
+      "notes": "Ninki-ichi \"Gold\" junmai daiginjo, 720 ml — brand is a stylised mark plus katakana. This photo: the importer's German or French back label. ゴールド人気 has its own catalogue row beside the line 人気一; either is the bottle."
     }
   },
   "ninki_sparkling_junmai_daiginjo_clear.jpg": {

@@ -1155,6 +1155,34 @@ describe('matches the real-bottle eval surfaced (#110)', () => {
     expect(result.sake).toMatchObject({ brandId: 9001, nameKanji: '勝山' })
   })
 
+  it('matches Latin read off a label whatever the spelling of its long vowels: Fudoh is the stored Fudō', async () => {
+    await seedBrewery({ breweryId: 9501, name: '鍋店', nameKanji: '鍋店', areaId: 12 })
+    await pool.query('UPDATE breweries SET name_romaji = $1 WHERE brewery_id = $2', ['Nabedana', 9501])
+    await pool.query(INSERT_BRAND, [9001, '不動', '不動', 9501, 'sakenowa', null, 'hash-fudo-9001'])
+    await pool.query('UPDATE brands SET name_romaji = $1 WHERE brand_id = $2', ['Fudō', 9001])
+
+    const result = await findSakeByLatinBreweryFromPool({ nameJa: 'Fudoh', breweryJa: 'Nabedana' }, pool)
+
+    expect(result.kind).toBe('exact')
+    if (result.kind !== 'exact') throw new Error('unreachable; for narrowing only')
+    expect(result.sake).toMatchObject({ brandId: 9001, nameKanji: '不動' })
+  })
+
+  it("finds the line named after the brewery when the catalogue writes it in another script: 世嬉の一 is せきのいち", async () => {
+    await seedBrewery({ breweryId: 9501, name: '世嬉の一酒造', nameKanji: '世嬉の一酒造', areaId: 3 })
+    await pool.query('UPDATE breweries SET name_romaji = $1 WHERE brewery_id = $2', ['Sekinoichi Shuzo', 9501])
+    await pool.query(INSERT_BRAND, [9001, 'せきのいち', 'せきのいち', 9501, 'sakenowa', null, 'hash-seki-9001'])
+    await pool.query(INSERT_BRAND, [9002, 'スパークリング清酒', 'スパークリング清酒', 9501, 'sakenowa', null, 'hash-spark-9002'])
+    await pool.query('UPDATE brands SET name_romaji = $1 WHERE brand_id = $2', ['Sekinoichi', 9001])
+    await pool.query('UPDATE brands SET name_romaji = $1 WHERE brand_id = $2', ['Sparkling Seishu', 9002])
+
+    const result = await findSakeByBreweryOnlyFromPool({ nameJa: '世嬉の一', breweryJa: '世嬉の一酒造' }, pool)
+
+    expect(result.kind).toBe('matched_brewery_only')
+    if (result.kind !== 'matched_brewery_only') throw new Error('unreachable; for narrowing only')
+    expect(result.sake).toMatchObject({ brandId: 9001, nameKanji: 'せきのいち' })
+  })
+
   it("picks the one line of a brewery a partial read belongs to: 樽酒 under 長龍酒造 is 吉野杉の樽酒", async () => {
     await seedBrewery({ breweryId: 9501, name: '長龍酒造', nameKanji: '長龍酒造', areaId: 29 })
     await pool.query(INSERT_BRAND, [9001, 'Choryo', '長龍', 9501, 'sakenowa', null, 'hash-choryo-9001'])
