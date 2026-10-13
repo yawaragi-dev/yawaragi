@@ -2031,6 +2031,26 @@
      ],
      "confidence": 0.6,
      "latencyMs": 3656
+    },
+    "kikuhime_marui_kenbishi_tamazakura_uehara_mukai_mochida_maruo_menu.jpg": {
+     "photoSha": "1f6c5cd6b46eb012",
+     "name_ja": "菊姫",
+     "brewery_ja": "菊姫",
+     "brewery_printed": false,
+     "subject": "menu",
+     "drink": "sake",
+     "bottling": {
+      "grade": "junmai",
+      "styles": [
+       "yamahai"
+      ]
+     },
+     "other_names": [
+      "きくひめ",
+      "Kikuhime"
+     ],
+     "confidence": 0.7,
+     "latencyMs": 5920
     }
    }
   },
@@ -4158,6 +4178,27 @@
      ],
      "confidence": 0.6,
      "latencyMs": 2948
+    },
+    "kikuhime_marui_kenbishi_tamazakura_uehara_mukai_mochida_maruo_menu.jpg": {
+     "photoSha": "1f6c5cd6b46eb012",
+     "name_ja": "菊姫",
+     "brewery_ja": "菊姫",
+     "brewery_printed": false,
+     "subject": "menu",
+     "drink": "sake",
+     "bottling": {
+      "grade": "junmai",
+      "styles": [
+       "yamahai",
+       "koshu"
+      ]
+     },
+     "other_names": [
+      "きくひめ",
+      "Kikuhime"
+     ],
+     "confidence": 0.8,
+     "latencyMs": 3373
     }
    }
   },

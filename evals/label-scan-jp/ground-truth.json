@@ -2472,5 +2472,122 @@
       "localOnly": false,
       "notes": "A MENU: the same bar's tablet list as aramasa_takagi_menu.jpg, another page, a grid of nine cells of which six are filled, listed left to right and top to bottom as the maintainer named them. Each cell prints the sake's name in kanji, hiragana and Latin with its prefecture, then the bottling and the grade; the page writes \"Tedorikawa\". It does not print the makers, which are the catalogue's. 一博 is 中澤酒造 of Shiga (row 1313); the maintainer's list and file name had \"Nakagawa\", and the file was renamed to \"nakazawa\" on that. The catalogue writes 赤武 as AKABU, and has a second 玉川 from another maker (48328) that is not this one. Below the grid: tasting-flight and per-glass prices and a one-drink-per-guest notice. Published: a plain typeset list of names, grades and prices, no venue name, no logo, no picture, no person; a lamp is reflected in the screen. Added 2026-10-13."
     }
+  },
+  "kikuhime_marui_kenbishi_tamazakura_uehara_mukai_mochida_maruo_menu.jpg": {
+    "name_ja": "菊姫",
+    "brewery_ja": "菊姫",
+    "view": "other",
+    "subject": "menu",
+    "items": [
+      {
+        "name_ja": "菊姫",
+        "brewery_ja": "菊姫",
+        "product": "山廃 2017 BY Aged 山田錦 純米",
+        "expectedBrandIds": [
+          1041
+        ]
+      },
+      {
+        "name_ja": "樂の世",
+        "brewery_ja": "丸井合名",
+        "product": "山廃 本醸造",
+        "expectedBrandIds": [
+          37850
+        ]
+      },
+      {
+        "name_ja": "剣菱",
+        "brewery_ja": "剣菱酒造",
+        "product": "瑞祥 Aged 5-10years blended",
+        "expectedBrandIds": [
+          766,
+          1444
+        ]
+      },
+      {
+        "name_ja": "玉櫻",
+        "brewery_ja": "玉櫻酒造",
+        "product": "生酛 2018 BY Aged 玉栄 純米",
+        "expectedBrandIds": [
+          1489
+        ]
+      },
+      {
+        "name_ja": "不老泉",
+        "brewery_ja": "上原酒造",
+        "product": "参年熟成 赤ラベル 山廃 3 years Aged 純米",
+        "expectedBrandIds": [
+          676
+        ]
+      },
+      {
+        "name_ja": "伊根満開",
+        "brewery_ja": "向井酒造",
+        "product": "赤米酒 Partially made with red rice",
+        "expectedBrandIds": [
+          1766
+        ]
+      },
+      {
+        "name_ja": "ヤマサン正宗",
+        "brewery_ja": "酒持田本店",
+        "product": "佐香錦 袋取り原酒 6BY 純米吟醸",
+        "expectedBrandIds": [
+          2282
+        ]
+      },
+      {
+        "name_ja": "悦凱陣",
+        "brewery_ja": "丸尾本店",
+        "product": "瀬戸米 山廃 2020 BY Aged 純米",
+        "expectedBrandIds": [
+          901
+        ]
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "樂の世",
+        "楽の世",
+        "剣菱",
+        "玉櫻",
+        "不老泉",
+        "伊根満開",
+        "ヤマサン正宗",
+        "悦凱陣",
+        "Kikuhime",
+        "Raku no yo",
+        "Kenbishi",
+        "Tamazakura",
+        "Furousen",
+        "Inemankai",
+        "Yamasan masamune",
+        "Yorokobi Gaigin",
+        "きくひめ",
+        "らくのよ",
+        "けんびし",
+        "たまざくら",
+        "ふろうせん",
+        "いねまんかい",
+        "ヤマサンまさむね",
+        "よろこびがいじん"
+      ],
+      "brewery_ja": [
+        "菊姫合資会社",
+        "丸井合名",
+        "剣菱酒造",
+        "玉櫻酒造",
+        "上原酒造",
+        "向井酒造",
+        "酒持田本店",
+        "丸尾本店"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_menu_photo",
+      "rightsCleared": true,
+      "localOnly": false,
+      "notes": "A MENU: the same bar's tablet list as aramasa_takagi_menu.jpg, the page headed お燗がおすすめ / \"Warm Aged SAKE\", a grid of nine cells of which eight are filled, listed left to right and top to bottom as the maintainer named them. Each cell prints the sake's name in kanji, hiragana and Latin with its prefecture, then the bottling and the grade; the cells for 剣菱 and 伊根満開 print no grade. The page does not print the makers, which are the catalogue's. 楽の世 (printed with the old character, 樂の世) is 丸井合名 of Aichi (row 1670); the maintainer's list and file name had \"Maruichi\", which is another Aichi brewery (丸一酒造, ほしいずみ), and the file was renamed to \"marui\" on that. 剣菱 瑞祥 is sold as 瑞祥黒松剣菱, which the catalogue does not have as a row of its own, so both 剣菱 and 黒松剣菱 count. The page writes \"Yorokobi Gaigin\" and \"Honjyozo\". Below the grid: per-glass prices, an offer to warm the sake to order and a one-drink-per-guest notice. Published: a plain typeset list of names, grades and prices, no venue name, no logo, no picture, no person; a lamp is reflected in the screen. Added 2026-10-13."
+    }
   }
 }
