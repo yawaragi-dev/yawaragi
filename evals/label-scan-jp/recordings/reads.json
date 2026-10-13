@@ -2335,6 +2335,18 @@
      ],
      "confidence": 0.5,
      "latencyMs": 8875
+    },
+    "ohmine_fuyuno_otozure_nigorizake_only_image_no_text.jpg": {
+     "photoSha": "60f7dad7f9b23124",
+     "name_ja": "label text not legible",
+     "brewery_ja": "brewery not legible",
+     "brewery_printed": false,
+     "subject": "one_bottle",
+     "drink": "unknown",
+     "bottling": {},
+     "other_names": [],
+     "confidence": 0.1,
+     "latencyMs": 5909
     }
    }
   },
@@ -4790,6 +4802,18 @@
      ],
      "confidence": 0.6,
      "latencyMs": 7612
+    },
+    "ohmine_fuyuno_otozure_nigorizake_only_image_no_text.jpg": {
+     "photoSha": "60f7dad7f9b23124",
+     "name_ja": "?",
+     "brewery_ja": "?",
+     "brewery_printed": false,
+     "subject": "one_bottle",
+     "drink": "unknown",
+     "bottling": {},
+     "other_names": [],
+     "confidence": 0.1,
+     "latencyMs": 8954
     }
    }
   },

@@ -3707,5 +3707,29 @@
       "localOnly": false,
       "notes": "A MENU, AT AN ANGLE: the same bar's tablet list as aramasa_takagi_menu.jpg, another page, photographed close and from the side: a grid of nine cells, the middle column whole and the outer columns cut by the edges of the frame, listed left to right and top to bottom as the maintainer named them. Whole: 澤屋まつもと, 手取川 and LINNE. Cut at the left: 不老泉 (no grade in frame), 久保田 and 竹葉, each with its name and bottling legible. Cut at the right: 花陽浴, with most of its lines; 作, of which one stroke of the name, \"Zaku\" and the first character of 雅乃智 are in frame; and 雨後の月, of which 雨 and \"Ugo n…\" are. The page does not print the makers, which are the catalogue's; the maintainer's list and file name had \"Kazumi\" for 数馬酒造 (Kazuma), and the file was renamed. LINNE is a craft sake brewed with barley koji as well as rice koji, as the cell says, so not sake in the legal sense; it is not in the catalogue and its maker is not on the page. A lamp is reflected in the screen across the 久保田 cell. Published: a plain typeset list of names, grades and prices, no venue name, no logo, no picture, no person. Location and camera data were removed from the file. Added 2026-10-13."
     }
+  },
+  "ohmine_fuyuno_otozure_nigorizake_only_image_no_text.jpg": {
+    "name_ja": "大嶺",
+    "brewery_ja": "大嶺酒造",
+    "bottle": "ohmine-fuyu-no-otozure",
+    "view": "side",
+    "expectedBrandIds": [
+      3581,
+      4132
+    ],
+    "also": {
+      "name_ja": [
+        "大嶺 冬のおとずれ",
+        "冬のおとずれ",
+        "Ohmine",
+        "大嶺3粒",
+        "大嶺 3粒 冬のおとずれ"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "NO WRITING IN THE FRAME: Ohmine 3 Grain \"Winter's Arrival\" (冬のおとずれ), a cloudy sake by the maintainer's account, on a bar counter with a glass of it in front. The side of the bottle that faces the camera carries a drawing only, a woman in a blue kimono under snow-laden branches, printed on frosted glass: no kanji, kana or Latin letter anywhere in the photo. Nothing here can be read, so a scan that names this sake has recognised the artwork, and a scan that finds nothing has not failed at reading. The catalogue has 大嶺 in two rows; both count. The same bottling as the 大嶺 line of okura_fukugen_omine_fujioka_takagi_izumi_menu.jpg. A person stood behind the counter at the top left and a second shape at the top right; both corners are painted over in the file, which was re-encoded for that, and location and camera data were removed. The drawn figure is artwork, not a person. The maintainer's file was ohime_…; \"ohmine\" was corrected. Photographed at a bar, added 2026-10-13."
+    }
   }
 }
