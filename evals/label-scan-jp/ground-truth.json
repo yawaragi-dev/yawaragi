@@ -890,7 +890,7 @@
       "notes": "Ninki-ichi \"Gold\" junmai daiginjo, 720 ml — brand is a stylised mark plus katakana. This photo: the importer's German or French back label. ゴールド人気 has its own catalogue row beside the line 人気一; either is the bottle."
     }
   },
-  "ninki_sparkling_junmai_daiginjo_clear.jpg": {
+  "ninki_sparkling_junmai_ginjo_clear.jpg": {
     "name_ja": "人気一",
     "brewery_ja": "人気酒造",
     "bottle": "ninki-sparkling",
@@ -910,7 +910,7 @@
       "notes": "Ninki-ichi sparkling junmai ginjo, 300 ml — stylised mark plus Latin only. This photo: front label."
     }
   },
-  "ninki_sparkling_junmai_daiginjo_label.jpg": {
+  "ninki_sparkling_junmai_ginjo_label.jpg": {
     "name_ja": "人気一",
     "brewery_ja": "人気酒造",
     "bottle": "ninki-sparkling",
@@ -1409,6 +1409,786 @@
       "source": "maintainer_shop_photo",
       "rightsCleared": true,
       "notes": "Tanigawadake chokara junmai; brush calligraphy on a dark label. Photographed on a shop shelf, added 2026-10-12 after the lookup was tuned on the first 73 photos. The bare glass above the label is blurred: it reflected the person taking the photo."
+    }
+  },
+  "arasebara_matsuo_with_glares.jpg": {
+    "name_ja": "松尾",
+    "brewery_ja": "高橋助作酒造店",
+    "bottle": "matsuo-arasebara",
+    "view": "front",
+    "expectedBrandIds": [
+      3298
+    ],
+    "also": {
+      "name_ja": [
+        "Matsuwo",
+        "松尾 荒瀬原",
+        "荒瀬原"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Matsuo \"Arasebara\" kimoto, Sankei Nishiki, 2023; the label sits under shrink film and glares, and prints the brand in brush characters with \"Matsuwo\" across them. The maker is not legible in this photo. Held in the hand in front of a shop shelf, added 2026-10-13."
+    }
+  },
+  "asabiraki_junmai_clear.jpg": {
+    "name_ja": "あさ開",
+    "brewery_ja": "あさ開",
+    "bottle": "asabiraki-junmai",
+    "view": "front",
+    "expectedBrandIds": [
+      34
+    ],
+    "also": {
+      "name_ja": [
+        "アサビラキ",
+        "ASABIRAKI"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Asabiraki junmai, small bottle; the brand in hiragana and kanji, katakana and Latin beside it. The maker is the company of the same name and is not printed apart from the brand. Photographed on a shop shelf, added 2026-10-13. The neighbouring label at the right edge carries a drawn portrait, not a person."
+    }
+  },
+  "bishu_ranman_clear.jpg": {
+    "name_ja": "爛漫",
+    "brewery_ja": "秋田銘醸",
+    "bottle": "ranman-junmai",
+    "view": "front",
+    "expectedBrandIds": [
+      113
+    ],
+    "also": {
+      "name_ja": [
+        "美酒爛漫",
+        "ランマン"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Ranman junmai, small bottle; 美酒 sits in a lozenge beside the brand, and the maker only in a small red seal. 英勲 is legible on the bottle to the right. Photographed on a shop shelf, added 2026-10-13."
+    }
+  },
+  "choryo_yoshinosugi_taruzake_clear_2.jpg": {
+    "name_ja": "吉野杉の樽酒",
+    "brewery_ja": "長龍酒造",
+    "bottle": "choryo-tarusake",
+    "view": "front",
+    "expectedBrandIds": [
+      2120
+    ],
+    "also": {
+      "name_ja": [
+        "樽酒"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Choryo Yoshinosugi no Taruzake. This photo: front label, on a shop shelf — the bottle of this group's other photos, another copy of it. Photographed on a shop shelf, added 2026-10-13. The bare glass above the label is blurred: it reflected the hands and phone of the person taking the photo."
+    }
+  },
+  "eikun_junmai_clear.jpg": {
+    "name_ja": "英勲",
+    "brewery_ja": "齊藤酒造",
+    "bottle": "eikun-junmai",
+    "view": "front",
+    "expectedBrandIds": [
+      728
+    ],
+    "also": {
+      "name_ja": [
+        "エイクン"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Eikun junmai, small bottle. The maker is not printed on the front. Photographed on a shop shelf, added 2026-10-13."
+    }
+  },
+  "fukumitsuya_fukumasamune_junmai_clearish.jpg": {
+    "name_ja": "福正宗",
+    "brewery_ja": "福光屋",
+    "bottle": "fukumasamune-junmai",
+    "view": "front",
+    "expectedBrandIds": [
+      488,
+      2006
+    ],
+    "also": {
+      "brewery_ja": [
+        "FUKUMITSUYA SAKE BREWERY",
+        "FUKUMITSUYA"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Fukumasamune junmai, small bottle; most of the label is a drawn portrait in the style of an old poster (a drawing, not a person), the brand small and stylised at its edge, the maker in Latin only. The catalogue lists this sake twice, as 福正宗 and 福政宗. Photographed on a shop shelf, added 2026-10-13."
+    }
+  },
+  "ginban_junmai_ginjo.jpg": {
+    "name_ja": "銀盤",
+    "brewery_ja": "銀盤酒造",
+    "bottle": "ginban-junmai-ginjo",
+    "view": "front",
+    "expectedBrandIds": [
+      463
+    ],
+    "also": {
+      "name_ja": [
+        "ギンバン",
+        "GINBAN"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Ginban junmai ginjo, small bottle. 幻の瀧 is legible on the bottle to the right. Photographed on a shop shelf, added 2026-10-13."
+    }
+  },
+  "ginrei_gassan_junmai_ginjo_gassan_no_yuki_wrapped.jpg": {
+    "name_ja": "月山の雪",
+    "brewery_ja": "月山酒造",
+    "bottle": "gassan-no-yuki",
+    "view": "front",
+    "expectedBrandIds": [
+      131,
+      132
+    ],
+    "also": {
+      "name_ja": [
+        "銀嶺月山",
+        "銀嶺月山 月山の雪",
+        "Gassan-no-Yuki",
+        "銀嶺"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Ginrei Gassan junmai ginjo \"Gassan no Yuki\", wrapped in clear film; the product name is in loose brush characters, the line only in a seal at the edge of the frame, the maker not at all. The catalogue has the line as 銀嶺月山 and again as 銀嶺; either is the bottle. Photographed on a shop shelf, added 2026-10-13."
+    }
+  },
+  "hakuryu_junmai_ginjo_clear.jpg": {
+    "name_ja": "白龍",
+    "brewery_ja": "白龍酒造",
+    "bottle": "hakuryu-junmai-ginjo",
+    "view": "front",
+    "expectedBrandIds": [
+      1290
+    ],
+    "also": {
+      "name_ja": [
+        "ハクリュウ"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Hakuryu junmai ginjo, small bottle; the label is set right to left. The catalogue has a second 白龍, from 吉田酒造 in Fukui, which is not this bottle. Photographed on a shop shelf, added 2026-10-13."
+    }
+  },
+  "hokushika_yuki_clear.jpg": {
+    "name_ja": "雪",
+    "brewery_ja": "北鹿",
+    "bottle": "hokushika-yuki",
+    "view": "front",
+    "expectedBrandIds": [],
+    "also": {
+      "name_ja": [
+        "北鹿",
+        "HOKUSHIKA YUKI",
+        "北鹿 雪"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Hokushika \"Yuki\" honjozo namachozo, 300 ml — NOT in the catalogue (北鹿 has five other rows). This photo: front label, on a shop shelf — the bottle of this group's other photos, another copy of it. 白龍 is legible on the bottle to the left. Photographed on a shop shelf, added 2026-10-13."
+    }
+  },
+  "imayo_tsukasa_junmai_ginjo_clearish.jpg": {
+    "name_ja": "今代司",
+    "brewery_ja": "今代司酒造",
+    "bottle": "imayotsukasa-junmai-ginjo",
+    "view": "front",
+    "expectedBrandIds": [
+      3400
+    ],
+    "also": {
+      "name_ja": [
+        "imayo tsukasa"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Imayotsukasa junmai ginjo; the brand is small, under a large crest. Held in the hand on a shop shelf, added 2026-10-13."
+    }
+  },
+  "kidoizumi_junmai_daigo_wrapped.jpg": {
+    "name_ja": "木戸泉",
+    "brewery_ja": "木戸泉酒造",
+    "bottle": "kidoizumi-daigo",
+    "view": "front",
+    "expectedBrandIds": [
+      310
+    ],
+    "also": {
+      "name_ja": [
+        "きどいずみ",
+        "木戸泉 醍醐"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Kidoizumi junmai \"Daigo\", wrapped in tissue that veils the label; the maker is printed along the bottom. Held in the hand, added 2026-10-13."
+    }
+  },
+  "kiku_masamune_junmai_taruzake_downward.jpg": {
+    "name_ja": "菊正宗",
+    "brewery_ja": "菊正宗酒造",
+    "bottle": "kikumasamune-taruzake",
+    "view": "front",
+    "expectedBrandIds": [
+      1583
+    ],
+    "also": {
+      "name_ja": [
+        "菊正宗 たるざけ"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Kikumasamune junmai taruzake, printed on embossed clear glass and shot from above. The maker is not printed apart from the brand. Photographed on a shop shelf, added 2026-10-13."
+    }
+  },
+  "kiku_masamune_junmai_taruzake_downward_2.jpg": {
+    "name_ja": "菊正宗",
+    "brewery_ja": "菊正宗酒造",
+    "bottle": "kikumasamune-taruzake",
+    "view": "front",
+    "expectedBrandIds": [
+      1583
+    ],
+    "also": {
+      "name_ja": [
+        "菊正宗 たるざけ"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Kikumasamune junmai taruzake, printed on embossed clear glass and shot from above. The maker is not printed apart from the brand. A second shot from further above. Photographed on a shop shelf, added 2026-10-13."
+    }
+  },
+  "koyama_honke_kinmon_sekaitaka_junmai_ginjo_clear_with_glare.jpg": {
+    "name_ja": "金紋世界鷹",
+    "brewery_ja": "小山本家酒造",
+    "bottle": "kinmon-sekaitaka",
+    "view": "front",
+    "expectedBrandIds": [
+      124178,
+      3147
+    ],
+    "also": {
+      "name_ja": [
+        "世界鷹",
+        "金紋",
+        "キンモン セカイタカ"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Kinmon Sekaitaka junmai ginjo, small bottle; foil brand characters on a dark label, an award tag on the neck. The maker is not printed on the front. The catalogue spells the line 世かい鷹 and also has a row 金紋 for this brewery; either is the bottle. Photographed on a shop shelf, added 2026-10-13."
+    }
+  },
+  "kuromatsu_hakushika_yamada_nishiki.jpg": {
+    "name_ja": "黒松白鹿",
+    "brewery_ja": "辰馬本家酒造",
+    "bottle": "kuromatsu-hakushika-yamadanishiki",
+    "view": "front",
+    "expectedBrandIds": [
+      772
+    ],
+    "also": {
+      "name_ja": [
+        "白鹿",
+        "黒松白鹿 山田錦"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Kuromatsu Hakushika tokubetsu honjozo Yamada Nishiki; the rice variety 山田錦 is the largest text on the label, the brand small beside it, the maker not printed. The catalogue also has a plain 白鹿 row for this brewery, which is not listed here because the label says 黒松. Photographed on a shop shelf, added 2026-10-13. The bare glass above the label is blurred: it reflected the hands and phone of the person taking the photo."
+    }
+  },
+  "makino_harunasan_junmai_ginjo_clear.jpg": {
+    "name_ja": "榛名山",
+    "brewery_ja": "牧野酒造",
+    "bottle": "harunasan-junmai-ginjo",
+    "view": "front",
+    "expectedBrandIds": [
+      275
+    ],
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Harunasan junmai ginjo; green foil brush characters. The maker is not printed on the front. The shelf tag of the neighbouring sake is partly in frame. Photographed on a shop shelf, added 2026-10-13."
+    }
+  },
+  "meiri_shurui_fukushogun_junmai_ginjo_clearish.jpg": {
+    "name_ja": "副将軍",
+    "brewery_ja": "明利酒類",
+    "bottle": "fukushogun-junmai-ginjo",
+    "view": "front",
+    "expectedBrandIds": [
+      242
+    ],
+    "also": {
+      "name_ja": [
+        "Fukushogun"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Fukushogun junmai ginjo; the label turned a little to one side. The maker is described (\"A brewery in Mito\") but not named. Photographed on a shop shelf, added 2026-10-13."
+    }
+  },
+  "mikunihare_maboroshinotaki_ginjo_clear.jpg": {
+    "name_ja": "幻の瀧",
+    "brewery_ja": "皇国晴酒造",
+    "bottle": "maboroshi-no-taki-ginjo",
+    "view": "front",
+    "expectedBrandIds": [
+      446
+    ],
+    "also": {
+      "name_ja": [
+        "まぼろしのたき"
+      ],
+      "brewery_ja": [
+        "皇國晴酒造"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Maboroshi no Taki ginjo, small bottle; the maker's own name 皇國晴 / MIKUNIHARE is printed beside the brand and is another catalogue row, which is not this bottle. Photographed on a shop shelf, added 2026-10-13."
+    }
+  },
+  "miwa_mild_shirakawa_nigorizake_clear.jpg": {
+    "name_ja": "まいるど白川",
+    "brewery_ja": "三輪酒造",
+    "bottle": "mild-shirakawa",
+    "view": "front",
+    "expectedBrandIds": [
+      583
+    ],
+    "also": {
+      "name_ja": [
+        "MILD SHIRAKAWA",
+        "白川",
+        "白川郷"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Miwa Shuzo \"Mild Shirakawa\" nigori, small bottle: a lighter bottling of the Shirakawago line, which is the catalogue row. The label prints neither 白川郷 nor the maker. 銀盤 is legible on the bottle to the right. Photographed on a shop shelf, added 2026-10-13."
+    }
+  },
+  "mizuo_ichiaji_junmai_clear.jpg": {
+    "name_ja": "水尾",
+    "brewery_ja": "田中屋酒造店",
+    "bottle": "mizuo-ichiaji",
+    "view": "front",
+    "expectedBrandIds": [
+      3776
+    ],
+    "also": {
+      "name_ja": [
+        "水尾 一味",
+        "一味",
+        "みずお"
+      ],
+      "brewery_ja": [
+        "田中酒造店"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Mizuo \"Ichiaji\" karakuchi junmai (一味, which the label glosses いちあじ and the brewery writes Ichiaji; some shops list it as \"Ichimi\"); the label prints the maker as 田中屋酒造店, the catalogue as 田中酒造店. Photographed on a shop shelf, added 2026-10-13."
+    }
+  },
+  "nanbu_bijin_namachozo_honjozo_clear.jpg": {
+    "name_ja": "南部美人",
+    "brewery_ja": "南部美人",
+    "bottle": "nanbu-bijin-namachozo",
+    "view": "front",
+    "expectedBrandIds": [
+      32
+    ],
+    "also": {
+      "name_ja": [
+        "なんぶびじん"
+      ],
+      "brewery_ja": [
+        "南部美人酒造"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Nanbu Bijin namachozo, 300 ml; foil brand characters. Held in the hand in front of a shop shelf, added 2026-10-13."
+    }
+  },
+  "ozawa_sawanoi_otoko_zake_honjozo_dai_karakuchi_clear.jpg": {
+    "name_ja": "澤乃井",
+    "brewery_ja": "小澤酒造",
+    "bottle": "sawanoi-otokozake",
+    "view": "front",
+    "expectedBrandIds": [
+      320
+    ],
+    "also": {
+      "name_ja": [
+        "男酒",
+        "澤乃井 男酒"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Sawanoi \"Otokozake\" honjozo dai-karakuchi, small bottle; the product name 男酒 is the largest text, the brand small beside it, the maker not printed. Photographed on a shop shelf, added 2026-10-13."
+    }
+  },
+  "ozeki_karatanba_honjozo_clear.jpg": {
+    "name_ja": "辛丹波",
+    "brewery_ja": "大関",
+    "bottle": "karatamba",
+    "view": "front",
+    "expectedBrandIds": [
+      1626
+    ],
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Ozeki Karatamba honjozo; white brush characters on a dark sleeve, a price sticker on the shoulder. The maker is not legible. Held in the hand on a shop shelf, added 2026-10-13."
+    }
+  },
+  "sawanotsuru_deluxe_clear_with_unclear_pricetag.jpg": {
+    "name_ja": "沢の鶴",
+    "brewery_ja": "沢の鶴",
+    "bottle": "sawanotsuru-deluxe",
+    "view": "front",
+    "expectedBrandIds": [
+      2008
+    ],
+    "also": {
+      "name_ja": [
+        "沢の鶴 DELUXE",
+        "サワノツル"
+      ],
+      "brewery_ja": [
+        "沢の鶴酒造"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Sawanotsuru \"Deluxe\" junmai; gold on a black label. The top of a shelf tag is in frame. Photographed on a shop shelf, added 2026-10-13. The bare glass above the label is blurred: it reflected the hands and phone of the person taking the photo."
+    }
+  },
+  "sekihara_echigo_junmai_clear.jpg": {
+    "name_ja": "越後",
+    "brewery_ja": "関原酒造",
+    "bottle": "sekihara-echigo-junmai",
+    "view": "front",
+    "expectedBrandIds": [],
+    "also": {
+      "name_ja": [
+        "Junmai Echigo",
+        "Echigo"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Sekihara Shuzo \"Echigo\" junmai, 300 ml — NOT in the catalogue (関原酒造 has two other rows, 群亀 and 越後長岡藩; two other breweries have a sake called 越後). The maker is printed in the small text at the right. Photographed on a shop shelf, added 2026-10-13."
+    }
+  },
+  "sekihara_echigo_junmai_ginjo_clear.jpg": {
+    "name_ja": "越後",
+    "brewery_ja": "関原酒造",
+    "bottle": "sekihara-echigo-junmai-ginjo",
+    "view": "front",
+    "expectedBrandIds": [],
+    "also": {
+      "name_ja": [
+        "Junmai Ginjo Echigo",
+        "Echigo"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Sekihara Shuzo \"Echigo\" junmai ginjo, 300 ml, blue glass — NOT in the catalogue (関原酒造 has two other rows, 群亀 and 越後長岡藩; two other breweries have a sake called 越後). Held in the hand on a shop shelf, added 2026-10-13."
+    }
+  },
+  "sekihara_nagaoka_han_junmai_ginjo_okayish_with_pricetag.jpg": {
+    "name_ja": "越後長岡藩",
+    "brewery_ja": "関原酒造",
+    "bottle": "echigo-nagaoka-han",
+    "view": "front",
+    "expectedBrandIds": [
+      392
+    ],
+    "also": {
+      "name_ja": [
+        "長岡藩",
+        "Nagaoka-Han",
+        "NAGAOKA-HAN"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Echigo Nagaoka-han junmai ginjo, 720 ml; the lower half of the label is behind the shelf rail, and the shelf tag below names the sake and its maker in Latin and kanji. Copies of the same bottle stand beside it. Photographed on a shop shelf, added 2026-10-13."
+    }
+  },
+  "suigei_junmai_ginjo_ginrei_clearish.jpg": {
+    "name_ja": "酔鯨",
+    "brewery_ja": "酔鯨酒造",
+    "bottle": "suigei-ginrei",
+    "view": "front",
+    "expectedBrandIds": [
+      933
+    ],
+    "also": {
+      "name_ja": [
+        "吟麗",
+        "酔鯨 吟麗",
+        "SUIGEI"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Suigei junmai ginjo \"Ginrei\"; the product name 吟麗 is the largest text, the brand small at the edge and in Latin under the whale. Photographed on a shop shelf, added 2026-10-13."
+    }
+  },
+  "tokyo_zakari_junmai_ginjo_clear_with_pricetag.jpg": {
+    "name_ja": "東京盛",
+    "brewery_ja": "小山本家酒造",
+    "bottle": "tokyo-zakari",
+    "view": "front",
+    "expectedBrandIds": [],
+    "also": {
+      "name_ja": [
+        "TOKYO ZAKARI"
+      ],
+      "brewery_ja": [
+        "小山本家",
+        "Koyama Honke"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Tokyo Zakari junmai ginjo, 720 ml — NOT in the catalogue (小山本家酒造 has ten other rows). The label is a red graphic; the brand is printed small at its foot, half behind the shelf rail, and again on the neck hanger and the shelf tag, which also names the maker. A second copy stands beside it. Photographed on a shop shelf, added 2026-10-13. A patch of bare glass under the neck hanger is blurred: it reflected the hands and phone of the person taking the photo."
+    }
+  },
+  "yuki_no_bosha_junmai_yamahai.jpg": {
+    "name_ja": "雪の茅舎",
+    "brewery_ja": "齋彌酒造店",
+    "bottle": "yuki-no-bosha-yamahai",
+    "view": "front",
+    "expectedBrandIds": [
+      73
+    ],
+    "also": {
+      "name_ja": [
+        "YUKI NO BOSHA"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Yuki no Bosha yamahai junmai, small bottle under shrink film; the maker is printed at the right edge. Held in the hand in front of a shop shelf, added 2026-10-13."
+    }
+  },
+  "kakushigura_mugi_shochu_clearish.jpg": {
+    "name_ja": "隠し蔵",
+    "brewery_ja": "濱田酒造",
+    "view": "front",
+    "drink": "shochu",
+    "expectedBrandIds": [],
+    "also": {
+      "brewery_ja": [
+        "濵田酒造"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "NOT SAKE: Kakushigura, a cask-aged barley shochu; the label says 貯蔵焼酎 麦. The maker is not printed on the front; it also brews sake and is in the catalogue for 薩州正宗 and 蔵弥一, neither of which is this bottle. Photographed on a shop shelf, added 2026-10-13."
+    }
+  },
+  "mitsutake_shuzo_makai_e_no_izanai_black_koji_shochu_clear.jpg": {
+    "name_ja": "魔界への誘い",
+    "brewery_ja": "光武酒造場",
+    "view": "front",
+    "drink": "shochu",
+    "expectedBrandIds": [
+      3935
+    ],
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "NOT SAKE: Makai e no Izanai, a black-koji sweet-potato shochu; the label says 本格芋焼酎 and 黒麹仕込み. Sakenowa lists it all the same, as row 3935 under its maker, which also brews the sakes 光武 and 金波. Photographed on a shop shelf, added 2026-10-13."
+    }
+  },
+  "satsushu_red_rabbit_horse_sekitoba_purple_potato_shochu_clear.jpg": {
+    "name_ja": "赤兎馬",
+    "brewery_ja": "濱田酒造",
+    "view": "front",
+    "drink": "shochu",
+    "expectedBrandIds": [],
+    "also": {
+      "name_ja": [
+        "薩州 赤兎馬",
+        "紫の赤兎馬"
+      ],
+      "brewery_ja": [
+        "濵田酒造"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "NOT SAKE: Sasshu Sekitoba, the purple label (Murasaki), a sweet-potato shochu; the label says 本格焼酎 芋 in small text and 薩州 above the name. The maker is not printed on the front; it also brews sake and is in the catalogue for 薩州正宗, which shares those two characters and is not this bottle. A second copy stands beside it. Photographed on a shop shelf, added 2026-10-13."
+    }
+  },
+  "tomi_no_hozan_imo_shochu_clear.jpg": {
+    "name_ja": "富乃宝山",
+    "brewery_ja": "西酒造",
+    "view": "front",
+    "drink": "shochu",
+    "expectedBrandIds": [],
+    "also": {
+      "name_ja": [
+        "とみのほうざん"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "NOT SAKE: Tomi no Hozan, a sweet-potato shochu; the label says 芋焼酎. The maker is in the red seal only; it also brews sake and is in the catalogue for 天賦, and another brewery has a sake called 宝山 — neither is this bottle. Photographed on a shop shelf, added 2026-10-13."
+    }
+  },
+  "tsukushi_kuro_mugi_shochu_clear.jpg": {
+    "name_ja": "つくし",
+    "brewery_ja": "西吉田酒造",
+    "view": "front",
+    "drink": "shochu",
+    "expectedBrandIds": [],
+    "also": {
+      "name_ja": [
+        "つくし 黒"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "NOT SAKE: Tsukushi, the black label, a barley shochu; the label says 本格麦焼酎. Neither the product nor its maker is in the catalogue. 隠し蔵 is legible on the bottle to the left, and a shelf card repeats the name. Photographed on a shop shelf, added 2026-10-13."
+    }
+  },
+  "zuisen_aka_awamori_clear_with_pricetag.jpg": {
+    "name_ja": "瑞泉",
+    "brewery_ja": "瑞泉酒造",
+    "view": "front",
+    "drink": "awamori",
+    "expectedBrandIds": [],
+    "also": {
+      "name_ja": [
+        "ZUISEN"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "NOT SAKE: Zuisen awamori; the label says 琉球泡盛 and \"A product of Okinawa\", and the shelf tag below says \"ZUISEN AKA AWAMORI\" (aka, 赤: the red label). The lower half of the label is behind the shelf rail. The catalogue has two sakes called 瑞泉 (上撰 and 佳撰, from 高田酒造場 in Tottori), neither of which is this bottle. Photographed on a shop shelf, added 2026-10-13."
+    }
+  },
+  "two_bottles_tsukasa_sjochu_AND_aioi_shochu_with_pricetag.jpg": {
+    "name_ja": "ソフトツカサ",
+    "brewery_ja": "美峰酒類",
+    "view": "front",
+    "subject": "several_bottles",
+    "items": [
+      {
+        "name_ja": "ソフトツカサ",
+        "brewery_ja": "美峰酒類",
+        "drink": "shochu",
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "相生焼酎",
+        "brewery_ja": "相生ユニビオ",
+        "drink": "shochu",
+        "expectedBrandIds": []
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "司",
+        "ソフトツカサ 司",
+        "相生焼酎",
+        "相生"
+      ],
+      "brewery_ja": [
+        "相生ユニビオ"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "NOT SAKE, TWO BOTTLES: two 2.7 l plastic jugs of multiply-distilled shochu (焼酎甲類) side by side, neither in front of the other — Soft Tsukasa (20%) at the left, Aioi Shochu (25%) at the right. Each label prints its maker; shelf tags below name both. Neither product nor maker is in the catalogue. The top-level name is the left-hand jug only because the field must hold something. Photographed on a shop shelf, added 2026-10-13."
+    }
+  },
+  "shichida_junmai_shochu_menu_clear.jpg": {
+    "name_ja": "七田",
+    "brewery_ja": "天山酒造",
+    "view": "other",
+    "subject": "menu",
+    "items": [
+      {
+        "name_ja": "七田",
+        "brewery_ja": "天山酒造",
+        "drink": "shochu",
+        "expectedBrandIds": []
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "SHICHIDA"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_menu_photo",
+      "rightsCleared": true,
+      "notes": "A MENU, AND NOT SAKE: one page of a restaurant drinks menu, headed 焼酎 米 / \"Japanischer Shochu\", offering Shichida rice shochu by the glass and the bottle with a picture of the bottle. The page does not name the maker. Its Japanese and German description calls the drink a junmai sake, which the heading, the serving line (\"mit Eis/Wasser/Soda\") and the pictured bottle contradict; the maintainer, who photographed it, confirms it is the rice shochu. The catalogue has the SAKE 七田 from the same maker (row 968), which is not what the page sells. Fingers at the corner, glasses on the table and a strip of dark clothing at the bottom edge are in frame; no face. Added 2026-10-13."
     }
   }
 }
