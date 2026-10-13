@@ -3332,5 +3332,161 @@
       "rightsCleared": true,
       "notes": "CUP SAKES IN A ROW: the same ledge as sohomare_iwasaki_shelf.jpg from further along, four one-cup sakes shot from the side and close, listed left to right as the maintainer named them. A cup cut off by the left edge; 黒牛 (純米酒, with くろうし in small type and the start of the back-label text); the Zuiyo cup with the Kumamon mascot, of which \"ZU…\" and \"C…\" are in frame; and 長陽福娘, the same cup as in the other photo, with \"…OYO FUKUMUS…\" in frame. No label shows its maker; they are the catalogue's. No bottle is the subject more than the others. No person, no venue name; the room behind is out of focus. Location and camera data were removed from the file. Photographed at a bar, added 2026-10-13."
     }
+  },
+  "ohki_chochin_dassai_menu.jpg": {
+    "name_ja": "楽器正宗",
+    "brewery_ja": "大木代吉本店",
+    "view": "other",
+    "subject": "menu",
+    "items": [
+      {
+        "name_ja": "楽器正宗",
+        "brewery_ja": "大木代吉本店",
+        "expectedBrandIds": [
+          10872
+        ]
+      },
+      {
+        "name_ja": "長珍",
+        "brewery_ja": "長珍酒造",
+        "product": "特別純米",
+        "expectedBrandIds": [
+          3402
+        ]
+      },
+      {
+        "name_ja": "獺祭",
+        "brewery_ja": "獺祭",
+        "product": "純米大吟醸 磨き三割九分",
+        "expectedBrandIds": [
+          887
+        ]
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "楽器政宗",
+        "長珍",
+        "獺祭",
+        "Gakki Masamune",
+        "Chochin",
+        "Dassai"
+      ],
+      "brewery_ja": [
+        "長珍酒造",
+        "獺祭",
+        "旭酒造"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_menu_photo",
+      "rightsCleared": true,
+      "localOnly": false,
+      "notes": "A MENU: the \"Japanese Sake\" section of a restaurant's laminated drinks list, three lines with a half-go price each, above the start of the soft drinks, in the maintainer's order. Each line prints the name in kanji and Latin; 楽器正宗 has no grade, as the maintainer notes, and the list spells it 楽器政宗, with another character for \"masa\"; both spellings count as read. The list prints no makers, which are the catalogue's: 獺祭's maker is now called 獺祭 (旭酒造 until 2025, the name in the maintainer's list). The glare of two lamps lies across the third line, where 磨き三割九分 is hard to read, and the shadow of the phone across the lower half. Published: a plain typeset list of names and prices. The photo is cropped to the list: behind it lay another page of the menu with a photograph of a dessert. The maintainer's file was ohki_shochin_dassai_menu.jpg (Chochin). No person; location and camera data were removed. Added 2026-10-13."
+    }
+  },
+  "kitagawa_takagi_shimizu_1.jpg": {
+    "name_ja": "富翁",
+    "brewery_ja": "北川本家",
+    "view": "front",
+    "subject": "several_bottles",
+    "items": [
+      {
+        "name_ja": "富翁",
+        "brewery_ja": "北川本家",
+        "product": "純米大吟醸 全量山田錦",
+        "expectedBrandIds": [
+          686
+        ]
+      },
+      {
+        "name_ja": "朝日鷹",
+        "brewery_ja": "高木酒造",
+        "product": "本醸造 低温貯蔵酒",
+        "expectedBrandIds": [
+          145
+        ]
+      },
+      {
+        "name_ja": "作",
+        "brewery_ja": "清水清三郎商店",
+        "product": "雅乃智 中取り 純米大吟醸",
+        "expectedBrandIds": [
+          1033
+        ]
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "朝日鷹",
+        "作",
+        "TOMIO",
+        "ZAKU",
+        "ZAKU MIYABI NO TOMO",
+        "雅乃智"
+      ],
+      "brewery_ja": [
+        "高木酒造",
+        "清水清三郎商店",
+        "清水清三郎商店株式会社"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "A TASTING FLIGHT: three 1.8 l bottles side by side on a bar counter with a glass in front of each and the edge of a tablet menu below, listed left to right as the maintainer named them: 富翁 (純米大吟醸, 全量山田錦, with its maker's address down the label's edge), 朝日鷹 (本醸造, with a 低温貯蔵酒 seal on the shoulder) and 作 turned so that its back label faces the camera, small and dark, with \"ZAKU MIYABI NO TOMO\" at its foot. The glasses cover the lower part of each label. No bottle is the subject more than the others. No person, no venue name; the room behind is out of focus. Location and camera data were removed from the file. Photographed at a bar, added 2026-10-13."
+    }
+  },
+  "kitagawa_takagi_shimizu_2.jpg": {
+    "name_ja": "富翁",
+    "brewery_ja": "北川本家",
+    "view": "front",
+    "subject": "several_bottles",
+    "items": [
+      {
+        "name_ja": "富翁",
+        "brewery_ja": "北川本家",
+        "product": "純米大吟醸 全量山田錦",
+        "expectedBrandIds": [
+          686
+        ]
+      },
+      {
+        "name_ja": "朝日鷹",
+        "brewery_ja": "高木酒造",
+        "product": "本醸造 低温貯蔵酒",
+        "expectedBrandIds": [
+          145
+        ]
+      },
+      {
+        "name_ja": "作",
+        "brewery_ja": "清水清三郎商店",
+        "product": "雅乃智 中取り 純米大吟醸",
+        "expectedBrandIds": [
+          1033
+        ]
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "朝日鷹",
+        "作",
+        "TOMIO",
+        "ZAKU",
+        "ZAKU MIYABI NO TOMO",
+        "雅乃智"
+      ],
+      "brewery_ja": [
+        "高木酒造",
+        "清水清三郎商店",
+        "清水清三郎商店株式会社"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "A TASTING FLIGHT: the same three bottles as kitagawa_takagi_shimizu_1.jpg a moment later, listed left to right: 富翁, 朝日鷹 and 作, this time with its front label to the camera (作, 雅乃智 中取り, ZAKU). The glasses cover the lower part of each label. The 作 is the bottle of shimizu_zaku_miyabi_no_tomo_nakadori_junmai_daiginjo_on_table.jpg. No bottle is the subject more than the others. No person, no venue name; the room behind is out of focus. Location and camera data were removed from the file. Photographed at a bar, added 2026-10-13."
+    }
   }
 }

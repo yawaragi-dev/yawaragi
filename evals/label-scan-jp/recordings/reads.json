@@ -2260,6 +2260,51 @@
      ],
      "confidence": 0.4,
      "latencyMs": 9037
+    },
+    "kitagawa_takagi_shimizu_1.jpg": {
+     "photoSha": "1b58bfe5fd66d601",
+     "name_ja": "富翁",
+     "brewery_ja": "富翁酒造",
+     "brewery_printed": false,
+     "subject": "several_bottles",
+     "drink": "sake",
+     "bottling": {
+      "grade": "junmai_daiginjo"
+     },
+     "other_names": [
+      "TOMIO"
+     ],
+     "confidence": 0.8,
+     "latencyMs": 6510
+    },
+    "kitagawa_takagi_shimizu_2.jpg": {
+     "photoSha": "443f093ed20cb775",
+     "name_ja": "富翁",
+     "brewery_ja": "増田德兵衛商店",
+     "brewery_printed": false,
+     "subject": "several_bottles",
+     "drink": "sake",
+     "bottling": {
+      "grade": "junmai_daiginjo",
+      "polishing_ratio": 39
+     },
+     "other_names": [],
+     "confidence": 0.8,
+     "latencyMs": 7840
+    },
+    "ohki_chochin_dassai_menu.jpg": {
+     "photoSha": "64d15ae58ef2c611",
+     "name_ja": "楽器政宗",
+     "brewery_ja": "Gakki Masamune",
+     "brewery_printed": false,
+     "subject": "menu",
+     "drink": "sake",
+     "bottling": {},
+     "other_names": [
+      "Gakki Masamune"
+     ],
+     "confidence": 0.45,
+     "latencyMs": 6563
     }
    }
   },
@@ -4630,6 +4675,53 @@
      ],
      "confidence": 0.6,
      "latencyMs": 6944
+    },
+    "kitagawa_takagi_shimizu_1.jpg": {
+     "photoSha": "1b58bfe5fd66d601",
+     "name_ja": "富翁",
+     "brewery_ja": "北川本家",
+     "brewery_printed": false,
+     "subject": "several_bottles",
+     "drink": "sake",
+     "bottling": {
+      "grade": "junmai_daiginjo"
+     },
+     "other_names": [
+      "TOMIO"
+     ],
+     "confidence": 0.8,
+     "latencyMs": 6375
+    },
+    "kitagawa_takagi_shimizu_2.jpg": {
+     "photoSha": "443f093ed20cb775",
+     "name_ja": "富翁",
+     "brewery_ja": "北川本家",
+     "brewery_printed": true,
+     "subject": "several_bottles",
+     "drink": "sake",
+     "bottling": {
+      "grade": "junmai_daiginjo",
+      "polishing_ratio": 39
+     },
+     "other_names": [
+      "TOMIO"
+     ],
+     "confidence": 0.85,
+     "latencyMs": 11446
+    },
+    "ohki_chochin_dassai_menu.jpg": {
+     "photoSha": "64d15ae58ef2c611",
+     "name_ja": "楽器政宗",
+     "brewery_ja": "宮坂醸造",
+     "brewery_printed": false,
+     "subject": "menu",
+     "drink": "sake",
+     "bottling": {},
+     "other_names": [
+      "Gakki Masamune"
+     ],
+     "confidence": 0.6,
+     "latencyMs": 1904
     }
    }
   },
