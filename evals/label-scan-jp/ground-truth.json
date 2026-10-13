@@ -2381,5 +2381,96 @@
       "localOnly": false,
       "notes": "A MENU: a bar's sake list shown on a tablet, a grid of nine cells of which four are filled, listed left to right and top to bottom as the maintainer named them. Each cell prints the sake's name in kanji, hiragana and Latin with its prefecture, then the bottling and the grade; the page writes \"Jyuyondai\". It does not print the makers, which are the catalogue's (高木酒造 of Yamagata, row 96; the catalogue has other breweries of that name). The third cell reads 大極上 諸白 where the maintainer's list has \"Gokujo Morohaku\"; 龍の落とし子 is the rice. Below the grid: tasting-flight and per-glass prices and a one-drink-per-guest notice. Published: a plain typeset list of names, grades and prices, no venue name, no logo, no picture, no person; a lamp is reflected in the screen. Added 2026-10-13."
     }
+  },
+  "fukuchiyo_nakazawa_kinoshita_yoshida_matsumoto_akabu_menu.jpg": {
+    "name_ja": "鍋島",
+    "brewery_ja": "富久千代酒造",
+    "view": "other",
+    "subject": "menu",
+    "items": [
+      {
+        "name_ja": "鍋島",
+        "brewery_ja": "富久千代酒造",
+        "product": "裏鍋島 純米吟醸",
+        "expectedBrandIds": [
+          975
+        ]
+      },
+      {
+        "name_ja": "一博",
+        "brewery_ja": "中澤酒造",
+        "product": "10年熟成 生酒 純米吟醸",
+        "expectedBrandIds": [
+          1372
+        ]
+      },
+      {
+        "name_ja": "玉川",
+        "brewery_ja": "木下酒造",
+        "product": "山廃 亀の尾 無濾過生原酒 純米",
+        "expectedBrandIds": [
+          696
+        ]
+      },
+      {
+        "name_ja": "手取川",
+        "brewery_ja": "吉田酒造店",
+        "product": "冬 辛口 1年熟成 純米",
+        "expectedBrandIds": [
+          470
+        ]
+      },
+      {
+        "name_ja": "澤屋まつもと",
+        "brewery_ja": "松本酒造",
+        "product": "守破離 雄町 特別純米",
+        "expectedBrandIds": [
+          704
+        ]
+      },
+      {
+        "name_ja": "赤武",
+        "brewery_ja": "赤武酒造",
+        "product": "SEA 純米",
+        "expectedBrandIds": [
+          2602
+        ]
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "一博",
+        "玉川",
+        "手取川",
+        "澤屋まつもと",
+        "赤武",
+        "AKABU",
+        "Nabeshima",
+        "Kazuhiro",
+        "Tamagawa",
+        "Tedorikawa",
+        "Sawaya Matsumoto",
+        "Akabu",
+        "なべしま",
+        "かずひろ",
+        "たまがわ",
+        "てどりかわ",
+        "さわやまつもと",
+        "あかぶ"
+      ],
+      "brewery_ja": [
+        "中澤酒造",
+        "木下酒造",
+        "吉田酒造店",
+        "松本酒造",
+        "赤武酒造"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_menu_photo",
+      "rightsCleared": true,
+      "localOnly": false,
+      "notes": "A MENU: the same bar's tablet list as aramasa_takagi_menu.jpg, another page, a grid of nine cells of which six are filled, listed left to right and top to bottom as the maintainer named them. Each cell prints the sake's name in kanji, hiragana and Latin with its prefecture, then the bottling and the grade; the page writes \"Tedorikawa\". It does not print the makers, which are the catalogue's. 一博 is 中澤酒造 of Shiga (row 1313); the maintainer's list and file name had \"Nakagawa\", and the file was renamed to \"nakazawa\" on that. The catalogue writes 赤武 as AKABU, and has a second 玉川 from another maker (48328) that is not this one. Below the grid: tasting-flight and per-glass prices and a one-drink-per-guest notice. Published: a plain typeset list of names, grades and prices, no venue name, no logo, no picture, no person; a lamp is reflected in the screen. Added 2026-10-13."
+    }
   }
 }

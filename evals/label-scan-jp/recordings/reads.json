@@ -2013,6 +2013,24 @@
      ],
      "confidence": 0.7,
      "latencyMs": 5229
+    },
+    "fukuchiyo_nakazawa_kinoshita_yoshida_matsumoto_akabu_menu.jpg": {
+     "photoSha": "5e980ada9b0e6837",
+     "name_ja": "鍋島",
+     "brewery_ja": "富久千代酒造",
+     "brewery_printed": false,
+     "subject": "menu",
+     "drink": "sake",
+     "bottling": {
+      "product_name": "裏鍋島",
+      "grade": "junmai_ginjo"
+     },
+     "other_names": [
+      "裏鍋島",
+      "Nabeshima"
+     ],
+     "confidence": 0.6,
+     "latencyMs": 3656
     }
    }
   },
@@ -4121,6 +4139,25 @@
      ],
      "confidence": 0.6,
      "latencyMs": 2703
+    },
+    "fukuchiyo_nakazawa_kinoshita_yoshida_matsumoto_akabu_menu.jpg": {
+     "photoSha": "5e980ada9b0e6837",
+     "name_ja": "鍋島",
+     "brewery_ja": "富久千代酒造",
+     "brewery_printed": false,
+     "subject": "menu",
+     "drink": "sake",
+     "bottling": {
+      "product_name": "裏鍋島",
+      "grade": "junmai_ginjo"
+     },
+     "other_names": [
+      "裏鍋島",
+      "なべしま",
+      "Nabeshima"
+     ],
+     "confidence": 0.6,
+     "latencyMs": 2948
     }
    }
   },
