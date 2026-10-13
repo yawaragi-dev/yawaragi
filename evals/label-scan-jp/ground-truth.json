@@ -3488,5 +3488,106 @@
       "rightsCleared": true,
       "notes": "A TASTING FLIGHT: the same three bottles as kitagawa_takagi_shimizu_1.jpg a moment later, listed left to right: 富翁, 朝日鷹 and 作, this time with its front label to the camera (作, 雅乃智 中取り, ZAKU). The glasses cover the lower part of each label. The 作 is the bottle of shimizu_zaku_miyabi_no_tomo_nakadori_junmai_daiginjo_on_table.jpg. No bottle is the subject more than the others. No person, no venue name; the room behind is out of focus. Location and camera data were removed from the file. Photographed at a bar, added 2026-10-13."
     }
+  },
+  "okura_fukugen_omine_fujioka_takagi_izumi_menu.jpg": {
+    "name_ja": "大倉",
+    "brewery_ja": "大倉本家",
+    "view": "other",
+    "subject": "menu",
+    "items": [
+      {
+        "name_ja": "大倉",
+        "brewery_ja": "大倉本家",
+        "product": "愛山 直汲み 無濾過生原酒 特別純米",
+        "expectedBrandIds": [
+          807
+        ]
+      },
+      {
+        "name_ja": "福源",
+        "brewery_ja": "福源酒造",
+        "product": "蔵出し無濾過原酒 純米吟醸",
+        "expectedBrandIds": [
+          562
+        ]
+      },
+      {
+        "name_ja": "福海",
+        "brewery_ja": "福田酒造",
+        "expectedBrandIds": [
+          1524
+        ]
+      },
+      {
+        "unreadable": true,
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "大嶺",
+        "brewery_ja": "大嶺酒造",
+        "product": "冬のおとずれ 純米",
+        "expectedBrandIds": [
+          3581,
+          4132
+        ]
+      },
+      {
+        "name_ja": "蒼空",
+        "brewery_ja": "藤岡酒造",
+        "product": "こうじましまし 純米吟醸",
+        "expectedBrandIds": [
+          1128
+        ]
+      },
+      {
+        "name_ja": "朝日鷹",
+        "brewery_ja": "高木酒造",
+        "product": "低温貯蔵酒 本醸造",
+        "expectedBrandIds": [
+          145
+        ]
+      },
+      {
+        "name_ja": "仙介",
+        "brewery_ja": "泉酒造",
+        "product": "超辛口 純米吟醸",
+        "expectedBrandIds": [
+          1681
+        ]
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "福源",
+        "福海",
+        "大嶺",
+        "蒼空",
+        "朝日鷹",
+        "仙介",
+        "Okura",
+        "Omine",
+        "Asahidaka",
+        "Sensuke",
+        "おおくら",
+        "おおみね",
+        "あさひだか",
+        "せんすけ",
+        "そうくう"
+      ],
+      "brewery_ja": [
+        "福源酒造",
+        "福田酒造",
+        "大嶺酒造",
+        "藤岡酒造",
+        "高木酒造",
+        "泉酒造"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_menu_photo",
+      "rightsCleared": true,
+      "localOnly": false,
+      "notes": "A MENU, AT AN ANGLE: the same bar's tablet list as aramasa_takagi_menu.jpg, another page, photographed close and from the side so that the grid runs diagonally and only the nearest cells are sharp. Items are in the maintainer's order. Sharp: 朝日鷹 (低温貯蔵酒, 本醸造; the page writes \"Honjyozo\"), 大嶺 (冬のおとずれ, 純米) and most of 大倉 and 蒼空. Soft: 福源, whose bottling line can still be made out, and 福海, of which only the name can; the maintainer's list has 福海 as blank, and it is listed here by name alone. 仙介 is cut by the right edge with 超辛口 and 純米吟醸 in frame. One more cell at the right edge shows part of one character and is unreadable. The page does not print the makers, which are the catalogue's; the catalogue has 大嶺 in two rows. A lamp is reflected in the screen. Published: a plain typeset list of names, grades and prices, no venue name, no logo, no picture, no person. Location and camera data were removed from the file. Added 2026-10-13."
+    }
   }
 }

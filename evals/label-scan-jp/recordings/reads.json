@@ -2305,6 +2305,23 @@
      ],
      "confidence": 0.45,
      "latencyMs": 6563
+    },
+    "okura_fukugen_omine_fujioka_takagi_izumi_menu.jpg": {
+     "photoSha": "b5178158b3c140ec",
+     "name_ja": "朝日鷹",
+     "brewery_ja": "水戸部酒造",
+     "brewery_printed": false,
+     "subject": "menu",
+     "drink": "sake",
+     "bottling": {
+      "grade": "honjozo"
+     },
+     "other_names": [
+      "あさひだか",
+      "Asahidaka"
+     ],
+     "confidence": 0.55,
+     "latencyMs": 7822
     }
    }
   },
@@ -4722,6 +4739,23 @@
      ],
      "confidence": 0.6,
      "latencyMs": 1904
+    },
+    "okura_fukugen_omine_fujioka_takagi_izumi_menu.jpg": {
+     "photoSha": "b5178158b3c140ec",
+     "name_ja": "朝日鷹",
+     "brewery_ja": "高木酒造",
+     "brewery_printed": false,
+     "subject": "menu",
+     "drink": "sake",
+     "bottling": {
+      "grade": "honjozo"
+     },
+     "other_names": [
+      "あさひだか",
+      "Asahidaka"
+     ],
+     "confidence": 0.8,
+     "latencyMs": 5110
     }
    }
   },
