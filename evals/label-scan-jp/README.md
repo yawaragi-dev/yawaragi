@@ -14,10 +14,10 @@ the metric-math and judging unit tests (`levenshtein.test.ts`, `judge.test.ts`).
 
 ## The corpus
 
-**123 photos**, all taken by the maintainer on a phone the way a visitor
+**124 photos**, all taken by the maintainer on a phone the way a visitor
 would: in the hand, a little off-angle, sometimes with condensation on the
 glass. **110 are of one sake bottle each (61 bottles)** and make the headline
-number; 13 show something a scan was not built for and are reported apart (see
+number; 14 show something a scan was not built for and are reported apart (see
 "Photos that are not one sake bottle").
 
 Of the 110, 73 are of 27 bottles at home in ordinary room light; 6 are single
@@ -137,7 +137,7 @@ in a table of their own, so adding one does not move "right of N".
 |------|-----------------------|--------|-------------|
 | a bottle that is not sake | `"drink": "shochu"` (or `awamori`, `umeshu`, `liqueur`, `other`) | 6 | no sake shown |
 | several bottles (two on a shelf edge, or a whole shop shelf) | `"subject": "several_bottles"` + `items` | 2 | the `main` bottle if there is one; otherwise no single sake |
-| a menu | `"subject": "menu"` + `items` | 5 | no single sake |
+| a menu | `"subject": "menu"` + `items` | 6 | no single sake |
 
 ```jsonc
 // a bottle that is not sake

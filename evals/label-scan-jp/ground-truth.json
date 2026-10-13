@@ -2704,5 +2704,100 @@
       "localOnly": false,
       "notes": "A MENU: the same bar's tablet list as aramasa_takagi_menu.jpg, another page, a grid of nine cells of which eight are filled, listed left to right and top to bottom as the maintainer named them. Each cell prints the sake's name in kanji, hiragana and Latin with its prefecture, then the bottling and the grade; the cell for 一歩己 prints the grade only. The page does not print the makers, which are the catalogue's: 亀齢 here is 亀齢酒造 of Hiroshima (the catalogue also has 信州亀齢 from another maker), 一歩己 is the 豊国酒造 the catalogue marks (東), and 仙禽's maker is written せんきん. The page writes \"Keri\", \"SenKin\" and \"Densyu\". The maintainer's file name had \"tokoyuni\" for Toyokuni and was renamed. Below the grid: tasting-flight and per-glass prices and a one-drink-per-guest notice. Published: a plain typeset list of names, grades and prices, no venue name, no logo, no picture, no person; a lamp is reflected in the screen. Added 2026-10-13."
     }
+  },
+  "inetoagave_hiroki_matsui_fujioka_shimizu_ryozeki_menu.jpg": {
+    "name_ja": "稲とアガベ",
+    "brewery_ja": "稲とアガベ醸造所",
+    "view": "other",
+    "subject": "menu",
+    "items": [
+      {
+        "name_ja": "稲とアガベ",
+        "brewery_ja": "稲とアガベ醸造所",
+        "product": "ぐるりこ Sake x Beer hop Craft SAKE",
+        "expectedBrandIds": [
+          50048
+        ]
+      },
+      {
+        "name_ja": "飛露喜",
+        "brewery_ja": "廣木酒造本店",
+        "product": "山田穂 純米吟醸",
+        "expectedBrandIds": [
+          202
+        ]
+      },
+      {
+        "name_ja": "神蔵",
+        "brewery_ja": "松井酒造",
+        "product": "祝 無濾過生原酒 純米吟醸",
+        "expectedBrandIds": [
+          1933
+        ]
+      },
+      {
+        "name_ja": "蒼空",
+        "brewery_ja": "藤岡酒造",
+        "product": "試験醸造 北海道産 きたしずく 純米吟醸",
+        "expectedBrandIds": [
+          1128
+        ]
+      },
+      {
+        "name_ja": "作",
+        "brewery_ja": "清水清三郎商店",
+        "product": "雅乃智 中取り 山田錦 純米大吟醸",
+        "expectedBrandIds": [
+          1033
+        ]
+      },
+      {
+        "name_ja": "裏翠玉",
+        "brewery_ja": "両関酒造",
+        "product": "秋田酒こまち 無濾過生酒 純米吟醸",
+        "expectedBrandIds": [
+          2240
+        ]
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "飛露喜",
+        "神蔵",
+        "蒼空",
+        "作",
+        "裏翠玉",
+        "翠玉",
+        "Inetoagabe",
+        "Hiroki",
+        "Kagura",
+        "Sookuu",
+        "Zaku",
+        "Suigyoku",
+        "\"Ura\" Suigyoku",
+        "Ura Suigyoku",
+        "いねとあがべ",
+        "ひろき",
+        "かぐら",
+        "そうくう",
+        "ざく",
+        "うらすいぎょく"
+      ],
+      "brewery_ja": [
+        "稲とアガベ",
+        "廣木酒造本店",
+        "廣木酒造",
+        "松井酒造",
+        "藤岡酒造",
+        "清水清三郎商店",
+        "両関酒造"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_menu_photo",
+      "rightsCleared": true,
+      "localOnly": false,
+      "notes": "A MENU: the same bar's tablet list as aramasa_takagi_menu.jpg, the \"Premium SAKE\" page, a grid of nine cells of which six are filled, listed left to right and top to bottom as the maintainer named them. Each cell prints the sake's name in kanji, hiragana and Latin with its prefecture, then the bottling and the grade. The page does not print the makers, which are the catalogue's. The first cell is a craft sake (brewed with beer hops, so not sake in the legal sense) and prints \"Craft SAKE\" where the others print a grade; the catalogue lists 稲とアガベ, so it is left as sake here. That cell also says 秋田 in Japanese and \"Aomori\" in Latin; Akita is right. 裏翠玉 is a bottling of 翠玉 in the catalogue. 作's bottling is 雅乃智 (Miyabi no Tomo), which the maintainer's list read as \"Ga no Chi\". The page writes \"Inetoagabe\" and \"Sookuu\". Below the grid: tasting-flight and per-glass prices and a one-drink-per-guest notice. Published: a plain typeset list of names, grades and prices, no venue name, no logo, no picture, no person; a lamp is reflected in the screen. Added 2026-10-13."
+    }
   }
 }

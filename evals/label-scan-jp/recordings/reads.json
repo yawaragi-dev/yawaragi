@@ -2072,6 +2072,24 @@
      ],
      "confidence": 0.6,
      "latencyMs": 5804
+    },
+    "inetoagave_hiroki_matsui_fujioka_shimizu_ryozeki_menu.jpg": {
+     "photoSha": "c81619cf5fbfc8d2",
+     "name_ja": "稲とアガベ",
+     "brewery_ja": "稲とアガベ醸造",
+     "brewery_printed": false,
+     "subject": "menu",
+     "drink": "sake",
+     "bottling": {
+      "product_name": "ぐるりこ"
+     },
+     "other_names": [
+      "いねとあがべ",
+      "Inetoagabe",
+      "ぐるりこ"
+     ],
+     "confidence": 0.5,
+     "latencyMs": 5676
     }
    }
   },
@@ -4242,6 +4260,25 @@
      ],
      "confidence": 0.8,
      "latencyMs": 4392
+    },
+    "inetoagave_hiroki_matsui_fujioka_shimizu_ryozeki_menu.jpg": {
+     "photoSha": "c81619cf5fbfc8d2",
+     "name_ja": "稲とアガベ",
+     "brewery_ja": "稲とアガベ醸造所",
+     "brewery_printed": false,
+     "subject": "menu",
+     "drink": "sake",
+     "bottling": {
+      "product_name": "ぐるりこ",
+      "styles": []
+     },
+     "other_names": [
+      "いねとあかべ",
+      "Inetoagabe",
+      "ぐるりこ"
+     ],
+     "confidence": 0.6,
+     "latencyMs": 3182
     }
    }
   },
