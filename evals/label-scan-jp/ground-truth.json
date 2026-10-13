@@ -4385,5 +4385,196 @@
       "rightsCleared": true,
       "notes": "A FRIDGE AND A TABLE FROM ABOVE: the shop's small fridge with bottles standing in it, and in front the tops and shoulders of the bottles on the round table, seen from above; a straw-wrapped cask printed 二世古 sits on the fridge. Items are in the maintainer's order and are the ones that can be named: in the fridge, 二世古 生酒, 今金, and the two 蝦夷の誉 kasseishu (plain, and with black rice); on the table, 二世古 上撰, 二世古 with the blue label (彗星 rice) and one more 二世古. 上撰 is the maker's own tier and not a legal grade, as the maintainer notes. 今金 is not in the catalogue and its maker is not known from this photo. Bottles of which only a cap or the edge of a label shows are not listed. Notices with QR codes are on the wall behind. Location and camera data were removed from the file. No person in the frame. Photographed in the brewery's shop, added 2026-10-13."
     }
+  },
+  "iichiko_shochu_menu.jpg": {
+    "name_ja": "いいちこ",
+    "brewery_ja": "三和酒類",
+    "view": "other",
+    "subject": "menu",
+    "items": [
+      {
+        "name_ja": "いいちこ",
+        "brewery_ja": "三和酒類",
+        "product": "麦焼酎 60ml €6.80 720ml €60.00",
+        "drink": "shochu",
+        "expectedBrandIds": []
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "Iichiko",
+        "iichiko"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_menu_photo",
+      "rightsCleared": true,
+      "localOnly": true,
+      "notes": "A MENU, AND NOT SAKE: one page of a restaurant's drinks menu in Germany, headed 焼酎 麦 MUGI / \"Gerste / Barley\" / \"Japanischer Shochu\", offering Iichiko barley shochu by the glass and the bottle, with a picture of the bottle and a glass and a description in Japanese and German. The page does not print the makers; where one is given here it is from general knowledge and was not checked against a source. Kept local: a designed menu page with product photographs and the venue's own descriptions, from the same restaurant as shichida_junmai_shochu_menu_clear.jpg. The photo is cropped to leave out the lap and hands of people at the table; location and camera data were removed. Added 2026-10-13."
+    }
+  },
+  "imo_shochu_menu.jpg": {
+    "name_ja": "富乃宝山",
+    "brewery_ja": "西酒造",
+    "view": "other",
+    "subject": "menu",
+    "items": [
+      {
+        "name_ja": "富乃宝山",
+        "brewery_ja": "西酒造",
+        "product": "鹿児島県 TOMINO HOUZAN 芋焼酎",
+        "drink": "shochu",
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "ダイヤメ",
+        "brewery_ja": "濵田酒造",
+        "product": "鹿児島県 DAIYAME 芋焼酎",
+        "drink": "shochu",
+        "expectedBrandIds": []
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "冨野宝山",
+        "ダイヤメ",
+        "TOMINO HOUZAN",
+        "DAIYAME",
+        "冨乃宝山"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_menu_photo",
+      "rightsCleared": true,
+      "localOnly": true,
+      "notes": "A MENU, AND NOT SAKE: the page headed 焼酎 芋 IMO / \"Kartoffel / Potato\", two sweet-potato shochu from Kagoshima, each with a picture of the bottle, a description in Japanese and German and prices by the glass and the bottle. The page spells the first 冨野宝山, with 冨 for 富 and 野 for 乃; both models read it as printed, and that spelling counts as read. The first is the bottle of tomi_no_hozan_imo_shochu_clear.jpg. The page does not print the makers; where one is given here it is from general knowledge and was not checked against a source. Kept local: a designed menu page with product photographs and the venue's own descriptions, from the same restaurant as shichida_junmai_shochu_menu_clear.jpg. The photo is cropped to leave out the lap and hands of people at the table; location and camera data were removed. Added 2026-10-13."
+    }
+  },
+  "kurokirishima_shochu_menu.jpg": {
+    "name_ja": "黒霧島",
+    "brewery_ja": "霧島酒造",
+    "view": "other",
+    "subject": "menu",
+    "items": [
+      {
+        "name_ja": "黒霧島",
+        "brewery_ja": "霧島酒造",
+        "product": "KUROKIRISHIMA 芋焼酎 60ml 720ml 1800ml",
+        "drink": "shochu",
+        "expectedBrandIds": []
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "KUROKIRISHIMA",
+        "トロッとキリッと"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_menu_photo",
+      "rightsCleared": true,
+      "localOnly": true,
+      "notes": "A MENU, AND NOT SAKE: a second page headed 焼酎 芋 IMO, given over to one sweet-potato shochu, Kurokirishima, with its bottle, a glass, a slogan in large brush characters and three prices. The glossy page reflected the person taking the photo; that patch is blurred, and the file was re-encoded for it. The page does not print the makers; where one is given here it is from general knowledge and was not checked against a source. Kept local: a designed menu page with product photographs and the venue's own descriptions, from the same restaurant as shichida_junmai_shochu_menu_clear.jpg. The photo is cropped to leave out the lap and hands of people at the table; location and camera data were removed. Added 2026-10-13."
+    }
+  },
+  "mugi_shochu_menu.jpg": {
+    "name_ja": "泰明",
+    "brewery_ja": "藤居醸造",
+    "view": "other",
+    "subject": "menu",
+    "items": [
+      {
+        "name_ja": "泰明",
+        "brewery_ja": "藤居醸造",
+        "product": "大分県 TAIMEI 麦焼酎",
+        "drink": "shochu",
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "山乃守",
+        "product": "長崎県 YAMANOMORI 麦焼酎",
+        "drink": "shochu",
+        "expectedBrandIds": []
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "山乃守",
+        "TAIMEI",
+        "YAMANOMORI"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_menu_photo",
+      "rightsCleared": true,
+      "localOnly": true,
+      "notes": "A MENU, AND NOT SAKE: the page headed 焼酎 麦 MUGI / \"Gerste / Barley\", two barley shochu, 泰明 from Oita and 山乃守 from Nagasaki, each with a picture of the bottle, a description in Japanese and German and one shared price block. The maker of 山乃守 is left out as not known. The page does not print the makers; where one is given here it is from general knowledge and was not checked against a source. Kept local: a designed menu page with product photographs and the venue's own descriptions, from the same restaurant as shichida_junmai_shochu_menu_clear.jpg. The photo is cropped to leave out the lap and hands of people at the table; location and camera data were removed. Added 2026-10-13."
+    }
+  },
+  "shichida_shochu_menu_2.jpg": {
+    "name_ja": "七田",
+    "brewery_ja": "天山酒造",
+    "view": "other",
+    "subject": "menu",
+    "items": [
+      {
+        "name_ja": "七田",
+        "brewery_ja": "天山酒造",
+        "product": "SHICHIDA 米焼酎 60ml €7.80 720ml €70.00",
+        "drink": "shochu",
+        "expectedBrandIds": []
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "SHICHIDA"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_menu_photo",
+      "rightsCleared": true,
+      "localOnly": true,
+      "notes": "A MENU, AND NOT SAKE: the page of shichida_junmai_shochu_menu_clear.jpg photographed again, headed 焼酎 米 KOME / \"Reis / Rice\": Shichida rice shochu, which the German text calls a junmai sake. The catalogue has the SAKE 七田 from the same maker (row 968), which is not what the page sells. A fingertip at the top corner is painted over; the file was re-encoded for it. The page does not print the makers; where one is given here it is from general knowledge and was not checked against a source. Kept local: a designed menu page with product photographs and the venue's own descriptions, from the same restaurant as shichida_junmai_shochu_menu_clear.jpg. The photo is cropped to leave out the lap and hands of people at the table; location and camera data were removed. Added 2026-10-13."
+    }
+  },
+  "nikka_whisky_not_sake.jpg": {
+    "name_ja": "余市",
+    "brewery_ja": "ニッカウヰスキー",
+    "view": "front",
+    "subject": "several_bottles",
+    "items": [
+      {
+        "name_ja": "余市",
+        "brewery_ja": "ニッカウヰスキー",
+        "product": "SINGLE MALT YOICHI",
+        "drink": "other",
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "余市",
+        "brewery_ja": "ニッカウヰスキー",
+        "product": "NIKKA SINGLE CASK MALT WHISKY 10",
+        "drink": "other",
+        "expectedBrandIds": []
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "YOICHI",
+        "SINGLE MALT YOICHI",
+        "NIKKA",
+        "NIKKA SINGLE CASK MALT WHISKY"
+      ],
+      "brewery_ja": [
+        "NIKKA",
+        "ニッカ",
+        "Nikka Whisky"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "NOT SAKE, TWO BOTTLES: two whiskies side by side on a bar counter with a glass beside each, Single Malt Yoichi and a Nikka single cask malt whisky with a 10 on the neck, both with 余市 in large characters on the label. Neither is sake and neither is in the catalogue; the labels print \"whisky\" in Latin letters. Shelves of other bottles behind, out of focus. No person in the frame; location and camera data were removed from the file. Photographed at a bar, added 2026-10-13."
+    }
   }
 }

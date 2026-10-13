@@ -2543,6 +2543,89 @@
      ],
      "confidence": 0.8,
      "latencyMs": 5059
+    },
+    "iichiko_shochu_menu.jpg": {
+     "photoSha": "71f520933969db84",
+     "name_ja": "いいちこ",
+     "brewery_ja": "三和酒類",
+     "brewery_printed": false,
+     "subject": "menu",
+     "drink": "shochu",
+     "other_names": [
+      "Iichiko"
+     ],
+     "confidence": 0.85,
+     "latencyMs": 5269
+    },
+    "imo_shochu_menu.jpg": {
+     "photoSha": "d4d1498022f942b0",
+     "name_ja": "冨野宝山",
+     "brewery_ja": "富乃露酒造店",
+     "brewery_printed": false,
+     "subject": "menu",
+     "drink": "shochu",
+     "other_names": [
+      "TOMINO HOUZAN"
+     ],
+     "confidence": 0.7,
+     "latencyMs": 6688
+    },
+    "kurokirishima_shochu_menu.jpg": {
+     "photoSha": "496ebae7542f8e1e",
+     "name_ja": "黒霧島",
+     "brewery_ja": "霧島酒造",
+     "brewery_printed": true,
+     "subject": "menu",
+     "drink": "shochu",
+     "bottling": {},
+     "other_names": [
+      "KUROKIRISHIMA"
+     ],
+     "confidence": 0.85,
+     "latencyMs": 5518
+    },
+    "mugi_shochu_menu.jpg": {
+     "photoSha": "d44810dec8d3ee37",
+     "name_ja": "泰明",
+     "brewery_ja": "高田酒造場",
+     "brewery_printed": false,
+     "subject": "menu",
+     "drink": "shochu",
+     "bottling": {},
+     "other_names": [
+      "TAIMEI"
+     ],
+     "confidence": 0.5,
+     "latencyMs": 6150
+    },
+    "nikka_whisky_not_sake.jpg": {
+     "photoSha": "8ac5b53cd2bcc10c",
+     "name_ja": "余市",
+     "brewery_ja": "ニッカウヰスキー",
+     "brewery_printed": true,
+     "subject": "several_bottles",
+     "drink": "other",
+     "bottling": {},
+     "other_names": [],
+     "confidence": 0.15,
+     "latencyMs": 6926
+    },
+    "shichida_shochu_menu_2.jpg": {
+     "photoSha": "8dfaa5344742af90",
+     "name_ja": "七田",
+     "brewery_ja": "天山酒造",
+     "brewery_printed": false,
+     "subject": "menu",
+     "drink": "sake",
+     "bottling": {
+      "grade": "junmai"
+     },
+     "other_names": [
+      "SHICHIDA",
+      "しちだ"
+     ],
+     "confidence": 0.85,
+     "latencyMs": 6183
     }
    }
   },
@@ -5218,6 +5301,101 @@
      ],
      "confidence": 0.7,
      "latencyMs": 3515
+    },
+    "iichiko_shochu_menu.jpg": {
+     "photoSha": "71f520933969db84",
+     "name_ja": "いいちこ",
+     "brewery_ja": "三和酒類",
+     "brewery_printed": false,
+     "subject": "menu",
+     "drink": "shochu",
+     "bottling": {},
+     "other_names": [
+      "Iichiko",
+      "iichiko"
+     ],
+     "confidence": 0.85,
+     "latencyMs": 3960
+    },
+    "imo_shochu_menu.jpg": {
+     "photoSha": "d4d1498022f942b0",
+     "name_ja": "冨野宝山",
+     "brewery_ja": "西酒造",
+     "brewery_printed": false,
+     "subject": "menu",
+     "drink": "shochu",
+     "bottling": {},
+     "other_names": [
+      "TOMINO HOUZAN",
+      "富乃宝山"
+     ],
+     "confidence": 0.8,
+     "latencyMs": 5996
+    },
+    "kurokirishima_shochu_menu.jpg": {
+     "photoSha": "496ebae7542f8e1e",
+     "name_ja": "黒霧島",
+     "brewery_ja": "霧島酒造",
+     "brewery_printed": true,
+     "subject": "menu",
+     "drink": "shochu",
+     "bottling": {},
+     "other_names": [
+      "KUROKIRISHIMA"
+     ],
+     "confidence": 0.93,
+     "latencyMs": 4137
+    },
+    "mugi_shochu_menu.jpg": {
+     "photoSha": "d44810dec8d3ee37",
+     "name_ja": "泰明",
+     "brewery_ja": "高崎酒造",
+     "brewery_printed": false,
+     "subject": "menu",
+     "drink": "shochu",
+     "bottling": {
+      "styles": []
+     },
+     "other_names": [
+      "TAIMEI"
+     ],
+     "confidence": 0.6,
+     "latencyMs": 5957
+    },
+    "nikka_whisky_not_sake.jpg": {
+     "photoSha": "8ac5b53cd2bcc10c",
+     "name_ja": "余市",
+     "brewery_ja": "ニッカウヰスキー",
+     "brewery_printed": true,
+     "subject": "several_bottles",
+     "drink": "other",
+     "bottling": {
+      "product_name": "シングルモルト"
+     },
+     "other_names": [
+      "YOICHI",
+      "SINGLE MALT YOICHI",
+      "NIKKA SINGLE CASK MALT WHISKY"
+     ],
+     "confidence": 0.6,
+     "latencyMs": 4847
+    },
+    "shichida_shochu_menu_2.jpg": {
+     "photoSha": "8dfaa5344742af90",
+     "name_ja": "七田",
+     "brewery_ja": "天山酒造",
+     "brewery_printed": false,
+     "subject": "menu",
+     "drink": "sake",
+     "bottling": {
+      "grade": "junmai"
+     },
+     "other_names": [
+      "SHICHIDA",
+      "しちだ"
+     ],
+     "confidence": 0.8,
+     "latencyMs": 5530
     }
    }
   },
