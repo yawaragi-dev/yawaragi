@@ -2937,5 +2937,131 @@
       "localOnly": true,
       "notes": "A MENU: the top left corner of the same leaflet as ide_menu_1.jpg, lying on a wooden table. In frame: No.1 (天下山麓富士の山, honjozo, with an International Wine Challenge 2024 silver medal mark) and the left half of No.2 (吟醸; the 180 ml bottle in its printed cloth wrap and without it, and the edge of the 720 ml bottle). The heading of an umeshu section starts at the bottom edge with nothing of it legible. Items are in the maintainer's order. Kept local: a brewery's printed brochure with its own product photographs and crest, which are not ours to publish. Location and camera data were removed from the file. Added 2026-10-13."
     }
+  },
+  "ide_menu_4.jpg": {
+    "name_ja": "甲斐の開運",
+    "brewery_ja": "井出醸造店",
+    "view": "other",
+    "subject": "menu",
+    "items": [
+      {
+        "name_ja": "甲斐の開運",
+        "brewery_ja": "井出醸造店",
+        "product": "大吟醸 Daiginjo",
+        "expectedBrandIds": [
+          124540
+        ]
+      },
+      {
+        "name_ja": "甲斐の開運",
+        "brewery_ja": "井出醸造店",
+        "product": "吟醸 Ginjo",
+        "expectedBrandIds": [
+          124540
+        ]
+      },
+      {
+        "name_ja": "甲斐の開運",
+        "brewery_ja": "井出醸造店",
+        "product": "吟醸生酒 GinjoNamasake 無殺菌",
+        "expectedBrandIds": [
+          124540
+        ]
+      },
+      {
+        "name_ja": "甲斐の開運",
+        "brewery_ja": "井出醸造店",
+        "product": "天下山麓富士の山 Tenkasanroku Fujinoyama 本醸造",
+        "expectedBrandIds": [
+          124540
+        ]
+      },
+      {
+        "name_ja": "甲斐の開運",
+        "brewery_ja": "井出醸造店",
+        "product": "生原酒 Namagenshu 無殺菌・無加水",
+        "expectedBrandIds": [
+          124540
+        ]
+      },
+      {
+        "name_ja": "梅酒",
+        "brewery_ja": "井出醸造店",
+        "product": "リキュール Plum Liqueur",
+        "drink": "umeshu",
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "冨麓",
+        "brewery_ja": "井出醸造店",
+        "product": "純米大吟醸 Junmai Daiginjo (Furoku)",
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "甲斐の開運",
+        "brewery_ja": "井出醸造店",
+        "product": "ひやおろし 純米吟醸生酒 HiyaoroshiNama 季節限定",
+        "expectedBrandIds": [
+          124540
+        ]
+      },
+      {
+        "name_ja": "甲斐の開運",
+        "brewery_ja": "井出醸造店",
+        "product": "囲 Kakoi 特別純米生原酒 酒蔵限定販売酒",
+        "expectedBrandIds": [
+          124540
+        ]
+      },
+      {
+        "name_ja": "甲斐の開運",
+        "brewery_ja": "井出醸造店",
+        "product": "純米原酒 Junmaigenshu 特別純米",
+        "expectedBrandIds": [
+          124540
+        ]
+      },
+      {
+        "name_ja": "甲斐の開運",
+        "brewery_ja": "井出醸造店",
+        "product": "純米甘口 (朱華色 はねずいろ) Junmaiamakuchi",
+        "expectedBrandIds": [
+          124540
+        ]
+      },
+      {
+        "name_ja": "大樹海",
+        "brewery_ja": "富士北麓蒸留所",
+        "product": "Blended Whisky",
+        "drink": "other",
+        "expectedBrandIds": []
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "冨麓",
+        "Furoku",
+        "大樹海",
+        "Daijukai",
+        "梅酒",
+        "Umeshu",
+        "天下山麓富士の山",
+        "Tenkasanroku Fujinoyama",
+        "Kakoi",
+        "Kaino Kaiun",
+        "KAINO KAIUN"
+      ],
+      "brewery_ja": [
+        "井出醸造",
+        "IDE SAKE BREWERY",
+        "富士北麓蒸留所"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_menu_photo",
+      "rightsCleared": true,
+      "localOnly": true,
+      "notes": "A MENU: the whole tasting sheet of 井出醸造店, laminated, lying on a counter and photographed at an angle: twelve numbered products in two rows (a honjozo-type row, No.1 to No.5, with a plum liqueur as No.6; a junmai-type row, No.7 to No.11, with a blended whisky as No.12), each with a picture of the bottle, its name, size, price, strength and polishing ratio, beside a chart of sake grades and a taste map. Items are in the maintainer's order, which is the sheet's. The sheet does not print the maker's name; the labels pictured say 甲斐の開運 and the other close-ups of the same sheets (ide_menu_1.jpg to ide_menu_3.jpg) do. No.6 (梅酒) and No.12 (大樹海, from the brewery's distillery, as the maintainer names it) are not sake. No.7 is sold as 冨麓, which the catalogue does not have. No.9 prints \"Junmai Ginjo\" in Latin under 特別純米生原酒. Kept local: a brewery's printed sheet with its own product photographs. A booking form with a visitor's name and e-mail address lay above the sheet; it is painted over in the file, which was re-encoded for that, and location and camera data were removed. Added 2026-10-13."
+    }
   }
 }

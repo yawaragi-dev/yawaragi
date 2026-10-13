@@ -2141,6 +2141,22 @@
      ],
      "confidence": 0.5,
      "latencyMs": 8358
+    },
+    "ide_menu_4.jpg": {
+     "photoSha": "6dabb15cbcde3f7a",
+     "name_ja": "冨麓",
+     "brewery_ja": "冨士酒造",
+     "brewery_printed": false,
+     "subject": "menu",
+     "drink": "sake",
+     "bottling": {
+      "grade": "junmai_daiginjo"
+     },
+     "other_names": [
+      "Furoku"
+     ],
+     "confidence": 0.3,
+     "latencyMs": 10362
     }
    }
   },
@@ -4383,6 +4399,22 @@
      ],
      "confidence": 0.6,
      "latencyMs": 3443
+    },
+    "ide_menu_4.jpg": {
+     "photoSha": "6dabb15cbcde3f7a",
+     "name_ja": "甲斐の開運",
+     "brewery_ja": "土屋酒造",
+     "brewery_printed": false,
+     "subject": "menu",
+     "drink": "sake",
+     "bottling": {
+      "grade": "daiginjo",
+      "styles": [],
+      "polishing_ratio": 40
+     },
+     "other_names": [],
+     "confidence": 0.4,
+     "latencyMs": 7939
     }
    }
   },
