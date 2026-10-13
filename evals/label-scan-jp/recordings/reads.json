@@ -2217,6 +2217,20 @@
      "other_names": [],
      "confidence": 0.15,
      "latencyMs": 13773
+    },
+    "ozawa_sawanoi_ohkarakuchi_junmai_on_table.jpg": {
+     "photoSha": "22e867635897cb24",
+     "name_ja": "澤乃井",
+     "brewery_ja": "小澤酒造",
+     "brewery_printed": true,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {
+      "grade": "junmai"
+     },
+     "other_names": [],
+     "confidence": 0.9,
+     "latencyMs": 4437
     }
    }
   },
@@ -4539,6 +4553,23 @@
      "other_names": [],
      "confidence": 0.5,
      "latencyMs": 4187
+    },
+    "ozawa_sawanoi_ohkarakuchi_junmai_on_table.jpg": {
+     "photoSha": "22e867635897cb24",
+     "name_ja": "澤乃井",
+     "brewery_ja": "小澤酒造",
+     "brewery_printed": true,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {
+      "product_name": "大辛口",
+      "grade": "junmai"
+     },
+     "other_names": [
+      "大辛口"
+     ],
+     "confidence": 0.93,
+     "latencyMs": 3942
     }
    }
   },

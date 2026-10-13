@@ -3205,5 +3205,30 @@
       "rightsCleared": true,
       "notes": "A WINDOW FULL OF BOTTLES, AT NIGHT: a bar's window photographed from the street in low light, with about ten empty bottles standing on the sill inside, backlit, listed left to right as the maintainer counted them. Only one can be named with confidence: 天穏 (板倉酒造), the eighth, in the right-hand pane. The others are too dark, turned away or half hidden: a label beginning 生酛の at the left edge, a drawn figure, a plain teal label, a black label with white brush characters, and to the right of 天穏 a large brushed ring and a single large character. The label does not print the maker in a size that can be read; it is the catalogue's. The catalogue also has 無窮天穏 from the same maker, which this label does not say. The top-level name is the one readable bottle. No venue name, no person; shelves, lamps and knives inside the room. Added 2026-10-13."
     }
+  },
+  "ozawa_sawanoi_ohkarakuchi_junmai_on_table.jpg": {
+    "name_ja": "澤乃井",
+    "brewery_ja": "小澤酒造",
+    "bottle": "sawanoi-junmai-okarakuchi",
+    "view": "front",
+    "expectedBrandIds": [
+      320
+    ],
+    "also": {
+      "name_ja": [
+        "澤乃井 大辛口",
+        "澤乃井 純米 大辛口",
+        "澤乃井 純米大辛口",
+        "大辛口"
+      ],
+      "brewery_ja": [
+        "小澤酒造株式会社"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Sawanoi junmai Ohkarakuchi, a 300 ml bottle on a restaurant table among plates of sushi, a carafe and a glass, with condensation on the glass and the bottle. 大辛口 is the largest text on the label, 澤乃井 and 純米 are in brush script beside it, and the maker, 小澤酒造株式会社, is printed small down the left edge. Another bottle of the same sake as ozawa_sawanoi_otoko_zake_honjozo_dai_karakuchi_clear.jpg. Two people sat across the table, visible from the chest down; the photo is cropped below them, which also cuts the bottle's neck, and cropped at the bottom and painted over beside the bottle where chopstick sleeves printed the restaurant's name. The file was re-encoded for that, and location and camera data were removed. The maintainer's file was ozawa_sawanoi_ohkarakuchi_on_table.jpg; the grade was added to the name. Photographed at a restaurant, added 2026-10-13."
+    }
   }
 }
