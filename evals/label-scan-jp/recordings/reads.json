@@ -2231,6 +2231,35 @@
      "other_names": [],
      "confidence": 0.9,
      "latencyMs": 4437
+    },
+    "nate_zuiyo_iwasaki_shelf.jpg": {
+     "photoSha": "2eb34e4262b2515b",
+     "name_ja": "黒牛",
+     "brewery_ja": "白糸酒造",
+     "brewery_printed": false,
+     "subject": "several_bottles",
+     "drink": "sake",
+     "bottling": {
+      "grade": "junmai"
+     },
+     "other_names": [
+      "くろうし"
+     ],
+     "confidence": 0.55,
+     "latencyMs": 8409
+    },
+    "sohomare_iwasaki_shelf.jpg": {
+     "photoSha": "37fb95f8a52588c4",
+     "name_ja": "福娘",
+     "brewery_ja": "企業",
+     "brewery_printed": false,
+     "subject": "several_bottles",
+     "drink": "unknown",
+     "other_names": [
+      "FUKUMUSUME"
+     ],
+     "confidence": 0.4,
+     "latencyMs": 9037
     }
    }
   },
@@ -4570,6 +4599,37 @@
      ],
      "confidence": 0.93,
      "latencyMs": 3942
+    },
+    "nate_zuiyo_iwasaki_shelf.jpg": {
+     "photoSha": "2eb34e4262b2515b",
+     "name_ja": "黒牛",
+     "brewery_ja": "名手酒造店",
+     "brewery_printed": false,
+     "subject": "several_bottles",
+     "drink": "sake",
+     "bottling": {
+      "grade": "junmai",
+      "polishing_ratio": 50
+     },
+     "other_names": [
+      "くろうし"
+     ],
+     "confidence": 0.6,
+     "latencyMs": 4788
+    },
+    "sohomare_iwasaki_shelf.jpg": {
+     "photoSha": "37fb95f8a52588c4",
+     "name_ja": "惣誉",
+     "brewery_ja": "惣誉酒造",
+     "brewery_printed": false,
+     "subject": "several_bottles",
+     "drink": "unknown",
+     "bottling": {},
+     "other_names": [
+      "ソーホマレ"
+     ],
+     "confidence": 0.6,
+     "latencyMs": 6944
     }
    }
   },

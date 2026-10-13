@@ -3230,5 +3230,107 @@
       "rightsCleared": true,
       "notes": "Sawanoi junmai Ohkarakuchi, a 300 ml bottle on a restaurant table among plates of sushi, a carafe and a glass, with condensation on the glass and the bottle. 大辛口 is the largest text on the label, 澤乃井 and 純米 are in brush script beside it, and the maker, 小澤酒造株式会社, is printed small down the left edge. Another bottle of the same sake as ozawa_sawanoi_otoko_zake_honjozo_dai_karakuchi_clear.jpg. Two people sat across the table, visible from the chest down; the photo is cropped below them, which also cuts the bottle's neck, and cropped at the bottom and painted over beside the bottle where chopstick sleeves printed the restaurant's name. The file was re-encoded for that, and location and camera data were removed. The maintainer's file was ozawa_sawanoi_ohkarakuchi_on_table.jpg; the grade was added to the name. Photographed at a restaurant, added 2026-10-13."
     }
+  },
+  "sohomare_iwasaki_shelf.jpg": {
+    "name_ja": "惣誉",
+    "brewery_ja": "惣誉酒造",
+    "view": "front",
+    "subject": "several_bottles",
+    "items": [
+      {
+        "unreadable": true,
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "惣誉",
+        "brewery_ja": "惣誉酒造",
+        "product": "辛口",
+        "expectedBrandIds": [
+          259
+        ]
+      },
+      {
+        "unreadable": true,
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "長陽福娘",
+        "brewery_ja": "岩崎酒造",
+        "expectedBrandIds": [
+          883
+        ]
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "長陽福娘",
+        "ソーホマレ",
+        "FUKUMUSUME",
+        "CHOYO FUKUMUSUME"
+      ],
+      "brewery_ja": [
+        "岩崎酒造"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "CUP SAKES IN A ROW: four one-cup sakes on a stone ledge, shot from the side and close, each partly behind the next, listed left to right as the maintainer named them. A green bottle cut off by the left edge, with part of a label; 惣誉 (辛口, with ソーホマレ in small type); a cup whose label is a painting of a cat playing a shamisen, with no name on the side that shows; and 長陽福娘, of which the red brush characters and \"…UKUMUSUME\" are in frame. No label shows its maker; they are the catalogue's. No bottle is the subject more than the others. No person, no venue name; the room behind is out of focus. Location and camera data were removed from the file. Photographed at a bar, added 2026-10-13."
+    }
+  },
+  "nate_zuiyo_iwasaki_shelf.jpg": {
+    "name_ja": "黒牛",
+    "brewery_ja": "名手酒造店",
+    "view": "front",
+    "subject": "several_bottles",
+    "items": [
+      {
+        "unreadable": true,
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "黒牛",
+        "brewery_ja": "名手酒造店",
+        "product": "純米酒",
+        "expectedBrandIds": [
+          830
+        ]
+      },
+      {
+        "name_ja": "瑞鷹",
+        "brewery_ja": "瑞鷹酒造",
+        "product": "ZUIYO CUP くまモン",
+        "expectedBrandIds": [
+          986
+        ]
+      },
+      {
+        "name_ja": "長陽福娘",
+        "brewery_ja": "岩崎酒造",
+        "expectedBrandIds": [
+          883
+        ]
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "瑞鷹",
+        "長陽福娘",
+        "くろうし",
+        "ZUIYO",
+        "ZUIYO CUP",
+        "FUKUMUSUME",
+        "CHOYO FUKUMUSUME"
+      ],
+      "brewery_ja": [
+        "瑞鷹酒造",
+        "岩崎酒造"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "CUP SAKES IN A ROW: the same ledge as sohomare_iwasaki_shelf.jpg from further along, four one-cup sakes shot from the side and close, listed left to right as the maintainer named them. A cup cut off by the left edge; 黒牛 (純米酒, with くろうし in small type and the start of the back-label text); the Zuiyo cup with the Kumamon mascot, of which \"ZU…\" and \"C…\" are in frame; and 長陽福娘, the same cup as in the other photo, with \"…OYO FUKUMUS…\" in frame. No label shows its maker; they are the catalogue's. No bottle is the subject more than the others. No person, no venue name; the room behind is out of focus. Location and camera data were removed from the file. Photographed at a bar, added 2026-10-13."
+    }
   }
 }
