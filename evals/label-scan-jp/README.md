@@ -78,7 +78,8 @@ so no location or device data is in the repo.
 **A photo keeps the file name the maintainer gave it.** The name is their note
 of what is in the frame — maker, brand, product, grade, then the condition of
 the shot (`ozawa_sawanoi_otoko_zake_honjozo_dai_karakuchi_clear.jpg`,
-`..._with_pricetag`, `..._wrapped`, `two_bottles_..._AND_...`, `..._menu_...`)
+`..._with_pricetag`, `..._wrapped`, `two_bottles_..._AND_...`, `menu` or
+`shelf` anywhere in the name for a menu or a shop shelf)
 — and it is the first check on the ground truth: where the label, the
 catalogue and the name disagree, say so in the entry's `notes` and ask, rather
 than renaming the file to fit. The romaji in a name is informal and is not
@@ -553,20 +554,42 @@ through the brand-only pass.
 
 ## Compliance
 
-**Menu photos are not in the repository.** A photo whose file name contains
-`menu` is ignored by git (`.gitignore`) and exists only on the maintainer's
-machine. A plain typed list of names and prices is not protected, but a
-designed menu usually carries the venue's descriptive text, artwork, and a
-product photograph that belongs to someone else again; German law has no
-exception that covers making a photo of that publicly available, and telling
-the two kinds apart photo by photo is a legal judgment not worth making. The
-ground-truth entry and the saved reads of a menu photo are committed — drink
-names, sizes and prices are facts — so the numbers can be replayed offline by
-anyone, and a fresh read only by the maintainer. `rightsCleared: true` on a
-`maintainer_menu_photo` entry therefore means cleared to run, not to publish.
-Shop-shelf and bottle photos are published as before; crop a shop's name and
-any written shelf card out of the frame. Third-party labels, menus and marks
-shown in these photos remain their owners' property.
+**A photo that may be run but not published lives in `photos/local/`.** Git
+ignores that folder, and the photo's ground-truth entry says
+`"provenance": { "localOnly": true }`. The entry and the saved reads are
+committed — drink names, sizes and prices are facts — so the numbers can be
+replayed offline by anyone, and a fresh read only by the maintainer.
+`rightsCleared: true` on such an entry means cleared to run, not to publish.
+The runner stops, and `photo-folders.test.ts` fails, when a photo's folder and
+its `localOnly` mark disagree. The decision is made photo by photo, never by
+file name.
+
+Menus are where the question comes up (research of 2026-10-13, German law; a
+reading of it, not legal advice):
+
+| the photo shows | folder |
+|---|---|
+| a plain list: names, grades, sizes, prices, one short descriptive line per drink at most; typed, printed or chalked | `photos/` |
+| the venue's own prose (tasting notes of a few sentences, a story about a brewery) | `photos/local/`, or crop to the list |
+| a photograph of a bottle or a dish, a drawing, decorative lettering | `photos/local/`, or crop it out |
+| the venue's logo or name | crop it out; `photos/local/` if it cannot be cropped |
+| a person, a hand-written name of a member of staff | crop it out; `photos/local/` if it cannot be cropped |
+| not sure | `photos/local/` |
+
+A menu entry (`maintainer_menu_photo`) must state `localOnly` as `true` or `false`; the schema rejects one that leaves it out.
+
+A list of names and prices is not a protected work, and a short phrase is not
+either; a designed menu carries text, artwork and often someone else's product
+photograph, and German law has no exception that covers making a photo of that
+publicly available.
+
+**A shop shelf is not a menu.** It is a photo of bottles (`subject:
+"several_bottles"`, each bottle in `items`), published like any other shop
+photo. Printed shelf tags with a name and a price are facts and stay in the
+frame — they are often the easiest thing on the shelf to read. Crop the shop's
+name and any hand-written card that describes a sake in the shop's own words.
+Third-party labels, menus and marks shown in these photos remain their owners'
+property.
 
 - **No Art. 9 special-category data.** Photos are bottle labels only — never
   people / faces (CLAUDE.md). The provenance enum has no "photo of a person"

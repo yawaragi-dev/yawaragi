@@ -84,7 +84,8 @@ export type PhotoView = z.infer<typeof PhotoViewSchema>
  * - `one_bottle` — one bottle (or its box) is the subject. Other bottles may
  *   stand at the edges of a shop shelf; they are not what was photographed.
  * - `several_bottles` — two or more different bottles, none of them merely
- *   at the edge. `items` lists each one.
+ *   at the edge: two on a table, or a whole shop shelf. `items` lists each
+ *   one that can be read.
  * - `menu` — a printed menu or drinks list, not a bottle. `items` lists the
  *   drinks legibly printed on it. Menu scan is a deferred feature (design §7).
  */
@@ -162,6 +163,13 @@ export const GroundTruthEntrySchema = z
        * photo with `rightsCleared: false` and quietly have it evaluated.
        */
       rightsCleared: z.boolean(),
+      /**
+       * `true` when the photo may be run but not published: it lives in
+       * `photos/local/`, which git ignores, and only its ground truth and
+       * saved reads are in the repository. Decided photo by photo (README,
+       * "Compliance") and never by file name. Left out, the photo is published; a menu photo must state it.
+       */
+      localOnly: z.boolean().optional(),
       /** Source URL / bottle description / licence grant. */
       attribution: z.string().optional(),
       notes: z.string().optional(),
@@ -175,6 +183,15 @@ export const GroundTruthEntrySchema = z
     // entry with `rightsCleared: false` is SKIPPED (never sent to a provider,
     // never scored) with a visible "rights not cleared" line. Flipping the
     // flag to `true` once the rights actually exist is what opts a photo in.
+    // A menu is the one kind of photo where publishing is a real question, so
+    // its entry must answer it either way rather than fall into the default.
+    if (source === 'maintainer_menu_photo' && entry.provenance.localOnly === undefined) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['provenance', 'localOnly'],
+        message: 'a menu photo must say localOnly: true or false (README, "Compliance").',
+      })
+    }
     if ((source === 'cc_by' || source === 'press_kit_licensed') && !attribution) {
       ctx.addIssue({
         code: 'custom',
