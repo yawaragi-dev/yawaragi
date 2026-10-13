@@ -890,7 +890,7 @@
       "notes": "Ninki-ichi \"Gold\" junmai daiginjo, 720 ml — brand is a stylised mark plus katakana. This photo: the importer's German or French back label. ゴールド人気 has its own catalogue row beside the line 人気一; either is the bottle."
     }
   },
-  "ninki_sparkling_junmai_daiginjo_clear.jpg": {
+  "ninki_sparkling_junmai_ginjo_clear.jpg": {
     "name_ja": "人気一",
     "brewery_ja": "人気酒造",
     "bottle": "ninki-sparkling",
@@ -910,7 +910,7 @@
       "notes": "Ninki-ichi sparkling junmai ginjo, 300 ml — stylised mark plus Latin only. This photo: front label."
     }
   },
-  "ninki_sparkling_junmai_daiginjo_label.jpg": {
+  "ninki_sparkling_junmai_ginjo_label.jpg": {
     "name_ja": "人気一",
     "brewery_ja": "人気酒造",
     "bottle": "ninki-sparkling",
@@ -2045,7 +2045,7 @@
       "notes": "NOT SAKE: Kakushigura, a cask-aged barley shochu; the label says 貯蔵焼酎 麦. The maker is not printed on the front; it also brews sake and is in the catalogue for 薩州正宗 and 蔵弥一, neither of which is this bottle. Photographed on a shop shelf, added 2026-10-13."
     }
   },
-  "kotake_shuzo_makai_e_no_izanai_black_koji_shochu_clear.jpg": {
+  "mitsutake_shuzo_makai_e_no_izanai_black_koji_shochu_clear.jpg": {
     "name_ja": "魔界への誘い",
     "brewery_ja": "光武酒造場",
     "view": "front",
@@ -2080,7 +2080,7 @@
       "notes": "NOT SAKE: Sasshu Sekitoba, the purple label (Murasaki), a sweet-potato shochu; the label says 本格焼酎 芋 in small text and 薩州 above the name. The maker is not printed on the front; it also brews sake and is in the catalogue for 薩州正宗, which shares those two characters and is not this bottle. A second copy stands beside it. Photographed on a shop shelf, added 2026-10-13."
     }
   },
-  "tomido_housan_imo_shochu_clear.jpg": {
+  "tomi_no_hozan_imo_shochu_clear.jpg": {
     "name_ja": "富乃宝山",
     "brewery_ja": "西酒造",
     "view": "front",
@@ -2128,7 +2128,7 @@
     "provenance": {
       "source": "maintainer_shop_photo",
       "rightsCleared": true,
-      "notes": "NOT SAKE: Zuisen awamori; the label says 琉球泡盛 and \"A product of Okinawa\", and the shelf tag below says AWAMORI. The lower half of the label is behind the shelf rail. The catalogue has two sakes called 瑞泉 (上撰 and 佳撰, from 高田酒造場 in Tottori), neither of which is this bottle. Photographed on a shop shelf, added 2026-10-13."
+      "notes": "NOT SAKE: Zuisen awamori; the label says 琉球泡盛 and \"A product of Okinawa\", and the shelf tag below says \"ZUISEN AKA AWAMORI\" (aka, 赤: the red label). The lower half of the label is behind the shelf rail. The catalogue has two sakes called 瑞泉 (上撰 and 佳撰, from 高田酒造場 in Tottori), neither of which is this bottle. Photographed on a shop shelf, added 2026-10-13."
     }
   },
   "two_bottles_tsukasa_sjochu_AND_aioi_shochu_with_pricetag.jpg": {
@@ -2167,7 +2167,7 @@
       "notes": "NOT SAKE, TWO BOTTLES: two 2.7 l plastic jugs of multiply-distilled shochu (焼酎甲類) side by side, neither in front of the other — Soft Tsukasa (20%) at the left, Aioi Shochu (25%) at the right. Each label prints its maker; shelf tags below name both. Neither product nor maker is in the catalogue. The top-level name is the left-hand jug only because the field must hold something. Photographed on a shop shelf, added 2026-10-13."
     }
   },
-  "shichida_junmai_menu_clear.jpg": {
+  "shichida_junmai_shochu_menu_clear.jpg": {
     "name_ja": "七田",
     "brewery_ja": "天山酒造",
     "view": "other",
@@ -2188,7 +2188,7 @@
     "provenance": {
       "source": "maintainer_menu_photo",
       "rightsCleared": true,
-      "notes": "A MENU, AND NOT SAKE: one page of a restaurant drinks menu, headed 焼酎 米 / \"Japanischer Shochu\", offering Shichida rice shochu by the glass and the bottle with a picture of the bottle. The page does not name the maker. Its Japanese and German description calls the drink a junmai sake, which the heading, the serving line (\"mit Eis/Wasser/Soda\") and the pictured bottle contradict. The catalogue has the SAKE 七田 from the same maker (row 968), which is not what the page sells. Fingers at the corner, glasses on the table and a strip of dark clothing at the bottom edge are in frame; no face. Added 2026-10-13."
+      "notes": "A MENU, AND NOT SAKE: one page of a restaurant drinks menu, headed 焼酎 米 / \"Japanischer Shochu\", offering Shichida rice shochu by the glass and the bottle with a picture of the bottle. The page does not name the maker. Its Japanese and German description calls the drink a junmai sake, which the heading, the serving line (\"mit Eis/Wasser/Soda\") and the pictured bottle contradict; the maintainer, who photographed it, confirms it is the rice shochu. The catalogue has the SAKE 七田 from the same maker (row 968), which is not what the page sells. Fingers at the corner, glasses on the table and a strip of dark clothing at the bottom edge are in frame; no face. Added 2026-10-13."
     }
   }
 }

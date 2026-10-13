@@ -140,7 +140,7 @@ in a table of their own, so adding one does not move "right of N".
 
 ```jsonc
 // a bottle that is not sake
-"kotake_shuzo_makai_e_no_izanai_black_koji_shochu_clear.jpg": {
+"mitsutake_shuzo_makai_e_no_izanai_black_koji_shochu_clear.jpg": {
   "name_ja": "魔界への誘い", "brewery_ja": "光武酒造場",
   "drink": "shochu",
   "expectedBrandIds": [3935]   // the catalogue row for THIS product, if Sakenowa lists it; usually []
@@ -354,9 +354,9 @@ saw several bottles where there was one, "not sake" and "not one bottle" are
 tier 2's to say.
 
 The grade has no ground truth of its own; the file names are the maintainer's
-notes, so the last row is a sanity check. The two disagreements are the same
-bottle (Ninki sparkling: `junmai_daiginjo` in the file name, 純米吟醸 read off
-both labels).
+notes, so the last row is a sanity check. The two disagreements were one
+bottle, the Ninki sparkling, whose file names said junmai daiginjo where both
+labels print 純米吟醸; the reads were right and the files are renamed.
 
 Two fresh reads with these fields scored 98 and 101 right of the 110 sake
 photos (the first is committed), against 103 for the one read made with the

@@ -1081,7 +1081,7 @@
      "confidence": 0.85,
      "latencyMs": 5563
     },
-    "kotake_shuzo_makai_e_no_izanai_black_koji_shochu_clear.jpg": {
+    "mitsutake_shuzo_makai_e_no_izanai_black_koji_shochu_clear.jpg": {
      "photoSha": "405dc683f319bc78",
      "name_ja": "魔界",
      "brewery_ja": "濱田酒造",
@@ -1311,7 +1311,7 @@
      "confidence": 0.8,
      "latencyMs": 5113
     },
-    "ninki_sparkling_junmai_daiginjo_clear.jpg": {
+    "ninki_sparkling_junmai_ginjo_clear.jpg": {
      "photoSha": "d4019e7ae35ff4be",
      "name_ja": "NINKI-ICHI",
      "brewery_ja": "木内酒造",
@@ -1328,7 +1328,7 @@
      "confidence": 0.7,
      "latencyMs": 4540
     },
-    "ninki_sparkling_junmai_daiginjo_label.jpg": {
+    "ninki_sparkling_junmai_ginjo_label.jpg": {
      "photoSha": "5ea97580de144e0c",
      "name_ja": "NINKI",
      "brewery_ja": "Ninki",
@@ -1703,7 +1703,7 @@
      "confidence": 0.85,
      "latencyMs": 5841
     },
-    "shichida_junmai_menu_clear.jpg": {
+    "shichida_junmai_shochu_menu_clear.jpg": {
      "photoSha": "9aa517bf4812f8c4",
      "name_ja": "七田",
      "brewery_ja": "天山酒造",
@@ -1856,7 +1856,7 @@
      "confidence": 0.9,
      "latencyMs": 5179
     },
-    "tomido_housan_imo_shochu_clear.jpg": {
+    "tomi_no_hozan_imo_shochu_clear.jpg": {
      "photoSha": "3f4d1860f6f867b8",
      "name_ja": "富乃宝山",
      "brewery_ja": "西酒造",
@@ -3107,7 +3107,7 @@
      "confidence": 0.9,
      "latencyMs": 3050
     },
-    "kotake_shuzo_makai_e_no_izanai_black_koji_shochu_clear.jpg": {
+    "mitsutake_shuzo_makai_e_no_izanai_black_koji_shochu_clear.jpg": {
      "photoSha": "405dc683f319bc78",
      "name_ja": "魔界への誘い",
      "brewery_ja": "大海酒造",
@@ -3341,7 +3341,7 @@
      "confidence": 0.8,
      "latencyMs": 2817
     },
-    "ninki_sparkling_junmai_daiginjo_clear.jpg": {
+    "ninki_sparkling_junmai_ginjo_clear.jpg": {
      "photoSha": "d4019e7ae35ff4be",
      "name_ja": "NINKI-ICHI",
      "brewery_ja": "人気酒造",
@@ -3358,7 +3358,7 @@
      "confidence": 0.72,
      "latencyMs": 5229
     },
-    "ninki_sparkling_junmai_daiginjo_label.jpg": {
+    "ninki_sparkling_junmai_ginjo_label.jpg": {
      "photoSha": "5ea97580de144e0c",
      "name_ja": "NINKI",
      "brewery_ja": "Ninki",
@@ -3758,7 +3758,7 @@
      "confidence": 0.85,
      "latencyMs": 5908
     },
-    "shichida_junmai_menu_clear.jpg": {
+    "shichida_junmai_shochu_menu_clear.jpg": {
      "photoSha": "9aa517bf4812f8c4",
      "name_ja": "七田",
      "brewery_ja": "天山酒造",
@@ -3919,7 +3919,7 @@
      "confidence": 0.86,
      "latencyMs": 4722
     },
-    "tomido_housan_imo_shochu_clear.jpg": {
+    "tomi_no_hozan_imo_shochu_clear.jpg": {
      "photoSha": "3f4d1860f6f867b8",
      "name_ja": "富乃宝山",
      "brewery_ja": "西酒造",
@@ -4534,7 +4534,7 @@
      "confidence": 0.85,
      "latencyMs": 3002
     },
-    "ninki_sparkling_junmai_daiginjo_clear.jpg": {
+    "ninki_sparkling_junmai_ginjo_clear.jpg": {
      "photoSha": "d4019e7ae35ff4be",
      "name_ja": "NINKI-ICHI",
      "brewery_ja": "NINKI-ICHI",
@@ -4542,7 +4542,7 @@
      "confidence": 0.35,
      "latencyMs": 5790
     },
-    "ninki_sparkling_junmai_daiginjo_label.jpg": {
+    "ninki_sparkling_junmai_ginjo_label.jpg": {
      "photoSha": "5ea97580de144e0c",
      "name_ja": "NINKI",
      "brewery_ja": "Ninki Inc.",
