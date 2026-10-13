@@ -87,7 +87,14 @@ export interface AnthropicHaikuProviderOptions {
    * Called with the tokens each call used. The eval runner adds them up to
    * say what a run cost; the scan itself has no use for it.
    */
-  onUsage?: (usage: { inputTokens: number; outputTokens: number }) => void
+  onUsage?: (usage: {
+    /** All input tokens, cached or not. */
+    inputTokens: number
+    outputTokens: number
+    /** Of the input: read from the prompt cache, and written to it. */
+    cacheReadTokens: number
+    cacheWriteTokens: number
+  }) => void
 }
 
 // The system prompt teaches the model the difference between the
@@ -259,7 +266,29 @@ export function createAnthropicHaikuProvider(
           schemaName: 'LabelScanExtraction',
           schemaDescription:
             'Sake label extraction: name and brewery in original script, other names printed for the sake, plus confidence.',
-          system: SYSTEM_PROMPT,
+          // The instructions are the same for every scan and are most of
+          // the input (4,113 tokens of about 5,000; the photo is the
+          // rest), so they are marked for Anthropic's prompt cache. A scan
+          // within five minutes of another on the same model reads them
+          // at a tenth of the price (a twentieth on Sonnet 5.5); a scan
+          // after a quiet spell writes them at 1.25x. It pays once more
+          // than about one scan in five is a hit — a visitor photographing
+          // two sides of a bottle is enough.
+          //
+          // Measured 2026-10-13 over three fresh reads of 79 photos: 81%
+          // of input tokens read from the cache; a tier-2 call costs about
+          // $0.005 warm against $0.013 uncached, and $0.015 cold.
+          //
+          // The message form is load-bearing: a bare string cannot carry
+          // `providerOptions`, and the marker would be dropped silently.
+          // Minimum cacheable size for both 5.5 models is 512 tokens
+          // (docs, 2026-10-13); the eval's cost line prints the tokens
+          // read from the cache — zero there means it stopped working.
+          instructions: {
+            role: 'system',
+            content: SYSTEM_PROMPT,
+            providerOptions: { anthropic: { cacheControl: { type: 'ephemeral' as const } } },
+          },
           ...(effort ? { providerOptions: { anthropic: { effort } } } : {}),
           messages: [
             {
@@ -277,7 +306,12 @@ export function createAnthropicHaikuProvider(
         },
       )
       const elapsedMs = Date.now() - start
-      options.onUsage?.({ inputTokens: usage.inputTokens ?? 0, outputTokens: usage.outputTokens ?? 0 })
+      options.onUsage?.({
+        inputTokens: usage.inputTokens ?? 0,
+        outputTokens: usage.outputTokens ?? 0,
+        cacheReadTokens: usage.inputTokenDetails?.cacheReadTokens ?? 0,
+        cacheWriteTokens: usage.inputTokenDetails?.cacheWriteTokens ?? 0,
+      })
 
       // `generateObject` already runs the schema parse, so `object` is
       // semantically `LabelScanExtraction`. The traced wrapper returns

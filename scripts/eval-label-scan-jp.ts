@@ -453,13 +453,15 @@ async function main() {
 
   for (const key of providerKeys) {
     console.log(`## Provider: ${key}`)
-    const spent = { inputTokens: 0, outputTokens: 0 }
+    const spent = { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0 }
     let provider
     try {
       provider = getVisionProvider(key, {
         onUsage: (u) => {
           spent.inputTokens += u.inputTokens
           spent.outputTokens += u.outputTokens
+          spent.cacheReadTokens += u.cacheReadTokens
+          spent.cacheWriteTokens += u.cacheWriteTokens
         },
       })
     } catch (err) {
@@ -563,11 +565,19 @@ async function main() {
     }
     providerResults.push({ key, photos })
     const price = PRICES[key]
-    const dollars = price ? (spent.inputTokens * price[0] + spent.outputTokens * price[1]) / 1e6 : null
+    // Cached input is priced apart: a write at 1.25x, a read at 0.1x
+    // (0.05x on Sonnet 5.5 and Opus 5.5).
+    const readRate = key.startsWith('anthropic-sonnet-5-5') ? 0.05 : 0.1
+    const plainInput = spent.inputTokens - spent.cacheReadTokens - spent.cacheWriteTokens
+    const dollars = price
+      ? ((plainInput + spent.cacheWriteTokens * 1.25 + spent.cacheReadTokens * readRate) * price[0] +
+          spent.outputTokens * price[1]) /
+        1e6
+      : null
     console.log(
       `  ${reused} saved read(s) reused, ${called} model call(s)` +
         (called > 0
-          ? `: ${spent.inputTokens} tokens in, ${spent.outputTokens} out${dollars === null ? '' : `, about $${dollars.toFixed(3)} at list prices`}.`
+          ? `: ${spent.inputTokens} tokens in (${spent.cacheReadTokens} read from cache, ${spent.cacheWriteTokens} written), ${spent.outputTokens} out${dollars === null ? '' : `, about $${dollars.toFixed(3)} at list prices`}.`
           : '.'),
     )
     console.log(``)

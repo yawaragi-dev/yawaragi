@@ -181,6 +181,26 @@ describe('createAnthropicHaikuProvider', () => {
     expect(filePart.mediaType).toMatch(/^image\//)
   })
 
+  it('marks the instructions for the prompt cache, so a second scan does not pay for them in full', async () => {
+    let capturedOptions: DoGenerateOptions | undefined
+    const captureDoGenerate: DoGenerateFn = async (options): Promise<DoGenerateResult> => {
+      capturedOptions = options
+      return { ...(await doGenerateOk()), content: [{ type: 'text', text: JSON.stringify(DASSAI_OBJECT) }] }
+    }
+    const provider = createAnthropicHaikuProvider({
+      model: new MockLanguageModelV3({ doGenerate: captureDoGenerate }),
+      zdrActive: true,
+      nodeEnv: 'test',
+    })
+
+    await provider.extractLabel(jpegBlob('actual-bytes'))
+
+    // Passing the instructions as a bare string would run fine and drop
+    // the marker without a word.
+    const system = capturedOptions!.prompt.find((msg) => msg.role === 'system')
+    expect(system?.providerOptions?.anthropic).toMatchObject({ cacheControl: { type: 'ephemeral' } })
+  })
+
   it('warns once (does NOT throw) in production when ZDR is not active', async () => {
     // ADR-0009 documents 7-day standard Anthropic retention as the
     // acceptable baseline; ZDR is the pre-DACH-launch upgrade, not a

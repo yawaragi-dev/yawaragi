@@ -172,9 +172,49 @@ LABEL_SCAN_EVAL_OFFLINE=1 LABEL_SCAN_EVAL_PROVIDERS=anthropic-haiku-5-5,anthropi
 - `LABEL_SCAN_EVAL_OFFLINE=1` never calls a model; a photo without a saved
   read counts as an error rather than as a charge.
 - `LABEL_SCAN_EVAL_FRESH=1` ignores the saved reads and asks again. Models are
-  not deterministic — between two fresh runs of the same tiers the `right`
-  count moved by one and `wrong` by five — so this is the way to see the
-  spread, and the only reason to pay twice.
+  not deterministic, so this is the way to see the spread, and the only
+  reason to pay twice. It overwrites `reads.json`: copy the file first if the
+  committed reads should stay.
+
+A fresh read of both tiers costs about $0.45 (2026-10-13: $0.035 for Haiku
+5.5, $0.43 for Sonnet 5.5). The instructions are cached between calls, and
+the cost line says how many input tokens were read from the cache; in a full
+run that is about 81%.
+
+### How much a run varies
+
+The committed reads are one run, and a good one. Three fresh reads on
+2026-10-13, same prompt, same lookup, the shipped tier pair:
+
+| reads | right | in a list | wrong | no answer |
+|---|---|---|---|---|
+| committed (`reads.json`) | 74 | 2 | 1 | 2 |
+| fresh 1 | 72 | 1 | 2 | 4 |
+| fresh 2 | 71 | 2 | 2 | 4 |
+| fresh 3 | 72 | 2 | 1 | 4 |
+
+So a single scan is right on about 90% of these photos, not 94%. By photo,
+over the four runs: 69 are right every time, 7 change from run to run, 3 are
+never right (the two Ninki back labels, which give a list, and the Kurokabuto
+front).
+
+Two photos end in a confident wrong answer, and by the same route. The model
+misreads brush calligraphy as a famous brand, then supplies that brand's
+brewery, which the label does not print — so brand and brewery "agree" and the
+lookup calls it exact:
+
+- `dewazakura_yukimegami_clear.jpg`: Haiku 5.5 read 獺祭 / 旭酒造 in all three
+  fresh runs (0.80–0.85). Sonnet 5.5 read it correctly every time, but tier 1's
+  exact match is never passed on to tier 2.
+- `ikekame_junmai_ginjo_nama_clear.jpg`: Sonnet 5.5 read 黒龍 / 黒龍酒造 in
+  three runs of four (0.62–0.72).
+
+A rule that asks tier 2 whenever tier 1's match leaves a printed name
+unexplained (雪女神 beside 獺祭) fixes the first. It also sends 21–23 more of
+the 79 photos to tier 2 and once turned a right answer into none, so it is
+not in. The cause is that the read does not say whether the brewery was
+printed or supplied; asking the model for that is a prompt change, not yet
+tried.
 
 The file holds the reads of the two tiers the scan runs. The tiers before them
 (`anthropic-haiku-4-5`, `anthropic-sonnet-4-6`) were last read with an earlier
