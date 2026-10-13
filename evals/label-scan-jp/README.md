@@ -8,22 +8,29 @@ follow-up (fallback-vendor choice, switch policy, schema-richness re-eval).
 
 **This is not a test.** No pass/fail; no CI wiring. It never runs in
 `pnpm test` / `pnpm verify`. The only thing CI runs from this directory is
-the metric-math unit test (`levenshtein.test.ts`).
+the metric-math and judging unit tests (`levenshtein.test.ts`, `judge.test.ts`).
 
 ---
 
 ## The corpus
 
-**79 photos of 33 bottles**, all taken by the maintainer on a phone the way a
-visitor would: in the hand, a little off-angle, sometimes with condensation on
-the glass. 73 are of 27 bottles at home in ordinary room light; 6 are single
+**118 photos**, all taken by the maintainer on a phone the way a visitor
+would: in the hand, a little off-angle, sometimes with condensation on the
+glass. **110 are of one sake bottle each (61 bottles)** and make the headline
+number; 8 show something a scan was not built for and are reported apart (see
+"Photos that are not one sake bottle").
+
+Of the 110, 73 are of 27 bottles at home in ordinary room light; 6 are single
 front shots of bottles on a shop shelf, added after the lookup had been tuned
-on the first 73 and scored once, untouched — all six landed on the right sake. Each bottle was shot from several
-sides, because a scan is only as good as the side the visitor points at:
+on the first 73 and scored once, untouched — all six landed on the right sake;
+and 31 more shop-shelf fronts were added on 2026-10-13 (28 new bottles, a
+second photo of one of them, and a shelf copy of two bottles already in the
+set). The bottles at home were shot from several sides, because a scan is only
+as good as the side the visitor points at:
 
 | view | photos | what it shows |
 |------|--------|---------------|
-| `front` | 36 | the front label, square on |
+| `front` | 67 | the front label, square on |
 | `side` | 12 | the label turned to one side |
 | `back_ja` | 4 | a Japanese back or side label (the regulatory block) |
 | `back_import` | 26 | the importer's German or French back label — sake and maker in Latin script only |
@@ -32,8 +39,14 @@ sides, because a scan is only as good as the side the visitor points at:
 The set is hard on purpose. It holds foil and brush-calligraphy brand marks,
 a cup printed on clear glass, two boxes rather than bottles, sub-lines that
 are their own catalogue row (あわ咲き, 黒兜, 別格), a brand the catalogue spells
-in hiragana where the label uses kanji (せきのいち), and two bottles the
-catalogue does not have at all, where the right answer is no match.
+in hiragana where the label uses kanji (せきのいち), and bottles the
+catalogue does not have at all, where the right answer is no match (five:
+北鹿 雪, 濃姫の里 隠し吟醸, 関原酒造's two 越後, 東京盛).
+
+The shop-shelf photos add what a shelf adds: a neighbouring bottle legible at
+the edge of the frame, a label half behind the shelf rail, a shelf tag that
+names the sake in Latin, bottles wrapped in film or tissue, and labels whose
+largest text is not the brand (山田錦, 男酒, 吟麗).
 
 Photos are stored **as the scan action receives them**: longer edge 1024 px,
 JPEG quality 0.85 — the numbers in `src/lib/scan/downscale.ts`. Scoring the
@@ -44,16 +57,32 @@ so no location or device data is in the repo.
 
 1. Photograph a bottle — **label only, never a person or a face** (CLAUDE.md,
    Art. 9). Dark glass reflects whoever holds the phone, in a shop especially:
-   look at the bare glass before committing and blur a reflection.
+   look at the bare glass before committing and blur a reflection. A hand
+   holding the bottle is fine as long as nothing on it identifies anyone (a
+   ring, a tattoo, a watch). No receipt, no address, no other shopper.
 2. Downscale it to a 1024 px longer edge at JPEG quality 0.85, re-encoding so
    the EXIF block is gone, and drop it into `photos/`.
 3. Add an entry to `ground-truth.json` keyed by the filename.
 4. Find the catalogue row it should land on (`brands.brand_id`) and list it in
    `expectedBrandIds` — or `[]` if the catalogue does not have the bottle.
+5. If the photo is not of one sake bottle, say so with `drink`, or with
+   `subject` and `items` (see "Photos that are not one sake bottle").
+6. Run the eval offline. It lists the new photo under "Not read yet" and says
+   how many model calls reading it will take; the same command without
+   `LABEL_SCAN_EVAL_OFFLINE=1` then reads the new photos and nothing else.
 
 ---
 
 ## Filename / JSON convention
+
+**A photo keeps the file name the maintainer gave it.** The name is their note
+of what is in the frame — maker, brand, product, grade, then the condition of
+the shot (`ozawa_sawanoi_otoko_zake_honjozo_dai_karakuchi_clear.jpg`,
+`..._with_pricetag`, `..._wrapped`, `two_bottles_..._AND_...`, `..._menu_...`)
+— and it is the first check on the ground truth: where the label, the
+catalogue and the name disagree, say so in the entry's `notes` and ask, rather
+than renaming the file to fit. The romaji in a name is informal and is not
+ground truth by itself.
 
 `ground-truth.json` is a flat map from **photo filename → expected answer +
 provenance**:
@@ -63,10 +92,11 @@ provenance**:
   "dassai.jpg": {
     "name_ja": "獺祭",           // brand (銘柄), original script, SKU modifiers stripped
     "brewery_ja": "旭酒造",       // brewery, original script, legal-form suffixes stripped
-    "bottle": "dassai-45",        // groups the photos of one physical bottle
+    "bottle": "dassai-45",        // groups the photos of one physical bottle (sake bottles only)
     "view": "front",              // front | side | back_ja | back_import | other
     "expectedBrandIds": [887],    // catalogue rows a correct scan may land on; [] = not in the catalogue
     "also": { "name_ja": ["DASSAI"] }, // other readings that are also right (optional)
+    // "subject", "drink", "items": only when the photo is not of one sake bottle — see below
     "provenance": {
       "source": "maintainer_own_bottle", // see the source enum below
       "rightsCleared": true,             // MUST be true for a real photo to be scored
@@ -93,6 +123,72 @@ provenance**:
   A malformed entry crashes with a readable Zod error rather than a silent
   metric miscalculation.
 
+### Photos that are not one sake bottle
+
+A visitor will point the camera at things the scan was not built for. Three
+kinds are in the corpus, each marked in its ground-truth entry and each with
+its own right answer, because "right" can no longer mean "landed on this
+sake". They are **never counted in the headline**: the comparison table and
+"Where the scan landed" hold photos of one sake bottle only, and these print
+in a table of their own, so adding one does not move "right of N".
+
+| kind | how the entry says so | photos | right today |
+|------|-----------------------|--------|-------------|
+| a bottle that is not sake | `"drink": "shochu"` (or `awamori`, `umeshu`, `liqueur`, `other`) | 6 | no sake shown |
+| several bottles | `"subject": "several_bottles"` + `items` | 1 | the `main` bottle if there is one; otherwise no single sake |
+| a menu | `"subject": "menu"` + `items` | 1 | no single sake |
+
+```jsonc
+// a bottle that is not sake
+"kotake_shuzo_makai_e_no_izanai_black_koji_shochu_clear.jpg": {
+  "name_ja": "魔界への誘い", "brewery_ja": "光武酒造場",
+  "drink": "shochu",
+  "expectedBrandIds": [3935]   // the catalogue row for THIS product, if Sakenowa lists it; usually []
+}
+// several bottles, or a menu
+"two_bottles_tsukasa_sjochu_AND_aioi_shochu_with_pricetag.jpg": {
+  "name_ja": "ソフトツカサ", "brewery_ja": "美峰酒類",   // required fields: the main item, else the first
+  "subject": "several_bottles",
+  "items": [
+    { "name_ja": "ソフトツカサ", "brewery_ja": "美峰酒類", "drink": "shochu", "expectedBrandIds": [] },
+    { "name_ja": "相生焼酎", "brewery_ja": "相生ユニビオ", "drink": "shochu", "expectedBrandIds": [] }
+    // "main": true on the one bottle that is clearly the subject — centred, largest, in focus
+  ]
+}
+```
+
+The verdicts are the usual four plus one, `in photo`. The rules live in
+`judge.ts` and are unit-tested in `judge.test.ts`:
+
+- **A bottle that is not sake.** The catalogue is sake only, so any sake shown
+  is one the visitor is not holding: `right` is no match (or a read dropped
+  for low confidence), `wrong` is a sake, alone or in a list. Watch the
+  hazards the entries' notes name: several shochu makers also brew sake and
+  are in the catalogue (濱田酒造, 西酒造, 光武酒造場), and 瑞泉 the awamori
+  shares its name with a sake. Sakenowa even lists a few such products;
+  `expectedBrandIds` then names that row, and landing on it is `in photo` —
+  the name is the bottle's, but the flavor data beside it is not sake data.
+  `drink` records what the bottle is, so a later "this is not sake" answer
+  can be scored against it without touching the photos.
+- **A menu.** Menu scan is deferred (design §7, screenshot 33) and the camera
+  is label-only, so today the right answer is the one that sends the visitor
+  on to search: no single sake. One sake presented as if the menu were a
+  bottle is `wrong`, or `in photo` if it is at least on the page. `items`
+  lists every drink legibly printed, with catalogue rows where they exist, so
+  that a menu scan can be scored on the same photos when it is built: per
+  item, did it find the row.
+- **Several bottles.** If one bottle is clearly the subject, mark it `main`
+  and the photo is judged as that bottle; another bottle from the frame is
+  `in photo`. If none is, the right answer is again no single sake: the
+  result screen says "this is your bottle", and choosing one of two equal
+  bottles answers a question the visitor did not ask. A list that holds one
+  of them is `in list`. A bottle standing at the edge of a shop shelf does not
+  make a photo `several_bottles`; name it in the notes.
+
+These entries carry no `bottle` group (the schema refuses one): it groups the
+photos of one sake bottle, and `pnpm eval label-scan-pairs` reads it to pair
+them, so the pairs eval leaves these photos out.
+
 ### Photo provenance / rights documentation requirements
 
 Every entry's `provenance.source` is drawn from a closed enum
@@ -102,6 +198,7 @@ Every entry's `provenance.source` is drawn from a closed enum
 |--------|---------|---------------|
 | `maintainer_own_bottle` | you photographed a bottle you own | optional |
 | `maintainer_shop_photo` | you photographed a bottle on a shop shelf | optional |
+| `maintainer_menu_photo` | you photographed a printed menu at a restaurant or bar; the page's wording and layout are the venue's | optional |
 | `public_domain` | PD product shot (age or explicit dedication) | recommended (source URL) |
 | `cc0` | CC0-dedicated image | recommended (source URL) |
 | `cc_by` | CC-BY image | **required** (source URL + attribution line) |
@@ -160,7 +257,7 @@ photo it has not yet read with the current prompt:
 | what changed since the last run | model calls |
 |---------------------------------|-------------|
 | the catalogue lookup, the ground truth, nothing | none |
-| three new photos | three per provider |
+| three new photos | three per provider, for those three only |
 | a new provider key | one per photo, for that provider |
 | the vision prompt | every photo, every provider |
 
@@ -170,7 +267,9 @@ LABEL_SCAN_EVAL_OFFLINE=1 LABEL_SCAN_EVAL_PROVIDERS=anthropic-haiku-5-5,anthropi
 ```
 
 - `LABEL_SCAN_EVAL_OFFLINE=1` never calls a model; a photo without a saved
-  read counts as an error rather than as a charge.
+  read counts as an error rather than as a charge. The run lists those photos
+  under "Not read yet" with the number of model calls reading them takes —
+  run it first, because a changed prompt makes that every photo.
 - `LABEL_SCAN_EVAL_FRESH=1` ignores the saved reads and asks again. Models are
   not deterministic, so this is the way to see the spread, and the only
   reason to pay twice. It overwrites `reads.json`: copy the file first if the
@@ -183,8 +282,8 @@ run that is about 81%.
 
 ### How much a run varies
 
-Models are not deterministic. Seven reads of these 79 photos, same lookup, the
-shipped tier pair, all but the first on 2026-10-13:
+Models are not deterministic. Seven reads of the 79 photos the set held until
+2026-10-13, same lookup, the shipped tier pair, all but the first on that day:
 
 | reads | prompt | right | in a list | wrong | no answer |
 |---|---|---|---|---|---|
@@ -229,32 +328,49 @@ alone cannot tell that one apart. A second photo does
 
 ### What the photo shows, what the drink is, the bottling
 
-A read also says what the photo shows (`subject`: one bottle, several
-bottles, a menu), what the drink is as the label prints it (`drink`), and what
-the label says about the bottling (`bottling`: product name, grade, style
-words, polishing ratio). The scan answers a menu, several bottles or a bottle
-that is not sake without asking the catalogue, and this run judges them the
-same way (`src/lib/scan/read-kind.ts`); "not sake" and "not one bottle" are
+Since 2026-10-13 a read also says what the photo shows (`subject`: one bottle,
+several bottles, a menu), what the drink is as the label prints it (`drink`),
+and what the label says about the bottling (`bottling`: product name, grade,
+style words, polishing ratio). The scan answers a menu, several bottles or a
+bottle that is not sake without asking the catalogue; this run judges them the
+same way (`src/lib/scan/read-kind.ts`).
+
+On the 118 photos (110 of one sake bottle, 6 not sake, 1 menu, 1 two bottles),
+committed reads:
+
+| | Haiku 5.5 | Sonnet 5.5 |
+|---|---|---|
+| Not sake, called what it is (of 6) | 6 | 6 |
+| A sake called another drink (of 110) | 0 | 0 |
+| Sake photos with the drink left `unknown` (name-only labels) | 10 | 15 |
+| Menu and two-bottle photo recognised (of 2) | 2 | 2 |
+| One bottle called "several bottles" (of 116) | 2 | 0 |
+| Grade agrees with the one in the file name, where both exist | 69 of 71 | 70 of 72 |
+
+Before the fields existed the shipped pair got 2 of those 8 photos right: the
+shochu bottles came back as their makers' sakes, and the menu as a sure match
+for a sake of the same name. With them it gets 8 of 8. Because tier 1 twice
+saw several bottles where there was one, "not sake" and "not one bottle" are
 tier 2's to say.
 
-These 79 photos are all of one sake bottle, so here the fields can only do
-harm, and the committed reads show how much: neither model calls a sake
-another drink or sees more than one bottle; the drink is left `unknown` on 5
-(Haiku 5.5) and 9 (Sonnet 5.5) labels that print the name alone, which are
-looked up as before; a grade is read on 58 photos and a product name on 38.
-Whether the fields do their job is measured on photos of shochu, awamori, a
-menu and two bottles in one frame, which arrive with the next batch of photos.
+The grade has no ground truth of its own; the file names are the maintainer's
+notes, so the last row is a sanity check. The two disagreements are the same
+bottle (Ninki sparkling: `junmai_daiginjo` in the file name, 純米吟醸 read off
+both labels).
 
-The longer prompt is not free. Sonnet 5.5 alone was right on 74 of the 79 with
-the fresh-4 prompt and on 72 in both runs with the longer one; two Choryo photos with
-the label cut off and the Shichiken neck band were right before and are not in
-either later run.
+Two fresh reads with these fields scored 98 and 101 right of the 110 sake
+photos (the first is committed), against 103 for the one read made with the
+shorter prompt an hour earlier. Over those three runs 95 photos are right
+every time, 10 change and 5 never are. Three of the ten — two Choryo photos
+with the label cut off and the Shichiken neck band — were right with the
+shorter prompt and not in either run with the longer one, so the longer
+prompt probably costs two or three photos in 110; the rest is the run-to-run
+noise measured above. The eight photos it fixes were confident wrong answers.
 
-The confidence gate was checked against these runs and the larger set (0.60
-is where it stands): at 0.30 no more photos are right and 14 more are wrong;
-at 0.65 eleven fewer are right and three fewer wrong. Only tier 2's gate
-matters — tier 1 stands on an exact match alone, which the gate does not
-touch.
+The confidence gate was checked against all seven saved runs (0.60 is where
+it stands): at 0.30 no more photos are right and 14 more are wrong; at 0.65
+eleven fewer are right and three fewer wrong. Only tier 2's gate matters — tier 1
+stands on an exact match alone, which the gate does not touch.
 
 The file holds the reads of the two tiers the scan runs. The tiers before them
 (`anthropic-haiku-4-5`, `anthropic-sonnet-4-6`) were last read with an earlier
@@ -287,7 +403,7 @@ It answers two questions:
 - **Different bottles.** A second photo's own answer is never changed, so this counts how often the earlier read still put a guess beside it. Across different breweries that must be never, and the run exits non-zero if it happens. Two bottles of one brewery share a field, so a guess can appear; each is listed.
 - **The same bottle.** Of the second scans with no single answer of their own, how many get the right sake from the two reads together.
 
-On 2026-10-13 (79 photos, 33 bottles, the committed reads):
+On 2026-10-13, for the 79 photos of 33 bottles the set held until then (the committed reads):
 
 | | pairs | result |
 |---|---|---|
@@ -299,7 +415,9 @@ Eight of those 15 are bottles the catalogue lacks, where "no guess" is the right
 
 A photo that comes with an earlier read goes straight to tier 2. Replayed for every second photo of a bottle whose first photo was not a sure match, over three reads of the larger photo set (240 pairs): 208 right by tier 2 alone against 205 through both tiers, with a median wait of about 4 s against 9 s.
 
-The sample is small: 69 of 79 photos already give one sake alone.
+On all 110 sake-bottle photos (61 bottles) the same reads give 27 same-bottle pairs where the second photo had no answer of its own: 23 right with both reads, 0 wrong, 4 still nothing, and again no guess carried across breweries.
+
+The sample is small: most photos already give one sake alone.
 
 ## Adding a candidate provider to the run
 
@@ -364,7 +482,9 @@ throw that signal away.
 
 Two tables print to stdout, both pastable into GitHub:
 
-- **Comparison** — one row per provider: `scored`, `errors`, `name_ja acc`,
+- **Not read yet** (offline runs only) — the photos no model has read with
+  the current prompt. They are errors in the tables below, not misses.
+- **Comparison** — one row per provider, over photos of one sake bottle: `scored`, `errors`, `name_ja acc`,
   `brewery_ja acc`, `exact-match rate`, `median latency (ms)`. This is the
   ranking. Higher accuracy + exact-match, lower latency, fewer errors is
   better. `errors` counts provider throws (bad image, API failure); a provider
@@ -403,6 +523,10 @@ Two tables print to stdout, both pastable into GitHub:
   experiences; `two-tier (Haiku 4.5 → Sonnet 4.6)` is the pair before it. Latency adds both
   calls on a retry.
 
+- **Photos that are not one sake bottle** (needs `DATABASE_URL`) — one row per
+  provider and kind, with the verdicts above plus `in photo`, and `not read`
+  for photos without a saved read. Never added to the rows above.
+
 This table reads character accuracy and catalogue resolution separately on
 purpose. A model can read 福寿 perfectly off a bottle whose catalogue row is
 あわ咲き, and a model can misread a brewery and still land on the right sake
@@ -412,8 +536,9 @@ through the brand-only pass.
 
 ## Files
 
-- `ground-truth.json` — filename → `{ name_ja, brewery_ja, bottle, view, expectedBrandIds, also, provenance }`.
+- `ground-truth.json` — filename → `{ name_ja, brewery_ja, bottle, view, expectedBrandIds, also, subject, drink, items, provenance }`.
 - `schemas.ts` — Zod shapes the ground-truth file is parsed against.
+- `judge.ts` / `judge.test.ts` — what counts as right for each kind of photo, and its unit test.
 - `levenshtein.ts` / `levenshtein.test.ts` — the metric math + its unit test.
 - `photos/` — the corpus, at scan-action size.
 - `recordings/reads.json` — the saved model reads.
@@ -428,9 +553,25 @@ through the brand-only pass.
 
 ## Compliance
 
+**Menu photos are not in the repository.** A photo whose file name contains
+`menu` is ignored by git (`.gitignore`) and exists only on the maintainer's
+machine. A plain typed list of names and prices is not protected, but a
+designed menu usually carries the venue's descriptive text, artwork, and a
+product photograph that belongs to someone else again; German law has no
+exception that covers making a photo of that publicly available, and telling
+the two kinds apart photo by photo is a legal judgment not worth making. The
+ground-truth entry and the saved reads of a menu photo are committed — drink
+names, sizes and prices are facts — so the numbers can be replayed offline by
+anyone, and a fresh read only by the maintainer. `rightsCleared: true` on a
+`maintainer_menu_photo` entry therefore means cleared to run, not to publish.
+Shop-shelf and bottle photos are published as before; crop a shop's name and
+any written shelf card out of the frame. Third-party labels, menus and marks
+shown in these photos remain their owners' property.
+
 - **No Art. 9 special-category data.** Photos are bottle labels only — never
   people / faces (CLAUDE.md). The provenance enum has no "photo of a person"
-  option by construction.
+  option by construction. A drawn portrait on a label (福正宗) is artwork, not
+  a person. A menu photo frames the page: no staff, no other guests.
 - **Image retention.** These eval photos live in the repo as fixtures with the
   maintainer's cleared rights — that's distinct from the production scan flow,
   which process-and-discards a visitor's uploaded image after the inference
