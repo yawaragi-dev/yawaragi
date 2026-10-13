@@ -3897,5 +3897,121 @@
       "rightsCleared": true,
       "notes": "A BREWERY'S OWN SHELF: eight bottles in a row in the shop of 二世古酒造, each with a printed price card in front and boxed stock below, listed left to right as the maintainer named them. A dark bottle cut off by the left edge; 二世古 純米原酒; ニセコ 本醸造 (a mountain in black and white, the name only on its card); ニセコ 純米; three blue bottles of 倶知安 — 本醸造, 純米 and 吟醸 原酒 (rice 彗星, polished to 55% by its card), which differ only in the colour of the label and the card; and くっちゃんの焼酎, a potato shochu, not sake. The maker is printed small on the first label and is the same for all. The catalogue has 二世古 and, as a separate row with no maker's name, 倶知安. The photo is cropped to the row of bottles: above it were the brewery's wall posters on how sake is made and a sign about age checks. A strip of one poster still shows between two bottles, where a photograph of people at work is painted over; the file was re-encoded for that, and location and camera data were removed. No shop name beyond the labels, no visitor in the frame. Added 2026-10-13."
     }
+  },
+  "niseko_shelf_2.jpg": {
+    "name_ja": "くっちゃんの焼酎",
+    "brewery_ja": "二世古酒造",
+    "view": "front",
+    "subject": "several_bottles",
+    "items": [
+      {
+        "name_ja": "くっちゃんの焼酎",
+        "brewery_ja": "二世古酒造",
+        "product": "本格焼酎 二十五度",
+        "drink": "shochu",
+        "expectedBrandIds": []
+      },
+      {
+        "unreadable": true,
+        "expectedBrandIds": []
+      },
+      {
+        "unreadable": true,
+        "expectedBrandIds": []
+      },
+      {
+        "unreadable": true,
+        "expectedBrandIds": []
+      },
+      {
+        "unreadable": true,
+        "expectedBrandIds": []
+      },
+      {
+        "unreadable": true,
+        "expectedBrandIds": []
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "くっちゃんの焼酎 本格焼酎",
+        "Niseko Challenge"
+      ],
+      "brewery_ja": [
+        "二世古"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "ONE LABEL AND FIVE BOTTLE TOPS: the end of the shelf in niseko_shelf.jpg, in the shop of 二世古酒造. The potato shochu くっちゃんの焼酎 stands at the left with its price card, and the tops of five more bottles rise from the lower shelf with no label in frame: a silver cap, a blue bottle, a black cap, a gold foil and a dark green bottle. Nothing here is a sake that can be named, and the one readable bottle is not sake. The label prints 二世古 small at its foot. Behind them hangs one of the brewery's wall posters, of which the paragraph on the yeast starter is in frame, and the corner of a flyer for \"Niseko Challenge 2025\". The photo is cropped below the poster's photographs of people at work. Location and camera data were removed from the file. No visitor in the frame. Added 2026-10-13."
+    }
+  },
+  "niseko_shochu_shelf.jpg": {
+    "name_ja": "珈琲",
+    "brewery_ja": "二世古酒造",
+    "view": "front",
+    "subject": "several_bottles",
+    "items": [
+      {
+        "name_ja": "珈琲",
+        "brewery_ja": "二世古酒造",
+        "product": "Coffee 焼酎乙類 珈琲豆使用",
+        "drink": "shochu",
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "正中",
+        "brewery_ja": "二世古酒造",
+        "product": "米焼酎 25度",
+        "drink": "shochu",
+        "expectedBrandIds": []
+      },
+      {
+        "brewery_ja": "二世古酒造",
+        "product": "乙類焼酎 30度",
+        "drink": "shochu",
+        "unreadable": true,
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "Niseko Challenge 2025",
+        "brewery_ja": "二世古酒造",
+        "product": "貴醸酒造りに白麹を一部使用した 600本限定のチャレンジ酒",
+        "expectedBrandIds": []
+      },
+      {
+        "unreadable": true,
+        "expectedBrandIds": []
+      },
+      {
+        "unreadable": true,
+        "expectedBrandIds": []
+      },
+      {
+        "unreadable": true,
+        "expectedBrandIds": []
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "Coffee",
+        "珈琲 Coffee",
+        "正中",
+        "niseko challenge 2025",
+        "Niseko Challenge",
+        "二世古"
+      ],
+      "brewery_ja": [
+        "二世古",
+        "有限会社二世古酒造"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "localOnly": true,
+      "notes": "A BREWERY'S SHOCHU CORNER: the shop of 二世古酒造, a corner of the shelf under one of its wall posters, listed as the maintainer named them. Three shochu on boxes: 珈琲 (Coffee, a shochu made with coffee beans), 正中 (rice shochu, 25%, with its price card) and a square black bottle of 30% shochu cut off by the right edge, whose name in brush script cannot be read. A flyer on the wall for \"Niseko Challenge 2025\", a sake made the kijoshu way with some white koji, 600 bottles, with a picture of the bottle: the bottle itself is not in frame. Kijoshu is a way of brewing, with sake in place of part of the water, and not a grade; the scan reads it as a style word. Below, a bottle wrapped in paper and the gold caps of two more, none readable. The catalogue has none of these. Kept local: the flyer carries the brewery's own product photograph, and most of the frame is its poster. No visitor in the frame; location and camera data were removed from the file. Added 2026-10-13."
+    }
   }
 }

@@ -2398,6 +2398,35 @@
      "other_names": [],
      "confidence": 0.6,
      "latencyMs": 8968
+    },
+    "niseko_shelf_2.jpg": {
+     "photoSha": "b281284521283df3",
+     "name_ja": "くっちゃん",
+     "brewery_ja": "倶知安酒造",
+     "brewery_printed": false,
+     "subject": "several_bottles",
+     "drink": "shochu",
+     "bottling": {},
+     "other_names": [],
+     "confidence": 0.3,
+     "latencyMs": 7146
+    },
+    "niseko_shochu_shelf.jpg": {
+     "photoSha": "57530d61550c06f4",
+     "name_ja": "二世古",
+     "brewery_ja": "二世古酒造",
+     "brewery_printed": true,
+     "subject": "several_bottles",
+     "drink": "shochu",
+     "bottling": {
+      "product_name": "珈琲"
+     },
+     "other_names": [
+      "正中",
+      "珈琲"
+     ],
+     "confidence": 0.7,
+     "latencyMs": 7211
     }
    }
   },
@@ -4917,6 +4946,34 @@
      "other_names": [],
      "confidence": 0.68,
      "latencyMs": 4952
+    },
+    "niseko_shelf_2.jpg": {
+     "photoSha": "b281284521283df3",
+     "name_ja": "くっちゃんの焼酎",
+     "brewery_ja": "二世古酒造",
+     "brewery_printed": false,
+     "subject": "several_bottles",
+     "drink": "shochu",
+     "bottling": {},
+     "other_names": [],
+     "confidence": 0.5,
+     "latencyMs": 4862
+    },
+    "niseko_shochu_shelf.jpg": {
+     "photoSha": "57530d61550c06f4",
+     "name_ja": "珈琲",
+     "brewery_ja": "二世古酒造",
+     "brewery_printed": true,
+     "subject": "several_bottles",
+     "drink": "shochu",
+     "bottling": {
+      "product_name": "珈琲豆使用"
+     },
+     "other_names": [
+      "Coffee"
+     ],
+     "confidence": 0.6,
+     "latencyMs": 4394
     }
    }
   },
