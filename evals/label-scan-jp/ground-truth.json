@@ -2799,5 +2799,143 @@
       "localOnly": false,
       "notes": "A MENU: the same bar's tablet list as aramasa_takagi_menu.jpg, the \"Premium SAKE\" page, a grid of nine cells of which six are filled, listed left to right and top to bottom as the maintainer named them. Each cell prints the sake's name in kanji, hiragana and Latin with its prefecture, then the bottling and the grade. The page does not print the makers, which are the catalogue's. The first cell is a craft sake (brewed with beer hops, so not sake in the legal sense) and prints \"Craft SAKE\" where the others print a grade; the catalogue lists 稲とアガベ, so it is left as sake here. That cell also says 秋田 in Japanese and \"Aomori\" in Latin; Akita is right. 裏翠玉 is a bottling of 翠玉 in the catalogue. 作's bottling is 雅乃智 (Miyabi no Tomo), which the maintainer's list read as \"Ga no Chi\". The page writes \"Inetoagabe\" and \"Sookuu\". Below the grid: tasting-flight and per-glass prices and a one-drink-per-guest notice. Published: a plain typeset list of names, grades and prices, no venue name, no logo, no picture, no person; a lamp is reflected in the screen. Added 2026-10-13."
     }
+  },
+  "ide_menu_1.jpg": {
+    "name_ja": "甲斐の開運",
+    "brewery_ja": "井出醸造店",
+    "view": "other",
+    "subject": "menu",
+    "items": [
+      {
+        "name_ja": "甲斐の開運",
+        "brewery_ja": "井出醸造店",
+        "product": "吟醸 Ginjo",
+        "expectedBrandIds": [
+          124540
+        ]
+      },
+      {
+        "name_ja": "甲斐の開運",
+        "brewery_ja": "井出醸造店",
+        "product": "大吟醸 Daiginjo",
+        "expectedBrandIds": [
+          124540
+        ]
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "KAINO KAIUN",
+        "カイノカイウン",
+        "Kaino Kaiun"
+      ],
+      "brewery_ja": [
+        "井出醸造",
+        "IDE SAKE BREWERY"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_menu_photo",
+      "rightsCleared": true,
+      "localOnly": true,
+      "notes": "A MENU: a close-up of the price list of 井出醸造店 (\"IDE SAKE BREWERY\"), a folded leaflet with a numbered column per product: a picture of the bottle and its box, the grade, sizes, prices, strength, serving temperature and polishing ratio. In frame: No.2 (吟醸, 720 ml and a smaller size cut off by the left edge) and No.3 (大吟醸, 180 ml and 720 ml), with the brand's crest and the table's row headings on the facing page. The maintainer's list has a cut-off item before the Ginjo and calls it No.1; the bottle at the left edge stands in the No.2 column, and ide_menu_3.jpg shows that column whole with the same small bottle, so it is counted with No.2 here. Kept local: a brewery's printed brochure with its own product photographs and crest, which are not ours to publish. Location and camera data were removed from the file. Added 2026-10-13."
+    }
+  },
+  "ide_menu_2.jpg": {
+    "name_ja": "甲斐の開運",
+    "brewery_ja": "井出醸造店",
+    "view": "other",
+    "subject": "menu",
+    "items": [
+      {
+        "product": "純米大吟醸 28年古酒",
+        "expectedBrandIds": [],
+        "unreadable": true
+      },
+      {
+        "name_ja": "甲斐の開運",
+        "brewery_ja": "井出醸造店",
+        "product": "<囲>Kakoi 酒蔵限定販売 特別純米生原酒 無殺菌・無加水",
+        "expectedBrandIds": [
+          124540
+        ]
+      },
+      {
+        "name_ja": "甲斐の開運",
+        "brewery_ja": "井出醸造店",
+        "product": "北麓 Hokuroku 特別純米",
+        "expectedBrandIds": [
+          124540
+        ]
+      },
+      {
+        "name_ja": "甲斐の開運",
+        "brewery_ja": "井出醸造店",
+        "product": "純米 Junmai",
+        "expectedBrandIds": [
+          124540
+        ]
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "北麓",
+        "Hokuroku",
+        "Kakoi",
+        "KAINO KAIUN",
+        "Kaino Kaiun"
+      ],
+      "brewery_ja": [
+        "井出醸造",
+        "IDE SAKE BREWERY"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_menu_photo",
+      "rightsCleared": true,
+      "localOnly": true,
+      "notes": "A MENU: another close-up of the same leaflet as ide_menu_1.jpg, the page headed \"FUJI HOKUROKU DISTILLERY\". In frame: No.7 (<囲> Kakoi, sold at the brewery only, a tokubetsu junmai nama genshu), No.8 (北麓, tokubetsu junmai) and No.9 (junmai, partly cut off by the right edge). Of No.6 only a strip is in frame, reading 純米大吟醸 28年古酒: the bottle and its name are outside the photo, so the item is listed as unreadable with that line as its product. Items are in the maintainer's order. Kept local: a brewery's printed brochure with its own product photographs and crest, which are not ours to publish. Location and camera data were removed from the file. Added 2026-10-13."
+    }
+  },
+  "ide_menu_3.jpg": {
+    "name_ja": "甲斐の開運",
+    "brewery_ja": "井出醸造店",
+    "view": "other",
+    "subject": "menu",
+    "items": [
+      {
+        "name_ja": "甲斐の開運",
+        "brewery_ja": "井出醸造店",
+        "product": "天下山麓富士の山 Tenkasanroku Fujinoyama 本醸造",
+        "expectedBrandIds": [
+          124540
+        ]
+      },
+      {
+        "name_ja": "甲斐の開運",
+        "brewery_ja": "井出醸造店",
+        "product": "吟醸 180ml",
+        "expectedBrandIds": [
+          124540
+        ]
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "天下山麓富士の山",
+        "Tenkasanroku Fujinoyama",
+        "Kaino Kaiun"
+      ],
+      "brewery_ja": [
+        "井出醸造",
+        "IDE SAKE BREWERY"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_menu_photo",
+      "rightsCleared": true,
+      "localOnly": true,
+      "notes": "A MENU: the top left corner of the same leaflet as ide_menu_1.jpg, lying on a wooden table. In frame: No.1 (天下山麓富士の山, honjozo, with an International Wine Challenge 2024 silver medal mark) and the left half of No.2 (吟醸; the 180 ml bottle in its printed cloth wrap and without it, and the edge of the 720 ml bottle). The heading of an umeshu section starts at the bottom edge with nothing of it legible. Items are in the maintainer's order. Kept local: a brewery's printed brochure with its own product photographs and crest, which are not ours to publish. Location and camera data were removed from the file. Added 2026-10-13."
+    }
   }
 }

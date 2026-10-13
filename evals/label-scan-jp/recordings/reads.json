@@ -2090,6 +2090,57 @@
      ],
      "confidence": 0.5,
      "latencyMs": 5676
+    },
+    "ide_menu_1.jpg": {
+     "photoSha": "d072a239cbb1e55a",
+     "name_ja": "甲斐の開運",
+     "brewery_ja": "井出醸造",
+     "brewery_printed": true,
+     "subject": "menu",
+     "drink": "sake",
+     "bottling": {
+      "grade": "daiginjo"
+     },
+     "other_names": [
+      "KAINO KAIUN"
+     ],
+     "confidence": 0.7,
+     "latencyMs": 9192
+    },
+    "ide_menu_2.jpg": {
+     "photoSha": "ee060bede0a73fc1",
+     "name_ja": "北麓",
+     "brewery_ja": "富士北麓",
+     "brewery_printed": true,
+     "subject": "menu",
+     "drink": "sake",
+     "bottling": {
+      "grade": "tokubetsu_junmai",
+      "polishing_ratio": 60
+     },
+     "other_names": [
+      "Hokuroku",
+      "甲斐の開運"
+     ],
+     "confidence": 0.6,
+     "latencyMs": 12462
+    },
+    "ide_menu_3.jpg": {
+     "photoSha": "2daaec103db4b78e",
+     "name_ja": "天下山麓富士の山",
+     "brewery_ja": "山梨銘醸",
+     "brewery_printed": false,
+     "subject": "menu",
+     "drink": "sake",
+     "bottling": {
+      "grade": "honjozo"
+     },
+     "other_names": [
+      "甲斐の開運",
+      "Tenkasanroku Fujinoyama"
+     ],
+     "confidence": 0.5,
+     "latencyMs": 8358
     }
    }
   },
@@ -4279,6 +4330,59 @@
      ],
      "confidence": 0.6,
      "latencyMs": 3182
+    },
+    "ide_menu_1.jpg": {
+     "photoSha": "d072a239cbb1e55a",
+     "name_ja": "甲斐の開運",
+     "brewery_ja": "井出醸造",
+     "brewery_printed": true,
+     "subject": "menu",
+     "drink": "sake",
+     "bottling": {
+      "grade": "daiginjo",
+      "polishing_ratio": 40
+     },
+     "other_names": [
+      "カイノカイウン",
+      "KAINO KAIUN"
+     ],
+     "confidence": 0.85,
+     "latencyMs": 3849
+    },
+    "ide_menu_2.jpg": {
+     "photoSha": "ee060bede0a73fc1",
+     "name_ja": "北麓",
+     "brewery_ja": "富士北麓酒造",
+     "brewery_printed": true,
+     "subject": "menu",
+     "drink": "sake",
+     "bottling": {
+      "grade": "tokubetsu_junmai",
+      "polishing_ratio": 60
+     },
+     "other_names": [
+      "Hokuroku",
+      "甲斐の開運"
+     ],
+     "confidence": 0.8,
+     "latencyMs": 5200
+    },
+    "ide_menu_3.jpg": {
+     "photoSha": "2daaec103db4b78e",
+     "name_ja": "天下山麓富士の山",
+     "brewery_ja": "山梨銘醸",
+     "brewery_printed": false,
+     "subject": "menu",
+     "drink": "sake",
+     "bottling": {
+      "grade": "honjozo",
+      "polishing_ratio": 65
+     },
+     "other_names": [
+      "Tenkasanroku Fujinoyama"
+     ],
+     "confidence": 0.6,
+     "latencyMs": 3443
     }
    }
   },
