@@ -2187,6 +2187,24 @@
      "other_names": [],
      "confidence": 0.4,
      "latencyMs": 5348
+    },
+    "aramasa_hinotori_spark_junmai_kijoshu_on_table.jpg": {
+     "photoSha": "232ed676349eb589",
+     "name_ja": "陽乃鳥",
+     "brewery_ja": "新政酒造",
+     "brewery_printed": true,
+     "subject": "one_bottle",
+     "drink": "unknown",
+     "bottling": {
+      "styles": [
+       "sparkling"
+      ]
+     },
+     "other_names": [
+      "Spark"
+     ],
+     "confidence": 0.8,
+     "latencyMs": 6679
     }
    }
   },
@@ -4478,6 +4496,25 @@
      "other_names": [],
      "confidence": 0.5,
      "latencyMs": 5900
+    },
+    "aramasa_hinotori_spark_junmai_kijoshu_on_table.jpg": {
+     "photoSha": "232ed676349eb589",
+     "name_ja": "陽乃鳥",
+     "brewery_ja": "新政酒造",
+     "brewery_printed": true,
+     "subject": "one_bottle",
+     "drink": "unknown",
+     "bottling": {
+      "product_name": "Spark",
+      "styles": [
+       "sparkling"
+      ]
+     },
+     "other_names": [
+      "Spark"
+     ],
+     "confidence": 0.8,
+     "latencyMs": 3199
     }
    }
   },

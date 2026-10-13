@@ -3121,5 +3121,33 @@
       "localOnly": true,
       "notes": "A MENU: an izakaya's laminated drinks card standing on the counter, photographed at an angle with sauce bottles and a wooden sign in front of it. Most of the card is other drinks: draft beer, cocktails, 焼酎・果実酒 (よかいち, 茉莉花, 梅酒), highballs and sours. The 日本酒 section, small and mid-page, has two lines, which are the items here in the maintainer's order: 豪快 (cold or hot) and 鯉と亀と生原酒。(cold). The card prints no maker for either and no grade; 豪快 is 宝酒造's in the catalogue, and 鯉と亀と生原酒 is not in the catalogue and its maker is not known. The other drinks on the card are not listed as items. Kept local: the card is illustrated throughout (drawn glasses, bottles, fruit) and set in decorative lettering. No person in the frame; no location data in the file. Added 2026-10-13."
     }
+  },
+  "aramasa_hinotori_spark_junmai_kijoshu_on_table.jpg": {
+    "name_ja": "新政",
+    "brewery_ja": "新政酒造",
+    "bottle": "aramasa-hinotori-spark",
+    "view": "front",
+    "expectedBrandIds": [
+      109
+    ],
+    "also": {
+      "name_ja": [
+        "陽乃鳥",
+        "陽乃鳥 Spark",
+        "陽乃鳥 スパーク",
+        "新政 陽乃鳥",
+        "新政 陽乃鳥 Spark",
+        "Spark",
+        "スパーク"
+      ],
+      "brewery_ja": [
+        "新政酒造株式会社"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Aramasa Hinotori Spark, a sparkling junmai kijoshu by the maintainer's account, on a bar counter in dim light with a glass in front of it. The label prints 新政酒造株式会社謹醸 above the bird mark and 陽乃鳥 below it, small; a neck seal says Spark / スパーク and an orange strip down the neck is too small to read. The brand 新政 appears only inside the maker's name, and the catalogue has no row for 陽乃鳥, so the sake's row is the answer. The same bottling as the fourth line of aramasa_takagi_menu.jpg. Other bottles stand in a fridge behind it, out of focus. The maintainer's file was aramasa_sparku_kijoshu_on_table.jpg and was renamed to say what the bottle is. Photographed at a bar; no person in the frame. Added 2026-10-13."
+    }
   }
 }
