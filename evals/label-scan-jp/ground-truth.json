@@ -4576,5 +4576,216 @@
       "rightsCleared": true,
       "notes": "NOT SAKE, TWO BOTTLES: two whiskies side by side on a bar counter with a glass beside each, Single Malt Yoichi and a Nikka single cask malt whisky with a 10 on the neck, both with 余市 in large characters on the label. Neither is sake and neither is in the catalogue; the labels print \"whisky\" in Latin letters. Shelves of other bottles behind, out of focus. No person in the frame; location and camera data were removed from the file. Photographed at a bar, added 2026-10-13."
     }
+  },
+  "hachinohe_oliveyeast_kirekkire_kikumasamune_menu.jpg": {
+    "name_ja": "陸奥八仙",
+    "brewery_ja": "八戸酒造",
+    "view": "other",
+    "subject": "menu",
+    "items": [
+      {
+        "name_ja": "陸奥八仙",
+        "brewery_ja": "八戸酒造",
+        "product": "Isaribi 特別純米 華吹雪 60%",
+        "expectedBrandIds": [
+          12
+        ]
+      },
+      {
+        "name_ja": "Olive East N.315",
+        "product": "香川県 純米吟醸 山田錦 58%",
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "キレッキレ",
+        "product": "栃木県 Kirekkire 純米吟醸 五百万石 60%",
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "菊正宗",
+        "brewery_ja": "菊正宗酒造",
+        "product": "House Sake Hot/cold 150ml",
+        "expectedBrandIds": [
+          1583
+        ]
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "MUTSU HASSEN",
+        "Olive East N.315",
+        "Olive East",
+        "キレッキレ",
+        "Kirekkire",
+        "菊正宗",
+        "Kikumasamune"
+      ],
+      "brewery_ja": [
+        "菊正宗酒造"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_menu_photo",
+      "rightsCleared": true,
+      "localOnly": true,
+      "notes": "A MENU: a page of a restaurant's drinks menu in Germany headed 日本酒 / \"Japanischer Sake\", three sakes with a picture of each bottle and, in a bar at the foot, the house sake, in the maintainer's order: 陸奥八仙 (Isaribi), Olive East N.315 from Kagawa, キレッキレ from Tochigi, and Kikumasamune. Olive East N.315 and キレッキレ are not in the catalogue and their makers are not on the page. The page prints prefecture, name, grade, rice and polishing ratio for each, a taste scale and a description in German; it does not print the makers, which are the catalogue's where the catalogue has the sake. Kept local: a designed menu page with product photographs and the venue's own descriptions, from the same restaurant as shichida_junmai_shochu_menu_clear.jpg. The photo is cropped to leave out the lap of a person at the table; location and camera data were removed. Added 2026-10-13."
+    }
+  },
+  "miyasaka_tsukasabotan_katokahachiro_menu.jpg": {
+    "name_ja": "真澄",
+    "brewery_ja": "宮坂醸造",
+    "view": "other",
+    "subject": "menu",
+    "items": [
+      {
+        "name_ja": "真澄",
+        "brewery_ja": "宮坂醸造",
+        "product": "長野県 MASUMI 純米吟醸 山田錦 美山錦 55%",
+        "expectedBrandIds": [
+          551
+        ]
+      },
+      {
+        "name_ja": "船中八策",
+        "brewery_ja": "司牡丹酒造",
+        "product": "高知県 Senchu hassaku 超辛口 純米酒 60%",
+        "expectedBrandIds": [
+          76068,
+          934
+        ]
+      },
+      {
+        "name_ja": "大山十水",
+        "brewery_ja": "加藤嘉八郎酒造",
+        "product": "山形県 Ooyamatomizu 特別純米酒 はえぬき 60%",
+        "expectedBrandIds": [
+          119,
+          2762
+        ]
+      },
+      {
+        "unreadable": true,
+        "expectedBrandIds": []
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "船中八策",
+        "大山十水",
+        "大山",
+        "十水",
+        "MASUMI",
+        "Senchu hassaku",
+        "Ooyamatomizu",
+        "司牡丹"
+      ],
+      "brewery_ja": [
+        "司牡丹酒造",
+        "加藤嘉八郎酒造"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_menu_photo",
+      "rightsCleared": true,
+      "localOnly": true,
+      "notes": "A MENU: another 日本酒 page of the same menu as hachinohe_oliveyeast_kirekkire_kikumasamune_menu.jpg, three sakes with a picture of each bottle, in the maintainer's order: 真澄, 船中八策 (司牡丹's, which the catalogue holds as a row of its own) and 大山十水 (the catalogue has 大山 and 十水 as two rows; both count). A fourth line, the house sake, is cut off by the bottom of the frame and is listed as unreadable. The maintainer's file had \"katokatachiro\"; the maker is 加藤嘉八郎 (Katō Kahachirō), and the file was renamed. The page prints prefecture, name, grade, rice and polishing ratio for each, a taste scale and a description in German; it does not print the makers, which are the catalogue's where the catalogue has the sake. Kept local: a designed menu page with product photographs and the venue's own descriptions, from the same restaurant as shichida_junmai_shochu_menu_clear.jpg. The photo is cropped to leave out the lap of a person at the table; location and camera data were removed. Added 2026-10-13."
+    }
+  },
+  "miura_hachinohe_nishida_several_on_table.jpg": {
+    "name_ja": "豊盃",
+    "brewery_ja": "三浦酒造",
+    "view": "front",
+    "subject": "several_bottles",
+    "items": [
+      {
+        "name_ja": "豊盃",
+        "brewery_ja": "三浦酒造",
+        "product": "純米吟醸",
+        "expectedBrandIds": [
+          1070
+        ]
+      },
+      {
+        "name_ja": "陸奥八仙",
+        "brewery_ja": "八戸酒造",
+        "product": "特別純米",
+        "expectedBrandIds": [
+          12
+        ]
+      },
+      {
+        "name_ja": "田酒",
+        "brewery_ja": "西田酒造店",
+        "product": "特別純米酒",
+        "expectedBrandIds": [
+          19
+        ]
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "陸奥八仙",
+        "八仙",
+        "HASSEN",
+        "田酒",
+        "でんしゅ",
+        "HOUHAI"
+      ],
+      "brewery_ja": [
+        "八戸酒造",
+        "西田酒造店"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "THREE BOTTLES ON A TABLE: three 1.8 l bottles from Aomori side by side on a restaurant table, each label facing the camera and none in front of the others, in the maintainer's order: 豊盃 (純米吟醸, a pink label, \"HOUHAI\"), 陸奥八仙 (特別純米, \"HASSEN\") and 田酒 (特別純米酒, with でんしゅ on the neck). The makers are in small print on the labels and are the catalogue's. A lamp, a plant and a table pager are in the frame; no person. Location and camera data were removed from the file. Photographed at a restaurant, added 2026-10-13."
+    }
+  },
+  "liquer_shelf.jpg": {
+    "name_ja": "鬼おろし",
+    "brewery_ja": "不明",
+    "view": "front",
+    "subject": "several_bottles",
+    "items": [
+      {
+        "name_ja": "鬼おろし",
+        "product": "キウイサワーの素",
+        "drink": "liqueur",
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "鬼おろし",
+        "product": "レモンサワーの素",
+        "drink": "liqueur",
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "鬼おろし",
+        "product": "みかんサワーの素",
+        "drink": "liqueur",
+        "expectedBrandIds": []
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "鬼",
+        "鬼おろし キウイサワーの素",
+        "鬼おろし レモンサワーの素",
+        "鬼おろし みかんサワーの素",
+        "キウイサワーの素",
+        "レモンサワーの素",
+        "みかんサワーの素",
+        "サワーの素"
+      ],
+      "brewery_ja": [
+        "?"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "NOT SAKE, A SHELF OF THEM: a shop shelf of 鬼おろし sour bases — fruit liqueurs of 25% for mixing with soda, by the maintainer's account — in bright labels with a large 鬼, each with a hand-written shelf tag naming the flavour and the price. Three stand whole in the middle, kiwi, lemon and mandarin; more of the same line are cut off at both edges and on the shelf above, and are not listed. The maintainer's list has no items for this photo, there being no sake in it. The maker is not legible in the photo and not known, so the brewery field holds 不明 (unknown) only because it must hold something. No shop name, no person. Location and camera data were removed from the file. Added 2026-10-13."
+    }
   }
 }

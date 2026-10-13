@@ -2626,6 +2626,75 @@
      ],
      "confidence": 0.85,
      "latencyMs": 6183
+    },
+    "hachinohe_oliveyeast_kirekkire_kikumasamune_menu.jpg": {
+     "photoSha": "85f0de46b17f5429",
+     "name_ja": "陸奥八仙",
+     "brewery_ja": "八戸酒造",
+     "brewery_printed": false,
+     "subject": "menu",
+     "drink": "sake",
+     "bottling": {
+      "product_name": "ISARIBI",
+      "grade": "tokubetsu_junmai",
+      "polishing_ratio": 60
+     },
+     "other_names": [
+      "MUTSU HASSEN",
+      "ISARIBI"
+     ],
+     "confidence": 0.8,
+     "latencyMs": 7048
+    },
+    "liquer_shelf.jpg": {
+     "photoSha": "baced5b026d9a27a",
+     "name_ja": "鬼おろし",
+     "brewery_ja": "北のさくら",
+     "brewery_printed": true,
+     "subject": "several_bottles",
+     "drink": "liqueur",
+     "bottling": {
+      "product_name": "レモンサワーの素"
+     },
+     "other_names": [
+      "しあわせ果実"
+     ],
+     "confidence": 0.8,
+     "latencyMs": 5915
+    },
+    "miura_hachinohe_nishida_several_on_table.jpg": {
+     "photoSha": "594a10c286f6d94b",
+     "name_ja": "八仙",
+     "brewery_ja": "八戸酒造",
+     "brewery_printed": false,
+     "subject": "several_bottles",
+     "drink": "sake",
+     "bottling": {
+      "grade": "tokubetsu_junmai"
+     },
+     "other_names": [
+      "陸奥",
+      "HASSEN"
+     ],
+     "confidence": 0.7,
+     "latencyMs": 4775
+    },
+    "miyasaka_tsukasabotan_katokahachiro_menu.jpg": {
+     "photoSha": "19c4c900f3a0b46b",
+     "name_ja": "真澄",
+     "brewery_ja": "宮坂醸造",
+     "brewery_printed": false,
+     "subject": "menu",
+     "drink": "sake",
+     "bottling": {
+      "grade": "junmai_ginjo",
+      "polishing_ratio": 55
+     },
+     "other_names": [
+      "MASUMI"
+     ],
+     "confidence": 0.85,
+     "latencyMs": 8799
     }
    }
   },
@@ -5396,6 +5465,75 @@
      ],
      "confidence": 0.8,
      "latencyMs": 5530
+    },
+    "hachinohe_oliveyeast_kirekkire_kikumasamune_menu.jpg": {
+     "photoSha": "85f0de46b17f5429",
+     "name_ja": "陸奥八仙",
+     "brewery_ja": "八戸酒造",
+     "brewery_printed": false,
+     "subject": "menu",
+     "drink": "sake",
+     "bottling": {
+      "grade": "tokubetsu_junmai",
+      "polishing_ratio": 60
+     },
+     "other_names": [
+      "MUTSU HASSEN"
+     ],
+     "confidence": 0.6,
+     "latencyMs": 2731
+    },
+    "liquer_shelf.jpg": {
+     "photoSha": "baced5b026d9a27a",
+     "name_ja": "鬼",
+     "brewery_ja": "北のさくら",
+     "brewery_printed": true,
+     "subject": "several_bottles",
+     "drink": "liqueur",
+     "bottling": {
+      "product_name": "レモンサワーの素"
+     },
+     "other_names": [
+      "鬼おろし",
+      "レモンサワーの素",
+      "しあわせ果実"
+     ],
+     "confidence": 0.6,
+     "latencyMs": 2873
+    },
+    "miura_hachinohe_nishida_several_on_table.jpg": {
+     "photoSha": "594a10c286f6d94b",
+     "name_ja": "陸奥八仙",
+     "brewery_ja": "八戸酒造",
+     "brewery_printed": false,
+     "subject": "several_bottles",
+     "drink": "sake",
+     "bottling": {
+      "grade": "tokubetsu_junmai",
+      "polishing_ratio": 60
+     },
+     "other_names": [
+      "HASSEN"
+     ],
+     "confidence": 0.6,
+     "latencyMs": 5594
+    },
+    "miyasaka_tsukasabotan_katokahachiro_menu.jpg": {
+     "photoSha": "19c4c900f3a0b46b",
+     "name_ja": "真澄",
+     "brewery_ja": "宮坂醸造",
+     "brewery_printed": false,
+     "subject": "menu",
+     "drink": "sake",
+     "bottling": {
+      "grade": "junmai_ginjo",
+      "polishing_ratio": 55
+     },
+     "other_names": [
+      "MASUMI"
+     ],
+     "confidence": 0.8,
+     "latencyMs": 7163
     }
    }
   },
