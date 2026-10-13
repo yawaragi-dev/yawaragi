@@ -66,6 +66,9 @@ const VARIANT_GROUPS: ReadonlyArray<ReadonlyArray<string>> = [
   ['鐵', '鉄'],
   // Yen / circle — appears in 圓 / 円 brand framings.
   ['圓', '円'],
+  // Waterfall — brand names such as 幻の瀧, which a model reading the
+  // label writes as 幻の滝 (label-scan eval, 2026-10-13).
+  ['瀧', '滝'],
   // Swamp — common in brewery names (黒澤 / 黒沢).
   ['澤', '沢'],
   // Old / elder — appears in 壽 (long life) variants, common in

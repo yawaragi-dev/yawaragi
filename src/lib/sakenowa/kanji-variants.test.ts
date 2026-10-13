@@ -44,6 +44,11 @@ describe('generateKanjiVariants', () => {
     expect(variantsOfB).toContain(b)
   })
 
+  it('reads 幻の滝 on a label as the catalogue’s 幻の瀧 (waterfall)', () => {
+    expect(generateKanjiVariants('幻の滝')).toContain('幻の瀧')
+    expect(generateKanjiVariants('幻の瀧')).toContain('幻の滝')
+  })
+
   it('expands the 濱 / 濵 / 浜 triplet (beach) in all three directions', () => {
     // Motivating bug (2026-06-14 Sekitoba scan): the vision model
     // returned `濵田酒造` for brewery 783 stored as `濱田酒造`. The

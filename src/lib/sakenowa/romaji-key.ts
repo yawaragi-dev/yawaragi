@@ -56,12 +56,15 @@ export function romajiKey(text: string): string {
       .replace(/[zd]i/g, 'ji')
       .replace(/du/g, 'zu')
       .replace(/m(?=[bpm])/g, 'n')
-      // Long vowels last: the rules above can create or expose them.
-      .replace(/o[ouh]/g, 'o')
-      .replace(/uu/g, 'u')
-      .replace(/aa/g, 'a')
-      .replace(/ii/g, 'i')
-      .replace(/ee/g, 'e')
+      // Long vowels last: the rules above can create or expose them. An
+      // `h` lengthens only where no vowel follows it; before one it opens
+      // the next syllable (Sohomare, Tamanohikari). Each run collapses
+      // whole, so Hououbiden and Hoo Biden meet.
+      .replace(/o(?:[ou]|h(?![aiueoy]))+/g, 'o')
+      .replace(/u{2,}/g, 'u')
+      .replace(/a{2,}/g, 'a')
+      .replace(/i{2,}/g, 'i')
+      .replace(/e{2,}/g, 'e')
   )
 }
 
