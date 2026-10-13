@@ -92,6 +92,8 @@ export type ScanStyle = z.infer<typeof ScanStyleSchema>
 export const ScanBottlingSchema = z.object({
   /** The product name beside the brand, as printed: 一味, 縁, "Wandering Poet". */
   product_name: z.string().optional(),
+  /** `product_name` in Latin letters, as printed or as read (一味 → Ichiaji). */
+  product_name_romaji: z.string().optional(),
   grade: ScanGradeSchema.optional(),
   styles: z.array(ScanStyleSchema).optional(),
   /** Polishing ratio in percent, as printed (精米歩合 60% → 60). */

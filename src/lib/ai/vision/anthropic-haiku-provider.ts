@@ -207,6 +207,7 @@ LATIN READING (name_romaji, brewery_romaji). Many of the people who see this rea
 
 THIS BOTTLING (bottling). The brand names a family; the label usually says more about this one product. Fill in only what is printed in the photo and leave out the rest — an empty object is a fine answer:
    - product_name: the product or sub-line name beside the brand, verbatim, in the script it is printed in (一味, 縁, 山ノ霞, "Wandering Poet"). Not the brand again, not a grade, not a slogan. Where it is printed in both Japanese and Latin, give the Japanese.
+   - product_name_romaji: product_name in Latin letters, by the same rule as name_romaji (一味 → Ichiaji). Leave it out when there is no product_name.
    - grade: the grade the label prints — junmai_daiginjo (純米大吟醸), daiginjo (大吟醸), junmai_ginjo (純米吟醸), ginjo (吟醸), tokubetsu_junmai (特別純米), junmai (純米), tokubetsu_honjozo (特別本醸造), honjozo (本醸造), futsushu (普通酒, or 上撰 / 佳撰 with no grade). Latin spellings count ("Junmai Ginjo"). Leave it out when no grade is printed.
    - styles: each style word printed — nama (生酒, 生), namachozo (生貯蔵), namazume (生詰), genshu (原酒), muroka (無濾過), nigori (にごり), sparkling (スパークリング, 発泡), koshu (古酒, 熟成), kimoto (生酛), yamahai (山廃), taruzake (樽酒), kijoshu (貴醸酒), hiyaoroshi (ひやおろし).
    - polishing_ratio: the polishing ratio in percent where printed (精米歩合 60% → 60).
