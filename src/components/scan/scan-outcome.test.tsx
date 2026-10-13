@@ -89,6 +89,34 @@ describe('§5a — a scan outcome that is not a match', () => {
     expect(screen.queryByTestId('scan-outcome-keep')).toBeNull()
   })
 
+  it('suggests another side of the bottle where a second photo can help', () => {
+    renderOutcome({ suggestOtherSide: true })
+    expect(screen.getByTestId('scan-outcome-other-side').textContent).toMatch(/another side of the bottle/)
+  })
+
+  it('shows the sake two photos point at as a guess beside the outcome, with why', () => {
+    renderOutcome({
+      suggestOtherSide: true,
+      bothPhotos: {
+        key: 'both-191',
+        href: '/en/sake/191?from=scan',
+        name: 'Ninki Ichi',
+        kanji: '人気一',
+        where: 'Ninki Shuzo · Fukushima',
+        reason: 'Your last photo and this one fit this sake',
+      },
+    })
+    // The outcome is still what this photo found by itself.
+    expect(screen.getByRole('heading', { name: 'We read it, but can’t find it' })).toBeTruthy()
+    const guess = screen.getByTestId('scan-outcome-both-photos')
+    expect(guess.textContent).toContain('Ninki Ichi')
+    expect(guess.textContent).toContain('Your last photo and this one fit this sake')
+    expect(guess.querySelector('a')?.getAttribute('href')).toBe('/en/sake/191?from=scan')
+    // A guess, so no percentage; and the hint has done its job.
+    expect(guess.textContent).not.toMatch(/%/)
+    expect(screen.queryByTestId('scan-outcome-other-side')).toBeNull()
+  })
+
   it('has nothing to keep without a name', () => {
     renderOutcome({ canKeep: true, read: { name: '', brewery: '伴野酒造', badge: null } })
     expect((screen.getByRole('button', { name: 'Add this bottling' }) as HTMLButtonElement).disabled).toBe(true)

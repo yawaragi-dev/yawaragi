@@ -26,6 +26,21 @@ beforeEach(() => {
   vi.clearAllMocks()
 })
 
+describe('"Add this bottling" after a scan that read more than the sake’s name', () => {
+  it('shows the name read off the label and opens the form with it', () => {
+    render(
+      <NextIntlClientProvider locale="en" messages={en} timeZone="UTC">
+        <AddBottlingRow brandId={12} lineName="Mizuo" suggestedName="Mizuo 一味 Junmai" />
+      </NextIntlClientProvider>,
+    )
+    const row = screen.getByRole('button', { name: /Add this bottling/ })
+    expect(row.textContent).toContain('Mizuo 一味 Junmai')
+
+    fireEvent.click(row)
+    expect((screen.getByLabelText('Bottling name') as HTMLInputElement).value).toBe('Mizuo 一味 Junmai')
+  })
+})
+
 describe('"Add your bottling" on a sake page', () => {
   it('asks for nothing until it is tapped, then only for a name, starting from the sake\'s', () => {
     renderRow()

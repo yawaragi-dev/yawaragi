@@ -172,9 +172,89 @@ LABEL_SCAN_EVAL_OFFLINE=1 LABEL_SCAN_EVAL_PROVIDERS=anthropic-haiku-5-5,anthropi
 - `LABEL_SCAN_EVAL_OFFLINE=1` never calls a model; a photo without a saved
   read counts as an error rather than as a charge.
 - `LABEL_SCAN_EVAL_FRESH=1` ignores the saved reads and asks again. Models are
-  not deterministic — between two fresh runs of the same tiers the `right`
-  count moved by one and `wrong` by five — so this is the way to see the
-  spread, and the only reason to pay twice.
+  not deterministic, so this is the way to see the spread, and the only
+  reason to pay twice. It overwrites `reads.json`: copy the file first if the
+  committed reads should stay.
+
+A fresh read of both tiers costs about $0.45 (2026-10-13: $0.035 for Haiku
+5.5, $0.43 for Sonnet 5.5). The instructions are cached between calls, and
+the cost line says how many input tokens were read from the cache; in a full
+run that is about 81%.
+
+### How much a run varies
+
+Models are not deterministic. Seven reads of these 79 photos, same lookup, the
+shipped tier pair, all but the first on 2026-10-13:
+
+| reads | prompt | right | in a list | wrong | no answer |
+|---|---|---|---|---|---|
+| committed until then | as merged in #411 | 74 | 2 | 1 | 2 |
+| fresh 1 | the same | 72 | 1 | 2 | 4 |
+| fresh 2 | the same | 71 | 2 | 2 | 4 |
+| fresh 3 | the same | 72 | 2 | 1 | 4 |
+| fresh 4 | + `brewery_printed` | 74 | 2 | 1 | 2 |
+| fresh 5 (`reads.json`) | + what the photo shows, the drink, the bottling | 71 | 2 | 3 | 3 |
+| fresh 6 | the same as 5 | 73 | 2 | 1 | 3 |
+
+So a single scan is right on about 90–94% of these photos, and one run says
+little about a difference of two photos. Over the first four rows: 69 photos
+right every time, 7 changing from run to run, 3 never right (the two Ninki
+back labels, which give a list, and the Kurokabuto front).
+
+Two photos end in a confident wrong answer, and by the same route. The model
+misreads brush calligraphy as a famous brand, then supplies that brand's
+brewery, which the label does not print — so brand and brewery "agree" and the
+lookup calls it exact:
+
+- `dewazakura_yukimegami_clear.jpg`: Haiku 5.5 read 獺祭 / 旭酒造 in every
+  fresh run (0.80–0.92). Sonnet 5.5 read it correctly every time, but tier 1's
+  exact match was never passed on to tier 2.
+- `ikekame_junmai_ginjo_nama_clear.jpg`: Sonnet 5.5 reads 黒龍 / 黒龍酒造 in
+  most runs (0.62–0.85).
+
+The read now says whether the brewery is printed in the photo
+(`brewery_printed`), and both models answer "no" for both photos. Tier 1's
+exact match stands only when its brewery was printed; otherwise tier 2 is
+asked. On the fresh-4 reads that sends 14 more of the 79 photos to tier 2 (47
+instead of 33), turns the Dewazakura front right, and changes no other
+answer. An earlier attempt without the field — ask tier 2 whenever tier 1's
+match leaves a printed name unexplained — sent 21–23 more and once turned a
+right answer into none.
+
+It does not help the Kurokabuto front: there the wrong read is tier 2's own,
+and nothing in the photo contradicts it. In the final answers 29 exact matches
+rest on a brewery that is not printed, and 28 of them are right, so the flag
+alone cannot tell that one apart. A second photo does
+(`pnpm eval label-scan-pairs`).
+
+### What the photo shows, what the drink is, the bottling
+
+A read also says what the photo shows (`subject`: one bottle, several
+bottles, a menu), what the drink is as the label prints it (`drink`), and what
+the label says about the bottling (`bottling`: product name, grade, style
+words, polishing ratio). The scan answers a menu, several bottles or a bottle
+that is not sake without asking the catalogue, and this run judges them the
+same way (`src/lib/scan/read-kind.ts`); "not sake" and "not one bottle" are
+tier 2's to say.
+
+These 79 photos are all of one sake bottle, so here the fields can only do
+harm, and the committed reads show how much: neither model calls a sake
+another drink or sees more than one bottle; the drink is left `unknown` on 5
+(Haiku 5.5) and 9 (Sonnet 5.5) labels that print the name alone, which are
+looked up as before; a grade is read on 58 photos and a product name on 38.
+Whether the fields do their job is measured on photos of shochu, awamori, a
+menu and two bottles in one frame, which arrive with the next batch of photos.
+
+The longer prompt is not free. Sonnet 5.5 alone was right on 74 of the 79 with
+the fresh-4 prompt and on 72 in both runs with the longer one; two Choryo photos with
+the label cut off and the Shichiken neck band were right before and are not in
+either later run.
+
+The confidence gate was checked against these runs and the larger set (0.60
+is where it stands): at 0.30 no more photos are right and 14 more are wrong;
+at 0.65 eleven fewer are right and three fewer wrong. Only tier 2's gate
+matters — tier 1 stands on an exact match alone, which the gate does not
+touch.
 
 The file holds the reads of the two tiers the scan runs. The tiers before them
 (`anthropic-haiku-4-5`, `anthropic-sonnet-4-6`) were last read with an earlier
@@ -197,6 +277,29 @@ the whole pipeline (corpus discovery → Blob → `extractLabel` → metric →
 catalogue lookup → tables) runs, at no cost.
 
 ---
+
+## Two photos of one bottle — `pnpm eval label-scan-pairs`
+
+A scan that does not settle on one sake is remembered for a few minutes, and the next photo is resolved with both reads (#408). `pnpm eval label-scan-pairs` measures that rule on this corpus. It calls no model: it replays the saved reads of the shipped tier pair through the real lookup, for every ordered pair of photos ("first scan A, second scan B"). It needs `DATABASE_URL` and nothing else.
+
+It answers two questions:
+
+- **Different bottles.** A second photo's own answer is never changed, so this counts how often the earlier read still put a guess beside it. Across different breweries that must be never, and the run exits non-zero if it happens. Two bottles of one brewery share a field, so a guess can appear; each is listed.
+- **The same bottle.** Of the second scans with no single answer of their own, how many get the right sake from the two reads together.
+
+On 2026-10-13 (79 photos, 33 bottles, the committed reads):
+
+| | pairs | result |
+|---|---|---|
+| Second photo gives one sake by itself, earlier read not consulted | 5,382 | unchanged by rule |
+| Different bottles, second photo has no single answer | 761 | 0 guesses across breweries, 2 within one brewery (both the right sake) |
+| Same bottle, second photo has no single answer | 19 | 15 right with both reads, 0 wrong, 4 still nothing |
+
+Eight of those 15 are bottles the catalogue lacks, where "no guess" is the right answer; seven are real rescues (Choryo's cut-off labels twice, the two Ninki back labels, the Shichiken neck band three times). The four with nothing are pairs of Choryo photos neither of which was read. Which photos need rescuing changes with the reads: on the reads of the day before it was 14 pairs with five rescues.
+
+A photo that comes with an earlier read goes straight to tier 2. Replayed for every second photo of a bottle whose first photo was not a sure match, over three reads of the larger photo set (240 pairs): 208 right by tier 2 alone against 205 through both tiers, with a median wait of about 4 s against 9 s.
+
+The sample is small: 69 of 79 photos already give one sake alone.
 
 ## Adding a candidate provider to the run
 

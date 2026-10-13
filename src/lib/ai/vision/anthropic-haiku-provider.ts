@@ -87,7 +87,14 @@ export interface AnthropicHaikuProviderOptions {
    * Called with the tokens each call used. The eval runner adds them up to
    * say what a run cost; the scan itself has no use for it.
    */
-  onUsage?: (usage: { inputTokens: number; outputTokens: number }) => void
+  onUsage?: (usage: {
+    /** All input tokens, cached or not. */
+    inputTokens: number
+    outputTokens: number
+    /** Of the input: read from the prompt cache, and written to it. */
+    cacheReadTokens: number
+    cacheWriteTokens: number
+  }) => void
 }
 
 // The system prompt teaches the model the difference between the
@@ -166,16 +173,42 @@ CRITICAL — script and field-identity rules:
    - Label shows "獺" but the rest of the brand kanji is blurred → name_ja: "獺", brewery_ja: <…>, confidence: 0.3
    - Label is a sake bottle but ALL text is unreadable → name_ja: <best Latin guess from shape or "?">, brewery_ja: <…>, confidence: 0.15
 
+WHAT THE PHOTO SHOWS (subject). Decide this first:
+   - one_bottle: one bottle (or its label) is the subject. A neighbouring bottle at the edge of the frame or on the shelf behind does not change this: read the bottle the photo is of.
+   - several_bottles: two or more bottles share the frame and none is clearly the one being photographed. Read the most prominent one into the fields below.
+   - menu: a menu, a drinks list, a shelf card or a price list — printed text naming drinks, not a bottle. Read the first or most prominent drink into the fields below.
+
+WHAT THE DRINK IS (drink). Go by the words printed in the photo, not by the maker or the look of the bottle:
+   - sake: the label prints 清酒, 日本酒, "Sake", or a sake grade (純米, 吟醸, 大吟醸, 本醸造 and their combinations).
+   - shochu: the label prints 焼酎 (本格焼酎, 焼酎甲類, 焼酎乙類, 芋焼酎, 麦焼酎, 米焼酎) or "Shochu".
+   - awamori: the label prints 泡盛 or "Awamori".
+   - umeshu: the label prints 梅酒 or "Umeshu".
+   - liqueur: the label prints リキュール or "Liqueur" (and is not umeshu).
+   - other: the label prints another category — whisky, beer, wine, gin, mirin.
+   - unknown: the photo prints none of these words. A front label with the name alone is unknown. Never guess a category from the brand or the brewery: many sake breweries also make shochu and umeshu, and shochu makers make sake.
+   Whatever the drink is, still read its name and maker into name_ja and brewery_ja.
+
+BREWERY PRINTED (brewery_printed). Say whether this photo prints the brewery's name, and decide it before you write brewery_ja:
+   - true: the brewery's name is on the label in this photo, in any script, and brewery_ja is what you read there.
+   - false: the photo does not print the brewery (a front label often shows the brand alone), or you cannot read it there, and brewery_ja is the brewery you know makes this brand.
+   Being sure which brewery makes a sake does not make it printed. Answer true only for text you can point to in the photo. When it is false, still fill brewery_ja with your best knowledge.
+
 OTHER NAMES (other_names). After choosing name_ja, list every OTHER name the label prints for this same sake, verbatim, one per entry, at most 5:
    - the product or sub-line name printed beside the brand — 縁 on a 勝山 label, 山ノ霞 on a 七賢 label, あわ咲き, "Awasaki", "Gold", "Barrel", "Wandering Poet". On an importer's back label the title line usually reads "Sake BRAND Product" (e.g. "Sake FUKUJU Awasaki Sparkling") or (PRODUCT NAME) "MAKER": put the brand in name_ja and the product words in other_names.
    - the same brand in another script — HANATOMOE or ハナトモエ beside 花巴, a small kana reading (furigana) beside brush kanji such as くろかぶと, the Latin spelling under the kanji.
    - any second large name on the label you did not choose as the brand.
    Do NOT list grades (純米吟醸, Junmai Daiginjo), rice varieties, polishing ratios, volume, alcohol, dates, the brewery, the importer, or slogans. Leave the list empty when the label prints no other name. The catalogue often lists a sub-line as its own sake, so these names decide which one the bottle is.
 
+THIS BOTTLING (bottling). The brand names a family; the label usually says more about this one product. Fill in only what is printed in the photo and leave out the rest — an empty object is a fine answer:
+   - product_name: the product or sub-line name beside the brand, verbatim, in the script it is printed in (一味, 縁, 山ノ霞, "Wandering Poet"). Not the brand again, not a grade, not a slogan. Where it is printed in both Japanese and Latin, give the Japanese.
+   - grade: the grade the label prints — junmai_daiginjo (純米大吟醸), daiginjo (大吟醸), junmai_ginjo (純米吟醸), ginjo (吟醸), tokubetsu_junmai (特別純米), junmai (純米), tokubetsu_honjozo (特別本醸造), honjozo (本醸造), futsushu (普通酒, or 上撰 / 佳撰 with no grade). Latin spellings count ("Junmai Ginjo"). Leave it out when no grade is printed.
+   - styles: each style word printed — nama (生酒, 生), namachozo (生貯蔵), namazume (生詰), genshu (原酒), muroka (無濾過), nigori (にごり), sparkling (スパークリング, 発泡), koshu (古酒, 熟成), kimoto (生酛), yamahai (山廃), taruzake (樽酒), kijoshu (貴醸酒), hiyaoroshi (ひやおろし).
+   - polishing_ratio: the polishing ratio in percent where printed (精米歩合 60% → 60).
+
 Return only what is visible on the label. Do not translate, do not romanise kanji into Latin, do not transliterate kana into kanji, do not invent any field. If the image is not a sake label at all, lower the confidence score significantly rather than producing a plausible-sounding guess.`
 
 const USER_PROMPT =
-  'Read this sake bottle label and return the brand and brewery, preserving the script each is actually printed in (kanji / katakana / hiragana / Latin), the other names printed for the same sake, plus a confidence score between 0 and 1. Follow the brand / SKU stripping and script-preservation rules in the system prompt.'
+  'Read this sake bottle label and return the brand and brewery, preserving the script each is actually printed in (kanji / katakana / hiragana / Latin), what the photo shows and what the drink is, whether the brewery is printed in the photo, the other names printed for the same sake, what the label says about this bottling, plus a confidence score between 0 and 1. Follow the brand / SKU stripping and script-preservation rules in the system prompt.'
 
 /**
  * The prompts as sent, for the eval runner: a saved model read is only
@@ -259,7 +292,29 @@ export function createAnthropicHaikuProvider(
           schemaName: 'LabelScanExtraction',
           schemaDescription:
             'Sake label extraction: name and brewery in original script, other names printed for the sake, plus confidence.',
-          system: SYSTEM_PROMPT,
+          // The instructions are the same for every scan and are most of
+          // the input (4,113 tokens of about 5,000; the photo is the
+          // rest), so they are marked for Anthropic's prompt cache. A scan
+          // within five minutes of another on the same model reads them
+          // at a tenth of the price (a twentieth on Sonnet 5.5); a scan
+          // after a quiet spell writes them at 1.25x. It pays once more
+          // than about one scan in five is a hit — a visitor photographing
+          // two sides of a bottle is enough.
+          //
+          // Measured 2026-10-13 over three fresh reads of 79 photos: 81%
+          // of input tokens read from the cache; a tier-2 call costs about
+          // $0.005 warm against $0.013 uncached, and $0.015 cold.
+          //
+          // The message form is load-bearing: a bare string cannot carry
+          // `providerOptions`, and the marker would be dropped silently.
+          // Minimum cacheable size for both 5.5 models is 512 tokens
+          // (docs, 2026-10-13); the eval's cost line prints the tokens
+          // read from the cache — zero there means it stopped working.
+          instructions: {
+            role: 'system',
+            content: SYSTEM_PROMPT,
+            providerOptions: { anthropic: { cacheControl: { type: 'ephemeral' as const } } },
+          },
           ...(effort ? { providerOptions: { anthropic: { effort } } } : {}),
           messages: [
             {
@@ -277,7 +332,12 @@ export function createAnthropicHaikuProvider(
         },
       )
       const elapsedMs = Date.now() - start
-      options.onUsage?.({ inputTokens: usage.inputTokens ?? 0, outputTokens: usage.outputTokens ?? 0 })
+      options.onUsage?.({
+        inputTokens: usage.inputTokens ?? 0,
+        outputTokens: usage.outputTokens ?? 0,
+        cacheReadTokens: usage.inputTokenDetails?.cacheReadTokens ?? 0,
+        cacheWriteTokens: usage.inputTokenDetails?.cacheWriteTokens ?? 0,
+      })
 
       // `generateObject` already runs the schema parse, so `object` is
       // semantically `LabelScanExtraction`. The traced wrapper returns
@@ -290,7 +350,11 @@ export function createAnthropicHaikuProvider(
       debugAdd('Vision', `model returned in ${elapsedMs}ms`, {
         name_ja: extraction.name_ja,
         brewery_ja: extraction.brewery_ja,
+        subject: extraction.subject,
+        drink: extraction.drink,
+        brewery_printed: extraction.brewery_printed,
         other_names: extraction.other_names,
+        bottling: extraction.bottling,
         confidence: extraction.confidence,
       })
 

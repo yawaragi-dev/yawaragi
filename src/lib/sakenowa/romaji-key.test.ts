@@ -14,6 +14,16 @@ describe('romajiKey', () => {
     expect(same('Niigata', 'Nigata')).toBe(true)
   })
 
+  it('keeps an h that opens the next syllable: Sohomare is not Soomare', () => {
+    expect(same('Sohomare', 'Souhomare', 'Sōhomare')).toBe(true)
+    expect(romajiKey('Tamanohikari')).toBe('tamanohikari')
+    expect(same('Kohaku', 'Koaku')).toBe(false)
+  })
+
+  it('collapses a run of long vowels whole: Hououbiden, Hoo Biden', () => {
+    expect(same('Hououbiden', 'Hoo Biden', 'Hōō Biden')).toBe(true)
+  })
+
   it('reads Kunrei and Nihon-shiki spellings as Hepburn', () => {
     expect(same('Shichiken', 'Sitiken')).toBe(true)
     expect(same('Tsuru', 'Turu')).toBe(true)

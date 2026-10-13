@@ -34,10 +34,12 @@ Paste once into the **DevTools console**. Values are set **raw** (not percent-en
 document.cookie = `yawaragi_age_gate={"v":1,"ts":${Date.now()}};path=/`
 
 // Inject a scan extraction (requires VISION_PROVIDER=e2e-stub; ships with #194).
-setScan = (name_ja, brewery_ja, confidence = 0.95) =>
+// `more` adds the optional parts of a read: { drink: 'shochu' }, { subject: 'menu' },
+// { bottling: { product_name: '一味', grade: 'junmai' } }, { brewery_printed: false }.
+setScan = (name_ja, brewery_ja, confidence = 0.95, more = {}) =>
   document.cookie =
     `yawaragi_e2e_vision=${btoa(unescape(encodeURIComponent(
-      JSON.stringify({ name_ja, brewery_ja, confidence }))))};path=/`
+      JSON.stringify({ name_ja, brewery_ja, confidence, ...more }))))};path=/`
 
 // Pick a suggest/chat state.
 setSuggest = (mode) => document.cookie = `yawaragi_suggest_stub=${mode};path=/`
@@ -82,9 +84,22 @@ Every non-match lands on §5a's one outcome screen: kicker · "Scan again" in th
 | Brewery matched, brand differs | `setScan('架空純米','松緑酒造')` | "Partly matched — We found the brewery, not the sake", "From this brewery" row |
 | Several fit, one name at several breweries | `setScan('高砂','架空酒造銘柄')` | "A few fit — Which one is it?", 2 rows with brewery · prefecture, "Same name · {brewery}" |
 | Several fit, one brewery's sakes | `setScan('架空純米','せんきん')` | Same screen, up to 3 of せんきん's 5 sakes, "Same brewery · same name" |
+| Not sake | `setScan('赤兎馬','濱田酒造',0.8,{drink:'shochu'})` | "Not sake — This is shochu, not sake", one line about shochu, "What we read". No lookup: 濱田酒造's sake is not offered. Also `awamori`, `umeshu`, `liqueur`, `other` |
+| A menu | `setScan('七田','天山酒造',0.85,{subject:'menu'})` | "A menu — That's a menu, not a label", "What we read" with the first drink, "Type the name instead" |
+| Several bottles | `setScan('獺祭','獺祭',0.9,{subject:'several_bottles'})` | "Several bottles — More than one bottle in the photo" |
+| Match, label names the bottling (journal needed) | `setJournal('populated')`, reload, `setScan('獺祭','獺祭',0.95,{bottling:{grade:'junmai_daiginjo',styles:['nama']}})` | Under the card: "Add this bottling" showing "Dassai Junmai Daiginjō Nama"; tapping opens the name form filled in with it. With bottlings of your own on that sake, "Is it one of these bottlings?" lists them first |
 | Not in the catalogue, something near | `setScan('十四代本丸','架空酒造零')` | "What we read" (editable, Read by AI badge), then "Did you mean" with Juyondai 十四代 · "Similar name" |
 | Not in the catalogue, nothing near | `setScan('架空銘柄零一','架空酒造零')` | The same screen with no "Did you mean". Nothing in the catalogue is close, and we don't invent a guess |
 | Unclear photo (< 0.60) | `setScan('獺祭','獺祭',0.5)` | "Unclear photo — We couldn't read this label", three tips. When most of this tab's recent matches (at least 2) were one sake: "This looks like {sake}" with Yes / No stacked (§5a, 45) |
+
+**Two photos of one bottle (#408).** A scan that did not settle on one sake is remembered for five minutes, in the tab only, and the next photo is resolved with both reads. The next photo's own answer always stands; the earlier read can only add a "From both photos" row beside it.
+
+1. `setScan('人気一','人気酒造',0.7)`, give a photo: a Best-guess card for Ninkiichi.
+2. Tap "Not this one". The camera says "This photo is read together with your last one."
+3. `setScan('NINKI','Ninki')`, give a photo: "A few fit" as before, and above "What we read" a **From both photos** row: Ninkiichi 人気一 · "Your last photo and this one fit this sake".
+4. Another bottle instead: after step 2 run `setScan('架空銘柄零一','架空酒造零')`. "Not in the catalogue", no "From both photos" row, and the line "Scan another side of the bottle and we read both photos together."
+
+The rule is measured on the eval photos with `pnpm eval label-scan-pairs` (no model calls).
 
 Confidence tiers (`src/lib/scan/confidence-tier.ts`, half-open):
 - **≥ 0.85** — "Sure match".

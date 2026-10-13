@@ -40,7 +40,15 @@ interface Injection {
   name_ja: string
   brewery_ja: string
   confidence: number
+  subject?: 'one_bottle' | 'several_bottles' | 'menu'
+  drink?: 'sake' | 'shochu' | 'awamori' | 'umeshu' | 'liqueur' | 'other' | 'unknown'
 }
+
+// A read the scan cannot stand on: low confidence, and a brewery that does
+// not agree with the name. Brand and brewery agreeing on one catalogue row
+// is accepted whatever the confidence (two fields do not agree by accident),
+// so a low-confidence 獺祭 / 旭酒造 is a match, not an unclear photo.
+const UNSURE_READ: Injection = { name_ja: '獺祭', brewery_ja: '架空酒造零', confidence: 0.3 }
 
 // Mirror of the stub's `yawaragi_e2e_vision` contract: base64 JSON so the
 // kanji payload stays ASCII-safe in the cookie value.
@@ -235,7 +243,7 @@ test.describe('scan result branches (#109 PR B)', () => {
     // Rescan into the retry tier: the card goes, the retry copy arrives,
     // and that state brings its own rescan rather than the camera's shutter.
     await context.addCookies([
-      injectionCookie({ name_ja: '獺祭', brewery_ja: '旭酒造', confidence: 0.3 }),
+      injectionCookie(UNSURE_READ),
     ])
     await rescan.click()
     // §4's model: a rescan RETURNS TO THE CAMERA. It used to open the OS photo
@@ -264,7 +272,7 @@ test.describe('scan result branches (#109 PR B)', () => {
     // directly beats scanning three times — `getConsensusFromHistory` reads
     // exactly this key, and two identical entries are 2 of 2, a majority.
     const { context, page } = await scanPageWith(browser, [
-      injectionCookie({ name_ja: '獺祭', brewery_ja: '旭酒造', confidence: 0.3 }),
+      injectionCookie(UNSURE_READ),
     ])
     const entry = {
       brandId,
@@ -315,7 +323,7 @@ test.describe('scan result branches (#109 PR B)', () => {
     // Confidence 0.30 → retry tier → low_confidence, short-circuiting the
     // lookup. The discovery-framed retry copy + rescan button render.
     const { context, page } = await scanPageWith(browser, [
-      injectionCookie({ name_ja: '獺祭', brewery_ja: '旭酒造', confidence: 0.3 }),
+      injectionCookie(UNSURE_READ),
     ])
     await page.goto('/en/scan')
     await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
@@ -377,6 +385,53 @@ test.describe('scan result branches (#109 PR B)', () => {
     await expect(page.getByTestId('scan-camera')).toHaveCount(0)
     await page.getByTestId('scan-outcome-search-again').click()
     await page.waitForURL(/\/en\/search\?q=Dassai$/)
+    await context.close()
+  })
+
+  test('a bottle whose label says shochu is called shochu, not matched to the maker’s sake', async ({ browser }) => {
+    // No catalogue needed: the lookup is not asked. 濱田酒造 is in the
+    // catalogue for its sake, which is what this bottle used to come back as.
+    const { context, page } = await scanPageWith(browser, [
+      injectionCookie({ name_ja: '赤兎馬', brewery_ja: '濱田酒造', confidence: 0.8, drink: 'shochu' }),
+    ])
+    await page.goto('/en/scan')
+    await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
+
+    const outcome = page.getByTestId('scan-result-not-sake')
+    await expect(outcome).toBeVisible()
+    await expect(outcome.getByTestId('scan-outcome-kicker')).toHaveText('Not sake')
+    await expect(outcome).toContainText('This is shochu, not sake')
+    await expect(outcome).toContainText('Shochu is distilled, where sake is brewed.')
+    // The read stays editable, so a wrong call is one search away.
+    await expect(page.getByTestId('scan-outcome-read-name')).toHaveValue('赤兎馬')
+    await expect(page.getByTestId('scan-outcome-rescan')).toBeVisible()
+    await expect(page.getByTestId('scan-camera')).toHaveCount(0)
+    await context.close()
+  })
+
+  test('a menu is called a menu instead of being matched to one sake on it', async ({ browser }) => {
+    const { context, page } = await scanPageWith(browser, [
+      injectionCookie({ name_ja: '七田', brewery_ja: '天山酒造', confidence: 0.85, subject: 'menu' }),
+    ])
+    await page.goto('/en/scan')
+    await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
+
+    const outcome = page.getByTestId('scan-result-menu')
+    await expect(outcome).toBeVisible()
+    await expect(outcome).toContainText('That’s a menu, not a label')
+    await expect(page.getByTestId('scan-outcome-read-name')).toHaveValue('七田')
+    await expect(page.getByTestId('scan-outcome-type-it')).toBeVisible()
+    await context.close()
+  })
+
+  test('two bottles in one photo are not answered with one of them', async ({ browser }) => {
+    const { context, page } = await scanPageWith(browser, [
+      injectionCookie({ name_ja: '獺祭', brewery_ja: '旭酒造', confidence: 0.9, subject: 'several_bottles' }),
+    ])
+    await page.goto('/en/scan')
+    await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
+
+    await expect(page.getByTestId('scan-result-several-bottles')).toContainText('More than one bottle in the photo')
     await context.close()
   })
 
@@ -471,6 +526,72 @@ test.describe('scan result branches (#109 PR B)', () => {
       'href',
       new RegExp(`/en/sake/${fixture.brandId}\\?from=scan$`),
     )
+    await context.close()
+  })
+
+  test('a photo of another side is read together with the last one (#408)', async ({ browser }, testInfo) => {
+    testInfo.skip(!dbUp, 'Sakenowa mirror not available — DB-bound spec')
+    const consent = {
+      name: 'yawaragi_consent',
+      value: JSON.stringify({ version: 1, analytics: false, marketing: false }),
+      url: BASE_URL,
+    }
+    // Front label: the line and its maker, read with some doubt — a best guess.
+    const { context, page } = await scanPageWith(browser, [
+      injectionCookie({ name_ja: '人気一', brewery_ja: '人気酒造', confidence: 0.7 }),
+      consent,
+    ])
+    await page.goto('/en/scan')
+    await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
+    const firstCard = page.getByTestId('scan-result-card')
+    await firstCard.waitFor({ state: 'visible' }).catch(() => {})
+    testInfo.skip(!(await firstCard.isVisible()), '人気一 / 人気酒造 no longer resolves in the mirror — refresh the fixture')
+
+    // Back at the camera, the visitor is told the next photo will not stand alone.
+    await page.getByTestId('scan-result-match-rescan').click()
+    await expect(page.getByTestId('scan-camera-both-photos')).toContainText('read together with your last one')
+
+    // Importer's back label: the house mark only, which is every line of the brewery.
+    await context.addCookies([injectionCookie({ name_ja: 'NINKI', brewery_ja: 'Ninki', confidence: 0.9 })])
+    await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
+
+    // This photo's own outcome stands — a list — with the two-photo guess beside it.
+    await expect(page.getByTestId('scan-result-ambiguous')).toBeVisible()
+    const guess = page.getByTestId('scan-outcome-both-photos')
+    await expect(guess).toContainText('人気一')
+    await expect(guess).toContainText('Your last photo and this one fit this sake')
+    await expect(page.getByTestId('scan-outcome-other-side')).toHaveCount(0)
+
+    await guess.getByRole('link').click()
+    await expect(page).toHaveURL(/\/en\/sake\/\d+\?from=scan/)
+    await context.close()
+  })
+
+  test('a photo of another bottle is not given the last bottle\'s sake (#408)', async ({ browser }, testInfo) => {
+    testInfo.skip(!dbUp, 'Sakenowa mirror not available — DB-bound spec')
+    const { context, page } = await scanPageWith(browser, [
+      injectionCookie({ name_ja: '人気一', brewery_ja: '人気酒造', confidence: 0.7 }),
+      {
+        name: 'yawaragi_consent',
+        value: JSON.stringify({ version: 1, analytics: false, marketing: false }),
+        url: BASE_URL,
+      },
+    ])
+    await page.goto('/en/scan')
+    await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
+    const firstCard = page.getByTestId('scan-result-card')
+    await firstCard.waitFor({ state: 'visible' }).catch(() => {})
+    testInfo.skip(!(await firstCard.isVisible()), '人気一 / 人気酒造 no longer resolves in the mirror — refresh the fixture')
+    await page.getByTestId('scan-result-match-rescan').click()
+
+    // Another bottle altogether, and one the catalogue lacks.
+    await context.addCookies([injectionCookie({ name_ja: '架空銘柄零一', brewery_ja: '架空酒造零', confidence: 0.95 })])
+    await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
+
+    await expect(page.getByTestId('scan-result-no-match')).toBeVisible()
+    await expect(page.getByTestId('scan-outcome-both-photos')).toHaveCount(0)
+    // …and the screen says a second photo may help.
+    await expect(page.getByTestId('scan-outcome-other-side')).toBeVisible()
     await context.close()
   })
 

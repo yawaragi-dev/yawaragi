@@ -47,6 +47,7 @@
  *   wrong     a sake that is not the bottle (or any sake, for a bottle the
  *             catalogue does not have)
  *   none      no answer for a bottle the catalogue has
+ *   in photo  only for the other kinds of photo, below
  *
  * A bottle the catalogue lacks is `right` when the scan says so. `right
  * ungated` is the same count with the model's self-reported confidence read
@@ -54,6 +55,15 @@
  * tiers of a pair are in the run, a `two-tier (…)` row replays the scan
  * action's rule — keep tier 1 only on a first-pass exact match, else take
  * tier 2 — from the calls already made, so it costs nothing extra.
+ *
+ * # Photos that are not one sake bottle
+ *
+ * A ground-truth entry may say the photo shows a bottle that is not sake, a
+ * menu, or several bottles (`subject` / `drink` / `items`). Those have their
+ * own right answers (`evals/label-scan-jp/judge.ts`) and are reported in a
+ * table of their own; the comparison table and "Where the scan landed" count
+ * photos of one sake bottle only, so their numbers stay comparable from run
+ * to run as such photos are added.
  *
  * # Saved reads
  *
@@ -107,11 +117,15 @@ import {
 } from '@/lib/sakenowa/resolve-scanned-label'
 import { LABEL_SCAN_PROMPTS } from '@/lib/ai/vision/anthropic-haiku-provider'
 import type { LabelScanExtraction } from '@/lib/schemas/label-scan-extraction'
+import { notOneBottleOfSake, type NotOneBottleOfSake } from '@/lib/scan/read-kind'
+import { canJudge, judgeLanding, type Landing, type Verdict } from '~/evals/label-scan-jp/judge'
 import { charAccuracy } from '~/evals/label-scan-jp/levenshtein'
 import {
   GroundTruthFileSchema,
   SavedReadsFileSchema,
+  photoKind,
   type GroundTruthEntry,
+  type PhotoKind,
   type PhotoView,
   type SavedRead,
   type SavedReadsFile,
@@ -135,11 +149,9 @@ const MIME_BY_EXT: Record<string, string> = {
   '.webp': 'image/webp',
 }
 
-type Verdict = 'right' | 'in_list' | 'wrong' | 'none'
-
 interface Resolution {
   /** `resolveScannedLabel`'s kind, or `error` when the lookup threw. */
-  kind: ResolveScannedLabelResult['kind'] | 'error'
+  kind: ResolveScannedLabelResult['kind'] | NotOneBottleOfSake['kind'] | 'error'
   /** What the scan landed on, for the detail table. */
   landedOn: string
   verdict: Verdict
@@ -176,6 +188,7 @@ interface PhotoResult {
   extractedBreweryJa?: string
   /** The other names the model read off the label. */
   otherNames?: string[]
+  breweryPrinted?: boolean
   /** The model's self-reported confidence, 0..1. */
   confidence?: number
 }
@@ -290,17 +303,25 @@ function fieldAccuracy(expected: string, also: readonly string[] | undefined, ac
 /** Runs the scan action's matching on an extraction and judges where it landed. */
 async function resolveAndJudge(
   extraction: LabelScanExtraction,
-  expectedBrandIds: readonly number[],
+  entry: GroundTruthEntry,
 ): Promise<Resolution> {
-  const gated = await judge(extraction, expectedBrandIds)
-  const ungated = await judge({ ...extraction, confidence: 1 }, expectedBrandIds)
+  const gated = await judge(extraction, entry)
+  const ungated = await judge({ ...extraction, confidence: 1 }, entry)
   return { ...gated, ungatedVerdict: ungated.verdict }
 }
 
 async function judge(
   extraction: LabelScanExtraction,
-  expectedBrandIds: readonly number[],
+  entry: GroundTruthEntry,
 ): Promise<Omit<Resolution, 'ungatedVerdict'>> {
+  // As the scan action does: a menu, several bottles or a bottle the label
+  // says is not sake is answered without asking the catalogue.
+  const other = notOneBottleOfSake(extraction)
+  if (other) {
+    const what = other.kind === 'not_sake' ? other.drink : other.subject
+    return { kind: other.kind, landedOn: `— (${what})`, verdict: judgeLanding(entry, { kind: 'none' }) }
+  }
+
   let resolved: ResolveScannedLabelResult
   try {
     resolved = await resolveScannedLabel(extraction)
@@ -308,33 +329,32 @@ async function judge(
     const message = err instanceof Error ? err.message : String(err)
     return { kind: 'error', landedOn: `lookup threw: ${message}`, verdict: 'none' }
   }
-  const notInCatalogue = expectedBrandIds.length === 0
 
+  let landing: Landing
+  let landedOn: string
   if (resolved.kind === 'no_match' || resolved.kind === 'low_confidence') {
-    return { kind: resolved.kind, landedOn: '—', verdict: notInCatalogue ? 'right' : 'none' }
+    landing = { kind: 'none' }
+    landedOn = '—'
+  } else if (resolved.kind === 'ambiguous') {
+    landing = { kind: 'list', brandIds: resolved.candidates.map((c) => c.sake.brandId) }
+    landedOn = resolved.candidates.map((c) => `${c.sake.brandId}:${c.sake.nameKanji}`).join(', ')
+  } else {
+    landing = { kind: 'one', brandId: resolved.sake.brandId }
+    landedOn = `${resolved.sake.brandId}:${resolved.sake.nameKanji}`
   }
-  if (resolved.kind === 'ambiguous') {
-    const names = resolved.candidates.map((c) => `${c.sake.brandId}:${c.sake.nameKanji}`)
-    const listed = resolved.candidates.some((c) => expectedBrandIds.includes(c.sake.brandId))
-    return { kind: 'ambiguous', landedOn: names.join(', '), verdict: listed ? 'in_list' : 'wrong' }
-  }
-  const { brandId, nameKanji } = resolved.sake
-  return {
-    kind: resolved.kind,
-    landedOn: `${brandId}:${nameKanji}`,
-    verdict: expectedBrandIds.includes(brandId) ? 'right' : 'wrong',
-  }
+  return { kind: resolved.kind, landedOn, verdict: judgeLanding(entry, landing) }
 }
 
 /**
  * Replays the scan action's two-tier rule from the per-tier results: tier 1
- * stands only on a first-pass exact match, anything else is tier 2's answer
- * (and pays for both calls).
+ * stands only on a first-pass exact match whose brewery it did not say is
+ * missing from the photo, anything else is tier 2's answer (and pays for
+ * both calls).
  */
 function replayTwoTier(label: string, tier1: ProviderResult, tier2: ProviderResult): ProviderResult {
   const tier2ByFile = new Map(tier2.photos.map((p) => [p.file, p]))
   const photos = tier1.photos.map((first) => {
-    if (first.resolution?.kind === 'exact') return first
+    if (first.resolution?.kind === 'exact' && first.breweryPrinted !== false) return first
     const second = tier2ByFile.get(first.file)
     return second ? { ...second, latencyMs: first.latencyMs + second.latencyMs } : first
   })
@@ -453,13 +473,15 @@ async function main() {
 
   for (const key of providerKeys) {
     console.log(`## Provider: ${key}`)
-    const spent = { inputTokens: 0, outputTokens: 0 }
+    const spent = { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0 }
     let provider
     try {
       provider = getVisionProvider(key, {
         onUsage: (u) => {
           spent.inputTokens += u.inputTokens
           spent.outputTokens += u.outputTokens
+          spent.cacheReadTokens += u.cacheReadTokens
+          spent.cacheWriteTokens += u.cacheWriteTokens
         },
       })
     } catch (err) {
@@ -494,6 +516,10 @@ async function main() {
           extraction = {
             name_ja: savedRead.name_ja,
             brewery_ja: savedRead.brewery_ja,
+            brewery_printed: savedRead.brewery_printed,
+            subject: savedRead.subject,
+            drink: savedRead.drink,
+            bottling: savedRead.bottling,
             other_names: savedRead.other_names,
             confidence: savedRead.confidence,
             source: 'llm_extracted',
@@ -503,7 +529,7 @@ async function main() {
         } else if (savedRead && !FRESH && OFFLINE) {
           throw new Error(savedRead.error)
         } else if (OFFLINE) {
-          throw new Error('no saved read for this photo and prompt')
+          throw new Error(NO_SAVED_READ)
         } else {
           if (called > 0 && key !== 'e2e-stub' && THROTTLE_MS > 0) await sleep(THROTTLE_MS)
           called++
@@ -514,6 +540,10 @@ async function main() {
             photoSha,
             name_ja: extraction.name_ja,
             brewery_ja: extraction.brewery_ja,
+            brewery_printed: extraction.brewery_printed,
+            subject: extraction.subject,
+            drink: extraction.drink,
+            bottling: extraction.bottling,
             other_names: extraction.other_names,
             confidence: extraction.confidence,
             latencyMs,
@@ -523,9 +553,7 @@ async function main() {
         const breweryAccuracy = fieldAccuracy(gt.brewery_ja, gt.also?.brewery_ja, extraction.brewery_ja)
         const exactMatch = nameAccuracy === 1 && breweryAccuracy === 1
         const resolution =
-          canResolve && gt.expectedBrandIds
-            ? await resolveAndJudge(extraction, gt.expectedBrandIds)
-            : undefined
+          canResolve && canJudge(gt) ? await resolveAndJudge(extraction, gt) : undefined
         photos.push({
           file,
           view: gt.view,
@@ -537,6 +565,7 @@ async function main() {
           status: 'ok',
           extractedNameJa: extraction.name_ja,
           extractedBreweryJa: extraction.brewery_ja,
+          breweryPrinted: extraction.brewery_printed,
           otherNames: extraction.other_names,
           confidence: extraction.confidence,
         })
@@ -563,11 +592,19 @@ async function main() {
     }
     providerResults.push({ key, photos })
     const price = PRICES[key]
-    const dollars = price ? (spent.inputTokens * price[0] + spent.outputTokens * price[1]) / 1e6 : null
+    // Cached input is priced apart: a write at 1.25x, a read at 0.1x
+    // (0.05x on Sonnet 5.5 and Opus 5.5).
+    const readRate = key.startsWith('anthropic-sonnet-5-5') ? 0.05 : 0.1
+    const plainInput = spent.inputTokens - spent.cacheReadTokens - spent.cacheWriteTokens
+    const dollars = price
+      ? ((plainInput + spent.cacheWriteTokens * 1.25 + spent.cacheReadTokens * readRate) * price[0] +
+          spent.outputTokens * price[1]) /
+        1e6
+      : null
     console.log(
       `  ${reused} saved read(s) reused, ${called} model call(s)` +
         (called > 0
-          ? `: ${spent.inputTokens} tokens in, ${spent.outputTokens} out${dollars === null ? '' : `, about $${dollars.toFixed(3)} at list prices`}.`
+          ? `: ${spent.inputTokens} tokens in (${spent.cacheReadTokens} read from cache, ${spent.cacheWriteTokens} written), ${spent.outputTokens} out${dollars === null ? '' : `, about $${dollars.toFixed(3)} at list prices`}.`
           : '.'),
     )
     console.log(``)
@@ -583,8 +620,19 @@ async function main() {
     if (canResolve && tier1 && tier2) providerResults.push(replayTwoTier(pair.label, tier1, tier2))
   }
 
-  printComparisonTable(providerResults, corpus.length)
-  if (canResolve) printResolutionTable(providerResults)
+  // The headline tables count photos of one sake bottle only; a shochu, a
+  // menu or two bottles in one frame are judged by other rules and reported
+  // apart, so adding them never moves "right of N".
+  const kindOf = new Map<string, PhotoKind>(corpus.map((c) => [c.file, photoKind(c.groundTruth)]))
+  const isSakeBottle = (p: PhotoResult) => kindOf.get(p.file) === 'sake_bottle'
+  const sakeBottles = providerResults.map((r) => ({ ...r, photos: r.photos.filter(isSakeBottle) }))
+  const otherKinds = providerResults.map((r) => ({ ...r, photos: r.photos.filter((p) => !isSakeBottle(p)) }))
+  const sakeBottleCount = corpus.filter((c) => photoKind(c.groundTruth) === 'sake_bottle').length
+
+  printUnreadPhotos(providerResults)
+  printComparisonTable(sakeBottles, sakeBottleCount)
+  if (canResolve) printResolutionTable(sakeBottles)
+  if (corpus.length > sakeBottleCount) printOtherKindsTable(otherKinds, kindOf, canResolve)
   printPerPhotoDetail(providerResults)
   // The lookup holds a pg pool open; the run is over.
   process.exit(0)
@@ -613,8 +661,79 @@ function printResolutionTable(results: ProviderResult[]) {
   console.log(``)
 }
 
+/** The message an offline run gives a photo no model has read with this prompt. */
+const NO_SAVED_READ = 'no saved read for this photo and prompt'
+
+/**
+ * Offline, a photo without a saved read is an error in every table below.
+ * Say which photos those are, once, and what reading them costs.
+ */
+function printUnreadPhotos(results: ProviderResult[]) {
+  const unread = results
+    .map((r) => ({ key: r.key, files: r.photos.filter((p) => p.detail === NO_SAVED_READ).map((p) => p.file) }))
+    .filter((r) => r.files.length > 0 && isVisionProviderKey(r.key))
+  if (unread.length === 0) return
+  const calls = unread.reduce((sum, r) => sum + r.files.length, 0)
+  console.log(`## Not read yet`)
+  console.log(``)
+  console.log(
+    `These photos have no saved read for the current prompt, so they count as errors below and are not judged. ` +
+      `The same run without LABEL_SCAN_EVAL_OFFLINE reads exactly these and nothing else: ${calls} model call(s).`,
+  )
+  console.log(``)
+  for (const r of unread) console.log(`- ${r.key}: ${r.files.length} photo(s)`)
+  console.log(``)
+  for (const file of [...new Set(unread.flatMap((r) => r.files))].sort()) {
+    const by = unread.filter((r) => r.files.includes(file)).map((r) => r.key)
+    console.log(`- ${file}${by.length === unread.length ? '' : ` (${by.join(', ')})`}`)
+  }
+  console.log(``)
+}
+
+const OTHER_KINDS: readonly { kind: PhotoKind; label: string }[] = [
+  { kind: 'other_drink', label: 'not sake' },
+  { kind: 'several_bottles', label: 'several bottles' },
+  { kind: 'menu', label: 'menu' },
+]
+
+/**
+ * One row per provider and kind, for the photos that are not one sake
+ * bottle. `right` here means what `judge.ts` says it means for that kind —
+ * mostly "no sake was shown" — so these rows are never added to the ones above.
+ */
+function printOtherKindsTable(results: ProviderResult[], kindOf: Map<string, PhotoKind>, canResolve: boolean) {
+  console.log(`## Photos that are not one sake bottle`)
+  console.log(``)
+  if (!canResolve) {
+    console.log(`Not judged: DATABASE_URL is not set. They are listed under "Per-photo detail".`)
+    console.log(``)
+    return
+  }
+  console.log(`| provider | kind | photos | not read | right | in photo | in list | wrong | none | right ungated |`)
+  console.log(`|----------|------|--------|----------|-------|----------|---------|-------|------|---------------|`)
+  for (const r of results) {
+    if (r.constructionError) continue
+    for (const { kind, label } of OTHER_KINDS) {
+      const photos = r.photos.filter((p) => kindOf.get(p.file) === kind)
+      if (photos.length === 0) continue
+      const judged = photos.filter((p) => p.resolution)
+      const count = (verdict: Verdict) => judged.filter((p) => p.resolution?.verdict === verdict).length
+      const ungatedRight = judged.filter((p) => p.resolution?.ungatedVerdict === 'right').length
+      console.log(
+        `| ${r.key} | ${label} | ${photos.length} | ${photos.length - judged.length} | ${count('right')} | ${count('in_photo')} | ${count('in_list')} | ${count('wrong')} | ${count('none')} | ${ungatedRight} |`,
+      )
+    }
+  }
+  console.log(``)
+  console.log(
+    `right: no sake shown (or, where one bottle of several is clearly the subject, that bottle). ` +
+      `in photo: a catalogue row for something in the frame that is not the answer. wrong: a sake that is not in the frame.`,
+  )
+  console.log(``)
+}
+
 function printComparisonTable(results: ProviderResult[], corpusSize: number) {
-  console.log(`## Comparison (${corpusSize} image(s))`)
+  console.log(`## Comparison (${corpusSize} photo(s) of one sake bottle)`)
   console.log(``)
   console.log(
     `| provider | scored | errors | name_ja acc | brewery_ja acc | exact-match rate | median latency (ms) |`,

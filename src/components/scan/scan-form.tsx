@@ -17,6 +17,8 @@ import {
   ClockCounterClockwise,
   EyeSlash,
   HandPalm,
+  BeerBottle,
+  SquaresFour,
   HourglassMedium,
   ImageBroken,
   Lightning,
@@ -42,6 +44,8 @@ import { resolveBadgeKind } from '@/lib/provenance/policy'
 import { CellarButton } from '@/components/collection/cellar-button'
 import { TastingLogPanel } from '@/components/journal/tasting-log-panel'
 import { OtherCandidates } from '@/components/scan/other-candidates'
+import { ScanBottlings } from '@/components/scan/scan-bottlings'
+import { bottlingNameFromRead } from '@/lib/scan/read-bottling'
 import { ScanOutcome, type OutcomeCandidate } from '@/components/scan/scan-outcome'
 import { ScanResultCard } from '@/components/scan/scan-result-card'
 import type { DebugEvent } from '@/lib/debug/debug-log'
@@ -54,9 +58,11 @@ import {
 import { scanAction } from '@/lib/scan/scan-action'
 import {
   INITIAL_SCAN_ACTION_STATE,
+  type BothPhotosGuess,
   type ScanActionState,
   type ScanCandidate,
 } from '@/lib/scan/scan-action-state'
+import { EARLIER_READ_TTL_MS, earlierReadOf } from '@/lib/scan/earlier-read'
 import { appendMatchToHistory } from '@/lib/scan/scan-history'
 import { rememberScannedPhoto } from '@/lib/scan/scanned-photo'
 import { useScanHistoryConsensus } from '@/lib/scan/use-scan-history-consensus'
@@ -158,6 +164,14 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
    * what makes `hasResult` false again so §4's camera screen returns.
    */
   const [resultDismissed, setResultDismissed] = useState(false)
+  /**
+   * #408: the scan on screen whose read is too old to resolve the next photo
+   * with. The read itself is not copied anywhere — it is `state`, which
+   * `useActionState` keeps until the next submission — so all that is needed
+   * is to know when it has gone stale.
+   */
+  const [expiredState, setExpiredState] = useState<ScanActionState | null>(null)
+  const earlierRead = state === expiredState ? null : earlierReadOf(state)
   // ADR-0015 / #163: the in-place result card shows the visitor's own
   // label photo. The URL is created from the ORIGINAL File the visitor
   // picked (pre-downscale — displays the friendliest quality). It never
@@ -268,6 +282,12 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
     }
   }, [state])
 
+  // #408: a read is usable for the next photo for a few minutes only.
+  useEffect(() => {
+    const timer = setTimeout(() => setExpiredState(state), EARLIER_READ_TTL_MS)
+    return () => clearTimeout(timer)
+  }, [state])
+
   // Mirror the server-side trace from the latest action result into
   // the app-level debug store. Guarded against re-renders that carry
   // the same `state.debugLog` reference: we only push when the array
@@ -349,6 +369,10 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
       const formData = new FormData()
       formData.set('image', downscaled, 'label.jpg')
       formData.set('locale', locale)
+      // #408: what the last scan read, so a photo of another side can be
+      // resolved with both. The server reads this photo blind and uses the
+      // earlier read only if this one finds no single sake by itself.
+      if (earlierRead) formData.set('earlierRead', JSON.stringify(earlierRead))
       pushClientEvent('submitting FormData to scanAction')
       // useActionState's action must be invoked from a transition. We
       // can't keep the await above inside startTransition (transitions
@@ -426,6 +450,17 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
     ),
   })
 
+  // #408: the sake two photos together point at, as §5a's candidate row.
+  const bothPhotosRow = (guess: BothPhotosGuess | undefined): OutcomeCandidate | undefined =>
+    guess && {
+      key: `both-${guess.brandId}`,
+      href: guess.sakeHref,
+      name: guess.nameRomaji ?? guess.nameKanji,
+      kanji: guess.nameRomaji ? guess.nameKanji : null,
+      where: join(guess.breweryRomaji ?? guess.breweryKanji, guess.prefectureName),
+      reason: tOutcome('bothPhotos.reason'),
+    }
+
   const outcome = renderOutcome()
   // §5a: every outcome — including the message-only ones — is a screen of its
   // own, with the rescan in its bar; the camera is not left up behind it.
@@ -473,6 +508,7 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
             title={tOutcome('brandOnly.title')}
             body={tOutcome('brandOnly.body', { line: view.sakeRomaji ?? view.sakeKanji })}
             onRescan={onPickClick}
+            suggestOtherSide
             canKeep={canLog}
             read={{
               name: view.extraction.name_ja,
@@ -503,6 +539,7 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
             title={tOutcome('breweryOnly.title')}
             body={tOutcome('breweryOnly.body', { brewery: view.breweryRomaji ?? view.extraction.brewery_ja })}
             onRescan={onPickClick}
+            suggestOtherSide
             canKeep={canLog}
             read={{
               name: view.extraction.name_ja,
@@ -535,6 +572,8 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
             title={tOutcome('ambiguous.title')}
             body={tOutcome('ambiguous.body')}
             onRescan={onPickClick}
+            suggestOtherSide
+            bothPhotos={bothPhotosRow(view.bothPhotos)}
             canKeep={canLog}
             read={{
               name: view.extraction.name_ja,
@@ -570,6 +609,8 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
             title={tOutcome('noMatch.title')}
             body={tOutcome('noMatch.body')}
             onRescan={onPickClick}
+            suggestOtherSide
+            bothPhotos={bothPhotosRow(view.bothPhotos)}
             canKeep={canLog}
             read={{
               name: view.extraction.name_ja,
@@ -596,6 +637,7 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
             title={tOutcome('consensus.title', { sake: consensus.nameRomaji ?? consensus.nameKanji })}
             body={tOutcome('consensus.body', { votes: consensus.votes, total: consensus.total })}
             onRescan={onPickClick}
+            bothPhotos={bothPhotosRow(view.bothPhotos)}
           >
             {/* §5a (45): the two answers stacked full width, Yes first. The
                 title names the sake; no separate kanji line under it. */}
@@ -626,11 +668,48 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
             title={tOutcome('unreadable.title')}
             body={tOutcome('unreadable.body')}
             onRescan={onPickClick}
+            suggestOtherSide
+            bothPhotos={bothPhotosRow(view.bothPhotos)}
             tips={[
               { icon: <ArrowsOut size={18} />, text: tOutcome('unreadable.tipCloser') },
               { icon: <Lightning size={18} />, text: tOutcome('unreadable.tipLight') },
               { icon: <HandPalm size={18} />, text: tOutcome('unreadable.tipStill') },
             ]}
+          />
+        )
+      case 'not_sake':
+        // Not in the design yet (questions for the designers, docs/design-questions.md):
+        // the screen says what the label says the drink is, and keeps the
+        // read editable so a wrong call is one "Search again" away.
+        return (
+          <ScanOutcome
+            testId="scan-result-not-sake"
+            icon={icon(BeerBottle)}
+            kicker={tOutcome('notSake.kicker')}
+            title={tOutcome(`notSake.title.${view.drink}`)}
+            body={`${tOutcome(`notSake.about.${view.drink}`)} ${tOutcome('notSake.body')}`}
+            onRescan={onPickClick}
+            read={{
+              name: view.extraction.name_ja,
+              brewery: view.extraction.brewery_ja,
+              badge: readBadge('scan-outcome-not-sake-badge'),
+            }}
+          />
+        )
+      case 'not_one_bottle':
+        return (
+          <ScanOutcome
+            testId={view.subject === 'menu' ? 'scan-result-menu' : 'scan-result-several-bottles'}
+            icon={icon(view.subject === 'menu' ? ListBullets : SquaresFour)}
+            kicker={tOutcome(`notOneBottle.${view.subject}.kicker`)}
+            title={tOutcome(`notOneBottle.${view.subject}.title`)}
+            body={tOutcome(`notOneBottle.${view.subject}.body`)}
+            onRescan={onPickClick}
+            read={{
+              name: view.extraction.name_ja,
+              brewery: view.extraction.brewery_ja,
+              badge: readBadge('scan-outcome-not-one-bottle-badge'),
+            }}
           />
         )
       case 'rate_limited':
@@ -714,7 +793,13 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
           onChoosePhoto={onUploadClick}
           typeItHref="/search"
           stillUrl={photoUrl}
-          notice={null}
+          // Only once the visitor is back at the camera from a result: a
+          // first scan has nothing to be read together with.
+          notice={
+            earlierRead && resultDismissed
+              ? { testId: 'scan-camera-both-photos', text: tOutcome('bothPhotos.cameraNotice') }
+              : null
+          }
         />
       )}
 
@@ -817,6 +902,25 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
                       refreshOnSave={false}
                     />
                   </div>
+                  <ScanBottlings
+                    brandId={view.brandId}
+                    lineName={view.sakeRomaji ?? view.extraction.name_ja}
+                    suggestedName={bottlingNameFromRead(
+                      view.sakeRomaji ?? view.extraction.name_ja,
+                      view.extraction.bottling,
+                    )}
+                    own={Array.isArray(view.ownBottlings) ? view.ownBottlings : []}
+                    badge={
+                      <ProvenanceBadgeView
+                        kind={resolveBadgeKind('llm_extracted')}
+                        label={tBadge('label')}
+                        explanation={tBadge('explanation')}
+                        sheetTitle={tBadge('sheetTitle')}
+                        closeLabel={tProvenanceSheet('closeLabel')}
+                        id="scan-bottling-read-badge"
+                      />
+                    }
+                  />
                 </div>
               )
             }

@@ -16,7 +16,20 @@ import { addOwnBottling } from '@/lib/collection/expression-actions'
  * "Just the name — the rest can wait": nothing else is asked, and nothing
  * else is stored (ADR-0025).
  */
-export function AddBottlingRow({ brandId, lineName }: { brandId: number; lineName: string }) {
+export function AddBottlingRow({
+  brandId,
+  lineName,
+  suggestedName,
+}: {
+  brandId: number
+  lineName: string
+  /**
+   * A fuller name read off the label by a scan ("Mizuo 一味 Junmai"). The
+   * row then says "Add this bottling" and shows the name it will start
+   * from; the form opens with it, still to be checked before saving.
+   */
+  suggestedName?: string
+}) {
   const t = useTranslations('bottling')
   const router = useRouter()
   const [open, setOpen] = useState(false)
@@ -33,8 +46,12 @@ export function AddBottlingRow({ brandId, lineName }: { brandId: number; lineNam
       >
         <PlusCircle size={20} className="shrink-0 text-ginshu-700" aria-hidden="true" />
         <span className="flex flex-col">
-          <span className="text-card-heading font-medium text-ink">{t('addRowTitle')}</span>
-          <span className="text-meta text-ash-700">{t('addRowHint')}</span>
+          <span className="text-card-heading font-medium text-ink">
+            {suggestedName ? t('addThisBottling') : t('addRowTitle')}
+          </span>
+          <span className="text-meta text-ash-700" data-testid="add-bottling-hint">
+            {suggestedName ?? t('addRowHint')}
+          </span>
         </span>
       </button>
     )
@@ -54,7 +71,7 @@ export function AddBottlingRow({ brandId, lineName }: { brandId: number; lineNam
 
   return (
     <BottlingNameForm
-      initialName={lineName}
+      initialName={suggestedName ?? lineName}
       pending={pending}
       failed={failed}
       onSubmit={save}

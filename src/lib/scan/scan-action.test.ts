@@ -31,6 +31,18 @@ vi.mock('@/lib/auth/maintainer', () => ({
   currentUserIsMaintainer: async () => false,
 }))
 
+// The visitor's journal, read only to list their own bottlings of a matched
+// sake. Clerk and Upstash have nothing to answer with in a unit test.
+const resolveViewerJournalMock = vi.fn(async () => ({
+  canLog: false,
+  entries: [],
+  cellar: [],
+  expressions: [] as { id: string; name: string; brandId: number | null }[],
+}))
+vi.mock('@/lib/taste/viewer-journal', () => ({
+  resolveViewerJournal: () => resolveViewerJournalMock(),
+}))
+
 vi.mock('next/headers', () => ({
   cookies: vi.fn(),
   headers: vi.fn(),
@@ -96,6 +108,12 @@ vi.mock('@/lib/sakenowa/nearest-brands', () => ({
   findNearestBrands: vi.fn().mockResolvedValue([]),
 }))
 
+// #408: the rules for combining two photos are unit-tested in
+// `resolve-with-earlier-read.test.ts`; here it is a seam.
+vi.mock('@/lib/sakenowa/resolve-with-earlier-read', () => ({
+  resolveWithEarlierRead: vi.fn().mockResolvedValue(null),
+}))
+
 vi.mock('@/lib/rate-limit/config-gate', () => ({
   // Return null by default so the action skips rate-limit enforcement
   // (as if env is unset in non-production). Individual tests override
@@ -109,6 +127,7 @@ import { createAnthropicHaikuProvider } from '@/lib/ai/vision/anthropic-haiku-pr
 import { resolveScannedLabel } from '@/lib/sakenowa/resolve-scanned-label'
 import { lookupBreweryByBrand } from '@/lib/sakenowa/lookup'
 import { findNearestBrands } from '@/lib/sakenowa/nearest-brands'
+import { resolveWithEarlierRead } from '@/lib/sakenowa/resolve-with-earlier-read'
 import { assertRateLimitConfig } from '@/lib/rate-limit/config-gate'
 import { scanAction } from './scan-action'
 import { INITIAL_SCAN_ACTION_STATE } from './scan-action-state'
@@ -291,6 +310,8 @@ const RETRY_TIER_EXTRACTION = {
   brewery_ja: '旭酒造',
   confidence: 0.4,
 }
+
+const EARLIER_READ = JSON.stringify({ name_ja: '人気一', brewery_ja: '人気酒造', other_names: [], confidence: 0.7 })
 
 // --- Input validation ------------------------------------------------
 
@@ -707,6 +728,104 @@ describe('scanAction — Sakenowa lookup states', () => {
 
 // --- Two-tier retry --------------------------------------------------
 
+describe('scanAction — a second photo, with what the first one read (#408)', () => {
+  const resolveWithEarlierReadMock = vi.mocked(resolveWithEarlierRead)
+  afterEach(() => {
+    vi.clearAllMocks()
+    resolveWithEarlierReadMock.mockResolvedValue(null)
+  })
+
+  function secondScan(earlierRead: string | null) {
+    stubEmptyRequestContext()
+    stubVisionTiers(mockModelReturning(DASSAI_EXTRACTION), mockModelReturning(DASSAI_EXTRACTION))
+    const formData = jpegFormData()
+    if (earlierRead !== null) formData.set('earlierRead', earlierRead)
+    return scanAction(INITIAL_SCAN_ACTION_STATE, formData)
+  }
+  const noMatch = { kind: 'no_match' as const, query: { nameJa: '獺祭', breweryJa: '旭酒造' } }
+
+  it('puts the sake both photos point at beside the outcome, which stays what it was', async () => {
+    resolveScannedLabelMock.mockResolvedValue(noMatch)
+    resolveWithEarlierReadMock.mockResolvedValue({ sake: DASSAI_BRAND })
+    lookupBreweryByBrandMock.mockResolvedValue(ASAHI_SHUZO)
+
+    const state = await secondScan(EARLIER_READ)
+
+    expect(state.status).toBe('no_match')
+    expect(state.status === 'no_match' && state.bothPhotos).toMatchObject({
+      brandId: DASSAI_BRAND.brandId,
+      sakeHref: `/en/sake/${DASSAI_BRAND.brandId}?from=scan`,
+      nameKanji: '獺祭',
+      breweryKanji: '旭酒造',
+    })
+  })
+
+  it('does not consult the earlier read when this photo gives one sake', async () => {
+    resolveScannedLabelMock.mockResolvedValue({ kind: 'exact', sake: DASSAI_BRAND })
+
+    const state = await secondScan(EARLIER_READ)
+
+    expect(state.status).toBe('matched')
+    expect(resolveWithEarlierReadMock).not.toHaveBeenCalled()
+  })
+
+  it('is an ordinary scan when no earlier read came with it', async () => {
+    resolveScannedLabelMock.mockResolvedValue(noMatch)
+
+    const state = await secondScan(null)
+
+    expect(state.status).toBe('no_match')
+    expect(resolveWithEarlierReadMock).not.toHaveBeenCalled()
+  })
+
+  it('ignores an earlier read that is not what the form sends', async () => {
+    resolveScannedLabelMock.mockResolvedValue(noMatch)
+
+    for (const junk of ['not json', '{"name_ja":""}', JSON.stringify({ name_ja: 'x'.repeat(500), brewery_ja: 'y', confidence: 1 })]) {
+      const state = await secondScan(junk)
+      expect(state.status).toBe('no_match')
+    }
+    expect(resolveWithEarlierReadMock).not.toHaveBeenCalled()
+  })
+
+  it('keeps the scan when combining the two reads fails', async () => {
+    resolveScannedLabelMock.mockResolvedValue(noMatch)
+    resolveWithEarlierReadMock.mockRejectedValue(new Error('connection reset'))
+
+    const state = await secondScan(EARLIER_READ)
+
+    expect(state.status).toBe('no_match')
+    expect(state.status === 'no_match' && state.bothPhotos).toBeUndefined()
+  })
+
+  it('reads a photo that follows an unsettled one with the stronger model at once', async () => {
+    // The first photo did not settle on a sake, so this is a bottle the
+    // cheap model struggles with; it is not asked again.
+    resolveScannedLabelMock.mockResolvedValue({ kind: 'exact', sake: DASSAI_BRAND })
+    lookupBreweryByBrandMock.mockResolvedValue(ASAHI_SHUZO)
+
+    const state = await secondScan(EARLIER_READ)
+
+    expect(state.status).toBe('matched')
+    expect(getVisionProviderMock).toHaveBeenCalledTimes(1)
+    expect(getVisionProviderMock).toHaveBeenCalledWith('anthropic-sonnet-5-5')
+  })
+
+  it('never sends the earlier read to the vision model', async () => {
+    resolveScannedLabelMock.mockResolvedValue(noMatch)
+    const model = mockModelReturning(DASSAI_EXTRACTION)
+    stubEmptyRequestContext()
+    stubVisionTiers(model, model)
+    const formData = jpegFormData()
+    formData.set('earlierRead', EARLIER_READ)
+
+    await scanAction(INITIAL_SCAN_ACTION_STATE, formData)
+
+    expect(model.doGenerateCalls.length).toBeGreaterThan(0)
+    expect(JSON.stringify(model.doGenerateCalls.map((call) => call.prompt))).not.toContain('人気一')
+  })
+})
+
 describe('scanAction — two-tier Haiku → Sonnet retry', () => {
   afterEach(() => {
     vi.clearAllMocks()
@@ -776,6 +895,167 @@ describe('scanAction — two-tier Haiku → Sonnet retry', () => {
     // stricter tier-1 → always-retry rule, this call count would fail.
     expect(getVisionProviderMock).toHaveBeenCalledTimes(1)
     expect(getVisionProviderMock).toHaveBeenCalledWith('anthropic-haiku-5-5')
+  })
+
+  it('asks tier-2 when tier-1 matched on a brewery it says the photo does not print', async () => {
+    // A front label with the brand alone: tier 1 misreads the brand and
+    // supplies that brand's brewery, so the two agree with each other and
+    // with the catalogue. Tier 2 reads the brand right.
+    stubEmptyRequestContext()
+    stubVisionTiers(
+      mockModelReturning({ ...DASSAI_EXTRACTION, brewery_printed: false }),
+      mockModelReturning({
+        source: 'llm_extracted',
+        name_ja: '出羽桜',
+        brewery_printed: false,
+        brewery_ja: '出羽桜酒造',
+        confidence: 0.85,
+      }),
+    )
+
+    resolveScannedLabelMock
+      .mockResolvedValueOnce({ kind: 'exact', sake: DASSAI_BRAND })
+      .mockResolvedValueOnce({ kind: 'exact', sake: { ...DASSAI_BRAND, brandId: 135, name: '出羽桜' } })
+    lookupBreweryByBrandMock.mockResolvedValue(ASAHI_SHUZO)
+
+    const state = await scanAction(INITIAL_SCAN_ACTION_STATE, jpegFormData())
+
+    expect(state.status).toBe('matched')
+    if (state.status === 'matched') expect(state.brandId).toBe(135)
+    expect(getVisionProviderMock).toHaveBeenCalledWith('anthropic-sonnet-5-5')
+  })
+
+  it('keeps a tier-1 match whose brewery is printed in the photo', async () => {
+    stubEmptyRequestContext()
+    stubVisionTiers(mockModelReturning({ ...DASSAI_EXTRACTION, brewery_printed: true }))
+    resolveScannedLabelMock.mockResolvedValueOnce({ kind: 'exact', sake: DASSAI_BRAND })
+    lookupBreweryByBrandMock.mockResolvedValueOnce(ASAHI_SHUZO)
+
+    const state = await scanAction(INITIAL_SCAN_ACTION_STATE, jpegFormData())
+
+    expect(state.status).toBe('matched')
+    expect(getVisionProviderMock).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('scanAction — the visitor’s own bottlings of the matched sake', () => {
+  afterEach(() => {
+    vi.clearAllMocks()
+    assertRateLimitConfigMock.mockReturnValue(null)
+  })
+
+  it('lists them with the one the label names first', async () => {
+    stubEmptyRequestContext()
+    stubVisionTiers(mockModelReturning({ ...DASSAI_EXTRACTION, bottling: { grade: 'junmai_daiginjo' } }))
+    resolveScannedLabelMock.mockResolvedValueOnce({ kind: 'exact', sake: DASSAI_BRAND })
+    lookupBreweryByBrandMock.mockResolvedValueOnce(ASAHI_SHUZO)
+    resolveViewerJournalMock.mockResolvedValueOnce({
+      canLog: true,
+      entries: [],
+      cellar: [],
+      expressions: [
+        { id: 'a', name: 'Dassai Junmai Ginjo', brandId: DASSAI_BRAND.brandId },
+        { id: 'b', name: 'Dassai 45 Junmai Daiginjo', brandId: DASSAI_BRAND.brandId },
+        { id: 'c', name: 'Another sake’s bottling', brandId: DASSAI_BRAND.brandId + 1 },
+      ],
+    })
+
+    const state = await scanAction(INITIAL_SCAN_ACTION_STATE, jpegFormData())
+
+    expect(state.status).toBe('matched')
+    if (state.status === 'matched') {
+      expect(state.ownBottlings).toEqual([
+        { id: 'b', name: 'Dassai 45 Junmai Daiginjo', fitsLabel: true },
+        { id: 'a', name: 'Dassai Junmai Ginjo', fitsLabel: false },
+      ])
+    }
+  })
+
+  it('keeps the match when the journal cannot be read', async () => {
+    stubEmptyRequestContext()
+    stubVisionTiers(mockModelReturning(DASSAI_EXTRACTION))
+    resolveScannedLabelMock.mockResolvedValueOnce({ kind: 'exact', sake: DASSAI_BRAND })
+    lookupBreweryByBrandMock.mockResolvedValueOnce(ASAHI_SHUZO)
+    resolveViewerJournalMock.mockRejectedValueOnce(new Error('store down'))
+
+    const state = await scanAction(INITIAL_SCAN_ACTION_STATE, jpegFormData())
+
+    expect(state.status).toBe('matched')
+  })
+})
+
+describe('scanAction — photos that are not one bottle of sake', () => {
+  afterEach(() => {
+    vi.clearAllMocks()
+    assertRateLimitConfigMock.mockReturnValue(null)
+  })
+
+  it('says a bottle is shochu when its label prints that, and looks nothing up', async () => {
+    // 濱田酒造 makes shochu and is in the catalogue for its sake; a lookup
+    // would hand the visitor that sake.
+    stubEmptyRequestContext()
+    const shochu = {
+      source: 'llm_extracted' as const,
+      subject: 'one_bottle' as const,
+      drink: 'shochu' as const,
+      name_ja: '赤兎馬',
+      brewery_ja: '濱田酒造',
+      confidence: 0.8,
+    }
+    stubVisionTiers(mockModelReturning(shochu), mockModelReturning(shochu))
+
+    const state = await scanAction(INITIAL_SCAN_ACTION_STATE, jpegFormData())
+
+    expect(state).toMatchObject({ status: 'not_sake', drink: 'shochu' })
+    expect(resolveScannedLabelMock).not.toHaveBeenCalled()
+  })
+
+  it('looks a bottle up as before when the label does not say what the drink is', async () => {
+    stubEmptyRequestContext()
+    stubVisionTiers(mockModelReturning({ ...DASSAI_EXTRACTION, drink: 'unknown' }))
+    resolveScannedLabelMock.mockResolvedValueOnce({ kind: 'exact', sake: DASSAI_BRAND })
+    lookupBreweryByBrandMock.mockResolvedValueOnce(ASAHI_SHUZO)
+
+    const state = await scanAction(INITIAL_SCAN_ACTION_STATE, jpegFormData())
+
+    expect(state.status).toBe('matched')
+  })
+
+  it('says a menu is a menu instead of naming one sake from it', async () => {
+    stubEmptyRequestContext()
+    const menu = { ...DASSAI_EXTRACTION, subject: 'menu' as const }
+    stubVisionTiers(mockModelReturning(menu), mockModelReturning(menu))
+
+    const state = await scanAction(INITIAL_SCAN_ACTION_STATE, jpegFormData())
+
+    expect(state).toMatchObject({ status: 'not_one_bottle', subject: 'menu' })
+    expect(resolveScannedLabelMock).not.toHaveBeenCalled()
+  })
+
+  it('takes tier-2’s word when tier-1 alone sees several bottles', async () => {
+    // Tier 1 called a single bottle on a shelf "several bottles"; tier 2
+    // reads the one bottle the photo is of.
+    stubEmptyRequestContext()
+    stubVisionTiers(
+      mockModelReturning({ ...DASSAI_EXTRACTION, subject: 'several_bottles' }),
+      mockModelReturning({ ...DASSAI_EXTRACTION, subject: 'one_bottle' }),
+    )
+    resolveScannedLabelMock.mockResolvedValueOnce({ kind: 'exact', sake: DASSAI_BRAND })
+    lookupBreweryByBrandMock.mockResolvedValueOnce(ASAHI_SHUZO)
+
+    const state = await scanAction(INITIAL_SCAN_ACTION_STATE, jpegFormData())
+
+    expect(state.status).toBe('matched')
+  })
+
+  it('says so when several bottles share the photo', async () => {
+    stubEmptyRequestContext()
+    const several = { ...DASSAI_EXTRACTION, subject: 'several_bottles' as const }
+    stubVisionTiers(mockModelReturning(several), mockModelReturning(several))
+
+    const state = await scanAction(INITIAL_SCAN_ACTION_STATE, jpegFormData())
+
+    expect(state).toMatchObject({ status: 'not_one_bottle', subject: 'several_bottles' })
   })
 })
 
