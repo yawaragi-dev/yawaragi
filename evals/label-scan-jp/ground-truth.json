@@ -3786,5 +3786,28 @@
       "localOnly": false,
       "notes": "A MENU, ONE COLUMN: the same page of the bar's tablet list as okura_fukugen_omine_fujioka_takagi_izumi_menu.jpg, photographed close and nearly square on, so that only its left column is in frame, sharp: 大倉, 大嶺 and 朝日鷹, top to bottom, in the maintainer's order. Each cell prints the name in kanji, hiragana and Latin with its prefecture, then the bottling and the grade; the page writes \"Honjyozo\". Slivers of the next column show at the right edge with nothing legible in them, and are not listed. The page does not print the makers, which are the catalogue's; the catalogue has 大嶺 in two rows. A lamp is reflected in the screen. Published: a plain typeset list, no venue name, no logo, no picture, no person. Location and camera data were removed from the file. Added 2026-10-13."
     }
+  },
+  "ide_kai_no_kaiun_daiginjo_180ml_on_table.jpg": {
+    "name_ja": "甲斐の開運",
+    "brewery_ja": "井出醸造店",
+    "bottle": "kai-no-kaiun-daiginjo-180",
+    "view": "front",
+    "expectedBrandIds": [
+      124540
+    ],
+    "also": {
+      "name_ja": [
+        "甲斐の開運 大吟醸",
+        "Kainokaiun"
+      ],
+      "brewery_ja": [
+        "井出醸造"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Kai no Kaiun daiginjo, the 180 ml blue bottle, at home on a hob with the brewery's own cup beside it. The label prints \"Daiginjo\", 大吟醸 in gold, 甲斐の開運 in red brush script, \"Kainokaiun\" and 富士山湧水仕込; the cup prints 清酒 甲斐の開運 inside the brand's crest, so the name is in the frame twice. The maker is not on the label; the cap's seal has part of it (…醸造店封緘). The label says daiginjo, not junmai daiginjo: the maintainer's file was ide_junmai_daiginjo_on_table.jpg and their note says Daiginjo, so the file was renamed. The same product as No.3 on the brewery's sheet (ide_menu_1.jpg, ide_menu_4.jpg). The catalogue also has 開運 from another maker (土井酒造場), which is not this. No person in the frame; location and camera data were removed from the file. Added 2026-10-13."
+    }
   }
 }

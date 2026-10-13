@@ -14,13 +14,13 @@ the metric-math and judging unit tests (`levenshtein.test.ts`, `judge.test.ts`).
 
 ## The corpus
 
-**142 photos**, all taken by the maintainer on a phone the way a visitor
+**143 photos**, all taken by the maintainer on a phone the way a visitor
 would: in the hand, a little off-angle, sometimes with condensation on the
-glass. **114 are of one sake bottle each (65 bottles)** and make the headline
+glass. **115 are of one sake bottle each (66 bottles)** and make the headline
 number; 28 show something a scan was not built for and are reported apart (see
 "Photos that are not one sake bottle").
 
-Of the 114, 73 are of 27 bottles at home in ordinary room light; 6 are single
+Of the 115, 74 are of 28 bottles at home in ordinary room light; 6 are single
 front shots of bottles on a shop shelf, added after the lookup had been tuned
 on the first 73 and scored once, untouched — all six landed on the right sake;
 and 31 more shop-shelf fronts were added on 2026-10-13 (28 new bottles, a

@@ -2369,6 +2369,23 @@
      ],
      "confidence": 0.6,
      "latencyMs": 8972
+    },
+    "ide_kai_no_kaiun_daiginjo_180ml_on_table.jpg": {
+     "photoSha": "73da29d908088a01",
+     "name_ja": "開運",
+     "brewery_ja": "土屋酒造店",
+     "brewery_printed": true,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {
+      "grade": "daiginjo"
+     },
+     "other_names": [
+      "甲斐の開運",
+      "Kainokaiun"
+     ],
+     "confidence": 0.8,
+     "latencyMs": 7248
     }
    }
   },
@@ -4860,6 +4877,22 @@
      ],
      "confidence": 0.6,
      "latencyMs": 7880
+    },
+    "ide_kai_no_kaiun_daiginjo_180ml_on_table.jpg": {
+     "photoSha": "73da29d908088a01",
+     "name_ja": "甲斐の開運",
+     "brewery_ja": "取星醸造",
+     "brewery_printed": false,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {
+      "grade": "daiginjo"
+     },
+     "other_names": [
+      "Kainokaiun"
+     ],
+     "confidence": 0.8,
+     "latencyMs": 2616
     }
    }
   },
