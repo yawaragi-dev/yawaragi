@@ -72,3 +72,12 @@ romaji-regeneration*.json
 # "Yawaragi Mobile.dc.html" (open-on-your-phone convenience). Committing it per
 # design release compounds and it does not delta-compress.
 design/**/*(phone).html
+
+# Photos of real menus stay on the maintainer's machine. A designed menu
+# carries other people's text, artwork and product photographs, and nothing
+# in German copyright law allows publishing a photo of one (research of
+# 2026-10-13, see evals/label-scan-jp/README.md "Compliance"). The file name
+# says what a photo is, so the name is what is ignored. The ground-truth
+# entry (names, sizes, prices: facts) and the saved reads are committed; the
+# eval runs a photo only where its file exists.
+/evals/label-scan-jp/photos/*menu*

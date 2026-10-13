@@ -1,7 +1,7 @@
 import type { DebugEvent } from '@/lib/debug/debug-log'
 import type { FlavorChart } from '@/lib/schemas/flavor-chart'
 import type { NearestReason } from '@/lib/sakenowa/nearest-brands'
-import type { LabelScanExtraction } from '@/lib/schemas/label-scan-extraction'
+import type { LabelScanExtraction, NonSakeDrink } from '@/lib/schemas/label-scan-extraction'
 
 /**
  * A catalogue sake offered as a guess — §5a's "Did you mean" and §5's
@@ -76,6 +76,14 @@ type ScanActionStateBase =
        * the match itself. Empty for a sure match, which does not ask.
        */
       otherCandidates: readonly ScanCandidate[]
+      /**
+       * The visitor's own bottlings of this sake (ADR-0025), for "Is it one
+       * of these bottlings?" under the card (design v1.6 §5, screenshot 54).
+       * `fitsLabel` marks the one the label's product name or grade points
+       * at, when exactly one does; it is listed first. Absent for a visitor
+       * who keeps no journal, and when they have none of this line.
+       */
+      ownBottlings?: readonly { id: string; name: string; fitsLabel: boolean }[]
     }
   /**
    * Phase 3 / #123: the `(brand AND brewery)` exact-match join
@@ -199,6 +207,30 @@ type ScanActionStateBase =
       }[]
       /** Set when this photo and the previous one together point at a sake. */
       bothPhotos?: BothPhotosGuess
+    }
+  /**
+   * The label prints that the bottle is something other than sake (焼酎,
+   * 泡盛, 梅酒, リキュール …). The catalogue is sake only, and the makers of
+   * these drinks often brew sake too, so a lookup would land on a sake the
+   * visitor is not holding. No lookup is made; the screen says what the
+   * drink is. `drink` comes from a word printed in the photo, never from
+   * the brand or the maker.
+   */
+  | {
+      status: 'not_sake'
+      extraction: LabelScanExtraction
+      drink: NonSakeDrink
+    }
+  /**
+   * The photo is of a menu or of several bottles, not of one bottle. The
+   * scan answers "which sake is this bottle", and neither has one answer.
+   * The read (the first or most prominent drink) is carried so the visitor
+   * can search from it.
+   */
+  | {
+      status: 'not_one_bottle'
+      extraction: LabelScanExtraction
+      subject: 'menu' | 'several_bottles'
     }
   /**
    * Phase 3 / S2 (#107): the per-visitor rate limit on the vision-scan

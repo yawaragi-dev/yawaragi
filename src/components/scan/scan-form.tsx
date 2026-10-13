@@ -17,6 +17,8 @@ import {
   ClockCounterClockwise,
   EyeSlash,
   HandPalm,
+  BeerBottle,
+  SquaresFour,
   HourglassMedium,
   ImageBroken,
   Lightning,
@@ -42,6 +44,8 @@ import { resolveBadgeKind } from '@/lib/provenance/policy'
 import { CellarButton } from '@/components/collection/cellar-button'
 import { TastingLogPanel } from '@/components/journal/tasting-log-panel'
 import { OtherCandidates } from '@/components/scan/other-candidates'
+import { ScanBottlings } from '@/components/scan/scan-bottlings'
+import { bottlingNameFromRead } from '@/lib/scan/read-bottling'
 import { ScanOutcome, type OutcomeCandidate } from '@/components/scan/scan-outcome'
 import { ScanResultCard } from '@/components/scan/scan-result-card'
 import type { DebugEvent } from '@/lib/debug/debug-log'
@@ -673,6 +677,41 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
             ]}
           />
         )
+      case 'not_sake':
+        // Not in the design yet (questions for the designers, docs/design-questions.md):
+        // the screen says what the label says the drink is, and keeps the
+        // read editable so a wrong call is one "Search again" away.
+        return (
+          <ScanOutcome
+            testId="scan-result-not-sake"
+            icon={icon(BeerBottle)}
+            kicker={tOutcome('notSake.kicker')}
+            title={tOutcome(`notSake.title.${view.drink}`)}
+            body={`${tOutcome(`notSake.about.${view.drink}`)} ${tOutcome('notSake.body')}`}
+            onRescan={onPickClick}
+            read={{
+              name: view.extraction.name_ja,
+              brewery: view.extraction.brewery_ja,
+              badge: readBadge('scan-outcome-not-sake-badge'),
+            }}
+          />
+        )
+      case 'not_one_bottle':
+        return (
+          <ScanOutcome
+            testId={view.subject === 'menu' ? 'scan-result-menu' : 'scan-result-several-bottles'}
+            icon={icon(view.subject === 'menu' ? ListBullets : SquaresFour)}
+            kicker={tOutcome(`notOneBottle.${view.subject}.kicker`)}
+            title={tOutcome(`notOneBottle.${view.subject}.title`)}
+            body={tOutcome(`notOneBottle.${view.subject}.body`)}
+            onRescan={onPickClick}
+            read={{
+              name: view.extraction.name_ja,
+              brewery: view.extraction.brewery_ja,
+              badge: readBadge('scan-outcome-not-one-bottle-badge'),
+            }}
+          />
+        )
       case 'rate_limited':
         // v1.5's copy says "give it a minute"; our anonymous limit is per day
         // (5 scans / 24h), so the body keeps the honest wait in hours.
@@ -863,6 +902,25 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
                       refreshOnSave={false}
                     />
                   </div>
+                  <ScanBottlings
+                    brandId={view.brandId}
+                    lineName={view.sakeRomaji ?? view.extraction.name_ja}
+                    suggestedName={bottlingNameFromRead(
+                      view.sakeRomaji ?? view.extraction.name_ja,
+                      view.extraction.bottling,
+                    )}
+                    own={Array.isArray(view.ownBottlings) ? view.ownBottlings : []}
+                    badge={
+                      <ProvenanceBadgeView
+                        kind={resolveBadgeKind('llm_extracted')}
+                        label={tBadge('label')}
+                        explanation={tBadge('explanation')}
+                        sheetTitle={tBadge('sheetTitle')}
+                        closeLabel={tProvenanceSheet('closeLabel')}
+                        id="scan-bottling-read-badge"
+                      />
+                    }
+                  />
                 </div>
               )
             }

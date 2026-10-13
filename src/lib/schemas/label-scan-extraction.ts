@@ -24,9 +24,97 @@ import { withProvenance } from './with-provenance'
 // brewery read in Latin (an importer's back label) or in kana is compared
 // with the catalogue's romaji, and counts as a sure match only where a
 // second field agrees — CONTEXT.md "Same-romaji collisions are possible".
+/**
+ * What the photo shows. The scan answers "which sake is this bottle"; a
+ * menu page or a row of bottles has no one answer to that.
+ */
+export const ScanSubjectSchema = z.enum(['one_bottle', 'several_bottles', 'menu'])
+export type ScanSubject = z.infer<typeof ScanSubjectSchema>
+
+/**
+ * What the bottle holds, as its label says. The catalogue is sake only, and
+ * makers of shochu, awamori and plum liqueur often brew sake too, so a
+ * shochu bottle read as a sake lands on the maker's sake. Anything but
+ * `sake` and `unknown` is only to be answered from a word printed in the
+ * photo (焼酎, 泡盛, 梅酒, リキュール); `unknown` is the honest answer for a
+ * label that prints the name alone.
+ */
+export const ScanDrinkSchema = z.enum(['sake', 'shochu', 'awamori', 'umeshu', 'liqueur', 'other', 'unknown'])
+export type ScanDrink = z.infer<typeof ScanDrinkSchema>
+
+/** The drinks the scan can say a bottle is instead of sake. */
+export type NonSakeDrink = Exclude<ScanDrink, 'sake' | 'unknown'>
+
+export function nonSakeDrinkOf(extraction: { drink?: ScanDrink }): NonSakeDrink | null {
+  const drink = extraction.drink
+  return drink === undefined || drink === 'sake' || drink === 'unknown' ? null : drink
+}
+
+/** The grade (特定名称) a label prints. A sake (line) has none; a bottling does. */
+export const ScanGradeSchema = z.enum([
+  'junmai_daiginjo',
+  'daiginjo',
+  'junmai_ginjo',
+  'ginjo',
+  'tokubetsu_junmai',
+  'junmai',
+  'tokubetsu_honjozo',
+  'honjozo',
+  'futsushu',
+])
+export type ScanGrade = z.infer<typeof ScanGradeSchema>
+
+/** Style words a label prints beside the grade. */
+export const ScanStyleSchema = z.enum([
+  'nama',
+  'namachozo',
+  'namazume',
+  'genshu',
+  'muroka',
+  'nigori',
+  'sparkling',
+  'koshu',
+  'kimoto',
+  'yamahai',
+  'taruzake',
+  'kijoshu',
+  'hiyaoroshi',
+])
+export type ScanStyle = z.infer<typeof ScanStyleSchema>
+
+/**
+ * What the label says about this particular bottling, beyond the sake
+ * (line) the lookup finds: the catalogue knows 水尾, the label says 一味,
+ * 純米. Only what is printed in the photo; every part is optional. Used to
+ * recognise one of the visitor's own bottlings and to fill in the name when
+ * they add one.
+ */
+export const ScanBottlingSchema = z.object({
+  /** The product name beside the brand, as printed: 一味, 縁, "Wandering Poet". */
+  product_name: z.string().optional(),
+  grade: ScanGradeSchema.optional(),
+  styles: z.array(ScanStyleSchema).optional(),
+  /** Polishing ratio in percent, as printed (精米歩合 60% → 60). */
+  polishing_ratio: z.number().min(1).max(100).optional(),
+})
+export type ScanBottling = z.infer<typeof ScanBottlingSchema>
+
 export const LabelScanExtractionSchema = withProvenance(z.literal('llm_extracted'))
   .extend({
+    /** Optional: absent on reads made before the field existed. */
+    subject: ScanSubjectSchema.optional(),
+    /** Optional: absent on reads made before the field existed. */
+    drink: ScanDrinkSchema.optional(),
     name_ja: z.string().min(1),
+    /**
+     * Whether the photo prints the brewery's name. A front label often
+     * shows the brand alone, and the model then fills `brewery_ja` with the
+     * brewery it knows makes that brand — so a misread brand arrives with a
+     * brewery that "agrees" with it. False says the brewery is no second
+     * witness. Asked before the brewery so the model settles it first.
+     * Optional: absent on reads made before the field existed.
+     */
+    brewery_printed: z.boolean().optional(),
     brewery_ja: z.string().min(1),
     /**
      * Every other name the label prints for this sake: the product or
@@ -43,6 +131,7 @@ export const LabelScanExtractionSchema = withProvenance(z.literal('llm_extracted
      * first few and ignores the rest.
      */
     other_names: z.array(z.string()).optional(),
+    bottling: ScanBottlingSchema.optional(),
   })
   .extend({
     confidence: z.number().min(0).max(1),

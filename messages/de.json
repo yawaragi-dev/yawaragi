@@ -865,6 +865,36 @@
       "tipLight": "Licht einschalten",
       "tipStill": "Eine Sekunde ruhig halten"
     },
+    "notSake": {
+      "kicker": "Kein Sake",
+      "title": {
+        "shochu": "Das ist Shochu, kein Sake",
+        "awamori": "Das ist Awamori, kein Sake",
+        "umeshu": "Das ist Umeshu, kein Sake",
+        "liqueur": "Das ist ein Likör, kein Sake",
+        "other": "Das ist kein Sake"
+      },
+      "about": {
+        "shochu": "Shochu wird destilliert, Sake wird gebraut.",
+        "awamori": "Awamori ist der Reisbrand aus Okinawa.",
+        "umeshu": "Umeshu ist ein Likör aus Ume-Früchten, in Alkohol und Zucker eingelegt.",
+        "liqueur": "Auf dem Etikett steht Likör.",
+        "other": "Das Etikett nennt eine andere Getränkeart."
+      },
+      "body": "Der Katalog von Yawaragi enthält nur Sake, deshalb gibt es zu dieser Flasche keine Seite."
+    },
+    "notOneBottle": {
+      "menu": {
+        "kicker": "Eine Karte",
+        "title": "Das ist eine Karte, kein Etikett",
+        "body": "Im Moment lesen wir eine Flasche nach der anderen. Suche nach einem Namen von der Karte oder scanne das Etikett einer Flasche."
+      },
+      "several_bottles": {
+        "kicker": "Mehrere Flaschen",
+        "title": "Mehr als eine Flasche im Bild",
+        "body": "Wir können nicht erkennen, welche du meinst. Scanne eine Flasche nach der anderen."
+      }
+    },
     "rateLimited": {
       "kicker": "Pause",
       "title": "Vorerst zu viele Scans"
@@ -898,6 +928,10 @@
     "yourBottlings": "Deine Abfüllungen",
     "count": "{n, plural, one {# Abfüllung} other {# Abfüllungen}}",
     "ownEntry": "Dein eigener Eintrag",
+    "oneOfThese": "Ist es eine dieser Abfüllungen?",
+    "oneOfTheseLead": "Wir haben den Sake erkannt, nicht die genaue Abfüllung. Wähle deine, dann landet die Verkostung auf ihrer Seite.",
+    "fitsLabel": "Dein eigener Eintrag · passt zu diesem Etikett",
+    "readOffLabel": "Vom Etikett gelesen",
     "tasted": "Verkostet",
     "bottlingOf": "Eine Abfüllung von {line} <kanji></kanji>",
     "ownOfLine": "Deine eigene Abfüllung von {line}, noch nicht im Katalog. Nur du kannst sie sehen.",

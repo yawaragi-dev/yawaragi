@@ -3,6 +3,9 @@
 import { cookies } from 'next/headers'
 import { getPathname } from '@/i18n/navigation'
 import { ARRIVED_VIA_SCAN_QUERY } from '@/lib/scan/arrived-via-scan'
+import { ownBottlingForRead } from '@/lib/scan/read-bottling'
+import { notOneBottleOfSake } from '@/lib/scan/read-kind'
+import { resolveViewerJournal } from '@/lib/taste/viewer-journal'
 import type { Locale } from '@/i18n/routing'
 import { routing } from '@/i18n/routing'
 import {
@@ -274,12 +277,56 @@ async function runScanAction(
     // exact). Sakenowa resolved unambiguously; Sonnet retry would
     // just re-read the same extraction at higher cost. `rate_limited`
     // and `invalid_input` never reach this branch.
+    //
+    // One exception: a `matched` whose brewery the model says is not
+    // printed in the photo. Brand and brewery then agree only because
+    // the model supplied the brewery of the brand it read, so a misread
+    // brand passes as an exact match. Real bite (Dewazakura Yukimegami,
+    // front, 2026-10-13): tier 1 read the brush kanji as 獺祭 and added
+    // 旭酒造 in every fresh run, at 0.80-0.92; tier 2 read 出羽桜 each
+    // time and was never asked. On the 79-photo eval this sends 14 more
+    // photos to tier 2 and turns that one wrong answer right, with no
+    // answer made worse.
+    //
+    // A photo that comes with an earlier read (#408) goes straight to tier
+    // 2. The earlier photo did not settle on a sake, so the bottle is one
+    // the cheap model has trouble with, and waiting for it first only adds
+    // its seconds. Replayed on the 118-photo eval for every second photo of
+    // a bottle whose first photo was not a sure match (240 pairs over three
+    // runs): 208 right by tier 2 alone against 205 through both tiers, and
+    // a median of about 4 s against 9 s.
+    if (earlierRead) {
+      recordActionMetadata({
+        'scan.tier1Status': 'skipped_second_photo',
+        'scan.tier2Used': true,
+        'scan.tier2Provider': TIER_2_VISION_PROVIDER_KEY,
+      })
+      return withOwnBottlings(
+        await withEarlierRead(
+          await withNearestCandidates(
+            await extractAndLookupWithProvider(getVisionProvider(TIER_2_VISION_PROVIDER_KEY), image, localeRaw),
+            localeRaw,
+          ),
+          earlierRead,
+          localeRaw,
+        ),
+      )
+    }
     const tier1Result = await extractAndLookupWithProvider(
       getVisionProvider(DEFAULT_VISION_PROVIDER_KEY),
       image,
       localeRaw,
     )
+    const tier1BreweryNotPrinted =
+      tier1Result.status === 'matched' && tier1Result.extraction.brewery_printed === false
     if (
+      tier1BreweryNotPrinted ||
+      // "Not sake" and "not one bottle" end the scan without a lookup, so
+      // they are tier 2's to say. On the 118-photo eval tier 1 called two
+      // single bottles "several bottles" (one of them a sake); tier 2 made
+      // no such mistake, and neither model called a sake anything else.
+      tier1Result.status === 'not_sake' ||
+      tier1Result.status === 'not_one_bottle' ||
       tier1Result.status === 'no_match' ||
       tier1Result.status === 'low_confidence' ||
       tier1Result.status === 'extraction_failed' ||
@@ -290,7 +337,7 @@ async function runScanAction(
       debugAdd(
         'ScanAction',
         `tier-1 (Haiku) returned ${tier1Result.status} — retrying with tier-2 (${TIER_2_VISION_PROVIDER_KEY})`,
-        { tier1Status: tier1Result.status },
+        { tier1Status: tier1Result.status, tier1BreweryNotPrinted },
         'warn',
       )
       // The cost signal. `scan.tier2Used` over all scans gives the retry
@@ -298,17 +345,19 @@ async function runScanAction(
       // which is what tells you whether to tune the prompt, the confidence
       // thresholds, or the tier-1 model itself.
       recordActionMetadata({
-        'scan.tier1Status': tier1Result.status,
+        'scan.tier1Status': tier1BreweryNotPrinted ? 'matched_brewery_not_printed' : tier1Result.status,
         'scan.tier2Used': true,
         'scan.tier2Provider': TIER_2_VISION_PROVIDER_KEY,
       })
-      return withEarlierRead(
-        await withNearestCandidates(
-          await extractAndLookupWithProvider(getVisionProvider(TIER_2_VISION_PROVIDER_KEY), image, localeRaw),
+      return withOwnBottlings(
+        await withEarlierRead(
+          await withNearestCandidates(
+            await extractAndLookupWithProvider(getVisionProvider(TIER_2_VISION_PROVIDER_KEY), image, localeRaw),
+            localeRaw,
+          ),
+          earlierRead,
           localeRaw,
         ),
-        earlierRead,
-        localeRaw,
       )
     }
     // Recorded on the cheap path too — a retry RATE needs the denominator,
@@ -317,7 +366,9 @@ async function runScanAction(
       'scan.tier1Status': tier1Result.status,
       'scan.tier2Used': false,
     })
-    return withEarlierRead(await withNearestCandidates(tier1Result, localeRaw), earlierRead, localeRaw)
+    return withOwnBottlings(
+      await withEarlierRead(await withNearestCandidates(tier1Result, localeRaw), earlierRead, localeRaw),
+    )
   })
 
   // Attach the accumulated trace to the response. Stripped when debug
@@ -404,6 +455,32 @@ async function withEarlierRead(
 }
 
 /**
+ * Adds the visitor's own bottlings of the matched sake, the one the label
+ * points at first (design v1.6 §5, "Is it one of these bottlings?"). The
+ * catalogue stops at the sake; the label names the bottling, and a visitor
+ * who added it before should land on it rather than add it twice.
+ *
+ * Only a match has a sake to hang bottlings on, and only a visitor who
+ * keeps a journal has any. A failure here leaves the scan as it was.
+ */
+async function withOwnBottlings(state: ScanActionState): Promise<ScanActionState> {
+  if (state.status !== 'matched') return state
+  try {
+    const viewer = await resolveViewerJournal(await cookies())
+    const own = viewer.expressions.filter((e) => e.brandId === state.brandId)
+    if (own.length === 0) return state
+    const fits = ownBottlingForRead(state.extraction.bottling, own)
+    const rows = own.map((e) => ({ id: e.id, name: e.name, fitsLabel: e.id === fits?.id }))
+    return { ...state, ownBottlings: rows.sort((a, b) => Number(b.fitsLabel) - Number(a.fitsLabel)) }
+  } catch (err) {
+    debugAdd('ScanAction', 'reading the visitor’s own bottlings threw; the match stands without them', {
+      message: err instanceof Error ? err.message.slice(0, 300) : String(err),
+    }, 'warn')
+    return state
+  }
+}
+
+/**
  * Tier-agnostic extraction + label-resolution pipeline. Takes a
  * `VisionProvider` so `scanAction` can run it with Haiku first and
  * Sonnet on retry (see the two-tier comment in `scanAction`).
@@ -429,6 +506,9 @@ async function extractAndLookupWithProvider(
       // through `LabelScanExtractionSchema`, pinning `source` to
       // `'llm_extracted'`.
       const extraction = await provider.extractLabel(image)
+      const other = notOneBottleOfSake(extraction)
+      if (other?.kind === 'not_one_bottle') return { status: 'not_one_bottle', extraction, subject: other.subject }
+      if (other?.kind === 'not_sake') return { status: 'not_sake', extraction, drink: other.drink }
       const resolved = await resolveScannedLabel(extraction)
       return mapResolvedToState(resolved, extraction, localeRaw)
     } catch (err) {

@@ -865,6 +865,36 @@
       "tipLight": "Turn on the light",
       "tipStill": "Hold still for a second"
     },
+    "notSake": {
+      "kicker": "Not sake",
+      "title": {
+        "shochu": "This is shochu, not sake",
+        "awamori": "This is awamori, not sake",
+        "umeshu": "This is umeshu, not sake",
+        "liqueur": "This is a liqueur, not sake",
+        "other": "This isn’t sake"
+      },
+      "about": {
+        "shochu": "Shochu is distilled, where sake is brewed.",
+        "awamori": "Awamori is Okinawa’s distilled rice spirit.",
+        "umeshu": "Umeshu is a liqueur of ume fruit steeped in alcohol and sugar.",
+        "liqueur": "The label says liqueur.",
+        "other": "The label names another kind of drink."
+      },
+      "body": "Yawaragi’s catalogue holds sake only, so there is no page for this bottle."
+    },
+    "notOneBottle": {
+      "menu": {
+        "kicker": "A menu",
+        "title": "That’s a menu, not a label",
+        "body": "We read one bottle at a time for now. Search for a name from the menu, or scan a bottle’s label."
+      },
+      "several_bottles": {
+        "kicker": "Several bottles",
+        "title": "More than one bottle in the photo",
+        "body": "We can’t tell which one you mean. Scan one bottle at a time."
+      }
+    },
     "rateLimited": {
       "kicker": "Paused",
       "title": "Too many scans for now"
@@ -898,6 +928,10 @@
     "yourBottlings": "Your bottlings",
     "count": "{n, plural, one {# bottling} other {# bottlings}}",
     "ownEntry": "Your own entry",
+    "oneOfThese": "Is it one of these bottlings?",
+    "oneOfTheseLead": "We matched the sake, not the exact bottling. Pick yours and the tasting lands on its page.",
+    "fitsLabel": "Your own entry · fits this label",
+    "readOffLabel": "Read off this label",
     "tasted": "Tasted",
     "bottlingOf": "A bottling of {line} <kanji></kanji>",
     "ownOfLine": "Your own bottling of {line}, not in the catalogue yet. Only you can see it.",
