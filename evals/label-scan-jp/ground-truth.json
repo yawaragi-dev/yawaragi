@@ -3731,5 +3731,60 @@
       "rightsCleared": true,
       "notes": "NO WRITING IN THE FRAME: Ohmine 3 Grain \"Winter's Arrival\" (冬のおとずれ), a cloudy sake by the maintainer's account, on a bar counter with a glass of it in front. The side of the bottle that faces the camera carries a drawing only, a woman in a blue kimono under snow-laden branches, printed on frosted glass: no kanji, kana or Latin letter anywhere in the photo. Nothing here can be read, so a scan that names this sake has recognised the artwork, and a scan that finds nothing has not failed at reading. The catalogue has 大嶺 in two rows; both count. The same bottling as the 大嶺 line of okura_fukugen_omine_fujioka_takagi_izumi_menu.jpg. A person stood behind the counter at the top left and a second shape at the top right; both corners are painted over in the file, which was re-encoded for that, and location and camera data were removed. The drawn figure is artwork, not a person. The maintainer's file was ohime_…; \"ohmine\" was corrected. Photographed at a bar, added 2026-10-13."
     }
+  },
+  "okura_omine_takagi_menu.jpg": {
+    "name_ja": "大倉",
+    "brewery_ja": "大倉本家",
+    "view": "other",
+    "subject": "menu",
+    "items": [
+      {
+        "name_ja": "大倉",
+        "brewery_ja": "大倉本家",
+        "product": "愛山 直汲み 無濾過生原酒 特別純米",
+        "expectedBrandIds": [
+          807
+        ]
+      },
+      {
+        "name_ja": "大嶺",
+        "brewery_ja": "大嶺酒造",
+        "product": "冬のおとずれ 純米",
+        "expectedBrandIds": [
+          3581,
+          4132
+        ]
+      },
+      {
+        "name_ja": "朝日鷹",
+        "brewery_ja": "高木酒造",
+        "product": "低温貯蔵酒 本醸造",
+        "expectedBrandIds": [
+          145
+        ]
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "大嶺",
+        "朝日鷹",
+        "Okura",
+        "Omine",
+        "Asahidaka",
+        "おおくら",
+        "おおみね",
+        "あさひだか"
+      ],
+      "brewery_ja": [
+        "大嶺酒造",
+        "高木酒造"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_menu_photo",
+      "rightsCleared": true,
+      "localOnly": false,
+      "notes": "A MENU, ONE COLUMN: the same page of the bar's tablet list as okura_fukugen_omine_fujioka_takagi_izumi_menu.jpg, photographed close and nearly square on, so that only its left column is in frame, sharp: 大倉, 大嶺 and 朝日鷹, top to bottom, in the maintainer's order. Each cell prints the name in kanji, hiragana and Latin with its prefecture, then the bottling and the grade; the page writes \"Honjyozo\". Slivers of the next column show at the right edge with nothing legible in them, and are not listed. The page does not print the makers, which are the catalogue's; the catalogue has 大嶺 in two rows. A lamp is reflected in the screen. Published: a plain typeset list, no venue name, no logo, no picture, no person. Location and camera data were removed from the file. Added 2026-10-13."
+    }
   }
 }
