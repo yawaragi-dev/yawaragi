@@ -1996,6 +1996,23 @@
      ],
      "confidence": 0.6,
      "latencyMs": 6163
+    },
+    "aramasa_takagi_menu.jpg": {
+     "photoSha": "e3cdd774cbb0b31f",
+     "name_ja": "新政",
+     "brewery_ja": "新政酒造",
+     "brewery_printed": false,
+     "subject": "menu",
+     "drink": "sake",
+     "bottling": {
+      "product_name": "タンジェリン",
+      "grade": "junmai"
+     },
+     "other_names": [
+      "タンジェリン"
+     ],
+     "confidence": 0.7,
+     "latencyMs": 5229
     }
    }
   },
@@ -4083,6 +4100,27 @@
      ],
      "confidence": 0.45,
      "latencyMs": 3151
+    },
+    "aramasa_takagi_menu.jpg": {
+     "photoSha": "e3cdd774cbb0b31f",
+     "name_ja": "新政",
+     "brewery_ja": "新政酒造",
+     "brewery_printed": false,
+     "subject": "menu",
+     "drink": "sake",
+     "bottling": {
+      "product_name": "タンジェリン",
+      "grade": "junmai",
+      "styles": [],
+      "polishing_ratio": 100
+     },
+     "other_names": [
+      "タンジェリン",
+      "あらまさ",
+      "Aramasa"
+     ],
+     "confidence": 0.6,
+     "latencyMs": 2703
     }
    }
   },

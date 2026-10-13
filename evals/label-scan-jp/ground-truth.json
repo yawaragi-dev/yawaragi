@@ -2323,5 +2323,63 @@
       "rightsCleared": true,
       "notes": "A SHOP SHELF: three rows of a refrigerated sake shelf in Japan, thirteen products, listed left to right and top to bottom as the maintainer named them. Most labels and boxes are legible and every row has printed shelf tags with name, grade and price. Item 9 is a bottle cut off by the right edge of the middle row. Item 8 is a second 山猿 with a white label; its grade could not be read with confidence. Makers are the catalogue's, confirmed by the maintainer: 花洛 is 招徳酒造, 坤滴 is 東山酒造 and 山猿 is 永山酒造 (永山本家酒造場 is the maker of 貴); the maker line on those shelf tags is too small to read in this photo. The file name lists the makers in shelf order. The top-level name is the first item only because the field must hold something. No shop name, no person, no reflection. Added 2026-10-13."
     }
+  },
+  "aramasa_takagi_menu.jpg": {
+    "name_ja": "新政",
+    "brewery_ja": "新政酒造",
+    "view": "other",
+    "subject": "menu",
+    "items": [
+      {
+        "name_ja": "新政",
+        "brewery_ja": "新政酒造",
+        "product": "タンジェリン 2025 純米",
+        "expectedBrandIds": [
+          109
+        ]
+      },
+      {
+        "name_ja": "新政",
+        "brewery_ja": "新政酒造",
+        "product": "No.6 X type 2025 純米",
+        "expectedBrandIds": [
+          109
+        ]
+      },
+      {
+        "name_ja": "十四代",
+        "brewery_ja": "高木酒造",
+        "product": "大極上 諸白 龍の落とし子 純米大吟醸",
+        "expectedBrandIds": [
+          144
+        ]
+      },
+      {
+        "name_ja": "新政",
+        "brewery_ja": "新政酒造",
+        "product": "陽乃鳥 スパーク Nepal flood relief 純米",
+        "expectedBrandIds": [
+          109
+        ]
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "十四代",
+        "Aramasa",
+        "Jyuyondai",
+        "あらまさ",
+        "じゅうよんだい"
+      ],
+      "brewery_ja": [
+        "高木酒造"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_menu_photo",
+      "rightsCleared": true,
+      "localOnly": false,
+      "notes": "A MENU: a bar's sake list shown on a tablet, a grid of nine cells of which four are filled, listed left to right and top to bottom as the maintainer named them. Each cell prints the sake's name in kanji, hiragana and Latin with its prefecture, then the bottling and the grade; the page writes \"Jyuyondai\". It does not print the makers, which are the catalogue's (高木酒造 of Yamagata, row 96; the catalogue has other breweries of that name). The third cell reads 大極上 諸白 where the maintainer's list has \"Gokujo Morohaku\"; 龍の落とし子 is the rice. Below the grid: tasting-flight and per-glass prices and a one-drink-per-guest notice. Published: a plain typeset list of names, grades and prices, no venue name, no logo, no picture, no person; a lamp is reflected in the screen. Added 2026-10-13."
+    }
   }
 }
