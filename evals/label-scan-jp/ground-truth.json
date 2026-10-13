@@ -3149,5 +3149,61 @@
       "rightsCleared": true,
       "notes": "Aramasa Hinotori Spark, a sparkling junmai kijoshu by the maintainer's account, on a bar counter in dim light with a glass in front of it. The label prints 新政酒造株式会社謹醸 above the bird mark and 陽乃鳥 below it, small; a neck seal says Spark / スパーク and an orange strip down the neck is too small to read. The brand 新政 appears only inside the maker's name, and the catalogue has no row for 陽乃鳥, so the sake's row is the answer. The same bottling as the fourth line of aramasa_takagi_menu.jpg. Other bottles stand in a fridge behind it, out of focus. The maintainer's file was aramasa_sparku_kijoshu_on_table.jpg and was renamed to say what the bottle is. Photographed at a bar; no person in the frame. Added 2026-10-13."
     }
+  },
+  "blanks_and_itakura_shelf_low_light.jpg": {
+    "name_ja": "天穏",
+    "brewery_ja": "板倉酒造",
+    "view": "front",
+    "subject": "several_bottles",
+    "items": [
+      {
+        "unreadable": true,
+        "expectedBrandIds": []
+      },
+      {
+        "unreadable": true,
+        "expectedBrandIds": []
+      },
+      {
+        "unreadable": true,
+        "expectedBrandIds": []
+      },
+      {
+        "unreadable": true,
+        "expectedBrandIds": []
+      },
+      {
+        "unreadable": true,
+        "expectedBrandIds": []
+      },
+      {
+        "unreadable": true,
+        "expectedBrandIds": []
+      },
+      {
+        "unreadable": true,
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "天穏",
+        "brewery_ja": "板倉酒造",
+        "expectedBrandIds": [
+          2077
+        ]
+      },
+      {
+        "unreadable": true,
+        "expectedBrandIds": []
+      },
+      {
+        "unreadable": true,
+        "expectedBrandIds": []
+      }
+    ],
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "A WINDOW FULL OF BOTTLES, AT NIGHT: a bar's window photographed from the street in low light, with about ten empty bottles standing on the sill inside, backlit, listed left to right as the maintainer counted them. Only one can be named with confidence: 天穏 (板倉酒造), the eighth, in the right-hand pane. The others are too dark, turned away or half hidden: a label beginning 生酛の at the left edge, a drawn figure, a plain teal label, a black label with white brush characters, and to the right of 天穏 a large brushed ring and a single large character. The label does not print the maker in a size that can be read; it is the catalogue's. The catalogue also has 無窮天穏 from the same maker, which this label does not say. The top-level name is the one readable bottle. No venue name, no person; shelves, lamps and knives inside the room. Added 2026-10-13."
+    }
   }
 }

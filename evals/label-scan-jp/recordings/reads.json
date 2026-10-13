@@ -2205,6 +2205,18 @@
      ],
      "confidence": 0.8,
      "latencyMs": 6679
+    },
+    "blanks_and_itakura_shelf_low_light.jpg": {
+     "photoSha": "313b36e90069ac32",
+     "name_ja": "天穏",
+     "brewery_ja": "天穏酒造",
+     "brewery_printed": false,
+     "subject": "several_bottles",
+     "drink": "unknown",
+     "bottling": {},
+     "other_names": [],
+     "confidence": 0.15,
+     "latencyMs": 13773
     }
    }
   },
@@ -4515,6 +4527,18 @@
      ],
      "confidence": 0.8,
      "latencyMs": 3199
+    },
+    "blanks_and_itakura_shelf_low_light.jpg": {
+     "photoSha": "313b36e90069ac32",
+     "name_ja": "天穏",
+     "brewery_ja": "板倉酒造",
+     "brewery_printed": false,
+     "subject": "several_bottles",
+     "drink": "unknown",
+     "bottling": {},
+     "other_names": [],
+     "confidence": 0.5,
+     "latencyMs": 4187
     }
    }
   },
