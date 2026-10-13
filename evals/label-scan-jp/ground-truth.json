@@ -2191,5 +2191,137 @@
       "localOnly": true,
       "notes": "A MENU, AND NOT SAKE: one page of a restaurant drinks menu, headed 焼酎 米 / \"Japanischer Shochu\", offering Shichida rice shochu by the glass and the bottle with a picture of the bottle. The page does not name the maker. Its Japanese and German description calls the drink a junmai sake, which the heading, the serving line (\"mit Eis/Wasser/Soda\") and the pictured bottle contradict; the maintainer, who photographed it, confirms it is the rice shochu. The catalogue has the SAKE 七田 from the same maker (row 968), which is not what the page sells. Fingers at the corner, glasses on the table and a strip of dark clothing at the bottom edge are in frame; no face. Added 2026-10-13."
     }
+  },
+  "sasaki_matsui_nagayama_kitagawa_sasaki_japanese_shelf.jpg": {
+    "name_ja": "西陣",
+    "brewery_ja": "佐々木酒造",
+    "view": "front",
+    "subject": "several_bottles",
+    "items": [
+      {
+        "name_ja": "西陣",
+        "brewery_ja": "佐々木酒造",
+        "product": "特別純米酒",
+        "expectedBrandIds": [
+          739
+        ]
+      },
+      {
+        "name_ja": "京千歳",
+        "brewery_ja": "松井酒造",
+        "product": "純米吟醸",
+        "expectedBrandIds": [
+          690
+        ]
+      },
+      {
+        "name_ja": "神蔵",
+        "brewery_ja": "松井酒造",
+        "product": "純米大吟醸 無濾過・無加水・一火(白)",
+        "expectedBrandIds": [
+          1933
+        ]
+      },
+      {
+        "name_ja": "神蔵",
+        "brewery_ja": "松井酒造",
+        "product": "純米 無濾過・無加水・生",
+        "expectedBrandIds": [
+          1933
+        ]
+      },
+      {
+        "name_ja": "花洛",
+        "brewery_ja": "招徳酒造",
+        "product": "純米吟醸 祝",
+        "expectedBrandIds": [
+          3280
+        ]
+      },
+      {
+        "name_ja": "坤滴",
+        "brewery_ja": "東山酒造",
+        "product": "純米吟醸",
+        "expectedBrandIds": [
+          742
+        ]
+      },
+      {
+        "name_ja": "山猿",
+        "brewery_ja": "永山酒造",
+        "product": "山廃仕込 無濾過生原酒",
+        "expectedBrandIds": [
+          889
+        ]
+      },
+      {
+        "name_ja": "山猿",
+        "brewery_ja": "永山酒造",
+        "expectedBrandIds": [
+          889
+        ]
+      },
+      {
+        "unreadable": true,
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "富翁",
+        "brewery_ja": "北川本家",
+        "product": "純米大吟醸 山田錦",
+        "expectedBrandIds": [
+          686
+        ]
+      },
+      {
+        "name_ja": "富翁",
+        "brewery_ja": "北川本家",
+        "product": "大吟醸純米 吟麗",
+        "expectedBrandIds": [
+          686
+        ]
+      },
+      {
+        "name_ja": "富翁",
+        "brewery_ja": "北川本家",
+        "product": "純米酒 山廃一火",
+        "expectedBrandIds": [
+          686
+        ]
+      },
+      {
+        "name_ja": "聚楽第",
+        "brewery_ja": "佐々木酒造",
+        "product": "純米吟醸",
+        "expectedBrandIds": [
+          737
+        ]
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "京千歳",
+        "神蔵",
+        "KAGURA",
+        "花洛",
+        "坤滴",
+        "山猿",
+        "富翁",
+        "TOMIO",
+        "聚楽第"
+      ],
+      "brewery_ja": [
+        "松井酒造",
+        "招徳酒造",
+        "東山酒造",
+        "永山酒造",
+        "北川本家"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "A SHOP SHELF: three rows of a refrigerated sake shelf in Japan, thirteen products, listed left to right and top to bottom as the maintainer named them. Most labels and boxes are legible and every row has printed shelf tags with name, grade and price. Item 9 is a bottle cut off by the right edge of the middle row. Item 8 is a second 山猿 with a white label; its grade could not be read with confidence. Makers are the catalogue's: the maintainer's list gave 花洛 to Matsui Shuzo, 坤滴 to Sasaki Shuzo and 山猿 to Nagayama Honke, where the catalogue has 招徳酒造, 東山酒造 and 永山酒造 (永山本家酒造場 is the maker of 貴); the maker line on those shelf tags is too small to read in this photo, and the question is open with the maintainer. The file name is theirs and still carries their makers. The top-level name is the first item only because the field must hold something. No shop name, no person, no reflection. Added 2026-10-13."
+    }
   }
 }

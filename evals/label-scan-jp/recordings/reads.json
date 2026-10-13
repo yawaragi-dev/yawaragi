@@ -1980,6 +1980,22 @@
      ],
      "confidence": 0.9,
      "latencyMs": 3998
+    },
+    "sasaki_matsui_nagayama_kitagawa_sasaki_japanese_shelf.jpg": {
+     "photoSha": "a4412ac95adca53a",
+     "name_ja": "富翁",
+     "brewery_ja": "富翁酒造",
+     "brewery_printed": false,
+     "subject": "several_bottles",
+     "drink": "sake",
+     "bottling": {
+      "grade": "junmai_daiginjo"
+     },
+     "other_names": [
+      "TOMIO"
+     ],
+     "confidence": 0.6,
+     "latencyMs": 6163
     }
    }
   },
@@ -4051,6 +4067,22 @@
      ],
      "confidence": 0.8,
      "latencyMs": 6216
+    },
+    "sasaki_matsui_nagayama_kitagawa_sasaki_japanese_shelf.jpg": {
+     "photoSha": "a4412ac95adca53a",
+     "name_ja": "富翁",
+     "brewery_ja": "北川本家",
+     "brewery_printed": false,
+     "subject": "several_bottles",
+     "drink": "sake",
+     "bottling": {
+      "grade": "junmai_daiginjo"
+     },
+     "other_names": [
+      "TOMIO"
+     ],
+     "confidence": 0.45,
+     "latencyMs": 3151
     }
    }
   },
