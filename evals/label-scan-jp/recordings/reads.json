@@ -2175,6 +2175,18 @@
      ],
      "confidence": 0.85,
      "latencyMs": 5410
+    },
+    "gokai_koitokame_menu.jpg": {
+     "photoSha": "4c11b8ae491b7bec",
+     "name_ja": "ブラックニッカ",
+     "brewery_ja": "ニッカウヰスキー",
+     "brewery_printed": false,
+     "subject": "menu",
+     "drink": "other",
+     "bottling": {},
+     "other_names": [],
+     "confidence": 0.4,
+     "latencyMs": 5348
     }
    }
   },
@@ -4454,6 +4466,18 @@
      ],
      "confidence": 0.85,
      "latencyMs": 2409
+    },
+    "gokai_koitokame_menu.jpg": {
+     "photoSha": "4c11b8ae491b7bec",
+     "name_ja": "ブラックニッカ",
+     "brewery_ja": "ニッカウヰスキー",
+     "brewery_printed": false,
+     "subject": "menu",
+     "drink": "other",
+     "bottling": {},
+     "other_names": [],
+     "confidence": 0.5,
+     "latencyMs": 5900
     }
    }
   },

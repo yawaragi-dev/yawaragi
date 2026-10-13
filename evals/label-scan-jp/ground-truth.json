@@ -3087,5 +3087,39 @@
       "rightsCleared": true,
       "notes": "Zaku Miyabi no Tomo Nakadori, a junmai daiginjo by the maintainer's account, on a bar counter in dim light with a glass beside it. The front label prints 作, 雅乃智 中取り in brush script, and ZAKU / MIYABI NO TOMO / NAKADORI / MIÉ JAPAN; it prints neither the grade nor the maker. The same bottling as the 作 line of inetoagave_hiroki_matsui_fujioka_shimizu_ryozeki_menu.jpg. The maintainer's file was shimizu_zaru_on_table.jpg and was renamed to say what the bottle is. A member of staff stood at the left of the frame with their back to the camera; the photo is cropped to leave them out, which also cuts the glass in half. Photographed at a bar, added 2026-10-13."
     }
+  },
+  "gokai_koitokame_menu.jpg": {
+    "name_ja": "豪快",
+    "brewery_ja": "宝酒造",
+    "view": "other",
+    "subject": "menu",
+    "items": [
+      {
+        "name_ja": "豪快",
+        "brewery_ja": "宝酒造",
+        "product": "冷・熱燗",
+        "expectedBrandIds": [
+          3507
+        ]
+      },
+      {
+        "name_ja": "鯉と亀と生原酒",
+        "product": "冷",
+        "expectedBrandIds": []
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "鯉と亀と生原酒",
+        "鯉と亀と生原酒。",
+        "日本酒"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_menu_photo",
+      "rightsCleared": true,
+      "localOnly": true,
+      "notes": "A MENU: an izakaya's laminated drinks card standing on the counter, photographed at an angle with sauce bottles and a wooden sign in front of it. Most of the card is other drinks: draft beer, cocktails, 焼酎・果実酒 (よかいち, 茉莉花, 梅酒), highballs and sours. The 日本酒 section, small and mid-page, has two lines, which are the items here in the maintainer's order: 豪快 (cold or hot) and 鯉と亀と生原酒。(cold). The card prints no maker for either and no grade; 豪快 is 宝酒造's in the catalogue, and 鯉と亀と生原酒 is not in the catalogue and its maker is not known. The other drinks on the card are not listed as items. Kept local: the card is illustrated throughout (drawn glasses, bottles, fruit) and set in decorative lettering. No person in the frame; no location data in the file. Added 2026-10-13."
+    }
   }
 }
