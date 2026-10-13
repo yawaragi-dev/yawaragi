@@ -2322,6 +2322,19 @@
      ],
      "confidence": 0.55,
      "latencyMs": 7822
+    },
+    "uehara_matsumoto_nanyo_asahi_yoshida_shimizu_kazuma_linne_aihara_menu.jpg": {
+     "photoSha": "599a96ab120a9452",
+     "name_ja": "LINNE",
+     "brewery_ja": "Fukushima",
+     "brewery_printed": false,
+     "subject": "menu",
+     "drink": "sake",
+     "other_names": [
+      "800 YAO 大麦"
+     ],
+     "confidence": 0.5,
+     "latencyMs": 8875
     }
    }
   },
@@ -4756,6 +4769,27 @@
      ],
      "confidence": 0.8,
      "latencyMs": 5110
+    },
+    "uehara_matsumoto_nanyo_asahi_yoshida_shimizu_kazuma_linne_aihara_menu.jpg": {
+     "photoSha": "599a96ab120a9452",
+     "name_ja": "手取川",
+     "brewery_ja": "吉田酒造店",
+     "brewery_printed": false,
+     "subject": "menu",
+     "drink": "sake",
+     "bottling": {
+      "grade": "junmai_ginjo",
+      "styles": [
+       "nama",
+       "genshu"
+      ]
+     },
+     "other_names": [
+      "てどりがわ",
+      "Tedorigawa"
+     ],
+     "confidence": 0.6,
+     "latencyMs": 7612
     }
    }
   },

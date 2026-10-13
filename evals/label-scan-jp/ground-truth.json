@@ -3589,5 +3589,123 @@
       "localOnly": false,
       "notes": "A MENU, AT AN ANGLE: the same bar's tablet list as aramasa_takagi_menu.jpg, another page, photographed close and from the side so that the grid runs diagonally and only the nearest cells are sharp. Items are in the maintainer's order. Sharp: 朝日鷹 (低温貯蔵酒, 本醸造; the page writes \"Honjyozo\"), 大嶺 (冬のおとずれ, 純米) and most of 大倉 and 蒼空. Soft: 福源, whose bottling line can still be made out, and 福海, of which only the name can; the maintainer's list has 福海 as blank, and it is listed here by name alone. 仙介 is cut by the right edge with 超辛口 and 純米吟醸 in frame. One more cell at the right edge shows part of one character and is unreadable. The page does not print the makers, which are the catalogue's; the catalogue has 大嶺 in two rows. A lamp is reflected in the screen. Published: a plain typeset list of names, grades and prices, no venue name, no logo, no picture, no person. Location and camera data were removed from the file. Added 2026-10-13."
     }
+  },
+  "uehara_matsumoto_nanyo_asahi_yoshida_shimizu_kazuma_linne_aihara_menu.jpg": {
+    "name_ja": "不老泉",
+    "brewery_ja": "上原酒造",
+    "view": "other",
+    "subject": "menu",
+    "items": [
+      {
+        "name_ja": "不老泉",
+        "brewery_ja": "上原酒造",
+        "product": "酒母四段 無濾過生酒",
+        "expectedBrandIds": [
+          676
+        ]
+      },
+      {
+        "name_ja": "澤屋まつもと",
+        "brewery_ja": "松本酒造",
+        "product": "雄町 純米吟醸",
+        "expectedBrandIds": [
+          704
+        ]
+      },
+      {
+        "name_ja": "花陽浴",
+        "brewery_ja": "南陽醸造",
+        "product": "越後五百万石 無濾過生原酒 純米大吟醸",
+        "expectedBrandIds": [
+          1179
+        ]
+      },
+      {
+        "name_ja": "久保田",
+        "brewery_ja": "朝日酒造",
+        "product": "千寿 純米吟醸",
+        "expectedBrandIds": [
+          431
+        ]
+      },
+      {
+        "name_ja": "手取川",
+        "brewery_ja": "吉田酒造店",
+        "product": "シャキッと辛口 生原酒 純米吟醸",
+        "expectedBrandIds": [
+          470
+        ]
+      },
+      {
+        "name_ja": "作",
+        "brewery_ja": "清水清三郎商店",
+        "product": "雅乃智 純米大吟醸",
+        "expectedBrandIds": [
+          1033
+        ]
+      },
+      {
+        "name_ja": "竹葉",
+        "brewery_ja": "数馬酒造",
+        "product": "能登産百万石乃白 ひやおろし 特別純米",
+        "expectedBrandIds": [
+          472
+        ]
+      },
+      {
+        "name_ja": "LINNE",
+        "product": "800 YAO 大麦 大麦麹と米麹を使用したクラフトサケ Craft SAKE",
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "雨後の月",
+        "brewery_ja": "相原酒造",
+        "product": "純米大吟醸",
+        "expectedBrandIds": [
+          871
+        ]
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "澤屋まつもと",
+        "花陽浴",
+        "久保田",
+        "手取川",
+        "作",
+        "竹葉",
+        "LINNE",
+        "りんね",
+        "雨後の月",
+        "Furousen",
+        "Sawaya Matsumoto",
+        "Hanaabi",
+        "Kubota",
+        "Tedorigawa",
+        "Zaku",
+        "Chikuha",
+        "ふろうせん",
+        "さわやまつもと",
+        "はなあび",
+        "くぼた",
+        "てどりがわ",
+        "ちくは"
+      ],
+      "brewery_ja": [
+        "松本酒造",
+        "南陽醸造",
+        "朝日酒造",
+        "吉田酒造店",
+        "清水清三郎商店",
+        "数馬酒造",
+        "相原酒造"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_menu_photo",
+      "rightsCleared": true,
+      "localOnly": false,
+      "notes": "A MENU, AT AN ANGLE: the same bar's tablet list as aramasa_takagi_menu.jpg, another page, photographed close and from the side: a grid of nine cells, the middle column whole and the outer columns cut by the edges of the frame, listed left to right and top to bottom as the maintainer named them. Whole: 澤屋まつもと, 手取川 and LINNE. Cut at the left: 不老泉 (no grade in frame), 久保田 and 竹葉, each with its name and bottling legible. Cut at the right: 花陽浴, with most of its lines; 作, of which one stroke of the name, \"Zaku\" and the first character of 雅乃智 are in frame; and 雨後の月, of which 雨 and \"Ugo n…\" are. The page does not print the makers, which are the catalogue's; the maintainer's list and file name had \"Kazumi\" for 数馬酒造 (Kazuma), and the file was renamed. LINNE is a craft sake brewed with barley koji as well as rice koji, as the cell says, so not sake in the legal sense; it is not in the catalogue and its maker is not on the page. A lamp is reflected in the screen across the 久保田 cell. Published: a plain typeset list of names, grades and prices, no venue name, no logo, no picture, no person. Location and camera data were removed from the file. Added 2026-10-13."
+    }
   }
 }
