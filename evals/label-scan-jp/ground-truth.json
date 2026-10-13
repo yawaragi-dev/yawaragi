@@ -2797,7 +2797,7 @@
       "source": "maintainer_menu_photo",
       "rightsCleared": true,
       "localOnly": false,
-      "notes": "A MENU: the same bar's tablet list as aramasa_takagi_menu.jpg, the \"Premium SAKE\" page, a grid of nine cells of which six are filled, listed left to right and top to bottom as the maintainer named them. Each cell prints the sake's name in kanji, hiragana and Latin with its prefecture, then the bottling and the grade. The page does not print the makers, which are the catalogue's. The first cell is a craft sake (brewed with beer hops, so not sake in the legal sense) and prints \"Craft SAKE\" where the others print a grade; the catalogue lists 稲とアガベ, so it is left as sake here. That cell also says 秋田 in Japanese and \"Aomori\" in Latin; Akita is right. 裏翠玉 is a bottling of 翠玉 in the catalogue. 作's bottling is 雅乃智 (Miyabi no Tomo), which the maintainer's list read as \"Ga no Chi\". The page writes \"Inetoagabe\" and \"Sookuu\". Below the grid: tasting-flight and per-glass prices and a one-drink-per-guest notice. Published: a plain typeset list of names, grades and prices, no venue name, no logo, no picture, no person; a lamp is reflected in the screen. Added 2026-10-13."
+      "notes": "A MENU: the same bar's tablet list as aramasa_takagi_menu.jpg, the \"Premium SAKE\" page, a grid of nine cells of which six are filled, listed left to right and top to bottom as the maintainer named them. Each cell prints the sake's name in kanji, hiragana and Latin with its prefecture, then the bottling and the grade. The page does not print the makers, which are the catalogue's. The first cell is a craft sake (brewed with beer hops, so not sake in the legal sense) and prints \"Craft SAKE\" where the others print a grade; the catalogue lists 稲とアガベ, so it is left as sake here. That cell also says 秋田 in Japanese and \"Aomori\" in Latin; Akita is right. 裏翠玉 is a bottling of 翠玉 in the catalogue. 作's bottling is 雅乃智 (Miyabi no Tomo); the bottle itself is in shimizu_zaku_miyabi_no_tomo_nakadori_junmai_daiginjo_on_table.jpg. The page writes \"Inetoagabe\" and \"Sookuu\". Below the grid: tasting-flight and per-glass prices and a one-drink-per-guest notice. Published: a plain typeset list of names, grades and prices, no venue name, no logo, no picture, no person; a lamp is reflected in the screen. Added 2026-10-13."
     }
   },
   "ide_menu_1.jpg": {
@@ -3062,6 +3062,30 @@
       "rightsCleared": true,
       "localOnly": true,
       "notes": "A MENU: the whole tasting sheet of 井出醸造店, laminated, lying on a counter and photographed at an angle: twelve numbered products in two rows (a honjozo-type row, No.1 to No.5, with a plum liqueur as No.6; a junmai-type row, No.7 to No.11, with a blended whisky as No.12), each with a picture of the bottle, its name, size, price, strength and polishing ratio, beside a chart of sake grades and a taste map. Items are in the maintainer's order, which is the sheet's. The sheet does not print the maker's name; the labels pictured say 甲斐の開運 and the other close-ups of the same sheets (ide_menu_1.jpg to ide_menu_3.jpg) do. No.6 (梅酒) and No.12 (大樹海, from the brewery's distillery, as the maintainer names it) are not sake. No.7 is sold as 冨麓, which the catalogue does not have. No.9 prints \"Junmai Ginjo\" in Latin under 特別純米生原酒. Kept local: a brewery's printed sheet with its own product photographs. A booking form with a visitor's name and e-mail address lay above the sheet; it is painted over in the file, which was re-encoded for that, and location and camera data were removed. Added 2026-10-13."
+    }
+  },
+  "shimizu_zaku_miyabi_no_tomo_nakadori_junmai_daiginjo_on_table.jpg": {
+    "name_ja": "作",
+    "brewery_ja": "清水清三郎商店",
+    "bottle": "zaku-miyabi-no-tomo",
+    "view": "front",
+    "expectedBrandIds": [
+      1033
+    ],
+    "also": {
+      "name_ja": [
+        "ZAKU",
+        "作 雅乃智",
+        "作 雅乃智 中取り",
+        "雅乃智",
+        "ZAKU MIYABI NO TOMO",
+        "MIYABI NO TOMO"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Zaku Miyabi no Tomo Nakadori, a junmai daiginjo by the maintainer's account, on a bar counter in dim light with a glass beside it. The front label prints 作, 雅乃智 中取り in brush script, and ZAKU / MIYABI NO TOMO / NAKADORI / MIÉ JAPAN; it prints neither the grade nor the maker. The same bottling as the 作 line of inetoagave_hiroki_matsui_fujioka_shimizu_ryozeki_menu.jpg. The maintainer's file was shimizu_zaru_on_table.jpg and was renamed to say what the bottle is. A member of staff stood at the left of the frame with their back to the camera; the photo is cropped to leave them out, which also cuts the glass in half. Photographed at a bar, added 2026-10-13."
     }
   }
 }

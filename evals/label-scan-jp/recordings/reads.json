@@ -2157,6 +2157,24 @@
      ],
      "confidence": 0.3,
      "latencyMs": 10362
+    },
+    "shimizu_zaku_miyabi_no_tomo_nakadori_junmai_daiginjo_on_table.jpg": {
+     "photoSha": "eb518f601a100c49",
+     "name_ja": "作",
+     "brewery_ja": "清水清三郎商店",
+     "brewery_printed": false,
+     "subject": "one_bottle",
+     "drink": "unknown",
+     "bottling": {
+      "product_name": "雅の友"
+     },
+     "other_names": [
+      "ZAKU",
+      "MIYABI NO TOMO",
+      "雅の友"
+     ],
+     "confidence": 0.85,
+     "latencyMs": 5410
     }
    }
   },
@@ -4415,6 +4433,27 @@
      "other_names": [],
      "confidence": 0.4,
      "latencyMs": 7939
+    },
+    "shimizu_zaku_miyabi_no_tomo_nakadori_junmai_daiginjo_on_table.jpg": {
+     "photoSha": "eb518f601a100c49",
+     "name_ja": "作",
+     "brewery_ja": "清水清三郎商店",
+     "brewery_printed": false,
+     "subject": "one_bottle",
+     "drink": "unknown",
+     "bottling": {
+      "product_name": "雅乃智",
+      "styles": []
+     },
+     "other_names": [
+      "ZAKU",
+      "雅乃智",
+      "MIYABI NO TOMO",
+      "中取り",
+      "NAKADORI"
+     ],
+     "confidence": 0.85,
+     "latencyMs": 2409
     }
    }
   },
