@@ -3809,5 +3809,93 @@
       "rightsCleared": true,
       "notes": "Kai no Kaiun daiginjo, the 180 ml blue bottle, at home on a hob with the brewery's own cup beside it. The label prints \"Daiginjo\", 大吟醸 in gold, 甲斐の開運 in red brush script, \"Kainokaiun\" and 富士山湧水仕込; the cup prints 清酒 甲斐の開運 inside the brand's crest, so the name is in the frame twice. The maker is not on the label; the cap's seal has part of it (…醸造店封緘). The label says daiginjo, not junmai daiginjo: the maintainer's file was ide_junmai_daiginjo_on_table.jpg and their note says Daiginjo, so the file was renamed. The same product as No.3 on the brewery's sheet (ide_menu_1.jpg, ide_menu_4.jpg). The catalogue also has 開運 from another maker (土井酒造場), which is not this. No person in the frame; location and camera data were removed from the file. Added 2026-10-13."
     }
+  },
+  "niseko_shelf.jpg": {
+    "name_ja": "二世古",
+    "brewery_ja": "二世古酒造",
+    "view": "front",
+    "subject": "several_bottles",
+    "items": [
+      {
+        "unreadable": true,
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "二世古",
+        "brewery_ja": "二世古酒造",
+        "product": "純米 原酒 北海道産米100%使用",
+        "expectedBrandIds": [
+          1611
+        ]
+      },
+      {
+        "name_ja": "ニセコ",
+        "brewery_ja": "二世古酒造",
+        "product": "本醸造",
+        "expectedBrandIds": [
+          1611
+        ]
+      },
+      {
+        "name_ja": "ニセコ",
+        "brewery_ja": "二世古酒造",
+        "product": "純米",
+        "expectedBrandIds": [
+          1611
+        ]
+      },
+      {
+        "name_ja": "倶知安",
+        "brewery_ja": "二世古酒造",
+        "product": "本醸造",
+        "expectedBrandIds": [
+          4109
+        ]
+      },
+      {
+        "name_ja": "倶知安",
+        "brewery_ja": "二世古酒造",
+        "product": "純米酒",
+        "expectedBrandIds": [
+          4109
+        ]
+      },
+      {
+        "name_ja": "倶知安",
+        "brewery_ja": "二世古酒造",
+        "product": "吟醸酒 原酒 彗星 精米歩合55%",
+        "expectedBrandIds": [
+          4109
+        ]
+      },
+      {
+        "name_ja": "くっちゃんの焼酎",
+        "brewery_ja": "二世古酒造",
+        "product": "本格焼酎 二十五度",
+        "drink": "shochu",
+        "expectedBrandIds": []
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "ニセコ",
+        "倶知安",
+        "くっちゃんの焼酎",
+        "二世古 純米原酒",
+        "ニセコ本醸造酒",
+        "ニセコ純米酒",
+        "倶知安 本醸造",
+        "倶知安純米酒",
+        "倶知安吟醸酒"
+      ],
+      "brewery_ja": [
+        "有限会社二世古酒造"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "A BREWERY'S OWN SHELF: eight bottles in a row in the shop of 二世古酒造, each with a printed price card in front and boxed stock below, listed left to right as the maintainer named them. A dark bottle cut off by the left edge; 二世古 純米原酒; ニセコ 本醸造 (a mountain in black and white, the name only on its card); ニセコ 純米; three blue bottles of 倶知安 — 本醸造, 純米 and 吟醸 原酒 (rice 彗星, polished to 55% by its card), which differ only in the colour of the label and the card; and くっちゃんの焼酎, a potato shochu, not sake. The maker is printed small on the first label and is the same for all. The catalogue has 二世古 and, as a separate row with no maker's name, 倶知安. The photo is cropped to the row of bottles: above it were the brewery's wall posters on how sake is made and a sign about age checks. A strip of one poster still shows between two bottles, where a photograph of people at work is painted over; the file was re-encoded for that, and location and camera data were removed. No shop name beyond the labels, no visitor in the frame. Added 2026-10-13."
+    }
   }
 }

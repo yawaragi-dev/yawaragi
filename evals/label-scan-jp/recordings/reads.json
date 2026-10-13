@@ -2386,6 +2386,18 @@
      ],
      "confidence": 0.8,
      "latencyMs": 7248
+    },
+    "niseko_shelf.jpg": {
+     "photoSha": "43d5db53b8d3c009",
+     "name_ja": "倶知安",
+     "brewery_ja": "二世古酒造",
+     "brewery_printed": true,
+     "subject": "several_bottles",
+     "drink": "sake",
+     "bottling": {},
+     "other_names": [],
+     "confidence": 0.6,
+     "latencyMs": 8968
     }
    }
   },
@@ -4893,6 +4905,18 @@
      ],
      "confidence": 0.8,
      "latencyMs": 2616
+    },
+    "niseko_shelf.jpg": {
+     "photoSha": "43d5db53b8d3c009",
+     "name_ja": "倶知安",
+     "brewery_ja": "二世古酒造",
+     "brewery_printed": true,
+     "subject": "several_bottles",
+     "drink": "sake",
+     "bottling": {},
+     "other_names": [],
+     "confidence": 0.68,
+     "latencyMs": 4952
     }
    }
   },
