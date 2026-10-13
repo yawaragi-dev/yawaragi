@@ -2488,6 +2488,61 @@
      ],
      "confidence": 0.8,
      "latencyMs": 7862
+    },
+    "niseko_shelf_3.jpg": {
+     "photoSha": "2ed895d473ca98fb",
+     "name_ja": "ニセコ",
+     "brewery_ja": "ニセコ酒造",
+     "brewery_printed": false,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {
+      "grade": "junmai_ginjo"
+     },
+     "other_names": [],
+     "confidence": 0.6,
+     "latencyMs": 8125
+    },
+    "niseko_shelf_4.jpg": {
+     "photoSha": "cfc53a5542d45951",
+     "name_ja": "?",
+     "brewery_ja": "?",
+     "brewery_printed": false,
+     "subject": "several_bottles",
+     "drink": "sake",
+     "bottling": {
+      "grade": "daiginjo"
+     },
+     "other_names": [],
+     "confidence": 0.1,
+     "latencyMs": 7152
+    },
+    "niseko_shelf_5.jpg": {
+     "photoSha": "b3c3277d177bcfca",
+     "name_ja": "誉",
+     "brewery_ja": "誉酒造",
+     "brewery_printed": false,
+     "subject": "several_bottles",
+     "drink": "sake",
+     "bottling": {
+      "grade": "daiginjo"
+     },
+     "other_names": [],
+     "confidence": 0.15,
+     "latencyMs": 7478
+    },
+    "niseko_shelf_6.jpg": {
+     "photoSha": "b8be8cfd8e9afe96",
+     "name_ja": "二世古",
+     "brewery_ja": "二世古酒造",
+     "brewery_printed": true,
+     "subject": "several_bottles",
+     "drink": "sake",
+     "other_names": [
+      "Niseko"
+     ],
+     "confidence": 0.8,
+     "latencyMs": 5059
     }
    }
   },
@@ -5104,6 +5159,65 @@
      ],
      "confidence": 0.6,
      "latencyMs": 3440
+    },
+    "niseko_shelf_3.jpg": {
+     "photoSha": "2ed895d473ca98fb",
+     "name_ja": "二世古",
+     "brewery_ja": "二世古酒造",
+     "brewery_printed": true,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {
+      "grade": "junmai_ginjo"
+     },
+     "other_names": [
+      "ニセコ",
+      "NISEKO"
+     ],
+     "confidence": 0.8,
+     "latencyMs": 2876
+    },
+    "niseko_shelf_4.jpg": {
+     "photoSha": "cfc53a5542d45951",
+     "name_ja": "大吟醸",
+     "brewery_ja": "?",
+     "subject": "several_bottles",
+     "drink": "sake",
+     "bottling": {
+      "grade": "daiginjo"
+     },
+     "confidence": 0.15,
+     "latencyMs": 3194
+    },
+    "niseko_shelf_5.jpg": {
+     "photoSha": "b3c3277d177bcfca",
+     "name_ja": "譽",
+     "brewery_ja": "不明",
+     "brewery_printed": false,
+     "subject": "several_bottles",
+     "drink": "sake",
+     "bottling": {
+      "grade": "daiginjo"
+     },
+     "other_names": [],
+     "confidence": 0.15,
+     "latencyMs": 10497
+    },
+    "niseko_shelf_6.jpg": {
+     "photoSha": "b8be8cfd8e9afe96",
+     "name_ja": "二世古",
+     "brewery_ja": "二世古酒造",
+     "brewery_printed": true,
+     "subject": "several_bottles",
+     "drink": "sake",
+     "bottling": {
+      "grade": "junmai_ginjo"
+     },
+     "other_names": [
+      "Niseko"
+     ],
+     "confidence": 0.7,
+     "latencyMs": 3515
     }
    }
   },

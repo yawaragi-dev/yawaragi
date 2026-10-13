@@ -4148,5 +4148,242 @@
       "rightsCleared": true,
       "notes": "TWO BOTTLES OF ONE SAKE: the same pair as niseko_ezo_no_homare_kasseishu_shelf.jpg from the other side, in the maintainer's order: Ezo no Homare kasseishu with black rice, and the plain one. A green bottle in the middle with 誉 in large characters and the pink paper tag over its shoulder; the cloudy white bottle at the right edge, half out of frame. Neither is in the catalogue. The bottle in the middle is the subject. Location and camera data were removed from the file. No person in the frame. Photographed in the brewery's shop, added 2026-10-13."
     }
+  },
+  "niseko_shelf_3.jpg": {
+    "name_ja": "ニセコ",
+    "brewery_ja": "二世古酒造",
+    "view": "front",
+    "subject": "several_bottles",
+    "items": [
+      {
+        "name_ja": "ニセコ",
+        "brewery_ja": "二世古酒造",
+        "product": "本醸造",
+        "expectedBrandIds": [
+          1611
+        ]
+      },
+      {
+        "name_ja": "ニセコ",
+        "brewery_ja": "二世古酒造",
+        "product": "純米",
+        "expectedBrandIds": [
+          1611
+        ]
+      },
+      {
+        "name_ja": "倶知安",
+        "brewery_ja": "二世古酒造",
+        "product": "本醸造",
+        "expectedBrandIds": [
+          4109
+        ]
+      },
+      {
+        "name_ja": "倶知安",
+        "brewery_ja": "二世古酒造",
+        "product": "純米",
+        "expectedBrandIds": [
+          4109
+        ]
+      },
+      {
+        "name_ja": "倶知安",
+        "brewery_ja": "二世古酒造",
+        "product": "吟醸 原酒",
+        "expectedBrandIds": [
+          4109
+        ]
+      },
+      {
+        "name_ja": "二世古",
+        "brewery_ja": "二世古酒造",
+        "product": "純米吟醸酒 彗星",
+        "expectedBrandIds": [
+          1611
+        ],
+        "main": true
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "二世古",
+        "倶知安",
+        "NISEKO",
+        "ニセコ本醸造酒",
+        "ニセコ純米酒"
+      ],
+      "brewery_ja": [
+        "二世古",
+        "NISEKO BREWERY CO., LTD."
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "A SHELF AND A BOTTLE IN FRONT OF IT: the row of niseko_shelf.jpg from lower down, with boxed stock in front (boxes printed 二世古 NISEKO, ニセコ and 倶知安) and, standing on the boxes nearest the camera, a green bottle with a red label, 二世古 純米吟醸酒, made with 彗星 rice by the maintainer's account. Items are in the maintainer's order: the five on the shelf, then the one in front. The bottle in front is the nearest and largest thing in the frame and is the subject; both models read it as the one bottle photographed. Bottles of which only a cap or the edge of a label shows are not listed, at the maintainer's choice: dark bottles at the left edge, the shochu at the right end of the row, and a crate of capped bottles at the bottom. One of the brewery's wall posters is behind the row; its photographs show only through the blue glass. Location and camera data were removed from the file. No person in the frame. Photographed in the brewery's shop, added 2026-10-13."
+    }
+  },
+  "niseko_shelf_4.jpg": {
+    "name_ja": "二世古",
+    "brewery_ja": "二世古酒造",
+    "view": "front",
+    "subject": "several_bottles",
+    "items": [
+      {
+        "name_ja": "蝦夷の誉",
+        "brewery_ja": "二世古酒造",
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "二世古",
+        "brewery_ja": "二世古酒造",
+        "product": "大吟醸",
+        "expectedBrandIds": [
+          1611
+        ]
+      },
+      {
+        "name_ja": "二世古",
+        "brewery_ja": "二世古酒造",
+        "product": "彗星",
+        "expectedBrandIds": [
+          1611
+        ]
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "蝦夷の誉",
+        "誉",
+        "大吟醸"
+      ],
+      "brewery_ja": [
+        "二世古",
+        "NISEKO BREWERY CO., LTD."
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "BOTTLES ON A TABLE, MOST TURNED AWAY: a round table of bottles in the brewery's shop with a fridge behind it and a black cat walking under the table. Three can be named, in the maintainer's order: 蝦夷の誉 standing in the fridge, with its pink tag; 二世古 大吟醸, a dark blue bottle with a gold label, at the front of the table; and 二世古 with a blue label, made with 彗星 rice by the maintainer's account, behind it. The other bottles on the table show their backs or sides and are not listed. Location and camera data were removed from the file. No person in the frame. Photographed in the brewery's shop, added 2026-10-13."
+    }
+  },
+  "niseko_shelf_5.jpg": {
+    "name_ja": "二世古",
+    "brewery_ja": "二世古酒造",
+    "view": "front",
+    "subject": "several_bottles",
+    "items": [
+      {
+        "name_ja": "蝦夷の誉",
+        "brewery_ja": "二世古酒造",
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "二世古",
+        "brewery_ja": "二世古酒造",
+        "product": "大吟醸",
+        "expectedBrandIds": [
+          1611
+        ]
+      },
+      {
+        "name_ja": "二世古",
+        "brewery_ja": "二世古酒造",
+        "product": "彗星",
+        "expectedBrandIds": [
+          1611
+        ]
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "蝦夷の誉",
+        "誉",
+        "大吟醸"
+      ],
+      "brewery_ja": [
+        "二世古",
+        "NISEKO BREWERY CO., LTD."
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "BOTTLES ON A TABLE, MOST TURNED AWAY: the same table as niseko_shelf_4.jpg a step to the right, with the same three bottles nameable, in the maintainer's order: 蝦夷の誉 in the fridge, 二世古 大吟醸 at the front of the table, and 二世古 with the blue label behind it. The cat is nearer the camera. Location and camera data were removed from the file. No person in the frame. Photographed in the brewery's shop, added 2026-10-13."
+    }
+  },
+  "niseko_shelf_6.jpg": {
+    "name_ja": "二世古",
+    "brewery_ja": "二世古酒造",
+    "view": "front",
+    "subject": "several_bottles",
+    "items": [
+      {
+        "name_ja": "二世古",
+        "brewery_ja": "二世古酒造",
+        "product": "生酒",
+        "expectedBrandIds": [
+          1611
+        ]
+      },
+      {
+        "name_ja": "今金",
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "蝦夷の誉",
+        "brewery_ja": "二世古酒造",
+        "product": "活性酒",
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "蝦夷の誉",
+        "brewery_ja": "二世古酒造",
+        "product": "活性酒 黒米入り",
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "二世古",
+        "brewery_ja": "二世古酒造",
+        "product": "上撰",
+        "expectedBrandIds": [
+          1611
+        ]
+      },
+      {
+        "name_ja": "二世古",
+        "brewery_ja": "二世古酒造",
+        "product": "彗星",
+        "expectedBrandIds": [
+          1611
+        ]
+      },
+      {
+        "name_ja": "二世古",
+        "brewery_ja": "二世古酒造",
+        "expectedBrandIds": [
+          1611
+        ]
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "今金",
+        "蝦夷の誉",
+        "誉",
+        "上撰"
+      ],
+      "brewery_ja": [
+        "二世古",
+        "NISEKO BREWERY CO., LTD."
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "A FRIDGE AND A TABLE FROM ABOVE: the shop's small fridge with bottles standing in it, and in front the tops and shoulders of the bottles on the round table, seen from above; a straw-wrapped cask printed 二世古 sits on the fridge. Items are in the maintainer's order and are the ones that can be named: in the fridge, 二世古 生酒, 今金, and the two 蝦夷の誉 kasseishu (plain, and with black rice); on the table, 二世古 上撰, 二世古 with the blue label (彗星 rice) and one more 二世古. 上撰 is the maker's own tier and not a legal grade, as the maintainer notes. 今金 is not in the catalogue and its maker is not known from this photo. Bottles of which only a cap or the edge of a label shows are not listed. Notices with QR codes are on the wall behind. Location and camera data were removed from the file. No person in the frame. Photographed in the brewery's shop, added 2026-10-13."
+    }
   }
 }
