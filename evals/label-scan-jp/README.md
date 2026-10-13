@@ -14,18 +14,18 @@ the metric-math and judging unit tests (`levenshtein.test.ts`, `judge.test.ts`).
 
 ## The corpus
 
-**146 photos**, all taken by the maintainer on a phone the way a visitor
+**150 photos**, all taken by the maintainer on a phone the way a visitor
 would: in the hand, a little off-angle, sometimes with condensation on the
-glass. **115 are of one sake bottle each (66 bottles)** and make the headline
-number; 31 show something a scan was not built for and are reported apart (see
+glass. **116 are of one sake bottle each (67 bottles)** and make the headline
+number; 34 show something a scan was not built for and are reported apart (see
 "Photos that are not one sake bottle").
 
-Of the 115, 74 are of 28 bottles at home in ordinary room light; 6 are single
+Of the 116, 74 are of 28 bottles at home in ordinary room light; 6 are single
 front shots of bottles on a shop shelf, added after the lookup had been tuned
 on the first 73 and scored once, untouched — all six landed on the right sake;
 and 31 more shop-shelf fronts were added on 2026-10-13 (28 new bottles, a
 second photo of one of them, and a shelf copy of two bottles already in the
-set), and four bottles on a bar counter or a restaurant table the same day, one of them turned so that no writing shows at all. The bottles at home were shot from several sides, because a scan is only
+set), and five more bottles the same day, on a bar counter, a restaurant table or a brewery's shelf, one of them turned so that no writing shows at all. The bottles at home were shot from several sides, because a scan is only
 as good as the side the visitor points at:
 
 | view | photos | what it shows |
@@ -136,7 +136,7 @@ in a table of their own, so adding one does not move "right of N".
 | kind | how the entry says so | photos | right today |
 |------|-----------------------|--------|-------------|
 | a bottle that is not sake | `"drink": "shochu"` (or `awamori`, `umeshu`, `liqueur`, `other`) | 6 | no sake shown |
-| several bottles (two on a shelf edge, a whole shop shelf, a window sill, cup sakes in a row, a tasting flight) | `"subject": "several_bottles"` + `items` | 10 | the `main` bottle if there is one; otherwise no single sake |
+| several bottles (two on a shelf edge, a whole shop shelf, a window sill, cup sakes in a row, a tasting flight) | `"subject": "several_bottles"` + `items` | 13 | the `main` bottle if there is one; otherwise no single sake |
 | a menu | `"subject": "menu"` + `items` | 15 | no single sake |
 
 ```jsonc

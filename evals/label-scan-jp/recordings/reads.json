@@ -2427,6 +2427,67 @@
      ],
      "confidence": 0.7,
      "latencyMs": 7211
+    },
+    "niseko_ezo_no_homare_kasseishu_shelf.jpg": {
+     "photoSha": "c87039ff805fdd6d",
+     "name_ja": "えぞの誉",
+     "brewery_ja": "北の誉酒造",
+     "brewery_printed": false,
+     "subject": "one_bottle",
+     "drink": "unknown",
+     "bottling": {
+      "styles": [
+       "namazume"
+      ]
+     },
+     "other_names": [],
+     "confidence": 0.45,
+     "latencyMs": 9822
+    },
+    "niseko_ezo_no_homare_kasseishu_shelf_2.jpg": {
+     "photoSha": "b860f57a0604a384",
+     "name_ja": "元老の誉",
+     "brewery_ja": "酒造",
+     "brewery_printed": true,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {
+      "styles": [
+       "nama"
+      ]
+     },
+     "other_names": [],
+     "confidence": 0.5,
+     "latencyMs": 6519
+    },
+    "niseko_kyogoku_meisui_karakuchi_honjozo_shelf.jpg": {
+     "photoSha": "e8f9642dbf7a3eaa",
+     "name_ja": "京極",
+     "brewery_ja": "二戸古酒造",
+     "brewery_printed": true,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {
+      "grade": "honjozo",
+      "polishing_ratio": 60
+     },
+     "other_names": [],
+     "confidence": 0.4,
+     "latencyMs": 7157
+    },
+    "niseko_shochu_shelf_2.jpg": {
+     "photoSha": "a765dcdafe7f41b5",
+     "name_ja": "豪雪",
+     "brewery_ja": "二世古酒造",
+     "brewery_printed": true,
+     "subject": "several_bottles",
+     "drink": "shochu",
+     "bottling": {},
+     "other_names": [
+      "GOUSETU"
+     ],
+     "confidence": 0.8,
+     "latencyMs": 7862
     }
    }
   },
@@ -4974,6 +5035,75 @@
      ],
      "confidence": 0.6,
      "latencyMs": 4394
+    },
+    "niseko_ezo_no_homare_kasseishu_shelf.jpg": {
+     "photoSha": "c87039ff805fdd6d",
+     "name_ja": "えぞの誉",
+     "brewery_ja": "北海道酒造",
+     "brewery_printed": false,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {},
+     "other_names": [],
+     "confidence": 0.8,
+     "latencyMs": 7739
+    },
+    "niseko_ezo_no_homare_kasseishu_shelf_2.jpg": {
+     "photoSha": "b860f57a0604a384",
+     "name_ja": "譽",
+     "brewery_ja": "二世古酒造",
+     "brewery_printed": true,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {
+      "product_name": "えぞの譽",
+      "styles": [
+       "nama"
+      ]
+     },
+     "other_names": [
+      "えぞの",
+      "蝦夷の譽"
+     ],
+     "confidence": 0.8,
+     "latencyMs": 3148
+    },
+    "niseko_kyogoku_meisui_karakuchi_honjozo_shelf.jpg": {
+     "photoSha": "e8f9642dbf7a3eaa",
+     "name_ja": "京極",
+     "brewery_ja": "二世古酒造",
+     "brewery_printed": false,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {
+      "product_name": "名水辛口",
+      "grade": "honjozo",
+      "styles": [],
+      "polishing_ratio": 60
+     },
+     "other_names": [
+      "名水辛口"
+     ],
+     "confidence": 0.8,
+     "latencyMs": 6561
+    },
+    "niseko_shochu_shelf_2.jpg": {
+     "photoSha": "a765dcdafe7f41b5",
+     "name_ja": "二世古",
+     "brewery_ja": "二世古酒造",
+     "brewery_printed": true,
+     "subject": "several_bottles",
+     "drink": "shochu",
+     "bottling": {
+      "product_name": "豪雪",
+      "styles": []
+     },
+     "other_names": [
+      "豪雪",
+      "GOUSETU"
+     ],
+     "confidence": 0.6,
+     "latencyMs": 3440
     }
    }
   },

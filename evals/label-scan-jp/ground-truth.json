@@ -4013,5 +4013,140 @@
       "localOnly": true,
       "notes": "A BREWERY'S SHOCHU CORNER: the shop of 二世古酒造, a corner of the shelf under one of its wall posters, listed as the maintainer named them. Three shochu on boxes: 珈琲 (Coffee, a shochu made with coffee beans), 正中 (rice shochu, 25%, with its price card) and a square black bottle of 30% shochu cut off by the right edge, whose name in brush script cannot be read. A flyer on the wall for \"Niseko Challenge 2025\", a sake made the kijoshu way with some white koji, 600 bottles, with a picture of the bottle: the bottle itself is not in frame. Kijoshu is a way of brewing, with sake in place of part of the water, and not a grade; the scan reads it as a style word. Below, a bottle wrapped in paper and the gold caps of two more, none readable. The catalogue has none of these. Kept local: the flyer carries the brewery's own product photograph, and most of the frame is its poster. No visitor in the frame; location and camera data were removed from the file. Added 2026-10-13."
     }
+  },
+  "niseko_shochu_shelf_2.jpg": {
+    "name_ja": "ようてい",
+    "brewery_ja": "二世古酒造",
+    "view": "front",
+    "subject": "several_bottles",
+    "items": [
+      {
+        "name_ja": "ようてい",
+        "brewery_ja": "二世古酒造",
+        "product": "乙類焼酎 30度",
+        "drink": "shochu",
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "豪雪",
+        "brewery_ja": "二世古酒造",
+        "product": "GOUSETU 米焼酎 39度",
+        "drink": "shochu",
+        "expectedBrandIds": []
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "豪雪",
+        "GOUSETU",
+        "羊蹄",
+        "二世古",
+        "二世古 ようてい",
+        "二世古 豪雪"
+      ],
+      "brewery_ja": [
+        "二世古",
+        "NISEKO BREWERY CO., LIMITED"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "NOT SAKE, TWO BOTTLES: two shochu of 二世古酒造 on boxed stock, as the maintainer named them: a square black bottle at the left, 30%, whose name is in brush script (Yōtei, by the maintainer's account; the square bottle cut off in niseko_shochu_shelf.jpg), and 豪雪 / GOUSETU, a rice shochu of 39%, with its price card. Both labels print 蔵元 二世古. Neither is in the catalogue. The photo is cropped below the brewery's wall poster, and one photograph on the poster, which showed a person at work, is painted over; the file was re-encoded for that. Location and camera data were removed from the file. No person in the frame. Photographed in the brewery's shop, added 2026-10-13."
+    }
+  },
+  "niseko_kyogoku_meisui_karakuchi_honjozo_shelf.jpg": {
+    "name_ja": "京極",
+    "brewery_ja": "二世古酒造",
+    "bottle": "niseko-kyogoku",
+    "view": "front",
+    "expectedBrandIds": [],
+    "also": {
+      "name_ja": [
+        "京極 名水 辛口",
+        "京極 名水辛口",
+        "京極 本醸造"
+      ],
+      "brewery_ja": [
+        "二世古"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Kyōgoku Meisui Karakuchi, a honjozo of 二世古酒造 by the maintainer's account, in a frosted blue bottle on a round display stand, with darker bottles around it that are not the subject and cannot be read. The label prints 京極 in large brush characters and a small tag on the shoulder; the maker is not legible in this photo. NOT in the catalogue (it has 二世古 and 倶知安 from this maker), so the right answer is no match. This is the bottle whose scan showed the read in kanji alone on the maintainer's phone. Location and camera data were removed from the file. No person in the frame. Photographed in the brewery's shop, added 2026-10-13."
+    }
+  },
+  "niseko_ezo_no_homare_kasseishu_shelf.jpg": {
+    "name_ja": "蝦夷の誉",
+    "brewery_ja": "二世古酒造",
+    "view": "front",
+    "subject": "several_bottles",
+    "items": [
+      {
+        "name_ja": "蝦夷の誉",
+        "brewery_ja": "二世古酒造",
+        "product": "活性酒 黒米入り",
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "蝦夷の誉",
+        "brewery_ja": "二世古酒造",
+        "product": "活性酒",
+        "expectedBrandIds": [],
+        "main": true
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "誉",
+        "蝦夷の誉 活性酒",
+        "二世古"
+      ],
+      "brewery_ja": [
+        "二世古"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "TWO BOTTLES OF ONE SAKE: Ezo no Homare kasseishu (a cloudy, lively sake) of 二世古酒造 on a round display stand, in the maintainer's order: the one made with black rice, and the plain one. The bottle in the middle is cloudy white with a pink paper tag hung on its neck, which covers part of the label; another stands at the left edge with 誉 in large characters and most of its label out of frame. Neither is in the catalogue. The maintainer's list gives no grade for either. The bottle in the middle is the subject. Location and camera data were removed from the file. No person in the frame. Photographed in the brewery's shop, added 2026-10-13."
+    }
+  },
+  "niseko_ezo_no_homare_kasseishu_shelf_2.jpg": {
+    "name_ja": "蝦夷の誉",
+    "brewery_ja": "二世古酒造",
+    "view": "front",
+    "subject": "several_bottles",
+    "items": [
+      {
+        "name_ja": "蝦夷の誉",
+        "brewery_ja": "二世古酒造",
+        "product": "活性酒 黒米入り",
+        "expectedBrandIds": [],
+        "main": true
+      },
+      {
+        "name_ja": "蝦夷の誉",
+        "brewery_ja": "二世古酒造",
+        "product": "活性酒",
+        "expectedBrandIds": []
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "誉",
+        "蝦夷の誉 活性酒",
+        "二世古"
+      ],
+      "brewery_ja": [
+        "二世古"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "TWO BOTTLES OF ONE SAKE: the same pair as niseko_ezo_no_homare_kasseishu_shelf.jpg from the other side, in the maintainer's order: Ezo no Homare kasseishu with black rice, and the plain one. A green bottle in the middle with 誉 in large characters and the pink paper tag over its shoulder; the cloudy white bottle at the right edge, half out of frame. Neither is in the catalogue. The bottle in the middle is the subject. Location and camera data were removed from the file. No person in the frame. Photographed in the brewery's shop, added 2026-10-13."
+    }
   }
 }
