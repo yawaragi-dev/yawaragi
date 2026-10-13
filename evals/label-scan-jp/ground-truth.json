@@ -2192,7 +2192,7 @@
       "notes": "A MENU, AND NOT SAKE: one page of a restaurant drinks menu, headed 焼酎 米 / \"Japanischer Shochu\", offering Shichida rice shochu by the glass and the bottle with a picture of the bottle. The page does not name the maker. Its Japanese and German description calls the drink a junmai sake, which the heading, the serving line (\"mit Eis/Wasser/Soda\") and the pictured bottle contradict; the maintainer, who photographed it, confirms it is the rice shochu. The catalogue has the SAKE 七田 from the same maker (row 968), which is not what the page sells. Fingers at the corner, glasses on the table and a strip of dark clothing at the bottom edge are in frame; no face. Added 2026-10-13."
     }
   },
-  "sasaki_matsui_nagayama_kitagawa_sasaki_japanese_shelf.jpg": {
+  "sasaki_matsui_shotoku_higashiyama_nagayama_kitagawa_sasaki_japanese_shelf.jpg": {
     "name_ja": "西陣",
     "brewery_ja": "佐々木酒造",
     "view": "front",
@@ -2321,7 +2321,7 @@
     "provenance": {
       "source": "maintainer_shop_photo",
       "rightsCleared": true,
-      "notes": "A SHOP SHELF: three rows of a refrigerated sake shelf in Japan, thirteen products, listed left to right and top to bottom as the maintainer named them. Most labels and boxes are legible and every row has printed shelf tags with name, grade and price. Item 9 is a bottle cut off by the right edge of the middle row. Item 8 is a second 山猿 with a white label; its grade could not be read with confidence. Makers are the catalogue's: the maintainer's list gave 花洛 to Matsui Shuzo, 坤滴 to Sasaki Shuzo and 山猿 to Nagayama Honke, where the catalogue has 招徳酒造, 東山酒造 and 永山酒造 (永山本家酒造場 is the maker of 貴); the maker line on those shelf tags is too small to read in this photo, and the question is open with the maintainer. The file name is theirs and still carries their makers. The top-level name is the first item only because the field must hold something. No shop name, no person, no reflection. Added 2026-10-13."
+      "notes": "A SHOP SHELF: three rows of a refrigerated sake shelf in Japan, thirteen products, listed left to right and top to bottom as the maintainer named them. Most labels and boxes are legible and every row has printed shelf tags with name, grade and price. Item 9 is a bottle cut off by the right edge of the middle row. Item 8 is a second 山猿 with a white label; its grade could not be read with confidence. Makers are the catalogue's, confirmed by the maintainer: 花洛 is 招徳酒造, 坤滴 is 東山酒造 and 山猿 is 永山酒造 (永山本家酒造場 is the maker of 貴); the maker line on those shelf tags is too small to read in this photo. The file name lists the makers in shelf order. The top-level name is the first item only because the field must hold something. No shop name, no person, no reflection. Added 2026-10-13."
     }
   }
 }
