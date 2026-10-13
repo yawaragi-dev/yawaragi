@@ -28,8 +28,17 @@ import { withProvenance } from './with-provenance'
  * What the photo shows. The scan answers "which sake is this bottle"; a
  * menu page or a row of bottles has no one answer to that.
  */
-export const ScanSubjectSchema = z.enum(['one_bottle', 'several_bottles', 'menu'])
+export const ScanSubjectSchema = z.enum(['one_bottle', 'several_bottles', 'menu', 'no_bottle'])
 export type ScanSubject = z.infer<typeof ScanSubjectSchema>
+
+/**
+ * Whether there was writing to read. A sharp photo of the side of a bottle
+ * that carries a drawing and no text is not an unclear photo, and telling the
+ * visitor to retake it sends them round in a circle; `no_text` lets the scan
+ * say "turn the bottle" instead.
+ */
+export const ScanLegibilitySchema = z.enum(['read', 'unclear', 'no_text'])
+export type ScanLegibility = z.infer<typeof ScanLegibilitySchema>
 
 /**
  * What the bottle holds, as its label says. The catalogue is sake only, and
@@ -105,6 +114,8 @@ export const LabelScanExtractionSchema = withProvenance(z.literal('llm_extracted
   .extend({
     /** Optional: absent on reads made before the field existed. */
     subject: ScanSubjectSchema.optional(),
+    /** Optional: absent on reads made before the field existed. */
+    legibility: ScanLegibilitySchema.optional(),
     /** Optional: absent on reads made before the field existed. */
     drink: ScanDrinkSchema.optional(),
     name_ja: z.string().min(1),

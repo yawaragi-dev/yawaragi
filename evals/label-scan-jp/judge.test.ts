@@ -178,3 +178,25 @@ describe('the ground-truth entry', () => {
     expect(GroundTruthEntrySchema.safeParse({ ...base, items }).success).toBe(false)
   })
 })
+
+describe('a photo with no bottle in it', () => {
+  const entry = { ...base, subject: 'no_bottle' as const }
+
+  it('is its own kind, judged without anything listed', () => {
+    expect(GroundTruthEntrySchema.safeParse(entry).success).toBe(true)
+    expect(photoKind(entry)).toBe('no_bottle')
+    expect(canJudge(entry)).toBe(true)
+  })
+
+  it('is right only when the scan shows no sake', () => {
+    expect(judgeLanding(entry, none)).toBe('right')
+    expect(judgeLanding(entry, one(968))).toBe('wrong')
+    expect(judgeLanding(entry, list(968, 12))).toBe('wrong')
+  })
+
+  it('refuses items, since there is nothing in the frame to list', () => {
+    expect(GroundTruthEntrySchema.safeParse({ ...entry, items: [{ name_ja: '七田', expectedBrandIds: [] }] }).success).toBe(
+      false,
+    )
+  })
+})

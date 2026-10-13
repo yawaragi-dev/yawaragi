@@ -40,7 +40,9 @@ export interface Judged {
 
 /** True when the entry says enough to judge where a scan landed. */
 export function canJudge(entry: Judged): boolean {
-  return photoKind(entry) === 'sake_bottle' || photoKind(entry) === 'other_drink'
+  const kind = photoKind(entry)
+  if (kind === 'no_bottle') return true
+  return kind === 'sake_bottle' || kind === 'other_drink'
     ? entry.expectedBrandIds !== undefined
     : (entry.items?.length ?? 0) > 0
 }
@@ -59,8 +61,9 @@ export function judgeLanding(entry: Judged, landing: Landing): Verdict {
     }
   }
 
-  // No single sake is the answer: a bottle that is not sake, a menu, or
-  // several bottles sharing the frame.
+  // No single sake is the answer: a bottle that is not sake, a menu,
+  // several bottles sharing the frame, or no bottle at all (nothing in the
+  // frame, so anything shown is wrong).
   const inPhoto = kind === 'other_drink' ? (entry.expectedBrandIds ?? []) : (entry.items ?? []).flatMap((i) => i.expectedBrandIds)
   if (landing.kind === 'none') return 'right'
   if (landing.kind === 'one') return inPhoto.includes(landing.brandId) ? 'in_photo' : 'wrong'

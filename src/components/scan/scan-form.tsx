@@ -19,6 +19,8 @@ import {
   HandPalm,
   BeerBottle,
   SquaresFour,
+  ArrowsClockwise,
+  ImageSquare,
   HourglassMedium,
   ImageBroken,
   Lightning,
@@ -123,6 +125,13 @@ interface ScanFormProps {
  * why. A "Scan again" dismisses the result and the viewfinder returns; see
  * `view` for why that is one value rather than five conditions.
  */
+/** The three §5a outcomes for a photo that is not of one bottle. */
+const NOT_ONE_BOTTLE = {
+  menu: { testId: 'scan-result-menu', icon: ListBullets },
+  several_bottles: { testId: 'scan-result-several-bottles', icon: SquaresFour },
+  no_bottle: { testId: 'scan-result-no-bottle', icon: ImageSquare },
+} as const
+
 export function ScanForm({ locale, debugMode = false, canLog = false }: ScanFormProps) {
   const t = useTranslations('scan.form')
   // ProvenanceBadgeView + SakenowaAttributionView are the sync presentational
@@ -673,6 +682,19 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
               </button>
             </div>
           </ScanOutcome>
+        ) : view.extraction.legibility === 'no_text' ? (
+          // Not in the design yet (docs/design-questions.md, G): the photo is
+          // sharp and this side of the bottle has no writing, so "retake it"
+          // would be the wrong advice.
+          <ScanOutcome
+            testId="scan-result-no-text"
+            icon={icon(ArrowsClockwise)}
+            kicker={tOutcome('noText.kicker')}
+            title={tOutcome('noText.title')}
+            body={tOutcome('noText.body')}
+            onRescan={onPickClick}
+            bothPhotos={bothPhotosRow(view.bothPhotos)}
+          />
         ) : (
           <ScanOutcome
             testId="scan-result-low-confidence"
@@ -714,19 +736,24 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
       case 'not_one_bottle':
         return (
           <ScanOutcome
-            testId={view.subject === 'menu' ? 'scan-result-menu' : 'scan-result-several-bottles'}
-            icon={icon(view.subject === 'menu' ? ListBullets : SquaresFour)}
+            testId={NOT_ONE_BOTTLE[view.subject].testId}
+            icon={icon(NOT_ONE_BOTTLE[view.subject].icon)}
             kicker={tOutcome(`notOneBottle.${view.subject}.kicker`)}
             title={tOutcome(`notOneBottle.${view.subject}.title`)}
             body={tOutcome(`notOneBottle.${view.subject}.body`)}
             onRescan={onPickClick}
-            read={{
-              name: view.extraction.name_ja,
-              brewery: view.extraction.brewery_ja,
-              nameRomaji: view.extraction.name_romaji,
-              breweryRomaji: view.extraction.brewery_romaji,
-              badge: readBadge('scan-outcome-not-one-bottle-badge'),
-            }}
+            // With no bottle in the photo there is no read worth fixing.
+            read={
+              view.subject === 'no_bottle'
+                ? undefined
+                : {
+                    name: view.extraction.name_ja,
+                    brewery: view.extraction.brewery_ja,
+                    nameRomaji: view.extraction.name_romaji,
+                    breweryRomaji: view.extraction.brewery_romaji,
+                    badge: readBadge('scan-outcome-not-one-bottle-badge'),
+                  }
+            }
           />
         )
       case 'rate_limited':

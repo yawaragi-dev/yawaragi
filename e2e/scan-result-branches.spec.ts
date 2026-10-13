@@ -40,7 +40,10 @@ interface Injection {
   name_ja: string
   brewery_ja: string
   confidence: number
-  subject?: 'one_bottle' | 'several_bottles' | 'menu'
+  subject?: 'one_bottle' | 'several_bottles' | 'menu' | 'no_bottle'
+  legibility?: 'read' | 'unclear' | 'no_text'
+  name_romaji?: string
+  brewery_romaji?: string
   drink?: 'sake' | 'shochu' | 'awamori' | 'umeshu' | 'liqueur' | 'other' | 'unknown'
 }
 
@@ -421,6 +424,50 @@ test.describe('scan result branches (#109 PR B)', () => {
     await expect(outcome).toContainText('That’s a menu, not a label')
     await expect(page.getByTestId('scan-outcome-read-name')).toHaveValue('七田')
     await expect(page.getByTestId('scan-outcome-type-it')).toBeVisible()
+    await context.close()
+  })
+
+  test('a photo with no bottle in it says so, and has no read to fix', async ({ browser }) => {
+    const { context, page } = await scanPageWith(browser, [
+      injectionCookie({ name_ja: '?', brewery_ja: '?', confidence: 0.1, subject: 'no_bottle' }),
+    ])
+    await page.goto('/en/scan')
+    await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
+
+    await expect(page.getByTestId('scan-result-no-bottle')).toContainText('We can’t see a bottle in this photo')
+    await expect(page.getByTestId('scan-outcome-read')).toHaveCount(0)
+    await context.close()
+  })
+
+  test('a sharp photo of a side with no writing is told to turn the bottle, not to retake the photo', async ({
+    browser,
+  }) => {
+    const { context, page } = await scanPageWith(browser, [
+      injectionCookie({ name_ja: '?', brewery_ja: '?', confidence: 0.1, legibility: 'no_text' }),
+    ])
+    await page.goto('/en/scan')
+    await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
+
+    await expect(page.getByTestId('scan-result-no-text')).toContainText('Turn the bottle to the side with writing')
+    await expect(page.getByTestId('scan-result-low-confidence')).toHaveCount(0)
+    await context.close()
+  })
+
+  test('a read that is not in the catalogue is also shown in Latin letters', async ({ browser }) => {
+    const { context, page } = await scanPageWith(browser, [
+      injectionCookie({
+        name_ja: '架空銘柄零',
+        brewery_ja: '架空酒造零',
+        confidence: 0.9,
+        name_romaji: 'Kakū Meigara Zero',
+        brewery_romaji: 'Kakū Shuzō Zero',
+      }),
+    ])
+    await page.goto('/en/scan')
+    await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
+
+    await expect(page.getByTestId('scan-outcome-read-name-reading')).toHaveText('In Latin letters: Kakū Meigara Zero')
+    await expect(page.getByTestId('scan-outcome-read-brewery-reading')).toHaveText('In Latin letters: Kakū Shuzō Zero')
     await context.close()
   })
 

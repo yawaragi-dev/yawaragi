@@ -177,9 +177,15 @@ WHAT THE PHOTO SHOWS (subject). Decide this first:
    - one_bottle: one bottle (or its label) is the subject. A neighbouring bottle at the edge of the frame or on the shelf behind does not change this: read the bottle the photo is of.
    - several_bottles: two or more bottles share the frame and none is clearly the one being photographed. Read the most prominent one into the fields below.
    - menu: a menu, a drinks list, a shelf card or a price list — printed text naming drinks, not a bottle. Read the first or most prominent drink into the fields below.
+   - no_bottle: no bottle, can, carton or drinks list is the subject — a loose tag or leaflet, a glass, a table, a room, anything else. Fill name_ja and brewery_ja with "?" unless the photo prints a drink's name.
+
+LEGIBILITY (legibility). Say what there was to read on the subject:
+   - read: you read a name.
+   - unclear: there is writing, but blur, glare, darkness or distance kept you from reading a name.
+   - no_text: the photo is clear and the side of the bottle that faces the camera carries no writing at all — a drawing, a pattern, bare glass. Do not name a sake from a picture alone: fill name_ja and brewery_ja with "?".
 
 WHAT THE DRINK IS (drink). Go by the words printed in the photo, not by the maker or the look of the bottle:
-   - sake: the label prints 清酒, 日本酒, "Sake", or a sake grade (純米, 吟醸, 大吟醸, 本醸造 and their combinations).
+   - sake: the label prints 清酒, 日本酒, "Sake", or a sake grade (純米, 吟醸, 大吟醸, 本醸造 and their combinations). Craft sake (クラフトサケ, "Craft Sake", その他の醸造酒 from a sake maker: brewed like sake with hops, fruit or another koji added) counts as sake here.
    - shochu: the label prints 焼酎 (本格焼酎, 焼酎甲類, 焼酎乙類, 芋焼酎, 麦焼酎, 米焼酎) or "Shochu".
    - awamori: the label prints 泡盛 or "Awamori".
    - umeshu: the label prints 梅酒 or "Umeshu".
@@ -358,6 +364,7 @@ export function createAnthropicHaikuProvider(
         name_ja: extraction.name_ja,
         brewery_ja: extraction.brewery_ja,
         subject: extraction.subject,
+        legibility: extraction.legibility,
         drink: extraction.drink,
         brewery_printed: extraction.brewery_printed,
         other_names: extraction.other_names,

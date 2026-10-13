@@ -91,8 +91,18 @@ Added 2026-10-13, after the list had gone to the designers.
 
 Some bottles carry a drawing on one side and all their text on another. A visitor photographs the side they find striking: the test set now has a sharp photo of a frosted bottle with a drawn figure and not one character in the frame. The model says so honestly (one bottle, nothing to read), and the scan then shows "unclear photo", which tells the visitor to retake a photo that is perfectly sharp.
 
-Not built yet. Planned: the read says which it is — text read, text there but too blurred to read, or no text on this side — and the last gets its own §5a outcome.
+Built ahead of the spec on branch `scan/read-romaji`: the read says which it is — text read, text there but too blurred to read, or no text on this side — and the last gets its own §5a outcome, with the copy proposed in question 1. A photo with no bottle in it at all (a loose tag, a table) gets one too: "No bottle" / "We can't see a bottle in this photo".
 
 1. Copy and layout for that outcome. Proposed: kicker "No name on this side"; title "Turn the bottle to the side with writing"; one line, "This side has only a picture. The name is usually on the opposite side or on a small label near the base."; then "Scan again", "Type the name instead" and "How to read a label".
 2. Should it show the photo back, so the visitor sees which side was taken?
 3. Naming a sake from its artwork alone is not possible today (there is no source of label images). If it ever becomes possible, such a match would be a guess of a new kind: does it get its own provenance wording, separate from "Read by AI"?
+
+## H. What was read, for a visitor who cannot read Japanese
+
+A read that is not in the catalogue was shown in kanji alone ("What we read": 京極 / 二世古酒造), which a visitor who does not read Japanese cannot check against the label, search for, or recognise later. Maintainer report, 2026-10-13.
+
+Built on branch `scan/read-romaji`: the model also gives the name, the brewery and the bottling's name in Latin letters (the label's own spelling where it prints one, a Hepburn reading where it does not). Under each field of "What we read" a line says "In Latin letters: Kyōgoku", for as long as the field holds what was read. "Keep it anyway" saves "Kyōgoku 京極", and "Add this bottling" offers "Mizuo Ichiaji 一味 Junmai" (this answers D2).
+
+1. Is a line under the field the right place, or should the Latin reading be the field's value with the kanji beside it?
+2. Reading first, then kanji ("Kyōgoku 京極"), for a kept name: right order, and right to keep both?
+3. The reading is the model's. It sits under the card's Read by AI badge; does it need its own mark where it appears in a saved name?

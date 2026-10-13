@@ -884,6 +884,11 @@
       },
       "body": "Der Katalog von Yawaragi enthält nur Sake, deshalb gibt es zu dieser Flasche keine Seite."
     },
+    "noText": {
+      "kicker": "Kein Name auf dieser Seite",
+      "title": "Dreh die Flasche zur Seite mit der Schrift",
+      "body": "Auf dieser Seite ist nur ein Bild. Der Name steht meist auf der gegenüberliegenden Seite oder auf einem kleinen Etikett unten an der Flasche."
+    },
     "notOneBottle": {
       "menu": {
         "kicker": "Eine Karte",
@@ -894,6 +899,11 @@
         "kicker": "Mehrere Flaschen",
         "title": "Mehr als eine Flasche im Bild",
         "body": "Wir können nicht erkennen, welche du meinst. Scanne eine Flasche nach der anderen."
+      },
+      "no_bottle": {
+        "kicker": "Keine Flasche",
+        "title": "Auf diesem Foto sehen wir keine Flasche",
+        "body": "Richte die Kamera auf das Etikett einer Flasche, so nah, dass der Name das Bild füllt."
       }
     },
     "rateLimited": {

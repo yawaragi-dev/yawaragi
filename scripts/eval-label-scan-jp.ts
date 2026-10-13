@@ -710,6 +710,7 @@ const OTHER_KINDS: readonly { kind: PhotoKind; label: string }[] = [
   { kind: 'other_drink', label: 'not sake' },
   { kind: 'several_bottles', label: 'several bottles' },
   { kind: 'menu', label: 'menu' },
+  { kind: 'no_bottle', label: 'no bottle' },
 ]
 
 /**

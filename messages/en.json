@@ -884,6 +884,11 @@
       },
       "body": "Yawaragi’s catalogue holds sake only, so there is no page for this bottle."
     },
+    "noText": {
+      "kicker": "No name on this side",
+      "title": "Turn the bottle to the side with writing",
+      "body": "This side has only a picture. The name is usually on the opposite side, or on a small label near the base."
+    },
     "notOneBottle": {
       "menu": {
         "kicker": "A menu",
@@ -894,6 +899,11 @@
         "kicker": "Several bottles",
         "title": "More than one bottle in the photo",
         "body": "We can’t tell which one you mean. Scan one bottle at a time."
+      },
+      "no_bottle": {
+        "kicker": "No bottle",
+        "title": "We can’t see a bottle in this photo",
+        "body": "Point the camera at a bottle’s label, close enough that the name fills the frame."
       }
     },
     "rateLimited": {
