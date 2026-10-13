@@ -2589,5 +2589,120 @@
       "localOnly": false,
       "notes": "A MENU: the same bar's tablet list as aramasa_takagi_menu.jpg, the page headed お燗がおすすめ / \"Warm Aged SAKE\", a grid of nine cells of which eight are filled, listed left to right and top to bottom as the maintainer named them. Each cell prints the sake's name in kanji, hiragana and Latin with its prefecture, then the bottling and the grade; the cells for 剣菱 and 伊根満開 print no grade. The page does not print the makers, which are the catalogue's. 楽の世 (printed with the old character, 樂の世) is 丸井合名 of Aichi (row 1670); the maintainer's list and file name had \"Maruichi\", which is another Aichi brewery (丸一酒造, ほしいずみ), and the file was renamed to \"marui\" on that. 剣菱 瑞祥 is sold as 瑞祥黒松剣菱, which the catalogue does not have as a row of its own, so both 剣菱 and 黒松剣菱 count. The page writes \"Yorokobi Gaigin\" and \"Honjyozo\". Below the grid: per-glass prices, an offer to warm the sake to order and a one-drink-per-guest notice. Published: a plain typeset list of names, grades and prices, no venue name, no logo, no picture, no person; a lamp is reflected in the screen. Added 2026-10-13."
     }
+  },
+  "kirei_yucho_toyokuni_kikunosato_senkin_suminoe_nishida_fukui_menu.jpg": {
+    "name_ja": "亀齢",
+    "brewery_ja": "亀齢酒造",
+    "view": "other",
+    "subject": "menu",
+    "items": [
+      {
+        "name_ja": "亀齢",
+        "brewery_ja": "亀齢酒造",
+        "product": "Check おりがらみ 生酒 特別純米",
+        "expectedBrandIds": [
+          1482
+        ]
+      },
+      {
+        "name_ja": "風の森",
+        "brewery_ja": "油長酒造",
+        "product": "秋津穂507 笊採り 無濾過無加水生酒 純米",
+        "expectedBrandIds": [
+          792
+        ]
+      },
+      {
+        "name_ja": "一歩己",
+        "brewery_ja": "豊国酒造",
+        "product": "純米吟醸",
+        "expectedBrandIds": [
+          1139
+        ]
+      },
+      {
+        "name_ja": "大那",
+        "brewery_ja": "菊の里酒造",
+        "product": "美山錦 生酛作り 無濾過生酒 特別純米",
+        "expectedBrandIds": [
+          253
+        ]
+      },
+      {
+        "name_ja": "仙禽",
+        "brewery_ja": "せんきん",
+        "product": "あかとんぼ 純米",
+        "expectedBrandIds": [
+          1121
+        ]
+      },
+      {
+        "name_ja": "墨廼江",
+        "brewery_ja": "墨廼江酒造",
+        "product": "麗辛口 特別純米",
+        "expectedBrandIds": [
+          49
+        ]
+      },
+      {
+        "name_ja": "田酒",
+        "brewery_ja": "西田酒造店",
+        "product": "渡船2号 純米吟醸",
+        "expectedBrandIds": [
+          19
+        ]
+      },
+      {
+        "name_ja": "萩乃露",
+        "brewery_ja": "福井弥平商店",
+        "product": "辛口 生酒 純米",
+        "expectedBrandIds": [
+          680
+        ]
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "風の森",
+        "一歩己",
+        "大那",
+        "仙禽",
+        "墨廼江",
+        "田酒",
+        "萩乃露",
+        "Keri",
+        "Kazenomori",
+        "Ibuki",
+        "Daina",
+        "SenKin",
+        "Suminoe",
+        "Densyu",
+        "Haginotsuyu",
+        "けれい",
+        "かぜのもり",
+        "いぶき",
+        "だいな",
+        "せんきん",
+        "すみのえ",
+        "でんしゅ",
+        "はぎのつゆ"
+      ],
+      "brewery_ja": [
+        "油長酒造",
+        "豊国酒造",
+        "豊国酒造 (東)",
+        "菊の里酒造",
+        "せんきん",
+        "墨廼江酒造",
+        "西田酒造店",
+        "福井弥平商店"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_menu_photo",
+      "rightsCleared": true,
+      "localOnly": false,
+      "notes": "A MENU: the same bar's tablet list as aramasa_takagi_menu.jpg, another page, a grid of nine cells of which eight are filled, listed left to right and top to bottom as the maintainer named them. Each cell prints the sake's name in kanji, hiragana and Latin with its prefecture, then the bottling and the grade; the cell for 一歩己 prints the grade only. The page does not print the makers, which are the catalogue's: 亀齢 here is 亀齢酒造 of Hiroshima (the catalogue also has 信州亀齢 from another maker), 一歩己 is the 豊国酒造 the catalogue marks (東), and 仙禽's maker is written せんきん. The page writes \"Keri\", \"SenKin\" and \"Densyu\". The maintainer's file name had \"tokoyuni\" for Toyokuni and was renamed. Below the grid: tasting-flight and per-glass prices and a one-drink-per-guest notice. Published: a plain typeset list of names, grades and prices, no venue name, no logo, no picture, no person; a lamp is reflected in the screen. Added 2026-10-13."
+    }
   }
 }

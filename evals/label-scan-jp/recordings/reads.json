@@ -2051,6 +2051,27 @@
      ],
      "confidence": 0.7,
      "latencyMs": 5920
+    },
+    "kirei_yucho_toyokuni_kikunosato_senkin_suminoe_nishida_fukui_menu.jpg": {
+     "photoSha": "ceb346eec97fa01d",
+     "name_ja": "亀齢",
+     "brewery_ja": "亀齢酒造",
+     "brewery_printed": false,
+     "subject": "menu",
+     "drink": "sake",
+     "bottling": {
+      "product_name": "Check",
+      "grade": "tokubetsu_junmai",
+      "styles": [
+       "nama",
+       "nigori"
+      ]
+     },
+     "other_names": [
+      "Check"
+     ],
+     "confidence": 0.6,
+     "latencyMs": 5804
     }
    }
   },
@@ -4199,6 +4220,28 @@
      ],
      "confidence": 0.8,
      "latencyMs": 3373
+    },
+    "kirei_yucho_toyokuni_kikunosato_senkin_suminoe_nishida_fukui_menu.jpg": {
+     "photoSha": "ceb346eec97fa01d",
+     "name_ja": "亀齢",
+     "brewery_ja": "救心酒造",
+     "brewery_printed": false,
+     "subject": "menu",
+     "drink": "sake",
+     "bottling": {
+      "product_name": "Check",
+      "grade": "tokubetsu_junmai",
+      "styles": [
+       "nama"
+      ]
+     },
+     "other_names": [
+      "Check",
+      "けれい",
+      "Keri"
+     ],
+     "confidence": 0.8,
+     "latencyMs": 4392
     }
    }
   },
