@@ -806,6 +806,7 @@
     "whatWeRead": "Was wir gelesen haben",
     "name": "Name",
     "brewery": "Brauerei",
+    "inLatin": "In lateinischer Schrift: {reading}",
     "misreadHint": "Falsch gelesen? Korrigiere es nach dem Etikett und suche erneut.",
     "searchAgain": "Erneut suchen",
     "otherSide": "Scanne eine andere Seite der Flasche, und wir lesen beide Fotos zusammen.",

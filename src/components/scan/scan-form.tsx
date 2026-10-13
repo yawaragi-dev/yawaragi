@@ -46,7 +46,7 @@ import { TastingLogPanel } from '@/components/journal/tasting-log-panel'
 import { OtherCandidates } from '@/components/scan/other-candidates'
 import { ScanBottlings } from '@/components/scan/scan-bottlings'
 import { bottlingNameFromRead } from '@/lib/scan/read-bottling'
-import { ScanOutcome, type OutcomeCandidate } from '@/components/scan/scan-outcome'
+import { ScanOutcome, readingFor, withReading, type OutcomeCandidate } from '@/components/scan/scan-outcome'
 import { ScanResultCard } from '@/components/scan/scan-result-card'
 import type { DebugEvent } from '@/lib/debug/debug-log'
 import { appendDebugEvents } from '@/lib/debug/debug-store'
@@ -513,6 +513,8 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
             read={{
               name: view.extraction.name_ja,
               brewery: view.extraction.brewery_ja,
+              nameRomaji: view.extraction.name_romaji,
+              breweryRomaji: view.extraction.brewery_romaji,
               badge: readBadge('scan-outcome-brand-only-badge'),
             }}
             candidates={{
@@ -537,13 +539,15 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
             icon={icon(ArrowsDownUp)}
             kicker={tOutcome('breweryOnly.kicker')}
             title={tOutcome('breweryOnly.title')}
-            body={tOutcome('breweryOnly.body', { brewery: view.breweryRomaji ?? view.extraction.brewery_ja })}
+            body={tOutcome('breweryOnly.body', { brewery: view.breweryRomaji ?? view.extraction.brewery_romaji ?? view.extraction.brewery_ja })}
             onRescan={onPickClick}
             suggestOtherSide
             canKeep={canLog}
             read={{
               name: view.extraction.name_ja,
               brewery: view.extraction.brewery_ja,
+              nameRomaji: view.extraction.name_romaji,
+              breweryRomaji: view.extraction.brewery_romaji,
               badge: readBadge('scan-outcome-brewery-only-badge'),
             }}
             candidates={{
@@ -554,8 +558,13 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
                   href: view.sakeHref,
                   name: view.brandDivergence.storedRomaji ?? view.brandDivergence.stored,
                   kanji: view.brandDivergence.storedRomaji ? view.brandDivergence.stored : null,
-                  where: view.breweryRomaji ?? view.extraction.brewery_ja,
-                  reason: tOutcome('breweryOnly.reason', { extracted: view.extraction.name_ja }),
+                  where: view.breweryRomaji ?? view.extraction.brewery_romaji ?? view.extraction.brewery_ja,
+                  reason: tOutcome('breweryOnly.reason', {
+                    extracted: withReading(
+                      view.extraction.name_ja,
+                      readingFor(view.extraction.name_ja, view.extraction.name_ja, view.extraction.name_romaji),
+                    ),
+                  }),
                 },
               ],
             }}
@@ -578,6 +587,8 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
             read={{
               name: view.extraction.name_ja,
               brewery: view.extraction.brewery_ja,
+              nameRomaji: view.extraction.name_romaji,
+              breweryRomaji: view.extraction.brewery_romaji,
               badge: readBadge('scan-outcome-ambiguous-badge'),
             }}
             candidates={{
@@ -615,6 +626,8 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
             read={{
               name: view.extraction.name_ja,
               brewery: view.extraction.brewery_ja,
+              nameRomaji: view.extraction.name_romaji,
+              breweryRomaji: view.extraction.brewery_romaji,
               badge: readBadge('scan-outcome-no-match-badge'),
             }}
             candidates={
@@ -692,6 +705,8 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
             read={{
               name: view.extraction.name_ja,
               brewery: view.extraction.brewery_ja,
+              nameRomaji: view.extraction.name_romaji,
+              breweryRomaji: view.extraction.brewery_romaji,
               badge: readBadge('scan-outcome-not-sake-badge'),
             }}
           />
@@ -708,6 +723,8 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
             read={{
               name: view.extraction.name_ja,
               brewery: view.extraction.brewery_ja,
+              nameRomaji: view.extraction.name_romaji,
+              breweryRomaji: view.extraction.brewery_romaji,
               badge: readBadge('scan-outcome-not-one-bottle-badge'),
             }}
           />
@@ -884,7 +901,7 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
                 <div key={view.brandId} className="flex flex-col gap-3">
                   <TastingLogPanel
                     brandId={view.brandId}
-                    sakeName={view.sakeRomaji ?? view.extraction.name_ja}
+                    sakeName={view.sakeRomaji ?? view.extraction.name_romaji ?? view.extraction.name_ja}
                     chart={view.flavorChart}
                     history={null}
                     // Nothing on /scan reads the journal, so there is nothing
@@ -897,16 +914,16 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
                   <div className="flex gap-2">
                     <CellarButton
                       target={{ brandId: view.brandId }}
-                      name={view.sakeRomaji ?? view.extraction.name_ja}
+                      name={view.sakeRomaji ?? view.extraction.name_romaji ?? view.extraction.name_ja}
                       initialCount={0}
                       refreshOnSave={false}
                     />
                   </div>
                   <ScanBottlings
                     brandId={view.brandId}
-                    lineName={view.sakeRomaji ?? view.extraction.name_ja}
+                    lineName={view.sakeRomaji ?? view.extraction.name_romaji ?? view.extraction.name_ja}
                     suggestedName={bottlingNameFromRead(
-                      view.sakeRomaji ?? view.extraction.name_ja,
+                      view.sakeRomaji ?? view.extraction.name_romaji ?? view.extraction.name_ja,
                       view.extraction.bottling,
                     )}
                     own={Array.isArray(view.ownBottlings) ? view.ownBottlings : []}

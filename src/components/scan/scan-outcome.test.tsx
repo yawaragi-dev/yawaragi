@@ -117,6 +117,39 @@ describe('§5a — a scan outcome that is not a match', () => {
     expect(screen.queryByTestId('scan-outcome-other-side')).toBeNull()
   })
 
+  it('says in Latin letters what was read, for a visitor who cannot read the kanji', () => {
+    renderOutcome({
+      read: { name: '京極', brewery: '二世古酒造', nameRomaji: 'Kyōgoku', breweryRomaji: 'Niseko Shuzō', badge: null },
+    })
+    expect(screen.getByTestId('scan-outcome-read-name-reading').textContent).toBe('In Latin letters: Kyōgoku')
+    expect(screen.getByTestId('scan-outcome-read-brewery-reading').textContent).toBe('In Latin letters: Niseko Shuzō')
+  })
+
+  it('drops the reading once the visitor has typed over the name it described', () => {
+    renderOutcome({ read: { name: '京極', brewery: '二世古酒造', nameRomaji: 'Kyōgoku', badge: null } })
+    fireEvent.change(screen.getByTestId('scan-outcome-read-name'), { target: { value: '京極 純米' } })
+    expect(screen.queryByTestId('scan-outcome-read-name-reading')).toBeNull()
+  })
+
+  it('does not repeat a name that is in Latin letters already', () => {
+    renderOutcome({ read: { name: 'DASSAI', brewery: '獺祭', nameRomaji: 'Dassai', badge: null } })
+    expect(screen.queryByTestId('scan-outcome-read-name-reading')).toBeNull()
+    expect(screen.queryByTestId('scan-outcome-read-brewery-reading')).toBeNull()
+  })
+
+  it('keeps an unmatched bottle under a name its owner can read', async () => {
+    addOwnBottling.mockClear()
+    addOwnBottling.mockResolvedValue({ status: 'ok', expressionId: 'exp-1' })
+    renderOutcome({
+      canKeep: true,
+      read: { name: '京極', brewery: '二世古酒造', nameRomaji: 'Kyōgoku', breweryRomaji: 'Niseko Shuzō', badge: null },
+    })
+    fireEvent.click(screen.getByTestId('scan-outcome-keep-add'))
+    await waitFor(() => expect(addOwnBottling).toHaveBeenCalledOnce())
+    expect(JSON.stringify(addOwnBottling.mock.calls[0])).toContain('Kyōgoku 京極')
+    expect(JSON.stringify(addOwnBottling.mock.calls[0])).toContain('Niseko Shuzō 二世古酒造')
+  })
+
   it('has nothing to keep without a name', () => {
     renderOutcome({ canKeep: true, read: { name: '', brewery: '伴野酒造', badge: null } })
     expect((screen.getByRole('button', { name: 'Add this bottling' }) as HTMLButtonElement).disabled).toBe(true)

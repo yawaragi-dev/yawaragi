@@ -131,6 +131,17 @@ export const LabelScanExtractionSchema = withProvenance(z.literal('llm_extracted
      * first few and ignores the rest.
      */
     other_names: z.array(z.string()).optional(),
+    /**
+     * `name_ja` and `brewery_ja` once more in Latin letters: the spelling the
+     * label prints where it prints one, the model's Hepburn reading where it
+     * does not. A visitor who cannot read Japanese has nothing else to go on
+     * when the read is not in the catalogue, where the catalogue's own Latin
+     * name would otherwise stand. A reading by the model, so it is shown
+     * under the Read by AI badge like the rest of the read, and never used by
+     * the lookup. Optional: absent on reads made before the fields existed.
+     */
+    name_romaji: z.string().optional(),
+    brewery_romaji: z.string().optional(),
     bottling: ScanBottlingSchema.optional(),
   })
   .extend({

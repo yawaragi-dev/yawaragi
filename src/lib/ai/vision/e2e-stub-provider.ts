@@ -48,7 +48,7 @@ async function readInjectedExtraction(): Promise<LabelScanExtraction | null> {
     const json = Buffer.from(raw, 'base64').toString('utf8')
     const parsed: unknown = JSON.parse(json)
     if (typeof parsed !== 'object' || parsed === null) return null
-    const { name_ja, brewery_ja, confidence, subject, drink, brewery_printed, other_names, bottling } =
+    const { name_ja, brewery_ja, confidence, subject, drink, brewery_printed, other_names, bottling, name_romaji, brewery_romaji } =
       parsed as Record<string, unknown>
     // Pin `source` here; the injected payload carries model-output fields
     // only — the three every read has, and the optional ones a test wants
@@ -64,6 +64,8 @@ async function readInjectedExtraction(): Promise<LabelScanExtraction | null> {
       drink,
       brewery_printed,
       other_names,
+      name_romaji,
+      brewery_romaji,
       bottling,
     })
   } catch {

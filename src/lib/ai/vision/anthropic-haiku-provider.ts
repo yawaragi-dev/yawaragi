@@ -199,6 +199,12 @@ OTHER NAMES (other_names). After choosing name_ja, list every OTHER name the lab
    - any second large name on the label you did not choose as the brand.
    Do NOT list grades (純米吟醸, Junmai Daiginjo), rice varieties, polishing ratios, volume, alcohol, dates, the brewery, the importer, or slogans. Leave the list empty when the label prints no other name. The catalogue often lists a sub-line as its own sake, so these names decide which one the bottle is.
 
+LATIN READING (name_romaji, brewery_romaji). Many of the people who see this read cannot read Japanese. Write name_ja and brewery_ja once more in Latin letters:
+   - if the photo prints the name in Latin letters, use that spelling as printed (HANATOMOE, Dassai);
+   - otherwise give the reading in Hepburn romanisation, with a macron on long vowels and a capital first letter (京極 → Kyōgoku, 小澤酒造 → Ozawa Shuzō);
+   - if name_ja or brewery_ja is already in Latin letters, repeat it.
+   A name you are not sure how to read still gets your best reading. Leave a field out only when you could not read the name at all.
+
 THIS BOTTLING (bottling). The brand names a family; the label usually says more about this one product. Fill in only what is printed in the photo and leave out the rest — an empty object is a fine answer:
    - product_name: the product or sub-line name beside the brand, verbatim, in the script it is printed in (一味, 縁, 山ノ霞, "Wandering Poet"). Not the brand again, not a grade, not a slogan. Where it is printed in both Japanese and Latin, give the Japanese.
    - grade: the grade the label prints — junmai_daiginjo (純米大吟醸), daiginjo (大吟醸), junmai_ginjo (純米吟醸), ginjo (吟醸), tokubetsu_junmai (特別純米), junmai (純米), tokubetsu_honjozo (特別本醸造), honjozo (本醸造), futsushu (普通酒, or 上撰 / 佳撰 with no grade). Latin spellings count ("Junmai Ginjo"). Leave it out when no grade is printed.
@@ -354,6 +360,8 @@ export function createAnthropicHaikuProvider(
         drink: extraction.drink,
         brewery_printed: extraction.brewery_printed,
         other_names: extraction.other_names,
+        name_romaji: extraction.name_romaji,
+        brewery_romaji: extraction.brewery_romaji,
         bottling: extraction.bottling,
         confidence: extraction.confidence,
       })

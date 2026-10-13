@@ -52,6 +52,12 @@ export interface OutcomeCandidate {
 export interface OutcomeRead {
   name: string
   brewery: string
+  /**
+   * The two once more in Latin letters, as the model read them. A visitor
+   * who cannot read Japanese has only these to tell what was read.
+   */
+  nameRomaji?: string
+  breweryRomaji?: string
   /** The Read by AI badge, rendered by the caller (it owns the sheet). */
   badge: ReactNode
 }
@@ -141,6 +147,8 @@ export function ScanOutcome({
           badge={read.badge}
           name={name}
           brewery={brewery}
+          nameReading={readingFor(name, read.name, read.nameRomaji)}
+          breweryReading={readingFor(brewery, read.brewery, read.breweryRomaji)}
           onName={setName}
           onBrewery={setBrewery}
         />
@@ -166,7 +174,12 @@ export function ScanOutcome({
         </ul>
       )}
 
-      {read && canKeep && <KeepItAnyway name={name} brewery={brewery} />}
+      {read && canKeep && (
+        <KeepItAnyway
+          name={withReading(name, readingFor(name, read.name, read.nameRomaji))}
+          brewery={withReading(brewery, readingFor(brewery, read.brewery, read.breweryRomaji))}
+        />
+      )}
 
       <Link
         href="/search"
@@ -191,6 +204,23 @@ export function ScanOutcome({
 }
 
 /**
+ * The Latin reading to show under a field: the model's, for as long as the
+ * field still holds what the model read. Once the visitor has typed over it
+ * the reading describes something else and goes. Nothing for a name that is
+ * in Latin letters already.
+ */
+export function readingFor(value: string, read: string, romaji: string | undefined): string | null {
+  const reading = romaji?.trim()
+  if (!reading || value.trim() !== read.trim()) return null
+  return reading.toLowerCase() === read.trim().toLowerCase() ? null : reading
+}
+
+/** A kept name leads with its reading: "Kyōgoku 京極". */
+export function withReading(value: string, reading: string | null): string {
+  return reading ? `${reading} ${value.trim()}` : value
+}
+
+/**
  * "What we read": the name and brewery as fields the visitor can fix from the
  * label, and "Search again" — a link to §8 with the (edited) name, so it lands
  * on a page the back button returns from. A link, not a form: the whole scan
@@ -200,12 +230,16 @@ function WhatWeRead({
   badge,
   name,
   brewery,
+  nameReading,
+  breweryReading,
   onName,
   onBrewery,
 }: {
   badge: ReactNode
   name: string
   brewery: string
+  nameReading: string | null
+  breweryReading: string | null
   onName: (value: string) => void
   onBrewery: (value: string) => void
 }) {
@@ -227,6 +261,11 @@ function WhatWeRead({
           className={field}
           data-testid="scan-outcome-read-name"
         />
+        {nameReading && (
+          <span className="text-meta text-ash-700" data-testid="scan-outcome-read-name-reading">
+            {t('inLatin', { reading: nameReading })}
+          </span>
+        )}
       </label>
       <label className="flex flex-col gap-1.5">
         <span className="text-section-label uppercase text-ash-600">{t('brewery')}</span>
@@ -240,6 +279,11 @@ function WhatWeRead({
           lang="ja"
           data-testid="scan-outcome-read-brewery"
         />
+        {breweryReading && (
+          <span className="text-meta text-ash-700" data-testid="scan-outcome-read-brewery-reading">
+            {t('inLatin', { reading: breweryReading })}
+          </span>
+        )}
       </label>
       <p className="text-meta text-ash-600">{t('misreadHint')}</p>
       <Link
