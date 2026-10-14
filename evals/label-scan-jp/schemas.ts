@@ -84,7 +84,8 @@ export type PhotoView = z.infer<typeof PhotoViewSchema>
  * - `one_bottle` — one bottle (or its box) is the subject. Other bottles may
  *   stand at the edges of a shop shelf; they are not what was photographed.
  * - `several_bottles` — two or more different bottles, none of them merely
- *   at the edge. `items` lists each one.
+ *   at the edge: two on a table, or a whole shop shelf. `items` lists each
+ *   one that can be read.
  * - `menu` — a printed menu or drinks list, not a bottle. `items` lists the
  *   drinks legibly printed on it. Menu scan is a deferred feature (design §7).
  */
@@ -101,21 +102,47 @@ export const DrinkSchema = z.enum(['sake', 'shochu', 'awamori', 'umeshu', 'lique
 
 export type Drink = z.infer<typeof DrinkSchema>
 
-/** One bottle in a `several_bottles` photo, or one line of a `menu`. */
-export const PhotoItemSchema = z.object({
-  name_ja: z.string().min(1),
-  /** Left out where a menu does not print the maker and it is not known. */
-  brewery_ja: z.string().min(1).optional(),
-  /** Left out, the item is sake. */
-  drink: DrinkSchema.optional(),
-  /** The catalogue rows for this item; `[]` when the catalogue has none. */
-  expectedBrandIds: z.array(z.number().int().positive()),
-  /**
-   * `several_bottles` only: this bottle is clearly the subject — centred,
-   * largest, in focus. At most one item; none when the bottles share the frame.
-   */
-  main: z.boolean().optional(),
-})
+/**
+ * One bottle in a `several_bottles` photo, or one line of a `menu`. A shelf
+ * or a menu lists its items left to right, top to bottom, one per product
+ * however many bottles of it stand in the row.
+ */
+export const PhotoItemSchema = z
+  .object({
+    /** Left out, with `unreadable`, where the item is there but cannot be read. */
+    name_ja: z.string().min(1).optional(),
+    /** Left out where a menu does not print the maker and it is not known. */
+    brewery_ja: z.string().min(1).optional(),
+    /**
+     * What the label, shelf tag or menu line says about this bottling beyond
+     * the sake's name, as printed: grade, product name, style words. Two
+     * bottlings of one sake on a shelf are two items that differ here.
+     */
+    product: z.string().min(1).optional(),
+    /** Left out, the item is sake. */
+    drink: DrinkSchema.optional(),
+    /** The catalogue rows for this item; `[]` when the catalogue has none. */
+    expectedBrandIds: z.array(z.number().int().positive()),
+    /**
+     * `several_bottles` only: this bottle is clearly the subject — centred,
+     * largest, in focus. At most one item; none when the bottles share the frame.
+     */
+    main: z.boolean().optional(),
+    /**
+     * The item is in the frame but nobody can say what it is: cut off by the
+     * edge, turned away, out of focus. Kept so that the list has as many
+     * entries as the photo has products.
+     */
+    unreadable: z.literal(true).optional(),
+  })
+  .superRefine((item, ctx) => {
+    if (item.unreadable ? item.name_ja !== undefined : item.name_ja === undefined) {
+      ctx.addIssue({ code: 'custom', path: ['name_ja'], message: 'an item has a name, or is unreadable; not both, not neither.' })
+    }
+    if (item.unreadable && item.expectedBrandIds.length > 0) {
+      ctx.addIssue({ code: 'custom', path: ['expectedBrandIds'], message: 'an unreadable item has no catalogue row.' })
+    }
+  })
 
 export type PhotoItem = z.infer<typeof PhotoItemSchema>
 
@@ -162,6 +189,13 @@ export const GroundTruthEntrySchema = z
        * photo with `rightsCleared: false` and quietly have it evaluated.
        */
       rightsCleared: z.boolean(),
+      /**
+       * `true` when the photo may be run but not published: it lives in
+       * `photos/local/`, which git ignores, and only its ground truth and
+       * saved reads are in the repository. Decided photo by photo (README,
+       * "Compliance") and never by file name. Left out, the photo is published; a menu photo must state it.
+       */
+      localOnly: z.boolean().optional(),
       /** Source URL / bottle description / licence grant. */
       attribution: z.string().optional(),
       notes: z.string().optional(),
@@ -175,6 +209,15 @@ export const GroundTruthEntrySchema = z
     // entry with `rightsCleared: false` is SKIPPED (never sent to a provider,
     // never scored) with a visible "rights not cleared" line. Flipping the
     // flag to `true` once the rights actually exist is what opts a photo in.
+    // A menu is the one kind of photo where publishing is a real question, so
+    // its entry must answer it either way rather than fall into the default.
+    if (source === 'maintainer_menu_photo' && entry.provenance.localOnly === undefined) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['provenance', 'localOnly'],
+        message: 'a menu photo must say localOnly: true or false (README, "Compliance").',
+      })
+    }
     if ((source === 'cc_by' || source === 'press_kit_licensed') && !attribution) {
       ctx.addIssue({
         code: 'custom',

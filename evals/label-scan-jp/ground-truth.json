@@ -2188,7 +2188,3511 @@
     "provenance": {
       "source": "maintainer_menu_photo",
       "rightsCleared": true,
+      "localOnly": true,
       "notes": "A MENU, AND NOT SAKE: one page of a restaurant drinks menu, headed 焼酎 米 / \"Japanischer Shochu\", offering Shichida rice shochu by the glass and the bottle with a picture of the bottle. The page does not name the maker. Its Japanese and German description calls the drink a junmai sake, which the heading, the serving line (\"mit Eis/Wasser/Soda\") and the pictured bottle contradict; the maintainer, who photographed it, confirms it is the rice shochu. The catalogue has the SAKE 七田 from the same maker (row 968), which is not what the page sells. Fingers at the corner, glasses on the table and a strip of dark clothing at the bottom edge are in frame; no face. Added 2026-10-13."
+    }
+  },
+  "sasaki_matsui_shotoku_higashiyama_nagayama_kitagawa_sasaki_japanese_shelf.jpg": {
+    "name_ja": "西陣",
+    "brewery_ja": "佐々木酒造",
+    "view": "front",
+    "subject": "several_bottles",
+    "items": [
+      {
+        "name_ja": "西陣",
+        "brewery_ja": "佐々木酒造",
+        "product": "特別純米酒",
+        "expectedBrandIds": [
+          739
+        ]
+      },
+      {
+        "name_ja": "京千歳",
+        "brewery_ja": "松井酒造",
+        "product": "純米吟醸",
+        "expectedBrandIds": [
+          690
+        ]
+      },
+      {
+        "name_ja": "神蔵",
+        "brewery_ja": "松井酒造",
+        "product": "純米大吟醸 無濾過・無加水・一火(白)",
+        "expectedBrandIds": [
+          1933
+        ]
+      },
+      {
+        "name_ja": "神蔵",
+        "brewery_ja": "松井酒造",
+        "product": "純米 無濾過・無加水・生",
+        "expectedBrandIds": [
+          1933
+        ]
+      },
+      {
+        "name_ja": "花洛",
+        "brewery_ja": "招徳酒造",
+        "product": "純米吟醸 祝",
+        "expectedBrandIds": [
+          3280
+        ]
+      },
+      {
+        "name_ja": "坤滴",
+        "brewery_ja": "東山酒造",
+        "product": "純米吟醸",
+        "expectedBrandIds": [
+          742
+        ]
+      },
+      {
+        "name_ja": "山猿",
+        "brewery_ja": "永山酒造",
+        "product": "山廃仕込 無濾過生原酒",
+        "expectedBrandIds": [
+          889
+        ]
+      },
+      {
+        "name_ja": "山猿",
+        "brewery_ja": "永山酒造",
+        "expectedBrandIds": [
+          889
+        ]
+      },
+      {
+        "unreadable": true,
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "富翁",
+        "brewery_ja": "北川本家",
+        "product": "純米大吟醸 山田錦",
+        "expectedBrandIds": [
+          686
+        ]
+      },
+      {
+        "name_ja": "富翁",
+        "brewery_ja": "北川本家",
+        "product": "大吟醸純米 吟麗",
+        "expectedBrandIds": [
+          686
+        ]
+      },
+      {
+        "name_ja": "富翁",
+        "brewery_ja": "北川本家",
+        "product": "純米酒 山廃一火",
+        "expectedBrandIds": [
+          686
+        ]
+      },
+      {
+        "name_ja": "聚楽第",
+        "brewery_ja": "佐々木酒造",
+        "product": "純米吟醸",
+        "expectedBrandIds": [
+          737
+        ]
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "京千歳",
+        "神蔵",
+        "KAGURA",
+        "花洛",
+        "坤滴",
+        "山猿",
+        "富翁",
+        "TOMIO",
+        "聚楽第"
+      ],
+      "brewery_ja": [
+        "松井酒造",
+        "招徳酒造",
+        "東山酒造",
+        "永山酒造",
+        "北川本家"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "A SHOP SHELF: three rows of a refrigerated sake shelf in Japan, thirteen products, listed left to right and top to bottom as the maintainer named them. Most labels and boxes are legible and every row has printed shelf tags with name, grade and price. Item 9 is a bottle cut off by the right edge of the middle row. Item 8 is a second 山猿 with a white label; its grade could not be read with confidence. Makers are the catalogue's, confirmed by the maintainer: 花洛 is 招徳酒造, 坤滴 is 東山酒造 and 山猿 is 永山酒造 (永山本家酒造場 is the maker of 貴); the maker line on those shelf tags is too small to read in this photo. The file name lists the makers in shelf order. The top-level name is the first item only because the field must hold something. No shop name, no person, no reflection. Added 2026-10-13."
+    }
+  },
+  "aramasa_takagi_menu.jpg": {
+    "name_ja": "新政",
+    "brewery_ja": "新政酒造",
+    "view": "other",
+    "subject": "menu",
+    "items": [
+      {
+        "name_ja": "新政",
+        "brewery_ja": "新政酒造",
+        "product": "タンジェリン 2025 純米",
+        "expectedBrandIds": [
+          109
+        ]
+      },
+      {
+        "name_ja": "新政",
+        "brewery_ja": "新政酒造",
+        "product": "No.6 X type 2025 純米",
+        "expectedBrandIds": [
+          109
+        ]
+      },
+      {
+        "name_ja": "十四代",
+        "brewery_ja": "高木酒造",
+        "product": "大極上 諸白 龍の落とし子 純米大吟醸",
+        "expectedBrandIds": [
+          144
+        ]
+      },
+      {
+        "name_ja": "新政",
+        "brewery_ja": "新政酒造",
+        "product": "陽乃鳥 スパーク Nepal flood relief 純米",
+        "expectedBrandIds": [
+          109
+        ]
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "十四代",
+        "Aramasa",
+        "Jyuyondai",
+        "あらまさ",
+        "じゅうよんだい"
+      ],
+      "brewery_ja": [
+        "高木酒造"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_menu_photo",
+      "rightsCleared": true,
+      "localOnly": false,
+      "notes": "A MENU: a bar's sake list shown on a tablet, a grid of nine cells of which four are filled, listed left to right and top to bottom as the maintainer named them. Each cell prints the sake's name in kanji, hiragana and Latin with its prefecture, then the bottling and the grade; the page writes \"Jyuyondai\". It does not print the makers, which are the catalogue's (高木酒造 of Yamagata, row 96; the catalogue has other breweries of that name). The third cell reads 大極上 諸白 where the maintainer's list has \"Gokujo Morohaku\"; 龍の落とし子 is the rice. Below the grid: tasting-flight and per-glass prices and a one-drink-per-guest notice. Published: a plain typeset list of names, grades and prices, no venue name, no logo, no picture, no person; a lamp is reflected in the screen. Added 2026-10-13."
+    }
+  },
+  "fukuchiyo_nakazawa_kinoshita_yoshida_matsumoto_akabu_menu.jpg": {
+    "name_ja": "鍋島",
+    "brewery_ja": "富久千代酒造",
+    "view": "other",
+    "subject": "menu",
+    "items": [
+      {
+        "name_ja": "鍋島",
+        "brewery_ja": "富久千代酒造",
+        "product": "裏鍋島 純米吟醸",
+        "expectedBrandIds": [
+          975
+        ]
+      },
+      {
+        "name_ja": "一博",
+        "brewery_ja": "中澤酒造",
+        "product": "10年熟成 生酒 純米吟醸",
+        "expectedBrandIds": [
+          1372
+        ]
+      },
+      {
+        "name_ja": "玉川",
+        "brewery_ja": "木下酒造",
+        "product": "山廃 亀の尾 無濾過生原酒 純米",
+        "expectedBrandIds": [
+          696
+        ]
+      },
+      {
+        "name_ja": "手取川",
+        "brewery_ja": "吉田酒造店",
+        "product": "冬 辛口 1年熟成 純米",
+        "expectedBrandIds": [
+          470
+        ]
+      },
+      {
+        "name_ja": "澤屋まつもと",
+        "brewery_ja": "松本酒造",
+        "product": "守破離 雄町 特別純米",
+        "expectedBrandIds": [
+          704
+        ]
+      },
+      {
+        "name_ja": "赤武",
+        "brewery_ja": "赤武酒造",
+        "product": "SEA 純米",
+        "expectedBrandIds": [
+          2602
+        ]
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "一博",
+        "玉川",
+        "手取川",
+        "澤屋まつもと",
+        "赤武",
+        "AKABU",
+        "Nabeshima",
+        "Kazuhiro",
+        "Tamagawa",
+        "Tedorikawa",
+        "Sawaya Matsumoto",
+        "Akabu",
+        "なべしま",
+        "かずひろ",
+        "たまがわ",
+        "てどりかわ",
+        "さわやまつもと",
+        "あかぶ"
+      ],
+      "brewery_ja": [
+        "中澤酒造",
+        "木下酒造",
+        "吉田酒造店",
+        "松本酒造",
+        "赤武酒造"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_menu_photo",
+      "rightsCleared": true,
+      "localOnly": false,
+      "notes": "A MENU: the same bar's tablet list as aramasa_takagi_menu.jpg, another page, a grid of nine cells of which six are filled, listed left to right and top to bottom as the maintainer named them. Each cell prints the sake's name in kanji, hiragana and Latin with its prefecture, then the bottling and the grade; the page writes \"Tedorikawa\". It does not print the makers, which are the catalogue's. 一博 is 中澤酒造 of Shiga (row 1313); the maintainer's list and file name had \"Nakagawa\", and the file was renamed to \"nakazawa\" on that. The catalogue writes 赤武 as AKABU, and has a second 玉川 from another maker (48328) that is not this one. Below the grid: tasting-flight and per-glass prices and a one-drink-per-guest notice. Published: a plain typeset list of names, grades and prices, no venue name, no logo, no picture, no person; a lamp is reflected in the screen. Added 2026-10-13."
+    }
+  },
+  "kikuhime_marui_kenbishi_tamazakura_uehara_mukai_mochida_maruo_menu.jpg": {
+    "name_ja": "菊姫",
+    "brewery_ja": "菊姫",
+    "view": "other",
+    "subject": "menu",
+    "items": [
+      {
+        "name_ja": "菊姫",
+        "brewery_ja": "菊姫",
+        "product": "山廃 2017 BY Aged 山田錦 純米",
+        "expectedBrandIds": [
+          1041
+        ]
+      },
+      {
+        "name_ja": "樂の世",
+        "brewery_ja": "丸井合名",
+        "product": "山廃 本醸造",
+        "expectedBrandIds": [
+          37850
+        ]
+      },
+      {
+        "name_ja": "剣菱",
+        "brewery_ja": "剣菱酒造",
+        "product": "瑞祥 Aged 5-10years blended",
+        "expectedBrandIds": [
+          766,
+          1444
+        ]
+      },
+      {
+        "name_ja": "玉櫻",
+        "brewery_ja": "玉櫻酒造",
+        "product": "生酛 2018 BY Aged 玉栄 純米",
+        "expectedBrandIds": [
+          1489
+        ]
+      },
+      {
+        "name_ja": "不老泉",
+        "brewery_ja": "上原酒造",
+        "product": "参年熟成 赤ラベル 山廃 3 years Aged 純米",
+        "expectedBrandIds": [
+          676
+        ]
+      },
+      {
+        "name_ja": "伊根満開",
+        "brewery_ja": "向井酒造",
+        "product": "赤米酒 Partially made with red rice",
+        "expectedBrandIds": [
+          1766
+        ]
+      },
+      {
+        "name_ja": "ヤマサン正宗",
+        "brewery_ja": "酒持田本店",
+        "product": "佐香錦 袋取り原酒 6BY 純米吟醸",
+        "expectedBrandIds": [
+          2282
+        ]
+      },
+      {
+        "name_ja": "悦凱陣",
+        "brewery_ja": "丸尾本店",
+        "product": "瀬戸米 山廃 2020 BY Aged 純米",
+        "expectedBrandIds": [
+          901
+        ]
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "樂の世",
+        "楽の世",
+        "剣菱",
+        "玉櫻",
+        "不老泉",
+        "伊根満開",
+        "ヤマサン正宗",
+        "悦凱陣",
+        "Kikuhime",
+        "Raku no yo",
+        "Kenbishi",
+        "Tamazakura",
+        "Furousen",
+        "Inemankai",
+        "Yamasan masamune",
+        "Yorokobi Gaigin",
+        "きくひめ",
+        "らくのよ",
+        "けんびし",
+        "たまざくら",
+        "ふろうせん",
+        "いねまんかい",
+        "ヤマサンまさむね",
+        "よろこびがいじん"
+      ],
+      "brewery_ja": [
+        "菊姫合資会社",
+        "丸井合名",
+        "剣菱酒造",
+        "玉櫻酒造",
+        "上原酒造",
+        "向井酒造",
+        "酒持田本店",
+        "丸尾本店"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_menu_photo",
+      "rightsCleared": true,
+      "localOnly": false,
+      "notes": "A MENU: the same bar's tablet list as aramasa_takagi_menu.jpg, the page headed お燗がおすすめ / \"Warm Aged SAKE\", a grid of nine cells of which eight are filled, listed left to right and top to bottom as the maintainer named them. Each cell prints the sake's name in kanji, hiragana and Latin with its prefecture, then the bottling and the grade; the cells for 剣菱 and 伊根満開 print no grade. The page does not print the makers, which are the catalogue's. 楽の世 (printed with the old character, 樂の世) is 丸井合名 of Aichi (row 1670); the maintainer's list and file name had \"Maruichi\", which is another Aichi brewery (丸一酒造, ほしいずみ), and the file was renamed to \"marui\" on that. 剣菱 瑞祥 is sold as 瑞祥黒松剣菱, which the catalogue does not have as a row of its own, so both 剣菱 and 黒松剣菱 count. The page writes \"Yorokobi Gaigin\" and \"Honjyozo\". Below the grid: per-glass prices, an offer to warm the sake to order and a one-drink-per-guest notice. Published: a plain typeset list of names, grades and prices, no venue name, no logo, no picture, no person; a lamp is reflected in the screen. Added 2026-10-13."
+    }
+  },
+  "kirei_yucho_toyokuni_kikunosato_senkin_suminoe_nishida_fukui_menu.jpg": {
+    "name_ja": "亀齢",
+    "brewery_ja": "亀齢酒造",
+    "view": "other",
+    "subject": "menu",
+    "items": [
+      {
+        "name_ja": "亀齢",
+        "brewery_ja": "亀齢酒造",
+        "product": "Check おりがらみ 生酒 特別純米",
+        "expectedBrandIds": [
+          1482
+        ]
+      },
+      {
+        "name_ja": "風の森",
+        "brewery_ja": "油長酒造",
+        "product": "秋津穂507 笊採り 無濾過無加水生酒 純米",
+        "expectedBrandIds": [
+          792
+        ]
+      },
+      {
+        "name_ja": "一歩己",
+        "brewery_ja": "豊国酒造",
+        "product": "純米吟醸",
+        "expectedBrandIds": [
+          1139
+        ]
+      },
+      {
+        "name_ja": "大那",
+        "brewery_ja": "菊の里酒造",
+        "product": "美山錦 生酛作り 無濾過生酒 特別純米",
+        "expectedBrandIds": [
+          253
+        ]
+      },
+      {
+        "name_ja": "仙禽",
+        "brewery_ja": "せんきん",
+        "product": "あかとんぼ 純米",
+        "expectedBrandIds": [
+          1121
+        ]
+      },
+      {
+        "name_ja": "墨廼江",
+        "brewery_ja": "墨廼江酒造",
+        "product": "麗辛口 特別純米",
+        "expectedBrandIds": [
+          49
+        ]
+      },
+      {
+        "name_ja": "田酒",
+        "brewery_ja": "西田酒造店",
+        "product": "渡船2号 純米吟醸",
+        "expectedBrandIds": [
+          19
+        ]
+      },
+      {
+        "name_ja": "萩乃露",
+        "brewery_ja": "福井弥平商店",
+        "product": "辛口 生酒 純米",
+        "expectedBrandIds": [
+          680
+        ]
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "風の森",
+        "一歩己",
+        "大那",
+        "仙禽",
+        "墨廼江",
+        "田酒",
+        "萩乃露",
+        "Keri",
+        "Kazenomori",
+        "Ibuki",
+        "Daina",
+        "SenKin",
+        "Suminoe",
+        "Densyu",
+        "Haginotsuyu",
+        "けれい",
+        "かぜのもり",
+        "いぶき",
+        "だいな",
+        "せんきん",
+        "すみのえ",
+        "でんしゅ",
+        "はぎのつゆ"
+      ],
+      "brewery_ja": [
+        "油長酒造",
+        "豊国酒造",
+        "豊国酒造 (東)",
+        "菊の里酒造",
+        "せんきん",
+        "墨廼江酒造",
+        "西田酒造店",
+        "福井弥平商店"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_menu_photo",
+      "rightsCleared": true,
+      "localOnly": false,
+      "notes": "A MENU: the same bar's tablet list as aramasa_takagi_menu.jpg, another page, a grid of nine cells of which eight are filled, listed left to right and top to bottom as the maintainer named them. Each cell prints the sake's name in kanji, hiragana and Latin with its prefecture, then the bottling and the grade; the cell for 一歩己 prints the grade only. The page does not print the makers, which are the catalogue's: 亀齢 here is 亀齢酒造 of Hiroshima (the catalogue also has 信州亀齢 from another maker), 一歩己 is the 豊国酒造 the catalogue marks (東), and 仙禽's maker is written せんきん. The page writes \"Keri\", \"SenKin\" and \"Densyu\". The maintainer's file name had \"tokoyuni\" for Toyokuni and was renamed. Below the grid: tasting-flight and per-glass prices and a one-drink-per-guest notice. Published: a plain typeset list of names, grades and prices, no venue name, no logo, no picture, no person; a lamp is reflected in the screen. Added 2026-10-13."
+    }
+  },
+  "inetoagave_hiroki_matsui_fujioka_shimizu_ryozeki_menu.jpg": {
+    "name_ja": "稲とアガベ",
+    "brewery_ja": "稲とアガベ醸造所",
+    "view": "other",
+    "subject": "menu",
+    "items": [
+      {
+        "name_ja": "稲とアガベ",
+        "brewery_ja": "稲とアガベ醸造所",
+        "product": "ぐるりこ Sake x Beer hop Craft SAKE",
+        "expectedBrandIds": [
+          50048
+        ]
+      },
+      {
+        "name_ja": "飛露喜",
+        "brewery_ja": "廣木酒造本店",
+        "product": "山田穂 純米吟醸",
+        "expectedBrandIds": [
+          202
+        ]
+      },
+      {
+        "name_ja": "神蔵",
+        "brewery_ja": "松井酒造",
+        "product": "祝 無濾過生原酒 純米吟醸",
+        "expectedBrandIds": [
+          1933
+        ]
+      },
+      {
+        "name_ja": "蒼空",
+        "brewery_ja": "藤岡酒造",
+        "product": "試験醸造 北海道産 きたしずく 純米吟醸",
+        "expectedBrandIds": [
+          1128
+        ]
+      },
+      {
+        "name_ja": "作",
+        "brewery_ja": "清水清三郎商店",
+        "product": "雅乃智 中取り 山田錦 純米大吟醸",
+        "expectedBrandIds": [
+          1033
+        ]
+      },
+      {
+        "name_ja": "裏翠玉",
+        "brewery_ja": "両関酒造",
+        "product": "秋田酒こまち 無濾過生酒 純米吟醸",
+        "expectedBrandIds": [
+          2240
+        ]
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "飛露喜",
+        "神蔵",
+        "蒼空",
+        "作",
+        "裏翠玉",
+        "翠玉",
+        "Inetoagabe",
+        "Hiroki",
+        "Kagura",
+        "Sookuu",
+        "Zaku",
+        "Suigyoku",
+        "\"Ura\" Suigyoku",
+        "Ura Suigyoku",
+        "いねとあがべ",
+        "ひろき",
+        "かぐら",
+        "そうくう",
+        "ざく",
+        "うらすいぎょく"
+      ],
+      "brewery_ja": [
+        "稲とアガベ",
+        "廣木酒造本店",
+        "廣木酒造",
+        "松井酒造",
+        "藤岡酒造",
+        "清水清三郎商店",
+        "両関酒造"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_menu_photo",
+      "rightsCleared": true,
+      "localOnly": false,
+      "notes": "A MENU: the same bar's tablet list as aramasa_takagi_menu.jpg, the \"Premium SAKE\" page, a grid of nine cells of which six are filled, listed left to right and top to bottom as the maintainer named them. Each cell prints the sake's name in kanji, hiragana and Latin with its prefecture, then the bottling and the grade. The page does not print the makers, which are the catalogue's. The first cell is a craft sake (brewed with beer hops, so not sake in the legal sense) and prints \"Craft SAKE\" where the others print a grade; the catalogue lists 稲とアガベ, so it is left as sake here. That cell also says 秋田 in Japanese and \"Aomori\" in Latin; Akita is right. 裏翠玉 is a bottling of 翠玉 in the catalogue. 作's bottling is 雅乃智 (Miyabi no Tomo); the bottle itself is in shimizu_zaku_miyabi_no_tomo_nakadori_junmai_daiginjo_on_table.jpg. The page writes \"Inetoagabe\" and \"Sookuu\". Below the grid: tasting-flight and per-glass prices and a one-drink-per-guest notice. Published: a plain typeset list of names, grades and prices, no venue name, no logo, no picture, no person; a lamp is reflected in the screen. Added 2026-10-13."
+    }
+  },
+  "ide_menu_1.jpg": {
+    "name_ja": "甲斐の開運",
+    "brewery_ja": "井出醸造店",
+    "view": "other",
+    "subject": "menu",
+    "items": [
+      {
+        "name_ja": "甲斐の開運",
+        "brewery_ja": "井出醸造店",
+        "product": "吟醸 Ginjo",
+        "expectedBrandIds": [
+          124540
+        ]
+      },
+      {
+        "name_ja": "甲斐の開運",
+        "brewery_ja": "井出醸造店",
+        "product": "大吟醸 Daiginjo",
+        "expectedBrandIds": [
+          124540
+        ]
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "KAINO KAIUN",
+        "カイノカイウン",
+        "Kaino Kaiun"
+      ],
+      "brewery_ja": [
+        "井出醸造",
+        "IDE SAKE BREWERY"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_menu_photo",
+      "rightsCleared": true,
+      "localOnly": true,
+      "notes": "A MENU: a close-up of the price list of 井出醸造店 (\"IDE SAKE BREWERY\"), a folded leaflet with a numbered column per product: a picture of the bottle and its box, the grade, sizes, prices, strength, serving temperature and polishing ratio. In frame: No.2 (吟醸, 720 ml and a smaller size cut off by the left edge) and No.3 (大吟醸, 180 ml and 720 ml), with the brand's crest and the table's row headings on the facing page. The maintainer's list has a cut-off item before the Ginjo and calls it No.1; the bottle at the left edge stands in the No.2 column, and ide_menu_3.jpg shows that column whole with the same small bottle, so it is counted with No.2 here. Kept local: a brewery's printed brochure with its own product photographs and crest, which are not ours to publish. Location and camera data were removed from the file. Added 2026-10-13."
+    }
+  },
+  "ide_menu_2.jpg": {
+    "name_ja": "甲斐の開運",
+    "brewery_ja": "井出醸造店",
+    "view": "other",
+    "subject": "menu",
+    "items": [
+      {
+        "product": "純米大吟醸 28年古酒",
+        "expectedBrandIds": [],
+        "unreadable": true
+      },
+      {
+        "name_ja": "甲斐の開運",
+        "brewery_ja": "井出醸造店",
+        "product": "<囲>Kakoi 酒蔵限定販売 特別純米生原酒 無殺菌・無加水",
+        "expectedBrandIds": [
+          124540
+        ]
+      },
+      {
+        "name_ja": "甲斐の開運",
+        "brewery_ja": "井出醸造店",
+        "product": "北麓 Hokuroku 特別純米",
+        "expectedBrandIds": [
+          124540
+        ]
+      },
+      {
+        "name_ja": "甲斐の開運",
+        "brewery_ja": "井出醸造店",
+        "product": "純米 Junmai",
+        "expectedBrandIds": [
+          124540
+        ]
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "北麓",
+        "Hokuroku",
+        "Kakoi",
+        "KAINO KAIUN",
+        "Kaino Kaiun"
+      ],
+      "brewery_ja": [
+        "井出醸造",
+        "IDE SAKE BREWERY"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_menu_photo",
+      "rightsCleared": true,
+      "localOnly": true,
+      "notes": "A MENU: another close-up of the same leaflet as ide_menu_1.jpg, the page headed \"FUJI HOKUROKU DISTILLERY\". In frame: No.7 (<囲> Kakoi, sold at the brewery only, a tokubetsu junmai nama genshu), No.8 (北麓, tokubetsu junmai) and No.9 (junmai, partly cut off by the right edge). Of No.6 only a strip is in frame, reading 純米大吟醸 28年古酒: the bottle and its name are outside the photo, so the item is listed as unreadable with that line as its product. Items are in the maintainer's order. Kept local: a brewery's printed brochure with its own product photographs and crest, which are not ours to publish. Location and camera data were removed from the file. Added 2026-10-13."
+    }
+  },
+  "ide_menu_3.jpg": {
+    "name_ja": "甲斐の開運",
+    "brewery_ja": "井出醸造店",
+    "view": "other",
+    "subject": "menu",
+    "items": [
+      {
+        "name_ja": "甲斐の開運",
+        "brewery_ja": "井出醸造店",
+        "product": "天下山麓富士の山 Tenkasanroku Fujinoyama 本醸造",
+        "expectedBrandIds": [
+          124540
+        ]
+      },
+      {
+        "name_ja": "甲斐の開運",
+        "brewery_ja": "井出醸造店",
+        "product": "吟醸 180ml",
+        "expectedBrandIds": [
+          124540
+        ]
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "天下山麓富士の山",
+        "Tenkasanroku Fujinoyama",
+        "Kaino Kaiun"
+      ],
+      "brewery_ja": [
+        "井出醸造",
+        "IDE SAKE BREWERY"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_menu_photo",
+      "rightsCleared": true,
+      "localOnly": true,
+      "notes": "A MENU: the top left corner of the same leaflet as ide_menu_1.jpg, lying on a wooden table. In frame: No.1 (天下山麓富士の山, honjozo, with an International Wine Challenge 2024 silver medal mark) and the left half of No.2 (吟醸; the 180 ml bottle in its printed cloth wrap and without it, and the edge of the 720 ml bottle). The heading of an umeshu section starts at the bottom edge with nothing of it legible. Items are in the maintainer's order. Kept local: a brewery's printed brochure with its own product photographs and crest, which are not ours to publish. Location and camera data were removed from the file. Added 2026-10-13."
+    }
+  },
+  "ide_menu_4.jpg": {
+    "name_ja": "甲斐の開運",
+    "brewery_ja": "井出醸造店",
+    "view": "other",
+    "subject": "menu",
+    "items": [
+      {
+        "name_ja": "甲斐の開運",
+        "brewery_ja": "井出醸造店",
+        "product": "大吟醸 Daiginjo",
+        "expectedBrandIds": [
+          124540
+        ]
+      },
+      {
+        "name_ja": "甲斐の開運",
+        "brewery_ja": "井出醸造店",
+        "product": "吟醸 Ginjo",
+        "expectedBrandIds": [
+          124540
+        ]
+      },
+      {
+        "name_ja": "甲斐の開運",
+        "brewery_ja": "井出醸造店",
+        "product": "吟醸生酒 GinjoNamasake 無殺菌",
+        "expectedBrandIds": [
+          124540
+        ]
+      },
+      {
+        "name_ja": "甲斐の開運",
+        "brewery_ja": "井出醸造店",
+        "product": "天下山麓富士の山 Tenkasanroku Fujinoyama 本醸造",
+        "expectedBrandIds": [
+          124540
+        ]
+      },
+      {
+        "name_ja": "甲斐の開運",
+        "brewery_ja": "井出醸造店",
+        "product": "生原酒 Namagenshu 無殺菌・無加水",
+        "expectedBrandIds": [
+          124540
+        ]
+      },
+      {
+        "name_ja": "梅酒",
+        "brewery_ja": "井出醸造店",
+        "product": "リキュール Plum Liqueur",
+        "drink": "umeshu",
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "冨麓",
+        "brewery_ja": "井出醸造店",
+        "product": "純米大吟醸 Junmai Daiginjo (Furoku)",
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "甲斐の開運",
+        "brewery_ja": "井出醸造店",
+        "product": "ひやおろし 純米吟醸生酒 HiyaoroshiNama 季節限定",
+        "expectedBrandIds": [
+          124540
+        ]
+      },
+      {
+        "name_ja": "甲斐の開運",
+        "brewery_ja": "井出醸造店",
+        "product": "囲 Kakoi 特別純米生原酒 酒蔵限定販売酒",
+        "expectedBrandIds": [
+          124540
+        ]
+      },
+      {
+        "name_ja": "甲斐の開運",
+        "brewery_ja": "井出醸造店",
+        "product": "純米原酒 Junmaigenshu 特別純米",
+        "expectedBrandIds": [
+          124540
+        ]
+      },
+      {
+        "name_ja": "甲斐の開運",
+        "brewery_ja": "井出醸造店",
+        "product": "純米甘口 (朱華色 はねずいろ) Junmaiamakuchi",
+        "expectedBrandIds": [
+          124540
+        ]
+      },
+      {
+        "name_ja": "大樹海",
+        "brewery_ja": "富士北麓蒸留所",
+        "product": "Blended Whisky",
+        "drink": "other",
+        "expectedBrandIds": []
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "冨麓",
+        "Furoku",
+        "大樹海",
+        "Daijukai",
+        "梅酒",
+        "Umeshu",
+        "天下山麓富士の山",
+        "Tenkasanroku Fujinoyama",
+        "Kakoi",
+        "Kaino Kaiun",
+        "KAINO KAIUN"
+      ],
+      "brewery_ja": [
+        "井出醸造",
+        "IDE SAKE BREWERY",
+        "富士北麓蒸留所"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_menu_photo",
+      "rightsCleared": true,
+      "localOnly": true,
+      "notes": "A MENU: the whole tasting sheet of 井出醸造店, laminated, lying on a counter and photographed at an angle: twelve numbered products in two rows (a honjozo-type row, No.1 to No.5, with a plum liqueur as No.6; a junmai-type row, No.7 to No.11, with a blended whisky as No.12), each with a picture of the bottle, its name, size, price, strength and polishing ratio, beside a chart of sake grades and a taste map. Items are in the maintainer's order, which is the sheet's. The sheet does not print the maker's name; the labels pictured say 甲斐の開運 and the other close-ups of the same sheets (ide_menu_1.jpg to ide_menu_3.jpg) do. No.6 (梅酒) and No.12 (大樹海, from the brewery's distillery, as the maintainer names it) are not sake. No.7 is sold as 冨麓, which the catalogue does not have. No.9 prints \"Junmai Ginjo\" in Latin under 特別純米生原酒. Kept local: a brewery's printed sheet with its own product photographs. A booking form with a visitor's name and e-mail address lay above the sheet; it is painted over in the file, which was re-encoded for that, and location and camera data were removed. Added 2026-10-13."
+    }
+  },
+  "shimizu_zaku_miyabi_no_tomo_nakadori_junmai_daiginjo_on_table.jpg": {
+    "name_ja": "作",
+    "brewery_ja": "清水清三郎商店",
+    "bottle": "zaku-miyabi-no-tomo",
+    "view": "front",
+    "expectedBrandIds": [
+      1033
+    ],
+    "also": {
+      "name_ja": [
+        "ZAKU",
+        "作 雅乃智",
+        "作 雅乃智 中取り",
+        "雅乃智",
+        "ZAKU MIYABI NO TOMO",
+        "MIYABI NO TOMO"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Zaku Miyabi no Tomo Nakadori, a junmai daiginjo by the maintainer's account, on a bar counter in dim light with a glass beside it. The front label prints 作, 雅乃智 中取り in brush script, and ZAKU / MIYABI NO TOMO / NAKADORI / MIÉ JAPAN; it prints neither the grade nor the maker. The same bottling as the 作 line of inetoagave_hiroki_matsui_fujioka_shimizu_ryozeki_menu.jpg. The maintainer's file was shimizu_zaru_on_table.jpg and was renamed to say what the bottle is. A member of staff stood at the left of the frame with their back to the camera; the photo is cropped to leave them out, which also cuts the glass in half. Photographed at a bar, added 2026-10-13."
+    }
+  },
+  "gokai_koitokame_menu.jpg": {
+    "name_ja": "豪快",
+    "brewery_ja": "宝酒造",
+    "view": "other",
+    "subject": "menu",
+    "items": [
+      {
+        "name_ja": "豪快",
+        "brewery_ja": "宝酒造",
+        "product": "冷・熱燗",
+        "expectedBrandIds": [
+          3507
+        ]
+      },
+      {
+        "name_ja": "鯉と亀と生原酒",
+        "product": "冷",
+        "expectedBrandIds": []
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "鯉と亀と生原酒",
+        "鯉と亀と生原酒。",
+        "日本酒"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_menu_photo",
+      "rightsCleared": true,
+      "localOnly": true,
+      "notes": "A MENU: an izakaya's laminated drinks card standing on the counter, photographed at an angle with sauce bottles and a wooden sign in front of it. Most of the card is other drinks: draft beer, cocktails, 焼酎・果実酒 (よかいち, 茉莉花, 梅酒), highballs and sours. The 日本酒 section, small and mid-page, has two lines, which are the items here in the maintainer's order: 豪快 (cold or hot) and 鯉と亀と生原酒。(cold). The card prints no maker for either and no grade; 豪快 is 宝酒造's in the catalogue, and 鯉と亀と生原酒 is not in the catalogue and its maker is not known. The other drinks on the card are not listed as items. Kept local: the card is illustrated throughout (drawn glasses, bottles, fruit) and set in decorative lettering. No person in the frame; no location data in the file. Added 2026-10-13."
+    }
+  },
+  "aramasa_hinotori_spark_junmai_kijoshu_on_table.jpg": {
+    "name_ja": "新政",
+    "brewery_ja": "新政酒造",
+    "bottle": "aramasa-hinotori-spark",
+    "view": "front",
+    "expectedBrandIds": [
+      109
+    ],
+    "also": {
+      "name_ja": [
+        "陽乃鳥",
+        "陽乃鳥 Spark",
+        "陽乃鳥 スパーク",
+        "新政 陽乃鳥",
+        "新政 陽乃鳥 Spark",
+        "Spark",
+        "スパーク"
+      ],
+      "brewery_ja": [
+        "新政酒造株式会社"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Aramasa Hinotori Spark, a sparkling junmai kijoshu by the maintainer's account, on a bar counter in dim light with a glass in front of it. The label prints 新政酒造株式会社謹醸 above the bird mark and 陽乃鳥 below it, small; a neck seal says Spark / スパーク and an orange strip down the neck is too small to read. The brand 新政 appears only inside the maker's name, and the catalogue has no row for 陽乃鳥, so the sake's row is the answer. The same bottling as the fourth line of aramasa_takagi_menu.jpg. Other bottles stand in a fridge behind it, out of focus. The maintainer's file was aramasa_sparku_kijoshu_on_table.jpg and was renamed to say what the bottle is. Photographed at a bar; no person in the frame. Added 2026-10-13."
+    }
+  },
+  "blanks_and_itakura_shelf_low_light.jpg": {
+    "name_ja": "天穏",
+    "brewery_ja": "板倉酒造",
+    "view": "front",
+    "subject": "several_bottles",
+    "items": [
+      {
+        "unreadable": true,
+        "expectedBrandIds": []
+      },
+      {
+        "unreadable": true,
+        "expectedBrandIds": []
+      },
+      {
+        "unreadable": true,
+        "expectedBrandIds": []
+      },
+      {
+        "unreadable": true,
+        "expectedBrandIds": []
+      },
+      {
+        "unreadable": true,
+        "expectedBrandIds": []
+      },
+      {
+        "unreadable": true,
+        "expectedBrandIds": []
+      },
+      {
+        "unreadable": true,
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "天穏",
+        "brewery_ja": "板倉酒造",
+        "expectedBrandIds": [
+          2077
+        ]
+      },
+      {
+        "unreadable": true,
+        "expectedBrandIds": []
+      },
+      {
+        "unreadable": true,
+        "expectedBrandIds": []
+      }
+    ],
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "A WINDOW FULL OF BOTTLES, AT NIGHT: a bar's window photographed from the street in low light, with about ten empty bottles standing on the sill inside, backlit, listed left to right as the maintainer counted them. Only one can be named with confidence: 天穏 (板倉酒造), the eighth, in the right-hand pane. The others are too dark, turned away or half hidden: a label beginning 生酛の at the left edge, a drawn figure, a plain teal label, a black label with white brush characters, and to the right of 天穏 a large brushed ring and a single large character. The label does not print the maker in a size that can be read; it is the catalogue's. The catalogue also has 無窮天穏 from the same maker, which this label does not say. The top-level name is the one readable bottle. No venue name, no person; shelves, lamps and knives inside the room. Added 2026-10-13."
+    }
+  },
+  "ozawa_sawanoi_ohkarakuchi_junmai_on_table.jpg": {
+    "name_ja": "澤乃井",
+    "brewery_ja": "小澤酒造",
+    "bottle": "sawanoi-junmai-okarakuchi",
+    "view": "front",
+    "expectedBrandIds": [
+      320
+    ],
+    "also": {
+      "name_ja": [
+        "澤乃井 大辛口",
+        "澤乃井 純米 大辛口",
+        "澤乃井 純米大辛口",
+        "大辛口"
+      ],
+      "brewery_ja": [
+        "小澤酒造株式会社"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Sawanoi junmai Ohkarakuchi, a 300 ml bottle on a restaurant table among plates of sushi, a carafe and a glass, with condensation on the glass and the bottle. 大辛口 is the largest text on the label, 澤乃井 and 純米 are in brush script beside it, and the maker, 小澤酒造株式会社, is printed small down the left edge. Another bottle of the same sake as ozawa_sawanoi_otoko_zake_honjozo_dai_karakuchi_clear.jpg. Two people sat across the table, visible from the chest down; the photo is cropped below them, which also cuts the bottle's neck, and cropped at the bottom and painted over beside the bottle where chopstick sleeves printed the restaurant's name. The file was re-encoded for that, and location and camera data were removed. The maintainer's file was ozawa_sawanoi_ohkarakuchi_on_table.jpg; the grade was added to the name. Photographed at a restaurant, added 2026-10-13."
+    }
+  },
+  "sohomare_iwasaki_shelf.jpg": {
+    "name_ja": "惣誉",
+    "brewery_ja": "惣誉酒造",
+    "view": "front",
+    "subject": "several_bottles",
+    "items": [
+      {
+        "unreadable": true,
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "惣誉",
+        "brewery_ja": "惣誉酒造",
+        "product": "辛口",
+        "expectedBrandIds": [
+          259
+        ]
+      },
+      {
+        "unreadable": true,
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "長陽福娘",
+        "brewery_ja": "岩崎酒造",
+        "expectedBrandIds": [
+          883
+        ]
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "長陽福娘",
+        "ソーホマレ",
+        "FUKUMUSUME",
+        "CHOYO FUKUMUSUME"
+      ],
+      "brewery_ja": [
+        "岩崎酒造"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "CUP SAKES IN A ROW: four one-cup sakes on a stone ledge, shot from the side and close, each partly behind the next, listed left to right as the maintainer named them. A green bottle cut off by the left edge, with part of a label; 惣誉 (辛口, with ソーホマレ in small type); a cup whose label is a painting of a cat playing a shamisen, with no name on the side that shows; and 長陽福娘, of which the red brush characters and \"…UKUMUSUME\" are in frame. No label shows its maker; they are the catalogue's. No bottle is the subject more than the others. No person, no venue name; the room behind is out of focus. Location and camera data were removed from the file. Photographed at a bar, added 2026-10-13."
+    }
+  },
+  "nate_zuiyo_iwasaki_shelf.jpg": {
+    "name_ja": "黒牛",
+    "brewery_ja": "名手酒造店",
+    "view": "front",
+    "subject": "several_bottles",
+    "items": [
+      {
+        "unreadable": true,
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "黒牛",
+        "brewery_ja": "名手酒造店",
+        "product": "純米酒",
+        "expectedBrandIds": [
+          830
+        ]
+      },
+      {
+        "name_ja": "瑞鷹",
+        "brewery_ja": "瑞鷹酒造",
+        "product": "ZUIYO CUP くまモン",
+        "expectedBrandIds": [
+          986
+        ]
+      },
+      {
+        "name_ja": "長陽福娘",
+        "brewery_ja": "岩崎酒造",
+        "expectedBrandIds": [
+          883
+        ]
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "瑞鷹",
+        "長陽福娘",
+        "くろうし",
+        "ZUIYO",
+        "ZUIYO CUP",
+        "FUKUMUSUME",
+        "CHOYO FUKUMUSUME"
+      ],
+      "brewery_ja": [
+        "瑞鷹酒造",
+        "岩崎酒造"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "CUP SAKES IN A ROW: the same ledge as sohomare_iwasaki_shelf.jpg from further along, four one-cup sakes shot from the side and close, listed left to right as the maintainer named them. A cup cut off by the left edge; 黒牛 (純米酒, with くろうし in small type and the start of the back-label text); the Zuiyo cup with the Kumamon mascot, of which \"ZU…\" and \"C…\" are in frame; and 長陽福娘, the same cup as in the other photo, with \"…OYO FUKUMUS…\" in frame. No label shows its maker; they are the catalogue's. No bottle is the subject more than the others. No person, no venue name; the room behind is out of focus. Location and camera data were removed from the file. Photographed at a bar, added 2026-10-13."
+    }
+  },
+  "ohki_chochin_dassai_menu.jpg": {
+    "name_ja": "楽器正宗",
+    "brewery_ja": "大木代吉本店",
+    "view": "other",
+    "subject": "menu",
+    "items": [
+      {
+        "name_ja": "楽器正宗",
+        "brewery_ja": "大木代吉本店",
+        "expectedBrandIds": [
+          10872
+        ]
+      },
+      {
+        "name_ja": "長珍",
+        "brewery_ja": "長珍酒造",
+        "product": "特別純米",
+        "expectedBrandIds": [
+          3402
+        ]
+      },
+      {
+        "name_ja": "獺祭",
+        "brewery_ja": "獺祭",
+        "product": "純米大吟醸 磨き三割九分",
+        "expectedBrandIds": [
+          887
+        ]
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "楽器政宗",
+        "長珍",
+        "獺祭",
+        "Gakki Masamune",
+        "Chochin",
+        "Dassai"
+      ],
+      "brewery_ja": [
+        "長珍酒造",
+        "獺祭",
+        "旭酒造"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_menu_photo",
+      "rightsCleared": true,
+      "localOnly": false,
+      "notes": "A MENU: the \"Japanese Sake\" section of a restaurant's laminated drinks list, three lines with a half-go price each, above the start of the soft drinks, in the maintainer's order. Each line prints the name in kanji and Latin; 楽器正宗 has no grade, as the maintainer notes, and the list spells it 楽器政宗, with another character for \"masa\"; both spellings count as read. The list prints no makers, which are the catalogue's: 獺祭's maker is now called 獺祭 (旭酒造 until 2025, the name in the maintainer's list). The glare of two lamps lies across the third line, where 磨き三割九分 is hard to read, and the shadow of the phone across the lower half. Published: a plain typeset list of names and prices. The photo is cropped to the list: behind it lay another page of the menu with a photograph of a dessert. The maintainer's file was ohki_shochin_dassai_menu.jpg (Chochin). No person; location and camera data were removed. Added 2026-10-13."
+    }
+  },
+  "kitagawa_takagi_shimizu_1.jpg": {
+    "name_ja": "富翁",
+    "brewery_ja": "北川本家",
+    "view": "front",
+    "subject": "several_bottles",
+    "items": [
+      {
+        "name_ja": "富翁",
+        "brewery_ja": "北川本家",
+        "product": "純米大吟醸 全量山田錦",
+        "expectedBrandIds": [
+          686
+        ]
+      },
+      {
+        "name_ja": "朝日鷹",
+        "brewery_ja": "高木酒造",
+        "product": "本醸造 低温貯蔵酒",
+        "expectedBrandIds": [
+          145
+        ]
+      },
+      {
+        "name_ja": "作",
+        "brewery_ja": "清水清三郎商店",
+        "product": "雅乃智 中取り 純米大吟醸",
+        "expectedBrandIds": [
+          1033
+        ]
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "朝日鷹",
+        "作",
+        "TOMIO",
+        "ZAKU",
+        "ZAKU MIYABI NO TOMO",
+        "雅乃智"
+      ],
+      "brewery_ja": [
+        "高木酒造",
+        "清水清三郎商店",
+        "清水清三郎商店株式会社"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "A TASTING FLIGHT: three 1.8 l bottles side by side on a bar counter with a glass in front of each and the edge of a tablet menu below, listed left to right as the maintainer named them: 富翁 (純米大吟醸, 全量山田錦, with its maker's address down the label's edge), 朝日鷹 (本醸造, with a 低温貯蔵酒 seal on the shoulder) and 作 turned so that its back label faces the camera, small and dark, with \"ZAKU MIYABI NO TOMO\" at its foot. The glasses cover the lower part of each label. No bottle is the subject more than the others. No person, no venue name; the room behind is out of focus. Location and camera data were removed from the file. Photographed at a bar, added 2026-10-13."
+    }
+  },
+  "kitagawa_takagi_shimizu_2.jpg": {
+    "name_ja": "富翁",
+    "brewery_ja": "北川本家",
+    "view": "front",
+    "subject": "several_bottles",
+    "items": [
+      {
+        "name_ja": "富翁",
+        "brewery_ja": "北川本家",
+        "product": "純米大吟醸 全量山田錦",
+        "expectedBrandIds": [
+          686
+        ]
+      },
+      {
+        "name_ja": "朝日鷹",
+        "brewery_ja": "高木酒造",
+        "product": "本醸造 低温貯蔵酒",
+        "expectedBrandIds": [
+          145
+        ]
+      },
+      {
+        "name_ja": "作",
+        "brewery_ja": "清水清三郎商店",
+        "product": "雅乃智 中取り 純米大吟醸",
+        "expectedBrandIds": [
+          1033
+        ]
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "朝日鷹",
+        "作",
+        "TOMIO",
+        "ZAKU",
+        "ZAKU MIYABI NO TOMO",
+        "雅乃智"
+      ],
+      "brewery_ja": [
+        "高木酒造",
+        "清水清三郎商店",
+        "清水清三郎商店株式会社"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "A TASTING FLIGHT: the same three bottles as kitagawa_takagi_shimizu_1.jpg a moment later, listed left to right: 富翁, 朝日鷹 and 作, this time with its front label to the camera (作, 雅乃智 中取り, ZAKU). The glasses cover the lower part of each label. The 作 is the bottle of shimizu_zaku_miyabi_no_tomo_nakadori_junmai_daiginjo_on_table.jpg. No bottle is the subject more than the others. No person, no venue name; the room behind is out of focus. Location and camera data were removed from the file. Photographed at a bar, added 2026-10-13."
+    }
+  },
+  "okura_fukugen_omine_fujioka_takagi_izumi_menu.jpg": {
+    "name_ja": "大倉",
+    "brewery_ja": "大倉本家",
+    "view": "other",
+    "subject": "menu",
+    "items": [
+      {
+        "name_ja": "大倉",
+        "brewery_ja": "大倉本家",
+        "product": "愛山 直汲み 無濾過生原酒 特別純米",
+        "expectedBrandIds": [
+          807
+        ]
+      },
+      {
+        "name_ja": "福源",
+        "brewery_ja": "福源酒造",
+        "product": "蔵出し無濾過原酒 純米吟醸",
+        "expectedBrandIds": [
+          562
+        ]
+      },
+      {
+        "name_ja": "福海",
+        "brewery_ja": "福田酒造",
+        "expectedBrandIds": [
+          1524
+        ]
+      },
+      {
+        "unreadable": true,
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "大嶺",
+        "brewery_ja": "大嶺酒造",
+        "product": "冬のおとずれ 純米",
+        "expectedBrandIds": [
+          3581,
+          4132
+        ]
+      },
+      {
+        "name_ja": "蒼空",
+        "brewery_ja": "藤岡酒造",
+        "product": "こうじましまし 純米吟醸",
+        "expectedBrandIds": [
+          1128
+        ]
+      },
+      {
+        "name_ja": "朝日鷹",
+        "brewery_ja": "高木酒造",
+        "product": "低温貯蔵酒 本醸造",
+        "expectedBrandIds": [
+          145
+        ]
+      },
+      {
+        "name_ja": "仙介",
+        "brewery_ja": "泉酒造",
+        "product": "超辛口 純米吟醸",
+        "expectedBrandIds": [
+          1681
+        ]
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "福源",
+        "福海",
+        "大嶺",
+        "蒼空",
+        "朝日鷹",
+        "仙介",
+        "Okura",
+        "Omine",
+        "Asahidaka",
+        "Sensuke",
+        "おおくら",
+        "おおみね",
+        "あさひだか",
+        "せんすけ",
+        "そうくう"
+      ],
+      "brewery_ja": [
+        "福源酒造",
+        "福田酒造",
+        "大嶺酒造",
+        "藤岡酒造",
+        "高木酒造",
+        "泉酒造"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_menu_photo",
+      "rightsCleared": true,
+      "localOnly": false,
+      "notes": "A MENU, AT AN ANGLE: the same bar's tablet list as aramasa_takagi_menu.jpg, another page, photographed close and from the side so that the grid runs diagonally and only the nearest cells are sharp. Items are in the maintainer's order. Sharp: 朝日鷹 (低温貯蔵酒, 本醸造; the page writes \"Honjyozo\"), 大嶺 (冬のおとずれ, 純米) and most of 大倉 and 蒼空. Soft: 福源, whose bottling line can still be made out, and 福海, of which only the name can; the maintainer's list has 福海 as blank, and it is listed here by name alone. 仙介 is cut by the right edge with 超辛口 and 純米吟醸 in frame. One more cell at the right edge shows part of one character and is unreadable. The page does not print the makers, which are the catalogue's; the catalogue has 大嶺 in two rows. A lamp is reflected in the screen. Published: a plain typeset list of names, grades and prices, no venue name, no logo, no picture, no person. Location and camera data were removed from the file. Added 2026-10-13."
+    }
+  },
+  "uehara_matsumoto_nanyo_asahi_yoshida_shimizu_kazuma_linne_aihara_menu.jpg": {
+    "name_ja": "不老泉",
+    "brewery_ja": "上原酒造",
+    "view": "other",
+    "subject": "menu",
+    "items": [
+      {
+        "name_ja": "不老泉",
+        "brewery_ja": "上原酒造",
+        "product": "酒母四段 無濾過生酒",
+        "expectedBrandIds": [
+          676
+        ]
+      },
+      {
+        "name_ja": "澤屋まつもと",
+        "brewery_ja": "松本酒造",
+        "product": "雄町 純米吟醸",
+        "expectedBrandIds": [
+          704
+        ]
+      },
+      {
+        "name_ja": "花陽浴",
+        "brewery_ja": "南陽醸造",
+        "product": "越後五百万石 無濾過生原酒 純米大吟醸",
+        "expectedBrandIds": [
+          1179
+        ]
+      },
+      {
+        "name_ja": "久保田",
+        "brewery_ja": "朝日酒造",
+        "product": "千寿 純米吟醸",
+        "expectedBrandIds": [
+          431
+        ]
+      },
+      {
+        "name_ja": "手取川",
+        "brewery_ja": "吉田酒造店",
+        "product": "シャキッと辛口 生原酒 純米吟醸",
+        "expectedBrandIds": [
+          470
+        ]
+      },
+      {
+        "name_ja": "作",
+        "brewery_ja": "清水清三郎商店",
+        "product": "雅乃智 純米大吟醸",
+        "expectedBrandIds": [
+          1033
+        ]
+      },
+      {
+        "name_ja": "竹葉",
+        "brewery_ja": "数馬酒造",
+        "product": "能登産百万石乃白 ひやおろし 特別純米",
+        "expectedBrandIds": [
+          472
+        ]
+      },
+      {
+        "name_ja": "LINNE",
+        "product": "800 YAO 大麦 大麦麹と米麹を使用したクラフトサケ Craft SAKE",
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "雨後の月",
+        "brewery_ja": "相原酒造",
+        "product": "純米大吟醸",
+        "expectedBrandIds": [
+          871
+        ]
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "澤屋まつもと",
+        "花陽浴",
+        "久保田",
+        "手取川",
+        "作",
+        "竹葉",
+        "LINNE",
+        "りんね",
+        "雨後の月",
+        "Furousen",
+        "Sawaya Matsumoto",
+        "Hanaabi",
+        "Kubota",
+        "Tedorigawa",
+        "Zaku",
+        "Chikuha",
+        "ふろうせん",
+        "さわやまつもと",
+        "はなあび",
+        "くぼた",
+        "てどりがわ",
+        "ちくは"
+      ],
+      "brewery_ja": [
+        "松本酒造",
+        "南陽醸造",
+        "朝日酒造",
+        "吉田酒造店",
+        "清水清三郎商店",
+        "数馬酒造",
+        "相原酒造"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_menu_photo",
+      "rightsCleared": true,
+      "localOnly": false,
+      "notes": "A MENU, AT AN ANGLE: the same bar's tablet list as aramasa_takagi_menu.jpg, another page, photographed close and from the side: a grid of nine cells, the middle column whole and the outer columns cut by the edges of the frame, listed left to right and top to bottom as the maintainer named them. Whole: 澤屋まつもと, 手取川 and LINNE. Cut at the left: 不老泉 (no grade in frame), 久保田 and 竹葉, each with its name and bottling legible. Cut at the right: 花陽浴, with most of its lines; 作, of which one stroke of the name, \"Zaku\" and the first character of 雅乃智 are in frame; and 雨後の月, of which 雨 and \"Ugo n…\" are. The page does not print the makers, which are the catalogue's; the maintainer's list and file name had \"Kazumi\" for 数馬酒造 (Kazuma), and the file was renamed. LINNE is a craft sake brewed with barley koji as well as rice koji, as the cell says, so not sake in the legal sense; it is not in the catalogue and its maker is not on the page. A lamp is reflected in the screen across the 久保田 cell. Published: a plain typeset list of names, grades and prices, no venue name, no logo, no picture, no person. Location and camera data were removed from the file. Added 2026-10-13."
+    }
+  },
+  "ohmine_fuyuno_otozure_nigorizake_only_image_no_text.jpg": {
+    "name_ja": "大嶺",
+    "brewery_ja": "大嶺酒造",
+    "bottle": "ohmine-fuyu-no-otozure",
+    "view": "side",
+    "expectedBrandIds": [
+      3581,
+      4132
+    ],
+    "also": {
+      "name_ja": [
+        "大嶺 冬のおとずれ",
+        "冬のおとずれ",
+        "Ohmine",
+        "大嶺3粒",
+        "大嶺 3粒 冬のおとずれ"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "NO WRITING IN THE FRAME: Ohmine 3 Grain \"Winter's Arrival\" (冬のおとずれ), a cloudy sake by the maintainer's account, on a bar counter with a glass of it in front. The side of the bottle that faces the camera carries a drawing only, a woman in a blue kimono under snow-laden branches, printed on frosted glass: no kanji, kana or Latin letter anywhere in the photo. Nothing here can be read, so a scan that names this sake has recognised the artwork, and a scan that finds nothing has not failed at reading. The catalogue has 大嶺 in two rows; both count. The same bottling as the 大嶺 line of okura_fukugen_omine_fujioka_takagi_izumi_menu.jpg. A person stood behind the counter at the top left and a second shape at the top right; both corners are painted over in the file, which was re-encoded for that, and location and camera data were removed. The drawn figure is artwork, not a person. The maintainer's file was ohime_…; \"ohmine\" was corrected. Photographed at a bar, added 2026-10-13."
+    }
+  },
+  "okura_omine_takagi_menu.jpg": {
+    "name_ja": "大倉",
+    "brewery_ja": "大倉本家",
+    "view": "other",
+    "subject": "menu",
+    "items": [
+      {
+        "name_ja": "大倉",
+        "brewery_ja": "大倉本家",
+        "product": "愛山 直汲み 無濾過生原酒 特別純米",
+        "expectedBrandIds": [
+          807
+        ]
+      },
+      {
+        "name_ja": "大嶺",
+        "brewery_ja": "大嶺酒造",
+        "product": "冬のおとずれ 純米",
+        "expectedBrandIds": [
+          3581,
+          4132
+        ]
+      },
+      {
+        "name_ja": "朝日鷹",
+        "brewery_ja": "高木酒造",
+        "product": "低温貯蔵酒 本醸造",
+        "expectedBrandIds": [
+          145
+        ]
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "大嶺",
+        "朝日鷹",
+        "Okura",
+        "Omine",
+        "Asahidaka",
+        "おおくら",
+        "おおみね",
+        "あさひだか"
+      ],
+      "brewery_ja": [
+        "大嶺酒造",
+        "高木酒造"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_menu_photo",
+      "rightsCleared": true,
+      "localOnly": false,
+      "notes": "A MENU, ONE COLUMN: the same page of the bar's tablet list as okura_fukugen_omine_fujioka_takagi_izumi_menu.jpg, photographed close and nearly square on, so that only its left column is in frame, sharp: 大倉, 大嶺 and 朝日鷹, top to bottom, in the maintainer's order. Each cell prints the name in kanji, hiragana and Latin with its prefecture, then the bottling and the grade; the page writes \"Honjyozo\". Slivers of the next column show at the right edge with nothing legible in them, and are not listed. The page does not print the makers, which are the catalogue's; the catalogue has 大嶺 in two rows. A lamp is reflected in the screen. Published: a plain typeset list, no venue name, no logo, no picture, no person. Location and camera data were removed from the file. Added 2026-10-13."
+    }
+  },
+  "ide_kai_no_kaiun_daiginjo_180ml_on_table.jpg": {
+    "name_ja": "甲斐の開運",
+    "brewery_ja": "井出醸造店",
+    "bottle": "kai-no-kaiun-daiginjo-180",
+    "view": "front",
+    "expectedBrandIds": [
+      124540
+    ],
+    "also": {
+      "name_ja": [
+        "甲斐の開運 大吟醸",
+        "Kainokaiun"
+      ],
+      "brewery_ja": [
+        "井出醸造"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Kai no Kaiun daiginjo, the 180 ml blue bottle, at home on a hob with the brewery's own cup beside it. The label prints \"Daiginjo\", 大吟醸 in gold, 甲斐の開運 in red brush script, \"Kainokaiun\" and 富士山湧水仕込; the cup prints 清酒 甲斐の開運 inside the brand's crest, so the name is in the frame twice. The maker is not on the label; the cap's seal has part of it (…醸造店封緘). The label says daiginjo, not junmai daiginjo: the maintainer's file was ide_junmai_daiginjo_on_table.jpg and their note says Daiginjo, so the file was renamed. The same product as No.3 on the brewery's sheet (ide_menu_1.jpg, ide_menu_4.jpg). The catalogue also has 開運 from another maker (土井酒造場), which is not this. No person in the frame; location and camera data were removed from the file. Added 2026-10-13."
+    }
+  },
+  "niseko_shelf.jpg": {
+    "name_ja": "二世古",
+    "brewery_ja": "二世古酒造",
+    "view": "front",
+    "subject": "several_bottles",
+    "items": [
+      {
+        "unreadable": true,
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "二世古",
+        "brewery_ja": "二世古酒造",
+        "product": "純米 原酒 北海道産米100%使用",
+        "expectedBrandIds": [
+          1611
+        ]
+      },
+      {
+        "name_ja": "ニセコ",
+        "brewery_ja": "二世古酒造",
+        "product": "本醸造",
+        "expectedBrandIds": [
+          1611
+        ]
+      },
+      {
+        "name_ja": "ニセコ",
+        "brewery_ja": "二世古酒造",
+        "product": "純米",
+        "expectedBrandIds": [
+          1611
+        ]
+      },
+      {
+        "name_ja": "倶知安",
+        "brewery_ja": "二世古酒造",
+        "product": "本醸造",
+        "expectedBrandIds": [
+          4109
+        ]
+      },
+      {
+        "name_ja": "倶知安",
+        "brewery_ja": "二世古酒造",
+        "product": "純米酒",
+        "expectedBrandIds": [
+          4109
+        ]
+      },
+      {
+        "name_ja": "倶知安",
+        "brewery_ja": "二世古酒造",
+        "product": "吟醸酒 原酒 彗星 精米歩合55%",
+        "expectedBrandIds": [
+          4109
+        ]
+      },
+      {
+        "name_ja": "くっちゃんの焼酎",
+        "brewery_ja": "二世古酒造",
+        "product": "本格焼酎 二十五度",
+        "drink": "shochu",
+        "expectedBrandIds": []
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "ニセコ",
+        "倶知安",
+        "くっちゃんの焼酎",
+        "二世古 純米原酒",
+        "ニセコ本醸造酒",
+        "ニセコ純米酒",
+        "倶知安 本醸造",
+        "倶知安純米酒",
+        "倶知安吟醸酒"
+      ],
+      "brewery_ja": [
+        "有限会社二世古酒造"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "A BREWERY'S OWN SHELF: eight bottles in a row in the shop of 二世古酒造, each with a printed price card in front and boxed stock below, listed left to right as the maintainer named them. A dark bottle cut off by the left edge; 二世古 純米原酒; ニセコ 本醸造 (a mountain in black and white, the name only on its card); ニセコ 純米; three blue bottles of 倶知安 — 本醸造, 純米 and 吟醸 原酒 (rice 彗星, polished to 55% by its card), which differ only in the colour of the label and the card; and くっちゃんの焼酎, a potato shochu, not sake. The maker is printed small on the first label and is the same for all. The catalogue has 二世古 and, as a separate row with no maker's name, 倶知安. The photo is cropped to the row of bottles: above it were the brewery's wall posters on how sake is made and a sign about age checks. A strip of one poster still shows between two bottles, where a photograph of people at work is painted over; the file was re-encoded for that, and location and camera data were removed. No shop name beyond the labels, no visitor in the frame. Added 2026-10-13."
+    }
+  },
+  "niseko_shelf_2.jpg": {
+    "name_ja": "くっちゃんの焼酎",
+    "brewery_ja": "二世古酒造",
+    "view": "front",
+    "subject": "several_bottles",
+    "items": [
+      {
+        "name_ja": "くっちゃんの焼酎",
+        "brewery_ja": "二世古酒造",
+        "product": "本格焼酎 二十五度",
+        "drink": "shochu",
+        "expectedBrandIds": []
+      },
+      {
+        "unreadable": true,
+        "expectedBrandIds": []
+      },
+      {
+        "unreadable": true,
+        "expectedBrandIds": []
+      },
+      {
+        "unreadable": true,
+        "expectedBrandIds": []
+      },
+      {
+        "unreadable": true,
+        "expectedBrandIds": []
+      },
+      {
+        "unreadable": true,
+        "expectedBrandIds": []
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "くっちゃんの焼酎 本格焼酎",
+        "Niseko Challenge"
+      ],
+      "brewery_ja": [
+        "二世古"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "ONE LABEL AND FIVE BOTTLE TOPS: the end of the shelf in niseko_shelf.jpg, in the shop of 二世古酒造. The potato shochu くっちゃんの焼酎 stands at the left with its price card, and the tops of five more bottles rise from the lower shelf with no label in frame: a silver cap, a blue bottle, a black cap, a gold foil and a dark green bottle. Nothing here is a sake that can be named, and the one readable bottle is not sake. The label prints 二世古 small at its foot. Behind them hangs one of the brewery's wall posters, of which the paragraph on the yeast starter is in frame, and the corner of a flyer for \"Niseko Challenge 2025\". The photo is cropped below the poster's photographs of people at work. Location and camera data were removed from the file. No visitor in the frame. Added 2026-10-13."
+    }
+  },
+  "niseko_shochu_shelf.jpg": {
+    "name_ja": "珈琲",
+    "brewery_ja": "二世古酒造",
+    "view": "front",
+    "subject": "several_bottles",
+    "items": [
+      {
+        "name_ja": "珈琲",
+        "brewery_ja": "二世古酒造",
+        "product": "Coffee 焼酎乙類 珈琲豆使用",
+        "drink": "shochu",
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "正中",
+        "brewery_ja": "二世古酒造",
+        "product": "米焼酎 25度",
+        "drink": "shochu",
+        "expectedBrandIds": []
+      },
+      {
+        "brewery_ja": "二世古酒造",
+        "product": "乙類焼酎 30度",
+        "drink": "shochu",
+        "unreadable": true,
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "Niseko Challenge 2025",
+        "brewery_ja": "二世古酒造",
+        "product": "貴醸酒造りに白麹を一部使用した 600本限定のチャレンジ酒",
+        "expectedBrandIds": []
+      },
+      {
+        "unreadable": true,
+        "expectedBrandIds": []
+      },
+      {
+        "unreadable": true,
+        "expectedBrandIds": []
+      },
+      {
+        "unreadable": true,
+        "expectedBrandIds": []
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "Coffee",
+        "珈琲 Coffee",
+        "正中",
+        "niseko challenge 2025",
+        "Niseko Challenge",
+        "二世古"
+      ],
+      "brewery_ja": [
+        "二世古",
+        "有限会社二世古酒造"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "localOnly": true,
+      "notes": "A BREWERY'S SHOCHU CORNER: the shop of 二世古酒造, a corner of the shelf under one of its wall posters, listed as the maintainer named them. Three shochu on boxes: 珈琲 (Coffee, a shochu made with coffee beans), 正中 (rice shochu, 25%, with its price card) and a square black bottle of 30% shochu cut off by the right edge, whose name in brush script cannot be read. A flyer on the wall for \"Niseko Challenge 2025\", a sake made the kijoshu way with some white koji, 600 bottles, with a picture of the bottle: the bottle itself is not in frame. Kijoshu is a way of brewing, with sake in place of part of the water, and not a grade; the scan reads it as a style word. Below, a bottle wrapped in paper and the gold caps of two more, none readable. The catalogue has none of these. Kept local: the flyer carries the brewery's own product photograph, and most of the frame is its poster. No visitor in the frame; location and camera data were removed from the file. Added 2026-10-13."
+    }
+  },
+  "niseko_shochu_shelf_2.jpg": {
+    "name_ja": "ようてい",
+    "brewery_ja": "二世古酒造",
+    "view": "front",
+    "subject": "several_bottles",
+    "items": [
+      {
+        "name_ja": "ようてい",
+        "brewery_ja": "二世古酒造",
+        "product": "乙類焼酎 30度",
+        "drink": "shochu",
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "豪雪",
+        "brewery_ja": "二世古酒造",
+        "product": "GOUSETU 米焼酎 39度",
+        "drink": "shochu",
+        "expectedBrandIds": []
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "豪雪",
+        "GOUSETU",
+        "羊蹄",
+        "二世古",
+        "二世古 ようてい",
+        "二世古 豪雪"
+      ],
+      "brewery_ja": [
+        "二世古",
+        "NISEKO BREWERY CO., LIMITED"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "NOT SAKE, TWO BOTTLES: two shochu of 二世古酒造 on boxed stock, as the maintainer named them: a square black bottle at the left, 30%, whose name is in brush script (Yōtei, by the maintainer's account; the square bottle cut off in niseko_shochu_shelf.jpg), and 豪雪 / GOUSETU, a rice shochu of 39%, with its price card. Both labels print 蔵元 二世古. Neither is in the catalogue. The photo is cropped below the brewery's wall poster, and one photograph on the poster, which showed a person at work, is painted over; the file was re-encoded for that. Location and camera data were removed from the file. No person in the frame. Photographed in the brewery's shop, added 2026-10-13."
+    }
+  },
+  "niseko_kyogoku_meisui_karakuchi_honjozo_shelf.jpg": {
+    "name_ja": "京極",
+    "brewery_ja": "二世古酒造",
+    "bottle": "niseko-kyogoku",
+    "view": "front",
+    "expectedBrandIds": [],
+    "also": {
+      "name_ja": [
+        "京極 名水 辛口",
+        "京極 名水辛口",
+        "京極 本醸造"
+      ],
+      "brewery_ja": [
+        "二世古"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Kyōgoku Meisui Karakuchi, a honjozo of 二世古酒造 by the maintainer's account, in a frosted blue bottle on a round display stand, with darker bottles around it that are not the subject and cannot be read. The label prints 京極 in large brush characters and a small tag on the shoulder; the maker is not legible in this photo. NOT in the catalogue (it has 二世古 and 倶知安 from this maker), so the right answer is no match. This is the bottle whose scan showed the read in kanji alone on the maintainer's phone. Location and camera data were removed from the file. No person in the frame. Photographed in the brewery's shop, added 2026-10-13."
+    }
+  },
+  "niseko_ezo_no_homare_kasseishu_shelf.jpg": {
+    "name_ja": "蝦夷の誉",
+    "brewery_ja": "二世古酒造",
+    "view": "front",
+    "subject": "several_bottles",
+    "items": [
+      {
+        "name_ja": "蝦夷の誉",
+        "brewery_ja": "二世古酒造",
+        "product": "活性酒 黒米入り",
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "蝦夷の誉",
+        "brewery_ja": "二世古酒造",
+        "product": "活性酒",
+        "expectedBrandIds": [],
+        "main": true
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "誉",
+        "蝦夷の誉 活性酒",
+        "二世古"
+      ],
+      "brewery_ja": [
+        "二世古"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "TWO BOTTLES OF ONE SAKE: Ezo no Homare kasseishu (a cloudy, lively sake) of 二世古酒造 on a round display stand, in the maintainer's order: the one made with black rice, and the plain one. The bottle in the middle is cloudy white with a pink paper tag hung on its neck, which covers part of the label; another stands at the left edge with 誉 in large characters and most of its label out of frame. Neither is in the catalogue. The maintainer's list gives no grade for either. The bottle in the middle is the subject. Location and camera data were removed from the file. No person in the frame. Photographed in the brewery's shop, added 2026-10-13."
+    }
+  },
+  "niseko_ezo_no_homare_kasseishu_shelf_2.jpg": {
+    "name_ja": "蝦夷の誉",
+    "brewery_ja": "二世古酒造",
+    "view": "front",
+    "subject": "several_bottles",
+    "items": [
+      {
+        "name_ja": "蝦夷の誉",
+        "brewery_ja": "二世古酒造",
+        "product": "活性酒 黒米入り",
+        "expectedBrandIds": [],
+        "main": true
+      },
+      {
+        "name_ja": "蝦夷の誉",
+        "brewery_ja": "二世古酒造",
+        "product": "活性酒",
+        "expectedBrandIds": []
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "誉",
+        "蝦夷の誉 活性酒",
+        "二世古"
+      ],
+      "brewery_ja": [
+        "二世古"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "TWO BOTTLES OF ONE SAKE: the same pair as niseko_ezo_no_homare_kasseishu_shelf.jpg from the other side, in the maintainer's order: Ezo no Homare kasseishu with black rice, and the plain one. A green bottle in the middle with 誉 in large characters and the pink paper tag over its shoulder; the cloudy white bottle at the right edge, half out of frame. Neither is in the catalogue. The bottle in the middle is the subject. Location and camera data were removed from the file. No person in the frame. Photographed in the brewery's shop, added 2026-10-13."
+    }
+  },
+  "niseko_shelf_3.jpg": {
+    "name_ja": "ニセコ",
+    "brewery_ja": "二世古酒造",
+    "view": "front",
+    "subject": "several_bottles",
+    "items": [
+      {
+        "name_ja": "ニセコ",
+        "brewery_ja": "二世古酒造",
+        "product": "本醸造",
+        "expectedBrandIds": [
+          1611
+        ]
+      },
+      {
+        "name_ja": "ニセコ",
+        "brewery_ja": "二世古酒造",
+        "product": "純米",
+        "expectedBrandIds": [
+          1611
+        ]
+      },
+      {
+        "name_ja": "倶知安",
+        "brewery_ja": "二世古酒造",
+        "product": "本醸造",
+        "expectedBrandIds": [
+          4109
+        ]
+      },
+      {
+        "name_ja": "倶知安",
+        "brewery_ja": "二世古酒造",
+        "product": "純米",
+        "expectedBrandIds": [
+          4109
+        ]
+      },
+      {
+        "name_ja": "倶知安",
+        "brewery_ja": "二世古酒造",
+        "product": "吟醸 原酒",
+        "expectedBrandIds": [
+          4109
+        ]
+      },
+      {
+        "name_ja": "二世古",
+        "brewery_ja": "二世古酒造",
+        "product": "純米吟醸酒 彗星",
+        "expectedBrandIds": [
+          1611
+        ],
+        "main": true
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "二世古",
+        "倶知安",
+        "NISEKO",
+        "ニセコ本醸造酒",
+        "ニセコ純米酒"
+      ],
+      "brewery_ja": [
+        "二世古",
+        "NISEKO BREWERY CO., LTD."
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "A SHELF AND A BOTTLE IN FRONT OF IT: the row of niseko_shelf.jpg from lower down, with boxed stock in front (boxes printed 二世古 NISEKO, ニセコ and 倶知安) and, standing on the boxes nearest the camera, a green bottle with a red label, 二世古 純米吟醸酒, made with 彗星 rice by the maintainer's account. Items are in the maintainer's order: the five on the shelf, then the one in front. The bottle in front is the nearest and largest thing in the frame and is the subject; both models read it as the one bottle photographed. Bottles of which only a cap or the edge of a label shows are not listed, at the maintainer's choice: dark bottles at the left edge, the shochu at the right end of the row, and a crate of capped bottles at the bottom. One of the brewery's wall posters is behind the row; its photographs show only through the blue glass. Location and camera data were removed from the file. No person in the frame. Photographed in the brewery's shop, added 2026-10-13."
+    }
+  },
+  "niseko_shelf_4.jpg": {
+    "name_ja": "二世古",
+    "brewery_ja": "二世古酒造",
+    "view": "front",
+    "subject": "several_bottles",
+    "items": [
+      {
+        "name_ja": "蝦夷の誉",
+        "brewery_ja": "二世古酒造",
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "二世古",
+        "brewery_ja": "二世古酒造",
+        "product": "大吟醸",
+        "expectedBrandIds": [
+          1611
+        ]
+      },
+      {
+        "name_ja": "二世古",
+        "brewery_ja": "二世古酒造",
+        "product": "彗星",
+        "expectedBrandIds": [
+          1611
+        ]
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "蝦夷の誉",
+        "誉",
+        "大吟醸"
+      ],
+      "brewery_ja": [
+        "二世古",
+        "NISEKO BREWERY CO., LTD."
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "BOTTLES ON A TABLE, MOST TURNED AWAY: a round table of bottles in the brewery's shop with a fridge behind it and a black cat walking under the table. Three can be named, in the maintainer's order: 蝦夷の誉 standing in the fridge, with its pink tag; 二世古 大吟醸, a dark blue bottle with a gold label, at the front of the table; and 二世古 with a blue label, made with 彗星 rice by the maintainer's account, behind it. The other bottles on the table show their backs or sides and are not listed. Location and camera data were removed from the file. No person in the frame. Photographed in the brewery's shop, added 2026-10-13."
+    }
+  },
+  "niseko_shelf_5.jpg": {
+    "name_ja": "二世古",
+    "brewery_ja": "二世古酒造",
+    "view": "front",
+    "subject": "several_bottles",
+    "items": [
+      {
+        "name_ja": "蝦夷の誉",
+        "brewery_ja": "二世古酒造",
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "二世古",
+        "brewery_ja": "二世古酒造",
+        "product": "大吟醸",
+        "expectedBrandIds": [
+          1611
+        ]
+      },
+      {
+        "name_ja": "二世古",
+        "brewery_ja": "二世古酒造",
+        "product": "彗星",
+        "expectedBrandIds": [
+          1611
+        ]
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "蝦夷の誉",
+        "誉",
+        "大吟醸"
+      ],
+      "brewery_ja": [
+        "二世古",
+        "NISEKO BREWERY CO., LTD."
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "BOTTLES ON A TABLE, MOST TURNED AWAY: the same table as niseko_shelf_4.jpg a step to the right, with the same three bottles nameable, in the maintainer's order: 蝦夷の誉 in the fridge, 二世古 大吟醸 at the front of the table, and 二世古 with the blue label behind it. The cat is nearer the camera. Location and camera data were removed from the file. No person in the frame. Photographed in the brewery's shop, added 2026-10-13."
+    }
+  },
+  "niseko_shelf_6.jpg": {
+    "name_ja": "二世古",
+    "brewery_ja": "二世古酒造",
+    "view": "front",
+    "subject": "several_bottles",
+    "items": [
+      {
+        "name_ja": "二世古",
+        "brewery_ja": "二世古酒造",
+        "product": "生酒",
+        "expectedBrandIds": [
+          1611
+        ]
+      },
+      {
+        "name_ja": "今金",
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "蝦夷の誉",
+        "brewery_ja": "二世古酒造",
+        "product": "活性酒",
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "蝦夷の誉",
+        "brewery_ja": "二世古酒造",
+        "product": "活性酒 黒米入り",
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "二世古",
+        "brewery_ja": "二世古酒造",
+        "product": "上撰",
+        "expectedBrandIds": [
+          1611
+        ]
+      },
+      {
+        "name_ja": "二世古",
+        "brewery_ja": "二世古酒造",
+        "product": "彗星",
+        "expectedBrandIds": [
+          1611
+        ]
+      },
+      {
+        "name_ja": "二世古",
+        "brewery_ja": "二世古酒造",
+        "expectedBrandIds": [
+          1611
+        ]
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "今金",
+        "蝦夷の誉",
+        "誉",
+        "上撰"
+      ],
+      "brewery_ja": [
+        "二世古",
+        "NISEKO BREWERY CO., LTD."
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "A FRIDGE AND A TABLE FROM ABOVE: the shop's small fridge with bottles standing in it, and in front the tops and shoulders of the bottles on the round table, seen from above; a straw-wrapped cask printed 二世古 sits on the fridge. Items are in the maintainer's order and are the ones that can be named: in the fridge, 二世古 生酒, 今金, and the two 蝦夷の誉 kasseishu (plain, and with black rice); on the table, 二世古 上撰, 二世古 with the blue label (彗星 rice) and one more 二世古. 上撰 is the maker's own tier and not a legal grade, as the maintainer notes. 今金 is not in the catalogue and its maker is not known from this photo. Bottles of which only a cap or the edge of a label shows are not listed. Notices with QR codes are on the wall behind. Location and camera data were removed from the file. No person in the frame. Photographed in the brewery's shop, added 2026-10-13."
+    }
+  },
+  "iichiko_shochu_menu.jpg": {
+    "name_ja": "いいちこ",
+    "brewery_ja": "三和酒類",
+    "view": "other",
+    "subject": "menu",
+    "items": [
+      {
+        "name_ja": "いいちこ",
+        "brewery_ja": "三和酒類",
+        "product": "麦焼酎 60ml €6.80 720ml €60.00",
+        "drink": "shochu",
+        "expectedBrandIds": []
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "Iichiko",
+        "iichiko"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_menu_photo",
+      "rightsCleared": true,
+      "localOnly": true,
+      "notes": "A MENU, AND NOT SAKE: one page of a restaurant's drinks menu in Germany, headed 焼酎 麦 MUGI / \"Gerste / Barley\" / \"Japanischer Shochu\", offering Iichiko barley shochu by the glass and the bottle, with a picture of the bottle and a glass and a description in Japanese and German. The page does not print the makers; where one is given here it is from general knowledge and was not checked against a source. Kept local: a designed menu page with product photographs and the venue's own descriptions, from the same restaurant as shichida_junmai_shochu_menu_clear.jpg. The photo is cropped to leave out the lap and hands of people at the table; location and camera data were removed. Added 2026-10-13."
+    }
+  },
+  "imo_shochu_menu.jpg": {
+    "name_ja": "富乃宝山",
+    "brewery_ja": "西酒造",
+    "view": "other",
+    "subject": "menu",
+    "items": [
+      {
+        "name_ja": "富乃宝山",
+        "brewery_ja": "西酒造",
+        "product": "鹿児島県 TOMINO HOUZAN 芋焼酎",
+        "drink": "shochu",
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "ダイヤメ",
+        "brewery_ja": "濵田酒造",
+        "product": "鹿児島県 DAIYAME 芋焼酎",
+        "drink": "shochu",
+        "expectedBrandIds": []
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "冨野宝山",
+        "ダイヤメ",
+        "TOMINO HOUZAN",
+        "DAIYAME",
+        "冨乃宝山"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_menu_photo",
+      "rightsCleared": true,
+      "localOnly": true,
+      "notes": "A MENU, AND NOT SAKE: the page headed 焼酎 芋 IMO / \"Kartoffel / Potato\", two sweet-potato shochu from Kagoshima, each with a picture of the bottle, a description in Japanese and German and prices by the glass and the bottle. The page spells the first 冨野宝山, with 冨 for 富 and 野 for 乃; both models read it as printed, and that spelling counts as read. The first is the bottle of tomi_no_hozan_imo_shochu_clear.jpg. The page does not print the makers; where one is given here it is from general knowledge and was not checked against a source. Kept local: a designed menu page with product photographs and the venue's own descriptions, from the same restaurant as shichida_junmai_shochu_menu_clear.jpg. The photo is cropped to leave out the lap and hands of people at the table; location and camera data were removed. Added 2026-10-13."
+    }
+  },
+  "kurokirishima_shochu_menu.jpg": {
+    "name_ja": "黒霧島",
+    "brewery_ja": "霧島酒造",
+    "view": "other",
+    "subject": "menu",
+    "items": [
+      {
+        "name_ja": "黒霧島",
+        "brewery_ja": "霧島酒造",
+        "product": "KUROKIRISHIMA 芋焼酎 60ml 720ml 1800ml",
+        "drink": "shochu",
+        "expectedBrandIds": []
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "KUROKIRISHIMA",
+        "トロッとキリッと"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_menu_photo",
+      "rightsCleared": true,
+      "localOnly": true,
+      "notes": "A MENU, AND NOT SAKE: a second page headed 焼酎 芋 IMO, given over to one sweet-potato shochu, Kurokirishima, with its bottle, a glass, a slogan in large brush characters and three prices. The glossy page reflected the person taking the photo; that patch is blurred, and the file was re-encoded for it. The page does not print the makers; where one is given here it is from general knowledge and was not checked against a source. Kept local: a designed menu page with product photographs and the venue's own descriptions, from the same restaurant as shichida_junmai_shochu_menu_clear.jpg. The photo is cropped to leave out the lap and hands of people at the table; location and camera data were removed. Added 2026-10-13."
+    }
+  },
+  "mugi_shochu_menu.jpg": {
+    "name_ja": "泰明",
+    "brewery_ja": "藤居醸造",
+    "view": "other",
+    "subject": "menu",
+    "items": [
+      {
+        "name_ja": "泰明",
+        "brewery_ja": "藤居醸造",
+        "product": "大分県 TAIMEI 麦焼酎",
+        "drink": "shochu",
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "山乃守",
+        "product": "長崎県 YAMANOMORI 麦焼酎",
+        "drink": "shochu",
+        "expectedBrandIds": []
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "山乃守",
+        "TAIMEI",
+        "YAMANOMORI"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_menu_photo",
+      "rightsCleared": true,
+      "localOnly": true,
+      "notes": "A MENU, AND NOT SAKE: the page headed 焼酎 麦 MUGI / \"Gerste / Barley\", two barley shochu, 泰明 from Oita and 山乃守 from Nagasaki, each with a picture of the bottle, a description in Japanese and German and one shared price block. The maker of 山乃守 is left out as not known. The page does not print the makers; where one is given here it is from general knowledge and was not checked against a source. Kept local: a designed menu page with product photographs and the venue's own descriptions, from the same restaurant as shichida_junmai_shochu_menu_clear.jpg. The photo is cropped to leave out the lap and hands of people at the table; location and camera data were removed. Added 2026-10-13."
+    }
+  },
+  "shichida_shochu_menu_2.jpg": {
+    "name_ja": "七田",
+    "brewery_ja": "天山酒造",
+    "view": "other",
+    "subject": "menu",
+    "items": [
+      {
+        "name_ja": "七田",
+        "brewery_ja": "天山酒造",
+        "product": "SHICHIDA 米焼酎 60ml €7.80 720ml €70.00",
+        "drink": "shochu",
+        "expectedBrandIds": []
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "SHICHIDA"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_menu_photo",
+      "rightsCleared": true,
+      "localOnly": true,
+      "notes": "A MENU, AND NOT SAKE: the page of shichida_junmai_shochu_menu_clear.jpg photographed again, headed 焼酎 米 KOME / \"Reis / Rice\": Shichida rice shochu, which the German text calls a junmai sake. The catalogue has the SAKE 七田 from the same maker (row 968), which is not what the page sells. A fingertip at the top corner is painted over; the file was re-encoded for it. The page does not print the makers; where one is given here it is from general knowledge and was not checked against a source. Kept local: a designed menu page with product photographs and the venue's own descriptions, from the same restaurant as shichida_junmai_shochu_menu_clear.jpg. The photo is cropped to leave out the lap and hands of people at the table; location and camera data were removed. Added 2026-10-13."
+    }
+  },
+  "nikka_whisky_not_sake.jpg": {
+    "name_ja": "余市",
+    "brewery_ja": "ニッカウヰスキー",
+    "view": "front",
+    "subject": "several_bottles",
+    "items": [
+      {
+        "name_ja": "余市",
+        "brewery_ja": "ニッカウヰスキー",
+        "product": "SINGLE MALT YOICHI",
+        "drink": "other",
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "余市",
+        "brewery_ja": "ニッカウヰスキー",
+        "product": "NIKKA SINGLE CASK MALT WHISKY 10",
+        "drink": "other",
+        "expectedBrandIds": []
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "YOICHI",
+        "SINGLE MALT YOICHI",
+        "NIKKA",
+        "NIKKA SINGLE CASK MALT WHISKY"
+      ],
+      "brewery_ja": [
+        "NIKKA",
+        "ニッカ",
+        "Nikka Whisky"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "NOT SAKE, TWO BOTTLES: two whiskies side by side on a bar counter with a glass beside each, Single Malt Yoichi and a Nikka single cask malt whisky with a 10 on the neck, both with 余市 in large characters on the label. Neither is sake and neither is in the catalogue; the labels print \"whisky\" in Latin letters. Shelves of other bottles behind, out of focus. No person in the frame; location and camera data were removed from the file. Photographed at a bar, added 2026-10-13."
+    }
+  },
+  "hachinohe_oliveyeast_kirekkire_kikumasamune_menu.jpg": {
+    "name_ja": "陸奥八仙",
+    "brewery_ja": "八戸酒造",
+    "view": "other",
+    "subject": "menu",
+    "items": [
+      {
+        "name_ja": "陸奥八仙",
+        "brewery_ja": "八戸酒造",
+        "product": "Isaribi 特別純米 華吹雪 60%",
+        "expectedBrandIds": [
+          12
+        ]
+      },
+      {
+        "name_ja": "Olive East N.315",
+        "product": "香川県 純米吟醸 山田錦 58%",
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "キレッキレ",
+        "product": "栃木県 Kirekkire 純米吟醸 五百万石 60%",
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "菊正宗",
+        "brewery_ja": "菊正宗酒造",
+        "product": "House Sake Hot/cold 150ml",
+        "expectedBrandIds": [
+          1583
+        ]
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "MUTSU HASSEN",
+        "Olive East N.315",
+        "Olive East",
+        "キレッキレ",
+        "Kirekkire",
+        "菊正宗",
+        "Kikumasamune"
+      ],
+      "brewery_ja": [
+        "菊正宗酒造"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_menu_photo",
+      "rightsCleared": true,
+      "localOnly": true,
+      "notes": "A MENU: a page of a restaurant's drinks menu in Germany headed 日本酒 / \"Japanischer Sake\", three sakes with a picture of each bottle and, in a bar at the foot, the house sake, in the maintainer's order: 陸奥八仙 (Isaribi), Olive East N.315 from Kagawa, キレッキレ from Tochigi, and Kikumasamune. Olive East N.315 and キレッキレ are not in the catalogue and their makers are not on the page. The page prints prefecture, name, grade, rice and polishing ratio for each, a taste scale and a description in German; it does not print the makers, which are the catalogue's where the catalogue has the sake. Kept local: a designed menu page with product photographs and the venue's own descriptions, from the same restaurant as shichida_junmai_shochu_menu_clear.jpg. The photo is cropped to leave out the lap of a person at the table; location and camera data were removed. Added 2026-10-13."
+    }
+  },
+  "miyasaka_tsukasabotan_katokahachiro_menu.jpg": {
+    "name_ja": "真澄",
+    "brewery_ja": "宮坂醸造",
+    "view": "other",
+    "subject": "menu",
+    "items": [
+      {
+        "name_ja": "真澄",
+        "brewery_ja": "宮坂醸造",
+        "product": "長野県 MASUMI 純米吟醸 山田錦 美山錦 55%",
+        "expectedBrandIds": [
+          551
+        ]
+      },
+      {
+        "name_ja": "船中八策",
+        "brewery_ja": "司牡丹酒造",
+        "product": "高知県 Senchu hassaku 超辛口 純米酒 60%",
+        "expectedBrandIds": [
+          76068,
+          934
+        ]
+      },
+      {
+        "name_ja": "大山十水",
+        "brewery_ja": "加藤嘉八郎酒造",
+        "product": "山形県 Ooyamatomizu 特別純米酒 はえぬき 60%",
+        "expectedBrandIds": [
+          119,
+          2762
+        ]
+      },
+      {
+        "unreadable": true,
+        "expectedBrandIds": []
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "船中八策",
+        "大山十水",
+        "大山",
+        "十水",
+        "MASUMI",
+        "Senchu hassaku",
+        "Ooyamatomizu",
+        "司牡丹"
+      ],
+      "brewery_ja": [
+        "司牡丹酒造",
+        "加藤嘉八郎酒造"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_menu_photo",
+      "rightsCleared": true,
+      "localOnly": true,
+      "notes": "A MENU: another 日本酒 page of the same menu as hachinohe_oliveyeast_kirekkire_kikumasamune_menu.jpg, three sakes with a picture of each bottle, in the maintainer's order: 真澄, 船中八策 (司牡丹's, which the catalogue holds as a row of its own) and 大山十水 (the catalogue has 大山 and 十水 as two rows; both count). A fourth line, the house sake, is cut off by the bottom of the frame and is listed as unreadable. The maintainer's file had \"katokatachiro\"; the maker is 加藤嘉八郎 (Katō Kahachirō), and the file was renamed. The page prints prefecture, name, grade, rice and polishing ratio for each, a taste scale and a description in German; it does not print the makers, which are the catalogue's where the catalogue has the sake. Kept local: a designed menu page with product photographs and the venue's own descriptions, from the same restaurant as shichida_junmai_shochu_menu_clear.jpg. The photo is cropped to leave out the lap of a person at the table; location and camera data were removed. Added 2026-10-13."
+    }
+  },
+  "miura_hachinohe_nishida_several_on_table.jpg": {
+    "name_ja": "豊盃",
+    "brewery_ja": "三浦酒造",
+    "view": "front",
+    "subject": "several_bottles",
+    "items": [
+      {
+        "name_ja": "豊盃",
+        "brewery_ja": "三浦酒造",
+        "product": "純米吟醸",
+        "expectedBrandIds": [
+          1070
+        ]
+      },
+      {
+        "name_ja": "陸奥八仙",
+        "brewery_ja": "八戸酒造",
+        "product": "特別純米",
+        "expectedBrandIds": [
+          12
+        ]
+      },
+      {
+        "name_ja": "田酒",
+        "brewery_ja": "西田酒造店",
+        "product": "特別純米酒",
+        "expectedBrandIds": [
+          19
+        ]
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "陸奥八仙",
+        "八仙",
+        "HASSEN",
+        "田酒",
+        "でんしゅ",
+        "HOUHAI"
+      ],
+      "brewery_ja": [
+        "八戸酒造",
+        "西田酒造店"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "THREE BOTTLES ON A TABLE: three 1.8 l bottles from Aomori side by side on a restaurant table, each label facing the camera and none in front of the others, in the maintainer's order: 豊盃 (純米吟醸, a pink label, \"HOUHAI\"), 陸奥八仙 (特別純米, \"HASSEN\") and 田酒 (特別純米酒, with でんしゅ on the neck). The makers are in small print on the labels and are the catalogue's. A lamp, a plant and a table pager are in the frame; no person. Location and camera data were removed from the file. Photographed at a restaurant, added 2026-10-13."
+    }
+  },
+  "liquer_shelf.jpg": {
+    "name_ja": "鬼おろし",
+    "brewery_ja": "不明",
+    "view": "front",
+    "subject": "several_bottles",
+    "items": [
+      {
+        "name_ja": "鬼おろし",
+        "product": "キウイサワーの素",
+        "drink": "liqueur",
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "鬼おろし",
+        "product": "レモンサワーの素",
+        "drink": "liqueur",
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "鬼おろし",
+        "product": "みかんサワーの素",
+        "drink": "liqueur",
+        "expectedBrandIds": []
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "鬼",
+        "鬼おろし キウイサワーの素",
+        "鬼おろし レモンサワーの素",
+        "鬼おろし みかんサワーの素",
+        "キウイサワーの素",
+        "レモンサワーの素",
+        "みかんサワーの素",
+        "サワーの素"
+      ],
+      "brewery_ja": [
+        "?"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "NOT SAKE, A SHELF OF THEM: a shop shelf of 鬼おろし sour bases — fruit liqueurs of 25% for mixing with soda, by the maintainer's account — in bright labels with a large 鬼, each with a hand-written shelf tag naming the flavour and the price. Three stand whole in the middle, kiwi, lemon and mandarin; more of the same line are cut off at both edges and on the shelf above, and are not listed. The maintainer's list has no items for this photo, there being no sake in it. The maker is not legible in the photo and not known, so the brewery field holds 不明 (unknown) only because it must hold something. No shop name, no person. Location and camera data were removed from the file. Added 2026-10-13."
+    }
+  },
+  "1plus1_yamahai_blend_clear.jpg": {
+    "name_ja": "1+1",
+    "brewery_ja": "不明",
+    "bottle": "1plus1-yamahai-blend",
+    "view": "front",
+    "also": {
+      "name_ja": [
+        "YAMAHAI BLEND",
+        "山廃越淡麗",
+        "山廃山田錦",
+        "1+1 -Yamahai Blend-",
+        "1＋1"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Held in the hand: a black bottle whose label is a large brush mark like 1+1 (the maintainer's file name), with 山廃越淡麗 / 山廃山田錦, \"YAMAHAI BLEND\" and 越淡麗50%使用+山田錦50%使用. It is 1+1 -Yamahai Blend-, a KURAND bottling from Niigata (the maintainer, 2026-10-14): a yamahai blend of 50% Echitanrei and 50% Yamadanishiki, polished to 50%. Not in the catalogue, so the right answer is no match. The maker is not on this side and is not known; the brewery field holds 不明 (unknown). Location and camera data were removed from the file. Added 2026-10-14."
+    },
+    "expectedBrandIds": []
+  },
+  "akagisan_hakuko_multiple_shelf_with_pricetag.jpg": {
+    "name_ja": "赤城山",
+    "brewery_ja": "近藤酒造",
+    "view": "front",
+    "subject": "several_bottles",
+    "items": [
+      {
+        "name_ja": "赤城山",
+        "brewery_ja": "近藤酒造",
+        "product": "本醸造 男の酒",
+        "expectedBrandIds": [
+          270
+        ]
+      },
+      {
+        "name_ja": "白鴻",
+        "brewery_ja": "盛川酒造",
+        "product": "上撰",
+        "expectedBrandIds": [
+          1921
+        ]
+      },
+      {
+        "name_ja": "白鴻",
+        "brewery_ja": "盛川酒造",
+        "product": "蔵きぢ 原酒",
+        "expectedBrandIds": [
+          1921
+        ]
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "白鴻",
+        "Akagisan",
+        "Hakuko",
+        "蔵きぢ"
+      ],
+      "brewery_ja": [
+        "盛川酒造"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "SEVERAL BOTTLES IN A SHOP FRIDGE in Germany, behind glass, each with a printed price tag: Akagisan Honjozo Trocken (赤城山), Hakuko Jotoshu (白鴻) and Hakuko Kurakiji Genshu (白鴻 蔵きぢ, with 広島の地酒 on its box). The glass reflected a shoe of the person taking the photo; that patch is blurred and the file was re-encoded for it. Location and camera data were removed from the file. Added 2026-10-14."
+    }
+  },
+  "born_gold_with_pricetag.jpg": {
+    "name_ja": "梵",
+    "brewery_ja": "加藤吉平商店",
+    "bottle": "born-gold",
+    "view": "front",
+    "expectedBrandIds": [
+      1948
+    ],
+    "also": {
+      "name_ja": [
+        "BORN",
+        "BORN GOLD",
+        "梵 GOLD",
+        "Born Gold"
+      ],
+      "brewery_ja": [
+        "KATOUKICHIBEE SHOUTEN",
+        "加藤吉平"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Born Gold, a junmai daiginjo, in a shop fridge with its price tag (\"Born Gold / Junmai Daiginjo\"). The label prints 梵 in gold, \"BORN GOLD\", 加藤吉平商店 and a long English text; other bottles stand at the edges. Location and camera data were removed from the file. Added 2026-10-14."
+    }
+  },
+  "choryo_hokushika_multiple.jpg": {
+    "name_ja": "吉野杉の樽酒",
+    "brewery_ja": "長龍酒造",
+    "view": "front",
+    "subject": "several_bottles",
+    "items": [
+      {
+        "name_ja": "吉野杉の樽酒",
+        "brewery_ja": "長龍酒造",
+        "product": "樽酒",
+        "expectedBrandIds": [
+          2120
+        ]
+      },
+      {
+        "name_ja": "雪",
+        "brewery_ja": "北鹿",
+        "product": "本醸造 生貯蔵酒",
+        "expectedBrandIds": []
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "樽酒",
+        "TARUSAKE",
+        "雪",
+        "HOKUSHIKA YUKI",
+        "北鹿"
+      ],
+      "brewery_ja": [
+        "北鹿"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "TWO SMALL BOTTLES SIDE BY SIDE at home on a hob, both labels to the camera: Choryo's 吉野杉の樽酒 (TARUSAKE) and Hokushika's 雪 honjozo namachozo, each in the set already on its own (choryo_yoshinosugi_taruzake_clear.jpg, hokushika_yuki_namachozo_clear.jpg). 雪 is not in the catalogue. Location and camera data were removed from the file. Added 2026-10-14."
+    }
+  },
+  "daiyame_and_glo_multiple_shochu_with_label.jpg": {
+    "name_ja": "だいやめ",
+    "brewery_ja": "濵田酒造",
+    "view": "front",
+    "subject": "several_bottles",
+    "items": [
+      {
+        "name_ja": "だいやめ",
+        "brewery_ja": "濵田酒造",
+        "product": "DAIYAME 芋焼酎 25%",
+        "drink": "shochu",
+        "expectedBrandIds": []
+      },
+      {
+        "name_ja": "GLOW",
+        "product": "EP05 芋焼酎 25%",
+        "drink": "shochu",
+        "expectedBrandIds": [],
+        "brewery_ja": "若潮酒造"
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "DAIYAME",
+        "GLOW",
+        "ダイヤメ"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "NOT SAKE, TWO BOTTLES: two sweet-potato shochu on a shop shelf in Japan with their price cards, DAIYAME (だいやめ, HAMADA SYUZOU) with an award card hung on its neck, and GLOW EP05 in a green label. The shelf's glass reflected the person taking the photo, holding the phone; that corner is blurred and the file was re-encoded for it. Location and camera data were removed from the file. Added 2026-10-14. GLOW EP05 is a honkaku imo shochu of 若潮酒造 (Wakashio Shuzo, Kagoshima), per the importer's description the maintainer passed on."
+    }
+  },
+  "dassai_kidoizumi_on_table.jpg": {
+    "name_ja": "獺祭",
+    "brewery_ja": "獺祭",
+    "view": "front",
+    "subject": "several_bottles",
+    "items": [
+      {
+        "name_ja": "獺祭",
+        "brewery_ja": "獺祭",
+        "expectedBrandIds": [
+          887
+        ]
+      },
+      {
+        "name_ja": "木戸泉",
+        "brewery_ja": "木戸泉酒造",
+        "expectedBrandIds": [
+          310
+        ]
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "木戸泉",
+        "Dassai",
+        "きどいずみ"
+      ],
+      "brewery_ja": [
+        "木戸泉酒造",
+        "旭酒造"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "TWO BOTTLES ON A TABLE with cups: a small bottle of 獺祭 and a larger one of 木戸泉 with its yellow label, side by side. Location and camera data were removed from the file. Added 2026-10-14."
+    }
+  },
+  "forever20_daybreak_multiple_shelf.jpg": {
+    "name_ja": "夜の帝王",
+    "brewery_ja": "藤井酒造",
+    "view": "front",
+    "subject": "several_bottles",
+    "items": [
+      {
+        "name_ja": "夜の帝王",
+        "brewery_ja": "藤井酒造",
+        "product": "Forever 20 特別純米",
+        "expectedBrandIds": [
+          3320
+        ]
+      },
+      {
+        "name_ja": "Daybreak",
+        "product": "特別純米",
+        "expectedBrandIds": [],
+        "brewery_ja": "藤井酒造"
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "Forever 20",
+        "Daybreak"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "A SHOP FRIDGE in Germany through its glass door: dark bottles, the clearest with 夜の帝王 on its label, and two printed price tags, \"Forever 20 / Tokubetsujunmai\" and \"Daybreak / Tokubetsujunmai\", as the maintainer's file name says. Which bottle the second tag belongs to cannot be told. Daybreak is a tokubetsu junmai of 藤井酒造 (Takehara, Hiroshima), the maker of 夜の帝王 (the maintainer, 2026-10-14); the catalogue has no row for it. Location and camera data were removed from the file. Added 2026-10-14."
+    }
+  },
+  "fudoh_fusakogane_migaki_80_junmainama_nabedana_clear.jpg": {
+    "name_ja": "不動",
+    "brewery_ja": "鍋店",
+    "bottle": "fudoh",
+    "view": "front",
+    "expectedBrandIds": [
+      312
+    ],
+    "also": {
+      "name_ja": [
+        "Fudoh",
+        "FUDOH"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Fudoh junmai nama genshu in a shop fridge, the yellow-green label with 不動 in large silver characters, 純米生原酒 and \"Fudoh / The premium sake\". The same bottling as fudoh_fusakogane_migaki_80_junmai_nama_nabedana_clearish.jpg. Location and camera data were removed from the file. Added 2026-10-14."
+    }
+  },
+  "fudoh_fusakogane_migaki_80_junmainama_nabedana_label.jpg": {
+    "name_ja": "不動",
+    "brewery_ja": "鍋店",
+    "bottle": "fudoh",
+    "view": "back_import",
+    "expectedBrandIds": [
+      312
+    ],
+    "also": {
+      "name_ja": [
+        "FUDOH",
+        "Fudoh",
+        "FUDOH FUSAKOGANE MIGAKI 80 JUNMAINAMA"
+      ],
+      "brewery_ja": [
+        "NABEDANA",
+        "Nabedana"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "The German importer's back label of the same bottle as fudoh_fusakogane_migaki_80_junmainama_nabedana_clear.jpg: \"ALKOHOLISCHES GETRÄNK AUS REIS (FUDOH FUSAKOGANE MIGAKI 80 JUNMAINAMA) \\\"NABEDANA\\\"\", 720 ml, 15.3%, distributed by JFC Deutschland. NABEDANA is the maker's name in Latin letters. Location and camera data were removed from the file. Added 2026-10-14."
+    }
+  },
+  "garyubai_junmai_ginjo_genshu_clear.jpg": {
+    "name_ja": "臥龍梅",
+    "brewery_ja": "三和酒造",
+    "bottle": "garyubai-junmai-ginjo-genshu",
+    "view": "front",
+    "expectedBrandIds": [
+      608
+    ],
+    "also": {
+      "name_ja": [
+        "臥龍梅 純米吟醸",
+        "がりゅうばい"
+      ],
+      "brewery_ja": [
+        "三和酒造株式会社"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Garyubai junmai ginjo (山田錦) held in the hand: 臥龍梅 in pink brush script, 純米吟醸, 山田錦 and がりゅうばい. Location and camera data were removed from the file. Added 2026-10-14."
+    }
+  },
+  "garyubai_junmai_ginjo_genshu_on_table_1.jpg": {
+    "name_ja": "臥龍梅",
+    "brewery_ja": "三和酒造",
+    "bottle": "garyubai-junmai-ginjo-genshu",
+    "view": "front",
+    "expectedBrandIds": [
+      608
+    ],
+    "also": {
+      "name_ja": [
+        "臥龍梅 純米吟醸",
+        "がりゅうばい"
+      ],
+      "brewery_ja": [
+        "三和酒造株式会社"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "The same bottle on a table at home with a glass in front, photographed from a little further away (1 of 3). A television behind it showed a video page; the screen is blurred around the bottle and the file was re-encoded for it. Location and camera data were removed from the file. Added 2026-10-14."
+    }
+  },
+  "garyubai_junmai_ginjo_genshu_on_table_2.jpg": {
+    "name_ja": "臥龍梅",
+    "brewery_ja": "三和酒造",
+    "bottle": "garyubai-junmai-ginjo-genshu",
+    "view": "front",
+    "expectedBrandIds": [
+      608
+    ],
+    "also": {
+      "name_ja": [
+        "臥龍梅 純米吟醸",
+        "がりゅうばい"
+      ],
+      "brewery_ja": [
+        "三和酒造株式会社"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "The same bottle on a table at home with a glass in front, photographed from a little further away (2 of 3). A television behind it showed a video page; the screen is blurred around the bottle and the file was re-encoded for it. Location and camera data were removed from the file. Added 2026-10-14."
+    }
+  },
+  "garyubai_junmai_ginjo_genshu_on_table_3.jpg": {
+    "name_ja": "臥龍梅",
+    "brewery_ja": "三和酒造",
+    "bottle": "garyubai-junmai-ginjo-genshu",
+    "view": "front",
+    "expectedBrandIds": [
+      608
+    ],
+    "also": {
+      "name_ja": [
+        "臥龍梅 純米吟醸",
+        "がりゅうばい"
+      ],
+      "brewery_ja": [
+        "三和酒造株式会社"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "The same bottle on a table at home with a glass in front, photographed from a little further away (3 of 3). A television behind it showed a video page; the screen is blurred around the bottle and the file was re-encoded for it. Location and camera data were removed from the file. Added 2026-10-14."
+    }
+  },
+  "garyubai_junmai_ginjo_genshu_side_1.jpg": {
+    "name_ja": "臥龍梅",
+    "brewery_ja": "三和酒造",
+    "bottle": "garyubai-junmai-ginjo-genshu",
+    "view": "side",
+    "expectedBrandIds": [
+      608
+    ],
+    "also": {
+      "name_ja": [
+        "臥龍梅 純米吟醸",
+        "がりゅうばい"
+      ],
+      "brewery_ja": [
+        "三和酒造株式会社"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "The same bottle turned so that the edge of the front label (臥龍梅, 山田錦) and the text beside it are in frame, which prints the maker, 三和酒造株式会社, 静岡県静岡市 (1 of 2). Location and camera data were removed from the file. Added 2026-10-14."
+    }
+  },
+  "garyubai_junmai_ginjo_genshu_side_2.jpg": {
+    "name_ja": "臥龍梅",
+    "brewery_ja": "三和酒造",
+    "bottle": "garyubai-junmai-ginjo-genshu",
+    "view": "side",
+    "expectedBrandIds": [
+      608
+    ],
+    "also": {
+      "name_ja": [
+        "臥龍梅 純米吟醸",
+        "がりゅうばい"
+      ],
+      "brewery_ja": [
+        "三和酒造株式会社"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "The same bottle turned so that the edge of the front label (臥龍梅, 山田錦) and the text beside it are in frame, which prints the maker, 三和酒造株式会社, 静岡県静岡市 (2 of 2). Location and camera data were removed from the file. Added 2026-10-14."
+    }
+  },
+  "garyubai_junmai_ginjo_genshu_side_3.jpg": {
+    "name_ja": "臥龍梅",
+    "brewery_ja": "三和酒造",
+    "bottle": "garyubai-junmai-ginjo-genshu",
+    "view": "side",
+    "expectedBrandIds": [
+      608
+    ],
+    "also": {
+      "name_ja": [
+        "臥龍梅 純米吟醸",
+        "がりゅうばい"
+      ],
+      "brewery_ja": [
+        "三和酒造株式会社"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "The same bottle turned further: 純米吟醸 in large type with a slice of the 臥龍梅 brush mark, a warning text, a QR code and 清酒. The name itself is mostly out of frame. Location and camera data were removed from the file. Added 2026-10-14."
+    }
+  },
+  "harima_barrel_craft_clear.jpg": {
+    "name_ja": "播磨",
+    "brewery_ja": "富久錦",
+    "bottle": "harima-barrel-craft",
+    "view": "front",
+    "expectedBrandIds": [],
+    "also": {
+      "name_ja": [
+        "播磨 BARREL CRAFT",
+        "BARREL CRAFT",
+        "KURAND"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Harima Barrel Craft, a KURAND bottling, held in the hand: 播磨 in gold and \"BARREL CRAFT\" on a dark label patterned like wood. A junmai daiginjo made with the KURAND platform (the maintainer). Not in the catalogue. The maker is not on this side. Location and camera data were removed from the file. Added 2026-10-14. The maker is 富久錦 of Kasai, Hyōgo (read off the back label by one model and confirmed by the maintainer, 2026-10-14). The catalogue has 富久錦's own sake, which is not this bottle."
+    }
+  },
+  "harima_barrel_craft_side.jpg": {
+    "name_ja": "播磨",
+    "brewery_ja": "富久錦",
+    "bottle": "harima-barrel-craft",
+    "view": "side",
+    "expectedBrandIds": [],
+    "also": {
+      "name_ja": [
+        "播磨 BARREL CRAFT",
+        "BARREL CRAFT",
+        "KURAND"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "The same bottle turned to its back label, which prints 日本酒, 純米大吟醸, the rice and 50% polishing, a maker in 兵庫県加西市 in small type, and KURAND with a lot number. Location and camera data were removed from the file. Added 2026-10-14. The maker is 富久錦 of Kasai, Hyōgo (read off the back label by one model and confirmed by the maintainer, 2026-10-14). The catalogue has 富久錦's own sake, which is not this bottle."
+    }
+  },
+  "hokushika_yuki_from_top.jpg": {
+    "name_ja": "雪",
+    "brewery_ja": "北鹿",
+    "bottle": "hokushika-yuki",
+    "view": "front",
+    "expectedBrandIds": [],
+    "also": {
+      "name_ja": [
+        "北鹿",
+        "HOKUSHIKA YUKI",
+        "北鹿 雪"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Hokushika 雪 honjozo namachozo at home on a hob, photographed from above so that the label is foreshortened: 雪, 本醸造, 生貯蔵酒, HOKUSHIKA YUKI. Not in the catalogue. Location and camera data were removed from the file. Added 2026-10-14."
+    }
+  },
+  "ikekame_barrel_clear_2.jpg": {
+    "name_ja": "池亀",
+    "brewery_ja": "池亀酒造",
+    "bottle": "ikekame-barrel",
+    "view": "front",
+    "expectedBrandIds": [
+      952
+    ],
+    "also": {
+      "name_ja": [
+        "IKEKAME",
+        "IKEKAME BARREL"
+      ],
+      "brewery_ja": [
+        "IKEKAME SAKE BREWERY"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Ikekame Barrel, close and at an angle: 池亀 in grey brush script, \"IKEKAME BARREL\", JUNMAI DAIGINJO, \"IKEKAME SAKE BREWERY SINCE 1875\". A second photo of the bottle of ikekame_barrel_clear.jpg. Location and camera data were removed from the file. Added 2026-10-14."
+    }
+  },
+  "kamonishiki_nifudazake_funakabumi_junmai_daiginjo_clear.jpg": {
+    "name_ja": "荷札酒",
+    "brewery_ja": "加茂錦酒造",
+    "bottle": "kamonishiki-nifudazake-funakabumi",
+    "view": "front",
+    "expectedBrandIds": [
+      124116,
+      3534
+    ],
+    "also": {
+      "name_ja": [
+        "荷札酒",
+        "加茂錦 荷札酒",
+        "荷札酒 槽場汲み"
+      ],
+      "brewery_ja": [
+        "加茂錦"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Kamonishiki's 荷札酒 槽場汲み, a junmai daiginjo, on a counter: a label made to look like a shipping tag, with 槽場汲み, 純米大吟醸, 淡麗フレッシュ, 13%, BY '25 and a grid of tank numbers with 133 circled, and the maker's mark at the top. The catalogue has 荷札酒 and 加茂錦 as two rows; both count. Location and camera data were removed from the file. Added 2026-10-14."
+    }
+  },
+  "kamonishiki_nifudazake_funakabumi_junmai_daiginjo_label_ja.jpg": {
+    "name_ja": "荷札酒",
+    "brewery_ja": "加茂錦酒造",
+    "bottle": "kamonishiki-nifudazake-funakabumi",
+    "view": "back_ja",
+    "expectedBrandIds": [
+      124116,
+      3534
+    ],
+    "also": {
+      "name_ja": [
+        "荷札酒",
+        "加茂錦 荷札酒",
+        "荷札酒 槽場汲み"
+      ],
+      "brewery_ja": [
+        "加茂錦"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "The back label of the same bottle: 荷札酒 槽場汲み 2025 BY, a description, the rice (山田錦 20%, 酒造好適米 80%), 50% polishing, 13%, and the maker, 加茂錦酒造, in small type. Location and camera data were removed from the file. Added 2026-10-14."
+    }
+  },
+  "katsuyama_en_on_table.jpg": {
+    "name_ja": "勝山",
+    "brewery_ja": "仙台伊澤家 勝山酒造",
+    "bottle": "katsuyama-en",
+    "view": "front",
+    "expectedBrandIds": [
+      60
+    ],
+    "also": {
+      "name_ja": [
+        "勝山 縁",
+        "勝山縁",
+        "KATSUYAMA",
+        "縁"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Katsuyama 縁 (EN) on a table with a glass behind it: KATSUYAMA, 勝山 in black brush script and 縁 in red. The bottle of katsuyama_en_clear.jpg. Location and camera data were removed from the file. Added 2026-10-14."
+    }
+  },
+  "kidoizumi_daigo_clear.jpg": {
+    "name_ja": "木戸泉",
+    "brewery_ja": "木戸泉酒造",
+    "bottle": "kidoizumi-daigo",
+    "view": "front",
+    "expectedBrandIds": [
+      310
+    ],
+    "also": {
+      "name_ja": [
+        "きどいずみ",
+        "木戸泉 醍醐"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Kidoizumi 醍醐 held in the hand: a yellow label with 木戸泉 in a black circle, 醍醐 in red, きどいずみ and the maker printed at the foot. The bottle of kidoizumi_junmai_daigo_wrapped.jpg, unwrapped. Location and camera data were removed from the file. Added 2026-10-14."
+    }
+  },
+  "kitsune_no_shukuen_clear.jpg": {
+    "name_ja": "狐の祝宴",
+    "brewery_ja": "西堀酒造",
+    "bottle": "kitsune-no-shukuen",
+    "view": "front",
+    "expectedBrandIds": [],
+    "also": {
+      "name_ja": [
+        "狐の祝宴",
+        "KURAND"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Kitsune no Shukuen, a KURAND bottling, on a counter: an illustrated label with foxes in hooded robes under a red umbrella and the name 狐の祝宴 in white. Not in the catalogue. The maker is on the back (kitsune_no_shukuen_side_1.jpg). Location and camera data were removed from the file. Added 2026-10-14."
+    }
+  },
+  "kitsune_no_shukuen_side_1.jpg": {
+    "name_ja": "狐の祝宴",
+    "brewery_ja": "西堀酒造",
+    "bottle": "kitsune-no-shukuen",
+    "view": "side",
+    "expectedBrandIds": [],
+    "also": {
+      "name_ja": [
+        "狐の祝宴",
+        "KURAND"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "The same bottle turned to its back label: 日本酒, 純米吟醸, 60% polishing, 16%, the maker 西堀酒造株式会社 of 栃木県小山市, and KURAND at the foot. Location and camera data were removed from the file. Added 2026-10-14."
+    }
+  },
+  "kitsune_no_shukuen_side_2.jpg": {
+    "name_ja": "狐の祝宴",
+    "brewery_ja": "西堀酒造",
+    "bottle": "kitsune-no-shukuen",
+    "view": "side",
+    "expectedBrandIds": [],
+    "also": {
+      "name_ja": [
+        "狐の祝宴",
+        "KURAND"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "The same bottle turned further, to a printed description in Japanese, a QR code and a barcode. The name is not on this side; it carries only the description. Location and camera data were removed from the file. Added 2026-10-14."
+    }
+  },
+  "kubota_junmai_daiginjo_box_clear.jpg": {
+    "name_ja": "久保田",
+    "brewery_ja": "朝日酒造",
+    "bottle": "kubota-junmai-daiginjo",
+    "view": "front",
+    "expectedBrandIds": [
+      431
+    ],
+    "also": {
+      "name_ja": [
+        "KUBOTA",
+        "久保田 純米大吟醸"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "The box of Kubota junmai daiginjo held in the hand in a shop: \"KUBOTA / JUNMAI DAIGINJO / JAPANESE SAKE\" in white on black, 純米大吟醸 日本酒, an English text and 久保田 in brush script at the foot. A box, not a bottle; shop fridges behind. Location and camera data were removed from the file. Added 2026-10-14."
+    }
+  },
+  "kurand_hug_me.jpg": {
+    "name_ja": "Hug Me",
+    "brewery_ja": "不明",
+    "bottle": "kurand-hug-me",
+    "view": "front",
+    "expectedBrandIds": [],
+    "also": {
+      "name_ja": [
+        "HUG ME",
+        "KURAND"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "Hug Me, a KURAND bottling, held in the hand in a shop: a green bottle with a drawing of white arms hugging it and \"Hug Me\" in script. Not in the catalogue; the maker is not on this side. Location and camera data were removed from the file. Added 2026-10-14."
+    }
+  },
+  "maibijin_suigei_hakkaisan_shelf.jpg": {
+    "name_ja": "舞美人",
+    "brewery_ja": "美川酒造場",
+    "view": "front",
+    "subject": "several_bottles",
+    "items": [
+      {
+        "name_ja": "舞美人",
+        "brewery_ja": "美川酒造場",
+        "product": "山廃 純米",
+        "expectedBrandIds": [
+          506
+        ]
+      },
+      {
+        "name_ja": "酔鯨",
+        "brewery_ja": "酔鯨酒造",
+        "product": "吟麗 純米吟醸",
+        "expectedBrandIds": [
+          933
+        ]
+      },
+      {
+        "name_ja": "八海山",
+        "brewery_ja": "八海醸造",
+        "product": "清酒",
+        "expectedBrandIds": [
+          380
+        ]
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "酔鯨",
+        "八海山",
+        "Maibijin",
+        "Suigei",
+        "Hakkaisan"
+      ],
+      "brewery_ja": [
+        "酔鯨酒造",
+        "八海醸造"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "A SHOP SHELF in Germany: three rows of bottles, each with a printed price tag in front — Maibijin Yamahai Junmai, Suigei Ginrei Junmaiginjo, Hakkaisan Seishu — and more of the same stock in the rows behind; bottles on the shelf below are cut off. Location and camera data were removed from the file. Added 2026-10-14."
+    }
+  },
+  "otokoyama_tokubetsu_junmai_clear.jpg": {
+    "name_ja": "男山",
+    "brewery_ja": "男山",
+    "bottle": "otokoyama-tokubetsu-junmai",
+    "view": "front",
+    "expectedBrandIds": [
+      2
+    ],
+    "also": {
+      "name_ja": [
+        "OTOKOYAMA",
+        "男山 特別純米"
+      ],
+      "brewery_ja": [
+        "男山株式会社",
+        "OTOKOYAMA Co.,Ltd."
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Otokoyama of Hokkaido, a 300 ml bottle held in the hand: 男山 in black brush script on a white-and-gold label, OTOKOYAMA HOKKAIDO, 酒造元祖, and 男山株式会社 at the foot. The catalogue has two more sakes called 男山 from other makers; only the Hokkaido one is right. Location and camera data were removed from the file. Added 2026-10-14."
+    }
+  },
+  "otokoyama_tokubetsu_junmai_side_1.jpg": {
+    "name_ja": "男山",
+    "brewery_ja": "男山",
+    "bottle": "otokoyama-tokubetsu-junmai",
+    "view": "side",
+    "expectedBrandIds": [
+      2
+    ],
+    "also": {
+      "name_ja": [
+        "OTOKOYAMA",
+        "男山 特別純米"
+      ],
+      "brewery_ja": [
+        "男山株式会社",
+        "OTOKOYAMA Co.,Ltd."
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "The same bottle turned so that the left half of the label is in frame, with its old warrant text, a red seal, JAPANESE SAKE, 16% and 300 ml. Location and camera data were removed from the file. Added 2026-10-14."
+    }
+  },
+  "otokoyama_tokubetsu_junmai_side_2.jpg": {
+    "name_ja": "男山",
+    "brewery_ja": "男山",
+    "bottle": "otokoyama-tokubetsu-junmai",
+    "view": "side",
+    "expectedBrandIds": [
+      2
+    ],
+    "also": {
+      "name_ja": [
+        "OTOKOYAMA",
+        "男山 特別純米"
+      ],
+      "brewery_ja": [
+        "男山株式会社",
+        "OTOKOYAMA Co.,Ltd."
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "The same bottle turned the other way, with the bottling date 25.11.28 and \"PRODUCED AND BOTTLED BY OTOKOYAMA Co., Ltd. HOKKAIDO, JAPAN\". Location and camera data were removed from the file. Added 2026-10-14."
+    }
+  },
+  "shimauta_awamori_shelf_with_pricetag.jpg": {
+    "name_ja": "島唄",
+    "brewery_ja": "まさひろ酒造",
+    "view": "front",
+    "drink": "awamori",
+    "expectedBrandIds": [],
+    "also": {
+      "name_ja": [
+        "SHIMAUTA",
+        "島唄 泡盛"
+      ],
+      "brewery_ja": [
+        "Masahiro",
+        "まさひろ"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "NOT SAKE: Shimauta awamori in a shop in Germany, two bottles with a blue wave pattern on the shelf and a printed price tag reading \"SHIMAUTA Awamori 720ml Masahiro 30%\" and 泡盛; black bottles of something else are cut off below. The awamori is not in the catalogue. Location and camera data were removed from the file. Added 2026-10-14."
+    }
+  },
+  "shinshu_nekomasamune_multiple_shelf_with_pricetag.jpg": {
+    "name_ja": "信州ねこ正宗",
+    "brewery_ja": "舞姫酒造",
+    "view": "front",
+    "subject": "several_bottles",
+    "items": [
+      {
+        "name_ja": "信州ねこ正宗",
+        "product": "HACHIWARE 本醸造",
+        "expectedBrandIds": [],
+        "brewery_ja": "舞姫酒造"
+      },
+      {
+        "name_ja": "信州ねこ正宗",
+        "product": "SHIRONEKO 純米吟醸",
+        "expectedBrandIds": [],
+        "brewery_ja": "舞姫酒造"
+      }
+    ],
+    "also": {
+      "name_ja": [
+        "ねこ正宗",
+        "Shinshu Nekomasamune",
+        "HACHIWARE",
+        "SHIRONEKO"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "TWO BOTTLES OF ONE SAKE in a shop fridge in Germany with price tags: Shinshu Nekomasamune Honjozo (a black-and-white cat, HACHIWARE) and Junmaiginjo (a white cat, SHIRONEKO), 信州ねこ正宗 down each neck. Not in the catalogue. The maker, 舞姫酒造 of Nagano, is not legible here; the maintainer confirmed it (2026-10-14). More bottles behind and below. Location and camera data were removed from the file. Added 2026-10-14."
+    }
+  },
+  "shirakawago_nigorizake_clear.jpg": {
+    "name_ja": "白川郷",
+    "brewery_ja": "三輪酒造",
+    "bottle": "shirakawago-nigori",
+    "view": "front",
+    "expectedBrandIds": [
+      583
+    ],
+    "also": {
+      "name_ja": [
+        "白川郷 純米",
+        "白川郷 にごり酒",
+        "白川郷 純米にごり酒"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_own_bottle",
+      "rightsCleared": true,
+      "notes": "Shirakawago junmai nigori held in the hand: 白川郷 in a frame, 純米, にごり酒, a drawing of thatched houses and mountains, and the maker in small type at the left. Location and camera data were removed from the file. Added 2026-10-14."
     }
   }
 }

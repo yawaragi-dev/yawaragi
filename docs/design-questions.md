@@ -1,6 +1,6 @@
 # Questions for the designers
 
-Open questions the build has run into and settled provisionally, so they can be handed to the designers in one go. Each says what is built today, so nobody has to guess. Opened 2026-10-13; not yet filed as issues.
+Open questions the build has run into and settled provisionally, so they can be handed to the designers in one go. Each says what is built today, so nobody has to guess. Opened 2026-10-13; filed as #417.
 
 The design snapshot these refer to is `design/README.md`, v1.6.2.
 
@@ -40,6 +40,20 @@ Built: two §5a outcomes. "That's a menu, not a label" — "We read one bottle a
 8. The reason line on a row ("2 lines then clamp") was model-written in the prototype. Can it be built from the chart alone ("Rich and dry, like the Kikuhime you gave five stars"), with no model text?
 9. Cost and limits: a menu read is a larger and slower model call than a label. Is a visible "this takes a few seconds" state acceptable, and should anonymous visitors get it at all?
 
+What 21 real photos say (14 menus, 7 photos of several bottles, collected 2026-10-13 and kept in `evals/label-scan-jp/`), for the questions above and six new ones:
+
+- The scan tells a menu or several bottles from one bottle on all 21, with no mode chosen by the visitor (question 3).
+- A read of one photo takes 5 to 10 seconds; a list read is estimated at 2 to 3 cents (question 9).
+- Menus almost never print the maker. A bar's list prints name, prefecture, bottling and grade; a restaurant's prints name and price. The model invents a maker when asked for one.
+- A real izakaya card is mostly other drinks: two lines of sake among beer, cocktails, shochu, highballs and sours (question 6).
+
+10. One sake, several lines. A bar's list had three bottlings of one sake on a page, a shop shelf three of another. The catalogue knows the sake only, so all three rows would carry the same chart and the same "for you". Show them as three rows that say so, or as one row with the bottlings listed under it?
+11. A line that is half there. Photos taken at an angle cut cells at the edge, and glare or blur leaves a name without its grade. Does a row for such a line appear with what was read, appear marked "partly read", or stay out, with "3 lines we could not read" at the end?
+12. A shelf has no lines to read from. On a shop shelf the names come from labels and printed shelf tags, several bottles of a kind stand side by side, and bottles at the edge are cut off; a bar's window at night gave one readable label of ten. What does the result look like when most of the frame could not be read: the few rows that could, with a count of the rest?
+13. A tasting flight: three bottles and three glasses on a counter. That is "which of these three is for me", or "tell me about these three". Same result screen as a shelf, or its own?
+14. A brewery's own tasting sheet numbers its products and prints a taste map and serving temperatures for each. Is anything from the page worth showing beside our own data, marked as the maker's, or is the page only a list of names to us?
+15. Craft sake (brewed with hops or barley koji) is on bar lists beside sake, and is not sake in law. List it with the sakes, under "Not sake", or as its own kind?
+
 ## D. The bottling read off the label
 
 The catalogue stops at the sake (the line). The scan now also reads what the label says about this bottling: the product name (一味), the grade (Junmai Ginjō), style words (Nama, Genshu) and the polishing ratio.
@@ -70,3 +84,15 @@ When a front label prints the brand alone, the brewery in the read is the model'
 
 1. Should a match whose brewery was not printed show as "Best guess" whatever the confidence? It would be honest for that bottle, and would also turn 11 correct "Sure match" results among the 79 older test photos into "Best guess". Not built.
 2. Or a quieter cue on the card: "Brewery not on this label" beside the brewery name, with the Read by AI sheet explaining it?
+
+## G. A bottle with no writing on the side that was photographed
+
+Added 2026-10-13, after the list had gone to the designers.
+
+Some bottles carry a drawing on one side and all their text on another. A visitor photographs the side they find striking: the test set now has a sharp photo of a frosted bottle with a drawn figure and not one character in the frame. The model says so honestly (one bottle, nothing to read), and the scan then shows "unclear photo", which tells the visitor to retake a photo that is perfectly sharp.
+
+Not built yet. Planned: the read says which it is — text read, text there but too blurred to read, or no text on this side — and the last gets its own §5a outcome.
+
+1. Copy and layout for that outcome. Proposed: kicker "No name on this side"; title "Turn the bottle to the side with writing"; one line, "This side has only a picture. The name is usually on the opposite side or on a small label near the base."; then "Scan again", "Type the name instead" and "How to read a label".
+2. Should it show the photo back, so the visitor sees which side was taken?
+3. Naming a sake from its artwork alone is not possible today (there is no source of label images). If it ever becomes possible, such a match would be a guess of a new kind: does it get its own provenance wording, separate from "Read by AI"?

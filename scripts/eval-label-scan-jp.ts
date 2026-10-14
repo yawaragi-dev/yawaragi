@@ -120,6 +120,7 @@ import type { LabelScanExtraction } from '@/lib/schemas/label-scan-extraction'
 import { notOneBottleOfSake, type NotOneBottleOfSake } from '@/lib/scan/read-kind'
 import { canJudge, judgeLanding, type Landing, type Verdict } from '~/evals/label-scan-jp/judge'
 import { charAccuracy } from '~/evals/label-scan-jp/levenshtein'
+import { photosInTheWrongFolder } from '~/evals/label-scan-jp/photo-folders'
 import {
   GroundTruthFileSchema,
   SavedReadsFileSchema,
@@ -133,6 +134,8 @@ import {
 
 const EVAL_DIR = fileURLToPath(new URL('../evals/label-scan-jp', import.meta.url))
 const PHOTOS_DIR = path.join(EVAL_DIR, 'photos')
+/** Photos that are run but not published; git ignores the folder. */
+const LOCAL_PHOTOS_DIR = path.join(PHOTOS_DIR, 'local')
 const FIXTURES_DIR = path.join(EVAL_DIR, 'fixtures')
 const GROUND_TRUTH_PATH = path.join(EVAL_DIR, 'ground-truth.json')
 const PROVIDERS_CONFIG_PATH = path.join(EVAL_DIR, 'providers.json')
@@ -394,13 +397,26 @@ async function main() {
   console.log(``)
 
   // ---- Build the corpus ----
-  const realPhotoFiles = listImages(PHOTOS_DIR)
+  const publishedPhotoFiles = listImages(PHOTOS_DIR)
+  const localPhotoFiles = listImages(LOCAL_PHOTOS_DIR)
+  const misplaced = photosInTheWrongFolder(groundTruth, publishedPhotoFiles, localPhotoFiles)
+  if (misplaced.length > 0) {
+    console.error(`Photos in the wrong folder (photos/ is published, photos/local/ is not):`)
+    for (const line of misplaced) console.error(`- ${line}`)
+    process.exitCode = 1
+    return
+  }
+  const realPhotoFiles = [...publishedPhotoFiles, ...localPhotoFiles].sort()
+  const localPhotos = new Set(localPhotoFiles)
   const includeSmoke =
     process.env.LABEL_SCAN_EVAL_INCLUDE_SMOKE === '1' || realPhotoFiles.length === 0
   const smokeAvailable = existsSync(path.join(FIXTURES_DIR, SMOKE_FIXTURE))
 
   const candidateFiles: Array<{ file: string; absPath: string }> = [
-    ...realPhotoFiles.map((f) => ({ file: f, absPath: path.join(PHOTOS_DIR, f) })),
+    ...realPhotoFiles.map((f) => ({
+      file: f,
+      absPath: path.join(localPhotos.has(f) ? LOCAL_PHOTOS_DIR : PHOTOS_DIR, f),
+    })),
     ...(includeSmoke && smokeAvailable
       ? [{ file: SMOKE_FIXTURE, absPath: path.join(FIXTURES_DIR, SMOKE_FIXTURE) }]
       : []),
