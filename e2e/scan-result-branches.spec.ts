@@ -442,7 +442,9 @@ test.describe('scan result branches (#109 PR B)', () => {
 
   test('a sharp photo of a side with no writing is told to turn the bottle, not to retake the photo', async ({
     browser,
-  }) => {
+  }, testInfo) => {
+    // Like every low-confidence read, it is checked against the last photo (#408), which needs the mirror.
+    testInfo.skip(!dbUp, 'Sakenowa mirror not available — DB-bound spec')
     const { context, page } = await scanPageWith(browser, [
       injectionCookie({ name_ja: '?', brewery_ja: '?', confidence: 0.1, legibility: 'no_text' }),
     ])
@@ -457,7 +459,10 @@ test.describe('scan result branches (#109 PR B)', () => {
     await context.close()
   })
 
-  test('a read that is not in the catalogue is shown in Latin letters, with the label\'s words under it', async ({ browser }) => {
+  test('a read that is not in the catalogue is shown in Latin letters, with the label\'s words under it', async ({
+    browser,
+  }, testInfo) => {
+    testInfo.skip(!dbUp, 'Sakenowa mirror not populated — DB-bound spec')
     const { context, page } = await scanPageWith(browser, [
       injectionCookie({
         name_ja: '架空銘柄零',
