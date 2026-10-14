@@ -86,6 +86,22 @@ export function bottlingNameFromRead(lineName: string, bottling: ScanBottling | 
 }
 
 /**
+ * §5's "On this label" (design v1.7 D4, 83): what the read found beyond the
+ * line's name — the product as printed, the grade, up to two styles. The
+ * polishing ratio is a sentence ("50% polished") and the caller words it.
+ * Empty when the label says nothing more.
+ */
+export function onThisLabelParts(bottling: ScanBottling | undefined): string[] {
+  if (!bottling) return []
+  const parts: string[] = []
+  const product = bottling.product_name?.trim()
+  if (product) parts.push(product)
+  if (bottling.grade) parts.push(GRADE_LABEL[bottling.grade])
+  for (const style of (bottling.styles ?? []).slice(0, MAX_STYLES_IN_NAME)) parts.push(STYLE_LABEL[style])
+  return parts
+}
+
+/**
  * Which of the visitor's bottlings of this line the label is, if exactly one
  * fits. A bottling is a name the visitor typed, so this reads that name: it
  * fits when it carries the product name the label prints, or the same grade,

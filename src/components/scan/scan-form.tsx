@@ -908,6 +908,8 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
             })}
             flavorChart={view.flavorChart}
             extractionConfidence={view.extraction.confidence}
+            readBottling={view.extraction.bottling}
+            breweryPrinted={view.extraction.brewery_printed}
             // §5 Best guess: "Not sure? {n} other candidates" under the card.
             // Empty on a sure match, so the row is absent there.
             otherCandidates={
