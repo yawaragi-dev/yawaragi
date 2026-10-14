@@ -991,14 +991,16 @@
       "grades": "Qualitätsstufen",
       "styles": "Stile und Verfahren",
       "rice": "Reis",
-      "tasting": "Servieren und Verkosten"
+      "tasting": "Servieren und Verkosten",
+      "around": "Rund um Sake"
     },
     "groupKicker": {
       "start": "Eine Flasche lesen",
       "grades": "Qualitätsstufe",
       "styles": "Stil",
       "rice": "Reis",
-      "tasting": "Verkostung"
+      "tasting": "Verkostung",
+      "around": "Rund um Sake"
     },
     "entries": {
       "how-to-read-a-label": {
@@ -1550,6 +1552,47 @@
           "p1": "Sakenowa ist eine japanische Sake-Community. Sie errechnet die sechs Werte aus dem, was ihre Nutzer über jeden Sake schreiben. Ein Diagramm zeigt also, wie Menschen einen Sake beschreiben. Es ist keine Labormessung.",
           "p2": "Die sechs decken sich nicht mit dem Weinvokabular. Lies jedes deutsche Wort als Hinweis auf die richtige Idee, nicht als deren Entsprechung.",
           "p3": "Bei Yawaragi heißt das Bild aus diesen sechs das Flavor Chart (Sakenowa). Die Methode und die Daten dahinter stammen von Sakenowa."
+        }
+      },
+      "other-japanese-drinks": {
+        "title": "Sake und die anderen japanischen Getränke",
+        "answer": "Sake wird aus Reis, Reis-Koji und Wasser gebraut. Shochu und Awamori werden destilliert. Umeshu sind Ume-Früchte, in Alkohol eingelegt und gesüßt, und damit ein Likör.",
+        "factsTitle": "So unterscheidest du sie",
+        "facts": {
+          "sake": {
+            "term": "Sake",
+            "value": "Gebraut und gefiltert",
+            "note": "Reis, Reis-Koji und Wasser, vergoren und abgepresst; unter 22 % Alkohol."
+          },
+          "craftSake": {
+            "term": "Craft-Sake",
+            "value": "Wie Sake, einen Schritt weiter",
+            "note": "Aus Reis gebraut, mit einem Schritt, den die gesetzliche Definition von Sake nicht erlaubt, etwa Früchte oder Kräuter in der Gärung; auf dem Etikett steht deshalb nicht 清酒."
+          },
+          "shochu": {
+            "term": "Shochu",
+            "value": "Destilliert",
+            "note": "Shochu aus der Brennblase hat bis zu 45 % Alkohol, Shochu aus der Kolonne unter 36 %."
+          },
+          "awamori": {
+            "term": "Awamori",
+            "value": "Okinawas Destillat",
+            "note": "Ein in der Brennblase destillierter Shochu aus Okinawa, aus Reis-Koji mit schwarzem Koji und Wasser."
+          },
+          "umeshu": {
+            "term": "Umeshu",
+            "value": "Ein Likör",
+            "note": "Ume-Früchte, in Alkohol eingelegt, mit Zucker; auf dem Etikett steht リキュール."
+          },
+          "liqueur": {
+            "term": "Likör",
+            "value": "Gesüßter Alkohol",
+            "note": "Aus einem alkoholischen Getränk und Zucker oder anderen Zutaten, mit mindestens 2 % Extrakt."
+          }
+        },
+        "detail": {
+          "p1": "Das japanische Recht ordnet jedes Getränk einer Kategorie zu, und die Flasche muss sie auf Japanisch auf der Seite mit der Marke tragen: 清酒 für Sake, 焼酎 für Shochu, リキュール für Likör. Dieses Wort entscheidet, was in der Flasche ist, egal wer sie gemacht hat.",
+          "p2": "Der Katalog von Yawaragi enthält Sake. Ein Scan liest Craft-Sake als Sake; Shochu, Awamori, Umeshu und andere Liköre haben hier keine Seite."
         }
       }
     }

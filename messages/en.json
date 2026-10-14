@@ -991,14 +991,16 @@
       "grades": "Grades",
       "styles": "Styles and processes",
       "rice": "Rice",
-      "tasting": "Serving and tasting"
+      "tasting": "Serving and tasting",
+      "around": "Around sake"
     },
     "groupKicker": {
       "start": "Reading a bottle",
       "grades": "Grade",
       "styles": "Style",
       "rice": "Rice",
-      "tasting": "Tasting"
+      "tasting": "Tasting",
+      "around": "Around sake"
     },
     "entries": {
       "how-to-read-a-label": {
@@ -1550,6 +1552,47 @@
           "p1": "Sakenowa is a Japanese sake community. It works the six values out by analysing what its users write about each sake, so a chart shows how people describe a sake. It is not a laboratory measurement.",
           "p2": "The six do not line up with wine vocabulary. Read each English word as pointing at the right idea, not as matching it.",
           "p3": "On Yawaragi the picture built from these six is the flavor chart (Sakenowa). The method and the data behind it are Sakenowa’s."
+        }
+      },
+      "other-japanese-drinks": {
+        "title": "Sake and the other Japanese drinks",
+        "answer": "Sake is brewed from rice, rice koji and water. Shochu and awamori are distilled. Umeshu is ume fruit steeped in a liquor and sweetened, which makes it a liqueur.",
+        "factsTitle": "How to tell them apart",
+        "facts": {
+          "sake": {
+            "term": "Sake",
+            "value": "Brewed and strained",
+            "note": "Rice, rice koji and water, fermented and strained; under 22% alcohol."
+          },
+          "craftSake": {
+            "term": "Craft sake",
+            "value": "Sake's methods, a step further",
+            "note": "Brewed from rice with a step the legal definition of sake does not allow, such as fruit or herbs in the ferment, so its label does not say 清酒."
+          },
+          "shochu": {
+            "term": "Shochu",
+            "value": "Distilled",
+            "note": "Pot-distilled shochu is up to 45% alcohol; shochu from a continuous still is under 36%."
+          },
+          "awamori": {
+            "term": "Awamori",
+            "value": "Okinawa's distilled spirit",
+            "note": "A pot-distilled shochu made in Okinawa from rice koji grown with black koji and water."
+          },
+          "umeshu": {
+            "term": "Umeshu",
+            "value": "A liqueur",
+            "note": "Ume fruit steeped in a liquor, with sugar added; its label says リキュール."
+          },
+          "liqueur": {
+            "term": "Liqueur",
+            "value": "A liquor sweetened",
+            "note": "Made from a liquor and sugar or other ingredients, with at least 2% extract."
+          }
+        },
+        "detail": {
+          "p1": "Japanese law sorts every drink into a category, and the bottle must print it in Japanese on the side with the brand: 清酒 for sake, 焼酎 for shochu, リキュール for a liqueur. That word settles what is in the bottle, whoever made it.",
+          "p2": "Yawaragi's catalogue holds sake. A scan reads craft sake as sake; shochu, awamori, umeshu and other liqueurs have no page here."
         }
       }
     }
