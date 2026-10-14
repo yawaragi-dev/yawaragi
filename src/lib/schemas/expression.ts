@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import type { VersionedRecordCodec } from '@/lib/collection/versioned-record'
+import { ScanGradeSchema } from '@/lib/schemas/label-scan-extraction'
 
 // An Expression (CONTEXT.md; "bottling" in the UI) — one bottling under a Sake
 // (the line), or standing alone when the line is unknown. This file holds the
@@ -26,9 +27,10 @@ import type { VersionedRecordCodec } from '@/lib/collection/versioned-record'
 // so the page can say "Reading by AI", and a rename clears the mark.
 // Optional and additive, so v1 rows without them still parse.
 //
-// VERSIONED (ADR-0024): stored rows carry `schemaVersion`. Grade, rice,
-// polishing and size are the expected v2 — §10's "About the sake" will set
-// them — and are left out of v1 because no screen asks for them yet.
+// VERSIONED (ADR-0024): stored rows carry `schemaVersion`. Grade, styles and
+// polishing joined in design v1.7 (D5, screenshot 84) as optional fields —
+// the naming form asks for them, prefilled from a scan — so a v1 row without
+// them still parses and needs no upcast. Rice and size are still to come.
 //
 // GDPR (ADR-0009 RoPA, expressions row): account-linked personal data, keyed
 // to the Clerk user id, permanent until erased; lawful basis consent. Free
@@ -42,6 +44,21 @@ export const EXPRESSION_SCHEMA_VERSION = 1 as const
 export const MAX_EXPRESSION_TEXT = 120
 
 const Text = z.string().trim().min(1).max(MAX_EXPRESSION_TEXT)
+
+/** A bottling lists a handful of style words at most; each is one word or two. */
+export const MAX_STYLES = 6
+export const StyleWord = z.string().trim().min(1).max(24)
+
+/**
+ * What a bottling says about itself beyond its name (design v1.7 D5), as the
+ * naming form sends it: a style field left blank is dropped on saving.
+ */
+export const BottlingDetailsSchema = z.object({
+  grade: ScanGradeSchema.optional(),
+  styles: z.array(z.string().trim().max(24)).max(MAX_STYLES).optional(),
+  polishingPct: z.number().int().min(1).max(100).optional(),
+})
+export type BottlingDetails = z.infer<typeof BottlingDetailsSchema>
 
 export const ExpressionSchema = z
   .object({
@@ -67,6 +84,12 @@ export const ExpressionSchema = z
     /** The brewery as typed. Only kept without a line — with one, the brewery
      *  is the catalogue's. */
     brewery: Text.optional(),
+    /** The grade, as the visitor set it or a scan read it. */
+    grade: ScanGradeSchema.optional(),
+    /** Style words as the visitor gave them ("Nama", "Genshu"), in order. */
+    styles: z.array(StyleWord).min(1).max(MAX_STYLES).optional(),
+    /** The polishing ratio in percent (精米歩合 50% → 50). */
+    polishingPct: z.number().int().min(1).max(100).optional(),
     /** The name is still the Latin reading the scan's model gave. */
     aiName: z.literal(true).optional(),
     /** The brewery is still the Latin reading the scan's model gave. */

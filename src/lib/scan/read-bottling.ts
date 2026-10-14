@@ -1,5 +1,5 @@
 import { romajiKey } from '@/lib/sakenowa/romaji-key'
-import { MAX_EXPRESSION_TEXT } from '@/lib/schemas/expression'
+import { type BottlingDetails, MAX_EXPRESSION_TEXT } from '@/lib/schemas/expression'
 import type { ScanBottling, ScanGrade, ScanStyle } from '@/lib/schemas/label-scan-extraction'
 
 /**
@@ -99,6 +99,20 @@ export function onThisLabelParts(bottling: ScanBottling | undefined): string[] {
   if (bottling.grade) parts.push(GRADE_LABEL[bottling.grade])
   for (const style of (bottling.styles ?? []).slice(0, MAX_STYLES_IN_NAME)) parts.push(STYLE_LABEL[style])
   return parts
+}
+
+/**
+ * The naming form's Grade, Polishing and Style as the label gives them
+ * (design v1.7 D5, 84): the visitor checks them before saving.
+ */
+export function detailsFromRead(bottling: ScanBottling | undefined): BottlingDetails | undefined {
+  if (!bottling) return undefined
+  const details: BottlingDetails = {
+    ...(bottling.grade ? { grade: bottling.grade } : {}),
+    ...(bottling.styles?.length ? { styles: bottling.styles.map((s) => STYLE_LABEL[s]) } : {}),
+    ...(bottling.polishing_ratio ? { polishingPct: Math.round(bottling.polishing_ratio) } : {}),
+  }
+  return Object.keys(details).length > 0 ? details : undefined
 }
 
 /**

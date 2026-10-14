@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { CellarBottleSchema } from '@/lib/schemas/cellar-bottle'
-import { ExpressionSchema, MAX_EXPRESSION_TEXT } from '@/lib/schemas/expression'
+import { BottlingDetailsSchema, ExpressionSchema, MAX_EXPRESSION_TEXT } from '@/lib/schemas/expression'
 import { JournalEntrySchema } from '@/lib/schemas/journal-entry'
 
 const Text = z.string().trim().min(1).max(MAX_EXPRESSION_TEXT)
@@ -17,7 +17,7 @@ const Text = z.string().trim().min(1).max(MAX_EXPRESSION_TEXT)
  *   "Add it yourself", §8). The brewery as read or typed is optional.
  */
 export const AddOwnBottlingInputSchema = z.union([
-  z.object({ brandId: z.number().int().positive(), name: Text }).strict(),
+  z.object({ brandId: z.number().int().positive(), name: Text, details: BottlingDetailsSchema.optional() }).strict(),
   z
     .object({
       brandId: z.null(),
@@ -28,6 +28,7 @@ export const AddOwnBottlingInputSchema = z.union([
        *  it anyway", design v1.7.1 H3). */
       aiName: z.literal(true).optional(),
       aiBrewery: z.literal(true).optional(),
+      details: BottlingDetailsSchema.optional(),
     })
     .strict(),
 ])
@@ -42,6 +43,8 @@ export const RenameOwnBottlingInputSchema = z.object({
   expressionId: z.string().min(1).max(64),
   name: Text,
   brewery: z.string().trim().max(MAX_EXPRESSION_TEXT).optional(),
+  /** Given, it replaces what is stored: a field left out of it is cleared. */
+  details: BottlingDetailsSchema.optional(),
 })
 export type RenameOwnBottlingInput = z.infer<typeof RenameOwnBottlingInputSchema>
 

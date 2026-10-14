@@ -39,6 +39,36 @@ describe('"Add this bottling" after a scan that read more than the sake’s name
     fireEvent.click(row)
     expect((screen.getByLabelText('Bottling name') as HTMLInputElement).value).toBe('Mizuo 一味 Junmai')
   })
+
+  it('starts the grade, polishing and style from the label, to be checked before saving', async () => {
+    addOwnBottling.mockResolvedValue({ status: 'ok', expressionId: 'x2' })
+    render(
+      <NextIntlClientProvider locale="en" messages={en} timeZone="UTC">
+        <AddBottlingRow
+          brandId={12}
+          lineName="Rihaku"
+          suggestedName="Rihaku Omachi (雄町) Junmai Ginjō Nama"
+          readDetails={{ grade: 'junmai_ginjo', styles: ['Nama'], polishingPct: 50 }}
+        />
+      </NextIntlClientProvider>,
+    )
+    fireEvent.click(screen.getByRole('button', { name: /Add this bottling/ }))
+    expect((screen.getByLabelText('Grade') as HTMLSelectElement).value).toBe('junmai_ginjo')
+    expect((screen.getByLabelText('Polishing') as HTMLInputElement).value).toBe('50')
+    expect((screen.getByLabelText('Style') as HTMLInputElement).value).toBe('Nama')
+    expect(screen.getByText(/Read from the label/)).toBeTruthy()
+
+    // The polishing was misread: 55, not 50.
+    fireEvent.change(screen.getByLabelText('Polishing'), { target: { value: '55' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Add bottling' }))
+    await waitFor(() =>
+      expect(addOwnBottling).toHaveBeenCalledWith({
+        brandId: 12,
+        name: 'Rihaku Omachi (雄町) Junmai Ginjō Nama',
+        details: { grade: 'junmai_ginjo', styles: ['Nama'], polishingPct: 55 },
+      }),
+    )
+  })
 })
 
 describe('"Add your bottling" on a sake page', () => {

@@ -12,6 +12,7 @@ import { BottleRateRow } from '@/components/sake/bottle-rate-row'
 import { BottleSection } from '@/components/sake/bottle-section'
 import { LineBlock } from '@/components/sake/line-block'
 import { ReadingByAiLine } from '@/components/sake/reading-by-ai-line'
+import { gradeLabel } from '@/lib/scan/read-bottling'
 import { RomajiDisclosure } from '@/components/sake/romaji-disclosure'
 import { SakenowaAttribution } from '@/components/sake/sakenowa-attribution'
 import type { FlavorChart } from '@/lib/schemas/flavor-chart'
@@ -138,7 +139,21 @@ export default async function BottlingPage({ params, searchParams }: PageProps) 
               {bottling.brewery ?? t('addedByYou')}
             </p>
           )}
-          <p className="mt-1">
+          <p className="mt-1 flex flex-wrap gap-1.5" data-testid="bottling-tags">
+            {/* Design v1.7 D5: grade and style tags come from the bottling's
+                own fields, the visitor's words — not catalogue data. */}
+            {[
+              ...(bottling.grade ? [gradeLabel(bottling.grade)] : []),
+              ...(bottling.styles ?? []),
+              ...(bottling.polishingPct ? [t('polishedTo', { n: bottling.polishingPct })] : []),
+            ].map((tag) => (
+              <span
+                key={tag}
+                className="inline-flex min-h-7 items-center rounded-full border border-ash-300 px-2.5 text-meta text-ash-700"
+              >
+                {tag}
+              </span>
+            ))}
             <span
               className="inline-flex min-h-7 items-center rounded-full border border-ash-400 px-2.5 text-meta text-ash-700"
               data-testid="bottling-own-tag"
@@ -232,6 +247,7 @@ export default async function BottlingPage({ params, searchParams }: PageProps) 
         expressionId={bottling.id}
         name={bottling.name}
         brewery={bottling.brewery}
+        details={{ grade: bottling.grade, styles: bottling.styles, polishingPct: bottling.polishingPct }}
         sake={brandId !== null && lineName !== null ? { brandId, name: lineName } : null}
         {...bottlingHoldings(bottling, { entries: viewer.entries, cellar: viewer.cellar })}
       />

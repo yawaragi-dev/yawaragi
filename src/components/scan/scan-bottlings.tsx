@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import { CaretRight } from '@phosphor-icons/react/dist/ssr'
 import { Link } from '@/i18n/navigation'
 import { AddBottlingRow } from '@/components/sake/add-bottling-row'
+import type { BottlingDetails } from '@/lib/schemas/expression'
 
 /**
  * Under a matched result card, for a visitor who keeps a journal: what the
@@ -24,12 +25,15 @@ export function ScanBottlings({
   brandId,
   lineName,
   suggestedName,
+  readDetails,
   own,
   badge,
 }: {
   brandId: number
   lineName: string
   suggestedName: string | null
+  /** Grade, styles and polishing read off the label, for the naming form. */
+  readDetails?: BottlingDetails
   own: readonly { id: string; name: string; fitsLabel: boolean }[]
   /** The Read by AI badge, rendered by the caller (it owns the sheet). */
   badge: ReactNode
@@ -72,7 +76,12 @@ export function ScanBottlings({
           {badge}
         </div>
       )}
-      <AddBottlingRow brandId={brandId} lineName={lineName} suggestedName={suggestedName ?? undefined} />
+      <AddBottlingRow
+        brandId={brandId}
+        lineName={lineName}
+        suggestedName={suggestedName ?? undefined}
+        readDetails={readDetails}
+      />
     </section>
   )
 }

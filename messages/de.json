@@ -995,7 +995,14 @@
     "deleteError": "Das ließ sich gerade nicht löschen — versuch es noch einmal.",
     "deletedNotice": "{name} gelöscht",
     "undo": "Rückgängig",
-    "undoError": "Das ließ sich gerade nicht zurückholen."
+    "undoError": "Das ließ sich gerade nicht zurückholen.",
+    "gradeLabel": "Qualitätsstufe",
+    "gradeNone": "Keine Angabe",
+    "polishingLabel": "Poliergrad",
+    "styleLabel": "Stil",
+    "formHintFromLabel": "Vom Etikett gelesen. Korrigiere, was falsch gelesen ist; Größe und den Rest kannst du später in den ausführlichen Notizen ergänzen. Nur du kannst es sehen.",
+    "formHintDetails": "Qualitätsstufe, Stil und Poliergrad sind optional; Größe und den Rest kannst du später in den ausführlichen Notizen ergänzen. Nur du kannst es sehen.",
+    "polishedTo": "auf {n} % poliert"
   },
   "learn": {
     "title": "Wissen",

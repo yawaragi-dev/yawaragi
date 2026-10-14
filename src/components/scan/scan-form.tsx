@@ -48,7 +48,7 @@ import { CellarButton } from '@/components/collection/cellar-button'
 import { TastingLogPanel } from '@/components/journal/tasting-log-panel'
 import { OtherCandidates } from '@/components/scan/other-candidates'
 import { ScanBottlings } from '@/components/scan/scan-bottlings'
-import { bottlingNameFromRead } from '@/lib/scan/read-bottling'
+import { bottlingNameFromRead, detailsFromRead } from '@/lib/scan/read-bottling'
 import { ScanOutcome, readName, type OutcomeCandidate } from '@/components/scan/scan-outcome'
 import { ScanResultCard } from '@/components/scan/scan-result-card'
 import type { DebugEvent } from '@/lib/debug/debug-log'
@@ -958,6 +958,7 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
                       view.sakeRomaji ?? view.extraction.name_romaji ?? view.extraction.name_ja,
                       view.extraction.bottling,
                     )}
+                    readDetails={detailsFromRead(view.extraction.bottling)}
                     own={Array.isArray(view.ownBottlings) ? view.ownBottlings : []}
                     badge={
                       <ProvenanceBadgeView

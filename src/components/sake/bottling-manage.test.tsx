@@ -73,7 +73,7 @@ describe('"This bottling": renaming', () => {
     fireEvent.change(field, { target: { value: 'Rihaku Wandering Poet' } })
     fireEvent.click(screen.getByRole('button', { name: 'Save' }))
     await waitFor(() =>
-      expect(renameOwnBottling).toHaveBeenCalledWith({ expressionId: 'x1', name: 'Rihaku Wandering Poet' }),
+      expect(renameOwnBottling).toHaveBeenCalledWith({ expressionId: 'x1', name: 'Rihaku Wandering Poet', details: {} }),
     )
     await waitFor(() => expect(refresh).toHaveBeenCalled())
     expect(push).not.toHaveBeenCalled()
@@ -91,6 +91,7 @@ describe('"This bottling": renaming', () => {
         expressionId: 'x1',
         name: '富久千代',
         brewery: '富久千代酒造',
+        details: {},
       }),
     )
   })
@@ -192,5 +193,20 @@ describe('"This bottling": deleting', () => {
     } finally {
       vi.useRealTimers()
     }
+  })
+
+  it('edits the grade, polishing and style it was saved with', async () => {
+    renameOwnBottling.mockResolvedValue({ status: 'ok' })
+    renderManage({ details: { grade: 'junmai_ginjo', styles: ['Nama'], polishingPct: 55 } })
+    fireEvent.click(screen.getByRole('button', { name: /Rename/ }))
+    expect((screen.getByLabelText('Grade') as HTMLSelectElement).value).toBe('junmai_ginjo')
+    expect((screen.getByLabelText('Polishing') as HTMLInputElement).value).toBe('55')
+    fireEvent.change(screen.getByLabelText('Style'), { target: { value: 'Nama, Genshu' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await waitFor(() =>
+      expect(renameOwnBottling).toHaveBeenCalledWith(
+        expect.objectContaining({ details: { grade: 'junmai_ginjo', styles: ['Nama', 'Genshu'], polishingPct: 55 } }),
+      ),
+    )
   })
 })

@@ -7,7 +7,12 @@ import {
   renameBottlingWrites,
 } from '@/lib/collection/bottling-changes'
 import { readSettledCellar } from '@/lib/collection/settled-cellar'
-import { EXPRESSION_SCHEMA_VERSION, type Expression, ExpressionSchema } from '@/lib/schemas/expression'
+import {
+  type BottlingDetails,
+  EXPRESSION_SCHEMA_VERSION,
+  type Expression,
+  ExpressionSchema,
+} from '@/lib/schemas/expression'
 import {
   type AddOwnBottlingInput,
   AddOwnBottlingInputSchema,
@@ -70,12 +75,24 @@ export async function addOwnBottling(input: AddOwnBottlingInput): Promise<AddOwn
       ...(brewery ? { brewery } : {}),
       ...(aiName ? { aiName: true as const } : {}),
       ...(aiBrewery ? { aiBrewery: true as const } : {}),
+      ...detailFields(parsed.data.details),
       createdAt: now,
       updatedAt: now,
     }
     await expressions.put(userId, expression)
     return { status: 'ok', expressionId: expression.id }
   })
+}
+
+/** Grade, styles and polishing as stored: what was given, nothing empty. */
+function detailFields(details: BottlingDetails | undefined): Partial<Expression> {
+  if (!details) return {}
+  const styles = (details.styles ?? []).map((s) => s.trim()).filter(Boolean)
+  return {
+    ...(details.grade ? { grade: details.grade } : {}),
+    ...(styles.length > 0 ? { styles } : {}),
+    ...(details.polishingPct ? { polishingPct: details.polishingPct } : {}),
+  }
 }
 
 /** Carry out a set of writes against the journal and the cellar. */
@@ -114,6 +131,12 @@ export async function renameOwnBottling(
 
     const now = Date.now()
     const next: Record<string, unknown> = { ...existing, name, updatedAt: now }
+    if (parsed.data.details) {
+      delete next.grade
+      delete next.styles
+      delete next.polishingPct
+      Object.assign(next, detailFields(parsed.data.details))
+    }
     // A name the visitor wrote is theirs, not a reading (design v1.7.1, H3).
     if (name !== existing.name) delete next.aiName
     // The brewery is the visitor's to set only while there is no sake.
