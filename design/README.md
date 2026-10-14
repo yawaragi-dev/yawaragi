@@ -1,6 +1,6 @@
 # Handoff: Yawaragi mobile app (webview)
 
-**Design version 1.7 · 13 Oct 2026.** Source of truth is the Claude Design project; this folder is a snapshot. When a new version arrives, read the Changelog at the bottom first and implement only what changed. **If this README and the prototype disagree, the prototype wins** — and please report the mismatch.
+**Design version 1.7.1 · 14 Oct 2026.** Source of truth is the Claude Design project; this folder is a snapshot. When a new version arrives, read the Changelog at the bottom first and implement only what changed. **If this README and the prototype disagree, the prototype wins** — and please report the mismatch.
 
 ## Overview
 Yawaragi (和らぎ) is a sake companion app. You scan a bottle label (or a menu or a shop shelf, to rank what's on it), rate the sake with one tap, and build a journal. That journal also feeds a taste profile ("Palate") and a chat assistant ("Ask"). The main job is **identifying and assessing a sake at the table**. Logging is a side effect of rating.
@@ -152,10 +152,10 @@ Card: surface, radius-lg, shadow-md.
 The pipeline's outcomes stay as the pipeline produces them; the design does not collapse them to three. Two share the §5 card (`matched` ≥ 0.85 "Sure match", 0.60–0.84 "Best guess"). Everything else is **one screen, `outcome`, with one shared vocabulary**:
 - **Top bar** as §5: back · kicker · ghost **"Scan again"** (camera-rotate icon) → the camera, §4. **This replaces every inline "Scan again" button.**
 - **Status block:** 28px icon in neutral-600 (never accent — nothing here is good news), title 21px/500, one or two lines of 13px neutral-700.
-- **"What we read" card** (only when something was read): surface, radius-lg, shadow-sm. Section label "What we read" with the **Read by AI** badge at the right; editable fields **Name** and **Brewery** (44px, prefilled from the read, ground-coloured); hint "Misread? Fix it from the label and search again."; secondary "Search again" → §8 with the edited name. **No confidence on this screen** — the percentage is in the Read by AI sheet only.
+- **"What we read" card** (only when something was read): surface, radius-lg, shadow-sm. Section label "What we read" with the **Read by AI** badge at the right; editable fields **Name** and **Brewery** (44px, prefilled from the read, ground-coloured). **1.7.1 (H, 44):** the field's value is the **Latin reading** (the label's own spelling where it prints one, else Hepburn); when the label is in Japanese, a line under the field, 12px neutral-600, reads "On the label: 澤の花 心" (kanji neutral-800, `lang="ja"`). The line stays when the visitor edits the field: it is what the label says, not what the field holds. **"Search again" searches the kanji while the field is unedited** (the reading is the model's; the kanji is what's printed), and the field's text once edited; hint "Misread? Fix it from the label and search again."; secondary "Search again" → §8 with the edited name. **No confidence on this screen** — the percentage is in the Read by AI sheet only.
 - **"Did you mean" (`no_match`)**: up to 3 catalogue sakes nearest the read by **name or brewery**, deterministic, no model call. Matching ignores grade words, polishing numbers, company forms (株式会社) and the 酒造 / 醸造 ending, and folds old/new kanji. **Nothing close → the section is absent**; never padded with weak matches. Reasons, exactly: "Similar name" · "Similar brewery name" · "Similar name and brewery" · "Same brewery" · "Same brewery · similar name".
 - **Candidate rows** (when there are any): section label, then rows — Latin name 15px + kanji 12px · brewery · prefecture 12px · a **reason in words** 12px neutral-700 ("Same brewery · closest name", "Similar name · brewery 伴野, not 友野") · caret. **No % tag and no accent**: a candidate is a guess and must not look like a match. Tap → §5 card. Up to 3.
-- **"Keep it anyway"** dashed card (whenever something was read): "Rate it and put it in your cellar now, with the name above. It's marked as your own entry, and we'll link it if the sake turns up in the catalogue." · secondary **"Add this bottling"** → §5 in "Your own entry" mode. What it creates is an **own bottling** (§9a). Minimum to save: **a name** (prefilled); brewery optional.
+- **"Keep it anyway"** dashed card (whenever something was read). **1.7.1:** the kept name and brewery are written **reading first, kanji in brackets**: "Sawa no Hana Kokoro (澤の花 心)", "Tomono Shuzō (友野酒造)", the same form as §5's suggested bottling name. "Rate it and put it in your cellar now, with the name above. It's marked as your own entry, and we'll link it if the sake turns up in the catalogue." · secondary **"Add this bottling"** → §5 in "Your own entry" mode. What it creates is an **own bottling** (§9a). Minimum to save: **a name** (prefilled); brewery optional.
 - Last: ghost "Type the name instead" → §8, then ghost **"How to read a label"** (book icon) → §18. Both on every outcome.
 
 | outcome | kicker | title | body (short) | parts |
@@ -173,6 +173,7 @@ The pipeline's outcomes stay as the pipeline produces them; the design does not 
 | `menu` (72, 73) · 1.7 | A menu | This looks like a menu | Signed in: "Rank the sakes on it for your palate? Reading a whole list takes a few seconds." Signed out: "Sign in and we'll rank the sakes on it for your palate. Or search for one name from it." | **primary "Rank these for you"** → §7 · signed out: **primary "Sign in to rank these"** → §14 (title "Rank lists for your palate") · read (first sake on the list) · no keep |
 | `several_bottles`, a shelf · 1.7 | Several bottles | This looks like a shelf | as `menu`, "the bottles in it" / "a whole shelf" | as `menu` |
 | `several_bottles`, two equal (74) · 1.7 | Two bottles | Which bottle do you mean? | Two bottles share the photo and neither is clearly the one. Pick yours, or scan one at a time. | "Read from your photo": one row per readable bottle, reason = position + what was read ("Left · name and brewery read") → §5 · no read card · no keep |
+| `no_bottle` (90) · 1.7.1 | No bottle | We can't see a bottle in this photo | Point the camera at one bottle, with its label filling most of the frame. | primary "Scan again" → §4 · no read · Phosphor `selection-slash` |
 | `no_text_this_side` (75) · 1.7 | No name on this side | Turn the bottle to the side with writing | This side has only a picture. The name is usually on the opposite side or on a small label near the base. | **the photo back** (72×96, "The side you photographed") · primary "Scan again" → §4 |
 
 **1.7 rules for the new rows.** Icons: `not_sake` Phosphor `drop` (neutral liquid, no bottle shape), `menu` `receipt` (its own; "Which one is it?" keeps `list-magnifying-glass`), shelf `squares-four`, two bottles `copy`, no text `arrows-clockwise`. "What we read" may show an empty Brewery field (menus rarely print it); never fill it from the model. **"Keep it anyway" is absent** on all five. With list ranking off (the *menuScan* tweak; the pre-§7 build): menu → "That's a menu, not a label" / "We read one bottle at a time for now. Search for a name from the menu, or scan a bottle's label."; shelf → "More than one bottle in the photo" / "We can't tell which one you mean. Scan one bottle at a time."; read card only.
@@ -237,6 +238,7 @@ One screen for "what should I order from this menu, or take from this shelf?". *
 - The bottling page is §9a.
 
 ### 9a. Bottling page (new in 1.6) · 51, 52, 57 (own bottling)
+**1.7.1 (H3, 91):** an own bottling whose name or brewery holds a reading the model gave carries one quiet line under the own-entry text: Phosphor `scan` 12px · "Reading by AI" 11px neutral-600 · caret → the Read by AI sheet. **No mark inside the name**, anywhere it appears (journal, cellar, search). Stored per field, `aiName` and `aiBrewery`. **Renaming the bottling clears `aiName`**: a name the visitor wrote is theirs, not a reading. The line goes once neither field holds a reading.
 One template, §9's order, sections dropping out by what is known (rule 4: hidden, not stated). Naming per the B-Line table: "sake" = line, "bottling" = expression, "bottle" only for what you own.
 1. **Header:** back · bottling name. Nothing else.
 2. **Identity:** name 25px · **"A bottling of {line} {kanji} ›"** (13px accent-700, kanji neutral-600) → §9 · place · tags: grade first, then flags (Nama, Genshu, Sparkling, Koshu · {n} years), all neutral, guide-linked · credit line (catalogue bottlings).
@@ -473,7 +475,7 @@ Phosphor, regular and fill weights (`@phosphor-icons/web` 2.1.1). Sizes: 22 tab 
 13. **A match from artwork alone (G3).** Not possible today. If it becomes possible it gets its own provenance wording ("Matched by its picture"), not "Read by AI".
 
 ## Files in this bundle
-- `Yawaragi Mobile.dc.html`: **the main prototype.** All screens, all behaviour. Logic is in the `class Component` block at the bottom. Tweaks: market, Ask, Menu scan, camera permission, iOS webview, two-tone bars, first run, **Scan outcome** (which §5a branch the next capture lands on; 1.6 adds *Matched, line only*; 1.7 adds *Matched, your bottling fits*, *Matched, brewery not on label*, *Not sake*, *Menu in photo*, *Shelf in photo*, *Two bottles*, *No name on this side*), **notSakeDrink** (which drink `not_sake` names), **menuScan** (list ranking on/off, default on in 1.7), **listPalate** (§7's fewer-than-three state), **Rating live** (§12's rating slot) and **Sake guide public** (§18's pre-gate mode).
+- `Yawaragi Mobile.dc.html`: **the main prototype.** All screens, all behaviour. Logic is in the `class Component` block at the bottom. Tweaks: market, Ask, Menu scan, camera permission, iOS webview, two-tone bars, first run, **Scan outcome** (which §5a branch the next capture lands on; 1.6 adds *Matched, line only*; 1.7 adds *Matched, your bottling fits*, *Matched, brewery not on label*, *Not sake*, *Menu in photo*, *Shelf in photo*, *Two bottles*, *No name on this side*; 1.7.1 adds *No bottle*), **notSakeDrink** (which drink `not_sake` names), **menuScan** (list ranking on/off, default on in 1.7), **listPalate** (§7's fewer-than-three state), **Rating live** (§12's rating slot) and **Sake guide public** (§18's pre-gate mode).
 - `Yawaragi Mobile (phone).html`: a self-contained single-file build of the same prototype. It opens directly on a phone.
 - `Yawaragi Tokens.dc.html`: the token and component reference (colour ramps, type scale, every component specimen, behaviour rules). "Added in 1.5" holds the provenance badge, AI-written note, floating surface, caveat line, horizontal row edge, tile vs button, end-of-screen block, tab placeholder and cellar control.
 - `Yawaragi Core Loop v2.dc.html`: decision record. It shows the result-card options (1a chosen), the thin-data states, and the colour exploration that led to Ginshu (turns 2–6).
@@ -512,11 +514,11 @@ Phosphor, regular and fill weights (`@phosphor-icons/web` 2.1.1). Sizes: 22 tab 
 - **Legal wording:** Austria/Switzerland gate lines and the cookie category descriptions.
 
 ### Screenshots
-`screenshots/` holds 89 PNGs at 390×844 (1×), captured from the prototype.
+`screenshots/` holds 91 PNGs at 390×844 (1×), captured from the prototype.
 - **01–26 are the base: EU (Germany), Ask off, Label only.**
 - **27–32 are the variants where Japan or Ask-on differ.**
 - **33 is the v1.0 menu screen, superseded by 76–82** (kept for the record).
-- **34–50 are new in 1.5; 51–62 new in 1.6; 63–65 new in 1.6.1** (1.6.1 also retook 09, 16, 57, 61, 62); **66–70 new in 1.6.2** (1.6.2 also retook 06, 58); **71–89 new in 1.7** (06 unchanged: the Menu toggle was never on in it). Retaken in 1.6: 04, 06, 09, 16, 18, 19, 20, 26, 44 (marked ●). Others differ only by the guide-linked tag icon and the extra journal row; the prototype wins.
+- **34–50 are new in 1.5; 51–62 new in 1.6; 63–65 new in 1.6.1** (1.6.1 also retook 09, 16, 57, 61, 62); **66–70 new in 1.6.2** (1.6.2 also retook 06, 58); **71–89 new in 1.7**; **90–91 new in 1.7.1** (1.7.1 also retook 44) (06 unchanged: the Menu toggle was never on in it). Retaken in 1.6: 04, 06, 09, 16, 18, 19, 20, 26, 44 (marked ●). Others differ only by the guide-linked tag icon and the extra journal row; the prototype wins.
 
 | # | Screen |
 |---|---|
@@ -609,6 +611,8 @@ Phosphor, regular and fill weights (`@phosphor-icons/web` 2.1.1). Sizes: 22 tab 
 | 87 | Read by AI sheet with the brewery paragraph |
 | 88 | §8 search matched through "Also sold as" |
 | 89 | §18 "Sake and the other Japanese drinks" |
+| 90 | §5a no bottle in the photo |
+| 91 | Own bottling kept from a read: "Reading by AI" |
 
 Screenshots that sit in sheets or overlays show the full screen behind them with the scrim.
 
@@ -729,6 +733,12 @@ Folded into the Screens sections and the prototype; this is the index.
 6. **Fixed, as you read it:** a bottling's row opens §9a, a sake's row opens §9.
 
 ## Changelog
+### 1.7.1 · 14 Oct 2026
+- Follow-up: "Search again" uses the kanji while unedited; renaming clears "Reading by AI".
+Answers to the latest #417 (G "No bottle", H). 90–91 added, 44 retaken.
+- **§5a** — "What we read" fields hold the Latin reading, "On the label: {kanji}" under each; kept names "Reading (kanji)"; `no_bottle` outcome.
+- **§9a** — "Reading by AI" line on own bottlings named from a read.
+
 ### 1.7 · 13 Oct 2026
 Answers to #417 (appendix "v1.7"). 19 screenshots added (71–89); 33 superseded.
 - **§4** — Label / Menu toggle removed; one frame size.
@@ -861,7 +871,7 @@ Each answer is spec and is drawn in the prototype unless it says otherwise. Scre
 
 ### D. The bottling read off the label (83–85)
 1. **Accepted:** "Add this bottling" on the card whenever the label says more than the line's name.
-2. **Line name · product romanised (kanji in brackets) · grade · up to two styles:** "Mizuo Ichimi (一味) Junmai". The visitor still confirms it.
+2. **Line name · product romanised (kanji in brackets) · grade · up to two styles:** "Mizuo Ichiaji (一味) Junmai". The visitor still confirms it.
 3. **Yes:** when one of the visitor's bottlings fits, open it directly, with "Not this bottling? All {line} bottlings".
 4. **Yes:** "On this label: {product} · {grade} · {styles} · {n}% polished" with the Read by AI badge, on the line's card.
 5. **Yes:** grade, styles and polishing become bottling fields, prefilled from the scan in the naming form.
@@ -882,3 +892,11 @@ Each answer is spec and is drawn in the prototype unless it says otherwise. Scre
 3. **Yes, its own wording** if it ever exists ("Matched by its picture"), separate from Read by AI (open decision 13). Not drawn.
 4. **The three read states map to outcomes:** text read → the matching rows of §5a as today · text there but too blurred → `unreadable` ("Unclear photo", 46), unchanged · no text on this side → `no_text_this_side` (75). A sharp photo must never land on "Unclear photo".
 5. **One exception to the §5a rule** that the top bar carries the only "Scan again": this outcome also has it as the primary button, because turning the bottle and shooting again is the whole answer.
+4. **"No bottle"** (90), as built: kicker "No bottle", title "We can't see a bottle in this photo", "Point the camera at one bottle, with its label filling most of the frame.", primary "Scan again", then the two ghost exits. Icon Phosphor `selection-slash`.
+
+### H. What was read, for a visitor who cannot read Japanese (44, 91) · 1.7.1
+1. **The reading is the field's value**, with "On the label: 京極" in a line under it. The visitor checks, edits and searches in Latin letters; the kanji stays visible to compare with the bottle.
+2. **Reading first, kanji in brackets, keep both:** "Kyōgoku (京極)", "Mizuo Ichiaji (一味) Junmai". The same form for the brewery.
+3. **No mark inside a saved name.** The bottling's page says it once, quietly: "Reading by AI" → the Read by AI sheet (91). It goes when the visitor renames the bottling, unless the brewery still holds a reading.
+
+E1 is confirmed as "Also sold as Ichimi" (not "searched for … instead").
