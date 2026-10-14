@@ -279,10 +279,12 @@ LABEL_SCAN_EVAL_OFFLINE=1 LABEL_SCAN_EVAL_PROVIDERS=anthropic-haiku-5-5,anthropi
   reason to pay twice. It overwrites `reads.json`: copy the file first if the
   committed reads should stay.
 
-A fresh read of both tiers costs about $0.45 (2026-10-13: $0.035 for Haiku
-5.5, $0.43 for Sonnet 5.5). The instructions are cached between calls, and
-the cost line says how many input tokens were read from the cache; in a full
-run that is about 81%.
+A fresh read of both tiers of all 202 photos costs about $2.10 and takes
+about an hour (2026-10-14, with the Latin readings in the prompt: $0.17 for
+Haiku 5.5, $1.95 for Sonnet 5.5). The instructions are cached between calls,
+and the cost line says how many input tokens were read from the cache; in a
+full run that is about 74%. The runner writes `reads.json` after every
+photo, so a run stopped halfway keeps what it has paid for.
 
 ### How much a run varies
 
