@@ -83,7 +83,18 @@ async function transliterateOne(_nameKanji: string, item: TransliterationItem, m
     schema: ResponseSchema,
     schemaName: 'RomajiTransliteration',
     schemaDescription: 'The Latin-alphabet name of a Japanese sake or sake brewery, as the brewery writes it.',
-    system: PROMPT,
+    // The instructions and the answer's schema are the same on every call
+    // and are most of the input (843 tokens, measured 2026-10-14; Sonnet
+    // 5.5 caches from 512), so they are marked for Anthropic's prompt
+    // cache: a regeneration of ~4,000 names reads them at a twentieth of
+    // the price instead of paying for them in full each time. The message
+    // form is load-bearing: a bare `system` string cannot carry
+    // `providerOptions`, and the marker would be dropped silently.
+    instructions: {
+      role: 'system',
+      content: PROMPT,
+      providerOptions: { anthropic: { cacheControl: { type: 'ephemeral' as const } } },
+    },
     messages: [{ role: 'user', content: transliterationRequest(item) }],
   })
   return object.romaji.trim()
@@ -154,7 +165,11 @@ export async function transliterateBatch(
   let nextIndex = 0
   let completed = 0
 
-  async function worker(): Promise<void> {
+  // `once`: stop after the first model call. The batch makes one call
+  // alone before the others start, because a cache entry exists only once
+  // its first response begins — eight calls started together would each
+  // write the prompt instead of seven of them reading it.
+  async function worker(once = false): Promise<void> {
     while (true) {
       const i = nextIndex++
       if (i >= items.length) return
@@ -175,9 +190,11 @@ export async function transliterateBatch(
       }
       completed++
       opts.onProgress?.(completed, items.length)
+      if (once && item.nameKanji.trim() !== '') return
     }
   }
 
+  await worker(true)
   await Promise.all(
     Array.from({ length: Math.min(concurrency, items.length) }, () => worker()),
   )
