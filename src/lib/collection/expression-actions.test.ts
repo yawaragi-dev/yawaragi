@@ -193,6 +193,30 @@ describe('renaming a bottling you added', () => {
     expect((await store().read(USER))[0]!.aiBrewery).toBeUndefined()
   })
 
+  it('keeps the grade, styles and polishing a bottling was added with, and a rename can change or clear them', async () => {
+    const added = await addOwnBottling({
+      brandId: 12,
+      name: 'Rihaku Omachi (雄町) Junmai Ginjō',
+      details: { grade: 'junmai_ginjo', styles: ['Nama', ' ', 'Genshu'], polishingPct: 50 },
+    })
+    const id = added.status === 'ok' ? added.expressionId : ''
+    expect((await store().read(USER))[0]).toMatchObject({
+      grade: 'junmai_ginjo',
+      styles: ['Nama', 'Genshu'],
+      polishingPct: 50,
+    })
+
+    await renameOwnBottling({ expressionId: id, name: 'Rihaku Omachi', details: { grade: 'junmai' } })
+    const renamed = (await store().read(USER))[0]!
+    expect(renamed.grade).toBe('junmai')
+    expect(renamed.styles).toBeUndefined()
+    expect(renamed.polishingPct).toBeUndefined()
+
+    // A rename that does not mention them leaves them as they were.
+    await renameOwnBottling({ expressionId: id, name: 'Rihaku Omachi Junmai' })
+    expect((await store().read(USER))[0]!.grade).toBe('junmai')
+  })
+
   it('leaves the brewery of a bottling of a sake to the catalogue', async () => {
     const id = await seedBottlingOfASake()
     expect(await renameOwnBottling({ expressionId: id, name: 'Poet', brewery: '李白酒造' })).toEqual({ status: 'ok' })

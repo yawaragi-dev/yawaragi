@@ -995,7 +995,14 @@
     "deleteError": "Couldn’t delete that just now — try again.",
     "deletedNotice": "{name} deleted",
     "undo": "Undo",
-    "undoError": "Couldn’t bring it back just now."
+    "undoError": "Couldn’t bring it back just now.",
+    "gradeLabel": "Grade",
+    "gradeNone": "Not set",
+    "polishingLabel": "Polishing",
+    "styleLabel": "Style",
+    "formHintFromLabel": "Read from the label. Fix anything misread; size and the rest can wait for Detailed notes. Only you can see it.",
+    "formHintDetails": "Grade, style and polishing are optional; size and the rest can wait for Detailed notes. Only you can see it.",
+    "polishedTo": "polished to {n}%"
   },
   "learn": {
     "title": "Learn",

@@ -7,6 +7,7 @@ import { BottlingNameForm } from '@/components/sake/bottling-name-form'
 import { useRouter } from '@/i18n/navigation'
 import { setPendingUndo } from '@/lib/collection/deleted-bottling-store'
 import { deleteOwnBottling, renameOwnBottling } from '@/lib/collection/expression-actions'
+import type { BottlingDetails } from '@/lib/schemas/expression'
 
 /**
  * §9a's "This bottling" group (design v1.6.2, screenshots 68–70): the last
@@ -23,6 +24,7 @@ export function BottlingManage({
   expressionId,
   name,
   brewery,
+  details,
   sake,
   tastings,
   bottles,
@@ -31,6 +33,8 @@ export function BottlingManage({
   name: string
   /** The brewery as given; only a bottle with no sake has one of its own. */
   brewery: string | undefined
+  /** Grade, styles and polishing as stored (design v1.7 D5). */
+  details?: BottlingDetails
   /** The sake it belongs to, or `null`. */
   sake: { brandId: number; name: string } | null
   /** How many tastings and cellar bottles are logged against it. */
@@ -43,13 +47,14 @@ export function BottlingManage({
   const [failed, setFailed] = useState(false)
   const [pending, startTransition] = useTransition()
 
-  function rename(nextName: string, nextBrewery: string) {
+  function rename(nextName: string, nextBrewery: string, nextDetails?: BottlingDetails) {
     setFailed(false)
     startTransition(async () => {
       const result = await renameOwnBottling({
         expressionId,
         name: nextName,
         ...(sake ? {} : { brewery: nextBrewery }),
+        ...(nextDetails ? { details: nextDetails } : {}),
       })
       if (result.status !== 'ok') {
         setFailed(true)
@@ -103,6 +108,8 @@ export function BottlingManage({
             initialName={name}
             initialBrewery={brewery ?? ''}
             withBrewery={sake === null}
+            withDetails
+            initialDetails={details}
             pending={pending}
             failed={failed}
             onSubmit={rename}
