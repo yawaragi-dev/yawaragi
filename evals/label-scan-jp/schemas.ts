@@ -153,6 +153,9 @@ export const PhotoItemSchema = z
 
 export type PhotoItem = z.infer<typeof PhotoItemSchema>
 
+export const EVAL_SUITES = ['regular', 'held_out'] as const
+export const EvalSuiteSchema = z.enum(EVAL_SUITES)
+
 export const GroundTruthEntrySchema = z
   .object({
     name_ja: z.string().min(1),
@@ -176,6 +179,14 @@ export const GroundTruthEntrySchema = z
      * no match at all. Left out, the photo is scored on extraction only.
      */
     expectedBrandIds: z.array(z.number().int().positive()).optional(),
+    /**
+     * Which run reads this photo (#415, README "Suites"). `regular` — the
+     * default run, the photos that say the most per dollar — is also part of
+     * the full one; left out, the photo is in the full run only. `held_out`
+     * photos are in neither: they are never used to tune a prompt and are
+     * read only for a final check, with their own switch.
+     */
+    suite: EvalSuiteSchema.optional(),
     /**
      * Other readings that are also right — a label that prints its brand in
      * kanji, katakana and Latin has three correct answers. Accuracy is the
