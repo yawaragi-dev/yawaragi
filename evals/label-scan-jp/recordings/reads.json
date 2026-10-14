@@ -2695,6 +2695,572 @@
      ],
      "confidence": 0.85,
      "latencyMs": 8799
+    },
+    "1plus1_yamahai_blend_clear.jpg": {
+     "photoSha": "0ff5a93f7e9581c4",
+     "name_ja": "山廃越淡麗",
+     "brewery_ja": "Unreadable",
+     "brewery_printed": false,
+     "subject": "one_bottle",
+     "drink": "unknown",
+     "bottling": {
+      "styles": [
+       "yamahai"
+      ]
+     },
+     "other_names": [
+      "山廃山田錦",
+      "Yamahai Blend"
+     ],
+     "confidence": 0.2,
+     "latencyMs": 8587
+    },
+    "akagisan_hakuko_multiple_shelf_with_pricetag.jpg": {
+     "photoSha": "668d61d47c7c4f5b",
+     "name_ja": "白鴻",
+     "brewery_ja": "盛川酒造",
+     "brewery_printed": false,
+     "subject": "several_bottles",
+     "drink": "sake",
+     "bottling": {
+      "grade": "futsushu"
+     },
+     "other_names": [
+      "HAKUKO"
+     ],
+     "confidence": 0.7,
+     "latencyMs": 6923
+    },
+    "born_gold_with_pricetag.jpg": {
+     "photoSha": "874690280543e7fd",
+     "name_ja": "BORN GOLD",
+     "brewery_ja": "加藤吉平商店",
+     "brewery_printed": true,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {
+      "grade": "junmai_daiginjo",
+      "styles": [
+       "muroka"
+      ],
+      "polishing_ratio": 50
+     },
+     "other_names": [],
+     "confidence": 0.45,
+     "latencyMs": 6061
+    },
+    "choryo_hokushika_multiple.jpg": {
+     "photoSha": "fb0a63b0f7a13bf4",
+     "name_ja": "吉野杉",
+     "brewery_ja": "美吉野醸造",
+     "brewery_printed": false,
+     "subject": "several_bottles",
+     "drink": "unknown",
+     "bottling": {
+      "styles": [
+       "taruzake"
+      ]
+     },
+     "other_names": [],
+     "confidence": 0.6,
+     "latencyMs": 5404
+    },
+    "daiyame_and_glo_multiple_shochu_with_label.jpg": {
+     "photoSha": "a37d9ff09ee8b9f3",
+     "name_ja": "DAIYAME",
+     "brewery_ja": "HAMADA SYUZOU",
+     "brewery_printed": true,
+     "subject": "one_bottle",
+     "drink": "shochu",
+     "bottling": {},
+     "other_names": [],
+     "confidence": 0.85,
+     "latencyMs": 6755
+    },
+    "dassai_kidoizumi_on_table.jpg": {
+     "photoSha": "e2c4bd5314cd4888",
+     "name_ja": "木戸泉",
+     "brewery_ja": "木戸泉酒造",
+     "brewery_printed": true,
+     "subject": "several_bottles",
+     "drink": "unknown",
+     "bottling": {},
+     "other_names": [
+      "きどいずみ"
+     ],
+     "confidence": 0.8,
+     "latencyMs": 6405
+    },
+    "forever20_daybreak_multiple_shelf.jpg": {
+     "photoSha": "69219daf45684202",
+     "name_ja": "夜の帝王",
+     "brewery_ja": "竹井酒造",
+     "brewery_printed": false,
+     "subject": "several_bottles",
+     "drink": "sake",
+     "bottling": {
+      "grade": "tokubetsu_junmai"
+     },
+     "other_names": [
+      "Daybreak"
+     ],
+     "confidence": 0.35,
+     "latencyMs": 7735
+    },
+    "fudoh_fusakogane_migaki_80_junmainama_nabedana_clear.jpg": {
+     "photoSha": "6c8d489c0148264c",
+     "name_ja": "不動",
+     "brewery_ja": "不動酒造",
+     "brewery_printed": false,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {
+      "grade": "junmai",
+      "styles": [
+       "nama",
+       "genshu"
+      ]
+     },
+     "other_names": [
+      "Fudoh"
+     ],
+     "confidence": 0.6,
+     "latencyMs": 5495
+    },
+    "fudoh_fusakogane_migaki_80_junmainama_nabedana_label.jpg": {
+     "photoSha": "bfd3d2a41c8f5b34",
+     "name_ja": "NABEDANA",
+     "brewery_ja": "FUDOH",
+     "brewery_printed": false,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {
+      "grade": "junmai",
+      "styles": [
+       "nama"
+      ],
+      "polishing_ratio": 80
+     },
+     "other_names": [
+      "FUDOH FUSAKOGANE"
+     ],
+     "confidence": 0.6,
+     "latencyMs": 10822
+    },
+    "garyubai_junmai_ginjo_genshu_clear.jpg": {
+     "photoSha": "c98eddee4cf99edd",
+     "name_ja": "我龍",
+     "brewery_ja": "我龍酒造",
+     "brewery_printed": false,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {
+      "grade": "junmai_ginjo"
+     },
+     "other_names": [
+      "がりゅうばい"
+     ],
+     "confidence": 0.5,
+     "latencyMs": 8092
+    },
+    "garyubai_junmai_ginjo_genshu_on_table_1.jpg": {
+     "photoSha": "1c2d47b369106a42",
+     "name_ja": "飛龍杯",
+     "brewery_ja": "酒造",
+     "brewery_printed": false,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {},
+     "other_names": [
+      "山田錦"
+     ],
+     "confidence": 0.3,
+     "latencyMs": 6922
+    },
+    "garyubai_junmai_ginjo_genshu_on_table_2.jpg": {
+     "photoSha": "56dfa8bad35b47e9",
+     "name_ja": "臥龍梅",
+     "brewery_ja": "深沢酒造",
+     "brewery_printed": false,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {
+      "grade": "junmai_ginjo"
+     },
+     "other_names": [
+      "がりゅうばい"
+     ],
+     "confidence": 0.8,
+     "latencyMs": 5406
+    },
+    "garyubai_junmai_ginjo_genshu_on_table_3.jpg": {
+     "photoSha": "f4c3c26743772af1",
+     "name_ja": "八龍",
+     "brewery_ja": "八龍酒造",
+     "brewery_printed": false,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {
+      "grade": "junmai_ginjo"
+     },
+     "other_names": [],
+     "confidence": 0.2,
+     "latencyMs": 6543
+    },
+    "garyubai_junmai_ginjo_genshu_side_1.jpg": {
+     "photoSha": "885890d4c329b640",
+     "name_ja": "我龍梅",
+     "brewery_ja": "三和酒造",
+     "brewery_printed": true,
+     "subject": "one_bottle",
+     "drink": "unknown",
+     "bottling": {
+      "polishing_ratio": 55
+     },
+     "other_names": [
+      "がりゅうばい"
+     ],
+     "confidence": 0.7,
+     "latencyMs": 5759
+    },
+    "garyubai_junmai_ginjo_genshu_side_2.jpg": {
+     "photoSha": "f34f0d4eb6debeae",
+     "name_ja": "臥龍梅",
+     "brewery_ja": "三和酒造",
+     "brewery_printed": true,
+     "subject": "one_bottle",
+     "drink": "unknown",
+     "bottling": {
+      "polishing_ratio": 55
+     },
+     "other_names": [
+      "がりゅうばい"
+     ],
+     "confidence": 0.85,
+     "latencyMs": 5036
+    },
+    "garyubai_junmai_ginjo_genshu_side_3.jpg": {
+     "photoSha": "b353996208c64777",
+     "name_ja": "くにさだ",
+     "brewery_ja": "?",
+     "brewery_printed": false,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {
+      "grade": "junmai_ginjo"
+     },
+     "other_names": [],
+     "confidence": 0.3,
+     "latencyMs": 8650
+    },
+    "harima_barrel_craft_clear.jpg": {
+     "photoSha": "ffa11898481477ac",
+     "name_ja": "播磨",
+     "brewery_ja": "播磨酒造",
+     "brewery_printed": false,
+     "subject": "one_bottle",
+     "drink": "unknown",
+     "bottling": {
+      "product_name": "BARREL CRAFT"
+     },
+     "other_names": [
+      "BARREL CRAFT"
+     ],
+     "confidence": 0.45,
+     "latencyMs": 5896
+    },
+    "harima_barrel_craft_side.jpg": {
+     "photoSha": "eb11240a2cb8f41a",
+     "name_ja": "播磨",
+     "brewery_ja": "富久錦",
+     "brewery_printed": true,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {
+      "product_name": "BARREL CRAFT",
+      "grade": "junmai_daiginjo",
+      "polishing_ratio": 50
+     },
+     "other_names": [
+      "BARREL CRAFT"
+     ],
+     "confidence": 0.9,
+     "latencyMs": 4604
+    },
+    "hokushika_yuki_from_top.jpg": {
+     "photoSha": "31683b74ae5ce789",
+     "name_ja": "雪",
+     "brewery_ja": "北鹿",
+     "brewery_printed": false,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {
+      "grade": "honjozo",
+      "styles": [
+       "namachozo"
+      ]
+     },
+     "other_names": [
+      "HOKUSHIKA YUKI",
+      "ゆき"
+     ],
+     "confidence": 0.8,
+     "latencyMs": 6120
+    },
+    "ikekame_barrel_clear_2.jpg": {
+     "photoSha": "4dc139acf7118e33",
+     "name_ja": "池亀",
+     "brewery_ja": "池亀酒造",
+     "brewery_printed": true,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {
+      "product_name": "BARREL",
+      "grade": "junmai_daiginjo"
+     },
+     "other_names": [
+      "IKEKAME",
+      "BARREL"
+     ],
+     "confidence": 0.85,
+     "latencyMs": 7427
+    },
+    "kamonishiki_nifudazake_funakabumi_junmai_daiginjo_clear.jpg": {
+     "photoSha": "01006efe2e0fbab4",
+     "name_ja": "加茂錦",
+     "brewery_ja": "加茂錦酒造",
+     "brewery_printed": false,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {
+      "product_name": "淡麗フレッシュ",
+      "grade": "junmai_daiginjo"
+     },
+     "other_names": [],
+     "confidence": 0.85,
+     "latencyMs": 6443
+    },
+    "kamonishiki_nifudazake_funakabumi_junmai_daiginjo_label_ja.jpg": {
+     "photoSha": "a1d0041b6ed89df3",
+     "name_ja": "荷札酒",
+     "brewery_ja": "加茂錦酒造",
+     "brewery_printed": true,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {
+      "product_name": "槽場汲み",
+      "styles": [
+       "genshu"
+      ],
+      "polishing_ratio": 50
+     },
+     "other_names": [
+      "槽場汲み",
+      "ふなばくみ"
+     ],
+     "confidence": 0.85,
+     "latencyMs": 4922
+    },
+    "katsuyama_en_on_table.jpg": {
+     "photoSha": "152c6839e9512f09",
+     "name_ja": "勝山",
+     "brewery_ja": "渡辺酒造店",
+     "brewery_printed": false,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {
+      "product_name": "縁"
+     },
+     "other_names": [
+      "縁",
+      "EN",
+      "KATSUYAMA"
+     ],
+     "confidence": 0.9,
+     "latencyMs": 4729
+    },
+    "kidoizumi_daigo_clear.jpg": {
+     "photoSha": "95958ed653a15b72",
+     "name_ja": "木戸泉",
+     "brewery_ja": "木戸泉酒造",
+     "brewery_printed": true,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {},
+     "other_names": [
+      "きどいずみ"
+     ],
+     "confidence": 0.9,
+     "latencyMs": 4393
+    },
+    "kitsune_no_shukuen_clear.jpg": {
+     "photoSha": "d0e98b0b48c9cff8",
+     "name_ja": "狐の祝宴",
+     "brewery_ja": "?",
+     "brewery_printed": false,
+     "subject": "one_bottle",
+     "drink": "unknown",
+     "bottling": {},
+     "other_names": [],
+     "confidence": 0.3,
+     "latencyMs": 6110
+    },
+    "kitsune_no_shukuen_side_1.jpg": {
+     "photoSha": "0128de8d61d78b98",
+     "name_ja": "西堀",
+     "brewery_ja": "西堀酒造",
+     "brewery_printed": true,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {
+      "grade": "junmai_ginjo",
+      "polishing_ratio": 60
+     },
+     "other_names": [],
+     "confidence": 0.2,
+     "latencyMs": 5142
+    },
+    "kitsune_no_shukuen_side_2.jpg": {
+     "photoSha": "203d86cf6a9c7c03",
+     "name_ja": "?",
+     "brewery_ja": "?",
+     "brewery_printed": false,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {
+      "grade": "junmai_ginjo"
+     },
+     "other_names": [],
+     "confidence": 0.1,
+     "latencyMs": 6159
+    },
+    "kubota_junmai_daiginjo_box_clear.jpg": {
+     "photoSha": "36a8a9916fc49160",
+     "name_ja": "久保田",
+     "brewery_ja": "朝日酒造",
+     "brewery_printed": false,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {
+      "grade": "junmai_daiginjo"
+     },
+     "other_names": [
+      "KUBOTA"
+     ],
+     "confidence": 0.9,
+     "latencyMs": 11932
+    },
+    "kurand_hug_me.jpg": {
+     "photoSha": "ef88f2d50052dce9",
+     "name_ja": "Hug Me",
+     "brewery_ja": "?",
+     "brewery_printed": false,
+     "subject": "one_bottle",
+     "drink": "unknown",
+     "bottling": {},
+     "other_names": [],
+     "confidence": 0.35,
+     "latencyMs": 5236
+    },
+    "maibijin_suigei_hakkaisan_shelf.jpg": {
+     "photoSha": "95e91a7c536a2037",
+     "name_ja": "酔鯨",
+     "brewery_ja": "酔鯨酒造",
+     "brewery_printed": false,
+     "subject": "several_bottles",
+     "drink": "sake",
+     "bottling": {
+      "product_name": "吟麗",
+      "grade": "junmai_ginjo"
+     },
+     "other_names": [
+      "SUIGEI"
+     ],
+     "confidence": 0.75,
+     "latencyMs": 7177
+    },
+    "otokoyama_tokubetsu_junmai_clear.jpg": {
+     "photoSha": "33e5db148fdf4d68",
+     "name_ja": "男山",
+     "brewery_ja": "男山",
+     "brewery_printed": true,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {},
+     "other_names": [
+      "OTOKOYAMA"
+     ],
+     "confidence": 0.93,
+     "latencyMs": 4294
+    },
+    "otokoyama_tokubetsu_junmai_side_1.jpg": {
+     "photoSha": "ae28e4164505b2f1",
+     "name_ja": "男山",
+     "brewery_ja": "男山",
+     "brewery_printed": true,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "other_names": [
+      "OTOKOYAMA"
+     ],
+     "confidence": 0.9,
+     "latencyMs": 5242
+    },
+    "otokoyama_tokubetsu_junmai_side_2.jpg": {
+     "photoSha": "4093d862c907a4c1",
+     "name_ja": "男山",
+     "brewery_ja": "男山",
+     "brewery_printed": true,
+     "subject": "one_bottle",
+     "drink": "unknown",
+     "other_names": [],
+     "confidence": 0.92,
+     "latencyMs": 4940
+    },
+    "shimauta_awamori_shelf_with_pricetag.jpg": {
+     "photoSha": "c029897c306f2919",
+     "name_ja": "島唄",
+     "brewery_ja": "まさひろ酒造",
+     "brewery_printed": true,
+     "subject": "menu",
+     "drink": "awamori",
+     "other_names": [
+      "SHIMAUTA"
+     ],
+     "confidence": 0.85,
+     "latencyMs": 5178
+    },
+    "shinshu_nekomasamune_multiple_shelf_with_pricetag.jpg": {
+     "photoSha": "b32ba0ab41228089",
+     "name_ja": "ねこ正宗",
+     "brewery_ja": "丸世酒造",
+     "brewery_printed": false,
+     "subject": "several_bottles",
+     "drink": "sake",
+     "other_names": [
+      "信州ねこ正宗",
+      "HACHIWARE",
+      "SHIRONEKO"
+     ],
+     "confidence": 0.35,
+     "latencyMs": 8629
+    },
+    "shirakawago_nigorizake_clear.jpg": {
+     "photoSha": "5422266567ef1f0d",
+     "name_ja": "白川郷",
+     "brewery_ja": "三輪酒造",
+     "brewery_printed": true,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {
+      "grade": "junmai",
+      "styles": [
+       "nigori"
+      ]
+     },
+     "other_names": [],
+     "confidence": 0.78,
+     "latencyMs": 4960
     }
    }
   },
@@ -5534,6 +6100,602 @@
      ],
      "confidence": 0.8,
      "latencyMs": 7163
+    },
+    "1plus1_yamahai_blend_clear.jpg": {
+     "photoSha": "0ff5a93f7e9581c4",
+     "name_ja": "HH",
+     "brewery_ja": "HH",
+     "brewery_printed": false,
+     "subject": "one_bottle",
+     "drink": "unknown",
+     "bottling": {
+      "product_name": "YAMAHAI BLEND",
+      "styles": [
+       "yamahai"
+      ]
+     },
+     "other_names": [
+      "YAMAHAI BLEND",
+      "山廃越淡麗",
+      "山廃山田錦"
+     ],
+     "confidence": 0.25,
+     "latencyMs": 7180
+    },
+    "akagisan_hakuko_multiple_shelf_with_pricetag.jpg": {
+     "photoSha": "668d61d47c7c4f5b",
+     "name_ja": "白鴻",
+     "brewery_ja": "盛川酒造",
+     "brewery_printed": true,
+     "subject": "several_bottles",
+     "drink": "sake",
+     "bottling": {},
+     "other_names": [
+      "はくこう",
+      "HAKUKO"
+     ],
+     "confidence": 0.8,
+     "latencyMs": 5628
+    },
+    "born_gold_with_pricetag.jpg": {
+     "photoSha": "874690280543e7fd",
+     "name_ja": "梵",
+     "brewery_ja": "加藤吉平商店",
+     "brewery_printed": true,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {
+      "product_name": "GOLD",
+      "grade": "junmai_daiginjo",
+      "styles": [
+       "muroka"
+      ],
+      "polishing_ratio": 50
+     },
+     "other_names": [
+      "BORN",
+      "GOLD",
+      "Born Gold"
+     ],
+     "confidence": 0.93,
+     "latencyMs": 2803
+    },
+    "choryo_hokushika_multiple.jpg": {
+     "photoSha": "fb0a63b0f7a13bf4",
+     "name_ja": "雪",
+     "brewery_ja": "北鹿",
+     "brewery_printed": false,
+     "subject": "several_bottles",
+     "drink": "sake",
+     "bottling": {
+      "grade": "honjozo",
+      "styles": [
+       "namachozo"
+      ]
+     },
+     "other_names": [
+      "ゆき",
+      "HOKUSHIKA YUKI"
+     ],
+     "confidence": 0.6,
+     "latencyMs": 6767
+    },
+    "daiyame_and_glo_multiple_shochu_with_label.jpg": {
+     "photoSha": "a37d9ff09ee8b9f3",
+     "name_ja": "DAIYAME",
+     "brewery_ja": "濱田酒造",
+     "brewery_printed": true,
+     "subject": "one_bottle",
+     "drink": "shochu",
+     "bottling": {
+      "product_name": "香熟芋"
+     },
+     "other_names": [
+      "だいやめ",
+      "香熟芋"
+     ],
+     "confidence": 0.85,
+     "latencyMs": 2440
+    },
+    "dassai_kidoizumi_on_table.jpg": {
+     "photoSha": "e2c4bd5314cd4888",
+     "name_ja": "木戸泉",
+     "brewery_ja": "木戸泉酒造",
+     "brewery_printed": true,
+     "subject": "several_bottles",
+     "drink": "sake",
+     "bottling": {
+      "product_name": "醍醐"
+     },
+     "other_names": [
+      "きどいずみ",
+      "醍醐"
+     ],
+     "confidence": 0.8,
+     "latencyMs": 5040
+    },
+    "forever20_daybreak_multiple_shelf.jpg": {
+     "photoSha": "69219daf45684202",
+     "name_ja": "夜の帝王",
+     "brewery_ja": "純米酒造",
+     "brewery_printed": false,
+     "subject": "several_bottles",
+     "drink": "sake",
+     "bottling": {
+      "grade": "tokubetsu_junmai"
+     },
+     "other_names": [
+      "Daybreak"
+     ],
+     "confidence": 0.75,
+     "latencyMs": 2972
+    },
+    "fudoh_fusakogane_migaki_80_junmainama_nabedana_clear.jpg": {
+     "photoSha": "6c8d489c0148264c",
+     "name_ja": "不動",
+     "brewery_ja": "鳥海酒造",
+     "brewery_printed": false,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {
+      "grade": "junmai",
+      "styles": [
+       "nama",
+       "genshu"
+      ]
+     },
+     "other_names": [
+      "Fudoh"
+     ],
+     "confidence": 0.8,
+     "latencyMs": 2539
+    },
+    "fudoh_fusakogane_migaki_80_junmainama_nabedana_label.jpg": {
+     "photoSha": "bfd3d2a41c8f5b34",
+     "name_ja": "FUDOH",
+     "brewery_ja": "鍋店",
+     "brewery_printed": true,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {
+      "grade": "junmai",
+      "styles": [
+       "nama"
+      ],
+      "polishing_ratio": 80
+     },
+     "other_names": [],
+     "confidence": 0.7,
+     "latencyMs": 7600
+    },
+    "garyubai_junmai_ginjo_genshu_clear.jpg": {
+     "photoSha": "c98eddee4cf99edd",
+     "name_ja": "臥龍梅",
+     "brewery_ja": "高嶋酒造",
+     "brewery_printed": false,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {
+      "grade": "junmai_ginjo"
+     },
+     "other_names": [
+      "がりゅうばい"
+     ],
+     "confidence": 0.85,
+     "latencyMs": 1826
+    },
+    "garyubai_junmai_ginjo_genshu_on_table_1.jpg": {
+     "photoSha": "1c2d47b369106a42",
+     "name_ja": "臥龍梅",
+     "brewery_ja": "三和酒造",
+     "brewery_printed": false,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {
+      "grade": "junmai_ginjo"
+     },
+     "other_names": [],
+     "confidence": 0.8,
+     "latencyMs": 4519
+    },
+    "garyubai_junmai_ginjo_genshu_on_table_2.jpg": {
+     "photoSha": "56dfa8bad35b47e9",
+     "name_ja": "臥龍梅",
+     "brewery_ja": "三和酒造",
+     "brewery_printed": false,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {
+      "grade": "junmai_ginjo"
+     },
+     "other_names": [
+      "がりゅうばい"
+     ],
+     "confidence": 0.82,
+     "latencyMs": 4204
+    },
+    "garyubai_junmai_ginjo_genshu_on_table_3.jpg": {
+     "photoSha": "f4c3c26743772af1",
+     "name_ja": "臥龍梅",
+     "brewery_ja": "三和酒造",
+     "brewery_printed": false,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {
+      "grade": "junmai_ginjo"
+     },
+     "other_names": [],
+     "confidence": 0.8,
+     "latencyMs": 3254
+    },
+    "garyubai_junmai_ginjo_genshu_side_1.jpg": {
+     "photoSha": "885890d4c329b640",
+     "name_ja": "臥龍梅",
+     "brewery_ja": "三和酒造",
+     "brewery_printed": true,
+     "subject": "one_bottle",
+     "drink": "unknown",
+     "bottling": {
+      "polishing_ratio": 55
+     },
+     "other_names": [
+      "がりゅうばい"
+     ],
+     "confidence": 0.85,
+     "latencyMs": 2205
+    },
+    "garyubai_junmai_ginjo_genshu_side_2.jpg": {
+     "photoSha": "f34f0d4eb6debeae",
+     "name_ja": "臥龍梅",
+     "brewery_ja": "三和酒造",
+     "brewery_printed": true,
+     "subject": "one_bottle",
+     "drink": "unknown",
+     "bottling": {
+      "polishing_ratio": 55
+     },
+     "other_names": [
+      "がりゅうばい"
+     ],
+     "confidence": 0.8,
+     "latencyMs": 4870
+    },
+    "garyubai_junmai_ginjo_genshu_side_3.jpg": {
+     "photoSha": "b353996208c64777",
+     "name_ja": "久",
+     "brewery_ja": "酒造",
+     "brewery_printed": false,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {
+      "grade": "junmai_ginjo"
+     },
+     "other_names": [],
+     "confidence": 0.1,
+     "latencyMs": 7894
+    },
+    "harima_barrel_craft_clear.jpg": {
+     "photoSha": "ffa11898481477ac",
+     "name_ja": "播磨",
+     "brewery_ja": "壺坂酒造",
+     "brewery_printed": false,
+     "subject": "one_bottle",
+     "drink": "unknown",
+     "bottling": {
+      "product_name": "BARREL CRAFT",
+      "styles": [
+       "koshu"
+      ]
+     },
+     "other_names": [
+      "BARREL CRAFT"
+     ],
+     "confidence": 0.6,
+     "latencyMs": 3233
+    },
+    "harima_barrel_craft_side.jpg": {
+     "photoSha": "eb11240a2cb8f41a",
+     "name_ja": "播磨",
+     "brewery_ja": "富久錦",
+     "brewery_printed": true,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {
+      "product_name": "BARREL CRAFT",
+      "grade": "junmai_daiginjo",
+      "styles": [],
+      "polishing_ratio": 50
+     },
+     "other_names": [
+      "BARREL CRAFT"
+     ],
+     "confidence": 0.8,
+     "latencyMs": 2979
+    },
+    "hokushika_yuki_from_top.jpg": {
+     "photoSha": "31683b74ae5ce789",
+     "name_ja": "雪",
+     "brewery_ja": "北鹿",
+     "brewery_printed": false,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {
+      "grade": "honjozo",
+      "styles": [
+       "namachozo"
+      ]
+     },
+     "other_names": [
+      "ゆき",
+      "HOKUSHIKA YUKI"
+     ],
+     "confidence": 0.8,
+     "latencyMs": 2298
+    },
+    "ikekame_barrel_clear_2.jpg": {
+     "photoSha": "4dc139acf7118e33",
+     "name_ja": "池亀",
+     "brewery_ja": "池亀酒造",
+     "brewery_printed": true,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {
+      "product_name": "BARREL",
+      "grade": "junmai_daiginjo"
+     },
+     "other_names": [
+      "IKEKAME BARREL",
+      "BARREL"
+     ],
+     "confidence": 0.85,
+     "latencyMs": 6644
+    },
+    "kamonishiki_nifudazake_funakabumi_junmai_daiginjo_clear.jpg": {
+     "photoSha": "01006efe2e0fbab4",
+     "name_ja": "加茂錦",
+     "brewery_ja": "加茂錦酒造",
+     "brewery_printed": true,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {
+      "grade": "junmai_daiginjo"
+     },
+     "other_names": [],
+     "confidence": 0.8,
+     "latencyMs": 6442
+    },
+    "kamonishiki_nifudazake_funakabumi_junmai_daiginjo_label_ja.jpg": {
+     "photoSha": "a1d0041b6ed89df3",
+     "name_ja": "荷札酒",
+     "brewery_ja": "加茂錦酒造",
+     "brewery_printed": true,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {
+      "product_name": "槽場汲み",
+      "styles": [
+       "genshu"
+      ],
+      "polishing_ratio": 50
+     },
+     "other_names": [
+      "槽場汲み",
+      "ふなばくみ"
+     ],
+     "confidence": 0.8,
+     "latencyMs": 4024
+    },
+    "katsuyama_en_on_table.jpg": {
+     "photoSha": "152c6839e9512f09",
+     "name_ja": "勝山",
+     "brewery_ja": "勝山酒造",
+     "brewery_printed": false,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {
+      "product_name": "縁"
+     },
+     "other_names": [
+      "縁",
+      "KATSUYAMA",
+      "EN"
+     ],
+     "confidence": 0.85,
+     "latencyMs": 4018
+    },
+    "kidoizumi_daigo_clear.jpg": {
+     "photoSha": "95958ed653a15b72",
+     "name_ja": "木戸泉",
+     "brewery_ja": "木戸泉酒造",
+     "brewery_printed": true,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {
+      "product_name": "醍醐"
+     },
+     "other_names": [
+      "きどいずみ",
+      "醍醐"
+     ],
+     "confidence": 0.92,
+     "latencyMs": 2844
+    },
+    "kitsune_no_shukuen_clear.jpg": {
+     "photoSha": "d0e98b0b48c9cff8",
+     "name_ja": "狐の祝宴",
+     "brewery_ja": "狐の祝宴",
+     "brewery_printed": false,
+     "subject": "one_bottle",
+     "drink": "unknown",
+     "bottling": {},
+     "other_names": [],
+     "confidence": 0.4,
+     "latencyMs": 7813
+    },
+    "kitsune_no_shukuen_side_1.jpg": {
+     "photoSha": "0128de8d61d78b98",
+     "name_ja": "KURAND",
+     "brewery_ja": "西堀酒造",
+     "brewery_printed": true,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {
+      "grade": "junmai_ginjo",
+      "polishing_ratio": 60
+     },
+     "other_names": [],
+     "confidence": 0.3,
+     "latencyMs": 7657
+    },
+    "kitsune_no_shukuen_side_2.jpg": {
+     "photoSha": "203d86cf6a9c7c03",
+     "name_ja": "狐",
+     "brewery_ja": "?",
+     "brewery_printed": false,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {
+      "grade": "junmai_ginjo"
+     },
+     "other_names": [],
+     "confidence": 0.1,
+     "latencyMs": 6714
+    },
+    "kubota_junmai_daiginjo_box_clear.jpg": {
+     "photoSha": "36a8a9916fc49160",
+     "name_ja": "久保田",
+     "brewery_ja": "朝日酒造",
+     "brewery_printed": false,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {
+      "grade": "junmai_daiginjo"
+     },
+     "other_names": [
+      "KUBOTA"
+     ],
+     "confidence": 0.9,
+     "latencyMs": 2714
+    },
+    "kurand_hug_me.jpg": {
+     "photoSha": "ef88f2d50052dce9",
+     "name_ja": "Hug Me",
+     "brewery_ja": "不明",
+     "brewery_printed": false,
+     "subject": "one_bottle",
+     "drink": "unknown",
+     "other_names": [],
+     "confidence": 0.3,
+     "latencyMs": 1713
+    },
+    "maibijin_suigei_hakkaisan_shelf.jpg": {
+     "photoSha": "95e91a7c536a2037",
+     "name_ja": "八海山",
+     "brewery_ja": "八海醸造",
+     "brewery_printed": true,
+     "subject": "several_bottles",
+     "drink": "sake",
+     "bottling": {
+      "grade": "futsushu"
+     },
+     "other_names": [
+      "Hakkaisan",
+      "ハッカイサン"
+     ],
+     "confidence": 0.8,
+     "latencyMs": 4537
+    },
+    "otokoyama_tokubetsu_junmai_clear.jpg": {
+     "photoSha": "33e5db148fdf4d68",
+     "name_ja": "男山",
+     "brewery_ja": "男山",
+     "brewery_printed": true,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {},
+     "other_names": [
+      "OTOKOYAMA"
+     ],
+     "confidence": 0.95,
+     "latencyMs": 7385
+    },
+    "otokoyama_tokubetsu_junmai_side_1.jpg": {
+     "photoSha": "ae28e4164505b2f1",
+     "name_ja": "男山",
+     "brewery_ja": "男山",
+     "brewery_printed": true,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {},
+     "other_names": [
+      "OTOKOYAMA"
+     ],
+     "confidence": 0.93,
+     "latencyMs": 3357
+    },
+    "otokoyama_tokubetsu_junmai_side_2.jpg": {
+     "photoSha": "4093d862c907a4c1",
+     "name_ja": "男山",
+     "brewery_ja": "男山",
+     "brewery_printed": true,
+     "subject": "one_bottle",
+     "drink": "unknown",
+     "bottling": {},
+     "other_names": [
+      "OTOKOYAMA"
+     ],
+     "confidence": 0.93,
+     "latencyMs": 5131
+    },
+    "shimauta_awamori_shelf_with_pricetag.jpg": {
+     "photoSha": "c029897c306f2919",
+     "name_ja": "島唄",
+     "brewery_ja": "まさひろ酒造",
+     "brewery_printed": true,
+     "subject": "menu",
+     "drink": "awamori",
+     "bottling": {},
+     "other_names": [
+      "SHIMAUTA"
+     ],
+     "confidence": 0.8,
+     "latencyMs": 5417
+    },
+    "shinshu_nekomasamune_multiple_shelf_with_pricetag.jpg": {
+     "photoSha": "b32ba0ab41228089",
+     "name_ja": "信州ねこ正宗",
+     "brewery_ja": "舞姫酒造",
+     "brewery_printed": false,
+     "subject": "several_bottles",
+     "drink": "sake",
+     "bottling": {
+      "product_name": "SHIRONEKO",
+      "grade": "junmai_ginjo"
+     },
+     "other_names": [
+      "SHIRONEKO",
+      "HACHIWARE",
+      "Shinshu Nekomasamune"
+     ],
+     "confidence": 0.72,
+     "latencyMs": 12591
+    },
+    "shirakawago_nigorizake_clear.jpg": {
+     "photoSha": "5422266567ef1f0d",
+     "name_ja": "白川郷",
+     "brewery_ja": "三輪酒造",
+     "brewery_printed": true,
+     "subject": "one_bottle",
+     "drink": "sake",
+     "bottling": {
+      "grade": "junmai",
+      "styles": [
+       "nigori"
+      ]
+     },
+     "other_names": [],
+     "confidence": 0.85,
+     "latencyMs": 4827
     }
    }
   },
