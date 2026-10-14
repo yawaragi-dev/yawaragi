@@ -14,10 +14,10 @@ the metric-math and judging unit tests (`levenshtein.test.ts`, `judge.test.ts`).
 
 ## The corpus
 
-**200 photos**, all taken by the maintainer on a phone the way a visitor
+**202 photos**, all taken by the maintainer on a phone the way a visitor
 would: in the hand, a little off-angle, sometimes with condensation on the
 glass. **144 are of one sake bottle each (77 bottles)** and make the headline
-number; 56 show something a scan was not built for and are reported apart (see
+number; 58 show something a scan was not built for and are reported apart (see
 "Photos that are not one sake bottle").
 
 Of the 144, 74 are of 28 bottles at home in ordinary room light; 6 are single
@@ -126,7 +126,7 @@ provenance**:
 
 ### Photos that are not one sake bottle
 
-A visitor will point the camera at things the scan was not built for. Three
+A visitor will point the camera at things the scan was not built for. Four
 kinds are in the corpus, each marked in its ground-truth entry and each with
 its own right answer, because "right" can no longer mean "landed on this
 sake". They are **never counted in the headline**: the comparison table and
@@ -138,6 +138,7 @@ in a table of their own, so adding one does not move "right of N".
 | a bottle that is not sake | `"drink": "shochu"` (or `awamori`, `umeshu`, `liqueur`, `other`) | 7 | no sake shown |
 | several bottles (two on a shelf edge, a whole shop shelf, a window sill, cup sakes in a row, a tasting flight) | `"subject": "several_bottles"` + `items` | 27 | the `main` bottle if there is one; otherwise no single sake |
 | a menu | `"subject": "menu"` + `items` | 22 | no single sake |
+| no bottle (a neck tag turned over and held up close) | `"subject": "no_bottle"`, no `items` | 2 | no sake shown |
 
 ```jsonc
 // a bottle that is not sake
@@ -185,6 +186,8 @@ The verdicts are the usual four plus one, `in photo`. The rules live in
   bottles answers a question the visitor did not ask. A list that holds one
   of them is `in list`. A bottle standing at the edge of a shop shelf does not
   make a photo `several_bottles`; name it in the notes.
+- **No bottle.** Nothing in the frame is a bottle to name: a loose tag, a
+  glass, a table. Any sake shown, alone or in a list, is `wrong`.
 
 These entries carry no `bottle` group (the schema refuses one): it groups the
 photos of one sake bottle, and `pnpm eval label-scan-pairs` reads it to pair
