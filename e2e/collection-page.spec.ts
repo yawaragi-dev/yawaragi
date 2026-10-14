@@ -47,11 +47,11 @@ test.describe('/en/collection — §11 Journal (ADR-0020, maintainer-only)', () 
 
     await expect(page.getByTestId('collection-page')).toBeVisible()
     await expect(page.getByTestId('journal-list')).toBeVisible()
-    await expect(page.getByTestId('journal-entry').first()).toContainText('而今')
+    await expect(page.getByTestId('journal-entry').first()).toContainText('新十津川')
     // Newest first, which is what makes the list readable without a date
     // filter — the stub's two entries are a month apart.
     const entries = page.getByTestId('journal-entry')
-    await expect(entries.first()).toContainText('而今')
+    await expect(entries.first()).toContainText('新十津川')
     await expect(entries.last()).toContainText('田酒')
 
     // §11's radar is gone from here, and that is the port's point: the Palate
@@ -69,8 +69,8 @@ test.describe('/en/collection — §11 Journal (ADR-0020, maintainer-only)', () 
     // v1.6 §11: a tasting logged against a bottling leads with the bottling's
     // name, the sake's kanji under it, and opens the bottling's page.
     const bottlingRow = page.getByTestId('journal-entry-bottling-link-stub-bottling')
-    await expect(bottlingRow.getByTestId('journal-entry-bottling')).toHaveText('Jikon Nama 2025')
-    await expect(bottlingRow).toContainText('而今')
+    await expect(bottlingRow.getByTestId('journal-entry-bottling')).toHaveText('Shintotsukawa Nama 2025')
+    await expect(bottlingRow).toContainText('新十津川')
     await expect(bottlingRow).toHaveAttribute('href', '/en/bottling/stub-bottling')
 
     // §11's "Full notes" chip on a row with detailed notes, and only there. It
@@ -177,18 +177,18 @@ test.describe('/en/collection?tab=cellar — §11 Cellar (ADR-0024)', () => {
     // then the sealed ones, newest first.
     const rows = page.getByTestId('cellar-row')
     await expect(rows).toHaveCount(5)
-    await expect(rows.nth(0)).toContainText('而今')
+    await expect(rows.nth(0)).toContainText('新十津川')
     await expect(rows.nth(0).getByTestId('cellar-state')).toHaveText(
       'Open 12 days — best finished this week',
     )
     await expect(rows.nth(1).getByTestId('cellar-state')).toHaveText('Open 2 days · fridge')
 
     // v1.6.1 §11: a bottling's bottle has a row of its own, beside its sake's
-    // (而今, above), and leads with the bottling's name, the sake's kanji
+    // (新十津川, above), and leads with the bottling's name, the sake's kanji
     // under it. v1.6.2: the count carries the size, and a nama bottle says so.
     const bottling = rows.nth(2)
-    await expect(bottling.getByTestId('cellar-row-name')).toHaveText('Jikon Nama 2025')
-    await expect(bottling).toContainText('而今')
+    await expect(bottling.getByTestId('cellar-row-name')).toHaveText('Shintotsukawa Nama 2025')
+    await expect(bottling).toContainText('新十津川')
     await expect(bottling.getByTestId('cellar-row-count')).toHaveText('× 1 · 720 ml')
     await expect(bottling.getByTestId('cellar-state')).toHaveText('Unopened · nama, keep cold')
     await expect(page.getByTestId('cellar-open-x:stub-bottling|720|n')).toBeVisible()

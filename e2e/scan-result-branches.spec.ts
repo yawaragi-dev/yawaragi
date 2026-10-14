@@ -396,8 +396,8 @@ test.describe('scan result branches (#109 PR B)', () => {
     browser,
   }, testInfo) => {
     testInfo.skip(!dbUp, 'Sakenowa mirror not available — DB-bound spec')
-    // The populated journal stub holds "Jikon Nama 2025" as a bottling of
-    // brand 1 — 新十津川 in the mirror, whatever line name the stub carries.
+    // The populated journal stub holds "Shintotsukawa Nama 2025", a bottling of
+    // brand 1, 新十津川 / 金滴酒造.
     const { context, page } = await scanPageWith(browser, [
       injectionCookie({
         name_ja: '新十津川',
@@ -413,7 +413,7 @@ test.describe('scan result branches (#109 PR B)', () => {
     await expect(card).toBeVisible()
     testInfo.skip(!(await page.getByTestId('scan-result-bottling-of').isVisible()), '新十津川 / 金滴酒造 no longer resolves to brand 1 in the mirror')
     await expect(page.getByTestId('scan-result-kicker')).toHaveText('Your own entry · fits this label')
-    await expect(card).toContainText('Jikon Nama 2025')
+    await expect(card).toContainText('Shintotsukawa Nama 2025')
     await expect(page.getByTestId('scan-result-match-tag')).toHaveCount(0)
 
     await page.getByTestId('scan-result-all-bottlings').click()

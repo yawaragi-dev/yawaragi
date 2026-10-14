@@ -79,7 +79,7 @@ Every non-match lands on §5a's one outcome screen: kicker · "Scan again" in th
 |---|---|---|
 | Sure match (≥ 0.85) | `setScan('獺祭','獺祭')` | §5 card tagged "Sure match", flavor chart, cross-beverage line. No "Not sure?" row |
 | Sure match, label prints a renamed brewery (#388) | `setScan('獺祭','旭酒造')` | The same clean match. 旭酒造 is Dassai's name before June 2025 |
-| Best guess (0.60–0.84) | `setScan('而今','木屋正酒造',0.7)` | Card tagged "Best guess". Under the log area, "Not sure? 1 other candidate" opens Takasago 高砂 · Kiyamasa Shuzo · Mie · "Same brewery" |
+| Best guess (0.60–0.84) | `setScan('新十津川','木屋正酒造',0.7)` | Card tagged "Best guess". Under the log area, "Not sure? 1 other candidate" opens Takasago 高砂 · Kiyamasa Shuzo · Mie · "Same brewery" |
 | Brand matched, brewery differs | `setScan('獺祭','高木酒造')` | "Partly matched — We found the sake, not its brewery", "What we read", one "Is it this one?" row |
 | Brewery matched, brand differs | `setScan('架空純米','松緑酒造')` | "Partly matched — We found the brewery, not the sake", "From this brewery" row |
 | Several fit, one name at several breweries | `setScan('高砂','架空酒造銘柄')` | "A few fit — Which one is it?", 2 rows with brewery · prefecture, "Same name · {brewery}" |
