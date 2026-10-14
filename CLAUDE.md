@@ -55,7 +55,7 @@ Claude model ids are pinned as string literals, so nothing fails when a newer fa
 - Suggestions: `src/lib/suggest/suggest-model.ts` (`SUGGEST_MODEL`)
 - Romaji ingest: `src/lib/sakenowa/romaji.ts` (`ROMAJI_MODEL`)
 
-A model change is made on eval numbers, not on a version number: register the new model as a candidate, run `pnpm eval label-scan-jp` (202 real photos, fourteen of them kept local: 144 of one sake bottle, a few bottles that are not sake, 27 photos of several bottles, 22 menus, 2 with no bottle at all) or `pnpm eval suggest-jp` with old and new side by side, and put the table in the PR. `.github/workflows/model-review-reminder.yml` opens an issue each quarter asking for this check.
+A model change is made on eval numbers, not on a version number: register the new model as a candidate, run `LABEL_SCAN_EVAL_SUITE=full pnpm eval label-scan-jp` (the default is an 84-photo regular suite; see the eval README's "Suites") (202 real photos, fourteen of them kept local: 144 of one sake bottle, a few bottles that are not sake, 27 photos of several bottles, 22 menus, 2 with no bottle at all) or `pnpm eval suggest-jp` with old and new side by side, and put the table in the PR. `.github/workflows/model-review-reminder.yml` opens an issue each quarter asking for this check.
 
 ## Source provenance
 

@@ -236,6 +236,7 @@ Env the runner reads:
   each extraction against the catalogue (see "Where the scan landed"). Without
   it, only the extraction is scored.
 - `LABEL_SCAN_EVAL_OFFLINE=1` / `LABEL_SCAN_EVAL_FRESH=1` — see "Saved reads".
+- `LABEL_SCAN_EVAL_SUITE` — `regular` (default), `full` or `held_out`; see "Suites".
 - `LABEL_SCAN_EVAL_INCLUDE_SMOKE=1` — also score the synthetic smoke fixture
   even when real photos are present (normally it's only used as the fallback
   when `photos/` is empty).
@@ -285,6 +286,42 @@ Haiku 5.5, $1.95 for Sonnet 5.5). The instructions are cached between calls,
 and the cost line says how many input tokens were read from the cache; in a
 full run that is about 74%. The runner writes `reads.json` after every
 photo, so a run stopped halfway keeps what it has paid for.
+
+### Suites — which photos a run reads
+
+A fresh read of every photo costs about $2.10, so a prompt tweak is first
+measured on the **regular** suite (#415). `LABEL_SCAN_EVAL_SUITE` picks it:
+
+| suite | photos | a fresh read of both tiers | what it is for |
+|-------|--------|----------------------------|----------------|
+| `regular` (the default) | 84 | about $0.90 | every prompt or model experiment |
+| `full` | 184 | about $1.95 | before a prompt or model change merges |
+| `held_out` | 18 | about $0.20 | a final check, never for tuning |
+
+A photo's `suite` in `ground-truth.json` says where it is: `regular` (also in
+`full`), `held_out`, or nothing (`full` only). The run prints the suite and
+how many photos it left out. Saved reads stay in one file, so moving a photo
+between suites costs nothing.
+
+How the photos were assigned (2026-10-14, from four reads of every photo:
+the old prompt, two Haiku-only passes and the two-tier read of the
+Latin-reading prompt):
+
+- **held out:** 18 photos drawn at random (seed 415) from the photos added
+  after the 118-photo set, before any read of the new prompt existed: about
+  one in five of each kind, a bottle's or a menu's photos all on one side,
+  and nothing that shares a bottle, a menu or a shop with a tuning photo.
+  They were read in the same runs as the rest while the prompt was being
+  fixed, but no change was made for them.
+- **regular:** every photo the shipped pair or Sonnet got wrong in any of
+  those runs; every photo on which Haiku changed its verdict between runs;
+  every photo of another drink or of no bottle; five menus and four shelves
+  every run got right; and one always-right photo of 20 bottles not otherwise
+  in it.
+- **full:** everything else that is not held out.
+
+Re-run the assignment when a batch of photos is added: new photos start in
+`full`, and the ones a fresh read misses move to `regular`.
 
 ### How much a run varies
 

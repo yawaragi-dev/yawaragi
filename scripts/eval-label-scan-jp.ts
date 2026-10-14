@@ -121,6 +121,7 @@ import { notOneBottleOfSake, type NotOneBottleOfSake } from '@/lib/scan/read-kin
 import { canJudge, judgeLanding, type Landing, type Verdict } from '~/evals/label-scan-jp/judge'
 import { charAccuracy } from '~/evals/label-scan-jp/levenshtein'
 import { photosInTheWrongFolder } from '~/evals/label-scan-jp/photo-folders'
+import { inSuite, isRunSuite } from '~/evals/label-scan-jp/suites'
 import {
   GroundTruthFileSchema,
   SavedReadsFileSchema,
@@ -238,6 +239,12 @@ function isVisionProviderKey(value: string): value is VisionProviderKey {
 
 const SAVED_READS_PATH = path.join(EVAL_DIR, 'recordings', 'reads.json')
 const OFFLINE = process.env.LABEL_SCAN_EVAL_OFFLINE === '1'
+/**
+ * Which photos a run reads (#415): `regular` by default, `full` for every
+ * photo but the held-out ones, `held_out` for those alone. Anything else
+ * stops the run rather than quietly falling back to a suite.
+ */
+const SUITE = process.env.LABEL_SCAN_EVAL_SUITE || 'regular'
 const FRESH = process.env.LABEL_SCAN_EVAL_FRESH === '1'
 
 const sha = (data: string | Uint8Array) => createHash('sha256').update(data).digest('hex').slice(0, 16)
@@ -433,6 +440,13 @@ async function main() {
   ]
 
   // Pair each file with its ground truth; report + skip anything unusable.
+  if (!isRunSuite(SUITE)) {
+    console.error(`LABEL_SCAN_EVAL_SUITE must be regular, full or held_out, not "${SUITE}".`)
+    process.exitCode = 1
+    return
+  }
+  const run = SUITE
+  let leftOut = 0
   const corpus: CorpusEntry[] = []
   const skipped: Array<{ file: string; reason: string }> = []
   for (const { file, absPath } of candidateFiles) {
@@ -445,15 +459,25 @@ async function main() {
       skipped.push({ file, reason: 'rights not cleared (set provenance.rightsCleared: true)' })
       continue
     }
+    if (file !== SMOKE_FIXTURE && !inSuite(run, gt.suite)) {
+      leftOut++
+      continue
+    }
     corpus.push({ file, absPath, groundTruth: gt })
   }
+  console.log(
+    `Suite: ${SUITE} — ${corpus.length} photo(s) to read, ${leftOut} left out` +
+      (SUITE === 'held_out' ? ' (the held-out check: do not tune on what it shows).' : '.'),
+  )
+  console.log(``)
 
   // Ground-truth entries pointing at a file that is not on disk (e.g. the
   // shipped placeholders) — surface them so the convention is obvious.
   const onDiskNames = new Set(candidateFiles.map((c) => c.file))
   const missingFiles = Object.keys(groundTruth).filter((k) => !onDiskNames.has(k))
 
-  const clearedRealPhotos = corpus.filter((c) => c.file !== SMOKE_FIXTURE).length
+  // The whole set, not this suite: a small suite is not a degraded corpus.
+  const clearedRealPhotos = corpus.filter((c) => c.file !== SMOKE_FIXTURE).length + leftOut
 
   // ---- Degraded-corpus messaging ----
   if (clearedRealPhotos < TARGET_PHOTO_COUNT) {
