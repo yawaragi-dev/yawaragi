@@ -1,5 +1,10 @@
 import { z } from 'zod'
-import { ScanBottlingSchema, ScanDrinkSchema, ScanSubjectSchema } from '@/lib/schemas/label-scan-extraction'
+import {
+  ScanBottlingSchema,
+  ScanDrinkSchema,
+  ScanLegibilitySchema,
+  ScanSubjectSchema,
+} from '@/lib/schemas/label-scan-extraction'
 
 /**
  * Phase 3 / S5 (#110) — Zod shapes for the `evals/label-scan-jp/` harness.
@@ -302,9 +307,12 @@ export const SavedReadSchema = z.union([
     brewery_ja: z.string().min(1),
     brewery_printed: z.boolean().optional(),
     subject: ScanSubjectSchema.optional(),
+    legibility: ScanLegibilitySchema.optional(),
     drink: ScanDrinkSchema.optional(),
     bottling: ScanBottlingSchema.optional(),
     other_names: z.array(z.string()).optional(),
+    name_romaji: z.string().optional(),
+    brewery_romaji: z.string().optional(),
     confidence: z.number().min(0).max(1),
     latencyMs: z.number().int().nonnegative(),
   }),
