@@ -4797,14 +4797,17 @@
       "name_ja": [
         "YAMAHAI BLEND",
         "山廃越淡麗",
-        "山廃山田錦"
+        "山廃山田錦",
+        "1+1 -Yamahai Blend-",
+        "1＋1"
       ]
     },
     "provenance": {
       "source": "maintainer_own_bottle",
       "rightsCleared": true,
-      "notes": "Held in the hand: a black bottle whose label is a large brush mark like 1+1 (the maintainer's file name), with 山廃越淡麗 / 山廃山田錦, \"YAMAHAI BLEND\" and 越淡麗50%使用+山田錦50%使用. Neither the brand nor the maker is clear from this side, so the photo is scored on the read only (no expected catalogue rows) until the maintainer says what it is. Location and camera data were removed from the file. Added 2026-10-14."
-    }
+      "notes": "Held in the hand: a black bottle whose label is a large brush mark like 1+1 (the maintainer's file name), with 山廃越淡麗 / 山廃山田錦, \"YAMAHAI BLEND\" and 越淡麗50%使用+山田錦50%使用. It is 1+1 -Yamahai Blend-, a KURAND bottling from Niigata (the maintainer, 2026-10-14): a yamahai blend of 50% Echitanrei and 50% Yamadanishiki, polished to 50%. Not in the catalogue, so the right answer is no match. The maker is not on this side and is not known; the brewery field holds 不明 (unknown). Location and camera data were removed from the file. Added 2026-10-14."
+    },
+    "expectedBrandIds": []
   },
   "akagisan_hakuko_multiple_shelf_with_pricetag.jpg": {
     "name_ja": "赤城山",
@@ -4936,7 +4939,8 @@
         "name_ja": "GLOW",
         "product": "EP05 芋焼酎 25%",
         "drink": "shochu",
-        "expectedBrandIds": []
+        "expectedBrandIds": [],
+        "brewery_ja": "若潮酒造"
       }
     ],
     "also": {
@@ -4949,7 +4953,7 @@
     "provenance": {
       "source": "maintainer_shop_photo",
       "rightsCleared": true,
-      "notes": "NOT SAKE, TWO BOTTLES: two sweet-potato shochu on a shop shelf in Japan with their price cards, DAIYAME (だいやめ, HAMADA SYUZOU) with an award card hung on its neck, and GLOW EP05 in a green label. The shelf's glass reflected the person taking the photo, holding the phone; that corner is blurred and the file was re-encoded for it. Location and camera data were removed from the file. Added 2026-10-14."
+      "notes": "NOT SAKE, TWO BOTTLES: two sweet-potato shochu on a shop shelf in Japan with their price cards, DAIYAME (だいやめ, HAMADA SYUZOU) with an award card hung on its neck, and GLOW EP05 in a green label. The shelf's glass reflected the person taking the photo, holding the phone; that corner is blurred and the file was re-encoded for it. Location and camera data were removed from the file. Added 2026-10-14. GLOW EP05 is a honkaku imo shochu of 若潮酒造 (Wakashio Shuzo, Kagoshima), per the importer's description the maintainer passed on."
     }
   },
   "dassai_kidoizumi_on_table.jpg": {
@@ -5007,7 +5011,8 @@
       {
         "name_ja": "Daybreak",
         "product": "特別純米",
-        "expectedBrandIds": []
+        "expectedBrandIds": [],
+        "brewery_ja": "藤井酒造"
       }
     ],
     "also": {
@@ -5019,7 +5024,7 @@
     "provenance": {
       "source": "maintainer_shop_photo",
       "rightsCleared": true,
-      "notes": "A SHOP FRIDGE in Germany through its glass door: dark bottles, the clearest with 夜の帝王 on its label, and two printed price tags, \"Forever 20 / Tokubetsujunmai\" and \"Daybreak / Tokubetsujunmai\", as the maintainer's file name says. Which bottle the second tag belongs to cannot be told; its maker is not on the tag. Location and camera data were removed from the file. Added 2026-10-14."
+      "notes": "A SHOP FRIDGE in Germany through its glass door: dark bottles, the clearest with 夜の帝王 on its label, and two printed price tags, \"Forever 20 / Tokubetsujunmai\" and \"Daybreak / Tokubetsujunmai\", as the maintainer's file name says. Which bottle the second tag belongs to cannot be told. Daybreak is a tokubetsu junmai of 藤井酒造 (Takehara, Hiroshima), the maker of 夜の帝王 (the maintainer, 2026-10-14); the catalogue has no row for it. Location and camera data were removed from the file. Added 2026-10-14."
     }
   },
   "fudoh_fusakogane_migaki_80_junmainama_nabedana_clear.jpg": {
@@ -5244,7 +5249,7 @@
     "provenance": {
       "source": "maintainer_own_bottle",
       "rightsCleared": true,
-      "notes": "Harima Barrel Craft, a KURAND bottling, held in the hand: 播磨 in gold and \"BARREL CRAFT\" on a dark label patterned like wood. Not in the catalogue. The maker is not on this side. Location and camera data were removed from the file. Added 2026-10-14."
+      "notes": "Harima Barrel Craft, a KURAND bottling, held in the hand: 播磨 in gold and \"BARREL CRAFT\" on a dark label patterned like wood. A junmai daiginjo made with the KURAND platform (the maintainer). Not in the catalogue. The maker is not on this side. Location and camera data were removed from the file. Added 2026-10-14."
     }
   },
   "harima_barrel_craft_side.jpg": {
