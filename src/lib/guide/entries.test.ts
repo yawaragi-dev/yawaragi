@@ -63,6 +63,13 @@ describe('the Learn entries', () => {
     }
   })
 
+  it.each([['en', en], ['de', de]] as const)('name every group in %s, on the index and above its entries', (_, messages) => {
+    for (const group of GUIDE_GROUPS) {
+      expect(messages.learn.groupKicker[group as keyof typeof messages.learn.groupKicker], group).toBeTruthy()
+      if (group !== 'start') expect(messages.learn.groups[group as keyof typeof messages.learn.groups], group).toBeTruthy()
+    }
+  })
+
   it('never use promotional or health language (JMStV)', () => {
     const text = JSON.stringify([en.learn, de.learn]).toLowerCase()
     for (const banned of ['buy now', 'healthy', 'gesund', 'kaufen', 'good for you']) {

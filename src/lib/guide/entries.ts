@@ -38,6 +38,13 @@ const NTA_2022: GuideSource = {
   url: 'https://www.nta.go.jp/law/kokuji/220729/01.htm',
 }
 
+const NTA_CATEGORIES: GuideSource = {
+  label: 'National Tax Agency, “酒のしおり” (2025), “酒税法における酒類の分類及び定義”',
+  url: 'https://www.nta.go.jp/taxes/sake/shiori-gaikyo/shiori/2025/pdf/0009.pdf',
+}
+
+/** The day each entry was last checked against its sources. An entry that
+ *  does not say was checked on the day "Learn" shipped. */
 const VERIFIED = '2026-10-11'
 
 const ENTRIES = [
@@ -338,8 +345,47 @@ const ENTRIES = [
       },
     ],
   },
+  {
+    // Design v1.7 §18 "Around sake" (89). Linked from §5a's `not_sake`
+    // outcome. No drink's or maker's name, like every entry (ADR-0026).
+    slug: 'other-japanese-drinks',
+    group: 'around',
+    kanji: '日本酒とほかのお酒',
+    romaji: 'nihonshu to hoka no osake',
+    facts: [
+      { id: 'sake', kanji: '清酒', romaji: 'seishu' },
+      { id: 'craftSake', kanji: 'クラフトサケ', romaji: 'kurafuto sake' },
+      { id: 'shochu', kanji: '焼酎', romaji: 'shōchū' },
+      { id: 'awamori', kanji: '泡盛', romaji: 'awamori' },
+      { id: 'umeshu', kanji: '梅酒', romaji: 'umeshu' },
+      { id: 'liqueur', kanji: 'リキュール', romaji: 'rikyūru' },
+    ],
+    paragraphs: 2,
+    related: ['how-to-read-a-label', 'grades'],
+    sources: [
+      NTA_CATEGORIES,
+      {
+        label: 'National Tax Agency, “酒類の表示方法チェックシート（各品目共通）” (the labelling duties of Article 86-5)',
+        url: 'https://www.nta.go.jp/taxes/sake/qa/11/pdf/011.pdf',
+      },
+      {
+        label: 'National Tax Agency, geographical indication “琉球”, production standard',
+        url: 'https://www.nta.go.jp/taxes/sake/hyoji/chiri/pdf/0020008-114_2.pdf',
+      },
+      {
+        label: 'National Tax Agency, “Product Specification of Geographical Indication 和歌山梅酒 (Wakayama Umeshu)”',
+        url: 'https://www.nta.go.jp/english/taxes/liquor_administration/02_11.htm',
+      },
+      {
+        label: 'Craft Sake Brewery Association, on what craft sake is',
+        url: 'https://craftsakebreweries.com/index.html',
+      },
+    ],
+    verifiedOn: '2026-10-14',
+  },
 ] as const satisfies ReadonlyArray<
   Omit<GuideEntry, 'source' | 'verifiedOn' | 'facts'> & {
+    verifiedOn?: string
     facts: ReadonlyArray<{ id: string; kanji?: string; romaji?: string; note?: boolean }>
   }
 >
@@ -348,7 +394,7 @@ export type GuideSlug = (typeof ENTRIES)[number]['slug']
 
 /** Every entry, parsed, in index order. */
 export const GUIDE_ENTRIES: readonly GuideEntry[] = ENTRIES.map((entry) =>
-  GuideEntrySchema.parse({ ...entry, source: 'manual_curation', verifiedOn: VERIFIED }),
+  GuideEntrySchema.parse({ verifiedOn: VERIFIED, ...entry, source: 'manual_curation' }),
 )
 
 export const GUIDE_SLUGS: readonly GuideSlug[] = ENTRIES.map((entry) => entry.slug)
