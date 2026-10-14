@@ -17,10 +17,11 @@ import {
   ClockCounterClockwise,
   EyeSlash,
   HandPalm,
-  BeerBottle,
+  Drop,
   SquaresFour,
   ArrowsClockwise,
-  ImageSquare,
+  Receipt,
+  SelectionSlash,
   HourglassMedium,
   ImageBroken,
   Lightning,
@@ -48,7 +49,7 @@ import { TastingLogPanel } from '@/components/journal/tasting-log-panel'
 import { OtherCandidates } from '@/components/scan/other-candidates'
 import { ScanBottlings } from '@/components/scan/scan-bottlings'
 import { bottlingNameFromRead } from '@/lib/scan/read-bottling'
-import { ScanOutcome, readingFor, withReading, type OutcomeCandidate } from '@/components/scan/scan-outcome'
+import { ScanOutcome, readName, type OutcomeCandidate } from '@/components/scan/scan-outcome'
 import { ScanResultCard } from '@/components/scan/scan-result-card'
 import type { DebugEvent } from '@/lib/debug/debug-log'
 import { appendDebugEvents } from '@/lib/debug/debug-store'
@@ -127,9 +128,9 @@ interface ScanFormProps {
  */
 /** The three §5a outcomes for a photo that is not of one bottle. */
 const NOT_ONE_BOTTLE = {
-  menu: { testId: 'scan-result-menu', icon: ListBullets },
+  menu: { testId: 'scan-result-menu', icon: Receipt },
   several_bottles: { testId: 'scan-result-several-bottles', icon: SquaresFour },
-  no_bottle: { testId: 'scan-result-no-bottle', icon: ImageSquare },
+  no_bottle: { testId: 'scan-result-no-bottle', icon: SelectionSlash },
 } as const
 
 export function ScanForm({ locale, debugMode = false, canLog = false }: ScanFormProps) {
@@ -569,10 +570,7 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
                   kanji: view.brandDivergence.storedRomaji ? view.brandDivergence.stored : null,
                   where: view.breweryRomaji ?? view.extraction.brewery_romaji ?? view.extraction.brewery_ja,
                   reason: tOutcome('breweryOnly.reason', {
-                    extracted: withReading(
-                      view.extraction.name_ja,
-                      readingFor(view.extraction.name_ja, view.extraction.name_ja, view.extraction.name_romaji),
-                    ),
+                    extracted: readName(view.extraction.name_ja, view.extraction.name_romaji),
                   }),
                 },
               ],
@@ -683,9 +681,9 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
             </div>
           </ScanOutcome>
         ) : view.extraction.legibility === 'no_text' ? (
-          // Not in the design yet (docs/design-questions.md, G): the photo is
-          // sharp and this side of the bottle has no writing, so "retake it"
-          // would be the wrong advice.
+          // Design v1.7 §5a `no_text_this_side` (75): the photo is sharp and
+          // this side has no writing, so "retake it" would be the wrong advice.
+          // The photo back shows which side that was.
           <ScanOutcome
             testId="scan-result-no-text"
             icon={icon(ArrowsClockwise)}
@@ -693,6 +691,8 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
             title={tOutcome('noText.title')}
             body={tOutcome('noText.body')}
             onRescan={onPickClick}
+            primaryRescan
+            photo={photoUrl ? { url: photoUrl, caption: tOutcome('noText.photo') } : undefined}
             bothPhotos={bothPhotosRow(view.bothPhotos)}
           />
         ) : (
@@ -713,13 +713,13 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
           />
         )
       case 'not_sake':
-        // Not in the design yet (questions for the designers, docs/design-questions.md):
-        // the screen says what the label says the drink is, and keeps the
-        // read editable so a wrong call is one "Search again" away.
+        // Design v1.7 §5a `not_sake` (71): the screen says what the label
+        // says the drink is, and keeps the read editable so a wrong call is
+        // one "Search again" away. No "Keep it anyway" (open decision 12).
         return (
           <ScanOutcome
             testId="scan-result-not-sake"
-            icon={icon(BeerBottle)}
+            icon={icon(Drop)}
             kicker={tOutcome('notSake.kicker')}
             title={tOutcome(`notSake.title.${view.drink}`)}
             body={`${tOutcome(`notSake.about.${view.drink}`)} ${tOutcome('notSake.body')}`}
@@ -742,7 +742,9 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
             title={tOutcome(`notOneBottle.${view.subject}.title`)}
             body={tOutcome(`notOneBottle.${view.subject}.body`)}
             onRescan={onPickClick}
-            // With no bottle in the photo there is no read worth fixing.
+            // Design v1.7.1 (90): with no bottle there is no read worth
+            // fixing, and shooting again is the whole answer.
+            primaryRescan={view.subject === 'no_bottle'}
             read={
               view.subject === 'no_bottle'
                 ? undefined

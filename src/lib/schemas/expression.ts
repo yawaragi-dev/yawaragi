@@ -21,6 +21,10 @@ import type { VersionedRecordCodec } from '@/lib/collection/versioned-record'
 // No `source` field: like a JournalEntry's note, this is the User's own words,
 // shown only to them and labelled "Your own entry" wherever it renders. It is
 // never presented as catalogue fact, so ADR-0005's taxonomy does not apply.
+// The one exception is a name kept from a scan while it still holds the
+// model's Latin reading: `aiName` / `aiBrewery` mark that (design v1.7.1, H3)
+// so the page can say "Reading by AI", and a rename clears the mark.
+// Optional and additive, so v1 rows without them still parse.
 //
 // VERSIONED (ADR-0024): stored rows carry `schemaVersion`. Grade, rice,
 // polishing and size are the expected v2 — §10's "About the sake" will set
@@ -63,6 +67,10 @@ export const ExpressionSchema = z
     /** The brewery as typed. Only kept without a line — with one, the brewery
      *  is the catalogue's. */
     brewery: Text.optional(),
+    /** The name is still the Latin reading the scan's model gave. */
+    aiName: z.literal(true).optional(),
+    /** The brewery is still the Latin reading the scan's model gave. */
+    aiBrewery: z.literal(true).optional(),
     /** Epoch ms the Expression was added. */
     createdAt: z.number().int().nonnegative(),
     /** Epoch ms of the last change (renamed, linked to a line). */

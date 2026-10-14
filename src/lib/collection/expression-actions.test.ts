@@ -172,6 +172,27 @@ describe('renaming a bottling you added', () => {
     expect((await store().read(USER))[0]!.brewery).toBeUndefined()
   })
 
+  it('stops calling a name an AI reading once the visitor has written their own', async () => {
+    const added = await addOwnBottling({
+      brandId: null,
+      name: 'Kyōgoku (京極)',
+      brewery: 'Niseko Shuzō (二世古酒造)',
+      aiName: true,
+      aiBrewery: true,
+    })
+    const id = added.status === 'ok' ? added.expressionId : ''
+    expect((await store().read(USER))[0]).toMatchObject({ aiName: true, aiBrewery: true })
+
+    // Renamed, the brewery kept as it was: only the name is theirs now.
+    await renameOwnBottling({ expressionId: id, name: 'Kyogoku Honjozo', brewery: 'Niseko Shuzō (二世古酒造)' })
+    const renamed = (await store().read(USER))[0]!
+    expect(renamed.aiName).toBeUndefined()
+    expect(renamed.aiBrewery).toBe(true)
+
+    await renameOwnBottling({ expressionId: id, name: 'Kyogoku Honjozo', brewery: 'Niseko' })
+    expect((await store().read(USER))[0]!.aiBrewery).toBeUndefined()
+  })
+
   it('leaves the brewery of a bottling of a sake to the catalogue', async () => {
     const id = await seedBottlingOfASake()
     expect(await renameOwnBottling({ expressionId: id, name: 'Poet', brewery: '李白酒造' })).toEqual({ status: 'ok' })

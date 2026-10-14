@@ -177,12 +177,12 @@ WHAT THE PHOTO SHOWS (subject). Decide this first:
    - one_bottle: one bottle (or its label) is the subject. A close-up of a label, a label filling the frame, or only part of a bottle is one_bottle too. A neighbouring bottle at the edge of the frame or on the shelf behind does not change this: read the bottle the photo is of.
    - several_bottles: two or more bottles share the frame and none is clearly the one being photographed. Read the most prominent one into the fields below.
    - menu: a menu, a drinks list, a shelf card or a price list — printed text naming drinks, not a bottle. Read the first or most prominent drink into the fields below.
-   - no_bottle: there is no bottle, bottle label, can, carton or drinks list in the photo at all — a loose tag or leaflet that is not a bottle's label, a glass, a table, a room. If you can see any part of a bottle or its label, it is not no_bottle. Fill name_ja and brewery_ja with "?" unless the photo prints a drink's name.
+   - no_bottle: there is no bottle, bottle label, can, carton or drinks list in the photo at all — a loose tag or leaflet that is not a bottle's label, a glass, a table, a room. If you can see any part of a bottle or its label, it is not no_bottle. Fill name_ja and brewery_ja with "?" unless the photo prints a drink's name — one of the two exceptions to rule 5.
 
 LEGIBILITY (legibility). Say what there was to read on the subject:
    - read: you read a name.
    - unclear: there is writing, but blur, glare, darkness or distance kept you from reading a name.
-   - no_text: the photo is clear and the side of the bottle that faces the camera carries no writing at all — a drawing, a pattern, bare glass. Do not name a sake from a picture alone: fill name_ja and brewery_ja with "?".
+   - no_text: the photo is clear and the side of the bottle that faces the camera carries no writing at all — a drawing, a pattern, bare glass. Do not name a sake from a picture alone: fill name_ja and brewery_ja with "?" — the other exception to rule 5. On every other photo "?" stays forbidden.
 
 WHAT THE DRINK IS (drink). Go by the words printed in the photo, not by the maker or the look of the bottle:
    - sake: the label prints 清酒, 日本酒, "Sake", or a sake grade (純米, 吟醸, 大吟醸, 本醸造 and their combinations). Craft sake (クラフトサケ, "Craft Sake", その他の醸造酒 from a sake maker: brewed like sake with hops, fruit or another koji added) counts as sake here.
@@ -197,7 +197,7 @@ WHAT THE DRINK IS (drink). Go by the words printed in the photo, not by the make
 BREWERY PRINTED (brewery_printed). Say whether this photo prints the brewery's name, and decide it before you write brewery_ja:
    - true: the brewery's name is on the label in this photo, in any script, and brewery_ja is what you read there.
    - false: the photo does not print the brewery (a front label often shows the brand alone), or you cannot read it there, and brewery_ja is the brewery you know makes this brand.
-   Being sure which brewery makes a sake does not make it printed. Answer true only for text you can point to in the photo. When it is false, still fill brewery_ja with your best knowledge.
+   Being sure which brewery makes a sake does not make it printed. Answer true only for text you can point to in the photo. When it is false, still fill brewery_ja with your best knowledge — never "?": a brewery that is not printed is false here, not unknown.
 
 OTHER NAMES (other_names). After choosing name_ja, list every OTHER name the label prints for this same sake, verbatim, one per entry, at most 5:
    - the product or sub-line name printed beside the brand — 縁 on a 勝山 label, 山ノ霞 on a 七賢 label, あわ咲き, "Awasaki", "Gold", "Barrel", "Wandering Poet". On an importer's back label the title line usually reads "Sake BRAND Product" (e.g. "Sake FUKUJU Awasaki Sparkling") or (PRODUCT NAME) "MAKER": put the brand in name_ja and the product words in other_names.

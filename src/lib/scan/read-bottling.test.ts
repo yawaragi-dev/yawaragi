@@ -9,7 +9,7 @@ describe('bottlingNameFromRead', () => {
   it('leads a kanji product name with its reading, for a visitor who cannot read it', () => {
     expect(
       bottlingNameFromRead('Mizuo', { product_name: '一味', product_name_romaji: 'Ichiaji', grade: 'junmai' }),
-    ).toBe('Mizuo Ichiaji 一味 Junmai')
+    ).toBe('Mizuo Ichiaji (一味) Junmai')
     expect(
       bottlingNameFromRead('Rihaku', { product_name: 'Wandering Poet', product_name_romaji: 'Wandering Poet' }),
     ).toBe('Rihaku Wandering Poet')

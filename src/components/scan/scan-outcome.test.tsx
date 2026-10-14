@@ -117,27 +117,34 @@ describe('§5a — a scan outcome that is not a match', () => {
     expect(screen.queryByTestId('scan-outcome-other-side')).toBeNull()
   })
 
-  it('says in Latin letters what was read, for a visitor who cannot read the kanji', () => {
+  it('shows what was read in Latin letters, with the label\'s own words under it', () => {
     renderOutcome({
       read: { name: '京極', brewery: '二世古酒造', nameRomaji: 'Kyōgoku', breweryRomaji: 'Niseko Shuzō', badge: null },
     })
-    expect(screen.getByTestId('scan-outcome-read-name-reading').textContent).toBe('In Latin letters: Kyōgoku')
-    expect(screen.getByTestId('scan-outcome-read-brewery-reading').textContent).toBe('In Latin letters: Niseko Shuzō')
+    expect((screen.getByTestId('scan-outcome-read-name') as HTMLInputElement).value).toBe('Kyōgoku')
+    expect((screen.getByTestId('scan-outcome-read-brewery') as HTMLInputElement).value).toBe('Niseko Shuzō')
+    expect(screen.getByTestId('scan-outcome-read-name-on-label').textContent).toBe('On the label: 京極')
+    expect(screen.getByTestId('scan-outcome-read-brewery-on-label').textContent).toBe('On the label: 二世古酒造')
   })
 
-  it('drops the reading once the visitor has typed over the name it described', () => {
+  it('searches the label\'s words until the visitor changes the name, then what they typed', () => {
     renderOutcome({ read: { name: '京極', brewery: '二世古酒造', nameRomaji: 'Kyōgoku', badge: null } })
-    fireEvent.change(screen.getByTestId('scan-outcome-read-name'), { target: { value: '京極 純米' } })
-    expect(screen.queryByTestId('scan-outcome-read-name-reading')).toBeNull()
+    expect(screen.getByRole('link', { name: 'Search again' }).getAttribute('href')).toBe(
+      `/en/search?q=${encodeURIComponent('京極')}`,
+    )
+    fireEvent.change(screen.getByTestId('scan-outcome-read-name'), { target: { value: 'Kyogoku' } })
+    expect(screen.getByRole('link', { name: 'Search again' }).getAttribute('href')).toBe('/en/search?q=Kyogoku')
+    // What the label says does not change with the field.
+    expect(screen.getByTestId('scan-outcome-read-name-on-label').textContent).toBe('On the label: 京極')
   })
 
-  it('does not repeat a name that is in Latin letters already', () => {
-    renderOutcome({ read: { name: 'DASSAI', brewery: '獺祭', nameRomaji: 'Dassai', badge: null } })
-    expect(screen.queryByTestId('scan-outcome-read-name-reading')).toBeNull()
-    expect(screen.queryByTestId('scan-outcome-read-brewery-reading')).toBeNull()
+  it('has no second line for a name the label prints in Latin letters', () => {
+    renderOutcome({ read: { name: 'DASSAI', brewery: '旭酒造', nameRomaji: 'Dassai', badge: null } })
+    expect((screen.getByTestId('scan-outcome-read-name') as HTMLInputElement).value).toBe('DASSAI')
+    expect(screen.queryByTestId('scan-outcome-read-name-on-label')).toBeNull()
   })
 
-  it('keeps an unmatched bottle under a name its owner can read', async () => {
+  it('keeps an unmatched bottle under a name its owner can read, the kanji in brackets', async () => {
     addOwnBottling.mockClear()
     addOwnBottling.mockResolvedValue({ status: 'ok', expressionId: 'exp-1' })
     renderOutcome({
@@ -145,9 +152,34 @@ describe('§5a — a scan outcome that is not a match', () => {
       read: { name: '京極', brewery: '二世古酒造', nameRomaji: 'Kyōgoku', breweryRomaji: 'Niseko Shuzō', badge: null },
     })
     fireEvent.click(screen.getByTestId('scan-outcome-keep-add'))
-    await waitFor(() => expect(addOwnBottling).toHaveBeenCalledOnce())
-    expect(JSON.stringify(addOwnBottling.mock.calls[0])).toContain('Kyōgoku 京極')
-    expect(JSON.stringify(addOwnBottling.mock.calls[0])).toContain('Niseko Shuzō 二世古酒造')
+    await waitFor(() =>
+      expect(addOwnBottling).toHaveBeenCalledWith({
+        brandId: null,
+        name: 'Kyōgoku (京極)',
+        brewery: 'Niseko Shuzō (二世古酒造)',
+        aiName: true,
+        aiBrewery: true,
+      }),
+    )
+  })
+
+  it('does not call a name the visitor typed an AI reading', async () => {
+    addOwnBottling.mockClear()
+    addOwnBottling.mockResolvedValue({ status: 'ok', expressionId: 'exp-2' })
+    renderOutcome({
+      canKeep: true,
+      read: { name: '京極', brewery: '二世古酒造', nameRomaji: 'Kyōgoku', breweryRomaji: 'Niseko Shuzō', badge: null },
+    })
+    fireEvent.change(screen.getByTestId('scan-outcome-read-name'), { target: { value: 'Kyogoku Karakuchi' } })
+    fireEvent.click(screen.getByTestId('scan-outcome-keep-add'))
+    await waitFor(() =>
+      expect(addOwnBottling).toHaveBeenCalledWith({
+        brandId: null,
+        name: 'Kyogoku Karakuchi (京極)',
+        brewery: 'Niseko Shuzō (二世古酒造)',
+        aiBrewery: true,
+      }),
+    )
   })
 
   it('has nothing to keep without a name', () => {

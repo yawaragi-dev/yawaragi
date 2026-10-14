@@ -40,6 +40,8 @@ export async function addOwnBottling(input: AddOwnBottlingInput): Promise<AddOwn
   if (!parsed.success) return { status: 'invalid_input' }
   const { brandId, name } = parsed.data
   const brewery = parsed.data.brandId === null ? parsed.data.brewery || undefined : undefined
+  const aiName = parsed.data.brandId === null && parsed.data.aiName
+  const aiBrewery = parsed.data.brandId === null && brewery !== undefined && parsed.data.aiBrewery
 
   return withMaintainerCollection(async ({ userId, expressions }) => {
     const brand = brandId === null ? null : await lookupBrand(brandId)
@@ -66,6 +68,8 @@ export async function addOwnBottling(input: AddOwnBottlingInput): Promise<AddOwn
       line: brand ? { nameKanji: brand.nameKanji, nameRomaji: brand.nameRomaji } : null,
       name,
       ...(brewery ? { brewery } : {}),
+      ...(aiName ? { aiName: true as const } : {}),
+      ...(aiBrewery ? { aiBrewery: true as const } : {}),
       createdAt: now,
       updatedAt: now,
     }
@@ -110,10 +114,13 @@ export async function renameOwnBottling(
 
     const now = Date.now()
     const next: Record<string, unknown> = { ...existing, name, updatedAt: now }
+    // A name the visitor wrote is theirs, not a reading (design v1.7.1, H3).
+    if (name !== existing.name) delete next.aiName
     // The brewery is the visitor's to set only while there is no sake.
     if (existing.brandId === null && parsed.data.brewery !== undefined) {
       if (parsed.data.brewery) next.brewery = parsed.data.brewery
       else delete next.brewery
+      if ((parsed.data.brewery || undefined) !== existing.brewery) delete next.aiBrewery
     }
     const checked = ExpressionSchema.safeParse(next)
     if (!checked.success) return { status: 'invalid_input' }

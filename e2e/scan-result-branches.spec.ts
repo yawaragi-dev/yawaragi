@@ -435,6 +435,7 @@ test.describe('scan result branches (#109 PR B)', () => {
     await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
 
     await expect(page.getByTestId('scan-result-no-bottle')).toContainText('We can’t see a bottle in this photo')
+    await expect(page.getByTestId('scan-outcome-rescan-primary')).toHaveText('Scan again')
     await expect(page.getByTestId('scan-outcome-read')).toHaveCount(0)
     await context.close()
   })
@@ -450,10 +451,13 @@ test.describe('scan result branches (#109 PR B)', () => {
 
     await expect(page.getByTestId('scan-result-no-text')).toContainText('Turn the bottle to the side with writing')
     await expect(page.getByTestId('scan-result-low-confidence')).toHaveCount(0)
+    // v1.7 G2: the photo back, so the visitor sees which side that was.
+    await expect(page.getByTestId('scan-outcome-photo')).toContainText('The side you photographed')
+    await expect(page.getByTestId('scan-outcome-rescan-primary')).toHaveText('Scan again')
     await context.close()
   })
 
-  test('a read that is not in the catalogue is also shown in Latin letters', async ({ browser }) => {
+  test('a read that is not in the catalogue is shown in Latin letters, with the label\'s words under it', async ({ browser }) => {
     const { context, page } = await scanPageWith(browser, [
       injectionCookie({
         name_ja: '架空銘柄零',
@@ -466,8 +470,10 @@ test.describe('scan result branches (#109 PR B)', () => {
     await page.goto('/en/scan')
     await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
 
-    await expect(page.getByTestId('scan-outcome-read-name-reading')).toHaveText('In Latin letters: Kakū Meigara Zero')
-    await expect(page.getByTestId('scan-outcome-read-brewery-reading')).toHaveText('In Latin letters: Kakū Shuzō Zero')
+    await expect(page.getByTestId('scan-outcome-read-name')).toHaveValue('Kakū Meigara Zero')
+    await expect(page.getByTestId('scan-outcome-read-name-on-label')).toHaveText('On the label: 架空銘柄零')
+    await expect(page.getByTestId('scan-outcome-read-brewery')).toHaveValue('Kakū Shuzō Zero')
+    await expect(page.getByTestId('scan-outcome-read-brewery-on-label')).toHaveText('On the label: 架空酒造零')
     await context.close()
   })
 

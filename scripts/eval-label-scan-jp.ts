@@ -261,7 +261,7 @@ function loadSavedReads(): SavedReadsFile {
  */
 function writeSavedReads(saved: SavedReadsFile): void {
   // The stub reads nothing; keeping its answers would only churn the file.
-  const { 'e2e-stub': _stub, ...providers } = saved.providers
+  const providers = Object.fromEntries(Object.entries(saved.providers).filter(([key]) => key !== 'e2e-stub'))
   writeFileSync(SAVED_READS_PATH, `${JSON.stringify({ ...saved, providers }, null, 1)}\n`)
 }
 

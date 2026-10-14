@@ -24,12 +24,18 @@ function useAddUnlistedBottling() {
   const [failed, setFailed] = useState(false)
   const [pending, startTransition] = useTransition()
 
-  function add(name: string, brewery?: string) {
+  function add(name: string, brewery?: string, read?: { aiName?: boolean; aiBrewery?: boolean }) {
     const trimmed = name.trim()
     if (trimmed.length === 0 || pending) return
     setFailed(false)
     startTransition(async () => {
-      const result = await addOwnBottling({ brandId: null, name: trimmed, brewery })
+      const result = await addOwnBottling({
+        brandId: null,
+        name: trimmed,
+        brewery,
+        ...(read?.aiName ? { aiName: true } : {}),
+        ...(read?.aiBrewery && brewery?.trim() ? { aiBrewery: true } : {}),
+      })
       if (result.status !== 'ok') {
         setFailed(true)
         return
@@ -48,9 +54,20 @@ function useAddUnlistedBottling() {
 /**
  * §5a's dashed "Keep it anyway" card, shown whenever something was read. It
  * saves the name and brewery as they stand in "What we read" above it — the
- * visitor may have just fixed them from the label.
+ * visitor may have just fixed them from the label. `aiName` / `aiBrewery`
+ * say a field still holds the model's Latin reading (design v1.7.1, H3).
  */
-export function KeepItAnyway({ name, brewery }: { name: string; brewery: string }) {
+export function KeepItAnyway({
+  name,
+  brewery,
+  aiName = false,
+  aiBrewery = false,
+}: {
+  name: string
+  brewery: string
+  aiName?: boolean
+  aiBrewery?: boolean
+}) {
   const t = useTranslations('bottling')
   const { add, pending, failed } = useAddUnlistedBottling()
 
@@ -71,7 +88,7 @@ export function KeepItAnyway({ name, brewery }: { name: string; brewery: string 
       <button
         // The outcome screen sits inside the scan form; this must not submit it.
         type="button"
-        onClick={() => add(name, brewery)}
+        onClick={() => add(name, brewery, { aiName, aiBrewery })}
         disabled={name.trim().length === 0 || pending}
         aria-busy={pending}
         className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-ash-300 px-4 text-subtle font-medium text-ink transition-colors hover:bg-ash-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600 disabled:opacity-50"
