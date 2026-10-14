@@ -2,6 +2,25 @@ import { describe, expect, it, vi } from 'vitest'
 import { transliterateBatch, transliterationRequest } from './romaji'
 
 describe('transliterateBatch', () => {
+  it('lets the first name finish alone, so the others can read the prompt from the cache', async () => {
+    let inFlight = 0
+    const seen: number[] = []
+    const call = async (name: string) => {
+      inFlight++
+      seen.push(inFlight)
+      await new Promise((resolve) => setTimeout(resolve, 5))
+      inFlight--
+      return name
+    }
+    await transliterateBatch(
+      ['', '獺祭', '八海山', '久保田', '田酒'].map((nameKanji, id) => ({ id, nameKanji })),
+      { call, concurrency: 4 },
+    )
+    // The blank row costs no call; the first real one runs by itself.
+    expect(seen[0]).toBe(1)
+    expect(Math.max(...seen.slice(1))).toBeGreaterThan(1)
+  })
+
   it('returns one result per input, in the same order', async () => {
     const call = vi.fn(async (kanji: string) => `${kanji}-rom`)
     const result = await transliterateBatch(
