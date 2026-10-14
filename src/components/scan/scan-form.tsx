@@ -731,6 +731,7 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
               breweryRomaji: view.extraction.brewery_romaji,
               badge: readBadge('scan-outcome-not-sake-badge'),
             }}
+            aboutOtherDrinks
           />
         )
       case 'not_one_bottle':

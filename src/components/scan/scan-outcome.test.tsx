@@ -182,6 +182,13 @@ describe('§5a — a scan outcome that is not a match', () => {
     )
   })
 
+  it('points a bottle that is not sake to what sets sake apart', () => {
+    renderOutcome({ aboutOtherDrinks: true })
+    expect(screen.getByRole('link', { name: 'Sake and the other Japanese drinks' }).getAttribute('href')).toBe(
+      '/en/learn/other-japanese-drinks',
+    )
+  })
+
   it('has nothing to keep without a name', () => {
     renderOutcome({ canKeep: true, read: { name: '', brewery: '伴野酒造', badge: null } })
     expect((screen.getByRole('button', { name: 'Add this bottling' }) as HTMLButtonElement).disabled).toBe(true)

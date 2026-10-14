@@ -409,6 +409,9 @@ test.describe('scan result branches (#109 PR B)', () => {
     await expect(page.getByTestId('scan-outcome-read-name')).toHaveValue('赤兎馬')
     await expect(page.getByTestId('scan-outcome-rescan')).toBeVisible()
     await expect(page.getByTestId('scan-camera')).toHaveCount(0)
+    // v1.7: the third exit explains what sets sake apart.
+    await outcome.getByTestId('scan-outcome-other-drinks').click()
+    await expect(page).toHaveURL(/\/en\/learn\/other-japanese-drinks$/)
     await context.close()
   })
 
