@@ -5235,7 +5235,7 @@
   },
   "harima_barrel_craft_clear.jpg": {
     "name_ja": "播磨",
-    "brewery_ja": "不明",
+    "brewery_ja": "富久錦",
     "bottle": "harima-barrel-craft",
     "view": "front",
     "expectedBrandIds": [],
@@ -5249,12 +5249,12 @@
     "provenance": {
       "source": "maintainer_own_bottle",
       "rightsCleared": true,
-      "notes": "Harima Barrel Craft, a KURAND bottling, held in the hand: 播磨 in gold and \"BARREL CRAFT\" on a dark label patterned like wood. A junmai daiginjo made with the KURAND platform (the maintainer). Not in the catalogue. The maker is not on this side. Location and camera data were removed from the file. Added 2026-10-14."
+      "notes": "Harima Barrel Craft, a KURAND bottling, held in the hand: 播磨 in gold and \"BARREL CRAFT\" on a dark label patterned like wood. A junmai daiginjo made with the KURAND platform (the maintainer). Not in the catalogue. The maker is not on this side. Location and camera data were removed from the file. Added 2026-10-14. The maker is 富久錦 of Kasai, Hyōgo (read off the back label by one model and confirmed by the maintainer, 2026-10-14). The catalogue has 富久錦's own sake, which is not this bottle."
     }
   },
   "harima_barrel_craft_side.jpg": {
     "name_ja": "播磨",
-    "brewery_ja": "不明",
+    "brewery_ja": "富久錦",
     "bottle": "harima-barrel-craft",
     "view": "side",
     "expectedBrandIds": [],
@@ -5268,7 +5268,7 @@
     "provenance": {
       "source": "maintainer_own_bottle",
       "rightsCleared": true,
-      "notes": "The same bottle turned to its back label, which prints 日本酒, 純米大吟醸, the rice and 50% polishing, a maker in 兵庫県加西市 in small type, and KURAND with a lot number. The maker's name is not legible enough here to be recorded; the brewery field holds 不明 (unknown). Location and camera data were removed from the file. Added 2026-10-14."
+      "notes": "The same bottle turned to its back label, which prints 日本酒, 純米大吟醸, the rice and 50% polishing, a maker in 兵庫県加西市 in small type, and KURAND with a lot number. Location and camera data were removed from the file. Added 2026-10-14. The maker is 富久錦 of Kasai, Hyōgo (read off the back label by one model and confirmed by the maintainer, 2026-10-14). The catalogue has 富久錦's own sake, which is not this bottle."
     }
   },
   "hokushika_yuki_from_top.jpg": {
@@ -5643,19 +5643,21 @@
   },
   "shinshu_nekomasamune_multiple_shelf_with_pricetag.jpg": {
     "name_ja": "信州ねこ正宗",
-    "brewery_ja": "不明",
+    "brewery_ja": "舞姫酒造",
     "view": "front",
     "subject": "several_bottles",
     "items": [
       {
         "name_ja": "信州ねこ正宗",
         "product": "HACHIWARE 本醸造",
-        "expectedBrandIds": []
+        "expectedBrandIds": [],
+        "brewery_ja": "舞姫酒造"
       },
       {
         "name_ja": "信州ねこ正宗",
         "product": "SHIRONEKO 純米吟醸",
-        "expectedBrandIds": []
+        "expectedBrandIds": [],
+        "brewery_ja": "舞姫酒造"
       }
     ],
     "also": {
@@ -5669,7 +5671,7 @@
     "provenance": {
       "source": "maintainer_shop_photo",
       "rightsCleared": true,
-      "notes": "TWO BOTTLES OF ONE SAKE in a shop fridge in Germany with price tags: Shinshu Nekomasamune Honjozo (a black-and-white cat, HACHIWARE) and Junmaiginjo (a white cat, SHIRONEKO), 信州ねこ正宗 down each neck. Not in the catalogue; the maker is not legible. More bottles behind and below. Location and camera data were removed from the file. Added 2026-10-14."
+      "notes": "TWO BOTTLES OF ONE SAKE in a shop fridge in Germany with price tags: Shinshu Nekomasamune Honjozo (a black-and-white cat, HACHIWARE) and Junmaiginjo (a white cat, SHIRONEKO), 信州ねこ正宗 down each neck. Not in the catalogue. The maker, 舞姫酒造 of Nagano, is not legible here; the maintainer confirmed it (2026-10-14). More bottles behind and below. Location and camera data were removed from the file. Added 2026-10-14."
     }
   },
   "shirakawago_nigorizake_clear.jpg": {
