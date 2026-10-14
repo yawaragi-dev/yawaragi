@@ -330,8 +330,7 @@ async function runSuggestAction(seed: SuggestSeed): Promise<SuggestActionState> 
             // multi-tool sequence would be disproportionate for the
             // signal here (existing suggest-action tests cover the
             // surrounding decision branches). Verified manually via
-            // `/en/suggest?seed=<N>` with the `yawaragi_debug=1` cookie
-            // and `RATE_LIMIT_BYPASS=1` env — the debug panel shows
+            // `/en/suggest?seed=<N>&debug=1` on a dev server and `RATE_LIMIT_BYPASS=1` env — the debug panel shows
             // `tool-call:`, `tool-result:`, and `step complete` lines
             // for each MCP call inside the loop.
             // `onStepEnd` — AI SDK 7's name for what v6 called

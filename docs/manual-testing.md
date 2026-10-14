@@ -49,7 +49,7 @@ setJournal = (mode) => document.cookie = `yawaragi_journal_stub=${mode};path=/`
 clearJournal = () => document.cookie = 'yawaragi_journal_stub=;path=/;max-age=0'
 ```
 
-> The debug cookie (`yawaragi_debug`) is **HttpOnly** — you cannot set it from JS. Use the `?debug=1` URL param instead (below).
+> The debug cookie (`yawaragi_debug`) is **HttpOnly** and signed — you cannot set it by hand. Use the `?debug=` URL param instead (below).
 
 ### Cookie reference
 
@@ -59,7 +59,7 @@ clearJournal = () => document.cookie = 'yawaragi_journal_stub=;path=/;max-age=0'
 | `yawaragi_e2e_vision` | Inject a scan extraction `{name_ja, brewery_ja, confidence}` (base64) | `setScan(...)` — **needs #194** + `VISION_PROVIDER=e2e-stub` |
 | `yawaragi_suggest_stub` | Pick a suggest state without the env var | `setSuggest('ok')` etc. |
 | `yawaragi_journal_stub` | Stand in for a maintainer's journal on Home, Collection, Palate, the sake page and the bottling page (reads only; logging a sake or adding a bottling still needs a real maintainer sign-in). `populated` also carries one bottling of your own, at `/en/bottling/stub-bottling`, with one tasting logged against it | `setJournal('populated')` etc. |
-| `yawaragi_debug` | Debug panel + per-step server tracing (HttpOnly) | `?debug=1` URL param; `?debug=0` clears |
+| `yawaragi_debug` | Debug panel + per-step server tracing (HttpOnly, signed) | `?debug=1` on a dev server without `DEBUG_TOKEN`, `?debug=<DEBUG_TOKEN>` everywhere else; `?debug=0` clears |
 | `yawaragi_consent` | GDPR cookie-consent decision | via the cookie banner UI |
 
 ---
@@ -136,7 +136,7 @@ Env var wins over the cookie; the cookie exists so each browser context can pick
 
 ## Debug panel + server tracing
 
-Append `?debug=1` to any URL (e.g. `/en/scan?debug=1`). This stamps the HttpOnly `yawaragi_debug` cookie (24h sliding) and turns on:
+On a local dev server with no `DEBUG_TOKEN`, append `?debug=1` to any URL (e.g. `/en/scan?debug=1`). Anywhere a `DEBUG_TOKEN` is set — and on Production and Preview, where without one debug mode cannot be turned on at all — append `?debug=<DEBUG_TOKEN>` instead; `?debug=1` is then ignored (#120). Either stamps the signed HttpOnly `yawaragi_debug` cookie (24h) and turns on:
 
 - The `<DebugPanel />` overlay on every page.
 - Per-step server-side tracing through the scan / suggest flows — the `+Xs ScanAction / Vision / Sakenowa …` lines (extraction, tier decisions, lookup counts, chosen branch).

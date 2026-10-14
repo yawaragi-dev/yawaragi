@@ -45,6 +45,7 @@ vi.mock('@/lib/rate-limit/config-gate', () => ({
 import { cookies, headers } from 'next/headers'
 import { getDefaultMcpClient } from '@/lib/ai/mcp/registry'
 import { assertRateLimitConfig } from '@/lib/rate-limit/config-gate'
+import { debugCookieValue } from '@/lib/debug/debug-mode'
 import { suggestAction } from './suggest-action'
 import { MAX_FREEFORM_QUERY_LEN } from './suggest-action-state'
 
@@ -198,14 +199,16 @@ describe('suggestAction — MCP service unavailable', () => {
 
 describe('suggestAction — debug log', () => {
   it('attaches a debugLog with entered / MCP failure events when debug cookie is set', async () => {
-    // Debug is opt-in per visitor via the `yawaragi_debug=1` cookie. When
+    // Debug is opt-in via the signed `yawaragi_debug` cookie. When
     // set, the action creates a `DebugLog` and every `debugAdd(...)` call
     // in the request appends to it. The log is serialised onto the
     // action's state so the `<DebugLogPusher />` client island can push
     // it into the panel store.
     cookiesMock.mockResolvedValue({
       get: (name: string) =>
-        name === 'yawaragi_debug' ? { name, value: '1' } : undefined,
+        name === 'yawaragi_debug'
+          ? { name, value: debugCookieValue() ?? '' }
+          : undefined,
       set: () => undefined,
     } as unknown as Awaited<ReturnType<typeof cookies>>)
     headersMock.mockResolvedValue({
@@ -260,7 +263,9 @@ describe('suggestAction — debug log', () => {
     // syntactically-invalid input is thin.
     cookiesMock.mockResolvedValue({
       get: (name: string) =>
-        name === 'yawaragi_debug' ? { name, value: '1' } : undefined,
+        name === 'yawaragi_debug'
+          ? { name, value: debugCookieValue() ?? '' }
+          : undefined,
       set: () => undefined,
     } as unknown as Awaited<ReturnType<typeof cookies>>)
 
