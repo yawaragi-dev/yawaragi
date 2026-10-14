@@ -45,6 +45,7 @@ interface Injection {
   name_romaji?: string
   brewery_romaji?: string
   drink?: 'sake' | 'shochu' | 'awamori' | 'umeshu' | 'liqueur' | 'other' | 'unknown'
+  bottling?: { product_name?: string; grade?: string; styles?: string[]; polishing_ratio?: number }
 }
 
 // A read the scan cannot stand on: low confidence, and a brewery that does
@@ -388,6 +389,36 @@ test.describe('scan result branches (#109 PR B)', () => {
     await expect(page.getByTestId('scan-camera')).toHaveCount(0)
     await page.getByTestId('scan-outcome-search-again').click()
     await page.waitForURL(/\/en\/search\?q=Dassai$/)
+    await context.close()
+  })
+
+  test('a label that fits one of the visitor\'s own bottlings opens that bottling, with the line one tap away (v1.7, 85)', async ({
+    browser,
+  }, testInfo) => {
+    testInfo.skip(!dbUp, 'Sakenowa mirror not available — DB-bound spec')
+    // The populated journal stub holds "Jikon Nama 2025" as a bottling of
+    // brand 1 — 新十津川 in the mirror, whatever line name the stub carries.
+    const { context, page } = await scanPageWith(browser, [
+      injectionCookie({
+        name_ja: '新十津川',
+        brewery_ja: '金滴酒造',
+        confidence: 0.92,
+        bottling: { product_name: '2025', styles: ['nama'] },
+      }),
+      { name: 'yawaragi_journal_stub', value: 'populated', url: BASE_URL },
+    ])
+    await page.goto('/en/scan')
+    await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
+    const card = page.getByTestId('scan-result-card')
+    await expect(card).toBeVisible()
+    testInfo.skip(!(await page.getByTestId('scan-result-bottling-of').isVisible()), '新十津川 / 金滴酒造 no longer resolves to brand 1 in the mirror')
+    await expect(page.getByTestId('scan-result-kicker')).toHaveText('Your own entry · fits this label')
+    await expect(card).toContainText('Jikon Nama 2025')
+    await expect(page.getByTestId('scan-result-match-tag')).toHaveCount(0)
+
+    await page.getByTestId('scan-result-all-bottlings').click()
+    await expect(page.getByTestId('scan-result-kicker')).toHaveText('Matched from your photo')
+    await expect(page.getByTestId('scan-bottling-stub-bottling')).toBeVisible()
     await context.close()
   })
 

@@ -470,7 +470,13 @@ async function withOwnBottlings(state: ScanActionState): Promise<ScanActionState
     const own = viewer.expressions.filter((e) => e.brandId === state.brandId)
     if (own.length === 0) return state
     const fits = ownBottlingForRead(state.extraction.bottling, own)
-    const rows = own.map((e) => ({ id: e.id, name: e.name, fitsLabel: e.id === fits?.id }))
+    const rows = own.map((e) => ({
+      id: e.id,
+      name: e.name,
+      fitsLabel: e.id === fits?.id,
+      ...(e.grade ? { grade: e.grade } : {}),
+      ...(e.styles ? { styles: e.styles } : {}),
+    }))
     return { ...state, ownBottlings: rows.sort((a, b) => Number(b.fitsLabel) - Number(a.fitsLabel)) }
   } catch (err) {
     debugAdd('ScanAction', 'reading the visitor’s own bottlings threw; the match stands without them', {

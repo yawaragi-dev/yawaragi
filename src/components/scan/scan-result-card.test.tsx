@@ -50,6 +50,19 @@ describe('§5 result card — what the label says beyond the sake', () => {
     expect(screen.getByTestId('scan-result-match-tag').textContent).toBe('Sure match')
   })
 
+  it('opened on the visitor\'s own bottling, names it, links its line and shows its tags instead of a match tag', () => {
+    renderCard({
+      sakeRomaji: 'Rihaku Omachi (雄町) Junmai Ginjō Nama',
+      bottlingOf: { line: 'Rihaku', lineKanji: '李白', href: '/en/sake/846?from=scan', tags: ['Junmai Ginjō', 'Nama'] },
+    })
+    expect(screen.getByTestId('scan-result-name-romaji').textContent).toBe('Rihaku Omachi (雄町) Junmai Ginjō Nama')
+    const link = screen.getByTestId('scan-result-bottling-of')
+    expect(link.textContent).toContain('A bottling of Rihaku')
+    expect(link.getAttribute('href')).toBe('/en/sake/846?from=scan')
+    expect(screen.getByTestId('scan-result-bottling-tags').textContent).toBe('Junmai GinjōNama')
+    expect(screen.queryByTestId('scan-result-match-tag')).toBeNull()
+  })
+
   it('says nothing about the brewery when the label printed it', () => {
     renderCard({ breweryPrinted: true })
     expect(screen.queryByTestId('scan-result-brewery-not-on-label')).toBeNull()

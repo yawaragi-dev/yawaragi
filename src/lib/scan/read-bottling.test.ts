@@ -33,6 +33,17 @@ describe('bottlingNameFromRead', () => {
 })
 
 describe('ownBottlingForRead', () => {
+  it('goes by the grade and styles the visitor saved, before any grade the name spells', () => {
+    const saved = [
+      { id: 'a', name: 'Rihaku Omachi', grade: 'junmai_ginjo' as const, styles: ['Nama'] },
+      { id: 'b', name: 'Rihaku Omachi', grade: 'junmai_ginjo' as const, styles: ['Genshu'] },
+      { id: 'c', name: 'Rihaku Junmai Ginjo', grade: 'daiginjo' as const },
+    ]
+    expect(ownBottlingForRead({ grade: 'junmai_ginjo', styles: ['nama'] }, saved)?.id).toBe('a')
+    // The stored grade says daiginjo, whatever the name spells.
+    expect(ownBottlingForRead({ grade: 'junmai_ginjo' }, [saved[2]])).toBeNull()
+  })
+
   const own = [
     { id: 'a', name: 'Mizuo Junmai Ginjo' },
     { id: 'b', name: 'Mizuo 一味 Junmai' },
