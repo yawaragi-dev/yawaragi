@@ -174,10 +174,10 @@ CRITICAL — script and field-identity rules:
    - Label is a sake bottle but ALL text is unreadable → name_ja: <best Latin guess from shape or "?">, brewery_ja: <…>, confidence: 0.15
 
 WHAT THE PHOTO SHOWS (subject). Decide this first:
-   - one_bottle: one bottle (or its label) is the subject. A neighbouring bottle at the edge of the frame or on the shelf behind does not change this: read the bottle the photo is of.
+   - one_bottle: one bottle (or its label) is the subject. A close-up of a label, a label filling the frame, or only part of a bottle is one_bottle too. A neighbouring bottle at the edge of the frame or on the shelf behind does not change this: read the bottle the photo is of.
    - several_bottles: two or more bottles share the frame and none is clearly the one being photographed. Read the most prominent one into the fields below.
    - menu: a menu, a drinks list, a shelf card or a price list — printed text naming drinks, not a bottle. Read the first or most prominent drink into the fields below.
-   - no_bottle: no bottle, can, carton or drinks list is the subject — a loose tag or leaflet, a glass, a table, a room, anything else. Fill name_ja and brewery_ja with "?" unless the photo prints a drink's name.
+   - no_bottle: there is no bottle, bottle label, can, carton or drinks list in the photo at all — a loose tag or leaflet that is not a bottle's label, a glass, a table, a room. If you can see any part of a bottle or its label, it is not no_bottle. Fill name_ja and brewery_ja with "?" unless the photo prints a drink's name.
 
 LEGIBILITY (legibility). Say what there was to read on the subject:
    - read: you read a name.
@@ -210,15 +210,16 @@ LATIN READING (name_romaji, brewery_romaji). Many of the people who see this rea
    - otherwise give the reading in Hepburn romanisation, with a macron on long vowels and a capital first letter (京極 → Kyōgoku, 小澤酒造 → Ozawa Shuzō);
    - if name_ja or brewery_ja is already in Latin letters, repeat it.
    A name you are not sure how to read still gets your best reading. Leave a field out only when you could not read the name at all.
+   The Latin reading never replaces name_ja or brewery_ja: those stay in the script rule 1 picks, so a label printing 達磨正宗 large with DARUMA MASAMUNE under it gives name_ja "達磨正宗" and name_romaji "Daruma Masamune".
 
 THIS BOTTLING (bottling). The brand names a family; the label usually says more about this one product. Fill in only what is printed in the photo and leave out the rest — an empty object is a fine answer:
    - product_name: the product or sub-line name beside the brand, verbatim, in the script it is printed in (一味, 縁, 山ノ霞, "Wandering Poet"). Not the brand again, not a grade, not a slogan. Where it is printed in both Japanese and Latin, give the Japanese.
-   - product_name_romaji: product_name in Latin letters, by the same rule as name_romaji (一味 → Ichiaji). Leave it out when there is no product_name.
+   - product_name_romaji: product_name in Latin letters, by the same rule as name_romaji (一味 → Ichiaji, as the label itself glosses it). Leave it out when there is no product_name.
    - grade: the grade the label prints — junmai_daiginjo (純米大吟醸), daiginjo (大吟醸), junmai_ginjo (純米吟醸), ginjo (吟醸), tokubetsu_junmai (特別純米), junmai (純米), tokubetsu_honjozo (特別本醸造), honjozo (本醸造), futsushu (普通酒, or 上撰 / 佳撰 with no grade). Latin spellings count ("Junmai Ginjo"). Leave it out when no grade is printed.
    - styles: each style word printed — nama (生酒, 生), namachozo (生貯蔵), namazume (生詰), genshu (原酒), muroka (無濾過), nigori (にごり), sparkling (スパークリング, 発泡), koshu (古酒, 熟成), kimoto (生酛), yamahai (山廃), taruzake (樽酒), kijoshu (貴醸酒), hiyaoroshi (ひやおろし).
    - polishing_ratio: the polishing ratio in percent where printed (精米歩合 60% → 60).
 
-Return only what is visible on the label. Do not translate, do not romanise kanji into Latin, do not transliterate kana into kanji, do not invent any field. If the image is not a sake label at all, lower the confidence score significantly rather than producing a plausible-sounding guess.`
+Return only what is visible on the label. Do not translate, do not transliterate kana into kanji, do not invent any field. Romanise only into name_romaji, brewery_romaji and product_name_romaji; never into name_ja, brewery_ja or product_name. If the image is not a sake label at all, lower the confidence score significantly rather than producing a plausible-sounding guess.`
 
 const USER_PROMPT =
   'Read this sake bottle label and return the brand and brewery, preserving the script each is actually printed in (kanji / katakana / hiragana / Latin), what the photo shows and what the drink is, whether the brewery is printed in the photo, the other names printed for the same sake, what the label says about this bottling, plus a confidence score between 0 and 1. Follow the brand / SKU stripping and script-preservation rules in the system prompt.'

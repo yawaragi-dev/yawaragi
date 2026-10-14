@@ -255,6 +255,16 @@ function loadSavedReads(): SavedReadsFile {
   return SavedReadsFileSchema.parse(JSON.parse(readFileSync(SAVED_READS_PATH, 'utf8')))
 }
 
+/**
+ * Written after every new read, not once at the end: a run stopped halfway
+ * (over budget, a crash, Ctrl-C) keeps what it has already paid for.
+ */
+function writeSavedReads(saved: SavedReadsFile): void {
+  // The stub reads nothing; keeping its answers would only churn the file.
+  const { 'e2e-stub': _stub, ...providers } = saved.providers
+  writeFileSync(SAVED_READS_PATH, `${JSON.stringify({ ...saved, providers }, null, 1)}\n`)
+}
+
 /** Resolve the provider list from env → config file → default. */
 function resolveProviderList(): VisionProviderKey[] {
   let raw: string[] | undefined
@@ -570,6 +580,7 @@ async function main() {
             confidence: extraction.confidence,
             latencyMs,
           }
+          writeSavedReads(saved)
         }
         const nameAccuracy = fieldAccuracy(gt.name_ja, gt.also?.name_ja, extraction.name_ja)
         const breweryAccuracy = fieldAccuracy(gt.brewery_ja, gt.also?.brewery_ja, extraction.brewery_ja)
@@ -597,7 +608,10 @@ async function main() {
       } catch (err) {
         const latencyMs = Math.round(performance.now() - t0)
         const message = err instanceof Error ? err.message : String(err)
-        if (!OFFLINE) reads[file] = { photoSha, error: message }
+        if (!OFFLINE) {
+          reads[file] = { photoSha, error: message }
+          writeSavedReads(saved)
+        }
         photos.push({
           file,
           view: gt.view,
@@ -632,9 +646,7 @@ async function main() {
     console.log(``)
   }
 
-  // The stub reads nothing; keeping its answers would only churn the file.
-  delete saved.providers['e2e-stub']
-  if (!OFFLINE) writeFileSync(SAVED_READS_PATH, `${JSON.stringify(saved, null, 1)}\n`)
+  if (!OFFLINE) writeSavedReads(saved)
 
   for (const pair of TIER_PAIRS) {
     const tier1 = providerResults.find((r) => r.key === pair.tier1 && !r.constructionError)
