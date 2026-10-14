@@ -1630,5 +1630,11 @@
         }
       }
     }
+  },
+  "appError": {
+    "title": "Diese Seite ließ sich nicht laden",
+    "body": "Der Sake-Katalog ist vielleicht kurz nicht erreichbar. Versuch es in ein paar Sekunden noch einmal oder geh zurück zur Startseite.",
+    "retry": "Noch einmal versuchen",
+    "home": "Zur Startseite"
   }
 }

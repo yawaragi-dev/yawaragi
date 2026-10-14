@@ -476,9 +476,9 @@ test.describe('scan result branches (#109 PR B)', () => {
 
   test('a sharp photo of a side with no writing is told to turn the bottle, not to retake the photo', async ({
     browser,
-  }, testInfo) => {
-    // Like every low-confidence read, it is checked against the last photo (#408), which needs the mirror.
-    testInfo.skip(!dbUp, 'Sakenowa mirror not available — DB-bound spec')
+  }) => {
+    // No catalogue needed: a side with no writing is not looked up, and the
+    // check against the last photo (#408) gives up quietly without the mirror.
     const { context, page } = await scanPageWith(browser, [
       injectionCookie({ name_ja: '?', brewery_ja: '?', confidence: 0.1, legibility: 'no_text' }),
     ])

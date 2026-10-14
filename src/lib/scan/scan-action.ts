@@ -515,6 +515,10 @@ async function extractAndLookupWithProvider(
       const other = notOneBottleOfSake(extraction)
       if (other?.kind === 'not_one_bottle') return { status: 'not_one_bottle', extraction, subject: other.subject }
       if (other?.kind === 'not_sake') return { status: 'not_sake', extraction, drink: other.drink }
+      // Nothing written on this side (design v1.7 G): there is no name to
+      // look up, so the catalogue is not asked — the answer does not depend
+      // on it being reachable.
+      if (extraction.legibility === 'no_text') return { status: 'low_confidence', extraction }
       const resolved = await resolveScannedLabel(extraction)
       return mapResolvedToState(resolved, extraction, localeRaw)
     } catch (err) {
