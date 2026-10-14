@@ -77,6 +77,7 @@ export function ScanOutcome({
   canKeep = false,
   primaryRescan = false,
   photo,
+  aboutOtherDrinks = false,
   children,
 }: {
   testId: string
@@ -102,6 +103,9 @@ export function ScanOutcome({
   /** The photo back, small (design v1.7 G2): an object URL that never leaves
    *  the browser, and its caption. */
   photo?: { url: string; caption: string }
+  /** A third exit to Learn's "Sake and the other Japanese drinks" (design
+   *  v1.7 §5a `not_sake`, 71). */
+  aboutOtherDrinks?: boolean
   /** Branch-specific actions under the status block (the consensus's Yes / No). */
   children?: ReactNode
 }) {
@@ -240,6 +244,16 @@ export function ScanOutcome({
         <BookOpen size={16} aria-hidden="true" />
         {t('howToReadALabel')}
       </Link>
+      {aboutOtherDrinks && (
+        <Link
+          href={{ pathname: '/learn/[slug]', params: { slug: 'other-japanese-drinks' } }}
+          className="-mt-3 flex min-h-11 w-fit items-center gap-2 text-subtle font-medium text-ginshu-700 hover:text-ginshu-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+          data-testid="scan-outcome-other-drinks"
+        >
+          <BookOpen size={16} aria-hidden="true" />
+          {t('otherDrinks')}
+        </Link>
+      )}
     </section>
   )
 }
