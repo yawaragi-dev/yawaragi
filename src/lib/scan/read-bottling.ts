@@ -117,18 +117,21 @@ export function detailsFromRead(bottling: ScanBottling | undefined): BottlingDet
 
 /**
  * Which of the visitor's bottlings of this line the label is, if exactly one
- * fits. A bottling is a name the visitor typed, so this reads that name: it
- * fits when it carries the product name the label prints, or the same grade,
- * and no other grade. Two that fit equally are no answer — the visitor picks.
+ * fits. It fits when its grade — the stored field, or failing that a grade
+ * its name spells — is the label's, and when its name carries the product
+ * name the label prints or its styles share the label's; never with another
+ * grade. Two that fit equally are no answer — the visitor picks.
  */
-export function ownBottlingForRead<T extends { id: string; name: string }>(
+export function ownBottlingForRead<
+  T extends { id: string; name: string; grade?: ScanGrade; styles?: readonly string[] },
+>(
   bottling: ScanBottling | undefined,
   own: readonly T[],
 ): T | null {
   if (!readNamesABottling(bottling)) return null
   const product = bottling.product_name?.trim()
   const scored = own
-    .map((candidate) => ({ candidate, score: fit(candidate.name, product, bottling.grade) }))
+    .map((candidate) => ({ candidate, score: fit(candidate, product, bottling) }))
     .filter((s) => s.score > 0)
     .sort((a, b) => b.score - a.score)
   if (scored.length === 0) return null
@@ -136,14 +139,23 @@ export function ownBottlingForRead<T extends { id: string; name: string }>(
   return scored[0].candidate
 }
 
-function fit(name: string, product: string | undefined, grade: ScanGrade | undefined): number {
-  const namedGrade = gradeIn(name)
-  // The visitor wrote a grade and the label prints another: not this one,
+function fit(
+  candidate: { name: string; grade?: ScanGrade; styles?: readonly string[] },
+  product: string | undefined,
+  read: ScanBottling,
+): number {
+  const grade = read.grade
+  // The stored grade (design v1.7 D5) is the visitor's word on it; a grade
+  // spelled in the name is the fallback for bottlings saved before it.
+  const ownGrade = candidate.grade ?? gradeIn(candidate.name)
+  // The visitor gave a grade and the label prints another: not this one,
   // whatever else agrees.
-  if (grade && namedGrade && namedGrade !== grade) return 0
+  if (grade && ownGrade && ownGrade !== grade) return 0
   let score = 0
-  if (product && contains(name, product)) score += 2
-  if (grade && namedGrade === grade) score += 1
+  if (product && contains(candidate.name, product)) score += 2
+  if (grade && ownGrade === grade) score += 1
+  const ownStyles = new Set((candidate.styles ?? []).map((s) => romajiKey(s)))
+  for (const style of read.styles ?? []) if (ownStyles.has(romajiKey(STYLE_LABEL[style]))) score += 1
   return score
 }
 

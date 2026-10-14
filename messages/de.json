@@ -325,7 +325,10 @@
       "polished": "{n} % poliert",
       "breweryNotOnLabel": "Brauerei nicht auf diesem Etikett",
       "breweryNotOnLabelLead": "Brauerei nicht auf diesem Etikett.",
-      "breweryNotOnLabelBody": "Auf dem Etikett stand nur der Name. Die angezeigte Brauerei ist die, die der Katalog für diesen Namen führt, nicht eine, die wir gelesen haben, und zwei Brauereien können denselben Namen verwenden. Steht auf dem Rückenetikett eine andere Brauerei, tippe auf „Nicht dieser“."
+      "breweryNotOnLabelBody": "Auf dem Etikett stand nur der Name. Die angezeigte Brauerei ist die, die der Katalog für diesen Namen führt, nicht eine, die wir gelesen haben, und zwei Brauereien können denselben Namen verwenden. Steht auf dem Rückenetikett eine andere Brauerei, tippe auf „Nicht dieser“.",
+      "bottlingOf": "Eine Abfüllung von {line}",
+      "allBottlings": "Nicht diese Abfüllung? Alle Abfüllungen von {line}",
+      "openBottling": "Seite öffnen"
     },
     "returnHint": {
       "notThisOne": "Nicht die Flasche, die du gescannt hast?",

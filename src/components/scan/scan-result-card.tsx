@@ -128,6 +128,13 @@ export interface ScanResultCardProps {
    * label" under the brewery, explained in the Read by AI sheet.
    */
   breweryPrinted?: boolean
+  /**
+   * The card is one of the visitor's own bottlings that fits the label
+   * (design v1.7, 85): the name is the bottling's, the kanji the line's, and
+   * a link under the brewery leads to the line. No match tag — the tags are
+   * the bottling's grade and styles.
+   */
+  bottlingOf?: { line: string; lineKanji: string | null; href: string; tags: readonly string[] }
 }
 
 export function ScanResultCard({
@@ -147,13 +154,14 @@ export function ScanResultCard({
   otherCandidates,
   readBottling,
   breweryPrinted,
+  bottlingOf,
 }: ScanResultCardProps) {
   const tOutcome = useTranslations('scanOutcome')
   // v1.5 §5 / ADR-0015's tiers: "Sure match" at ≥ 0.85, "Best guess" below.
   // Under 0.60 the pipeline answers low_confidence, except where the read
   // matched one catalogue row on brand and brewery both — still a best guess.
   const matchTag =
-    typeof extractionConfidence !== 'number'
+    bottlingOf || typeof extractionConfidence !== 'number'
       ? null
       : extractionConfidence >= 0.85
         ? tOutcome('sureMatch')
@@ -303,6 +311,31 @@ export function ScanResultCard({
                     {confidenceText && <span className="mt-2 block text-meta text-ash-700">{confidenceText}</span>}
                   </InfoSheetPanel>
                 </Sheet>
+              )}
+              {bottlingOf && (
+                <>
+                  <NextLink
+                    href={bottlingOf.href}
+                    className="block min-h-8 py-1 text-meta font-medium text-ginshu-700 hover:text-ginshu-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+                    data-testid="scan-result-bottling-of"
+                  >
+                    {t('bottlingOf', { line: bottlingOf.line })}
+                    {bottlingOf.lineKanji && <span lang="ja"> {bottlingOf.lineKanji}</span>}
+                    <CaretRight size={12} aria-hidden="true" className="ml-1 inline align-[-1px]" />
+                  </NextLink>
+                  {bottlingOf.tags.length > 0 && (
+                    <span className="flex flex-wrap gap-1.5" data-testid="scan-result-bottling-tags">
+                      {bottlingOf.tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="inline-flex min-h-7 items-center rounded-full border border-ash-300 px-2.5 text-meta text-ash-700"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </span>
+                  )}
+                </>
               )}
               {matchTag && (
                 <span className="mt-1.5 flex">

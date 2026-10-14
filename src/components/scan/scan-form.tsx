@@ -27,6 +27,8 @@ import {
   Lightning,
   ListBullets,
   MagnifyingGlass,
+  ListMagnifyingGlass,
+  CaretRight,
   WarningCircle,
 } from '@phosphor-icons/react/dist/ssr'
 import { useRouter } from 'next/navigation'
@@ -48,7 +50,8 @@ import { CellarButton } from '@/components/collection/cellar-button'
 import { TastingLogPanel } from '@/components/journal/tasting-log-panel'
 import { OtherCandidates } from '@/components/scan/other-candidates'
 import { ScanBottlings } from '@/components/scan/scan-bottlings'
-import { bottlingNameFromRead, detailsFromRead } from '@/lib/scan/read-bottling'
+import { bottlingNameFromRead, detailsFromRead, gradeLabel } from '@/lib/scan/read-bottling'
+import NextLink from 'next/link'
 import { ScanOutcome, readName, type OutcomeCandidate } from '@/components/scan/scan-outcome'
 import { ScanResultCard } from '@/components/scan/scan-result-card'
 import type { DebugEvent } from '@/lib/debug/debug-log'
@@ -190,6 +193,12 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
   // Storing it in state (not a ref) so re-renders after `useActionState`
   // returns the matched result pick up the URL.
   const [photoUrl, setPhotoUrl] = useState<string | null>(null)
+  // "Not this bottling?" on a scan that opened the visitor's own bottling
+  // (design v1.7, 85): which photo and bottling it was said for, so the next
+  // scan opens directly again.
+  const [lineViewFor, setLineViewFor] = useState<string | null>(null)
+  const tBottling = useTranslations('bottling')
+  const tCard = useTranslations('scan.resultCard')
   // Per-scan timing origin. Initialized to 0 so the ref initializer
   // stays pure for React 19's render-purity rules. `onFileChange`
   // writes the real epoch ms before the first event is pushed, so the
@@ -440,6 +449,14 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
   // faded, for the whole read — `handleFile` clears the dismissal at the start
   // of the read — so the working state only ever appeared on a first scan.
   const view = resultDismissed || isPending ? INITIAL_SCAN_ACTION_STATE : state
+  // Design v1.7 (85): one of the visitor's bottlings fits the label, so the
+  // scan opens it rather than the line.
+  const fitting =
+    view.status === 'matched' && canLog && Array.isArray(view.ownBottlings)
+      ? view.ownBottlings.find((b) => b.fitsLabel)
+      : undefined
+  const fittingKey = fitting ? `${photoUrl}|${fitting.id}` : null
+  const openFitting = fitting !== undefined && lineViewFor !== fittingKey
 
   const join = (...parts: (string | null | undefined)[]) =>
     parts.filter((p): p is string => Boolean(p)).join(' · ') || null
@@ -863,7 +880,9 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
           // v1.5 §5's bar: kicker · ghost "Not this one" back to the camera.
           // It replaces the "Scan again" button that sat under the card.
           <div className="flex min-h-11 items-center justify-between gap-3" data-testid="scan-result-bar">
-            <span className="text-subtle text-ash-600">{tOutcome('matchedKicker')}</span>
+            <span className="text-subtle text-ash-600" data-testid="scan-result-kicker">
+              {openFitting ? tBottling('fitsLabel') : tOutcome('matchedKicker')}
+            </span>
             <button
               type="button"
               onClick={onPickClick}
@@ -891,7 +910,17 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
             photoUrl={photoUrl}
             photoAlt={t('photoAlt')}
             sakeKanji={view.extraction.name_ja}
-            sakeRomaji={view.sakeRomaji}
+            sakeRomaji={openFitting ? fitting.name : view.sakeRomaji}
+            bottlingOf={
+              openFitting
+                ? {
+                    line: view.sakeRomaji ?? view.extraction.name_romaji ?? view.extraction.name_ja,
+                    lineKanji: view.sakeRomaji ? view.extraction.name_ja : null,
+                    href: view.sakeHref,
+                    tags: [...(fitting.grade ? [gradeLabel(fitting.grade)] : []), ...(fitting.styles ?? [])],
+                  }
+                : undefined
+            }
             breweryKanji={view.extraction.brewery_ja}
             breweryRomaji={view.breweryRomaji}
             sakeHref={view.sakeHref}
@@ -913,9 +942,26 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
             // §5 Best guess: "Not sure? {n} other candidates" under the card.
             // Empty on a sure match, so the row is absent there.
             otherCandidates={
-              <OtherCandidates
-                rows={(Array.isArray(view.otherCandidates) ? view.otherCandidates : []).map(candidateRow)}
-              />
+              openFitting ? (
+                <button
+                  type="button"
+                  onClick={() => setLineViewFor(fittingKey)}
+                  className="flex min-h-11 w-full items-center gap-3 border-y border-divider text-left text-subtle text-ink transition-colors hover:bg-ash-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+                  data-testid="scan-result-all-bottlings"
+                >
+                  <ListMagnifyingGlass size={18} aria-hidden="true" className="shrink-0 text-ash-600" />
+                  <span className="flex-1">
+                    {tCard('allBottlings', {
+                      line: view.sakeRomaji ?? view.extraction.name_romaji ?? view.extraction.name_ja,
+                    })}
+                  </span>
+                  <CaretRight size={16} aria-hidden="true" className="shrink-0 text-ash-500" />
+                </button>
+              ) : (
+                <OtherCandidates
+                  rows={(Array.isArray(view.otherCandidates) ? view.otherCandidates : []).map(candidateRow)}
+                />
+              )
             }
             // Rescan-in-flight fade: `isPending` covers both the browser-
             // side downscale AND the server round-trip. While either is
@@ -930,10 +976,17 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
                 // fresh "Your take", not a re-rate of the last bottle's entry.
                 // No history meta before the first tap — the scan does not
                 // read the journal, and "First time for you" would be a guess.
-                <div key={view.brandId} className="flex flex-col gap-3">
+                <div key={openFitting ? fitting.id : view.brandId} className="flex flex-col gap-3">
                   <TastingLogPanel
                     brandId={view.brandId}
-                    sakeName={view.sakeRomaji ?? view.extraction.name_romaji ?? view.extraction.name_ja}
+                    // Design v1.7 (85): opened on the visitor's own bottling,
+                    // the tasting lands on its page, not the line's.
+                    {...(openFitting ? { expressionId: fitting.id } : {})}
+                    sakeName={
+                      openFitting
+                        ? fitting.name
+                        : (view.sakeRomaji ?? view.extraction.name_romaji ?? view.extraction.name_ja)
+                    }
                     chart={view.flavorChart}
                     history={null}
                     // Nothing on /scan reads the journal, so there is nothing
@@ -945,12 +998,26 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
                       cellar"; the first tap answers with the real count. */}
                   <div className="flex gap-2">
                     <CellarButton
-                      target={{ brandId: view.brandId }}
-                      name={view.sakeRomaji ?? view.extraction.name_romaji ?? view.extraction.name_ja}
+                      target={openFitting ? { expressionId: fitting.id } : { brandId: view.brandId }}
+                      name={
+                        openFitting
+                          ? fitting.name
+                          : (view.sakeRomaji ?? view.extraction.name_romaji ?? view.extraction.name_ja)
+                      }
                       initialCount={0}
                       refreshOnSave={false}
                     />
                   </div>
+                  {openFitting ? (
+                    <NextLink
+                      href={getPathname({ locale, href: { pathname: '/bottling/[id]', params: { id: fitting.id } } })}
+                      className="flex min-h-11 w-fit items-center gap-1.5 text-subtle font-medium text-ginshu-700 hover:text-ginshu-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+                      data-testid="scan-result-open-bottling"
+                    >
+                      {tCard('openBottling')}
+                      <CaretRight size={14} aria-hidden="true" />
+                    </NextLink>
+                  ) : (
                   <ScanBottlings
                     brandId={view.brandId}
                     lineName={view.sakeRomaji ?? view.extraction.name_romaji ?? view.extraction.name_ja}
@@ -971,6 +1038,7 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
                       />
                     }
                   />
+                  )}
                 </div>
               )
             }

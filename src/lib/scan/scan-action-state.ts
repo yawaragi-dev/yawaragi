@@ -1,7 +1,7 @@
 import type { DebugEvent } from '@/lib/debug/debug-log'
 import type { FlavorChart } from '@/lib/schemas/flavor-chart'
 import type { NearestReason } from '@/lib/sakenowa/nearest-brands'
-import type { LabelScanExtraction, NonSakeDrink } from '@/lib/schemas/label-scan-extraction'
+import type { LabelScanExtraction, NonSakeDrink, ScanGrade } from '@/lib/schemas/label-scan-extraction'
 
 /**
  * A catalogue sake offered as a guess — §5a's "Did you mean" and §5's
@@ -83,7 +83,14 @@ type ScanActionStateBase =
        * at, when exactly one does; it is listed first. Absent for a visitor
        * who keeps no journal, and when they have none of this line.
        */
-      ownBottlings?: readonly { id: string; name: string; fitsLabel: boolean }[]
+      ownBottlings?: readonly {
+        id: string
+        name: string
+        fitsLabel: boolean
+        /** Its grade and style words, for the tags when it opens directly (v1.7, 85). */
+        grade?: ScanGrade
+        styles?: readonly string[]
+      }[]
     }
   /**
    * Phase 3 / #123: the `(brand AND brewery)` exact-match join
