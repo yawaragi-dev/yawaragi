@@ -255,6 +255,16 @@ function loadSavedReads(): SavedReadsFile {
   return SavedReadsFileSchema.parse(JSON.parse(readFileSync(SAVED_READS_PATH, 'utf8')))
 }
 
+/**
+ * Written after every new read, not once at the end: a run stopped halfway
+ * (over budget, a crash, Ctrl-C) keeps what it has already paid for.
+ */
+function writeSavedReads(saved: SavedReadsFile): void {
+  // The stub reads nothing; keeping its answers would only churn the file.
+  const providers = Object.fromEntries(Object.entries(saved.providers).filter(([key]) => key !== 'e2e-stub'))
+  writeFileSync(SAVED_READS_PATH, `${JSON.stringify({ ...saved, providers }, null, 1)}\n`)
+}
+
 /** Resolve the provider list from env → config file → default. */
 function resolveProviderList(): VisionProviderKey[] {
   let raw: string[] | undefined
@@ -534,9 +544,12 @@ async function main() {
             brewery_ja: savedRead.brewery_ja,
             brewery_printed: savedRead.brewery_printed,
             subject: savedRead.subject,
+            legibility: savedRead.legibility,
             drink: savedRead.drink,
             bottling: savedRead.bottling,
             other_names: savedRead.other_names,
+            name_romaji: savedRead.name_romaji,
+            brewery_romaji: savedRead.brewery_romaji,
             confidence: savedRead.confidence,
             source: 'llm_extracted',
           }
@@ -558,12 +571,16 @@ async function main() {
             brewery_ja: extraction.brewery_ja,
             brewery_printed: extraction.brewery_printed,
             subject: extraction.subject,
+            legibility: extraction.legibility,
             drink: extraction.drink,
             bottling: extraction.bottling,
             other_names: extraction.other_names,
+            name_romaji: extraction.name_romaji,
+            brewery_romaji: extraction.brewery_romaji,
             confidence: extraction.confidence,
             latencyMs,
           }
+          writeSavedReads(saved)
         }
         const nameAccuracy = fieldAccuracy(gt.name_ja, gt.also?.name_ja, extraction.name_ja)
         const breweryAccuracy = fieldAccuracy(gt.brewery_ja, gt.also?.brewery_ja, extraction.brewery_ja)
@@ -591,7 +608,10 @@ async function main() {
       } catch (err) {
         const latencyMs = Math.round(performance.now() - t0)
         const message = err instanceof Error ? err.message : String(err)
-        if (!OFFLINE) reads[file] = { photoSha, error: message }
+        if (!OFFLINE) {
+          reads[file] = { photoSha, error: message }
+          writeSavedReads(saved)
+        }
         photos.push({
           file,
           view: gt.view,
@@ -626,9 +646,7 @@ async function main() {
     console.log(``)
   }
 
-  // The stub reads nothing; keeping its answers would only churn the file.
-  delete saved.providers['e2e-stub']
-  if (!OFFLINE) writeFileSync(SAVED_READS_PATH, `${JSON.stringify(saved, null, 1)}\n`)
+  if (!OFFLINE) writeSavedReads(saved)
 
   for (const pair of TIER_PAIRS) {
     const tier1 = providerResults.find((r) => r.key === pair.tier1 && !r.constructionError)
@@ -710,6 +728,7 @@ const OTHER_KINDS: readonly { kind: PhotoKind; label: string }[] = [
   { kind: 'other_drink', label: 'not sake' },
   { kind: 'several_bottles', label: 'several bottles' },
   { kind: 'menu', label: 'menu' },
+  { kind: 'no_bottle', label: 'no bottle' },
 ]
 
 /**

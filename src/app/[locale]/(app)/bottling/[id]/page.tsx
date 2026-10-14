@@ -11,6 +11,7 @@ import { BottlingManage } from '@/components/sake/bottling-manage'
 import { BottleRateRow } from '@/components/sake/bottle-rate-row'
 import { BottleSection } from '@/components/sake/bottle-section'
 import { LineBlock } from '@/components/sake/line-block'
+import { ReadingByAiLine } from '@/components/sake/reading-by-ai-line'
 import { RomajiDisclosure } from '@/components/sake/romaji-disclosure'
 import { SakenowaAttribution } from '@/components/sake/sakenowa-attribution'
 import type { FlavorChart } from '@/lib/schemas/flavor-chart'
@@ -148,6 +149,14 @@ export default async function BottlingPage({ params, searchParams }: PageProps) 
           <p className="text-subtle text-ash-700" data-testid="bottling-own-line">
             {lineName !== null ? t('ownOfLine', { line: lineName }) : t('ownNoLine')}
           </p>
+          {(bottling.aiName || bottling.aiBrewery) && (
+            <ReadingByAiLine
+              label={t('readingByAi.label')}
+              title={t('readingByAi.title')}
+              body={t('readingByAi.body')}
+              closeLabel={t('readingByAi.close')}
+            />
+          )}
         </div>
         {/* §9a gives an own bottling no credit line. One that belongs to a sake
             shows that sake's name, which is Sakenowa's, so the above-the-fold

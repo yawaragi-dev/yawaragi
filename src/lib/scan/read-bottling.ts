@@ -61,8 +61,11 @@ export function readNamesABottling(bottling: ScanBottling | undefined): bottling
 }
 
 /**
- * The name to offer for a new bottling: the line, the product name as
- * printed, the grade, up to two style words — "Mizuo 一味 Junmai". `null`
+ * The name to offer for a new bottling: the line, the product name in Latin
+ * letters with the printed words in brackets, the grade, up to two style
+ * words — "Mizuo Ichiaji (一味) Junmai" (design v1.7 D2, v1.7.1 H2). The
+ * reading leads because the visitor may not read kanji; a product name in
+ * Latin letters already stands alone. `null`
  * when the label adds nothing to the line's name, and the form then starts
  * from the line's name as it always did.
  */
@@ -73,7 +76,10 @@ export function bottlingNameFromRead(lineName: string, bottling: ScanBottling | 
   const parts = [line]
   // A product name that only repeats the line (花巴 beside Hanatomoe is not
   // told apart here, but a literal repeat is) adds nothing.
-  if (product && !sameText(product, line)) parts.push(product)
+  if (product && !sameText(product, line)) {
+    const reading = bottling.product_name_romaji?.trim()
+    parts.push(reading && !sameText(reading, product) && !sameText(reading, line) ? `${reading} (${product})` : product)
+  }
   if (bottling.grade) parts.push(GRADE_LABEL[bottling.grade])
   for (const style of (bottling.styles ?? []).slice(0, MAX_STYLES_IN_NAME)) parts.push(STYLE_LABEL[style])
   return parts.join(' ').slice(0, MAX_EXPRESSION_TEXT).trim()

@@ -806,6 +806,7 @@
     "whatWeRead": "What we read",
     "name": "Name",
     "brewery": "Brewery",
+    "onTheLabel": "On the label: <ja>{words}</ja>",
     "misreadHint": "Misread? Fix it from the label and search again.",
     "searchAgain": "Search again",
     "otherSide": "Scan another side of the bottle and we read both photos together.",
@@ -881,7 +882,13 @@
         "liqueur": "The label says liqueur.",
         "other": "The label names another kind of drink."
       },
-      "body": "Yawaragi’s catalogue holds sake only, so there is no page for this bottle."
+      "body": "Yawaragi’s catalogue holds sake only, so there is no page for this bottle, and it can’t go in your journal yet."
+    },
+    "noText": {
+      "kicker": "No name on this side",
+      "title": "Turn the bottle to the side with writing",
+      "body": "This side has only a picture. The name is usually on the opposite side, or on a small label near the base.",
+      "photo": "The side you photographed"
     },
     "notOneBottle": {
       "menu": {
@@ -893,6 +900,11 @@
         "kicker": "Several bottles",
         "title": "More than one bottle in the photo",
         "body": "We can’t tell which one you mean. Scan one bottle at a time."
+      },
+      "no_bottle": {
+        "kicker": "No bottle",
+        "title": "We can’t see a bottle in this photo",
+        "body": "Point the camera at one bottle, with its label filling most of the frame."
       }
     },
     "rateLimited": {
@@ -940,6 +952,12 @@
     "lineBlockTitle": "About the {line} line <kanji></kanji>",
     "lineCaveat": "Measured for the whole line; bottlings vary.",
     "similarToLine": "Sakes similar to {line}",
+    "readingByAi": {
+      "label": "Reading by AI",
+      "title": "Read by an AI model",
+      "body": "The Latin spelling in this bottling's name or brewery is how an AI model read the label's Japanese. It is an approximation of how the name sounds, not an official spelling; the Japanese in brackets is what the label prints. Rename the bottling to make the name your own.",
+      "close": "Close"
+    },
     "addedByYou": "Added by you",
     "ownNoLine": "Not in the catalogue yet. Only you can see it, and we’ll link it to its sake if it turns up.",
     "keepTitle": "Keep it anyway",

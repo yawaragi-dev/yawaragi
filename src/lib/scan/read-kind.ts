@@ -5,8 +5,8 @@ import {
 } from '@/lib/schemas/label-scan-extraction'
 
 /**
- * The two reads the catalogue is not asked about: a menu or several bottles
- * (no one bottle to name), and a bottle whose label prints that it is not
+ * The two reads the catalogue is not asked about: a menu, several bottles or
+ * no bottle at all (no one bottle to name), and a bottle whose label prints that it is not
  * sake. Both would otherwise go through the lookup and come back as a sake
  * — the maker's, or a namesake — which is worse than no answer.
  *
@@ -17,13 +17,17 @@ import {
  * does.
  */
 export type NotOneBottleOfSake =
-  | { kind: 'not_one_bottle'; subject: 'menu' | 'several_bottles' }
+  | { kind: 'not_one_bottle'; subject: 'menu' | 'several_bottles' | 'no_bottle' }
   | { kind: 'not_sake'; drink: NonSakeDrink }
 
 export function notOneBottleOfSake(
   extraction: Pick<LabelScanExtraction, 'subject' | 'drink'>,
 ): NotOneBottleOfSake | null {
-  if (extraction.subject === 'menu' || extraction.subject === 'several_bottles') {
+  if (
+    extraction.subject === 'menu' ||
+    extraction.subject === 'several_bottles' ||
+    extraction.subject === 'no_bottle'
+  ) {
     return { kind: 'not_one_bottle', subject: extraction.subject }
   }
   const drink = nonSakeDrinkOf(extraction)

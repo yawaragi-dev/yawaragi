@@ -24,6 +24,10 @@ export const AddOwnBottlingInputSchema = z.union([
       name: Text,
       /** Blank counts as not given: the field on §5a is prefilled and editable. */
       brewery: z.string().trim().max(MAX_EXPRESSION_TEXT).optional(),
+      /** The name or brewery is still the model's Latin reading (§5a's "Keep
+       *  it anyway", design v1.7.1 H3). */
+      aiName: z.literal(true).optional(),
+      aiBrewery: z.literal(true).optional(),
     })
     .strict(),
 ])

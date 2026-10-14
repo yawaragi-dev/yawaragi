@@ -52,6 +52,12 @@ export interface OutcomeCandidate {
 export interface OutcomeRead {
   name: string
   brewery: string
+  /**
+   * The two once more in Latin letters, as the model read them. A visitor
+   * who cannot read Japanese has only these to tell what was read.
+   */
+  nameRomaji?: string
+  breweryRomaji?: string
   /** The Read by AI badge, rendered by the caller (it owns the sheet). */
   badge: ReactNode
 }
@@ -69,6 +75,8 @@ export function ScanOutcome({
   bothPhotos,
   suggestOtherSide = false,
   canKeep = false,
+  primaryRescan = false,
+  photo,
   children,
 }: {
   testId: string
@@ -86,14 +94,28 @@ export function ScanOutcome({
   suggestOtherSide?: boolean
   /** Offer "Keep it anyway" — only to a visitor who can keep a journal (ADR-0020). */
   canKeep?: boolean
+  /**
+   * Repeat "Scan again" as the screen's main button (design v1.7 G5, v1.7.1):
+   * where shooting again is the whole answer, the bar's quiet one is not enough.
+   */
+  primaryRescan?: boolean
+  /** The photo back, small (design v1.7 G2): an object URL that never leaves
+   *  the browser, and its caption. */
+  photo?: { url: string; caption: string }
   /** Branch-specific actions under the status block (the consensus's Yes / No). */
   children?: ReactNode
 }) {
   const t = useTranslations('scanOutcome')
+  // Design v1.7.1 (H): each field holds the Latin reading, the label's own
+  // words sit under it. Worked out once, from the read as it arrived.
+  const [nameField] = useState(() => fieldFromRead(read?.name ?? '', read?.nameRomaji))
+  const [breweryField] = useState(() => fieldFromRead(read?.brewery ?? '', read?.breweryRomaji))
   // The read, as the visitor has corrected it. Held here rather than in
   // "What we read" because "Keep it anyway", further down, saves the same two.
-  const [name, setName] = useState(read?.name ?? '')
-  const [brewery, setBrewery] = useState(read?.brewery ?? '')
+  const [name, setName] = useState(nameField.value)
+  const [brewery, setBrewery] = useState(breweryField.value)
+  const nameEdited = name !== nameField.value
+  const breweryEdited = brewery !== breweryField.value
 
   return (
     <section className="flex flex-col gap-5" data-testid={testId}>
@@ -127,6 +149,26 @@ export function ScanOutcome({
         )}
       </div>
 
+      {photo && (
+        <figure className="flex items-end gap-3" data-testid="scan-outcome-photo">
+          {/* eslint-disable-next-line @next/next/no-img-element -- a blob: URL of the visitor's own photo; next/image cannot optimise it */}
+          <img src={photo.url} alt="" className="h-24 w-[72px] rounded-md object-cover" />
+          <figcaption className="text-meta text-ash-600">{photo.caption}</figcaption>
+        </figure>
+      )}
+
+      {primaryRescan && (
+        <button
+          type="button"
+          onClick={onRescan}
+          className="flex min-h-11 items-center justify-center gap-2 rounded-xl border-[1.5px] border-ginshu-400 px-4 text-body font-medium text-ginshu-700 transition-colors hover:bg-ginshu-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+          data-testid="scan-outcome-rescan-primary"
+        >
+          <CameraRotate size={16} aria-hidden="true" />
+          {t('scanAgain')}
+        </button>
+      )}
+
       {bothPhotos && (
         <div className="flex flex-col">
           <span className="text-section-label uppercase text-ash-600">{t('bothPhotos.label')}</span>
@@ -141,6 +183,11 @@ export function ScanOutcome({
           badge={read.badge}
           name={name}
           brewery={brewery}
+          nameOnLabel={nameField.onLabel}
+          breweryOnLabel={breweryField.onLabel}
+          // While the name is as read, search the label's own words: the
+          // Latin reading is the model's, the kanji is what is printed.
+          searchFor={nameEdited ? name : read.name}
           onName={setName}
           onBrewery={setBrewery}
         />
@@ -166,7 +213,14 @@ export function ScanOutcome({
         </ul>
       )}
 
-      {read && canKeep && <KeepItAnyway name={name} brewery={brewery} />}
+      {read && canKeep && (
+        <KeepItAnyway
+          name={withLabelWords(name, nameField.onLabel)}
+          brewery={withLabelWords(brewery, breweryField.onLabel)}
+          aiName={!nameEdited && nameField.onLabel !== null}
+          aiBrewery={!breweryEdited && breweryField.onLabel !== null}
+        />
+      )}
 
       <Link
         href="/search"
@@ -191,6 +245,38 @@ export function ScanOutcome({
 }
 
 /**
+ * What a field of "What we read" starts as (design v1.7.1, H1): the model's
+ * Latin reading, with the label's own words kept for the line under it. A
+ * name the label prints in Latin letters is its own reading, so there is no
+ * line.
+ */
+export function fieldFromRead(
+  printed: string,
+  romaji: string | undefined,
+): { value: string; onLabel: string | null } {
+  const reading = romaji?.trim()
+  if (!reading || reading.toLowerCase() === printed.trim().toLowerCase()) return { value: printed, onLabel: null }
+  return { value: reading, onLabel: printed.trim() }
+}
+
+/**
+ * A kept name (design v1.7.1, H2): the name as it stands, then the label's
+ * words in brackets — "Kyōgoku (京極)". Left alone when the visitor has
+ * already typed them in.
+ */
+export function withLabelWords(value: string, onLabel: string | null): string {
+  const kept = value.trim()
+  if (!onLabel || !kept || kept.includes(onLabel)) return value
+  return `${kept} (${onLabel})`
+}
+
+/** A name as read, written the H2 way: "Kyōgoku (京極)". */
+export function readName(printed: string, romaji: string | undefined): string {
+  const { value, onLabel } = fieldFromRead(printed, romaji)
+  return withLabelWords(value, onLabel)
+}
+
+/**
  * "What we read": the name and brewery as fields the visitor can fix from the
  * label, and "Search again" — a link to §8 with the (edited) name, so it lands
  * on a page the back button returns from. A link, not a form: the whole scan
@@ -200,12 +286,18 @@ function WhatWeRead({
   badge,
   name,
   brewery,
+  nameOnLabel,
+  breweryOnLabel,
+  searchFor,
   onName,
   onBrewery,
 }: {
   badge: ReactNode
   name: string
   brewery: string
+  nameOnLabel: string | null
+  breweryOnLabel: string | null
+  searchFor: string
   onName: (value: string) => void
   onBrewery: (value: string) => void
 }) {
@@ -227,6 +319,7 @@ function WhatWeRead({
           className={field}
           data-testid="scan-outcome-read-name"
         />
+        {nameOnLabel && <OnTheLabel words={nameOnLabel} testId="scan-outcome-read-name-on-label" />}
       </label>
       <label className="flex flex-col gap-1.5">
         <span className="text-section-label uppercase text-ash-600">{t('brewery')}</span>
@@ -237,13 +330,13 @@ function WhatWeRead({
           value={brewery}
           onChange={(e) => onBrewery(e.target.value)}
           className={field}
-          lang="ja"
           data-testid="scan-outcome-read-brewery"
         />
+        {breweryOnLabel && <OnTheLabel words={breweryOnLabel} testId="scan-outcome-read-brewery-on-label" />}
       </label>
       <p className="text-meta text-ash-600">{t('misreadHint')}</p>
       <Link
-        href={name.trim() ? { pathname: '/search', query: { q: name.trim() } } : '/search'}
+        href={searchFor.trim() ? { pathname: '/search', query: { q: searchFor.trim() } } : '/search'}
         className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-ash-300 text-subtle font-medium text-ink transition-colors hover:bg-ash-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
         data-testid="scan-outcome-search-again"
       >
@@ -251,6 +344,26 @@ function WhatWeRead({
         {t('searchAgain')}
       </Link>
     </div>
+  )
+}
+
+/**
+ * "On the label: 京極" under a field. It stays when the visitor edits the
+ * field: it is what the label says, not what the field holds.
+ */
+function OnTheLabel({ words, testId }: { words: string; testId: string }) {
+  const t = useTranslations('scanOutcome')
+  return (
+    <span className="text-meta text-ash-600" data-testid={testId}>
+      {t.rich('onTheLabel', {
+        words,
+        ja: (chunks) => (
+          <span className="text-ash-800" lang="ja">
+            {chunks}
+          </span>
+        ),
+      })}
+    </span>
   )
 }
 

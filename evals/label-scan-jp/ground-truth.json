@@ -5694,5 +5694,45 @@
       "rightsCleared": true,
       "notes": "Shirakawago junmai nigori held in the hand: 白川郷 in a frame, 純米, にごり酒, a drawing of thatched houses and mountains, and the maker in small type at the left. Location and camera data were removed from the file. Added 2026-10-14."
     }
+  },
+  "niseko_only_infolabel_1.jpg": {
+    "name_ja": "蝦夷の誉",
+    "brewery_ja": "二世古酒造",
+    "view": "other",
+    "subject": "no_bottle",
+    "also": {
+      "name_ja": [
+        "誉",
+        "えぞの誉"
+      ],
+      "brewery_ja": [
+        "二世古"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "NO BOTTLE: the pink paper tag that hangs on the neck of Ezo no Homare kasseishu with black rice (二世古酒造), turned over and held up close, at an angle. It carries serving instructions (keep below 5°C overnight, turn gently before pouring), a line saying the black-rice version comes in 1.8 l and 900 ml and is a pale cherry-blossom colour, 要冷蔵, and two small pictures of bottles with 誉 on them, with the brand faint in the background; no bottle is in the frame as the subject, only out-of-focus shop shelves behind. The scan has no one bottle to name here. The fingers holding the tag were cropped out. Location and camera data were removed from the file. No person in the frame. Photographed in the brewery's shop, added 2026-10-14."
+    }
+  },
+  "niseko_only_infolabel_2.jpg": {
+    "name_ja": "蝦夷の誉",
+    "brewery_ja": "二世古酒造",
+    "view": "other",
+    "subject": "no_bottle",
+    "also": {
+      "name_ja": [
+        "誉",
+        "えぞの誉"
+      ],
+      "brewery_ja": [
+        "二世古"
+      ]
+    },
+    "provenance": {
+      "source": "maintainer_shop_photo",
+      "rightsCleared": true,
+      "notes": "NO BOTTLE: the pink paper tag that hangs on the neck of Ezo no Homare kasseishu with black rice (二世古酒造), turned over and held up close, from slightly further away, with the neck of a green bottle at the lower right. It carries serving instructions (keep below 5°C overnight, turn gently before pouring), a line saying the black-rice version comes in 1.8 l and 900 ml and is a pale cherry-blossom colour, 要冷蔵, and two small pictures of bottles with 誉 on them, with the brand faint in the background; no bottle is in the frame as the subject, only out-of-focus shop shelves behind. The scan has no one bottle to name here. The fingers holding the tag were cropped out. Location and camera data were removed from the file. No person in the frame. Photographed in the brewery's shop, added 2026-10-14."
+    }
   }
 }

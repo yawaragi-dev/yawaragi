@@ -806,6 +806,7 @@
     "whatWeRead": "Was wir gelesen haben",
     "name": "Name",
     "brewery": "Brauerei",
+    "onTheLabel": "Auf dem Etikett: <ja>{words}</ja>",
     "misreadHint": "Falsch gelesen? Korrigiere es nach dem Etikett und suche erneut.",
     "searchAgain": "Erneut suchen",
     "otherSide": "Scanne eine andere Seite der Flasche, und wir lesen beide Fotos zusammen.",
@@ -881,7 +882,13 @@
         "liqueur": "Auf dem Etikett steht Likör.",
         "other": "Das Etikett nennt eine andere Getränkeart."
       },
-      "body": "Der Katalog von Yawaragi enthält nur Sake, deshalb gibt es zu dieser Flasche keine Seite."
+      "body": "Der Katalog von Yawaragi enthält nur Sake, deshalb gibt es zu dieser Flasche keine Seite, und sie kann noch nicht in dein Journal."
+    },
+    "noText": {
+      "kicker": "Kein Name auf dieser Seite",
+      "title": "Dreh die Flasche zur Seite mit der Schrift",
+      "body": "Auf dieser Seite ist nur ein Bild. Der Name steht meist auf der gegenüberliegenden Seite oder auf einem kleinen Etikett unten an der Flasche.",
+      "photo": "Die Seite, die du fotografiert hast"
     },
     "notOneBottle": {
       "menu": {
@@ -893,6 +900,11 @@
         "kicker": "Mehrere Flaschen",
         "title": "Mehr als eine Flasche im Bild",
         "body": "Wir können nicht erkennen, welche du meinst. Scanne eine Flasche nach der anderen."
+      },
+      "no_bottle": {
+        "kicker": "Keine Flasche",
+        "title": "Auf diesem Foto sehen wir keine Flasche",
+        "body": "Richte die Kamera auf eine einzelne Flasche, sodass ihr Etikett den Großteil des Bildes füllt."
       }
     },
     "rateLimited": {
@@ -940,6 +952,12 @@
     "lineBlockTitle": "Über die Linie {line} <kanji></kanji>",
     "lineCaveat": "Für die ganze Linie gemessen; Abfüllungen unterscheiden sich.",
     "similarToLine": "Sake ähnlich wie {line}",
+    "readingByAi": {
+      "label": "Lesung durch KI",
+      "title": "Von einem KI-Modell gelesen",
+      "body": "Die lateinische Schreibweise im Namen oder bei der Brauerei dieser Abfüllung ist, wie ein KI-Modell das Japanische auf dem Etikett gelesen hat. Sie gibt ungefähr wieder, wie der Name klingt, und ist keine offizielle Schreibweise; das Japanische in Klammern steht so auf dem Etikett. Benenne die Abfüllung um, um den Namen zu deinem eigenen zu machen.",
+      "close": "Schließen"
+    },
     "addedByYou": "Von dir hinzugefügt",
     "ownNoLine": "Noch nicht im Katalog. Nur du kannst es sehen, und wir verknüpfen es mit seinem Sake, sobald er auftaucht.",
     "keepTitle": "Trotzdem behalten",

@@ -1,5 +1,10 @@
 import { z } from 'zod'
-import { ScanBottlingSchema, ScanDrinkSchema, ScanSubjectSchema } from '@/lib/schemas/label-scan-extraction'
+import {
+  ScanBottlingSchema,
+  ScanDrinkSchema,
+  ScanLegibilitySchema,
+  ScanSubjectSchema,
+} from '@/lib/schemas/label-scan-extraction'
 
 /**
  * Phase 3 / S5 (#110) — Zod shapes for the `evals/label-scan-jp/` harness.
@@ -86,10 +91,12 @@ export type PhotoView = z.infer<typeof PhotoViewSchema>
  * - `several_bottles` — two or more different bottles, none of them merely
  *   at the edge: two on a table, or a whole shop shelf. `items` lists each
  *   one that can be read.
+ * - `no_bottle` — nothing a scan can name: a loose tag, a glass, a table. No
+ *   `items`; the right answer is that no sake is shown.
  * - `menu` — a printed menu or drinks list, not a bottle. `items` lists the
  *   drinks legibly printed on it. Menu scan is a deferred feature (design §7).
  */
-export const PhotoSubjectSchema = z.enum(['one_bottle', 'several_bottles', 'menu'])
+export const PhotoSubjectSchema = z.enum(['one_bottle', 'several_bottles', 'menu', 'no_bottle'])
 
 export type PhotoSubject = z.infer<typeof PhotoSubjectSchema>
 
@@ -243,6 +250,10 @@ export const GroundTruthEntrySchema = z
     if (entry.bottle) {
       ctx.addIssue({ code: 'custom', path: ['bottle'], message: `a ${subject} photo is not one bottle.` })
     }
+    if (subject === 'no_bottle') {
+      if (entry.items) ctx.addIssue({ code: 'custom', path: ['items'], message: 'a photo with no bottle has no items.' })
+      return
+    }
     if (items.length < (subject === 'several_bottles' ? 2 : 1)) {
       ctx.addIssue({
         code: 'custom',
@@ -267,10 +278,10 @@ export type GroundTruthEntry = z.infer<typeof GroundTruthEntrySchema>
  * headline ("right of N"); the other three each have their own right answer
  * (see `judge.ts`) and their own lines in the output.
  */
-export type PhotoKind = 'sake_bottle' | 'other_drink' | 'several_bottles' | 'menu'
+export type PhotoKind = 'sake_bottle' | 'other_drink' | 'several_bottles' | 'menu' | 'no_bottle'
 
 export function photoKind(entry: Pick<GroundTruthEntry, 'subject' | 'drink'>): PhotoKind {
-  if (entry.subject === 'several_bottles' || entry.subject === 'menu') return entry.subject
+  if (entry.subject === 'several_bottles' || entry.subject === 'menu' || entry.subject === 'no_bottle') return entry.subject
   return (entry.drink ?? 'sake') === 'sake' ? 'sake_bottle' : 'other_drink'
 }
 
@@ -296,9 +307,12 @@ export const SavedReadSchema = z.union([
     brewery_ja: z.string().min(1),
     brewery_printed: z.boolean().optional(),
     subject: ScanSubjectSchema.optional(),
+    legibility: ScanLegibilitySchema.optional(),
     drink: ScanDrinkSchema.optional(),
     bottling: ScanBottlingSchema.optional(),
     other_names: z.array(z.string()).optional(),
+    name_romaji: z.string().optional(),
+    brewery_romaji: z.string().optional(),
     confidence: z.number().min(0).max(1),
     latencyMs: z.number().int().nonnegative(),
   }),

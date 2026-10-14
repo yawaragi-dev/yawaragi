@@ -28,8 +28,17 @@ import { withProvenance } from './with-provenance'
  * What the photo shows. The scan answers "which sake is this bottle"; a
  * menu page or a row of bottles has no one answer to that.
  */
-export const ScanSubjectSchema = z.enum(['one_bottle', 'several_bottles', 'menu'])
+export const ScanSubjectSchema = z.enum(['one_bottle', 'several_bottles', 'menu', 'no_bottle'])
 export type ScanSubject = z.infer<typeof ScanSubjectSchema>
+
+/**
+ * Whether there was writing to read. A sharp photo of the side of a bottle
+ * that carries a drawing and no text is not an unclear photo, and telling the
+ * visitor to retake it sends them round in a circle; `no_text` lets the scan
+ * say "turn the bottle" instead.
+ */
+export const ScanLegibilitySchema = z.enum(['read', 'unclear', 'no_text'])
+export type ScanLegibility = z.infer<typeof ScanLegibilitySchema>
 
 /**
  * What the bottle holds, as its label says. The catalogue is sake only, and
@@ -92,6 +101,8 @@ export type ScanStyle = z.infer<typeof ScanStyleSchema>
 export const ScanBottlingSchema = z.object({
   /** The product name beside the brand, as printed: 一味, 縁, "Wandering Poet". */
   product_name: z.string().optional(),
+  /** `product_name` in Latin letters, as printed or as read (一味 → Ichiaji, as the Mizuo label glosses it). */
+  product_name_romaji: z.string().optional(),
   grade: ScanGradeSchema.optional(),
   styles: z.array(ScanStyleSchema).optional(),
   /** Polishing ratio in percent, as printed (精米歩合 60% → 60). */
@@ -103,6 +114,8 @@ export const LabelScanExtractionSchema = withProvenance(z.literal('llm_extracted
   .extend({
     /** Optional: absent on reads made before the field existed. */
     subject: ScanSubjectSchema.optional(),
+    /** Optional: absent on reads made before the field existed. */
+    legibility: ScanLegibilitySchema.optional(),
     /** Optional: absent on reads made before the field existed. */
     drink: ScanDrinkSchema.optional(),
     name_ja: z.string().min(1),
@@ -131,6 +144,17 @@ export const LabelScanExtractionSchema = withProvenance(z.literal('llm_extracted
      * first few and ignores the rest.
      */
     other_names: z.array(z.string()).optional(),
+    /**
+     * `name_ja` and `brewery_ja` once more in Latin letters: the spelling the
+     * label prints where it prints one, the model's Hepburn reading where it
+     * does not. A visitor who cannot read Japanese has nothing else to go on
+     * when the read is not in the catalogue, where the catalogue's own Latin
+     * name would otherwise stand. A reading by the model, so it is shown
+     * under the Read by AI badge like the rest of the read, and never used by
+     * the lookup. Optional: absent on reads made before the fields existed.
+     */
+    name_romaji: z.string().optional(),
+    brewery_romaji: z.string().optional(),
     bottling: ScanBottlingSchema.optional(),
   })
   .extend({

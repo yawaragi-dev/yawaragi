@@ -6,6 +6,15 @@ describe('bottlingNameFromRead', () => {
     expect(bottlingNameFromRead('Mizuo', { product_name: '一味', grade: 'junmai' })).toBe('Mizuo 一味 Junmai')
   })
 
+  it('leads a kanji product name with its reading, for a visitor who cannot read it', () => {
+    expect(
+      bottlingNameFromRead('Mizuo', { product_name: '一味', product_name_romaji: 'Ichiaji', grade: 'junmai' }),
+    ).toBe('Mizuo Ichiaji (一味) Junmai')
+    expect(
+      bottlingNameFromRead('Rihaku', { product_name: 'Wandering Poet', product_name_romaji: 'Wandering Poet' }),
+    ).toBe('Rihaku Wandering Poet')
+  })
+
   it('adds style words after the grade, two at most', () => {
     expect(
       bottlingNameFromRead('Ikekame', { grade: 'junmai_ginjo', styles: ['nama', 'genshu', 'muroka'] }),

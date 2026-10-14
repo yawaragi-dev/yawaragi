@@ -230,7 +230,7 @@ type ScanActionStateBase =
   | {
       status: 'not_one_bottle'
       extraction: LabelScanExtraction
-      subject: 'menu' | 'several_bottles'
+      subject: 'menu' | 'several_bottles' | 'no_bottle'
     }
   /**
    * Phase 3 / S2 (#107): the per-visitor rate limit on the vision-scan
