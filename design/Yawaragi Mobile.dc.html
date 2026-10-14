@@ -143,14 +143,7 @@ textarea::placeholder,input::placeholder{font-style:italic}
       <div style="flex:1;min-height:0;display:flex;flex-direction:column;background:#121110">
         <div style="display:grid;grid-template-columns:44px minmax(0,1fr) 44px;align-items:center;justify-items:center;padding:12px 14px;flex:none">
           <span style="width:44px" aria-hidden="true"></span>
-          <sc-if value="{{ menuOn }}">
-            <div style="display:inline-flex;border-radius:var(--radius-md);overflow:hidden;border:1px solid rgba(255,255,255,.25);white-space:nowrap">
-              <sc-for list="{{ scanModes }}" as="m" hint-placeholder-count="2">
-                <button onClick="{{ m.pick }}" style="padding:7px 14px;font-size:13px;background:{{ m.bg }};color:{{ m.fg }};border:0;cursor:pointer;font-family:var(--font-heading);font-weight:500">{{ m.label }}</button>
-              </sc-for>
-            </div>
-          </sc-if>
-          <sc-if value="{{ menuOff }}"><div style="font-family:var(--font-heading);font-weight:500;font-size:15px;color:#f6f2ea;white-space:nowrap;text-align:center;max-width:100%;overflow:hidden;text-overflow:ellipsis">Scan a label</div></sc-if>
+          <div style="font-family:var(--font-heading);font-weight:500;font-size:15px;color:#f6f2ea;white-space:nowrap;text-align:center;max-width:100%;overflow:hidden;text-overflow:ellipsis">Scan a label</div>
           <div style="width:44px;display:flex;justify-content:flex-end">
             <sc-if value="{{ torchOn }}"><button class="btn" style="color:{{ torchColor }};padding-inline:4px" onClick="{{ toggleTorch }}" aria-label="{{ torchLabel }}"><i class="ph {{ torchIcon }}" style="font-size:20px"></i></button></sc-if>
           </div>
@@ -283,62 +276,148 @@ textarea::placeholder,input::placeholder{font-style:italic}
     <sc-if value="{{ isMenu }}">
       <div style="flex:1;min-height:0;display:flex;flex-direction:column;animation:yw-fade .2s ease-out">
         <div style="display:flex;align-items:center;gap:6px;padding:10px 14px 4px;flex:none">
-          <button class="btn" style="padding-inline:4px" onClick="{{ goScan }}" aria-label="Back to camera"><i class="ph ph-arrow-left" style="font-size:19px"></i></button>
-          <div style="font-size:12px;color:var(--color-neutral-600);flex:1">Read from your photo · {{ menuReadCount }} sakes</div>
+          <button class="btn" style="padding-inline:4px" onClick="{{ back }}" aria-label="Back"><i class="ph ph-arrow-left" style="font-size:19px"></i></button>
+          <div style="font-size:12px;color:var(--color-neutral-600);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ listKicker }}</div>
           <button class="btn btn-ghost" style="font-size:12px;gap:5px" onClick="{{ goScan }}"><i class="ph ph-camera-rotate" style="font-size:14px"></i>Retake</button>
         </div>
+        <sc-if value="{{ listLoading }}">
+          <div style="flex:1;min-height:0;overflow:hidden;padding:16px 20px;display:flex;flex-direction:column;gap:14px">
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="font-family:var(--font-heading);font-weight:500;font-size:21px;letter-spacing:-.02em">{{ listLoadingTitle }}</div>
+              <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.5;text-wrap:pretty">This takes a few seconds. We’re finding each sake and placing it against your palate.</div>
+            </div>
+            <div style="display:flex;flex-direction:column">
+              <sc-for list="{{ firstSteps }}" as="skl" hint-placeholder-count="3">
+                <div style="display:flex;flex-direction:column;gap:7px;padding:14px 0;border-bottom:1px solid var(--color-divider);animation:yw-pulse 1.4s ease-in-out infinite">
+                  <span style="width:58%;height:12px;border-radius:4px;background:var(--color-neutral-200);display:block"></span>
+                  <span style="width:36%;height:9px;border-radius:4px;background:var(--color-neutral-200);display:block"></span>
+                  <span style="width:82%;height:9px;border-radius:4px;background:var(--color-neutral-200);display:block"></span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ listReady }}">
         <div style="padding:6px 20px 0;flex:none;display:flex;flex-direction:column;gap:12px">
           <div>
             <div style="font-family:var(--font-heading);font-weight:500;font-size:24px;letter-spacing:-.02em;line-height:1.15">{{ menuHeadline }}</div>
-            <div style="font-size:13px;color:var(--color-neutral-700);margin-top:4px;text-wrap:pretty">{{ menuSub }}</div>
+            <div style="display:flex;align-items:flex-start;gap:2px;margin-top:4px">
+              <div style="font-size:13px;color:var(--color-neutral-700);text-wrap:pretty;flex:1;min-width:0">{{ menuSub }}</div>
+              <sc-if value="{{ listRanked }}"><button onClick="{{ openRankInfo }}" aria-label="How this is ranked" style="width:28px;height:28px;margin:-5px -6px 0 0;border:0;background:transparent;cursor:pointer;display:grid;place-items:center;color:var(--color-neutral-600);flex:none"><i class="ph ph-info" style="font-size:15px"></i></button></sc-if>
+            </div>
           </div>
+          <sc-if value="{{ listEarly }}">
+            <div style="padding:12px 13px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm);display:flex;align-items:center;gap:12px">
+              <i class="ph ph-hexagon" style="font-size:20px;color:var(--color-accent-600);flex:none"></i>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:13px;line-height:1.4;text-wrap:pretty">Rate three sakes and we’ll rank lists like this for you.</div>
+                <div style="font-size:11px;color:var(--color-neutral-600);margin-top:2px">{{ listEarlyCount }}</div>
+              </div>
+              <button class="btn btn-secondary" style="height:36px;font-size:12px;padding-inline:11px;flex:none" onClick="{{ rateThree }}">Find one</button>
+            </div>
+          </sc-if>
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <sc-if value="{{ listRanked }}">
             <div style="display:inline-flex;border:1px solid var(--color-divider);border-radius:var(--radius-md);overflow:hidden">
               <sc-for list="{{ menuSorts }}" as="ms" hint-placeholder-count="2">
                 <button onClick="{{ ms.pick }}" style="padding:7px 12px;font-size:12px;font-family:var(--font-heading);font-weight:500;border:0;cursor:pointer;background:{{ ms.bg }};color:{{ ms.fg }}">{{ ms.label }}</button>
               </sc-for>
             </div>
+            </sc-if>
             <sc-for list="{{ menuFilters }}" as="mf" hint-placeholder-count="3">
               <button onClick="{{ mf.pick }}" style="min-height:32px;padding:6px 11px;border-radius:999px;border:1px solid {{ mf.border }};background:{{ mf.bg }};color:{{ mf.fg }};font-size:12px;font-family:var(--font-body);cursor:pointer">{{ mf.label }}</button>
             </sc-for>
           </div>
         </div>
-        <div style="flex:1;min-height:0;overflow-y:auto;padding:16px 20px 24px;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 18px);mask-image:linear-gradient(to bottom,transparent 0,#000 18px)">
+        <div style="flex:1;min-height:0;overflow-y:auto;padding:12px 20px 24px;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 18px);mask-image:linear-gradient(to bottom,transparent 0,#000 18px)">
           <sc-for list="{{ menuRows }}" as="m" hint-placeholder-count="5">
-            <button onClick="{{ m.open }}" style="display:flex;gap:12px;width:100%;padding:13px 0;border:0;border-bottom:1px solid var(--color-divider);background:transparent;text-align:left;cursor:pointer;font-family:var(--font-body);color:var(--color-text)">
+            <div style="display:flex;flex-direction:column;border-bottom:1px solid var(--color-divider)">
+            <button onClick="{{ m.open }}" style="display:flex;gap:12px;width:100%;padding:13px 0;border:0;background:transparent;text-align:left;cursor:pointer;font-family:var(--font-body);color:var(--color-text)">
               <div style="width:22px;flex:none;display:flex;flex-direction:column;align-items:center;gap:6px;padding-top:2px">
                 <span style="font-family:var(--font-heading);font-size:15px;color:{{ m.rankColor }}">{{ m.rank }}</span>
                 <sc-if value="{{ m.top }}"><span style="width:2px;height:22px;background:var(--color-accent-500);display:block"></span></sc-if>
               </div>
               <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px">
                 <div style="display:flex;align-items:baseline;gap:8px">
-                  <div style="font-family:var(--font-heading);font-weight:500;font-size:15px;flex:1;min-width:0">{{ m.name }}</div>
-                  <span style="font-size:13px;color:var(--color-neutral-700);flex:none">{{ m.price }}</span>
+                  <div style="flex:1;min-width:0;display:flex;align-items:baseline;flex-wrap:wrap;column-gap:6px"><span style="font-family:var(--font-heading);font-weight:500;font-size:15px">{{ m.name }}</span><sc-if value="{{ m.craft }}"><span style="font-size:12px;color:var(--color-neutral-700)">(Craft sake)</span></sc-if></div>
+                  <sc-if value="{{ m.hasPrice }}"><span style="font-size:13px;color:var(--color-neutral-700);flex:none">{{ m.price }}</span></sc-if>
                 </div>
-                <div style="font-size:12px;color:var(--color-neutral-600)"><span lang="ja">{{ m.asRead }}</span> · {{ m.style }}</div>
+                <div style="display:flex;align-items:flex-end;gap:10px">
+                  <div style="font-size:12px;color:var(--color-neutral-600);flex:1;min-width:0" lang="ja">{{ m.meta }}</div>
+                  <div title="{{ m.shapeLabel }}" style="display:flex;align-items:flex-end;gap:2px;height:20px;flex:none">
+                    <sc-for list="{{ m.bars }}" as="sb" hint-placeholder-count="6"><span style="width:4px;height:{{ sb.h }};border-radius:1px;background:var(--color-accent-500);display:block"></span></sc-for>
+                  </div>
+                </div>
                 <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.45;margin-top:3px;text-wrap:pretty">{{ m.why }}</div>
                 <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px">
-                  <span class="tag {{ m.matchTone }}">{{ m.match }}</span>
+                  <sc-if value="{{ m.hasFit }}"><span class="tag {{ m.fitTone }}">{{ m.fitWord }}</span></sc-if>
                   <sc-if value="{{ m.tasted }}"><span class="tag tag-neutral" style="gap:3px"><i class="ph-fill ph-star" style="font-size:10px"></i>{{ m.yourRating }} · yours</span></sc-if>
                   <sc-if value="{{ m.warm }}"><span class="tag tag-neutral">Good warm</span></sc-if>
+                  <sc-if value="{{ m.partial }}"><span class="tag" style="border:1px solid var(--color-neutral-400);color:var(--color-neutral-700)">Partly read</span></sc-if>
                 </div>
               </div>
             </button>
+            <sc-if value="{{ m.hasLines }}">
+              <div style="display:flex;flex-direction:column;margin:-4px 0 10px 34px">
+                <div style="font-size:11px;color:var(--color-neutral-600);margin-bottom:2px">{{ m.linesHead }}</div>
+                <sc-for list="{{ m.lines }}" as="ln" hint-placeholder-count="3">
+                  <button onClick="{{ ln.open }}" style="display:flex;align-items:center;gap:10px;width:100%;min-height:44px;padding:0;border:0;border-top:1px solid var(--color-divider);background:transparent;text-align:left;cursor:pointer;font-family:var(--font-body);color:var(--color-text)">
+                    <span style="font-size:13px;flex:1;min-width:0" lang="ja">{{ ln.asRead }}</span>
+                    <sc-if value="{{ ln.hasPrice }}"><span style="font-size:12px;color:var(--color-neutral-700);flex:none">{{ ln.price }}</span></sc-if>
+                    <i class="ph ph-caret-right" style="font-size:13px;color:var(--color-neutral-500)"></i>
+                  </button>
+                </sc-for>
+              </div>
+            </sc-if>
+            </div>
           </sc-for>
           <sc-if value="{{ menuNone }}">
-            <div style="font-size:13px;color:var(--color-neutral-700);padding:18px 0">Nothing on this list fits those filters.</div>
+            <div style="font-size:13px;color:var(--color-neutral-700);padding:18px 0">Nothing here fits those filters.</div>
           </sc-if>
+          <sc-if value="{{ hasUnmatched }}">
           <div style="display:flex;flex-direction:column;gap:4px;margin-top:18px">
             <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-600)">Couldn’t match · 2</div>
             <sc-for list="{{ menuUnmatched }}" as="u" hint-placeholder-count="2">
-              <button onClick="{{ u.search }}" style="display:flex;align-items:center;gap:10px;width:100%;min-height:48px;border:0;border-bottom:1px solid var(--color-divider);background:transparent;text-align:left;cursor:pointer;font-family:var(--font-body);color:var(--color-text)">
-                <i class="ph ph-question" style="font-size:17px;color:var(--color-neutral-600)"></i>
-                <div style="flex:1;min-width:0"><span style="font-size:14px" lang="ja">{{ u.asRead }}</span> <span style="font-size:12px;color:var(--color-neutral-600)">· {{ u.price }}</span></div>
-                <span style="font-size:12px;color:var(--color-accent-700)">Search</span>
-              </button>
+              <div style="display:flex;align-items:center;gap:6px;min-height:48px;border-bottom:1px solid var(--color-divider)">
+                <i class="ph ph-question" style="font-size:17px;color:var(--color-neutral-600);flex:none"></i>
+                <div style="flex:1;min-width:0;padding-left:4px"><span style="font-size:14px" lang="ja">{{ u.asRead }}</span> <span style="font-size:12px;color:var(--color-neutral-600)">· {{ u.price }}</span></div>
+                <button class="btn btn-ghost" style="height:40px;font-size:12px;padding-inline:8px" onClick="{{ u.search }}">Search</button>
+                <button class="btn btn-ghost" style="height:40px;font-size:12px;padding-inline:8px;gap:4px" onClick="{{ u.add }}"><i class="ph ph-plus-circle" style="font-size:14px"></i>Add it</button>
+              </div>
             </sc-for>
           </div>
+          </sc-if>
+          <div style="display:flex;align-items:flex-start;gap:12px;margin-top:18px;padding:12px 0;border-bottom:1px solid var(--color-divider)">
+            <i class="ph ph-eye-slash" style="font-size:17px;color:var(--color-neutral-600);flex:none;margin-top:1px"></i>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:14px">{{ unreadLabel }}</div>
+              <div style="font-size:12px;color:var(--color-neutral-600);margin-top:2px;text-wrap:pretty">{{ unreadHint }}</div>
+            </div>
+          </div>
+          <sc-if value="{{ hasOther }}">
+            <button onClick="{{ toggleOther }}" aria-expanded="{{ otherOpen }}" style="display:flex;align-items:center;gap:12px;width:100%;min-height:48px;margin-top:6px;padding:0;border:0;background:transparent;text-align:left;cursor:pointer;font-family:var(--font-body);color:var(--color-text)">
+              <i class="ph ph-drop" style="font-size:17px;color:var(--color-neutral-600)"></i>
+              <span style="flex:1;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-600)">{{ otherCount }}</span>
+              <i class="ph {{ otherCaret }}" style="font-size:14px;color:var(--color-neutral-500)"></i>
+            </button>
+            <sc-if value="{{ otherOpen }}">
+              <div style="display:flex;flex-direction:column;animation:yw-fade .2s ease-out">
+                <sc-for list="{{ menuOther }}" as="o" hint-placeholder-count="4">
+                  <div style="display:flex;align-items:baseline;gap:8px;min-height:40px;padding:10px 0 0 29px;box-sizing:border-box;border-top:1px solid var(--color-divider);color:var(--color-neutral-600)">
+                    <span style="font-size:13px;flex:1;min-width:0" lang="ja">{{ o.asRead }} <span style="font-size:12px">· {{ o.kind }}</span></span>
+                    <span style="font-size:12px">{{ o.price }}</span>
+                  </div>
+                </sc-for>
+                <button class="btn btn-ghost" style="height:40px;font-size:12px;gap:5px;align-self:flex-start;padding-inline:0;margin-left:29px" onClick="{{ openOtherDrinks }}"><i class="ph ph-book-open-text" style="font-size:14px"></i>Sake and the other Japanese drinks</button>
+              </div>
+            </sc-if>
+          </sc-if>
+          <div style="padding-top:28px;display:flex;flex-direction:column;gap:2px;font-size:12px;line-height:1.5;color:var(--color-neutral-600)">
+            <div>Catalogue and flavour data · <a href="https://sakenowa.com" target="_blank" rel="noopener">Powered by Sakenowa ↗</a></div>
+            <div style="display:flex;flex-wrap:wrap;column-gap:14px"><a href="#impressum" style="padding:6px 0">Impressum</a><a href="#privacy" style="padding:6px 0">Privacy notice</a><a href="#cookies" onClick="{{ reopenCookies }}" style="padding:6px 0">Cookie settings</a><a href="#drink" style="padding:6px 0">Drink responsibly</a></div>
+          </div>
         </div>
+        </sc-if>
       </div>
     </sc-if>
 
@@ -364,6 +443,7 @@ textarea::placeholder,input::placeholder{font-style:italic}
                   <span style="font-size:12px;color:var(--color-neutral-600)" lang="ja">{{ it.kana }}</span>
                 </div>
                 <div style="font-size:12px;color:var(--color-neutral-600);margin-top:2px">{{ it.meta }}</div>
+                <sc-if value="{{ it.hasAlt }}"><div style="font-size:12px;color:var(--color-neutral-700);margin-top:2px">Also sold as {{ it.alt }}</div></sc-if>
               </div>
               <sc-if value="{{ it.tasted }}"><span class="tag tag-accent">Tasted</span></sc-if>
             </button>
@@ -404,11 +484,18 @@ textarea::placeholder,input::placeholder{font-style:italic}
                 <div style="font-family:var(--font-heading);font-weight:500;font-size:21px;line-height:1.14;letter-spacing:-.02em">{{ pickName }}</div>
                 <sc-if value="{{ pickHasKana }}"><div style="font-size:13px;color:var(--color-neutral-600)" lang="ja">{{ pickKana }}</div></sc-if>
                 <div style="font-size:12px;color:var(--color-neutral-600)">{{ pickBrewery }}</div>
+                <sc-if value="{{ pickBrInferred }}"><button onClick="{{ openProv }}" style="display:inline-flex;align-items:center;gap:4px;align-self:flex-start;min-height:30px;margin:-6px 0 -4px;padding:0;border:0;background:transparent;cursor:pointer;font-family:var(--font-body);font-size:12px;color:var(--color-neutral-700)"><i class="ph ph-info" style="font-size:13px;color:var(--color-neutral-600)"></i>Brewery not on this label</button></sc-if>
                 <sc-if value="{{ pickIsBottling }}"><button onClick="{{ pickOpenLine }}" style="display:inline-flex;align-items:center;gap:4px;align-self:flex-start;min-height:30px;margin:-4px 0;padding:0;border:0;background:transparent;cursor:pointer;font-family:var(--font-body);font-size:13px;color:var(--color-accent-700)">A bottling of {{ pickLine }} <span lang="ja" style="color:var(--color-neutral-600)">{{ pickLineKana }}</span><i class="ph ph-caret-right" style="font-size:11px"></i></button></sc-if>
                 <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px">
                   <sc-if value="{{ pickHasMatch }}"><span class="tag tag-accent">{{ pickMatch }}</span></sc-if>
                   <sc-for list="{{ pickTags }}" as="pt" hint-placeholder-count="2"><sc-if value="{{ pt.hasEntry }}"><button onClick="{{ pt.learn }}" aria-label="{{ pt.aria }}" style="display:inline-flex;padding:11px 0;margin:-11px 0;border:0;background:transparent;cursor:pointer;font-family:var(--font-body)"><span class="tag tag-neutral" style="gap:4px" style-hover="background:var(--color-neutral-300)">{{ pt.label }}<i class="ph ph-book-open" style="font-size:11px;color:var(--color-neutral-600)"></i></span></button></sc-if><sc-if value="{{ pt.noEntry }}"><span class="tag tag-neutral">{{ pt.label }}</span></sc-if></sc-for>
                 </div>
+                <sc-if value="{{ pickLabelRead }}">
+                  <div style="display:flex;flex-direction:column;gap:4px;margin-top:8px;padding-top:8px;border-top:1px solid var(--color-divider)">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600)">On this label</span><button onClick="{{ openProv }}" aria-label="Read by AI — what this means" style="display:inline-flex;align-items:center;gap:4px;height:24px;padding:0 9px;border-radius:999px;border:1px solid var(--color-neutral-400);background:transparent;color:var(--color-neutral-700);font-size:11px;font-family:var(--font-body);cursor:pointer;box-sizing:border-box;flex:none" style-hover="background:var(--color-neutral-200)"><i class="ph ph-scan" style="font-size:12px"></i>Read by AI</button></div>
+                    <div style="font-size:13px;color:var(--color-neutral-800);line-height:1.4;text-wrap:pretty">{{ pickLabelLine }}</div>
+                  </div>
+                </sc-if>
                 <sc-if value="{{ pickInCatalogue }}"><div style="font-size:11px;color:var(--color-neutral-700);margin-top:6px">Catalogue data · <a href="https://sakenowa.com" target="_blank" rel="noopener" style="color:var(--color-neutral-700);text-decoration:underline;text-decoration-color:var(--color-neutral-500);text-underline-offset:2px">Powered by Sakenowa ↗</a></div></sc-if>
               </div>
             </div>
@@ -476,6 +563,12 @@ textarea::placeholder,input::placeholder{font-style:italic}
           </article>
         </div>
 
+        <sc-if value="{{ pickFits }}">
+          <div style="padding:6px 18px 0">
+            <button onClick="{{ openAllBottlings }}" style="display:flex;align-items:center;gap:8px;width:100%;min-height:44px;padding:0 2px;border:0;background:transparent;cursor:pointer;font-family:var(--font-body);font-size:13px;color:var(--color-text);text-align:left"><i class="ph ph-list-magnifying-glass" style="font-size:17px;color:var(--color-neutral-600)"></i><span style="flex:1">Not this bottling? All {{ pickFitsLine }} bottlings</span><i class="ph ph-caret-right" style="font-size:14px;color:var(--color-neutral-500)"></i></button>
+          </div>
+        </sc-if>
+
         <sc-if value="{{ pickBestGuess }}">
           <div style="padding:10px 18px 0;display:flex;flex-direction:column">
             <button onClick="{{ toggleCands }}" style="display:flex;align-items:center;gap:8px;min-height:44px;padding:0 2px;border:0;background:transparent;cursor:pointer;font-family:var(--font-body);font-size:13px;color:var(--color-text);text-align:left"><i class="ph ph-list-magnifying-glass" style="font-size:17px;color:var(--color-neutral-600)"></i><span style="flex:1">Not sure? {{ candCount }} other candidates</span><i class="ph {{ candCaret }}" style="font-size:14px;color:var(--color-neutral-500)"></i></button>
@@ -494,8 +587,10 @@ textarea::placeholder,input::placeholder{font-style:italic}
 
         <sc-if value="{{ pickHasBottlings }}">
           <div style="padding:16px 18px 0;display:flex;flex-direction:column">
+            <sc-if value="{{ pickBtList }}">
             <h6 style="margin:0 0 4px;font-size:11px;letter-spacing:.1em;color:var(--color-neutral-600)">Is it one of these bottlings?</h6>
             <div style="font-size:12px;color:var(--color-neutral-700);line-height:1.5;text-wrap:pretty;margin-bottom:2px">We matched the sake, not the exact bottling. Pick yours and the tasting lands on its page.</div>
+            </sc-if>
             <sc-for list="{{ pickBottlings }}" as="cd" hint-placeholder-count="3">
                 <button onClick="{{ cd.open }}" style="display:flex;align-items:center;gap:12px;width:100%;min-height:58px;padding:10px 0;border:0;border-bottom:1px solid var(--color-divider);background:transparent;text-align:left;cursor:pointer;font-family:var(--font-body);color:var(--color-text)">
                   <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
@@ -509,13 +604,18 @@ textarea::placeholder,input::placeholder{font-style:italic}
               <sc-if value="{{ addBtClosed }}">
                 <button onClick="{{ openAddBt }}" style="display:flex;align-items:center;gap:12px;width:100%;min-height:56px;margin-top:8px;padding:10px 12px;border-radius:var(--radius-md);border:1px dashed var(--color-neutral-400);background:transparent;text-align:left;cursor:pointer;font-family:var(--font-body);color:var(--color-text)">
                   <i class="ph ph-plus-circle" style="font-size:20px;color:var(--color-accent-600)"></i>
-                  <div style="flex:1;min-width:0"><div style="font-size:14px">{{ addBtLabel }}</div><div style="font-size:12px;color:var(--color-neutral-600);margin-top:1px">Just the name — the rest can wait</div></div>
+                  <div style="flex:1;min-width:0"><div style="font-size:14px">{{ addBtLabel }}</div><div style="font-size:12px;color:var(--color-neutral-600);margin-top:1px">{{ addBtSub }}</div></div>
                 </button>
               </sc-if>
               <sc-if value="{{ addBtOpen }}">
                 <div style="margin-top:8px;padding:12px;border-radius:var(--radius-md);border:1px dashed var(--color-neutral-400);display:flex;flex-direction:column;gap:10px;animation:yw-fade .2s ease-out">
                   <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600)">Bottling name</span><input class="input" autofocus="{{ true }}" value="{{ addBtName }}" onChange="{{ setAddBtName }}" style="height:44px;font-size:15px;background:var(--color-bg)" /></label>
-                  <div style="font-size:12px;color:var(--color-neutral-600);line-height:1.5;text-wrap:pretty">Brewery, grade and size are optional — add them later in Detailed notes. Only you can see it.</div>
+                  <div style="display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:8px">
+                    <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600)">Grade</span><input class="input" value="{{ addBtGrade }}" onChange="{{ setAddBtGrade }}" placeholder="Junmai Ginjō" style="height:44px;font-size:14px;background:var(--color-bg)" /></label>
+                    <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600)">Polishing</span><input class="input" value="{{ addBtPol }}" onChange="{{ setAddBtPol }}" placeholder="50%" inputMode="numeric" style="height:44px;font-size:14px;background:var(--color-bg)" /></label>
+                  </div>
+                  <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600)">Style</span><input class="input" value="{{ addBtStyles }}" onChange="{{ setAddBtStyles }}" placeholder="Nama, Genshu" style="height:44px;font-size:14px;background:var(--color-bg)" /></label>
+                  <div style="font-size:12px;color:var(--color-neutral-600);line-height:1.5;text-wrap:pretty">{{ addBtHint }}</div>
                   <div style="display:flex;gap:8px"><button class="btn btn-primary" style="height:42px;font-size:13px;padding-inline:18px;border-width:1.5px" onClick="{{ saveAddBt }}">Add bottling</button><button class="btn btn-ghost" style="height:42px;font-size:13px" onClick="{{ cancelAddBt }}">Cancel</button></div>
                 </div>
               </sc-if>
@@ -603,6 +703,15 @@ textarea::placeholder,input::placeholder{font-style:italic}
             <div style="font-family:var(--font-heading);font-weight:500;font-size:21px;line-height:1.2;letter-spacing:-.02em;text-wrap:pretty">{{ oc.title }}</div>
             <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.55;text-wrap:pretty">{{ oc.body }}</div>
           </div>
+          <sc-if value="{{ oc.photoBack }}">
+            <div style="display:flex;align-items:flex-end;gap:12px">
+              <div style="width:72px;height:96px;flex:none;border-radius:8px;background:repeating-linear-gradient(135deg,#2a2826,#2a2826 5px,#33302d 5px,#33302d 10px);display:grid;place-items:end center;padding-bottom:6px;box-sizing:border-box"><span style="font-family:ui-monospace,monospace;font-size:9px;color:var(--color-neutral-700)">your photo</span></div>
+              <div style="font-size:12px;color:var(--color-neutral-600);line-height:1.45;padding-bottom:2px">The side you photographed</div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ oc.hasPrimary }}">
+            <button class="btn btn-primary btn-block" style="height:46px;font-size:14px;gap:8px;border-width:1.5px;margin:0" onClick="{{ oc.primaryGo }}"><i class="ph {{ oc.primaryIcon }}" style="font-size:17px"></i>{{ oc.primaryLabel }}</button>
+          </sc-if>
           <sc-if value="{{ oc.consensus }}">
             <div style="display:flex;flex-direction:column;gap:8px">
               <button class="btn btn-primary btn-block" style="height:46px;font-size:14px;border-width:1.5px;margin:0" onClick="{{ ocYes }}">Yes, that’s it</button>
@@ -622,8 +731,8 @@ textarea::placeholder,input::placeholder{font-style:italic}
                 <h6 style="margin:0;font-size:11px;letter-spacing:.1em;color:var(--color-neutral-600)">What we read</h6>
                 <button onClick="{{ openProv }}" aria-label="Read by AI — what this means" style="display:inline-flex;align-items:center;gap:4px;height:24px;padding:0 9px;border-radius:999px;border:1px solid var(--color-neutral-400);background:transparent;color:var(--color-neutral-700);font-size:11px;font-family:var(--font-body);cursor:pointer;box-sizing:border-box" style-hover="background:var(--color-neutral-200)"><i class="ph ph-scan" style="font-size:12px"></i>Read by AI</button>
               </div>
-              <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600)">Name</span><input class="input" value="{{ ocName }}" onChange="{{ ocSetName }}" style="height:44px;font-size:15px;background:var(--color-bg)" /></label>
-              <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600)">Brewery</span><input class="input" value="{{ ocBrewery }}" onChange="{{ ocSetBrewery }}" style="height:44px;font-size:15px;background:var(--color-bg)" lang="ja" /></label>
+              <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600)">Name</span><input class="input" value="{{ ocName }}" onChange="{{ ocSetName }}" style="height:44px;font-size:15px;background:var(--color-bg)" /><sc-if value="{{ ocHasNameJa }}"><span style="font-size:12px;color:var(--color-neutral-600)">On the label: <span lang="ja" style="color:var(--color-neutral-800)">{{ ocNameJa }}</span></span></sc-if></label>
+              <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600)">Brewery</span><input class="input" value="{{ ocBrewery }}" onChange="{{ ocSetBrewery }}" style="height:44px;font-size:15px;background:var(--color-bg)" /><sc-if value="{{ ocHasBreweryJa }}"><span style="font-size:12px;color:var(--color-neutral-600)">On the label: <span lang="ja" style="color:var(--color-neutral-800)">{{ ocBreweryJa }}</span></span></sc-if></label>
               <div style="font-size:12px;color:var(--color-neutral-600);text-wrap:pretty">Misread? Fix it from the label and search again.</div>
               <button class="btn btn-secondary btn-block" style="height:42px;font-size:13px;gap:7px;margin:0" onClick="{{ ocSearch }}"><i class="ph ph-magnifying-glass" style="font-size:15px"></i>Search again</button>
             </div>
@@ -643,7 +752,7 @@ textarea::placeholder,input::placeholder{font-style:italic}
             </sc-for>
             </div>
           </sc-if>
-          <sc-if value="{{ oc.hasRead }}">
+          <sc-if value="{{ oc.canKeep }}">
             <div style="padding:14px;border-radius:var(--radius-md);border:1px dashed var(--color-neutral-400);display:flex;flex-direction:column;gap:8px">
               <div style="font-family:var(--font-heading);font-weight:500;font-size:14px">Keep it anyway</div>
               <div style="font-size:12px;color:var(--color-neutral-700);line-height:1.5;text-wrap:pretty">Rate it and put it in your cellar now, with the name above. It’s marked as your own entry, and we’ll link it if the sake turns up in the catalogue.</div>
@@ -653,6 +762,7 @@ textarea::placeholder,input::placeholder{font-style:italic}
           <div style="display:flex;flex-direction:column;margin-top:-8px">
             <button class="btn btn-ghost" style="height:44px;font-size:13px;gap:6px;align-self:flex-start;padding-inline:0" onClick="{{ goSearch }}"><i class="ph ph-keyboard" style="font-size:16px"></i>Type the name instead</button>
             <button class="btn btn-ghost" style="height:44px;font-size:13px;gap:6px;align-self:flex-start;padding-inline:0" onClick="{{ openLabelGuide }}"><i class="ph ph-book-open-text" style="font-size:16px"></i>How to read a label</button>
+            <sc-if value="{{ oc.learnOther }}"><button class="btn btn-ghost" style="height:44px;font-size:13px;gap:6px;align-self:flex-start;padding-inline:0" onClick="{{ openOtherDrinks }}"><i class="ph ph-book-open-text" style="font-size:16px"></i>Sake and the other Japanese drinks</button></sc-if>
           </div>
         </div>
       </div>
@@ -730,6 +840,7 @@ textarea::placeholder,input::placeholder{font-style:italic}
             <div style="font-family:var(--font-heading);font-weight:500;font-size:25px;line-height:1.1;letter-spacing:-.02em">{{ sk.name }}</div>
             <sc-if value="{{ sk.hasKana }}"><div style="font-size:13px;color:var(--color-neutral-600)" lang="ja">{{ sk.kana }}</div></sc-if>
             <div style="font-size:12px;color:var(--color-neutral-600)">{{ sk.place }}</div>
+            <sc-if value="{{ sk.hasAlso }}"><div style="font-size:12px;color:var(--color-neutral-600)">Also sold as {{ sk.alsoAs }}</div></sc-if>
             <sc-if value="{{ sk.hasFormer }}"><div style="font-size:12px;color:var(--color-neutral-600)">formerly {{ sk.formerLatin }} <span lang="ja">{{ sk.formerKanji }}</span></div></sc-if>
             <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:6px">
               <sc-for list="{{ sk.tags }}" as="tg" hint-placeholder-count="2"><sc-if value="{{ tg.hasEntry }}"><button onClick="{{ tg.learn }}" aria-label="{{ tg.aria }}" style="display:inline-flex;padding:11px 0;margin:-11px 0;border:0;background:transparent;cursor:pointer;font-family:var(--font-body)"><span class="tag tag-neutral" style="gap:4px" style-hover="background:var(--color-neutral-300)">{{ tg.label }}<i class="ph ph-book-open" style="font-size:11px;color:var(--color-neutral-600)"></i></span></button></sc-if><sc-if value="{{ tg.noEntry }}"><span class="tag tag-neutral">{{ tg.label }}</span></sc-if></sc-for>
@@ -851,13 +962,18 @@ textarea::placeholder,input::placeholder{font-style:italic}
               <sc-if value="{{ addBtClosed }}">
                 <button onClick="{{ openAddBt }}" style="display:flex;align-items:center;gap:12px;width:100%;min-height:56px;margin-top:8px;padding:10px 12px;border-radius:var(--radius-md);border:1px dashed var(--color-neutral-400);background:transparent;text-align:left;cursor:pointer;font-family:var(--font-body);color:var(--color-text)">
                   <i class="ph ph-plus-circle" style="font-size:20px;color:var(--color-accent-600)"></i>
-                  <div style="flex:1;min-width:0"><div style="font-size:14px">{{ addBtLabel }}</div><div style="font-size:12px;color:var(--color-neutral-600);margin-top:1px">Just the name — the rest can wait</div></div>
+                  <div style="flex:1;min-width:0"><div style="font-size:14px">{{ addBtLabel }}</div><div style="font-size:12px;color:var(--color-neutral-600);margin-top:1px">{{ addBtSub }}</div></div>
                 </button>
               </sc-if>
               <sc-if value="{{ addBtOpen }}">
                 <div style="margin-top:8px;padding:12px;border-radius:var(--radius-md);border:1px dashed var(--color-neutral-400);display:flex;flex-direction:column;gap:10px;animation:yw-fade .2s ease-out">
                   <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600)">Bottling name</span><input class="input" autofocus="{{ true }}" value="{{ addBtName }}" onChange="{{ setAddBtName }}" style="height:44px;font-size:15px;background:var(--color-bg)" /></label>
-                  <div style="font-size:12px;color:var(--color-neutral-600);line-height:1.5;text-wrap:pretty">Brewery, grade and size are optional — add them later in Detailed notes. Only you can see it.</div>
+                  <div style="display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:8px">
+                    <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600)">Grade</span><input class="input" value="{{ addBtGrade }}" onChange="{{ setAddBtGrade }}" placeholder="Junmai Ginjō" style="height:44px;font-size:14px;background:var(--color-bg)" /></label>
+                    <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600)">Polishing</span><input class="input" value="{{ addBtPol }}" onChange="{{ setAddBtPol }}" placeholder="50%" inputMode="numeric" style="height:44px;font-size:14px;background:var(--color-bg)" /></label>
+                  </div>
+                  <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600)">Style</span><input class="input" value="{{ addBtStyles }}" onChange="{{ setAddBtStyles }}" placeholder="Nama, Genshu" style="height:44px;font-size:14px;background:var(--color-bg)" /></label>
+                  <div style="font-size:12px;color:var(--color-neutral-600);line-height:1.5;text-wrap:pretty">{{ addBtHint }}</div>
                   <div style="display:flex;gap:8px"><button class="btn btn-primary" style="height:42px;font-size:13px;padding-inline:18px;border-width:1.5px" onClick="{{ saveAddBt }}">Add bottling</button><button class="btn btn-ghost" style="height:42px;font-size:13px" onClick="{{ cancelAddBt }}">Cancel</button></div>
                 </div>
               </sc-if>
@@ -1009,6 +1125,7 @@ textarea::placeholder,input::placeholder{font-style:italic}
             </div>
             <sc-if value="{{ bt.fromCatalogue }}"><div style="font-size:11px;color:var(--color-neutral-700);margin-top:8px">Catalogue data · <a href="https://sakenowa.com" target="_blank" rel="noopener" style="color:var(--color-neutral-700);text-decoration:underline;text-decoration-color:var(--color-neutral-500);text-underline-offset:2px">Powered by Sakenowa ↗</a></div></sc-if>
             <sc-if value="{{ bt.isOwn }}"><div style="font-size:12px;color:var(--color-neutral-700);margin-top:8px;line-height:1.5;text-wrap:pretty">{{ bt.ownLine }}</div></sc-if>
+            <sc-if value="{{ bt.aiReading }}"><button onClick="{{ openProv }}" style="display:inline-flex;align-items:center;gap:4px;align-self:flex-start;min-height:32px;margin:2px 0 -6px;padding:0;border:0;background:transparent;cursor:pointer;font-family:var(--font-body);font-size:11px;color:var(--color-neutral-600)"><i class="ph ph-scan" style="font-size:12px"></i>Reading by AI<i class="ph ph-caret-right" style="font-size:10px"></i></button></sc-if>
           </div>
           <sc-if value="{{ skPanelClosed }}">
             <div style="display:flex;gap:8px;padding:10px 20px 0">
@@ -2082,6 +2199,21 @@ textarea::placeholder,input::placeholder{font-style:italic}
     </div>
   </sc-if>
 
+  <sc-if value="{{ rankInfoOpen }}">
+    <div style="position:absolute;inset:0;background:rgba(0,0,0,.55);display:flex;flex-direction:column;justify-content:flex-end;z-index:8;animation:yw-fade .2s ease-out">
+      <button onClick="{{ closeRankInfo }}" aria-label="Dismiss" style="flex:1;border:0;background:transparent;cursor:pointer"></button>
+      <div role="dialog" aria-labelledby="yw-rank-title" style="background:var(--color-surface);border-radius:20px 20px 0 0;padding:10px 20px 26px;box-shadow:var(--shadow-lg);animation:yw-sheet .26s ease-out;display:flex;flex-direction:column;gap:12px">
+        <span style="width:36px;height:4px;border-radius:2px;background:var(--color-neutral-400);align-self:center"></span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div id="yw-rank-title" style="font-family:var(--font-heading);font-weight:500;font-size:19px;flex:1">How this is ranked</div>
+          <button class="btn" style="padding-inline:2px" onClick="{{ closeRankInfo }}" aria-label="Close"><i class="ph ph-x" style="font-size:18px"></i></button>
+        </div>
+        <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.55;text-wrap:pretty">Each sake is placed by how close its flavour chart sits to the sakes you rate highly. The reasons come from the charts and your ratings, nothing else.</div>
+        <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.55;text-wrap:pretty">It works on the sake, not the bottling, so bottlings of one sake share a place. With only a few tastings it’s a rough guide, which is why it says so in words and not as a number.</div>
+      </div>
+    </div>
+  </sc-if>
+
   <sc-if value="{{ provOpen }}">
     <div style="position:absolute;inset:0;background:rgba(0,0,0,.55);display:flex;flex-direction:column;justify-content:flex-end;z-index:8;animation:yw-fade .2s ease-out">
       <button onClick="{{ closeProv }}" aria-label="Dismiss" style="flex:1;border:0;background:transparent;cursor:pointer"></button>
@@ -2092,6 +2224,7 @@ textarea::placeholder,input::placeholder{font-style:italic}
           <button class="btn" style="padding-inline:2px" onClick="{{ closeProv }}" aria-label="Close"><i class="ph ph-x" style="font-size:18px"></i></button>
         </div>
         <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.55;text-wrap:pretty">An AI model read these words off your photo. It can misread a character or run two names together, so check them against the label.</div>
+        <sc-if value="{{ provBrewery }}"><div style="font-size:13px;color:var(--color-neutral-700);line-height:1.55;text-wrap:pretty"><span style="color:var(--color-text)">Brewery not on this label.</span> The label printed the name alone. The brewery shown is the one the catalogue lists for that name, not one we read, and two breweries can use the same name. If the back label names another brewery, tap “Not this one”.</div></sc-if>
         <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.55;text-wrap:pretty">How sure it was: <span style="color:var(--color-text)">{{ ocConfidence }}</span>. Your photo is discarded once it has been read.</div>
       </div>
     </div>
@@ -2224,7 +2357,7 @@ textarea::placeholder,input::placeholder{font-style:italic}
 </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;firstRun&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;market&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;EU (Germany)&quot;,&quot;Japan&quot;],&quot;default&quot;:&quot;EU (Germany)&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;askEnabled&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;menuScan&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;camera&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Allowed&quot;,&quot;Permission denied&quot;,&quot;Desktop / none&quot;],&quot;default&quot;:&quot;Allowed&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;iosWebview&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;twoToneBars&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;scanOutcome&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Matched&quot;,&quot;Matched, best guess&quot;,&quot;Brand only&quot;,&quot;Brewery only&quot;,&quot;Several fit&quot;,&quot;Not in catalogue&quot;,&quot;Unclear, recent scans agree&quot;,&quot;Unclear, nothing read&quot;,&quot;Rate limited&quot;,&quot;Something went wrong&quot;,&quot;Photo unusable&quot;,&quot;Matched, line only&quot;],&quot;default&quot;:&quot;Matched&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Scan&quot;},&quot;guidePublic&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Sake guide&quot;},&quot;ratingLive&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;firstRun&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;market&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;EU (Germany)&quot;,&quot;Japan&quot;],&quot;default&quot;:&quot;EU (Germany)&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;askEnabled&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;menuScan&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Scan&quot;},&quot;camera&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Allowed&quot;,&quot;Permission denied&quot;,&quot;Desktop / none&quot;],&quot;default&quot;:&quot;Allowed&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;iosWebview&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;twoToneBars&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;scanOutcome&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Matched&quot;,&quot;Matched, best guess&quot;,&quot;Matched, line only&quot;,&quot;Matched, your bottling fits&quot;,&quot;Matched, brewery not on label&quot;,&quot;Brand only&quot;,&quot;Brewery only&quot;,&quot;Several fit&quot;,&quot;Not in catalogue&quot;,&quot;Not sake&quot;,&quot;Menu in photo&quot;,&quot;Shelf in photo&quot;,&quot;Two bottles&quot;,&quot;No name on this side&quot;,&quot;No bottle&quot;,&quot;Unclear, recent scans agree&quot;,&quot;Unclear, nothing read&quot;,&quot;Rate limited&quot;,&quot;Something went wrong&quot;,&quot;Photo unusable&quot;],&quot;default&quot;:&quot;Matched&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Scan&quot;},&quot;guidePublic&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Sake guide&quot;},&quot;ratingLive&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;notSakeDrink&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Shochu&quot;,&quot;Awamori&quot;,&quot;Umeshu&quot;,&quot;Liqueur&quot;,&quot;Other drink&quot;],&quot;default&quot;:&quot;Shochu&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Scan&quot;},&quot;listPalate&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;From journal&quot;,&quot;Under three tastings&quot;],&quot;default&quot;:&quot;From journal&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Scan&quot;}}">
 const SEED = [
   { id: 4, day: '20', mon: 'Sep', ago: '1d', name: 'Rihaku Wandering Poet', brewery: 'Rihaku Shuzō · Shimane', note: '“Melon and steamed rice, then a dry snap. Easy to like.”', rating: 4, hasDetail: false },
   { id: 3, day: '19', mon: 'Sep', ago: '2d', name: 'Kidoizumi AFS', brewery: 'Kidoizumi Shuzō · Chiba', note: '“Sour apple, almost cider — nothing like the others.”', rating: 4.5, hasDetail: true },
@@ -2249,6 +2382,7 @@ const CATALOGUE = [
   { name: 'Jikon Tokubetsu Junmai', kana: '而今 特別純米', brewery: 'Kiyasho Shuzō · Mie', tags: ['Junmai'] },
   { name: 'Rihaku', kana: '李白', brewery: 'Rihaku Shuzō · Shimane', tags: [] },
   { name: 'Dassai', kana: '獺祭', brewery: 'Dassai · Yamaguchi', tags: [] },
+  { name: 'Haccoba Hanauta Hops', kana: 'はなうたホップス', brewery: 'haccoba · Fukushima', tags: [], craft: true },
 ]
 // A bottling (UI) = expression (code): one product under a catalogue line. Sample data.
 const BOTTLINGS = {
@@ -2269,11 +2403,26 @@ const findSake = (name, own) => {
   const b = BOTTLINGS[name] || (own || {})[name]
   if (!b) return null
   const ln = b.line ? CATALOGUE.find((x) => x.name === b.line) : null
-  return { name, kana: ln ? ln.kana : '', brewery: ln ? ln.brewery : (b.brewery || 'Added by you'), tags: [b.grade].filter(Boolean), bottling: true, line: b.line || null, own: !!b.own }
+  return { name, kana: ln ? ln.kana : '', brewery: ln ? ln.brewery : (b.brewery || 'Added by you'), tags: [b.grade, ...(b.styles || [])].filter(Boolean), bottling: true, line: b.line || null, own: !!b.own }
 }
 // B3: renames on record, kept by hand
+// E (#413): other names a sake is sold under. Sample data.
+const ALT = { 'Akishika Okuharuka': ['Okuroku'], 'Katori 90': ['Terada Honke Katori'], 'Dassai': ['Otter Festival'] }
+// D: what the label says about this bottling (model-read). Name = line · product romanised (kanji) · grade · up to two styles.
+const LABEL_READ = { productLatin: 'Omachi', productKanji: '雄町', grade: 'Junmai Ginjō', styles: ['Nama'], polishing: '50%' }
+const composeName = (line, r) => [line, r.productKanji ? (r.productLatin ? r.productLatin + ' (' + r.productKanji + ')' : '(' + r.productKanji + ')') : r.productLatin, r.grade, ...(r.styles || []).slice(0, 2)].filter(Boolean).join(' ')
+// H: Latin reading the model gives for a read (label's own spelling, else Hepburn). Sample data.
+const READING = { '田中酒造': 'Tanaka Shuzō', '萬乗醸造': 'Banjō Jōzō', '木戸泉酒造': 'Kidoizumi Shuzō', '澤の花 心': 'Sawa no Hana Kokoro', '友野酒造': 'Tomono Shuzō', 'いいちこ 25度': 'Iichiko 25°', '三和酒類': 'Sanwa Shurui', '残波 白': 'Zanpa Shiro', '比嘉酒造': 'Higa Shuzō', '梅乃宿の梅酒': 'Umenoyado Umeshu', '梅乃宿酒造': 'Umenoyado Shuzō', 'あらごしゆず': 'Aragoshi Yuzu', '角ハイボール': 'Kaku Highball', 'サントリー': 'Suntory', '秋鹿 奥鹿': 'Akishika Okuroku', '醸し人九平次': 'Kamoshibito Kuheiji' }
+const withReading = (r) => { if (!r) return r; const o = { ...r }; ['name', 'brewery'].forEach((k) => { const v = r[k]; if (v && READING[v]) { o[k] = READING[v]; o[k + 'Ja'] = v } }); return o }
+const NOT_SAKE = {
+  Shochu: { t: 'This is shochu, not sake', d: 'Shochu is distilled, where sake is brewed.', read: { name: 'いいちこ 25度', brewery: '三和酒類' } },
+  Awamori: { t: 'This is awamori, not sake', d: 'Awamori is Okinawa’s own spirit, distilled from rice with black koji.', read: { name: '残波 白', brewery: '比嘉酒造' } },
+  Umeshu: { t: 'This is umeshu, not sake', d: 'Umeshu is ume fruit steeped in a spirit or in sake, with sugar.', read: { name: '梅乃宿の梅酒', brewery: '梅乃宿酒造' } },
+  Liqueur: { t: 'This is a liqueur, not sake', d: 'A liqueur is a spirit or sake, flavoured and sweetened: yuzu, peach, green tea.', read: { name: 'あらごしゆず', brewery: '梅乃宿酒造' } },
+  'Other drink': { t: 'This isn’t sake', d: 'The label names another kind of drink.', read: { name: '角ハイボール', brewery: 'サントリー' } },
+}
 const FORMER = { 'Dassai · Yamaguchi': { latin: 'Asahi Shuzō', kanji: '旭酒造' } }
-const TAG_GUIDE = { 'Junmai': 'junmai', 'Tokubetsu Junmai': 'junmai', 'Junmai Ginjō': 'ginjo', 'Ginjō': 'ginjo', 'Junmai Daiginjō': 'daiginjo', 'Daiginjō': 'daiginjo', 'Honjōzō': 'honjozo', 'Kimoto': 'kimoto', 'Yamahai': 'yamahai', 'Nama': 'nama', 'Genshu': 'genshu', 'Muroka': 'muroka', 'Nigori': 'nigori', 'Aged': 'koshu' }
+const TAG_GUIDE = { 'Craft sake': 'other', 'Junmai': 'junmai', 'Tokubetsu Junmai': 'junmai', 'Junmai Ginjō': 'ginjo', 'Ginjō': 'ginjo', 'Junmai Daiginjō': 'daiginjo', 'Daiginjō': 'daiginjo', 'Honjōzō': 'honjozo', 'Kimoto': 'kimoto', 'Yamahai': 'yamahai', 'Nama': 'nama', 'Genshu': 'genshu', 'Muroka': 'muroka', 'Nigori': 'nigori', 'Aged': 'koshu' }
 const NTA = 'National Tax Agency labelling standard (清酒の製法品質表示基準)'
 const JSS = 'Japan Sake and Shochu Makers Association'
 // Sample entries — production entries are hand-curated, each fact with a source.
@@ -2343,8 +2492,20 @@ const GUIDE = [
   { k: 'axes', group: 'Tasting', title: 'The six flavour words', kanji: '華やか · 芳醇 · 重厚 · 穏やか · ドライ · 軽快', romaji: '',
     answer: 'Sakenowa’s flavour charts use six Japanese brewers’ terms. The English words in Yawaragi are approximations, not translations.', factsTitle: 'The six', facts: 'AXES',
     source: 'Sakenowa (さけのわ) flavour chart', related: ['temps', 'label'] },
+  { k: 'other', group: 'Around sake', title: 'Sake and the other Japanese drinks', kanji: '日本酒 と ほかのお酒', romaji: 'nihonshu to hoka no osake',
+    answer: 'Sake is brewed from rice, koji and water. Shochu and awamori are distilled; umeshu and most liqueurs are steeped and sweetened. Many sake breweries make them too.',
+    factsTitle: 'How to tell them apart', facts: [
+      { k: 'Sake', jp: '日本酒 · 清酒', note: 'Brewed from rice and koji, then pressed. Usually 15–17%.' },
+      { k: 'Craft sake', jp: 'クラフトサケ', note: 'Brewed like sake, with hops, fruit or herbs added. Not sake in Japanese law; Yawaragi lists it with sake, marked.' },
+      { k: 'Shochu', jp: '焼酎', note: 'Distilled, from barley, sweet potato, rice and more. Often 25%.' },
+      { k: 'Awamori', jp: '泡盛', note: 'Okinawa’s distilled rice spirit, made with black koji.' },
+      { k: 'Umeshu', jp: '梅酒', note: 'Ume fruit steeped in a spirit or in sake, with sugar.' },
+      { k: 'Liqueur', jp: 'リキュール', note: 'The label word for flavoured, sweetened drinks.' },
+    ],
+    detail: ['The word on the label settles it. 焼酎, 泡盛, 梅酒 or リキュール means the bottle is not sake, even when a sake brewery made it. Yawaragi’s catalogue holds sake and craft sake only.'],
+    source: NTA, related: ['label', 'junmai'], tags: ['Craft sake'] },
 ]
-const GUIDE_GROUPS = [['Grades', ['junmai', 'ginjo', 'daiginjo', 'honjozo']], ['Styles and processes', ['kimoto', 'yamahai', 'nama', 'genshu', 'muroka', 'nigori', 'koshu']], ['Rice', ['yamada', 'omachi', 'gohyakumangoku']], ['Serving and tasting', ['temps', 'axes']]]
+const GUIDE_GROUPS = [['Grades', ['junmai', 'ginjo', 'daiginjo', 'honjozo']], ['Styles and processes', ['kimoto', 'yamahai', 'nama', 'genshu', 'muroka', 'nigori', 'koshu']], ['Rice', ['yamada', 'omachi', 'gohyakumangoku']], ['Serving and tasting', ['temps', 'axes']], ['Around sake', ['other']]]
 
 const CELLAR_SEED = [
   { name: 'Kamoshibito Kuheiji', brewery: 'Banjō Jōzō · Aichi', count: 1, size: '720 ml', openedDaysAgo: 12, nama: false },
@@ -2375,12 +2536,18 @@ const OUTCOMES = {
   'Brand only': { kicker: 'Partly matched', icon: 'ph-git-diff', title: 'We found the sake, not its brewery', body: 'The name matches Rihaku in the catalogue, but the brewery we read isn’t the one it lists. If it’s this one, pick it.', read: { name: 'RIHAKU Wandering Poet', brewery: '田中酒造' }, conf: '81%', candLabel: 'Is it this one?', cands: [{ name: 'Rihaku', kana: '李白', brewery: 'Rihaku Shuzō · Shimane', why: 'Same name · different brewery on the label', tags: ['Junmai'] }] },
   'Brewery only': { kicker: 'Partly matched', icon: 'ph-git-diff', title: 'We found the brewery, not the sake', body: 'Banjō Jōzō is in the catalogue, but none of its sakes goes by the name we read. Is it one of these?', read: { name: 'Kuheiji Kurodashō', brewery: '萬乗醸造' }, conf: '88%', candLabel: 'From this brewery', cands: [{ name: 'Kamoshibito Kuheiji', kana: '醸し人九平次', brewery: 'Banjō Jōzō · Aichi', why: 'Same brewery · closest name', cat: 1 }] },
   'Several fit': { kicker: 'A few fit', icon: 'ph-list-magnifying-glass', title: 'Which one is it?', body: 'The label fits more than one sake in the catalogue. Pick the one in front of you.', read: { name: 'Kidoizumi', brewery: '木戸泉酒造' }, conf: '90%', candLabel: 'Closest in the catalogue', cands: [{ cat: 0, why: 'Name and brewery match' }, { name: 'Kidoizumi Afuruu', kana: '木戸泉 アフルー', brewery: 'Kidoizumi Shuzō · Chiba', why: 'Same brewery · sparkling', tags: ['Sparkling'] }, { name: 'Kidoizumi Junmai', kana: '木戸泉 純米', brewery: 'Kidoizumi Shuzō · Chiba', why: 'Same brewery', tags: ['Junmai'] }] },
-  'Not in catalogue': { kicker: 'Not in the catalogue', icon: 'ph-magnifying-glass', title: 'We read it, but can’t find it', body: 'Fix anything we misread and search again — or keep it as your own entry.', read: { name: 'SAWA NO HANA Kokoro', brewery: '友野酒造' }, conf: '85%', candLabel: 'Did you mean', cands: [{ name: 'Sawa no Hana', kana: '澤の花', brewery: 'Banno Shuzō · Nagano', why: 'Similar name · brewery 伴野, not 友野', tags: ['Junmai'] }] },
+  'Not in catalogue': { kicker: 'Not in the catalogue', icon: 'ph-magnifying-glass', title: 'We read it, but can’t find it', body: 'Fix anything we misread and search again — or keep it as your own entry.', read: { name: '澤の花 心', brewery: '友野酒造' }, conf: '85%', candLabel: 'Did you mean', cands: [{ name: 'Sawa no Hana', kana: '澤の花', brewery: 'Banno Shuzō · Nagano', why: 'Similar name · brewery 伴野, not 友野', tags: ['Junmai'] }] },
   'Unclear, recent scans agree': { kicker: 'Unclear photo', icon: 'ph-clock-counter-clockwise', title: 'This looks like Kidoizumi AFS', body: 'The photo was hard to read, but 3 of your last 4 scans were this sake. Is it?', consensus: true },
   'Unclear, nothing read': { kicker: 'Unclear photo', icon: 'ph-eye-slash', title: 'We couldn’t read this label', body: 'Nothing on it was clear enough to look up. Another photo usually does it.', tips: true },
   'Rate limited': { kicker: 'Paused', icon: 'ph-hourglass-medium', title: 'Too many scans in a row', body: 'Give it a minute, then scan again. Typing the name works any time.' },
   'Something went wrong': { kicker: 'Not read', icon: 'ph-warning-circle', title: 'Something went wrong on our side', body: 'It wasn’t your photo. Scan again, or type the name.' },
   'Photo unusable': { kicker: 'Not read', icon: 'ph-image-broken', title: 'We couldn’t use that photo', body: 'Try another photo of the label — JPEG, PNG or HEIC.' },
+  'Not sake': { kicker: 'Not sake', icon: 'ph-drop', notSake: true, read: {}, conf: '93%', noKeep: true },
+  'Menu in photo': { kicker: 'A menu', icon: 'ph-receipt', list: 'menu', read: { name: '秋鹿 奥鹿', brewery: '' }, conf: '90%', noKeep: true },
+  'Shelf in photo': { kicker: 'Several bottles', icon: 'ph-squares-four', list: 'shelf', read: { name: '醸し人九平次', brewery: '' }, conf: '88%', noKeep: true },
+  'Two bottles': { kicker: 'Two bottles', icon: 'ph-copy', title: 'Which bottle do you mean?', body: 'Two bottles share the photo and neither is clearly the one. Pick yours, or scan one at a time.', candLabel: 'Read from your photo', cands: [{ cat: 3, why: 'Left · name and brewery read' }, { cat: 4, why: 'Right · name read' }], noKeep: true },
+  'No bottle': { kicker: 'No bottle', icon: 'ph-selection-slash', title: 'We can’t see a bottle in this photo', body: 'Point the camera at one bottle, with its label filling most of the frame.', scanBtn: true },
+  'No name on this side': { kicker: 'No name on this side', icon: 'ph-arrows-clockwise', title: 'Turn the bottle to the side with writing', body: 'This side has only a picture. The name is usually on the opposite side or on a small label near the base.', photoBack: true, scanBtn: true },
 }
 const XSEED = { lag: [20, 45, 85, 30, 82, 15], ries: [82, 50, 32, 55, 22, 56], guin: [24, 72, 80, 42, 40, 20], fino: [30, 40, 60, 45, 86, 40], pinot: [56, 46, 30, 70, 40, 66] }
 const TEMP_TERMS = [
@@ -2414,6 +2581,7 @@ const PROFILES = {
   'Jikon Tokubetsu Junmai': [76, 50, 44, 48, 34, 52],
   'Rihaku': [58, 52, 46, 60, 62, 48],
   'Dassai': [78, 44, 26, 70, 36, 74],
+  'Haccoba Hanauta Hops': [70, 38, 30, 52, 58, 60],
 }
 const AVG = AXIS_ORDER.map((_, i) => { const ps = Object.values(PROFILES); return ps.reduce((n, p) => n + p[i], 0) / ps.length })
 const standout = (p) => AXIS_ORDER.map((l, i) => ({ l, d: p[i] - AVG[i] })).sort((a, b) => b.d - a.d).slice(0, 2).map((x) => x.l)
@@ -2423,15 +2591,27 @@ const WISH_SEED = [
   { name: 'Jikon Tokubetsu Junmai', brewery: 'Kiyasho Shuzō · Mie', why: 'Scanned at Hasegawa Saketen, 2 Sep', whyIcon: 'ph-camera', shop: '' },
 ]
 
+// §7 v2: a list read (menu or shelf). Sample data; cat = CATALOGUE index.
+const RIHAKU_LINES = [{ asRead: '李白 純米吟醸 Wandering Poet', price: '¥1,100', bt: 'Rihaku Wandering Poet' }, { asRead: '李白 特別純米 超辛口', price: '¥950', bt: 'Rihaku Tokubetsu Junmai Chōkarakuchi' }, { asRead: '李白 山田錦55 原酒 生', price: '¥1,300', bt: 'Rihaku Yamada Nishiki 55 Genshu' }]
 const MENU = [
-  { name: 'Akishika Okuharuka', asRead: '秋鹿 奥鹿', style: 'Junmai · aged', price: '¥1,100', match: 94, why: 'Dry, savoury and made to be warmed — closest thing here to the kimoto you rate highest.', warm: true, cat: 3 },
-  { name: 'Shinkame Kinoene', asRead: '神亀 甲子', style: 'Junmai', price: '¥900', match: 91, why: 'Rich rice and umami without the sourness of AFS. A safe second glass.', warm: true, cat: 4 },
-  { name: 'Katori 90', asRead: '寺田本家 香取90', style: 'Kimoto · 90% polish', price: '¥1,000', match: 88, why: 'You gave it 4 last week. Wild and grainy — good with anything grilled.', warm: true, cat: 2 },
-  { name: 'Tamagawa Time Machine', asRead: '玉川 タイムマシン', style: 'Kimoto · sweet', price: '¥1,300', match: 72, why: 'Heavy and sweet-sour. Worth one if you want a dessert glass, not a food sake.', warm: false, cat: 5 },
-  { name: 'Jikon Tokubetsu Junmai', asRead: '而今 特別純米', style: 'Junmai · fruity', price: '¥1,400', match: 61, why: 'Beautiful, but fruity and bright — the opposite of what you usually reach for.', warm: false, cat: 7 },
-  { name: 'Dassai 45', asRead: '獺祭 45', style: 'Junmai Daiginjō', price: '¥1,200', match: 44, why: 'You rated it 3. Clean and floral; skip unless someone else is ordering.', warm: false, cat: 6 },
+  { cat: 3, asRead: '秋鹿 奥鹿', read: 'Junmai · aged', price: '¥1,100', warm: true },
+  { cat: 4, asRead: '神亀 甲子', read: 'Junmai', price: '¥900', warm: true },
+  { cat: 8, asRead: '李白', lines: RIHAKU_LINES },
+  { cat: 2, asRead: '寺田本家 香取90', read: 'Kimoto', price: '¥1,000', warm: true },
+  { cat: 10, asRead: 'haccoba はなうたホップス', read: '', price: '¥1,200' },
+  { cat: 5, asRead: '玉川 タイムマシン', read: '', price: '¥1,300', partial: true },
+  { cat: 7, asRead: '而今 特別純米', read: 'Tokubetsu Junmai', price: '¥1,400' },
+  { cat: 6, asRead: '獺祭 45', read: 'Junmai Daiginjō', price: '¥1,200' },
+]
+const SHELF = [
+  { cat: 1, asRead: '醸し人九平次', read: 'Junmai Daiginjō' },
+  { cat: 8, asRead: '李白', lines: [RIHAKU_LINES[0], RIHAKU_LINES[2]].map((l) => ({ ...l, price: '' })) },
+  { cat: 6, asRead: '獺祭 45', read: 'Junmai Daiginjō' },
+  { cat: 7, asRead: '而今', read: '', partial: true },
+  { cat: 2, asRead: '香取 90', read: 'Kimoto' },
 ]
 const MENU_UNMATCHED = [{ asRead: '房島屋 純米', price: '¥800' }, { asRead: '本日のおすすめ', price: '¥950' }]
+const MENU_OTHER = [{ asRead: 'いいちこ', kind: 'Shochu', price: '¥600' }, { asRead: '残波', kind: 'Awamori', price: '¥700' }, { asRead: '梅乃宿 梅酒', kind: 'Umeshu', price: '¥650' }, { asRead: 'あらごしゆず', kind: 'Liqueur', price: '¥650' }, { asRead: '生ビール', kind: 'Beer', price: '¥600' }, { asRead: '角ハイボール', kind: 'Highball', price: '¥550' }, { asRead: 'レモンサワー', kind: 'Sour', price: '¥500' }]
 
 const PALATE_AXES = [
   { k: 'rich', label: 'Rich', you: 86, avg: 52, summary: 'Your strongest pull. Everything you rate 4.5 or higher has weight on the palate — rice, umami, a savoury middle.',
@@ -2624,7 +2804,7 @@ class Component extends DCLogic {
     const blocked = !perm
     const desk = cam === 'Desktop / none'
     return {
-      menuOn: menu, menuOff: !menu,
+      menuOn: false, menuOff: true,
       torchOn: perm && !this.pp.iosWebview,
       camLive: !blocked, camBlocked: blocked,
       camDesktop: desk, camNoPerm: cam === 'Permission denied',
@@ -2675,11 +2855,16 @@ class Component extends DCLogic {
   }
 
   pickSake(p, manual) {
-    const own = manual ? { ...(this.state.own || {}), [p.name]: { own: true, line: p.line || null, brewery: p.brewery === 'Added by you' ? '' : p.brewery } } : this.state.own
+    const own = manual ? { ...(this.state.own || {}), [p.name]: { own: true, line: p.line || null, brewery: p.brewery === 'Added by you' ? '' : p.brewery, aiName: !!p.aiName, aiBrewery: !!p.aiBrewery } } : this.state.own
     this.setState({ view: 'result', own, addBt: null, pick: { ...p, manual: !!manual, bottling: !!(p.bottling || manual), own: !!(p.own || manual) }, bestGuess: false, query: '', dn: {}, r: { rating: 0, note: '', tags: [], id: null, toast: false, pop: 0 } })
   }
 
   setDn(p) { this.setState((st) => ({ dn: { ...(st.dn || {}), ...p } })) }
+
+  startList(kind) {
+    this.setState({ view: 'menu', listKind: kind, listLoading: true, menuSort: 'you', menuFilter: [], otherOpen: false })
+    clearTimeout(this._ls); this._ls = setTimeout(() => this.setState({ listLoading: false }), 2600)
+  }
 
   setAcct(p) { this.setState((st) => ({ acct: { ...(st.acct || {}), ...p } })) }
 
@@ -2745,8 +2930,17 @@ class Component extends DCLogic {
     clearTimeout(this._u)
     const out = this.pp.scanOutcome ?? 'Matched'
     const oc = OUTCOMES[out]
-    const lineOnly = out === 'Matched, line only' ? { ...CATALOGUE.find((c) => c.name === 'Rihaku'), photo: true, manual: false } : null
-    this._u = setTimeout(() => this.setState({ view: this.state.mode === 'menu' ? 'menu' : oc ? 'outcome' : 'result', outcome: oc ? out : null, ocRead: oc && oc.read ? { ...oc.read } : null, bestGuess: out === 'Matched, best guess', candsOpen: false, menuSort: 'you', menuFilter: [], scan: 'idle', addBt: null, pick: lineOnly, dn: {}, r: { rating: 0, note: '', tags: [], id: null, toast: false, pop: 0 } }), 2000)
+    const rihaku = CATALOGUE.find((c) => c.name === 'Rihaku')
+    let own = this.state.own || {}
+    let lineOnly = out === 'Matched, line only' ? { ...rihaku, photo: true, manual: false, labelRead: LABEL_READ }
+      : out === 'Matched, brewery not on label' ? { ...CATALOGUE[0], photo: true, manual: false, breweryInferred: true } : null
+    if (out === 'Matched, your bottling fits') {
+      const nm = composeName('Rihaku', LABEL_READ)
+      own = { ...own, [nm]: { own: true, aiName: true, line: 'Rihaku', grade: LABEL_READ.grade, styles: LABEL_READ.styles, polishing: LABEL_READ.polishing } }
+      lineOnly = { ...findSake(nm, own), photo: true, manual: true, bottling: true, own: true, labelRead: LABEL_READ, fits: true }
+    }
+    const read = oc && oc.notSake ? { ...(NOT_SAKE[this.pp.notSakeDrink ?? 'Shochu'] || NOT_SAKE.Shochu).read } : oc && oc.read ? { ...oc.read } : null
+    this._u = setTimeout(() => this.setState({ own, view: oc ? 'outcome' : 'result', outcome: oc ? out : null, ocRead: withReading(read), bestGuess: out === 'Matched, best guess', candsOpen: false, menuSort: 'you', menuFilter: [], scan: 'idle', addBt: null, pick: lineOnly, dn: {}, r: { rating: 0, note: '', tags: [], id: null, toast: false, pop: 0 } }), 2000)
   }
 
 
@@ -2799,7 +2993,7 @@ class Component extends DCLogic {
     })
 
     const working = s.scan === 'working'
-    const menuMode = s.mode === 'menu'
+    const menuMode = false
 
     return {
       gate: s.gate,
@@ -2950,7 +3144,7 @@ class Component extends DCLogic {
               openLine: () => ln && this.setState({ view: 'sake', sakeName: ln.name, skPanel: false }),
               place: ln ? (li.place || ln.brewery) : (b.brewery || 'Added by you'),
               tags: [b.grade, ...(b.flags || [])].filter(Boolean).map(tagBtn),
-              isOwn: !!b.own, fromCatalogue: !b.own,
+              isOwn: !!b.own, fromCatalogue: !b.own, aiReading: !!(b.aiName || b.aiBrewery),
               ownLine: ln ? 'Your own bottling of ' + ln.name + ', not in the catalogue yet. Only you can see it.' : 'Not in the catalogue yet. Only you can see it, and we’ll link it to its sake if it turns up.',
               hasServe: on.length > 0, serveMeta: b.serveMeta || '', serveNote: b.serveNote || '',
               temps: TEMPS.map((x, i) => { const hit = on.indexOf(i) >= 0; return { deg: x.deg, jp: x.jp, bar: hit ? '#b8735a' : '#2d2b29', fg: hit ? '#e8e4dd' : '#a8a49c', sub: hit ? '#e0a88f' : '#8a867e' } }),
@@ -2981,7 +3175,7 @@ class Component extends DCLogic {
                   startRename: () => this.setState({ btEdit: { name, mode: 'rename', val: name } }),
                   setRename: (e) => this.setState({ btEdit: { name, mode: 'rename', val: e.target.value } }),
                   cancelEdit: () => this.setState({ btEdit: null }),
-                  saveRename: () => { const to = ((this.state.btEdit || {}).val || '').trim(); if (!to || to === name) { this.setState({ btEdit: null }); return } this.setState({ ...moveTo(to), sakeName: to, btEdit: null }); this.shelfNote('Renamed to ' + to, 'journal') },
+                  saveRename: () => { const to = ((this.state.btEdit || {}).val || '').trim(); if (!to || to === name) { this.setState({ btEdit: null }); return } const mv = moveTo(to); if (mv.own && mv.own[to]) mv.own[to] = { ...mv.own[to], aiName: false }; this.setState({ ...mv, sakeName: to, btEdit: null }); this.shelfNote('Renamed to ' + to, 'journal') },
                   askDelete: () => this.setState({ btEdit: { name, mode: 'delete' } }),
                   deleteText: 'Delete ' + name + '?' + (yours ? ' ' + yours + (ln ? ' stay, under ' + ln.name + '.' : ' go with it.') : ''),
                   confirmDelete: () => { const to = ln ? ln.name : null; const snap = { own: s.own, cellar: s.cellar, entries: s.entries, view: s.view, tab: s.tab, sakeName: s.sakeName, btEdit: null }; this.setState({ ...moveTo(to), btEdit: null, ...(to ? { view: 'sake', sakeName: to } : { view: null, tab: 'collection', collection: 'journal' }) }); this.shelfNote(name + ' deleted', 'journal', snap) },
@@ -3071,8 +3265,8 @@ class Component extends DCLogic {
           dismissNudge: () => this.setAuth({ dismissed: true }),
           authOpen: !!au.step,
           authCanBack: au.step === 'email' || au.step === 'code',
-          authTitle: au.step === 'email' ? 'Your email' : au.step === 'code' ? 'Enter the code' : ({ log: 'Keep this tasting', wish: 'Keep your wishlist', cellar: 'Keep track of your cellar' }[au.reason] || 'Keep your journal'),
-          authLead: ({ log: 'It’s saved on this phone. Sign in so it’s backed up and your palate follows you.', wish: 'It’s saved on this phone. Sign in to keep it, and to get a note when it’s in stock nearby.', cellar: 'It’s saved on this phone. Sign in so your bottles and open dates are backed up.' }[au.reason] || 'No password. Your notes stay private — nothing is posted publicly.'),
+          authTitle: au.step === 'email' ? 'Your email' : au.step === 'code' ? 'Enter the code' : ({ list: 'Rank lists for your palate', log: 'Keep this tasting', wish: 'Keep your wishlist', cellar: 'Keep track of your cellar' }[au.reason] || 'Keep your journal'),
+          authLead: ({ list: 'Ranking a menu or a shelf works from your palate, so it needs an account. No password.', log: 'It’s saved on this phone. Sign in so it’s backed up and your palate follows you.', wish: 'It’s saved on this phone. Sign in to keep it, and to get a note when it’s in stock nearby.', cellar: 'It’s saved on this phone. Sign in so your bottles and open dates are backed up.' }[au.reason] || 'No password. Your notes stay private — nothing is posted publicly.'),
           authNotNow: () => this.setAuth({ step: null, snoozed: true }),
           authMethods: au.step === 'methods',
           authEmailStep: au.step === 'email',
@@ -3101,7 +3295,7 @@ class Component extends DCLogic {
         const pool = [...CATALOGUE, ...Object.keys(BOTTLINGS).map((n) => findSake(n))]
         const score = (c) => (c.name.toLowerCase().indexOf(q) === 0 || c.kana.indexOf(q) === 0 ? 2 : 1)
         const list = q
-          ? pool.filter((c) => (c.name + ' ' + c.kana + ' ' + c.brewery).toLowerCase().indexOf(q) >= 0).sort((a, b) => (score(b) - score(a)) || ((b.bottling ? 1 : 0) - (a.bottling ? 1 : 0)))
+          ? pool.filter((c) => (c.name + ' ' + c.kana + ' ' + c.brewery + ' ' + (ALT[c.name] || []).join(' ')).toLowerCase().indexOf(q) >= 0).sort((a, b) => (score(b) - score(a)) || ((b.bottling ? 1 : 0) - (a.bottling ? 1 : 0)))
           : pool.filter((c) => tasted(c.name)).slice(0, 4)
         const lineRow = view === 'sake' ? s.sakeName : pk.name
         const addBt = s.addBt || {}
@@ -3114,29 +3308,50 @@ class Component extends DCLogic {
           setQuery: (ev) => this.setState({ query: ev.target.value }),
           clearQuery: () => this.setState({ query: '' }),
           searchHeading: q ? (list.length ? list.length + (list.length === 1 ? ' match' : ' matches') : 'No matches') : 'Recently tasted',
-          searchResults: list.map((c) => ({ ...c, meta: c.bottling ? 'Bottling · ' + c.kana + (c.tags.length ? ' · ' + c.tags.join(', ') : '') : nb(c.name) ? c.brewery + ' · Sake · ' + nb(c.name) + ' bottlings' : c.brewery, tasted: tasted(c.name), pick: () => this.pickSake(c) })),
+          searchResults: list.map((c) => ({ ...c, ...(() => { const a = q && (c.name + ' ' + c.kana).toLowerCase().indexOf(q) < 0 ? (ALT[c.name] || []).find((x) => x.toLowerCase().indexOf(q) >= 0) : null; return { hasAlt: !!a, alt: a || '' } })(), meta: c.bottling ? 'Bottling · ' + c.kana + (c.tags.length ? ' · ' + c.tags.join(', ') : '') : nb(c.name) ? c.brewery + ' · Sake · ' + nb(c.name) + ' bottlings' : c.brewery, tasted: tasted(c.name), pick: () => this.pickSake(c) })),
           addBtClosed: !addBt.open, addBtOpen: !!addBt.open, addBtName: addBt.name || '',
           addBtLabel: view === 'sake' ? 'Add your bottling' : 'Add this bottling',
-          openAddBt: () => this.setState({ addBt: { open: true, name: lineRow + ' ' } }),
-          setAddBtName: (ev) => this.setState({ addBt: { open: true, name: ev.target.value } }),
+          openAddBt: () => { const lr = view === 'sake' ? null : pk.labelRead; this.setState({ addBt: lr ? { open: true, fromLabel: true, name: composeName(lineRow, lr), grade: lr.grade, styles: (lr.styles || []).join(', '), pol: lr.polishing } : { open: true, name: lineRow + ' ', grade: '', styles: '', pol: '' } }) },
+          setAddBtName: (ev) => this.setState({ addBt: { ...addBt, name: ev.target.value } }),
+          setAddBtGrade: (ev) => this.setState({ addBt: { ...addBt, grade: ev.target.value } }),
+          setAddBtStyles: (ev) => this.setState({ addBt: { ...addBt, styles: ev.target.value } }),
+          setAddBtPol: (ev) => this.setState({ addBt: { ...addBt, pol: ev.target.value } }),
+          addBtGrade: addBt.grade || '', addBtStyles: addBt.styles || '', addBtPol: addBt.pol || '',
+          addBtHint: addBt.fromLabel ? 'Read from the label. Fix anything misread; size and the rest can wait for Detailed notes. Only you can see it.' : 'Grade, style and polishing are optional; size and the rest can wait for Detailed notes. Only you can see it.',
+          addBtSub: pk.labelRead && view !== 'sake' ? 'Starts from what the label says' : 'Just the name — the rest can wait',
           cancelAddBt: () => this.setState({ addBt: null }),
           saveAddBt: () => {
             const nm = (addBt.name || '').trim() || lineRow + ' (my bottling)'
-            const own = { ...(s.own || {}), [nm]: { own: true, line: lineRow } }
+            const styles = (addBt.styles || '').split(',').map((x) => x.trim()).filter(Boolean)
+            const own = { ...(s.own || {}), [nm]: { own: true, aiName: !!addBt.fromLabel && (addBt.name || '') === composeName(lineRow, pk.labelRead || {}), line: lineRow, grade: (addBt.grade || '').trim() || null, styles, polishing: (addBt.pol || '').trim() || null } }
             if (view === 'sake') { this.setState({ own, addBt: null, view: 'bottling', sakeName: nm, skPanel: false }); return }
-            this.setState({ own, addBt: null, pick: { name: nm, kana: lnCat.kana || '', brewery: lnCat.brewery || '', tags: [], bottling: true, own: true, line: lineRow, manual: true, photo: pk.photo }, r: { rating: 0, note: '', tags: [], id: null, toast: false, pop: 0 } })
+            this.setState({ own, addBt: null, pick: { name: nm, kana: lnCat.kana || '', brewery: lnCat.brewery || '', tags: [(addBt.grade || '').trim(), ...styles].filter(Boolean), labelRead: pk.labelRead, bottling: true, own: true, line: lineRow, manual: true, photo: pk.photo }, r: { rating: 0, note: '', tags: [], id: null, toast: false, pop: 0 } })
           },
           pickIsBottling: !!pk.bottling && !!pk.line, pickLine: pk.line || '', pickLineKana: (CATALOGUE.find((c) => c.name === pk.line) || {}).kana || '',
           pickOpenLine: () => this.setState({ view: 'sake', sakeName: pk.line, skPanel: false }),
           pageLinkLabel: pk.bottling ? 'Bottling page' : 'Full bottle page',
-          pickHasBottlings: !pk.bottling && !pk.manual && (nb(pk.name) > 0 || Object.keys(s.own || {}).some((n) => s.own[n].line === pk.name)),
-          pickBottlings: [...Object.keys(BOTTLINGS).filter((n) => BOTTLINGS[n].line === pk.name), ...Object.keys(s.own || {}).filter((n) => s.own[n].line === pk.name)].map((n) => { const b = BOTTLINGS[n] || { grade: 'Your own entry', flags: [], specs: [] }; const pol = (b.specs.find((x) => x[0] === 'Polishing') || [])[1]; return { name: n, kana: pk.kana, meta: pk.brewery, why: [b.grade, ...b.flags, pol && 'polished to ' + pol].filter(Boolean).join(' · '), hasWhy: true, open: () => this.pickSake({ ...findSake(n), photo: pk.photo }) } }),
+          ...(() => {
+            const list = !pk.bottling && !pk.manual && (nb(pk.name) > 0 || Object.keys(s.own || {}).some((n) => s.own[n].line === pk.name))
+            const lr = pk.labelRead
+            const fitsL = (g, st) => !!lr && g === lr.grade && (st || []).join() === (lr.styles || []).join()
+            const rows = [...Object.keys(BOTTLINGS).filter((n) => BOTTLINGS[n].line === pk.name).map((n) => ({ n, b: BOTTLINGS[n], own: false })), ...Object.keys(s.own || {}).filter((n) => s.own[n].line === pk.name).map((n) => ({ n, b: s.own[n], own: true }))]
+              .map((x) => { const pol = x.own ? x.b.polishing : ((x.b.specs || []).find((y) => y[0] === 'Polishing') || [])[1]; const st = x.own ? x.b.styles : x.b.flags; return { ...x, pol, st, fit: fitsL(x.b.grade, st) } })
+              .sort((a, b) => (b.fit ? 1 : 0) - (a.fit ? 1 : 0))
+            return {
+              pickHasBottlings: list || (!!lr && !pk.bottling && !pk.manual), pickBtList: list,
+              pickBottlings: rows.map((x) => ({ name: x.n, kana: pk.kana, meta: pk.brewery, why: x.own ? (x.fit ? 'Your own entry · fits this label' : ['Your own entry', x.b.grade].filter(Boolean).join(' · ')) : [x.fit && 'Fits this label', x.b.grade, ...(x.st || []), x.pol && 'polished to ' + x.pol].filter(Boolean).join(' · '), hasWhy: true, open: () => this.pickSake({ ...findSake(x.n, s.own), photo: pk.photo }) })),
+              pickLabelRead: !!lr, pickLabelLine: lr ? [lr.productKanji, lr.grade, ...(lr.styles || []), lr.polishing && lr.polishing + ' polished'].filter(Boolean).join(' · ') : '',
+              pickBrInferred: !!pk.breweryInferred,
+              pickFits: !!pk.fits, pickFitsLine: pk.line || '',
+              openAllBottlings: () => this.setState({ view: 'result', addBt: null, pick: { ...CATALOGUE.find((c) => c.name === pk.line), photo: true, manual: false, labelRead: lr }, r: { rating: 0, note: '', tags: [], id: null, toast: false, pop: 0 } }),
+            }
+          })(),
           noResults: !!q && list.length === 0,
           addManual: () => this.pickSake({ name: (s.query || '').trim(), kana: '', brewery: 'Added by you', tags: [] }, true),
           pickName: pk.name, pickKana: pk.kana, pickHasKana: !!pk.kana, pickBrewery: pk.brewery,
-          pickTags: pk.bottling ? (pk.tags || []).map(tagBtn) : [],
+          pickTags: pk.bottling ? (pk.tags || []).map(tagBtn) : pk.craft ? [tagBtn('Craft sake')] : [],
           pickOwnHasLine: !!pk.line,
-          pickKicker: pk.manual ? 'Your own entry' : (s.pick && !pk.photo) ? 'From the catalogue' : 'Matched from your photo',
+          pickKicker: pk.fits ? 'Your own entry · fits this label' : pk.manual ? 'Your own entry' : (s.pick && !pk.photo) ? 'From the catalogue' : 'Matched from your photo',
           pickFromPhoto: !s.pick || !!pk.photo, pickHasMatch: !s.pick || (!!pk.photo && !pk.manual), pickMatch: s.bestGuess ? 'Best guess' : 'Sure match',
           pickBestGuess: !s.pick && !!s.bestGuess, candsOpen: !!s.candsOpen, candCount: 2, candCaret: s.candsOpen ? 'ph-caret-up' : 'ph-caret-down',
           toggleCands: () => this.setState({ candsOpen: !s.candsOpen }),
@@ -3146,17 +3361,37 @@ class Component extends DCLogic {
             const rd = s.ocRead || {}
             return {
               isOutcome: view === 'outcome',
-              oc: { kicker: oc.kicker, icon: oc.icon, title: oc.title, body: oc.body, consensus: !!oc.consensus, tips: !!oc.tips, hasRead: !!oc.read, hasCands: !!(oc.cands && oc.cands.length), candLabel: oc.candLabel },
+              oc: (() => {
+                const ns = NOT_SAKE[this.pp.notSakeDrink ?? 'Shochu'] || NOT_SAKE.Shochu
+                const feat = this.pp.menuScan ?? true
+                const signed = !!(s.auth || {}).signedIn
+                let title = oc.title, body = oc.body, primary = null
+                if (oc.notSake) { title = ns.t; body = ns.d + ' Yawaragi’s catalogue holds sake only, so there is no page for this bottle, and it can’t go in your journal yet.' }
+                if (oc.list) {
+                  const m = oc.list === 'menu', what = m ? 'the sakes on it' : 'the bottles in it'
+                  if (!feat) { title = m ? 'That’s a menu, not a label' : 'More than one bottle in the photo'; body = m ? 'We read one bottle at a time for now. Search for a name from the menu, or scan a bottle’s label.' : 'We can’t tell which one you mean. Scan one bottle at a time.' }
+                  else {
+                    title = m ? 'This looks like a menu' : 'This looks like a shelf'
+                    body = signed ? 'Rank ' + what + ' for your palate? Reading a whole ' + (m ? 'list' : 'shelf') + ' takes a few seconds.' : 'Sign in and we’ll rank ' + what + ' for your palate. Or search for one name from it.'
+                    primary = signed ? { label: 'Rank these for you', icon: 'ph-list-numbers', go: () => this.startList(oc.list) } : { label: 'Sign in to rank these', icon: 'ph-user-circle', go: () => this.setAuth({ step: 'methods', reason: 'list' }) }
+                  }
+                }
+                if (oc.scanBtn) primary = { label: 'Scan again', icon: 'ph-camera-rotate', go: () => this.setState({ tab: 'scan', view: null, scan: 'idle' }) }
+                return { kicker: oc.kicker, icon: oc.icon, title, body, consensus: !!oc.consensus, tips: !!oc.tips, hasRead: !!oc.read, canKeep: !!oc.read && !oc.noKeep, hasCands: !!(oc.cands && oc.cands.length), candLabel: oc.candLabel, hasPrimary: !!primary, primaryLabel: primary ? primary.label : '', primaryIcon: primary ? primary.icon : '', primaryGo: primary ? primary.go : null, photoBack: !!oc.photoBack, learnOther: !!oc.notSake }
+              })(),
+              openOtherDrinks: () => this.setState({ view: 'guideEntry', guideKey: 'other' }),
               ocTips: [{ icon: 'ph-arrows-out', label: 'Get closer so the label fills the frame' }, { icon: 'ph-lightning', label: 'Turn on the light' }, { icon: 'ph-hand', label: 'Hold still for a second' }],
               ocName: rd.name || '', ocBrewery: rd.brewery || '',
+              ocNameJa: rd.nameJa || '', ocHasNameJa: !!rd.nameJa, ocBreweryJa: rd.breweryJa || '', ocHasBreweryJa: !!rd.breweryJa,
               ocSetName: (ev) => this.setState({ ocRead: { ...rd, name: ev.target.value } }),
               ocSetBrewery: (ev) => this.setState({ ocRead: { ...rd, brewery: ev.target.value } }),
-              ocSearch: () => this.setState({ view: 'search', query: rd.name || '' }),
-              ocAdd: () => this.pickSake({ name: rd.name || 'Unnamed sake', kana: '', brewery: rd.brewery || 'Added by you', tags: [] }, true),
+              ocSearch: () => this.setState({ view: 'search', query: (rd.nameJa && rd.name === READING[rd.nameJa]) ? rd.nameJa : (rd.name || '') }),
+              ocAdd: () => { const j = (v, ja) => v && ja && v !== ja ? v + ' (' + ja + ')' : (v || ja); this.pickSake({ name: j(rd.name, rd.nameJa) || 'Unnamed sake', kana: '', brewery: j(rd.brewery, rd.breweryJa) || 'Added by you', tags: [], aiName: !!rd.nameJa, aiBrewery: !!rd.breweryJa }, true) },
               ocYes: () => this.pickSake(CATALOGUE[0]),
               ocCands: (oc.cands || []).map((c) => { const cat = c.cat !== undefined ? CATALOGUE[c.cat] : null; const it = cat ? { ...cat } : { name: c.name, kana: c.kana, brewery: c.brewery, tags: c.tags || [] }; return { name: it.name, kana: it.kana, meta: it.brewery, why: c.why, open: () => this.pickSake(it) } }),
               provOpen: !!s.provOpen, openProv: () => this.setState({ provOpen: true }), closeProv: () => this.setState({ provOpen: false }),
-              ocConfidence: oc.conf || '—',
+              ocConfidence: view === 'result' ? (pk.breweryInferred ? '85%' : '91%') : (oc.conf || '—'),
+              provBrewery: view === 'result' && !!pk.breweryInferred,
             }
           })(),
           pickInCatalogue: !pk.manual, pickManual: !!pk.manual,
@@ -3425,39 +3660,74 @@ class Component extends DCLogic {
         }
       })(),
       ...(() => {
-        const sort = s.menuSort || 'you'
+        const kind = s.listKind || 'menu'
+        const isMenuL = kind === 'menu'
+        const L = isMenuL ? MENU : SHELF
+        const early = (this.pp.listPalate ?? 'From journal') === 'Under three tastings'
+        const sort = early ? 'list' : (s.menuSort || 'you')
         const filt = s.menuFilter || []
+        const pf = (n) => PROFILES[n] || PROFILES[lineOf(n)]
         const tastedE = (n) => s.entries.find((e) => e.name === n)
-        const yen = (p) => parseInt(p.replace(/\D/g, ''), 10)
-        let rows = MENU.map((m, i) => ({ ...m, menuIdx: i }))
+        const yen = (p) => parseInt((p || '0').replace(/\D/g, ''), 10)
+        const me = AXIS_ORDER.map((l) => (PALATE_AXES.find((a) => a.label === l) || {}).you || 50)
+        const liked = s.entries.filter((e) => e.rating >= 4 && pf(e.name))
+        const shape = (p) => { const w = topAxes(p, 2).map((x) => x.toLowerCase()); return w[0].charAt(0).toUpperCase() + w[0].slice(1) + ' and ' + w[1] }
+        let rows = L.map((m, i) => {
+          const c = CATALOGUE[m.cat]
+          const p = PROFILES[c.name]
+          const fit = l2Sim(me, p)
+          const t = tastedE(c.name)
+          const near = liked.filter((e) => e.name !== c.name && lineOf(e.name) !== c.name).map((e) => ({ e, d: l2Sim(pf(e.name), p) })).sort((x, y) => y.d - x.d)[0]
+          const why = early ? shape(p) + '.' : t ? 'You gave it ' + t.rating + '. ' + shape(p) + '.' : near && near.d >= 0.8 ? shape(p) + ', like the ' + near.e.name + ' you gave ' + near.e.rating + '.' : fit < 0.75 ? shape(p) + ', not much like what you rate highly.' : shape(p) + '.'
+          const lines = (m.lines || []).map((l) => ({ ...l, hasPrice: !!l.price, open: () => this.pickSake({ ...findSake(l.bt, s.own), photo: true }) }))
+          const prices = lines.map((l) => yen(l.price)).filter(Boolean)
+          return { ...m, c, fit, t, why, lines, idx: i, priceMin: prices.length ? Math.min(...prices) : yen(m.price) }
+        })
         if (filt.indexOf('Good warm') >= 0) rows = rows.filter((m) => m.warm)
-        if (filt.indexOf('Under ¥1,000') >= 0) rows = rows.filter((m) => yen(m.price) <= 1000)
-        if (filt.indexOf('New to me') >= 0) rows = rows.filter((m) => !tastedE(m.name))
-        rows = sort === 'you' ? [...rows].sort((a, b) => b.match - a.match) : rows
+        if (filt.indexOf('Under ¥1,000') >= 0) rows = rows.filter((m) => m.priceMin && m.priceMin <= 1000)
+        if (filt.indexOf('New to me') >= 0) rows = rows.filter((m) => !m.t)
+        if (sort === 'you') rows = [...rows].sort((x, y) => y.fit - x.fit)
         const fchip = (label) => { const on = filt.indexOf(label) >= 0; return { label, bg: on ? '#cf8a6e' : 'transparent', fg: on ? '#1b1a19' : '#bdb9b1', border: on ? '#cf8a6e' : 'var(--color-divider)', pick: () => this.setState({ menuFilter: on ? filt.filter((x) => x !== label) : [...filt, label] }) } }
-        const best = [...MENU].sort((a, b) => b.match - a.match)[0]
+        const best = [...L].map((m) => ({ m, f: l2Sim(me, PROFILES[CATALOGUE[m.cat].name]) })).sort((x, y) => y.f - x.f)[0].m
+        const bestName = CATALOGUE[best.cat].name.split(' ')[0]
+        const fitWord = (f) => f >= 0.82 ? 'Close to what you rate highly' : f >= 0.75 ? 'Some of what you like' : 'Not your usual'
         return {
           isMenu: view === 'menu',
-          menuReadCount: MENU.length + MENU_UNMATCHED.length,
-          menuHeadline: 'Order the ' + best.name.split(' ')[0],
-          menuSub: 'Ranked for your palate — rich, dry, umami-forward. Prices per glass, as printed.',
-          menuSorts: [{ k: 'you', label: 'For you' }, { k: 'menu', label: 'Menu order' }].map((x) => ({ label: x.label, bg: sort === x.k ? 'var(--color-accent-100)' : 'transparent', fg: sort === x.k ? '#e0a88f' : '#a8a49c', pick: () => this.setState({ menuSort: x.k }) })),
-          menuFilters: ['Good warm', 'Under ¥1,000', 'New to me'].map(fchip),
+          listLoading: !!s.listLoading, listReady: !s.listLoading,
+          listLoadingTitle: isMenuL ? 'Reading the whole menu…' : 'Reading the shelf…',
+          listKicker: 'From your photo · ' + (isMenuL ? 'Menu' : 'Shelf') + ' · ' + L.length + ' sakes',
+          menuHeadline: early ? (isMenuL ? 'What’s on this menu' : 'What’s on this shelf') : (isMenuL ? 'Order the ' : 'Try the ') + bestName,
+          menuSub: early ? (isMenuL ? 'In menu order' : 'In the order they stand') + ', each with its flavour shape.' : 'Ranked by how close each sake sits to what you rate highly.',
+          listRanked: !early, listEarly: early,
+          listEarlyCount: Math.min(s.entries.length, 2) + ' of 3 so far',
+          menuSorts: [{ k: 'you', label: 'For you' }, { k: 'list', label: isMenuL ? 'Menu order' : 'Left to right' }].map((x) => ({ label: x.label, bg: sort === x.k ? 'var(--color-accent-100)' : 'transparent', fg: sort === x.k ? '#e0a88f' : '#a8a49c', pick: () => this.setState({ menuSort: x.k }) })),
+          menuFilters: (isMenuL ? ['Good warm', 'Under ¥1,000', 'New to me'] : ['New to me']).map(fchip),
           menuNone: rows.length === 0,
-          menuRows: rows.map((m, i) => {
-            const t = tastedE(m.name)
-            return {
-              ...m,
-              rank: sort === 'you' ? i + 1 : m.menuIdx + 1,
-              top: sort === 'you' && i === 0 && !filt.length,
-              rankColor: sort === 'you' && i === 0 ? '#cf8a6e' : '#8a867e',
-              match: m.match + '% for you',
-              matchTone: m.match >= 85 ? 'tag-accent' : 'tag-neutral',
-              tasted: !!t, yourRating: t ? t.rating : '',
-              open: () => this.pickSake(CATALOGUE[m.cat] || { name: m.name, kana: m.asRead, brewery: '', tags: [] }),
-            }
-          }),
-          menuUnmatched: MENU_UNMATCHED.map((u) => ({ ...u, search: () => this.setState({ view: 'search', query: u.asRead }) })),
+          menuRows: rows.map((m, i) => ({
+            name: m.c.name, craft: !!m.c.craft, asRead: m.asRead,
+            meta: [m.asRead, m.read].filter(Boolean).join(' · '),
+            hasPrice: !!m.price, price: m.price || '',
+            why: m.why,
+            rank: sort === 'you' ? i + 1 : m.idx + 1,
+            top: sort === 'you' && i === 0 && !filt.length,
+            rankColor: sort === 'you' && i === 0 ? '#cf8a6e' : '#8a867e',
+            hasFit: !early, fitWord: fitWord(m.fit), fitTone: m.fit >= 0.82 ? 'tag-accent' : 'tag-neutral',
+            tasted: !!m.t, yourRating: m.t ? m.t.rating : '',
+            warm: !!m.warm, partial: !!m.partial,
+            hasLines: m.lines.length > 0, lines: m.lines, linesHead: m.lines.length + ' bottlings ' + (isMenuL ? 'on this list' : 'on this shelf') + ' · one chart for all',
+            bars: PROFILES[m.c.name].map((v) => ({ h: Math.max(2, Math.round(v / 100 * 20)) + 'px' })),
+            shapeLabel: 'Flavour shape: ' + AXIS_ORDER.map((l, j) => l + ' ' + PROFILES[m.c.name][j]).join(', '),
+            open: () => this.pickSake({ ...m.c, photo: true }),
+          })),
+          hasUnmatched: isMenuL,
+          menuUnmatched: (isMenuL ? MENU_UNMATCHED : []).map((u) => ({ ...u, search: () => this.setState({ view: 'search', query: u.asRead }), add: () => this.pickSake({ name: u.asRead, kana: '', brewery: 'Added by you', tags: [] }, true) })),
+          unreadLabel: isMenuL ? '3 lines we couldn’t read' : '6 bottles we couldn’t read',
+          unreadHint: isMenuL ? 'Cut off at the edge or lost in glare. Retake closer to read them.' : 'Turned away, cut off or too far. Retake closer to read more.',
+          hasOther: isMenuL, otherCount: 'Not sake · ' + MENU_OTHER.length, otherOpen: !!s.otherOpen, otherCaret: s.otherOpen ? 'ph-caret-up' : 'ph-caret-down',
+          toggleOther: () => this.setState({ otherOpen: !s.otherOpen }),
+          menuOther: MENU_OTHER,
+          rankInfoOpen: !!s.rankInfo, openRankInfo: () => this.setState({ rankInfo: true }), closeRankInfo: () => this.setState({ rankInfo: false }),
+          rateThree: () => this.setState({ view: 'search', query: '' }),
         }
       })(),
       ...(() => {
@@ -3552,6 +3822,7 @@ class Component extends DCLogic {
         return {
           name, kana: cat ? cat.kana : '', hasKana: !!(cat && cat.kana), fromCatalogue: !!cat,
           place: info.place || (cat ? cat.brewery : 'Added by you'),
+          hasAlso: !!ALT[name], alsoAs: (ALT[name] || []).join(', '),
           hasFormer: !!(cat && FORMER[cat.brewery]), formerLatin: cat && FORMER[cat.brewery] ? FORMER[cat.brewery].latin : '', formerKanji: cat && FORMER[cat.brewery] ? FORMER[cat.brewery].kanji : '',
           tags: [],
           ...(() => {
