@@ -320,7 +320,12 @@
       "flavorComingSoonHeading": "Geschmacksprofil folgt in Kürze",
       "flavorComingSoonBody": "Wir haben diesen Sake erkannt — das Geschmacksprofil erstellen wir noch. Alles, was wir bisher darüber wissen, kannst du dir trotzdem ansehen.",
       "openDetailSubtitle": "Alles, was wir über diesen Sake wissen",
-      "similarCta": "Ähnliche Sake"
+      "similarCta": "Ähnliche Sake",
+      "onThisLabel": "Auf diesem Etikett",
+      "polished": "{n} % poliert",
+      "breweryNotOnLabel": "Brauerei nicht auf diesem Etikett",
+      "breweryNotOnLabelLead": "Brauerei nicht auf diesem Etikett.",
+      "breweryNotOnLabelBody": "Auf dem Etikett stand nur der Name. Die angezeigte Brauerei ist die, die der Katalog für diesen Namen führt, nicht eine, die wir gelesen haben, und zwei Brauereien können denselben Namen verwenden. Steht auf dem Rückenetikett eine andere Brauerei, tippe auf „Nicht dieser“."
     },
     "returnHint": {
       "notThisOne": "Nicht die Flasche, die du gescannt hast?",

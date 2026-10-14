@@ -320,7 +320,12 @@
       "flavorComingSoonHeading": "Flavor profile coming soon",
       "flavorComingSoonBody": "We've recognised this sake — we're still building its flavor profile. You can still explore everything we know about it so far.",
       "openDetailSubtitle": "Everything we know about this sake",
-      "similarCta": "Similar sakes"
+      "similarCta": "Similar sakes",
+      "onThisLabel": "On this label",
+      "polished": "{n}% polished",
+      "breweryNotOnLabel": "Brewery not on this label",
+      "breweryNotOnLabelLead": "Brewery not on this label.",
+      "breweryNotOnLabelBody": "The label printed the name alone. The brewery shown is the one the catalogue lists for that name, not one we read, and two breweries can use the same name. If the back label names another brewery, tap “Not this one”."
     },
     "returnHint": {
       "notThisOne": "Not the bottle you scanned?",

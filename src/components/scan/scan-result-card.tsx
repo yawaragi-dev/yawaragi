@@ -3,7 +3,11 @@
 import type { ReactNode } from 'react'
 import { useTranslations } from 'next-intl'
 import NextLink from 'next/link'
-import { ArrowsSplit, BookOpenText, CaretRight } from '@phosphor-icons/react/dist/ssr'
+import { ArrowsSplit, BookOpenText, CaretRight, Info } from '@phosphor-icons/react/dist/ssr'
+import { Sheet, SheetTrigger } from '@/components/ui/sheet'
+import { InfoSheetPanel } from '@/components/ui/info-sheet'
+import { onThisLabelParts } from '@/lib/scan/read-bottling'
+import type { ScanBottling } from '@/lib/schemas/label-scan-extraction'
 import { HeuristicDisclaimerView } from '@/components/legal/heuristic-disclaimer'
 import { ProvenanceBadgeView } from '@/components/sake/provenance-badge'
 import {
@@ -112,6 +116,18 @@ export interface ScanResultCardProps {
    * identity and log panel and above the chart. Absent on a sure match.
    */
   otherCandidates?: ReactNode
+  /**
+   * What the read found on the label beyond the line's name (design v1.7
+   * D4, 83). Model-read text, so the block carries the Read by AI badge;
+   * the rest of the card stays catalogue data. The landing's example omits it.
+   */
+  readBottling?: ScanBottling
+  /**
+   * `false` when the label printed the name alone and the brewery shown came
+   * from the catalogue (design v1.7 F, 86–87): a quiet "Brewery not on this
+   * label" under the brewery, explained in the Read by AI sheet.
+   */
+  breweryPrinted?: boolean
 }
 
 export function ScanResultCard({
@@ -129,6 +145,8 @@ export function ScanResultCard({
   isStale = false,
   logPanel,
   otherCandidates,
+  readBottling,
+  breweryPrinted,
 }: ScanResultCardProps) {
   const tOutcome = useTranslations('scanOutcome')
   // v1.5 §5 / ADR-0015's tiers: "Sure match" at ≥ 0.85, "Best guess" below.
@@ -145,6 +163,13 @@ export function ScanResultCard({
   const tProvenanceSheet = useTranslations('provenance.sheet')
   const tDisclaimer = useTranslations('heuristicDisclaimer')
   const tAttribution = useTranslations('sakenowaAttribution')
+  const tRead = useTranslations('provenance.badge.llmExtracted')
+  const confidenceText =
+    typeof extractionConfidence === 'number'
+      ? tProvenanceSheet('confidence', { pct: Math.round(extractionConfidence * 100) })
+      : undefined
+  const labelParts = onThisLabelParts(readBottling)
+  if (readBottling?.polishing_ratio) labelParts.push(t('polished', { n: readBottling.polishing_ratio }))
 
   // UX-C reverse cross-beverage hook (#164): if the matched sake has a
   // Sakenowa flavor chart, name the nearest curated Western exemplar below
@@ -251,6 +276,34 @@ export function ScanResultCard({
               <span className="text-meta text-ash-600" data-testid="scan-result-brewery">
                 {breweryRomaji ?? <span lang="ja">{breweryKanji}</span>}
               </span>
+              {breweryPrinted === false && (
+                <Sheet>
+                  <SheetTrigger
+                    render={
+                      <button
+                        type="button"
+                        className="-ml-1 flex min-h-8 w-fit items-center gap-1.5 rounded-md px-1 text-meta text-ash-700 transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+                        data-testid="scan-result-brewery-not-on-label"
+                      />
+                    }
+                  >
+                    <Info size={13} aria-hidden="true" />
+                    {t('breweryNotOnLabel')}
+                  </SheetTrigger>
+                  <InfoSheetPanel
+                    title={tRead('sheetTitle')}
+                    closeLabel={tProvenanceSheet('closeLabel')}
+                    id="scan-result-brewery-not-on-label"
+                  >
+                    <span className="block">
+                      <span className="font-medium text-ink">{t('breweryNotOnLabelLead')}</span>{' '}
+                      {t('breweryNotOnLabelBody')}
+                    </span>
+                    <span className="mt-2 block">{tRead('explanation')}</span>
+                    {confidenceText && <span className="mt-2 block text-meta text-ash-700">{confidenceText}</span>}
+                  </InfoSheetPanel>
+                </Sheet>
+              )}
               {matchTag && (
                 <span className="mt-1.5 flex">
                   <span
@@ -260,6 +313,26 @@ export function ScanResultCard({
                     {matchTag}
                   </span>
                 </span>
+              )}
+              {labelParts.length > 0 && (
+                <div className="mt-1.5 flex flex-col gap-1.5 border-t border-divider pt-2.5" data-testid="scan-result-on-this-label">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="whitespace-nowrap text-section-label uppercase text-ash-600">{t('onThisLabel')}</span>
+                    <ProvenanceBadgeView
+                      kind={resolveBadgeKind('llm_extracted')}
+                      label={tRead('label')}
+                      explanation={tRead('explanation')}
+                      sheetTitle={tRead('sheetTitle')}
+                      closeLabel={tProvenanceSheet('closeLabel')}
+                      confidenceText={confidenceText}
+                      id="scan-result-on-this-label"
+                      className="shrink-0 whitespace-nowrap"
+                    />
+                  </div>
+                  <span className="text-subtle text-ink" data-testid="scan-result-on-this-label-text">
+                    {labelParts.join(' · ')}
+                  </span>
+                </div>
               )}
               <SakenowaAttributionView
                 placement="identity"
