@@ -903,17 +903,37 @@
       "menu": {
         "kicker": "Eine Karte",
         "title": "Das ist eine Karte, kein Etikett",
-        "body": "Im Moment lesen wir eine Flasche nach der anderen. Suche nach einem Namen von der Karte oder scanne das Etikett einer Flasche."
+        "body": "Im Moment lesen wir eine Flasche nach der anderen. Suche nach einem Namen von der Karte oder scanne das Etikett einer Flasche.",
+        "rank": {
+          "title": "Das sieht nach einer Karte aus",
+          "body": "Sollen wir die Sake darauf nach deinem Geschmack ordnen? Eine ganze Liste zu lesen dauert ein paar Sekunden."
+        },
+        "signedOut": {
+          "body": "Melde dich an, dann ordnen wir die Sake darauf nach deinem Geschmack. Oder suche nach einem Namen von der Karte."
+        }
       },
       "several_bottles": {
         "kicker": "Mehrere Flaschen",
         "title": "Mehr als eine Flasche im Bild",
-        "body": "Wir können nicht erkennen, welche du meinst. Scanne eine Flasche nach der anderen."
+        "body": "Wir können nicht erkennen, welche du meinst. Scanne eine Flasche nach der anderen.",
+        "rank": {
+          "title": "Das sieht nach einem Regal aus",
+          "body": "Sollen wir die Flaschen darin nach deinem Geschmack ordnen? Ein ganzes Regal zu lesen dauert ein paar Sekunden."
+        },
+        "signedOut": {
+          "body": "Melde dich an, dann ordnen wir die Flaschen darin nach deinem Geschmack. Oder suche nach einem Namen daraus."
+        }
       },
       "no_bottle": {
         "kicker": "Keine Flasche",
         "title": "Auf diesem Foto sehen wir keine Flasche",
         "body": "Richte die Kamera auf eine einzelne Flasche, sodass ihr Etikett den Großteil des Bildes füllt."
+      },
+      "rankThese": "Für dich ordnen",
+      "signInToRank": "Anmelden und ordnen lassen",
+      "notAllowed": {
+        "title": "Zum Ordnen brauchen wir deine Verkostungen",
+        "body": "Listen werden nach den Sake geordnet, die du bewertet hast, und dein Konto hat noch kein Verkostungstagebuch."
       }
     },
     "rateLimited": {
@@ -934,6 +954,71 @@
     "notThisOne": "Nicht dieser",
     "sureMatch": "Sicherer Treffer",
     "bestGuess": "Beste Vermutung"
+  },
+  "listResults": {
+    "bar": "{kind, select, menu {Von deinem Foto · Karte} other {Von deinem Foto · Regal}} · {count, plural, =1 {1 Sake} other {# Sake}}",
+    "barReading": "{kind, select, menu {Von deinem Foto · Karte} other {Von deinem Foto · Regal}}",
+    "barProblem": "Von deinem Foto",
+    "back": "Zurück zum Scan",
+    "retake": "Neu aufnehmen",
+    "readingMenu": "Wir lesen die ganze Karte…",
+    "readingShelf": "Wir lesen das Regal…",
+    "readingBody": "Das dauert ein paar Sekunden. Wir suchen jeden Sake und ordnen ihn deinem Geschmack zu.",
+    "orderThe": "Bestell den {name}",
+    "tryThe": "Probier den {name}",
+    "whatsOnMenu": "Was auf dieser Karte steht",
+    "whatsOnShelf": "Was in diesem Regal steht",
+    "rankedBy": "Geordnet danach, wie nah jeder Sake dem kommt, was du hoch bewertest.",
+    "inMenuOrder": "In der Reihenfolge der Karte, jeder mit seiner Geschmacksform.",
+    "leftToRightShapes": "Von links nach rechts, jeder mit seiner Geschmacksform.",
+    "rateThree": "Bewerte drei Sake, dann ordnen wir Listen wie diese für dich.",
+    "soFar": "{count} von {of} bisher",
+    "findOne": "Einen finden",
+    "sortLabel": "Reihenfolge",
+    "forYou": "Für dich",
+    "menuOrder": "Wie auf der Karte",
+    "leftToRight": "Von links nach rechts",
+    "goodWarm": "Gut warm",
+    "under": "Unter {price}",
+    "newToMe": "Neu für mich",
+    "noneForFilters": "Nichts auf der Liste passt zu all dem.",
+    "craft": "(Craft-Sake)",
+    "fit": {
+      "close": "Nah an dem, was du hoch bewertest",
+      "some": "Etwas von dem, was du magst",
+      "unusual": "Nicht dein Üblicher"
+    },
+    "yours": "★ {rating} · deine",
+    "partlyRead": "Teilweise gelesen",
+    "bottlingsOnList": "{count} Abfüllungen auf dieser Liste · ein Diagramm für alle",
+    "bottlingsOnShelf": "{count} Abfüllungen in diesem Regal · ein Diagramm für alle",
+    "couldntMatch": "Nicht gefunden · {count}",
+    "search": "Suchen",
+    "addIt": "Hinzufügen",
+    "linesUnread": "{count, plural, =1 {1 Zeile, die wir nicht lesen konnten} other {# Zeilen, die wir nicht lesen konnten}}",
+    "bottlesUnread": "{count, plural, =1 {1 Flasche, die wir nicht lesen konnten} other {# Flaschen, die wir nicht lesen konnten}}",
+    "linesUnreadHint": "Am Rand abgeschnitten oder im Gegenlicht verloren. Nimm sie näher auf, um sie zu lesen.",
+    "bottlesUnreadHint": "Weggedreht, abgeschnitten oder zu weit weg. Nimm sie näher auf, um mehr zu lesen.",
+    "notSake": "Kein Sake · {count}",
+    "otherDrinks": "Sake und die anderen japanischen Getränke",
+    "drink": {
+      "shochu": "Shochu",
+      "awamori": "Awamori",
+      "umeshu": "Umeshu",
+      "liqueur": "Likör",
+      "other": "Kein Sake"
+    },
+    "howRankedTitle": "Wie wir ordnen",
+    "howRankedBody1": "Jeder Sake wird danach eingeordnet, wie nah sein Geschmacksdiagramm (Sakenowa) den Sake kommt, die du hoch bewertest. Die Begründungen stammen aus den Diagrammen und deinen Bewertungen, aus nichts sonst.",
+    "howRankedBody2": "Es geht um den Sake, nicht um die Abfüllung, deshalb teilen sich Abfüllungen eines Sake einen Platz. Mit nur wenigen Verkostungen ist es eine grobe Orientierung, darum steht es in Worten da und nicht als Zahl.",
+    "reason": {
+      "shape": "{first} und {second}",
+      "tasted": "Du hast ihm {rating} gegeben. {shape}.",
+      "like": "{shape}, wie der {name}, dem du {rating} gegeben hast.",
+      "axes": "{shape}.",
+      "unusual": "{shape}, nicht sehr wie das, was du hoch bewertest.",
+      "noChart": "Für diesen gibt es noch kein Geschmacksdiagramm."
+    }
   },
   "bottling": {
     "addRowTitle": "Eigene Abfüllung hinzufügen",

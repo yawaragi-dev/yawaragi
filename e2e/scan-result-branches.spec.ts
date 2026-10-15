@@ -455,9 +455,78 @@ test.describe('scan result branches (#109 PR B)', () => {
 
     const outcome = page.getByTestId('scan-result-menu')
     await expect(outcome).toBeVisible()
-    await expect(outcome).toContainText('That’s a menu, not a label')
+    // Design v1.7 (73): signed out, the menu is an invitation to sign in and
+    // have it ranked — and the read stays, for searching one name from it.
+    await expect(outcome).toContainText('This looks like a menu')
+    await expect(page.getByTestId('scan-outcome-sign-in-to-rank')).toHaveAttribute(
+      'href',
+      `/en/sign-in?redirect_url=${encodeURIComponent('/en/scan')}`,
+    )
+    await expect(page.getByTestId('scan-outcome-rank')).toHaveCount(0)
     await expect(page.getByTestId('scan-outcome-read-name')).toHaveValue('七田')
     await expect(page.getByTestId('scan-outcome-type-it')).toBeVisible()
+    await context.close()
+  })
+
+  test('a visitor with a journal has the menu read and ranked, with what could not be matched and what is not sake', async ({
+    browser,
+  }) => {
+    // The list reader's e2e stub returns a fixed menu: 獺祭, 李白 twice, 架空ノ月
+    // (not in the catalogue) and いいちこ (shochu). Without a catalogue every
+    // sake line lands under "Couldn't match", which is the screen degrading,
+    // not failing.
+    const { context, page } = await scanPageWith(browser, [
+      injectionCookie({ name_ja: '七田', brewery_ja: '天山酒造', confidence: 0.85, subject: 'menu' }),
+      { name: 'yawaragi_journal_stub', value: 'populated', url: BASE_URL },
+    ])
+    await page.goto('/en/scan')
+    await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
+
+    await expect(page.getByTestId('scan-result-menu')).toContainText('Rank the sakes on it for your palate?')
+    await page.getByTestId('scan-outcome-rank').click()
+
+    const list = page.getByTestId('list-results')
+    await expect(list).toBeVisible()
+    await expect(page.getByTestId('list-bar-title')).toContainText('From your photo · Menu')
+    await expect(page.getByTestId('list-unreadable')).toContainText('1 line we couldn’t read')
+
+    // 架空ノ月 is made up: on no catalogue row, with or without a database.
+    const unmatched = page.getByTestId('list-unmatched')
+    await expect(unmatched).toContainText('架空ノ月 純米')
+    await expect(unmatched.getByTestId('list-unmatched-search').first()).toHaveAttribute('href', /\/en\/search\?q=/)
+
+    // Not sake: collapsed until asked, greyed, and the Learn entry at its end.
+    await expect(page.getByTestId('list-other-drinks')).toHaveCount(0)
+    await page.getByTestId('list-not-sake-toggle').click()
+    await expect(page.getByTestId('list-not-sake')).toContainText('いいちこ · Shochu')
+    await expect(page.getByTestId('list-other-drinks')).toBeVisible()
+
+    // Back returns to the menu outcome; Retake to the camera.
+    await page.getByTestId('list-back').click()
+    await expect(page.getByTestId('scan-result-menu')).toBeVisible()
+    await page.getByTestId('scan-outcome-rank').click()
+    await expect(page.getByTestId('list-results')).toBeVisible()
+    await page.getByTestId('list-retake').click()
+    await expect(page.getByTestId('scan-camera')).toBeVisible()
+    await context.close()
+  })
+
+  test('a ranked menu puts each catalogue sake on one row, its bottlings under it', async ({ browser }, testInfo) => {
+    testInfo.skip(!dbReady, 'Sakenowa mirror not available — DB-bound spec')
+    const { context, page } = await scanPageWith(browser, [
+      injectionCookie({ name_ja: '七田', brewery_ja: '天山酒造', confidence: 0.85, subject: 'menu' }),
+      { name: 'yawaragi_journal_stub', value: 'populated', url: BASE_URL },
+    ])
+    await page.goto('/en/scan')
+    await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
+    await page.getByTestId('scan-outcome-rank').click()
+
+    const dassai = page.locator('[data-testid="list-row"]', { hasText: '獺祭' })
+    await expect(dassai).toBeVisible()
+    await expect(dassai.getByTestId('list-row-price')).toHaveText('¥1,200')
+    await expect(dassai.getByTestId('list-row-reason')).not.toBeEmpty()
+    // Fit is in words, never a percentage (C7).
+    await expect(page.getByTestId('list-rows')).not.toContainText('%')
     await context.close()
   })
 
@@ -523,7 +592,12 @@ test.describe('scan result branches (#109 PR B)', () => {
     await page.goto('/en/scan')
     await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
 
-    await expect(page.getByTestId('scan-result-several-bottles')).toContainText('More than one bottle in the photo')
+    // Design v1.7: a shelf is a list to rank, not a bottle to name; signed
+    // out, the way to that is signing in.
+    const outcome = page.getByTestId('scan-result-several-bottles')
+    await expect(outcome).toContainText('This looks like a shelf')
+    await expect(page.getByTestId('scan-outcome-sign-in-to-rank')).toBeVisible()
+    await expect(page.getByTestId('scan-result-card')).toHaveCount(0)
     await context.close()
   })
 

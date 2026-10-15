@@ -25,7 +25,7 @@
  *   pnpm eval label-scan-jp
  */
 
-const AVAILABLE_SUITES = ['suggest-jp', 'label-scan-jp', 'label-scan-pairs'] as const
+const AVAILABLE_SUITES = ['suggest-jp', 'label-scan-jp', 'label-scan-pairs', 'list-read-jp'] as const
 
 async function main() {
   const suite = process.argv[2]
@@ -44,6 +44,9 @@ async function main() {
       break
     case 'label-scan-pairs':
       await import('./eval-label-scan-pairs')
+      break
+    case 'list-read-jp':
+      await import('./eval-list-read-jp')
       break
     default:
       console.error(`Unknown suite: ${suite}`)

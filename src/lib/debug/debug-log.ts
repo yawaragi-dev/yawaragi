@@ -34,6 +34,8 @@ export type DebugEventSource =
   | 'Vision'
   | 'Sakenowa'
   | 'ScanAction'
+  | 'ListReader'
+  | 'ListAction'
   | 'SuggestAction'
   | 'MCP'
   | 'Hydrate'

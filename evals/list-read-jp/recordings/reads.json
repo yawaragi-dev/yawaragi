@@ -1,0 +1,5925 @@
+{
+ "models": {
+  "sonnet-5-5": {
+   "fingerprint": "59f659d060a69c67",
+   "reads": {
+    "kirei_yucho_toyokuni_kikunosato_senkin_suminoe_nishida_fukui_menu.jpg": {
+     "photoSha": "ceb346eec97fa01d",
+     "latencyMs": 29514,
+     "usage": {
+      "inputTokens": 4874,
+      "outputTokens": 2488,
+      "cacheReadTokens": 0,
+      "cacheWriteTokens": 3222
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.85,
+      "kind": "menu",
+      "lines": [
+       {
+        "printed": "亀齢 Check 特別純米 おりがらみ 生酒",
+        "name_ja": "亀齢",
+        "name_romaji": "Keri",
+        "brewery_printed": false,
+        "brewery_ja": "亀齢酒造",
+        "other_names": [
+         "けれい",
+         "Check"
+        ],
+        "product_name": "Check",
+        "product_name_romaji": "Check",
+        "grade": "tokubetsu_junmai",
+        "styles": [
+         "nama"
+        ],
+        "drink": "sake"
+       },
+       {
+        "printed": "風の森 秋津穂507 純米 無濾過無加水生酒",
+        "name_ja": "風の森",
+        "name_romaji": "Kazenomori",
+        "brewery_printed": false,
+        "brewery_ja": "油長酒造",
+        "other_names": [
+         "かぜのもり",
+         "秋津穂507"
+        ],
+        "product_name": "秋津穂507",
+        "product_name_romaji": "Akitsuho 507",
+        "grade": "junmai",
+        "styles": [
+         "muroka",
+         "nama"
+        ],
+        "drink": "sake"
+       },
+       {
+        "printed": "一歩己 純米吟醸",
+        "name_ja": "一歩己",
+        "name_romaji": "Ibuki",
+        "brewery_printed": false,
+        "other_names": [
+         "いぶき"
+        ],
+        "grade": "junmai_ginjo",
+        "drink": "sake"
+       },
+       {
+        "printed": "大那 美山錦 特別純米 生酛作り 無濾過生酒",
+        "name_ja": "大那",
+        "name_romaji": "Daina",
+        "brewery_printed": false,
+        "brewery_ja": "菊の里酒造",
+        "other_names": [
+         "だいな",
+         "美山錦"
+        ],
+        "product_name": "美山錦",
+        "product_name_romaji": "Miyamanishiki",
+        "grade": "tokubetsu_junmai",
+        "styles": [
+         "kimoto",
+         "muroka",
+         "nama"
+        ],
+        "drink": "sake"
+       },
+       {
+        "printed": "仙禽 あかとんぼ 純米",
+        "name_ja": "仙禽",
+        "name_romaji": "SenKin",
+        "brewery_printed": false,
+        "brewery_ja": "せんきん",
+        "other_names": [
+         "せんきん",
+         "あかとんぼ"
+        ],
+        "product_name": "あかとんぼ",
+        "product_name_romaji": "Akatonbo",
+        "grade": "junmai",
+        "drink": "sake"
+       },
+       {
+        "printed": "墨廻江 麗辛口 特別純米",
+        "name_ja": "墨廻江",
+        "name_romaji": "Suminoe",
+        "brewery_printed": false,
+        "brewery_ja": "墨廼江酒造",
+        "other_names": [
+         "すみのえ",
+         "麗辛口"
+        ],
+        "product_name": "麗辛口",
+        "product_name_romaji": "Reikarakuchi",
+        "grade": "tokubetsu_junmai",
+        "drink": "sake"
+       },
+       {
+        "printed": "田酒 渡船2号 純米吟醸",
+        "name_ja": "田酒",
+        "name_romaji": "Densyu",
+        "brewery_printed": false,
+        "brewery_ja": "西田酒造店",
+        "other_names": [
+         "でんしゅ",
+         "渡船2号"
+        ],
+        "product_name": "渡船2号",
+        "product_name_romaji": "Watarifune Nigō",
+        "grade": "junmai_ginjo",
+        "drink": "sake"
+       },
+       {
+        "printed": "萩乃露 辛口 純米 生酒",
+        "name_ja": "萩乃露",
+        "name_romaji": "Haginotsuyu",
+        "brewery_printed": false,
+        "brewery_ja": "福井弥平商店",
+        "other_names": [
+         "はぎのつゆ",
+         "辛口"
+        ],
+        "product_name": "辛口",
+        "product_name_romaji": "Karakuchi",
+        "grade": "junmai",
+        "styles": [
+         "nama"
+        ],
+        "drink": "sake"
+       }
+      ],
+      "unreadable_count": 0,
+      "currency": "JPY"
+     }
+    }
+   }
+  },
+  "haiku-5-5": {
+   "fingerprint": "59f659d060a69c67",
+   "reads": {
+    "kirei_yucho_toyokuni_kikunosato_senkin_suminoe_nishida_fukui_menu.jpg": {
+     "photoSha": "ceb346eec97fa01d",
+     "latencyMs": 15043,
+     "usage": {
+      "inputTokens": 4874,
+      "outputTokens": 3419,
+      "cacheReadTokens": 0,
+      "cacheWriteTokens": 3222
+     },
+     "read": {
+      "source": "llm_extracted",
+      "kind": "menu",
+      "lines": [
+       {
+        "printed": "亀齢 Check おりがらみ 生酒 特別純米 Tokubetsu Junmai",
+        "name_ja": "亀齢",
+        "name_romaji": "Keri",
+        "brewery_printed": false,
+        "grade": "tokubetsu_junmai",
+        "styles": [
+         "nigori",
+         "nama"
+        ],
+        "drink": "sake"
+       },
+       {
+        "printed": "風の森 秋津穂507 雉採り 無濾過無加水生酒 純米 Junmai",
+        "name_ja": "風の森",
+        "name_romaji": "Kazenomori",
+        "brewery_printed": false,
+        "product_name": "秋津穂507",
+        "product_name_romaji": "Akitsuho 507",
+        "grade": "junmai",
+        "styles": [
+         "nama",
+         "genshu",
+         "muroka"
+        ],
+        "drink": "sake"
+       },
+       {
+        "printed": "一歩己 純米吟醸 Junmai Ginjo",
+        "name_ja": "一歩己",
+        "name_romaji": "Ibuki",
+        "brewery_printed": false,
+        "grade": "junmai_ginjo",
+        "drink": "sake"
+       },
+       {
+        "printed": "大那 美山錦 生酛作り 無濾過生酒 特別純米 Tokubetsu Junmai",
+        "name_ja": "大那",
+        "name_romaji": "Daina",
+        "brewery_printed": false,
+        "product_name": "美山錦",
+        "product_name_romaji": "Miyamanishiki",
+        "grade": "tokubetsu_junmai",
+        "styles": [
+         "kimoto",
+         "muroka",
+         "nama"
+        ],
+        "drink": "sake"
+       },
+       {
+        "printed": "仙禽 あかとんぼ 純米 Junmai",
+        "name_ja": "仙禽",
+        "name_romaji": "SenKin",
+        "brewery_printed": false,
+        "product_name": "あかとんぼ",
+        "product_name_romaji": "Akatonbo",
+        "grade": "junmai",
+        "drink": "sake"
+       },
+       {
+        "printed": "墨廻江 麗辛口 特別純米 Tokubetsu Junmai",
+        "name_ja": "墨廻江",
+        "name_romaji": "Suminoe",
+        "brewery_printed": false,
+        "product_name": "麗辛口",
+        "product_name_romaji": "Reikarakuchi",
+        "grade": "tokubetsu_junmai",
+        "drink": "sake"
+       },
+       {
+        "printed": "田酒 渡舟2号 純米吟醸 Junmai Ginjo",
+        "name_ja": "田酒",
+        "name_romaji": "Densyu",
+        "brewery_printed": false,
+        "product_name": "渡舟2号",
+        "product_name_romaji": "Watafune 2",
+        "grade": "junmai_ginjo",
+        "drink": "sake"
+       },
+       {
+        "printed": "萩乃露 辛口 生酒 純米 Junmai",
+        "name_ja": "萩乃露",
+        "name_romaji": "Haginotsuyu",
+        "brewery_printed": false,
+        "grade": "junmai",
+        "styles": [
+         "nama"
+        ],
+        "drink": "sake"
+       }
+      ],
+      "unreadable_count": 0,
+      "currency": "JPY"
+     }
+    }
+   }
+  },
+  "sonnet-5-5-low": {
+   "fingerprint": "dd70f98a333d48d9",
+   "reads": {
+    "akagisan_hakuko_multiple_shelf_with_pricetag.jpg": {
+     "photoSha": "668d61d47c7c4f5b",
+     "latencyMs": 4759,
+     "usage": {
+      "inputTokens": 8236,
+      "outputTokens": 413,
+      "cacheReadTokens": 0,
+      "cacheWriteTokens": 3404
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.8,
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "赤城山 男の酒 本醸造 辛口",
+        "name_ja": "赤城山",
+        "name_romaji": "Akagisan",
+        "brewery_printed": false,
+        "other_names": [
+         "Akagisan",
+         "男の酒"
+        ],
+        "product_name": "男の酒",
+        "product_name_romaji": "Otoko no Sake",
+        "grade": "honjozo",
+        "drink": "sake"
+       },
+       {
+        "printed": "白鴻 はくこう HAKUKO",
+        "name_ja": "白鴻",
+        "name_romaji": "Hakuko",
+        "brewery_printed": false,
+        "brewery_ja": "盛川酒造",
+        "other_names": [
+         "はくこう",
+         "HAKUKO"
+        ],
+        "drink": "sake"
+       },
+       {
+        "printed": "白鴻 蔵きぢ",
+        "name_ja": "白鴻",
+        "name_romaji": "Hakuko",
+        "brewery_printed": false,
+        "brewery_ja": "盛川酒造",
+        "other_names": [
+         "蔵きぢ",
+         "Kurakiji"
+        ],
+        "product_name": "蔵きぢ",
+        "product_name_romaji": "Kurakiji",
+        "styles": [
+         "genshu"
+        ],
+        "drink": "sake"
+       }
+      ],
+      "unreadable_count": 1,
+      "currency": "EUR"
+     }
+    },
+    "aramasa_takagi_menu.jpg": {
+     "photoSha": "e3cdd774cbb0b31f",
+     "latencyMs": 3889,
+     "usage": {
+      "inputTokens": 5056,
+      "outputTokens": 561,
+      "cacheReadTokens": 3404,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.9,
+      "kind": "menu",
+      "lines": [
+       {
+        "printed": "新政 タンジェリン 2025 純米 Junmai",
+        "name_ja": "新政",
+        "name_romaji": "Aramasa",
+        "brewery_printed": false,
+        "brewery_ja": "新政酒造",
+        "product_name": "タンジェリン",
+        "product_name_romaji": "Tanjerin",
+        "grade": "junmai",
+        "drink": "sake"
+       },
+       {
+        "printed": "新政 No.6 X type 2025 純米 Junmai",
+        "name_ja": "新政",
+        "name_romaji": "Aramasa",
+        "brewery_printed": false,
+        "brewery_ja": "新政酒造",
+        "product_name": "No.6 X type",
+        "product_name_romaji": "No.6 X type",
+        "grade": "junmai",
+        "drink": "sake"
+       },
+       {
+        "printed": "十四代 大極上 諸白 純米大吟醸 Junmai Daiginjo",
+        "name_ja": "十四代",
+        "name_romaji": "Jyuyondai",
+        "brewery_printed": false,
+        "brewery_ja": "高木酒造",
+        "product_name": "大極上 諸白",
+        "product_name_romaji": "Dai Gokujō Morohaku",
+        "grade": "junmai_daiginjo",
+        "drink": "sake"
+       },
+       {
+        "printed": "新政 陽乃鳥 スパーク 純米 Junmai",
+        "name_ja": "新政",
+        "name_romaji": "Aramasa",
+        "brewery_printed": false,
+        "brewery_ja": "新政酒造",
+        "product_name": "陽乃鳥 スパーク",
+        "product_name_romaji": "Hinotori Spark",
+        "grade": "junmai",
+        "drink": "sake"
+       }
+      ],
+      "unreadable_count": 0,
+      "currency": "JPY"
+     }
+    },
+    "blanks_and_itakura_shelf_low_light.jpg": {
+     "photoSha": "313b36e90069ac32",
+     "latencyMs": 2544,
+     "usage": {
+      "inputTokens": 5062,
+      "outputTokens": 167,
+      "cacheReadTokens": 3404,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.4,
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "天穏",
+        "name_ja": "天穏",
+        "name_romaji": "Tennō",
+        "brewery_printed": false,
+        "brewery_ja": "板倉酒造",
+        "drink": "sake"
+       },
+       {
+        "printed": "嚴",
+        "name_ja": "嚴",
+        "name_romaji": "Gen",
+        "brewery_printed": false,
+        "drink": "unknown",
+        "partly_read": true
+       }
+      ],
+      "unreadable_count": 8
+     }
+    },
+    "choryo_hokushika_multiple.jpg": {
+     "photoSha": "fb0a63b0f7a13bf4",
+     "latencyMs": 4022,
+     "usage": {
+      "inputTokens": 8236,
+      "outputTokens": 295,
+      "cacheReadTokens": 3404,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "吉野杉の樽酒 TARUSAKE",
+        "name_ja": "吉野杉の樽酒",
+        "name_romaji": "Yoshinosugi no Tarusake",
+        "brewery_printed": false,
+        "other_names": [
+         "TARUSAKE"
+        ],
+        "styles": [
+         "taruzake"
+        ],
+        "drink": "sake"
+       },
+       {
+        "printed": "雪 ゆき 本醸造 生貯蔵酒 HOKUSHIKA YUKI",
+        "name_ja": "雪",
+        "name_romaji": "Yuki",
+        "brewery_printed": false,
+        "brewery_ja": "北鹿",
+        "other_names": [
+         "ゆき",
+         "HOKUSHIKA YUKI"
+        ],
+        "grade": "honjozo",
+        "styles": [
+         "namachozo"
+        ],
+        "drink": "sake"
+       }
+      ],
+      "unreadable_count": 0,
+      "currency": "JPY"
+     }
+    },
+    "daiyame_and_glo_multiple_shochu_with_label.jpg": {
+     "photoSha": "a37d9ff09ee8b9f3",
+     "latencyMs": 3197,
+     "usage": {
+      "inputTokens": 8236,
+      "outputTokens": 258,
+      "cacheReadTokens": 3404,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.85,
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "DAIYAME HAMADA SYUZOU JAPANESE TRADITIONAL SHOCHU だいやめ",
+        "name_ja": "だいやめ",
+        "name_romaji": "Daiyame",
+        "brewery_printed": true,
+        "brewery_ja": "濱田酒造",
+        "other_names": [
+         "DAIYAME"
+        ],
+        "drink": "shochu"
+       },
+       {
+        "printed": "GLOW EP05 Ride the wave",
+        "name_ja": "GLOW",
+        "name_romaji": "Glow",
+        "brewery_printed": false,
+        "product_name": "EP05",
+        "product_name_romaji": "EP05",
+        "drink": "shochu",
+        "partly_read": true
+       }
+      ],
+      "unreadable_count": 0
+     }
+    },
+    "dassai_kidoizumi_on_table.jpg": {
+     "photoSha": "e2c4bd5314cd4888",
+     "latencyMs": 2854,
+     "usage": {
+      "inputTokens": 8236,
+      "outputTokens": 258,
+      "cacheReadTokens": 3404,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.9,
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "獺祭 純米大吟醸45 DASSAI 45",
+        "name_ja": "獺祭",
+        "name_romaji": "Dassai",
+        "brewery_printed": true,
+        "brewery_ja": "旭酒造",
+        "other_names": [
+         "DASSAI"
+        ],
+        "product_name": "45",
+        "grade": "junmai_daiginjo",
+        "drink": "sake"
+       },
+       {
+        "printed": "木戸泉 きどいずみ",
+        "name_ja": "木戸泉",
+        "name_romaji": "Kidoizumi",
+        "brewery_printed": true,
+        "brewery_ja": "木戸泉酒造",
+        "other_names": [
+         "きどいずみ"
+        ],
+        "drink": "sake"
+       }
+      ],
+      "unreadable_count": 0
+     }
+    },
+    "forever20_daybreak_multiple_shelf.jpg": {
+     "photoSha": "69219daf45684202",
+     "latencyMs": 2657,
+     "usage": {
+      "inputTokens": 8236,
+      "outputTokens": 151,
+      "cacheReadTokens": 3404,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.5,
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "夜の帝王 Daybreak Tokubetsujunmai",
+        "name_ja": "夜の帝王",
+        "name_romaji": "Yoru no Teiō",
+        "brewery_printed": false,
+        "other_names": [
+         "Daybreak"
+        ],
+        "grade": "tokubetsu_junmai",
+        "drink": "sake"
+       }
+      ],
+      "unreadable_count": 5
+     }
+    },
+    "fukuchiyo_nakazawa_kinoshita_yoshida_matsumoto_akabu_menu.jpg": {
+     "photoSha": "5e980ada9b0e6837",
+     "latencyMs": 5847,
+     "usage": {
+      "inputTokens": 5056,
+      "outputTokens": 974,
+      "cacheReadTokens": 3404,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.9,
+      "kind": "menu",
+      "lines": [
+       {
+        "printed": "鍋島 裏鍋島 純米吟醸 Junmai Ginjo",
+        "name_ja": "鍋島",
+        "name_romaji": "Nabeshima",
+        "brewery_printed": false,
+        "brewery_ja": "富久千代酒造",
+        "other_names": [
+         "なべしま",
+         "裏鍋島"
+        ],
+        "product_name": "裏鍋島",
+        "product_name_romaji": "Uranabeshima",
+        "grade": "junmai_ginjo",
+        "drink": "sake"
+       },
+       {
+        "printed": "一博 10年熟成 生酒 純米吟醸 Junmai Ginjo",
+        "name_ja": "一博",
+        "name_romaji": "Kazuhiro",
+        "brewery_printed": false,
+        "other_names": [
+         "かずひろ",
+         "10年熟成"
+        ],
+        "product_name": "10年熟成",
+        "product_name_romaji": "Jūnen jukusei",
+        "grade": "junmai_ginjo",
+        "styles": [
+         "nama",
+         "koshu"
+        ],
+        "drink": "sake"
+       },
+       {
+        "printed": "玉川 山廃 亀の尾 無濾過生原酒 純米 Junmai",
+        "name_ja": "玉川",
+        "name_romaji": "Tamagawa",
+        "brewery_printed": false,
+        "brewery_ja": "木下酒造",
+        "other_names": [
+         "たまがわ",
+         "亀の尾"
+        ],
+        "product_name": "亀の尾",
+        "product_name_romaji": "Kamenoo",
+        "grade": "junmai",
+        "styles": [
+         "yamahai",
+         "muroka",
+         "nama",
+         "genshu"
+        ],
+        "drink": "sake"
+       },
+       {
+        "printed": "手取川 冬辛口 1年熟成 純米 Junmai",
+        "name_ja": "手取川",
+        "name_romaji": "Tedorigawa",
+        "brewery_printed": false,
+        "brewery_ja": "吉田酒造店",
+        "other_names": [
+         "てどりかわ",
+         "冬辛口"
+        ],
+        "product_name": "冬辛口",
+        "product_name_romaji": "Fuyu karakuchi",
+        "grade": "junmai",
+        "styles": [
+         "koshu"
+        ],
+        "drink": "sake"
+       },
+       {
+        "printed": "澤屋まつもと 守破離 雄町 特別純米 Tokubetsu Junmai",
+        "name_ja": "澤屋まつもと",
+        "name_romaji": "Sawaya Matsumoto",
+        "brewery_printed": false,
+        "brewery_ja": "松本酒造",
+        "other_names": [
+         "さわやまつもと",
+         "守破離"
+        ],
+        "product_name": "守破離",
+        "product_name_romaji": "Shuhari",
+        "grade": "tokubetsu_junmai",
+        "drink": "sake"
+       },
+       {
+        "printed": "赤武 SEA 純米 Junmai",
+        "name_ja": "赤武",
+        "name_romaji": "Akabu",
+        "brewery_printed": false,
+        "brewery_ja": "赤武酒造",
+        "other_names": [
+         "あかぶ"
+        ],
+        "product_name": "SEA",
+        "product_name_romaji": "SEA",
+        "grade": "junmai",
+        "drink": "sake"
+       }
+      ],
+      "unreadable_count": 0,
+      "currency": "JPY"
+     }
+    },
+    "inetoagave_hiroki_matsui_fujioka_shimizu_ryozeki_menu.jpg": {
+     "photoSha": "c81619cf5fbfc8d2",
+     "latencyMs": 6271,
+     "usage": {
+      "inputTokens": 5056,
+      "outputTokens": 1054,
+      "cacheReadTokens": 3404,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.9,
+      "kind": "menu",
+      "lines": [
+       {
+        "printed": "稲とアガベ ぐるりこ Craft SAKE",
+        "name_ja": "稲とアガベ",
+        "name_romaji": "Ine to Agabe",
+        "brewery_printed": false,
+        "brewery_ja": "稲とアガベ",
+        "other_names": [
+         "Inetoagabe",
+         "いねとあがべ",
+         "ぐるりこ"
+        ],
+        "product_name": "ぐるりこ",
+        "product_name_romaji": "Gur1riko",
+        "drink": "sake",
+        "craft": true
+       },
+       {
+        "printed": "飛露喜 山田穂 純米吟醸 Junmai Ginjo",
+        "name_ja": "飛露喜",
+        "name_romaji": "Hiroki",
+        "brewery_printed": false,
+        "brewery_ja": "廣木酒造本店",
+        "other_names": [
+         "ひろき",
+         "Hiroki",
+         "山田穂"
+        ],
+        "product_name": "山田穂",
+        "product_name_romaji": "Yamadaho",
+        "grade": "junmai_ginjo",
+        "drink": "sake"
+       },
+       {
+        "printed": "神蔵 祝 無濾過生原酒 純米吟醸 Junmai Ginjo",
+        "name_ja": "神蔵",
+        "name_romaji": "Kagura",
+        "brewery_printed": false,
+        "brewery_ja": "神蔵",
+        "other_names": [
+         "かぐら",
+         "Kagura",
+         "祝"
+        ],
+        "product_name": "祝",
+        "product_name_romaji": "Iwai",
+        "grade": "junmai_ginjo",
+        "styles": [
+         "muroka",
+         "nama",
+         "genshu"
+        ],
+        "drink": "sake"
+       },
+       {
+        "printed": "蒼空 試験醸造 純米吟醸 Junmai Ginjo",
+        "name_ja": "蒼空",
+        "name_romaji": "Sōkū",
+        "brewery_printed": false,
+        "brewery_ja": "藤岡酒造",
+        "other_names": [
+         "そうくう",
+         "Sookuu",
+         "試験醸造"
+        ],
+        "product_name": "試験醸造",
+        "product_name_romaji": "Shiken Jōzō",
+        "grade": "junmai_ginjo",
+        "drink": "sake"
+       },
+       {
+        "printed": "作 雅乃智 純米大吟醸 Junmai Daiginjo",
+        "name_ja": "作",
+        "name_romaji": "Zaku",
+        "brewery_printed": false,
+        "brewery_ja": "清水清三郎商店",
+        "other_names": [
+         "ざく",
+         "Zaku",
+         "雅乃智"
+        ],
+        "product_name": "雅乃智",
+        "product_name_romaji": "Miyabi no Tomo",
+        "grade": "junmai_daiginjo",
+        "drink": "sake"
+       },
+       {
+        "printed": "裏翠玉 秋田酒こまち 無濾過生酒 純米吟醸 Junmai Ginjo",
+        "name_ja": "裏翠玉",
+        "name_romaji": "Ura Suigyoku",
+        "brewery_printed": false,
+        "brewery_ja": "阿櫻酒造",
+        "other_names": [
+         "うらすいぎょく",
+         "Ura Suigyoku",
+         "秋田酒こまち"
+        ],
+        "product_name": "秋田酒こまち",
+        "product_name_romaji": "Akita Sake Komachi",
+        "grade": "junmai_ginjo",
+        "styles": [
+         "muroka",
+         "nama"
+        ],
+        "drink": "sake"
+       }
+      ],
+      "unreadable_count": 0,
+      "currency": "JPY"
+     }
+    },
+    "kikuhime_marui_kenbishi_tamazakura_uehara_mukai_mochida_maruo_menu.jpg": {
+     "photoSha": "1f6c5cd6b46eb012",
+     "latencyMs": 6976,
+     "usage": {
+      "inputTokens": 5056,
+      "outputTokens": 1215,
+      "cacheReadTokens": 3404,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.85,
+      "kind": "menu",
+      "lines": [
+       {
+        "printed": "菊姫 山廃 純米 Junmai 2017 BY Aged 山田錦",
+        "name_ja": "菊姫",
+        "name_romaji": "Kikuhime",
+        "brewery_printed": false,
+        "brewery_ja": "菊姫合資会社",
+        "other_names": [
+         "きくひめ",
+         "Kikuhime"
+        ],
+        "grade": "junmai",
+        "styles": [
+         "yamahai",
+         "koshu"
+        ],
+        "drink": "sake",
+        "price": 990,
+        "warm": true
+       },
+       {
+        "printed": "樂の世 山廃 本醸造 Honjyozo",
+        "name_ja": "樂の世",
+        "name_romaji": "Raku no yo",
+        "brewery_printed": false,
+        "other_names": [
+         "らくのよ",
+         "Raku no yo"
+        ],
+        "grade": "honjozo",
+        "styles": [
+         "yamahai"
+        ],
+        "drink": "sake",
+        "price": 990,
+        "warm": true
+       },
+       {
+        "printed": "剣菱 瑞祥 Aged 5-10years blended",
+        "name_ja": "剣菱",
+        "name_romaji": "Kenbishi",
+        "brewery_printed": false,
+        "other_names": [
+         "けんびし",
+         "Kenbishi",
+         "瑞祥"
+        ],
+        "product_name": "瑞祥",
+        "product_name_romaji": "Zuishō",
+        "styles": [
+         "koshu"
+        ],
+        "drink": "sake",
+        "price": 990,
+        "warm": true
+       },
+       {
+        "printed": "玉櫻 生酛 2018 BY Aged 玉栄 純米 Junmai",
+        "name_ja": "玉櫻",
+        "name_romaji": "Tamazakura",
+        "brewery_printed": false,
+        "other_names": [
+         "たまざくら",
+         "Tamazakura"
+        ],
+        "grade": "junmai",
+        "styles": [
+         "kimoto",
+         "koshu"
+        ],
+        "drink": "sake",
+        "price": 990,
+        "warm": true
+       },
+       {
+        "printed": "不老泉 参年熟成 赤ラベル 山廃 3 years Aged 純米 Junmai",
+        "name_ja": "不老泉",
+        "name_romaji": "Furōsen",
+        "brewery_printed": false,
+        "other_names": [
+         "ふろうせん",
+         "Furousen"
+        ],
+        "product_name": "参年熟成 赤ラベル",
+        "product_name_romaji": "San-nen Jukusei Aka Label",
+        "grade": "junmai",
+        "styles": [
+         "yamahai",
+         "koshu"
+        ],
+        "drink": "sake",
+        "price": 990,
+        "warm": true
+       },
+       {
+        "printed": "伊根満開 赤米酒 Partially made with red rice",
+        "name_ja": "伊根満開",
+        "name_romaji": "Inemankai",
+        "brewery_printed": false,
+        "other_names": [
+         "いねまんかい",
+         "Inemankai"
+        ],
+        "product_name": "赤米酒",
+        "product_name_romaji": "Akagomeshu",
+        "drink": "sake",
+        "price": 990,
+        "warm": true
+       },
+       {
+        "printed": "ヤマサン正宗 佐香錦 袋取り原酒 6BY 純米吟醸 Junmai Ginjo",
+        "name_ja": "ヤマサン正宗",
+        "name_romaji": "Yamasan Masamune",
+        "brewery_printed": false,
+        "other_names": [
+         "ヤマサンまさむね",
+         "Yamasan masamune"
+        ],
+        "grade": "junmai_ginjo",
+        "styles": [
+         "genshu"
+        ],
+        "drink": "sake",
+        "price": 990,
+        "warm": true
+       },
+       {
+        "printed": "悦凱陣 瀬戸米 山廃 2020 BY Aged 純米 Junmai",
+        "name_ja": "悦凱陣",
+        "name_romaji": "Yorokobi Gaijin",
+        "brewery_printed": false,
+        "other_names": [
+         "よろこびがいじん",
+         "Yorokobi Gaigin"
+        ],
+        "grade": "junmai",
+        "styles": [
+         "yamahai",
+         "koshu"
+        ],
+        "drink": "sake",
+        "price": 990,
+        "warm": true
+       }
+      ],
+      "unreadable_count": 0,
+      "currency": "JPY"
+     }
+    },
+    "kirei_yucho_toyokuni_kikunosato_senkin_suminoe_nishida_fukui_menu.jpg": {
+     "photoSha": "ceb346eec97fa01d",
+     "latencyMs": 6073,
+     "usage": {
+      "inputTokens": 5056,
+      "outputTokens": 1019,
+      "cacheReadTokens": 3404,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.85,
+      "kind": "menu",
+      "lines": [
+       {
+        "printed": "亀齢 Check おりがらみ 生酒 特別純米",
+        "name_ja": "亀齢",
+        "name_romaji": "Keirei",
+        "brewery_printed": false,
+        "other_names": [
+         "Check"
+        ],
+        "product_name": "Check",
+        "product_name_romaji": "Check",
+        "grade": "tokubetsu_junmai",
+        "styles": [
+         "nama"
+        ],
+        "drink": "sake"
+       },
+       {
+        "printed": "風の森 秋津穂507 難採り 無濾過無加水生酒 純米",
+        "name_ja": "風の森",
+        "name_romaji": "Kazenomori",
+        "brewery_printed": false,
+        "other_names": [
+         "秋津穂507"
+        ],
+        "product_name": "秋津穂507",
+        "product_name_romaji": "Akitsuho 507",
+        "grade": "junmai",
+        "styles": [
+         "muroka",
+         "nama"
+        ],
+        "drink": "sake"
+       },
+       {
+        "printed": "一歩己 純米吟醸",
+        "name_ja": "一歩己",
+        "name_romaji": "Ibuki",
+        "brewery_printed": false,
+        "grade": "junmai_ginjo",
+        "drink": "sake"
+       },
+       {
+        "printed": "大那 美山錦 生酛作り 無濾過生酒 特別純米",
+        "name_ja": "大那",
+        "name_romaji": "Daina",
+        "brewery_printed": false,
+        "other_names": [
+         "美山錦"
+        ],
+        "product_name": "美山錦",
+        "product_name_romaji": "Miyamanishiki",
+        "grade": "tokubetsu_junmai",
+        "styles": [
+         "kimoto",
+         "muroka",
+         "nama"
+        ],
+        "drink": "sake"
+       },
+       {
+        "printed": "仙禽 あかとんぼ 純米",
+        "name_ja": "仙禽",
+        "name_romaji": "Senkin",
+        "brewery_printed": false,
+        "other_names": [
+         "あかとんぼ"
+        ],
+        "product_name": "あかとんぼ",
+        "product_name_romaji": "Akatonbo",
+        "grade": "junmai",
+        "drink": "sake"
+       },
+       {
+        "printed": "墨廻江 麗辛口 特別純米",
+        "name_ja": "墨廻江",
+        "name_romaji": "Suminoe",
+        "brewery_printed": false,
+        "other_names": [
+         "麗辛口"
+        ],
+        "product_name": "麗辛口",
+        "product_name_romaji": "Uraraskaraguchi",
+        "grade": "tokubetsu_junmai",
+        "drink": "sake"
+       },
+       {
+        "printed": "田酒 渡船2号 純米吟醸",
+        "name_ja": "田酒",
+        "name_romaji": "Denshu",
+        "brewery_printed": false,
+        "other_names": [
+         "渡船2号"
+        ],
+        "product_name": "渡船2号",
+        "product_name_romaji": "Tosen 2-gō",
+        "grade": "junmai_ginjo",
+        "drink": "sake"
+       },
+       {
+        "printed": "萩乃露 辛口 生酒 純米",
+        "name_ja": "萩乃露",
+        "name_romaji": "Haginotsuyu",
+        "brewery_printed": false,
+        "other_names": [
+         "辛口"
+        ],
+        "product_name": "辛口",
+        "product_name_romaji": "Karakuchi",
+        "grade": "junmai",
+        "styles": [
+         "nama"
+        ],
+        "drink": "sake"
+       }
+      ],
+      "unreadable_count": 0,
+      "currency": "JPY"
+     }
+    },
+    "kitagawa_takagi_shimizu_1.jpg": {
+     "photoSha": "1b58bfe5fd66d601",
+     "latencyMs": 4161,
+     "usage": {
+      "inputTokens": 8236,
+      "outputTokens": 402,
+      "cacheReadTokens": 3404,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.9,
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "富翁 純米大吟醸 全量山田錦 TOMIO",
+        "name_ja": "富翁",
+        "name_romaji": "Tomio",
+        "brewery_printed": true,
+        "brewery_ja": "北川本家",
+        "other_names": [
+         "TOMIO"
+        ],
+        "grade": "junmai_daiginjo",
+        "drink": "sake"
+       },
+       {
+        "printed": "朝日鷹 本醸造",
+        "name_ja": "朝日鷹",
+        "name_romaji": "Asahitaka",
+        "brewery_printed": false,
+        "brewery_ja": "高木酒造",
+        "grade": "honjozo",
+        "drink": "sake"
+       },
+       {
+        "printed": "作 ZAKU 雅乃智 純米大吟醸",
+        "name_ja": "作",
+        "name_romaji": "Zaku",
+        "brewery_printed": true,
+        "brewery_ja": "清水清三郎商店",
+        "other_names": [
+         "ZAKU",
+         "雅乃智",
+         "MIYABI NO TOMO"
+        ],
+        "product_name": "雅乃智",
+        "product_name_romaji": "Miyabi no Tomo",
+        "grade": "junmai_daiginjo",
+        "drink": "sake"
+       }
+      ],
+      "unreadable_count": 0
+     }
+    },
+    "kitagawa_takagi_shimizu_2.jpg": {
+     "photoSha": "443f093ed20cb775",
+     "latencyMs": 4166,
+     "usage": {
+      "inputTokens": 8236,
+      "outputTokens": 320,
+      "cacheReadTokens": 3404,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "富翁 純米大吟醸 全量山田錦",
+        "name_ja": "富翁",
+        "name_romaji": "Tomio",
+        "brewery_printed": true,
+        "brewery_ja": "北川本家",
+        "other_names": [
+         "TOMIO"
+        ],
+        "grade": "junmai_daiginjo",
+        "drink": "sake"
+       },
+       {
+        "printed": "朝日鷹 本醸造",
+        "name_ja": "朝日鷹",
+        "name_romaji": "Asahitaka",
+        "brewery_printed": false,
+        "brewery_ja": "高木酒造",
+        "grade": "honjozo",
+        "drink": "sake"
+       },
+       {
+        "printed": "作 ZAKU",
+        "name_ja": "作",
+        "name_romaji": "Zaku",
+        "brewery_printed": false,
+        "brewery_ja": "清水清三郎商店",
+        "other_names": [
+         "ZAKU"
+        ],
+        "drink": "sake"
+       }
+      ],
+      "unreadable_count": 0,
+      "currency": "JPY"
+     }
+    },
+    "liquer_shelf.jpg": {
+     "photoSha": "baced5b026d9a27a",
+     "latencyMs": 3620,
+     "usage": {
+      "inputTokens": 8236,
+      "outputTokens": 399,
+      "cacheReadTokens": 3404,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.75,
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "鬼おろし キウイサワーの素",
+        "name_ja": "鬼おろし",
+        "name_romaji": "Oniorosh",
+        "brewery_printed": true,
+        "brewery_ja": "北のさくら",
+        "product_name": "キウイサワーの素",
+        "product_name_romaji": "Kiui Sawā no Moto",
+        "drink": "liqueur"
+       },
+       {
+        "printed": "鬼おろし レモンサワーの素",
+        "name_ja": "鬼おろし",
+        "name_romaji": "Oniorosh",
+        "brewery_printed": true,
+        "brewery_ja": "北のさくら",
+        "product_name": "レモンサワーの素",
+        "product_name_romaji": "Remon Sawā no Moto",
+        "drink": "liqueur"
+       },
+       {
+        "printed": "鬼おろし みかんサワーの素",
+        "name_ja": "鬼おろし",
+        "name_romaji": "Oniorosh",
+        "brewery_printed": true,
+        "brewery_ja": "北のさくら",
+        "product_name": "みかんサワーの素",
+        "product_name_romaji": "Mikan Sawā no Moto",
+        "drink": "liqueur"
+       }
+      ],
+      "unreadable_count": 2
+     }
+    },
+    "maibijin_suigei_hakkaisan_shelf.jpg": {
+     "photoSha": "95e91a7c536a2037",
+     "latencyMs": 4145,
+     "usage": {
+      "inputTokens": 8236,
+      "outputTokens": 412,
+      "cacheReadTokens": 3404,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.8,
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "舞美人 山田錦85 木槽搾り 生原酒 MAIBIJIN",
+        "name_ja": "舞美人",
+        "name_romaji": "Maibijin",
+        "brewery_printed": false,
+        "brewery_ja": "清水酒造",
+        "other_names": [
+         "MAIBIJIN"
+        ],
+        "styles": [
+         "nama",
+         "genshu"
+        ],
+        "drink": "sake"
+       },
+       {
+        "printed": "醉鯨 吟麗 純米吟醸 SUIGEI",
+        "name_ja": "醉鯨",
+        "name_romaji": "Suigei",
+        "brewery_printed": false,
+        "brewery_ja": "醉鯨酒造",
+        "other_names": [
+         "吟麗",
+         "SUIGEI"
+        ],
+        "product_name": "吟麗",
+        "product_name_romaji": "Ginrei",
+        "grade": "junmai_ginjo",
+        "drink": "sake"
+       },
+       {
+        "printed": "八海山 清酒",
+        "name_ja": "八海山",
+        "name_romaji": "Hakkaisan",
+        "brewery_printed": true,
+        "brewery_ja": "八海醸造",
+        "other_names": [
+         "Hakkaisan"
+        ],
+        "drink": "sake"
+       }
+      ],
+      "unreadable_count": 3,
+      "currency": "EUR"
+     }
+    },
+    "miura_hachinohe_nishida_several_on_table.jpg": {
+     "photoSha": "594a10c286f6d94b",
+     "latencyMs": 3068,
+     "usage": {
+      "inputTokens": 8236,
+      "outputTokens": 380,
+      "cacheReadTokens": 3404,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.93,
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "豊盃 純米吟醸 HOUHAI Junmai Ginjo",
+        "name_ja": "豊盃",
+        "name_romaji": "Hōhai",
+        "brewery_printed": true,
+        "brewery_ja": "三浦酒造",
+        "other_names": [
+         "HOUHAI"
+        ],
+        "grade": "junmai_ginjo",
+        "drink": "sake"
+       },
+       {
+        "printed": "陸奥八仙 特別純米 HASSEN",
+        "name_ja": "八仙",
+        "name_romaji": "Hassen",
+        "brewery_printed": false,
+        "brewery_ja": "八戸酒造",
+        "other_names": [
+         "HASSEN"
+        ],
+        "grade": "tokubetsu_junmai",
+        "drink": "sake"
+       },
+       {
+        "printed": "田酒 特別純米酒 でんしゅ",
+        "name_ja": "田酒",
+        "name_romaji": "Denshu",
+        "brewery_printed": false,
+        "brewery_ja": "西田酒造店",
+        "other_names": [
+         "でんしゅ"
+        ],
+        "grade": "tokubetsu_junmai",
+        "drink": "sake"
+       }
+      ],
+      "unreadable_count": 0
+     }
+    },
+    "nate_zuiyo_iwasaki_shelf.jpg": {
+     "photoSha": "2eb34e4262b2515b",
+     "latencyMs": 3035,
+     "usage": {
+      "inputTokens": 8236,
+      "outputTokens": 135,
+      "cacheReadTokens": 3404,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "黒牛 純米酒",
+        "name_ja": "黒牛",
+        "name_romaji": "Kuroushi",
+        "brewery_printed": false,
+        "brewery_ja": "名手酒造店",
+        "grade": "junmai",
+        "drink": "sake",
+        "partly_read": true
+       }
+      ],
+      "unreadable_count": 3,
+      "currency": "JPY"
+     }
+    },
+    "nikka_whisky_not_sake.jpg": {
+     "photoSha": "8ac5b53cd2bcc10c",
+     "latencyMs": 3825,
+     "usage": {
+      "inputTokens": 8236,
+      "outputTokens": 275,
+      "cacheReadTokens": 3404,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.85,
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "NIKKA WHISKY SINGLE MALT YOICHI 余市",
+        "name_ja": "余市",
+        "name_romaji": "Yoichi",
+        "brewery_printed": true,
+        "brewery_ja": "ニッカウヰスキー",
+        "other_names": [
+         "YOICHI"
+        ],
+        "styles": [],
+        "drink": "other"
+       },
+       {
+        "printed": "NIKKA SINGLE CASK MALT WHISKY 余市",
+        "name_ja": "余市",
+        "name_romaji": "Yoichi",
+        "brewery_printed": true,
+        "brewery_ja": "ニッカウヰスキー",
+        "other_names": [
+         "YOICHI"
+        ],
+        "product_name": "Single Cask",
+        "styles": [],
+        "drink": "other"
+       }
+      ],
+      "unreadable_count": 0
+     }
+    },
+    "niseko_ezo_no_homare_kasseishu_shelf.jpg": {
+     "photoSha": "c87039ff805fdd6d",
+     "latencyMs": 2758,
+     "usage": {
+      "inputTokens": 8236,
+      "outputTokens": 239,
+      "cacheReadTokens": 3404,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.6,
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "えぞの誉",
+        "name_ja": "えぞの誉",
+        "name_romaji": "Ezo no Homare",
+        "brewery_printed": true,
+        "brewery_ja": "北海道酒造",
+        "drink": "sake",
+        "partly_read": true
+       },
+       {
+        "printed": "えぞの誉 活性酒",
+        "name_ja": "えぞの誉",
+        "name_romaji": "Ezo no Homare",
+        "brewery_printed": false,
+        "brewery_ja": "北海道酒造",
+        "product_name": "活性酒",
+        "product_name_romaji": "Kasseishu",
+        "drink": "sake",
+        "partly_read": false
+       }
+      ],
+      "unreadable_count": 3
+     }
+    },
+    "niseko_ezo_no_homare_kasseishu_shelf_2.jpg": {
+     "photoSha": "b860f57a0604a384",
+     "latencyMs": 7572,
+     "usage": {
+      "inputTokens": 8236,
+      "outputTokens": 247,
+      "cacheReadTokens": 3404,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.5,
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "二世古 えぞの誉 活性酒",
+        "name_ja": "えぞの誉",
+        "name_romaji": "Ezo no Homare",
+        "brewery_printed": true,
+        "brewery_ja": "二世古酒造",
+        "other_names": [
+         "誉"
+        ],
+        "drink": "sake",
+        "partly_read": true
+       },
+       {
+        "printed": "えぞの誉",
+        "name_ja": "えぞの誉",
+        "name_romaji": "Ezo no Homare",
+        "brewery_printed": true,
+        "brewery_ja": "二世古酒造",
+        "other_names": [
+         "誉"
+        ],
+        "styles": [
+         "nigori"
+        ],
+        "drink": "sake",
+        "partly_read": true
+       }
+      ],
+      "unreadable_count": 4
+     }
+    },
+    "niseko_shelf.jpg": {
+     "photoSha": "43d5db53b8d3c009",
+     "latencyMs": 5225,
+     "usage": {
+      "inputTokens": 8192,
+      "outputTokens": 649,
+      "cacheReadTokens": 3404,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.8,
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "二世古 純米 原酒",
+        "name_ja": "二世古",
+        "name_romaji": "Niseko",
+        "brewery_printed": true,
+        "brewery_ja": "二世古酒造",
+        "grade": "junmai",
+        "styles": [
+         "genshu"
+        ],
+        "drink": "sake"
+       },
+       {
+        "printed": "ニセコ 本醸造",
+        "name_ja": "ニセコ",
+        "name_romaji": "Niseko",
+        "brewery_printed": false,
+        "brewery_ja": "二世古酒造",
+        "grade": "honjozo",
+        "drink": "sake"
+       },
+       {
+        "printed": "ニセコ 純米",
+        "name_ja": "ニセコ",
+        "name_romaji": "Niseko",
+        "brewery_printed": false,
+        "brewery_ja": "二世古酒造",
+        "grade": "junmai",
+        "drink": "sake"
+       },
+       {
+        "printed": "倶知安 本醸造",
+        "name_ja": "倶知安",
+        "name_romaji": "Kutchan",
+        "brewery_printed": false,
+        "brewery_ja": "二世古酒造",
+        "grade": "honjozo",
+        "drink": "sake"
+       },
+       {
+        "printed": "倶知安 純米酒",
+        "name_ja": "倶知安",
+        "name_romaji": "Kutchan",
+        "brewery_printed": false,
+        "brewery_ja": "二世古酒造",
+        "grade": "junmai",
+        "drink": "sake"
+       },
+       {
+        "printed": "倶知安 吟醸酒 原酒",
+        "name_ja": "倶知安",
+        "name_romaji": "Kutchan",
+        "brewery_printed": false,
+        "brewery_ja": "二世古酒造",
+        "grade": "ginjo",
+        "styles": [
+         "genshu"
+        ],
+        "drink": "sake"
+       },
+       {
+        "printed": "くっちゃんの焼酎",
+        "name_ja": "くっちゃんの焼酎",
+        "name_romaji": "Kutchan no Shōchū",
+        "brewery_printed": true,
+        "brewery_ja": "二世古酒造",
+        "drink": "shochu"
+       }
+      ],
+      "unreadable_count": 1
+     }
+    },
+    "niseko_shelf_2.jpg": {
+     "photoSha": "b281284521283df3",
+     "latencyMs": 2678,
+     "usage": {
+      "inputTokens": 7988,
+      "outputTokens": 131,
+      "cacheReadTokens": 3404,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.6,
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "くっちゃんの焼酎 本格焼酎二十五度",
+        "name_ja": "くっちゃんの焼酎",
+        "name_romaji": "Kutchan no Shōchū",
+        "brewery_printed": false,
+        "drink": "shochu"
+       }
+      ],
+      "unreadable_count": 5
+     }
+    },
+    "niseko_shelf_3.jpg": {
+     "photoSha": "2ed895d473ca98fb",
+     "latencyMs": 8451,
+     "usage": {
+      "inputTokens": 8236,
+      "outputTokens": 560,
+      "cacheReadTokens": 3404,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.6,
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "ニセコ 本醸造",
+        "name_ja": "ニセコ",
+        "name_romaji": "Niseko",
+        "brewery_printed": true,
+        "brewery_ja": "二世古酒造",
+        "other_names": [
+         "NISEKO"
+        ],
+        "grade": "honjozo",
+        "drink": "sake",
+        "partly_read": true
+       },
+       {
+        "printed": "ニセコ 純米",
+        "name_ja": "ニセコ",
+        "name_romaji": "Niseko",
+        "brewery_printed": false,
+        "brewery_ja": "二世古酒造",
+        "grade": "junmai",
+        "drink": "sake"
+       },
+       {
+        "printed": "倶知安 本醸造",
+        "name_ja": "倶知安",
+        "name_romaji": "Kutchan",
+        "brewery_printed": false,
+        "brewery_ja": "二世古酒造",
+        "grade": "honjozo",
+        "drink": "sake"
+       },
+       {
+        "printed": "倶知安",
+        "name_ja": "倶知安",
+        "name_romaji": "Kutchan",
+        "brewery_printed": false,
+        "brewery_ja": "二世古酒造",
+        "drink": "sake"
+       },
+       {
+        "printed": "倶知安",
+        "name_ja": "倶知安",
+        "name_romaji": "Kutchan",
+        "brewery_printed": false,
+        "brewery_ja": "二世古酒造",
+        "drink": "sake"
+       },
+       {
+        "printed": "ニセコ 純米吟醸酒",
+        "name_ja": "ニセコ",
+        "name_romaji": "Niseko",
+        "brewery_printed": true,
+        "brewery_ja": "二世古酒造",
+        "other_names": [
+         "NISEKO"
+        ],
+        "grade": "junmai_ginjo",
+        "drink": "sake"
+       }
+      ],
+      "unreadable_count": 3,
+      "currency": "JPY"
+     }
+    },
+    "niseko_shelf_4.jpg": {
+     "photoSha": "cfc53a5542d45951",
+     "latencyMs": 2560,
+     "usage": {
+      "inputTokens": 8236,
+      "outputTokens": 84,
+      "cacheReadTokens": 3404,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.3,
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "大吟醸",
+        "name_ja": "大吟醸",
+        "drink": "sake",
+        "partly_read": true
+       }
+      ],
+      "unreadable_count": 9
+     }
+    },
+    "niseko_shelf_5.jpg": {
+     "photoSha": "b3c3277d177bcfca",
+     "latencyMs": 3568,
+     "usage": {
+      "inputTokens": 8236,
+      "outputTokens": 138,
+      "cacheReadTokens": 3404,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "大吟醸",
+        "name_ja": "大吟醸",
+        "drink": "sake",
+        "partly_read": true
+       },
+       {
+        "printed": "誉",
+        "name_ja": "誉",
+        "name_romaji": "Homare",
+        "brewery_printed": false,
+        "drink": "sake",
+        "partly_read": true
+       }
+      ],
+      "unreadable_count": 8,
+      "currency": "JPY"
+     }
+    },
+    "niseko_shelf_6.jpg": {
+     "photoSha": "b8be8cfd8e9afe96",
+     "latencyMs": 6179,
+     "usage": {
+      "inputTokens": 8236,
+      "outputTokens": 599,
+      "cacheReadTokens": 3404,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "二世古 純米大吟醸",
+        "name_ja": "二世古",
+        "name_romaji": "Niseko",
+        "brewery_printed": false,
+        "brewery_ja": "二世古酒造",
+        "grade": "junmai_daiginjo",
+        "drink": "sake",
+        "partly_read": true
+       },
+       {
+        "printed": "二世古 生酒",
+        "name_ja": "二世古",
+        "name_romaji": "Niseko",
+        "brewery_printed": false,
+        "brewery_ja": "二世古酒造",
+        "styles": [
+         "nama"
+        ],
+        "drink": "sake"
+       },
+       {
+        "printed": "二世古 純米吟醸 今金",
+        "name_ja": "二世古",
+        "name_romaji": "Niseko",
+        "brewery_printed": false,
+        "brewery_ja": "二世古酒造",
+        "product_name": "今金",
+        "product_name_romaji": "Imakane",
+        "grade": "junmai_ginjo",
+        "drink": "sake",
+        "partly_read": true
+       },
+       {
+        "printed": "二世古 上撰",
+        "name_ja": "二世古",
+        "name_romaji": "Niseko",
+        "brewery_printed": false,
+        "brewery_ja": "二世古酒造",
+        "other_names": [
+         "Niseko"
+        ],
+        "drink": "sake"
+       },
+       {
+        "printed": "二世古 誉",
+        "name_ja": "二世古",
+        "name_romaji": "Niseko",
+        "brewery_printed": false,
+        "brewery_ja": "二世古酒造",
+        "product_name": "誉",
+        "product_name_romaji": "Homare",
+        "drink": "sake",
+        "partly_read": true
+       },
+       {
+        "printed": "新酒しぼりたて生酒",
+        "name_ja": "二世古",
+        "name_romaji": "Niseko",
+        "brewery_printed": false,
+        "brewery_ja": "二世古酒造",
+        "styles": [
+         "nama"
+        ],
+        "drink": "sake",
+        "partly_read": true
+       }
+      ],
+      "unreadable_count": 8,
+      "currency": "JPY"
+     }
+    },
+    "niseko_shochu_shelf_2.jpg": {
+     "photoSha": "a765dcdafe7f41b5",
+     "latencyMs": 3891,
+     "usage": {
+      "inputTokens": 8177,
+      "outputTokens": 273,
+      "cacheReadTokens": 3404,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.6,
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "蔵元 二世古 乙類焼酎 30度",
+        "name_ja": "二世古",
+        "name_romaji": "Niseko",
+        "brewery_printed": false,
+        "other_names": [
+         "NISEKO"
+        ],
+        "drink": "shochu",
+        "partly_read": true
+       },
+       {
+        "printed": "豪雪 蔵元 二世古 GOUSETU 本格焼酎 三十九度",
+        "name_ja": "二世古",
+        "name_romaji": "Niseko",
+        "brewery_printed": true,
+        "brewery_ja": "二世古酒造",
+        "other_names": [
+         "豪雪",
+         "GOUSETU"
+        ],
+        "product_name": "豪雪",
+        "product_name_romaji": "Gōsetsu",
+        "drink": "shochu"
+       }
+      ],
+      "unreadable_count": 0
+     }
+    },
+    "ohki_chochin_dassai_menu.jpg": {
+     "photoSha": "64d15ae58ef2c611",
+     "latencyMs": 3665,
+     "usage": {
+      "inputTokens": 8178,
+      "outputTokens": 519,
+      "cacheReadTokens": 3404,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.9,
+      "kind": "menu",
+      "lines": [
+       {
+        "printed": "楽器政宗 Gakki Masamune",
+        "name_ja": "楽器政宗",
+        "name_romaji": "Gakki Masamune",
+        "brewery_printed": false,
+        "brewery_ja": "大木代吉本店",
+        "other_names": [
+         "Gakki Masamune"
+        ],
+        "drink": "sake",
+        "price": 600
+       },
+       {
+        "printed": "長珍 特別純米 Chochin",
+        "name_ja": "長珍",
+        "name_romaji": "Chochin",
+        "brewery_printed": false,
+        "brewery_ja": "長珍酒造",
+        "other_names": [
+         "Chochin"
+        ],
+        "grade": "tokubetsu_junmai",
+        "drink": "sake",
+        "price": 650
+       },
+       {
+        "printed": "獺祭 純米大吟醸 磨き三割九分 Dassai",
+        "name_ja": "獺祭",
+        "name_romaji": "Dassai",
+        "brewery_printed": false,
+        "brewery_ja": "旭酒造",
+        "other_names": [
+         "Dassai"
+        ],
+        "grade": "junmai_daiginjo",
+        "drink": "sake",
+        "price": 1100
+       },
+       {
+        "printed": "コーラ Cola",
+        "name_ja": "コーラ",
+        "name_romaji": "Kōra",
+        "brewery_printed": false,
+        "other_names": [
+         "Cola"
+        ],
+        "drink": "other",
+        "price": 550
+       },
+       {
+        "printed": "ジンジャーエール",
+        "name_ja": "ジンジャーエール",
+        "name_romaji": "Jinjā Ēru",
+        "brewery_printed": false,
+        "drink": "other",
+        "partly_read": true
+       }
+      ],
+      "unreadable_count": 0,
+      "currency": "JPY"
+     }
+    },
+    "okura_fukugen_omine_fujioka_takagi_izumi_menu.jpg": {
+     "photoSha": "b5178158b3c140ec",
+     "latencyMs": 7244,
+     "usage": {
+      "inputTokens": 8230,
+      "outputTokens": 1005,
+      "cacheReadTokens": 3404,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.8,
+      "kind": "menu",
+      "lines": [
+       {
+        "printed": "大倉 愛山 直汲み 無濾過生原酒 特別純米 Tokubetsu Junmai",
+        "name_ja": "大倉",
+        "name_romaji": "Ōkura",
+        "brewery_printed": false,
+        "brewery_ja": "大倉本家",
+        "other_names": [
+         "おおくら",
+         "愛山 直汲み"
+        ],
+        "grade": "tokubetsu_junmai",
+        "styles": [
+         "muroka",
+         "nama",
+         "genshu"
+        ],
+        "drink": "sake"
+       },
+       {
+        "printed": "福源 蔵出し無濾過原酒 純米吟醸 Junmai Ginjo",
+        "name_ja": "福源",
+        "name_romaji": "Fukugen",
+        "brewery_printed": false,
+        "other_names": [
+         "ふくげん"
+        ],
+        "product_name": "蔵出し無濾過原酒",
+        "grade": "junmai_ginjo",
+        "styles": [
+         "muroka",
+         "genshu"
+        ],
+        "drink": "sake"
+       },
+       {
+        "printed": "福海",
+        "name_ja": "福海",
+        "name_romaji": "Fukuumi",
+        "brewery_printed": false,
+        "other_names": [],
+        "drink": "sake",
+        "partly_read": true
+       },
+       {
+        "printed": "大嶺 冬のおとずれ 純米 Junmai",
+        "name_ja": "大嶺",
+        "name_romaji": "Ōmine",
+        "brewery_printed": false,
+        "brewery_ja": "大嶺酒造",
+        "other_names": [
+         "おおみね",
+         "Omine",
+         "冬のおとずれ"
+        ],
+        "product_name": "冬のおとずれ",
+        "product_name_romaji": "Fuyu no Otozure",
+        "grade": "junmai",
+        "drink": "sake"
+       },
+       {
+        "printed": "蒼空 こうじましまし 純米吟醸 Junmai Ginjo",
+        "name_ja": "蒼空",
+        "name_romaji": "Sōkū",
+        "brewery_printed": false,
+        "brewery_ja": "藤岡酒造",
+        "other_names": [
+         "そうくう",
+         "こうじましまし"
+        ],
+        "product_name": "こうじましまし",
+        "product_name_romaji": "Kōji Mashimashi",
+        "grade": "junmai_ginjo",
+        "drink": "sake"
+       },
+       {
+        "printed": "朝日鷹 低温貯蔵酒 本醸造 Honjyozo",
+        "name_ja": "朝日鷹",
+        "name_romaji": "Asahitaka",
+        "brewery_printed": false,
+        "brewery_ja": "高木酒造",
+        "other_names": [
+         "あさひだか",
+         "Asahidaka"
+        ],
+        "product_name": "低温貯蔵酒",
+        "product_name_romaji": "Teion Chozōshu",
+        "grade": "honjozo",
+        "drink": "sake"
+       },
+       {
+        "printed": "仙介 超辛口 純米吟醸",
+        "name_ja": "仙介",
+        "name_romaji": "Sensuke",
+        "brewery_printed": false,
+        "other_names": [
+         "せんすけ",
+         "Sensuke"
+        ],
+        "product_name": "超辛口",
+        "product_name_romaji": "Chōkarakuchi",
+        "grade": "junmai_ginjo",
+        "drink": "sake",
+        "partly_read": true
+       }
+      ],
+      "unreadable_count": 1,
+      "currency": "JPY"
+     }
+    },
+    "okura_omine_takagi_menu.jpg": {
+     "photoSha": "2a51e1aaa2d4100f",
+     "latencyMs": 5387,
+     "usage": {
+      "inputTokens": 8230,
+      "outputTokens": 548,
+      "cacheReadTokens": 3404,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.9,
+      "kind": "menu",
+      "lines": [
+       {
+        "printed": "大倉 愛山 直汲み 無濾過生原酒 特別純米 Tokubetsu Junmai",
+        "name_ja": "大倉",
+        "name_romaji": "Ōkura",
+        "brewery_printed": false,
+        "brewery_ja": "大倉本家",
+        "other_names": [
+         "おおくら",
+         "Okura",
+         "愛山 直汲み"
+        ],
+        "product_name": "愛山 直汲み",
+        "product_name_romaji": "Aiyama Jikaguchi",
+        "grade": "tokubetsu_junmai",
+        "styles": [
+         "muroka",
+         "nama",
+         "genshu"
+        ],
+        "drink": "sake"
+       },
+       {
+        "printed": "大嶺 冬のおとずれ 純米 Junmai",
+        "name_ja": "大嶺",
+        "name_romaji": "Ōmine",
+        "brewery_printed": false,
+        "brewery_ja": "大嶺酒造",
+        "other_names": [
+         "おおみね",
+         "Omine",
+         "冬のおとずれ"
+        ],
+        "product_name": "冬のおとずれ",
+        "product_name_romaji": "Fuyu no Otozure",
+        "grade": "junmai",
+        "drink": "sake"
+       },
+       {
+        "printed": "朝日鷹 低温貯蔵酒 本醸造 Honjyozo",
+        "name_ja": "朝日鷹",
+        "name_romaji": "Asahidaka",
+        "brewery_printed": false,
+        "brewery_ja": "高木酒造",
+        "other_names": [
+         "あさひだか",
+         "Asahidaka"
+        ],
+        "product_name": "低温貯蔵酒",
+        "product_name_romaji": "Teion Chozōshu",
+        "grade": "honjozo",
+        "drink": "sake"
+       }
+      ],
+      "unreadable_count": 0
+     }
+    },
+    "sasaki_matsui_shotoku_higashiyama_nagayama_kitagawa_sasaki_japanese_shelf.jpg": {
+     "photoSha": "a4412ac95adca53a",
+     "latencyMs": 6222,
+     "usage": {
+      "inputTokens": 5062,
+      "outputTokens": 978,
+      "cacheReadTokens": 3404,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.8,
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "西陣 特別純米酒",
+        "name_ja": "西陣",
+        "name_romaji": "Nishijin",
+        "brewery_printed": true,
+        "brewery_ja": "佐々木酒造",
+        "product_name_romaji": "",
+        "grade": "tokubetsu_junmai",
+        "drink": "sake"
+       },
+       {
+        "printed": "京千歳 純米吟醸",
+        "name_ja": "京千歳",
+        "name_romaji": "Kyōchitose",
+        "brewery_printed": true,
+        "brewery_ja": "松井酒造",
+        "grade": "junmai_ginjo",
+        "drink": "sake"
+       },
+       {
+        "printed": "神蔵 純米大吟醸 KAGURA 無濾過・無加水・一火(白)",
+        "name_ja": "神蔵",
+        "name_romaji": "Kagura",
+        "brewery_printed": true,
+        "brewery_ja": "松井酒造",
+        "other_names": [
+         "KAGURA"
+        ],
+        "grade": "junmai_daiginjo",
+        "styles": [
+         "muroka"
+        ],
+        "drink": "sake"
+       },
+       {
+        "printed": "花洛 純米吟醸 祝",
+        "name_ja": "花洛",
+        "name_romaji": "Karaku",
+        "brewery_printed": false,
+        "grade": "junmai_ginjo",
+        "drink": "sake"
+       },
+       {
+        "printed": "坤滴 純米吟醸",
+        "name_ja": "坤滴",
+        "name_romaji": "Konteki",
+        "brewery_printed": false,
+        "grade": "junmai_ginjo",
+        "drink": "sake"
+       },
+       {
+        "printed": "山猿 山廃仕込 無濾過生原酒",
+        "name_ja": "山猿",
+        "name_romaji": "Yamazaru",
+        "brewery_printed": false,
+        "brewery_ja": "永山本家酒造場",
+        "styles": [
+         "yamahai",
+         "muroka",
+         "nama",
+         "genshu"
+        ],
+        "drink": "sake"
+       },
+       {
+        "printed": "山猿 純米",
+        "name_ja": "山猿",
+        "name_romaji": "Yamazaru",
+        "brewery_printed": false,
+        "brewery_ja": "永山本家酒造場",
+        "grade": "junmai",
+        "drink": "sake"
+       },
+       {
+        "printed": "富翁 純米大吟醸 吟麗",
+        "name_ja": "富翁",
+        "name_romaji": "Tomio",
+        "brewery_printed": false,
+        "brewery_ja": "北川本家",
+        "product_name": "吟麗",
+        "product_name_romaji": "Ginrei",
+        "grade": "junmai_daiginjo",
+        "drink": "sake"
+       },
+       {
+        "printed": "富翁 純米酒 山廃一火",
+        "name_ja": "富翁",
+        "name_romaji": "Tomio",
+        "brewery_printed": false,
+        "brewery_ja": "北川本家",
+        "grade": "junmai",
+        "styles": [
+         "yamahai"
+        ],
+        "drink": "sake"
+       },
+       {
+        "printed": "聚楽第",
+        "name_ja": "聚楽第",
+        "name_romaji": "Jurakudai",
+        "brewery_printed": false,
+        "brewery_ja": "佐々木酒造",
+        "drink": "sake"
+       }
+      ],
+      "unreadable_count": 3
+     }
+    },
+    "shinshu_nekomasamune_multiple_shelf_with_pricetag.jpg": {
+     "photoSha": "b32ba0ab41228089",
+     "latencyMs": 3946,
+     "usage": {
+      "inputTokens": 8236,
+      "outputTokens": 405,
+      "cacheReadTokens": 3404,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.6,
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "信州ねこ正宗 HACHIWARE",
+        "name_ja": "信州ねこ正宗",
+        "name_romaji": "Shinshū Nekomasamune",
+        "brewery_printed": true,
+        "brewery_ja": "舞姫",
+        "other_names": [
+         "Shinshu Nekomasamune",
+         "HACHIWARE"
+        ],
+        "product_name": "HACHIWARE",
+        "product_name_romaji": "Hachiware",
+        "grade": "honjozo",
+        "drink": "sake"
+       },
+       {
+        "printed": "信州ねこ正宗 SHIRONEKO",
+        "name_ja": "信州ねこ正宗",
+        "name_romaji": "Shinshū Nekomasamune",
+        "brewery_printed": false,
+        "brewery_ja": "舞姫",
+        "other_names": [
+         "Shinshu Nekomasamune",
+         "SHIRONEKO"
+        ],
+        "product_name": "SHIRONEKO",
+        "product_name_romaji": "Shironeko",
+        "grade": "junmai_ginjo",
+        "drink": "sake"
+       },
+       {
+        "printed": "純米吟醸",
+        "name_ja": "純米吟醸",
+        "drink": "sake",
+        "partly_read": true
+       }
+      ],
+      "unreadable_count": 3
+     }
+    },
+    "sohomare_iwasaki_shelf.jpg": {
+     "photoSha": "37fb95f8a52588c4",
+     "latencyMs": 4732,
+     "usage": {
+      "inputTokens": 8236,
+      "outputTokens": 217,
+      "cacheReadTokens": 3404,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "惣誉 辛口",
+        "name_ja": "惣誉",
+        "name_romaji": "Sōhomare",
+        "brewery_printed": false,
+        "brewery_ja": "惣誉酒造",
+        "drink": "sake"
+       },
+       {
+        "printed": "FUKUMUSUME",
+        "name_ja": "FUKUMUSUME",
+        "name_romaji": "Fukumusume",
+        "brewery_printed": false,
+        "brewery_ja": "福娘酒造",
+        "other_names": [
+         "福娘"
+        ],
+        "drink": "sake",
+        "partly_read": true
+       }
+      ],
+      "unreadable_count": 2,
+      "currency": "JPY"
+     }
+    },
+    "two_bottles_tsukasa_sjochu_AND_aioi_shochu_with_pricetag.jpg": {
+     "photoSha": "2aad9113c91ccf19",
+     "latencyMs": 3055,
+     "usage": {
+      "inputTokens": 4229,
+      "outputTokens": 216,
+      "cacheReadTokens": 3404,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.6,
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "ソフトツカサ 20 焼酎甲類",
+        "name_ja": "ソフトツカサ",
+        "name_romaji": "Sofuto Tsukasa",
+        "brewery_printed": true,
+        "brewery_ja": "美峰酒類",
+        "drink": "shochu"
+       },
+       {
+        "printed": "相生焼酎 25",
+        "name_ja": "相生",
+        "name_romaji": "Aioi",
+        "brewery_printed": false,
+        "other_names": [
+         "AIOI"
+        ],
+        "drink": "shochu"
+       }
+      ],
+      "unreadable_count": 4,
+      "currency": "EUR"
+     }
+    },
+    "uehara_matsumoto_nanyo_asahi_yoshida_shimizu_kazuma_linne_aihara_menu.jpg": {
+     "photoSha": "599a96ab120a9452",
+     "latencyMs": 9414,
+     "usage": {
+      "inputTokens": 8230,
+      "outputTokens": 1253,
+      "cacheReadTokens": 3404,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.75,
+      "kind": "menu",
+      "lines": [
+       {
+        "printed": "不老泉 酒母四段 無濾過生酒",
+        "name_ja": "不老泉",
+        "name_romaji": "Furousen",
+        "brewery_printed": false,
+        "other_names": [
+         "Furousen"
+        ],
+        "product_name": "酒母四段",
+        "product_name_romaji": "Shubo Yondan",
+        "styles": [
+         "muroka",
+         "nama"
+        ],
+        "drink": "sake"
+       },
+       {
+        "printed": "澤屋まつもと 雄町 純米吟醸 Junmai Ginjo",
+        "name_ja": "澤屋まつもと",
+        "name_romaji": "Sawaya Matsumoto",
+        "brewery_printed": false,
+        "other_names": [
+         "Sawaya Matsumoto",
+         "雄町"
+        ],
+        "product_name": "雄町",
+        "product_name_romaji": "Omachi",
+        "grade": "junmai_ginjo",
+        "drink": "sake"
+       },
+       {
+        "printed": "花陽浴 越後五百万石 無濾過生原酒 生酒 純米大吟醸",
+        "name_ja": "花陽浴",
+        "name_romaji": "Hanaabi",
+        "brewery_printed": false,
+        "other_names": [
+         "Hanaabi"
+        ],
+        "product_name": "越後五百万石",
+        "product_name_romaji": "Echigo Gohyakumangoku",
+        "grade": "junmai_daiginjo",
+        "styles": [
+         "muroka",
+         "nama",
+         "genshu"
+        ],
+        "drink": "sake",
+        "partly_read": true
+       },
+       {
+        "printed": "久保田 千寿 純米吟醸 Junmai Ginjo",
+        "name_ja": "久保田",
+        "name_romaji": "Kubota",
+        "brewery_printed": false,
+        "other_names": [
+         "Kubota",
+         "千寿"
+        ],
+        "product_name": "千寿",
+        "product_name_romaji": "Senju",
+        "grade": "junmai_ginjo",
+        "drink": "sake",
+        "partly_read": true
+       },
+       {
+        "printed": "手取川 シャキッと辛口 生原酒 純米吟醸 Junmai Ginjo",
+        "name_ja": "手取川",
+        "name_romaji": "Tedorigawa",
+        "brewery_printed": false,
+        "other_names": [
+         "Tedorigawa"
+        ],
+        "product_name": "シャキッと辛口",
+        "product_name_romaji": "Shakitto Karakuchi",
+        "grade": "junmai_ginjo",
+        "styles": [
+         "nama",
+         "genshu"
+        ],
+        "drink": "sake"
+       },
+       {
+        "printed": "雅 純米大吟醸",
+        "name_ja": "雅",
+        "name_romaji": "Miyabi",
+        "brewery_printed": false,
+        "grade": "junmai_daiginjo",
+        "drink": "sake",
+        "partly_read": true
+       },
+       {
+        "printed": "竹葉 能登産百万石乃白 ひやおろし 特別純米 Tokubetsu Junmai",
+        "name_ja": "竹葉",
+        "name_romaji": "Chikuha",
+        "brewery_printed": false,
+        "other_names": [
+         "Chikuha"
+        ],
+        "product_name": "百万石乃白",
+        "product_name_romaji": "Hyakumangoku no Shiro",
+        "grade": "tokubetsu_junmai",
+        "styles": [
+         "hiyaoroshi"
+        ],
+        "drink": "sake",
+        "partly_read": true
+       },
+       {
+        "printed": "LINNE 800 YAO 大麦 Craft SAKE",
+        "name_ja": "LINNE",
+        "name_romaji": "LINNE",
+        "brewery_printed": false,
+        "other_names": [
+         "りんね"
+        ],
+        "product_name": "800 YAO 大麦",
+        "product_name_romaji": "800 YAO Omugi",
+        "drink": "sake",
+        "craft": true
+       },
+       {
+        "printed": "雨後の月 純米大吟醸",
+        "name_ja": "雨後の月",
+        "name_romaji": "Ugo no Tsuki",
+        "brewery_printed": false,
+        "other_names": [
+         "Ugo no Tsuki"
+        ],
+        "grade": "junmai_daiginjo",
+        "drink": "sake",
+        "partly_read": true
+       }
+      ],
+      "unreadable_count": 0,
+      "currency": "JPY"
+     }
+    },
+    "gokai_koitokame_menu.jpg": {
+     "photoSha": "4c11b8ae491b7bec",
+     "latencyMs": 2984,
+     "usage": {
+      "inputTokens": 5056,
+      "outputTokens": 197,
+      "cacheReadTokens": 3404,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.6,
+      "kind": "menu",
+      "lines": [
+       {
+        "printed": "豪快 (冷・熱燗)",
+        "name_ja": "豪快",
+        "name_romaji": "Gōkai",
+        "drink": "sake",
+        "price": 399,
+        "warm": true
+       },
+       {
+        "printed": "鯉と亀と生原酒。(冷)",
+        "name_ja": "鯉と亀と生原酒",
+        "name_romaji": "Koi to Kame to Namagenshu",
+        "drink": "sake",
+        "price": 599,
+        "partly_read": true
+       }
+      ],
+      "unreadable_count": 0,
+      "currency": "JPY"
+     }
+    },
+    "hachinohe_oliveyeast_kirekkire_kikumasamune_menu.jpg": {
+     "photoSha": "85f0de46b17f5429",
+     "latencyMs": 4278,
+     "usage": {
+      "inputTokens": 8206,
+      "outputTokens": 543,
+      "cacheReadTokens": 3404,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.9,
+      "kind": "menu",
+      "lines": [
+       {
+        "printed": "陸奥八仙 MUTSU HASSEN 特別純米 Tokubetsu Junmai",
+        "name_ja": "陸奥八仙",
+        "name_romaji": "Mutsu Hassen",
+        "brewery_printed": false,
+        "brewery_ja": "八戸酒造",
+        "other_names": [
+         "MUTSU HASSEN"
+        ],
+        "grade": "tokubetsu_junmai",
+        "drink": "sake",
+        "price": 5.9
+       },
+       {
+        "printed": "Olive East N.315 純米吟醸 Junmai Ginjo",
+        "name_ja": "Olive East",
+        "name_romaji": "Olive East",
+        "brewery_printed": false,
+        "other_names": [
+         "N.315"
+        ],
+        "product_name": "N.315",
+        "product_name_romaji": "N.315",
+        "grade": "junmai_ginjo",
+        "drink": "sake",
+        "price": 5.9
+       },
+       {
+        "printed": "キレッキレ Kirekkire 純米吟醸 Junmai Ginjo",
+        "name_ja": "キレッキレ",
+        "name_romaji": "Kirekkire",
+        "brewery_printed": false,
+        "other_names": [
+         "Kirekkire"
+        ],
+        "grade": "junmai_ginjo",
+        "drink": "sake",
+        "price": 5.9
+       },
+       {
+        "printed": "House Sake - Kikumasamune -",
+        "name_ja": "菊正宗",
+        "name_romaji": "Kikumasamune",
+        "brewery_printed": false,
+        "brewery_ja": "菊正宗酒造",
+        "other_names": [
+         "Kikumasamune"
+        ],
+        "drink": "sake",
+        "price": 8.8,
+        "warm": true
+       }
+      ],
+      "unreadable_count": 0,
+      "currency": "EUR"
+     }
+    },
+    "ide_menu_1.jpg": {
+     "photoSha": "d072a239cbb1e55a",
+     "latencyMs": 3296,
+     "usage": {
+      "inputTokens": 8230,
+      "outputTokens": 295,
+      "cacheReadTokens": 3404,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.8,
+      "kind": "menu",
+      "lines": [
+       {
+        "printed": "吟醸 Ginjo",
+        "name_ja": "甲斐の開運",
+        "name_romaji": "Kai no Kaiun",
+        "brewery_printed": true,
+        "brewery_ja": "井出醸造店",
+        "other_names": [
+         "カイノカイウン",
+         "KAINO KAIUN"
+        ],
+        "grade": "ginjo",
+        "drink": "sake",
+        "price": 1870
+       },
+       {
+        "printed": "大吟醸 Daiginjo",
+        "name_ja": "甲斐の開運",
+        "name_romaji": "Kai no Kaiun",
+        "brewery_printed": true,
+        "brewery_ja": "井出醸造店",
+        "other_names": [
+         "カイノカイウン",
+         "KAINO KAIUN"
+        ],
+        "grade": "daiginjo",
+        "drink": "sake",
+        "price": 968
+       }
+      ],
+      "unreadable_count": 1,
+      "currency": "JPY"
+     }
+    },
+    "ide_menu_2.jpg": {
+     "photoSha": "ee060bede0a73fc1",
+     "latencyMs": 4252,
+     "usage": {
+      "inputTokens": 8230,
+      "outputTokens": 483,
+      "cacheReadTokens": 3404,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.7,
+      "kind": "menu",
+      "lines": [
+       {
+        "printed": "<囲>Kakoi 無殺菌・無加水 特別純米生原酒",
+        "name_ja": "甲斐の開運",
+        "name_romaji": "Kai no Kaiun",
+        "brewery_printed": true,
+        "brewery_ja": "富士北麓酒造",
+        "other_names": [
+         "Kakoi"
+        ],
+        "product_name": "囲",
+        "product_name_romaji": "Kakoi",
+        "grade": "tokubetsu_junmai",
+        "styles": [
+         "nama",
+         "genshu"
+        ],
+        "drink": "sake",
+        "price": 2200
+       },
+       {
+        "printed": "特別純米 北麓 Hokuroku (Tokubetsu Junmai)",
+        "name_ja": "甲斐の開運",
+        "name_romaji": "Kai no Kaiun",
+        "brewery_printed": true,
+        "brewery_ja": "富士北麓酒造",
+        "other_names": [
+         "Hokuroku"
+        ],
+        "product_name": "北麓",
+        "product_name_romaji": "Hokuroku",
+        "grade": "tokubetsu_junmai",
+        "drink": "sake",
+        "price": 1870
+       },
+       {
+        "printed": "純米 Junmai",
+        "name_ja": "甲斐の開運",
+        "name_romaji": "Kai no Kaiun",
+        "brewery_printed": true,
+        "brewery_ja": "富士北麓酒造",
+        "grade": "junmai",
+        "drink": "sake",
+        "price": 1540,
+        "partly_read": true
+       }
+      ],
+      "unreadable_count": 0,
+      "currency": "JPY"
+     }
+    },
+    "ide_menu_3.jpg": {
+     "photoSha": "2daaec103db4b78e",
+     "latencyMs": 3587,
+     "usage": {
+      "inputTokens": 8230,
+      "outputTokens": 263,
+      "cacheReadTokens": 3404,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "kind": "menu",
+      "lines": [
+       {
+        "printed": "天下山麓富士の山 本醸造 Tenkasanroku Fujinoyama (Honjozo)",
+        "name_ja": "天下山麓富士の山",
+        "name_romaji": "Tenkasanroku Fujinoyama",
+        "brewery_printed": false,
+        "other_names": [
+         "Tenkasanroku Fujinoyama"
+        ],
+        "grade": "honjozo",
+        "drink": "sake",
+        "price": 1397,
+        "warm": false
+       },
+       {
+        "printed": "吟醸",
+        "name_ja": "吟醸",
+        "name_romaji": "Ginjō",
+        "brewery_printed": false,
+        "grade": "ginjo",
+        "drink": "sake",
+        "price": 1100,
+        "partly_read": true
+       }
+      ],
+      "unreadable_count": 1,
+      "currency": "JPY"
+     }
+    },
+    "ide_menu_4.jpg": {
+     "photoSha": "6dabb15cbcde3f7a",
+     "latencyMs": 7266,
+     "usage": {
+      "inputTokens": 8230,
+      "outputTokens": 863,
+      "cacheReadTokens": 3404,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.6,
+      "kind": "menu",
+      "lines": [
+       {
+        "printed": "大吟醸 Daiginjo",
+        "name_ja": "大吟醸",
+        "drink": "sake",
+        "price": 3850,
+        "partly_read": true
+       },
+       {
+        "printed": "吟醸 Ginjo",
+        "name_ja": "吟醸",
+        "drink": "sake",
+        "price": 1870,
+        "partly_read": true
+       },
+       {
+        "printed": "吟醸生酒 Ginjo Namasake",
+        "name_ja": "吟醸生酒",
+        "drink": "sake",
+        "price": 1870,
+        "partly_read": true
+       },
+       {
+        "printed": "天下山麓富士の山 Tenkasanroku Fujinoyama",
+        "name_ja": "天下山麓富士の山",
+        "name_romaji": "Tenkasanroku Fujinoyama",
+        "drink": "sake",
+        "price": 1397,
+        "partly_read": true
+       },
+       {
+        "printed": "生原酒 Namagenshu",
+        "name_ja": "生原酒",
+        "drink": "sake",
+        "price": 1463,
+        "partly_read": true
+       },
+       {
+        "printed": "梅酒 Umeshu",
+        "name_ja": "梅酒",
+        "name_romaji": "Umeshu",
+        "drink": "umeshu",
+        "price": 561
+       },
+       {
+        "printed": "純米大吟醸 冨麗 Junmai Daiginjo (Furoku)",
+        "name_ja": "冨麗",
+        "name_romaji": "Furoku",
+        "grade": "junmai_daiginjo",
+        "drink": "sake",
+        "price": 4290
+       },
+       {
+        "printed": "ひやおろし 純米吟醸生酒 HiyaoroshiNama",
+        "name_ja": "ひやおろし",
+        "name_romaji": "Hiyaoroshi",
+        "grade": "junmai_ginjo",
+        "styles": [
+         "hiyaoroshi",
+         "nama"
+        ],
+        "drink": "sake",
+        "price": 2200
+       },
+       {
+        "printed": "囲 Kakoi 特別純米生原酒 Junmai Ginjo",
+        "name_ja": "囲",
+        "name_romaji": "Kakoi",
+        "grade": "tokubetsu_junmai",
+        "styles": [
+         "nama",
+         "genshu"
+        ],
+        "drink": "sake",
+        "price": 2200
+       },
+       {
+        "printed": "純米原酒 Junmaigenshu",
+        "name_ja": "純米原酒",
+        "drink": "sake",
+        "price": 1790,
+        "partly_read": true
+       },
+       {
+        "printed": "純米甘口 Junmaiamakuchi (HANEZUIRO)",
+        "name_ja": "純米甘口",
+        "drink": "sake",
+        "price": 968,
+        "partly_read": true
+       },
+       {
+        "printed": "大樹海 Daijukai",
+        "name_ja": "大樹海",
+        "name_romaji": "Daijukai",
+        "drink": "other",
+        "price": 4950
+       }
+      ],
+      "unreadable_count": 0,
+      "currency": "JPY"
+     }
+    },
+    "iichiko_shochu_menu.jpg": {
+     "photoSha": "71f520933969db84",
+     "latencyMs": 2901,
+     "usage": {
+      "inputTokens": 8150,
+      "outputTokens": 148,
+      "cacheReadTokens": 3404,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.95,
+      "kind": "menu",
+      "lines": [
+       {
+        "printed": "いいちこ Iichiko",
+        "name_ja": "いいちこ",
+        "name_romaji": "Iichiko",
+        "brewery_printed": false,
+        "brewery_ja": "三和酒類",
+        "other_names": [
+         "Iichiko"
+        ],
+        "drink": "shochu",
+        "price": 6.8
+       }
+      ],
+      "unreadable_count": 0,
+      "currency": "EUR"
+     }
+    },
+    "imo_shochu_menu.jpg": {
+     "photoSha": "d4d1498022f942b0",
+     "latencyMs": 4044,
+     "usage": {
+      "inputTokens": 8198,
+      "outputTokens": 237,
+      "cacheReadTokens": 3404,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.95,
+      "kind": "menu",
+      "lines": [
+       {
+        "printed": "冨野宝山 TOMINO HOUZAN",
+        "name_ja": "冨野宝山",
+        "name_romaji": "Tomino Houzan",
+        "brewery_printed": false,
+        "other_names": [
+         "TOMINO HOUZAN"
+        ],
+        "drink": "shochu",
+        "price": 6.8
+       },
+       {
+        "printed": "ダイヤメ DAIYAME",
+        "name_ja": "ダイヤメ",
+        "name_romaji": "Daiyame",
+        "brewery_printed": false,
+        "other_names": [
+         "DAIYAME"
+        ],
+        "drink": "shochu",
+        "price": 6.8
+       }
+      ],
+      "unreadable_count": 0,
+      "currency": "EUR"
+     }
+    },
+    "kurokirishima_shochu_menu.jpg": {
+     "photoSha": "496ebae7542f8e1e",
+     "latencyMs": 2846,
+     "usage": {
+      "inputTokens": 8177,
+      "outputTokens": 164,
+      "cacheReadTokens": 3404,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.95,
+      "kind": "menu",
+      "lines": [
+       {
+        "printed": "黒霧島 KUROKIRISHIMA",
+        "name_ja": "黒霧島",
+        "name_romaji": "Kurokirishima",
+        "brewery_printed": true,
+        "brewery_ja": "霧島酒造",
+        "other_names": [
+         "KUROKIRISHIMA"
+        ],
+        "drink": "shochu",
+        "price": 5.8
+       }
+      ],
+      "unreadable_count": 0,
+      "currency": "EUR"
+     }
+    },
+    "miyasaka_tsukasabotan_katokahachiro_menu.jpg": {
+     "photoSha": "19c4c900f3a0b46b",
+     "latencyMs": 4366,
+     "usage": {
+      "inputTokens": 8150,
+      "outputTokens": 398,
+      "cacheReadTokens": 3404,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.9,
+      "kind": "menu",
+      "lines": [
+       {
+        "printed": "真澄 MASUMI 純米吟醸 Junmai Ginjo",
+        "name_ja": "真澄",
+        "name_romaji": "Masumi",
+        "brewery_printed": false,
+        "other_names": [
+         "MASUMI"
+        ],
+        "grade": "junmai_ginjo",
+        "drink": "sake",
+        "price": 4.9
+       },
+       {
+        "printed": "船中八策 Senchu hassaku 超辛口 純米酒 Super Dry Junmai",
+        "name_ja": "船中八策",
+        "name_romaji": "Senchū Hassaku",
+        "brewery_printed": false,
+        "other_names": [
+         "Senchu hassaku"
+        ],
+        "grade": "junmai",
+        "drink": "sake",
+        "price": 4.9
+       },
+       {
+        "printed": "大山十水 Ooyamatomizu 特別純米酒 Tokubetsu Junmai",
+        "name_ja": "大山十水",
+        "name_romaji": "Ōyama Tomizu",
+        "brewery_printed": false,
+        "other_names": [
+         "Ooyamatomizu"
+        ],
+        "grade": "tokubetsu_junmai",
+        "drink": "sake",
+        "price": 4.9
+       }
+      ],
+      "unreadable_count": 0,
+      "currency": "EUR"
+     }
+    },
+    "mugi_shochu_menu.jpg": {
+     "photoSha": "d44810dec8d3ee37",
+     "latencyMs": 2814,
+     "usage": {
+      "inputTokens": 8176,
+      "outputTokens": 217,
+      "cacheReadTokens": 3404,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.95,
+      "kind": "menu",
+      "lines": [
+       {
+        "printed": "泰明 TAIMEI",
+        "name_ja": "泰明",
+        "name_romaji": "Taimei",
+        "brewery_printed": false,
+        "other_names": [
+         "TAIMEI"
+        ],
+        "drink": "shochu",
+        "price": 6.8
+       },
+       {
+        "printed": "山乃守 YAMANOMORI",
+        "name_ja": "山乃守",
+        "name_romaji": "Yamanomori",
+        "brewery_printed": false,
+        "other_names": [
+         "YAMANOMORI"
+        ],
+        "drink": "shochu",
+        "price": 6.8
+       }
+      ],
+      "unreadable_count": 0,
+      "currency": "EUR"
+     }
+    },
+    "niseko_shochu_shelf.jpg": {
+     "photoSha": "57530d61550c06f4",
+     "latencyMs": 4163,
+     "usage": {
+      "inputTokens": 8236,
+      "outputTokens": 384,
+      "cacheReadTokens": 3404,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.6,
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "二世古 珈琲 焼酎乙類",
+        "name_ja": "二世古",
+        "name_romaji": "Niseko",
+        "brewery_printed": true,
+        "brewery_ja": "二世古酒造",
+        "other_names": [
+         "Coffee"
+        ],
+        "product_name": "珈琲",
+        "product_name_romaji": "Kōhī",
+        "drink": "shochu"
+       },
+       {
+        "printed": "二世古 正中 米焼酎25度",
+        "name_ja": "二世古",
+        "name_romaji": "Niseko",
+        "brewery_printed": true,
+        "brewery_ja": "二世古酒造",
+        "product_name": "正中",
+        "product_name_romaji": "Shōchū",
+        "drink": "shochu"
+       },
+       {
+        "printed": "二世古 しき繪 乙類焼酎 30度",
+        "name_ja": "二世古",
+        "name_romaji": "Niseko",
+        "brewery_printed": false,
+        "brewery_ja": "二世古酒造",
+        "product_name": "しき繪",
+        "product_name_romaji": "Shikie",
+        "drink": "shochu",
+        "partly_read": true
+       }
+      ],
+      "unreadable_count": 3,
+      "currency": "JPY"
+     }
+    },
+    "shichida_junmai_shochu_menu_clear.jpg": {
+     "photoSha": "9aa517bf4812f8c4",
+     "latencyMs": 2531,
+     "usage": {
+      "inputTokens": 4223,
+      "outputTokens": 146,
+      "cacheReadTokens": 3404,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.9,
+      "kind": "menu",
+      "lines": [
+       {
+        "printed": "七田 SHICHIDA",
+        "name_ja": "七田",
+        "name_romaji": "Shichida",
+        "brewery_printed": false,
+        "brewery_ja": "天山酒造",
+        "other_names": [
+         "SHICHIDA"
+        ],
+        "drink": "shochu",
+        "price": 7.8
+       }
+      ],
+      "unreadable_count": 0,
+      "currency": "EUR"
+     }
+    },
+    "shichida_shochu_menu_2.jpg": {
+     "photoSha": "8dfaa5344742af90",
+     "latencyMs": 2989,
+     "usage": {
+      "inputTokens": 8177,
+      "outputTokens": 146,
+      "cacheReadTokens": 3404,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.9,
+      "kind": "menu",
+      "lines": [
+       {
+        "printed": "七田 SHICHIDA",
+        "name_ja": "七田",
+        "name_romaji": "Shichida",
+        "brewery_printed": false,
+        "brewery_ja": "天山酒造",
+        "other_names": [
+         "SHICHIDA"
+        ],
+        "drink": "shochu",
+        "price": 7.8
+       }
+      ],
+      "unreadable_count": 0,
+      "currency": "EUR"
+     }
+    }
+   }
+  },
+  "haiku-5-5-low": {
+   "fingerprint": "59f659d060a69c67",
+   "reads": {
+    "kirei_yucho_toyokuni_kikunosato_senkin_suminoe_nishida_fukui_menu.jpg": {
+     "photoSha": "ceb346eec97fa01d",
+     "latencyMs": 11662,
+     "usage": {
+      "inputTokens": 4874,
+      "outputTokens": 2634,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "kind": "menu",
+      "lines": [
+       {
+        "printed": "亀齢 Check 特別純米 Tokubetsu Junmai",
+        "name_ja": "亀齢",
+        "name_romaji": "Keri",
+        "brewery_printed": false,
+        "other_names": [
+         "Keri"
+        ],
+        "product_name": "Check",
+        "product_name_romaji": "Check",
+        "grade": "tokubetsu_junmai",
+        "styles": [
+         "nama"
+        ],
+        "drink": "sake",
+        "craft": false,
+        "partly_read": false
+       },
+       {
+        "printed": "風の森 秋津穂507 純米 Junmai",
+        "name_ja": "風の森",
+        "name_romaji": "Kazenomori",
+        "brewery_printed": false,
+        "other_names": [
+         "Kazenomori"
+        ],
+        "product_name": "秋津穂507",
+        "product_name_romaji": "Akitsuho507",
+        "grade": "junmai",
+        "styles": [
+         "muroka",
+         "nama"
+        ],
+        "drink": "sake",
+        "craft": false
+       },
+       {
+        "printed": "一歩己 純米吟醸 Junmai Ginjo",
+        "name_ja": "一歩己",
+        "name_romaji": "Ibuki",
+        "brewery_printed": false,
+        "other_names": [
+         "Ibuki"
+        ],
+        "grade": "junmai_ginjo",
+        "drink": "sake",
+        "craft": false
+       },
+       {
+        "printed": "大那 美山錦 生酛作り 無濾過生酒 特別純米 Tokubetsu Junmai",
+        "name_ja": "大那",
+        "name_romaji": "Daina",
+        "brewery_printed": false,
+        "other_names": [
+         "Daina"
+        ],
+        "product_name": "美山錦",
+        "product_name_romaji": "Miyamanishiki",
+        "grade": "tokubetsu_junmai",
+        "styles": [
+         "kimoto",
+         "muroka",
+         "nama"
+        ],
+        "drink": "sake",
+        "craft": false
+       },
+       {
+        "printed": "仙禽 あかとんぼ 純米 Junmai",
+        "name_ja": "仙禽",
+        "name_romaji": "Senkin",
+        "brewery_printed": false,
+        "other_names": [
+         "SenKin"
+        ],
+        "product_name": "あかとんぼ",
+        "product_name_romaji": "Akatonbo",
+        "grade": "junmai",
+        "drink": "sake",
+        "craft": false
+       },
+       {
+        "printed": "墨廼江 麗辛口 特別純米 Tokubetsu Junmai",
+        "name_ja": "墨廼江",
+        "name_romaji": "Suminoe",
+        "brewery_printed": false,
+        "other_names": [
+         "Suminoe"
+        ],
+        "product_name": "麗辛口",
+        "product_name_romaji": "Rei Karakuchi",
+        "grade": "tokubetsu_junmai",
+        "drink": "sake",
+        "craft": false
+       },
+       {
+        "printed": "田酒 渡船2号 純米吟醸 Junmai Ginjo",
+        "name_ja": "田酒",
+        "name_romaji": "Densyu",
+        "brewery_printed": false,
+        "other_names": [
+         "Densyu"
+        ],
+        "product_name": "渡船2号",
+        "product_name_romaji": "Tosen 2-go",
+        "grade": "junmai_ginjo",
+        "drink": "sake",
+        "craft": false
+       },
+       {
+        "printed": "萩乃露 辛口 生酒 純米 Junmai",
+        "name_ja": "萩乃露",
+        "name_romaji": "Haginotsuyu",
+        "brewery_printed": false,
+        "other_names": [
+         "Haginotsuyu"
+        ],
+        "product_name": "辛口",
+        "product_name_romaji": "Karakuchi",
+        "grade": "junmai",
+        "styles": [
+         "nama"
+        ],
+        "drink": "sake",
+        "craft": false
+       }
+      ],
+      "unreadable_count": 0,
+      "currency": "JPY"
+     }
+    },
+    "akagisan_hakuko_multiple_shelf_with_pricetag.jpg": {
+     "photoSha": "668d61d47c7c4f5b",
+     "latencyMs": 12093,
+     "usage": {
+      "inputTokens": 8054,
+      "outputTokens": 2215,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "Akagisan Honjozo Trocken",
+        "name_ja": "Akagisan",
+        "name_romaji": "Akagisan",
+        "brewery_printed": false,
+        "other_names": [
+         "AKAGISAN"
+        ],
+        "grade": "honjozo",
+        "drink": "sake",
+        "partly_read": true
+       },
+       {
+        "printed": "男の酒 辛口 本醸造",
+        "name_ja": "男の酒",
+        "name_romaji": "Otoko no Sake",
+        "brewery_printed": false,
+        "product_name": "辛口",
+        "product_name_romaji": "Karakuchi",
+        "grade": "honjozo",
+        "drink": "sake",
+        "partly_read": true
+       },
+       {
+        "printed": "Hakuko Jotoshu",
+        "name_ja": "白鴻",
+        "name_romaji": "Hakuko",
+        "brewery_printed": false,
+        "brewery_ja": "盛川酒造",
+        "other_names": [
+         "HAKUKO"
+        ],
+        "drink": "sake"
+       },
+       {
+        "printed": "Hakuko Kurakiji Genshu",
+        "name_ja": "白鴻",
+        "name_romaji": "Hakuko",
+        "brewery_printed": false,
+        "brewery_ja": "盛川酒造",
+        "product_name": "蔵きぢ",
+        "product_name_romaji": "Kurakiji",
+        "styles": [
+         "genshu"
+        ],
+        "drink": "sake"
+       }
+      ],
+      "unreadable_count": 1,
+      "currency": "EUR"
+     }
+    },
+    "aramasa_takagi_menu.jpg": {
+     "photoSha": "e3cdd774cbb0b31f",
+     "latencyMs": 8535,
+     "usage": {
+      "inputTokens": 4874,
+      "outputTokens": 1948,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.85,
+      "kind": "menu",
+      "lines": [
+       {
+        "printed": "新政 タンジェリン 2025 純米",
+        "name_ja": "新政",
+        "name_romaji": "Aramasa",
+        "brewery_printed": false,
+        "brewery_ja": "佐藤酒造",
+        "other_names": [
+         "Aramasa"
+        ],
+        "product_name": "タンジェリン",
+        "product_name_romaji": "Tanjerin",
+        "grade": "junmai",
+        "drink": "sake"
+       },
+       {
+        "printed": "新政 No.6 X type 2025 純米",
+        "name_ja": "新政",
+        "name_romaji": "Aramasa",
+        "brewery_printed": false,
+        "brewery_ja": "佐藤酒造",
+        "other_names": [
+         "Aramasa"
+        ],
+        "product_name": "No.6 X type",
+        "product_name_romaji": "No.6 X type",
+        "grade": "junmai",
+        "drink": "sake"
+       },
+       {
+        "printed": "十四代 大極上 諸白 純米大吟醸",
+        "name_ja": "十四代",
+        "name_romaji": "Jyuyondai",
+        "brewery_printed": false,
+        "brewery_ja": "高木酒造",
+        "other_names": [
+         "Jyuyondai"
+        ],
+        "product_name": "大極上",
+        "product_name_romaji": "Daigokujo",
+        "grade": "junmai_daiginjo",
+        "drink": "sake"
+       },
+       {
+        "printed": "新政 陽乃鳥 スパーク 純米",
+        "name_ja": "新政",
+        "name_romaji": "Aramasa",
+        "brewery_printed": false,
+        "brewery_ja": "佐藤酒造",
+        "other_names": [
+         "Aramasa"
+        ],
+        "product_name": "陽乃鳥 スパーク",
+        "product_name_romaji": "Hinotori Supaku",
+        "grade": "junmai",
+        "styles": [
+         "sparkling"
+        ],
+        "drink": "sake"
+       }
+      ],
+      "unreadable_count": 0,
+      "currency": "JPY"
+     }
+    },
+    "blanks_and_itakura_shelf_low_light.jpg": {
+     "photoSha": "313b36e90069ac32",
+     "latencyMs": 6150,
+     "usage": {
+      "inputTokens": 4880,
+      "outputTokens": 868,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "天穏",
+        "name_ja": "天穏",
+        "drink": "unknown",
+        "partly_read": true
+       }
+      ],
+      "unreadable_count": 8,
+      "currency": "JPY"
+     }
+    },
+    "choryo_hokushika_multiple.jpg": {
+     "photoSha": "fb0a63b0f7a13bf4",
+     "latencyMs": 6819,
+     "usage": {
+      "inputTokens": 8054,
+      "outputTokens": 1137,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "吉野杉の樽酒",
+        "name_ja": "吉野杉",
+        "name_romaji": "Yoshinosugi",
+        "brewery_printed": false,
+        "other_names": [],
+        "grade": "futsushu",
+        "styles": [
+         "taruzake"
+        ],
+        "drink": "sake"
+       },
+       {
+        "printed": "HOKUSHIKA 雪 本醸造 生貯蔵酒",
+        "name_ja": "HOKUSHIKA",
+        "name_romaji": "HOKUSHIKA",
+        "brewery_printed": false,
+        "product_name": "雪",
+        "product_name_romaji": "Yuki",
+        "grade": "honjozo",
+        "styles": [
+         "namachozo"
+        ],
+        "drink": "sake"
+       }
+      ],
+      "unreadable_count": 0,
+      "currency": "JPY"
+     }
+    },
+    "daiyame_and_glo_multiple_shochu_with_label.jpg": {
+     "photoSha": "a37d9ff09ee8b9f3",
+     "latencyMs": 9648,
+     "usage": {
+      "inputTokens": 8054,
+      "outputTokens": 1156,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "DAIYAME",
+        "name_ja": "だいやめ",
+        "name_romaji": "Daiyame",
+        "brewery_printed": true,
+        "other_names": [
+         "DAIYAME"
+        ],
+        "drink": "shochu"
+       }
+      ],
+      "unreadable_count": 1,
+      "currency": "JPY"
+     }
+    },
+    "dassai_kidoizumi_on_table.jpg": {
+     "photoSha": "e2c4bd5314cd4888",
+     "latencyMs": 5214,
+     "usage": {
+      "inputTokens": 8054,
+      "outputTokens": 820,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.8,
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "獺祭 純米大吟醸45 DASSAI 45",
+        "name_ja": "獺祭",
+        "name_romaji": "Dassai",
+        "brewery_printed": true,
+        "brewery_ja": "旭酒造",
+        "other_names": [
+         "DASSAI"
+        ],
+        "grade": "junmai_daiginjo",
+        "drink": "sake"
+       },
+       {
+        "printed": "木戸泉",
+        "name_ja": "木戸泉",
+        "name_romaji": "Kidoizumi",
+        "brewery_printed": true,
+        "brewery_ja": "木戸泉酒造",
+        "other_names": [],
+        "drink": "sake"
+       }
+      ],
+      "unreadable_count": 0
+     }
+    },
+    "forever20_daybreak_multiple_shelf.jpg": {
+     "photoSha": "69219daf45684202",
+     "latencyMs": 7389,
+     "usage": {
+      "inputTokens": 8054,
+      "outputTokens": 1060,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.6,
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "夜の帝王",
+        "name_ja": "夜の帝王",
+        "name_romaji": "Yoru no Teio",
+        "brewery_printed": false,
+        "drink": "sake"
+       }
+      ],
+      "unreadable_count": 4
+     }
+    },
+    "fukuchiyo_nakazawa_kinoshita_yoshida_matsumoto_akabu_menu.jpg": {
+     "photoSha": "5e980ada9b0e6837",
+     "latencyMs": 9666,
+     "usage": {
+      "inputTokens": 4874,
+      "outputTokens": 2131,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.9,
+      "kind": "menu",
+      "lines": [
+       {
+        "printed": "鍋島 裏鍋島 純米吟醸",
+        "name_ja": "鍋島",
+        "name_romaji": "Nabeshima",
+        "product_name": "裏鍋島",
+        "product_name_romaji": "Uranabeshima",
+        "grade": "junmai_ginjo",
+        "drink": "sake",
+        "warm": false
+       },
+       {
+        "printed": "一博 10年熟成 生酒 純米吟醸",
+        "name_ja": "一博",
+        "name_romaji": "Kazuhiro",
+        "product_name": "10年熟成",
+        "product_name_romaji": "10-nen jukusei",
+        "grade": "junmai_ginjo",
+        "styles": [
+         "nama"
+        ],
+        "drink": "sake"
+       },
+       {
+        "printed": "玉川 山廃 亀の尾 無濾過生原酒 純米",
+        "name_ja": "玉川",
+        "name_romaji": "Tamagawa",
+        "product_name": "亀の尾",
+        "product_name_romaji": "Kamenoo",
+        "grade": "junmai",
+        "styles": [
+         "yamahai",
+         "muroka",
+         "genshu"
+        ],
+        "drink": "sake"
+       },
+       {
+        "printed": "手取川 冬 辛口 純米",
+        "name_ja": "手取川",
+        "name_romaji": "Tedorikawa",
+        "product_name": "冬 辛口",
+        "product_name_romaji": "Fuyu Karakuchi",
+        "grade": "junmai",
+        "drink": "sake"
+       },
+       {
+        "printed": "澤屋まつもと 守破離 特別純米",
+        "name_ja": "澤屋まつもと",
+        "name_romaji": "Sawaya Matsumoto",
+        "product_name": "守破離",
+        "product_name_romaji": "Shuhari",
+        "grade": "tokubetsu_junmai",
+        "drink": "sake"
+       },
+       {
+        "printed": "赤武 SEA 純米",
+        "name_ja": "赤武",
+        "name_romaji": "Akabu",
+        "product_name": "SEA",
+        "product_name_romaji": "SEA",
+        "grade": "junmai",
+        "drink": "sake"
+       }
+      ],
+      "unreadable_count": 0
+     }
+    },
+    "inetoagave_hiroki_matsui_fujioka_shimizu_ryozeki_menu.jpg": {
+     "photoSha": "c81619cf5fbfc8d2",
+     "latencyMs": 9977,
+     "usage": {
+      "inputTokens": 4874,
+      "outputTokens": 2340,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "kind": "menu",
+      "lines": [
+       {
+        "printed": "稲とアガベ ぐるりこ Craft SAKE",
+        "name_ja": "稲とアガベ",
+        "name_romaji": "Inetoagabe",
+        "brewery_printed": true,
+        "other_names": [
+         "Inetoagabe"
+        ],
+        "product_name": "ぐるりこ",
+        "product_name_romaji": "Gururiko",
+        "drink": "sake",
+        "craft": true
+       },
+       {
+        "printed": "飛露喜 山田穂 純米吟醸 Junmai Ginjo",
+        "name_ja": "飛露喜",
+        "name_romaji": "Hiroki",
+        "brewery_printed": false,
+        "other_names": [
+         "Hiroki"
+        ],
+        "grade": "junmai_ginjo",
+        "drink": "sake"
+       },
+       {
+        "printed": "神蔵 祝 無濾過生原酒 純米吟醸 Junmai Ginjo",
+        "name_ja": "神蔵",
+        "name_romaji": "Kagura",
+        "brewery_printed": false,
+        "other_names": [
+         "Kagura"
+        ],
+        "product_name": "祝",
+        "product_name_romaji": "Iwai",
+        "grade": "junmai_ginjo",
+        "styles": [
+         "muroka",
+         "nama",
+         "genshu"
+        ],
+        "drink": "sake"
+       },
+       {
+        "printed": "蒼空 試験醸造 純米吟醸 Junmai Ginjo",
+        "name_ja": "蒼空",
+        "name_romaji": "Sōkū",
+        "brewery_printed": false,
+        "other_names": [
+         "Sokuu"
+        ],
+        "product_name": "試験醸造",
+        "product_name_romaji": "Shikenjozo",
+        "grade": "junmai_ginjo",
+        "drink": "sake"
+       },
+       {
+        "printed": "作 雅乃智 純米大吟醸 Junmai Daiginjo",
+        "name_ja": "作",
+        "name_romaji": "Zaku",
+        "brewery_printed": false,
+        "other_names": [
+         "Zaku"
+        ],
+        "product_name": "雅乃智",
+        "product_name_romaji": "Miyanochi",
+        "grade": "junmai_daiginjo",
+        "drink": "sake"
+       },
+       {
+        "printed": "裏翠玉 秋田酒こまち 無濾過生酒 純米吟醸 Junmai Ginjo",
+        "name_ja": "裏翠玉",
+        "name_romaji": "Urasuigyoku",
+        "brewery_printed": false,
+        "other_names": [
+         "Ura Suigyoku"
+        ],
+        "product_name": "秋田酒こまち",
+        "product_name_romaji": "Akitashu Komachi",
+        "grade": "junmai_ginjo",
+        "styles": [
+         "muroka",
+         "nama"
+        ],
+        "drink": "sake"
+       }
+      ],
+      "unreadable_count": 0,
+      "currency": "JPY"
+     }
+    },
+    "kikuhime_marui_kenbishi_tamazakura_uehara_mukai_mochida_maruo_menu.jpg": {
+     "photoSha": "1f6c5cd6b46eb012",
+     "latencyMs": 12616,
+     "usage": {
+      "inputTokens": 4874,
+      "outputTokens": 2982,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "kind": "menu",
+      "lines": [
+       {
+        "printed": "菊姫 山廃 純米",
+        "name_ja": "菊姫",
+        "name_romaji": "Kikuhime",
+        "other_names": [
+         "Kikuhime"
+        ],
+        "product_name": "山廃",
+        "product_name_romaji": "Yamahai",
+        "grade": "junmai",
+        "styles": [
+         "yamahai"
+        ],
+        "drink": "sake",
+        "craft": false,
+        "price": 990,
+        "warm": true
+       },
+       {
+        "printed": "樂の世 山廃 本醸造",
+        "name_ja": "樂の世",
+        "name_romaji": "Raku no yo",
+        "other_names": [
+         "Raku no yo"
+        ],
+        "grade": "honjozo",
+        "styles": [
+         "yamahai"
+        ],
+        "drink": "sake",
+        "craft": false,
+        "price": 990,
+        "warm": true
+       },
+       {
+        "printed": "剣菱 瑞祥",
+        "name_ja": "剣菱",
+        "name_romaji": "Kenbishi",
+        "other_names": [
+         "Kenbishi"
+        ],
+        "product_name": "瑞祥",
+        "product_name_romaji": "Zuishō",
+        "styles": [
+         "koshu"
+        ],
+        "drink": "sake",
+        "craft": false,
+        "price": 990,
+        "warm": true
+       },
+       {
+        "printed": "玉櫻 生酛 純米",
+        "name_ja": "玉櫻",
+        "name_romaji": "Tamazakura",
+        "other_names": [
+         "Tamazakura"
+        ],
+        "grade": "junmai",
+        "styles": [
+         "kimoto"
+        ],
+        "drink": "sake",
+        "craft": false,
+        "price": 990,
+        "warm": true
+       },
+       {
+        "printed": "不老泉 参年熟成 赤ラベル 山廃 純米",
+        "name_ja": "不老泉",
+        "name_romaji": "Furousen",
+        "other_names": [
+         "Furousen"
+        ],
+        "product_name": "参年熟成 赤ラベル",
+        "product_name_romaji": "Sannen Jukusei Aka Raberu",
+        "grade": "junmai",
+        "styles": [
+         "yamahai",
+         "koshu"
+        ],
+        "drink": "sake",
+        "craft": false,
+        "price": 990,
+        "warm": true
+       },
+       {
+        "printed": "伊根満開 赤米酒",
+        "name_ja": "伊根満開",
+        "name_romaji": "Inemankai",
+        "other_names": [
+         "Inemankai"
+        ],
+        "drink": "sake",
+        "craft": false,
+        "price": 990,
+        "warm": true
+       },
+       {
+        "printed": "ヤマサン正宗 佐香錦 袋取り原酒 純米吟醸",
+        "name_ja": "ヤマサン正宗",
+        "name_romaji": "Yamasan Masamune",
+        "other_names": [
+         "Yamasan masamune"
+        ],
+        "product_name": "佐香錦",
+        "product_name_romaji": "Sakōnishiki",
+        "grade": "junmai_ginjo",
+        "styles": [
+         "genshu"
+        ],
+        "drink": "sake",
+        "craft": false,
+        "price": 990,
+        "warm": true
+       },
+       {
+        "printed": "悦凱陣 瀬戸米 山廃 純米",
+        "name_ja": "悦凱陣",
+        "name_romaji": "Yorokobi Gaigin",
+        "other_names": [
+         "Yorokobi Gaigin"
+        ],
+        "product_name": "瀬戸米",
+        "product_name_romaji": "Setomai",
+        "grade": "junmai",
+        "styles": [
+         "yamahai",
+         "koshu"
+        ],
+        "drink": "sake",
+        "craft": false,
+        "price": 990,
+        "warm": true
+       }
+      ],
+      "unreadable_count": 0,
+      "currency": "JPY"
+     }
+    },
+    "kitagawa_takagi_shimizu_1.jpg": {
+     "photoSha": "1b58bfe5fd66d601",
+     "latencyMs": 10749,
+     "usage": {
+      "inputTokens": 8054,
+      "outputTokens": 1978,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "富翁 純米大吟醸",
+        "name_ja": "富翁",
+        "name_romaji": "Tomio",
+        "brewery_printed": false,
+        "brewery_ja": "増田徳兵衛商店",
+        "other_names": [
+         "TOMIO"
+        ],
+        "grade": "junmai_daiginjo",
+        "drink": "sake",
+        "craft": false,
+        "partly_read": true
+       },
+       {
+        "printed": "朝日鷹 本醸造",
+        "name_ja": "朝日鷹",
+        "name_romaji": "Asahitaka",
+        "brewery_printed": false,
+        "grade": "honjozo",
+        "drink": "sake",
+        "craft": false,
+        "partly_read": true
+       },
+       {
+        "printed": "MIYABINO TOMO ZAKU 純米大吟醸",
+        "name_ja": "MIYABINO TOMO",
+        "name_romaji": "Miyabino Tomo",
+        "brewery_printed": true,
+        "brewery_ja": "清水清三郎商店",
+        "other_names": [
+         "雑 ZAKU"
+        ],
+        "product_name": "ZAKU",
+        "product_name_romaji": "ZAKU",
+        "grade": "junmai_daiginjo",
+        "drink": "sake",
+        "craft": false,
+        "partly_read": true
+       }
+      ],
+      "unreadable_count": 0,
+      "currency": "JPY"
+     }
+    },
+    "kitagawa_takagi_shimizu_2.jpg": {
+     "photoSha": "443f093ed20cb775",
+     "latencyMs": 9729,
+     "usage": {
+      "inputTokens": 8054,
+      "outputTokens": 1693,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "富翁 純米大吟醸",
+        "name_ja": "富翁",
+        "name_romaji": "Tomio",
+        "brewery_printed": false,
+        "brewery_ja": "増田徳兵衛商店",
+        "other_names": [
+         "TOMIO"
+        ],
+        "grade": "junmai_daiginjo",
+        "drink": "sake"
+       },
+       {
+        "printed": "朝日鷹 本醸造",
+        "name_ja": "朝日鷹",
+        "name_romaji": "Asahitaka",
+        "brewery_printed": false,
+        "other_names": [],
+        "grade": "honjozo",
+        "drink": "sake"
+       },
+       {
+        "printed": "作",
+        "name_ja": "作",
+        "name_romaji": "Zaku",
+        "brewery_printed": false,
+        "other_names": [
+         "ZAKU"
+        ],
+        "drink": "sake"
+       }
+      ],
+      "unreadable_count": 0,
+      "currency": "JPY"
+     }
+    },
+    "liquer_shelf.jpg": {
+     "photoSha": "baced5b026d9a27a",
+     "latencyMs": 7853,
+     "usage": {
+      "inputTokens": 8054,
+      "outputTokens": 1224,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.75,
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "鬼おろし キウイサワーの素",
+        "name_ja": "鬼おろし",
+        "name_romaji": "Oniorosi",
+        "brewery_printed": false,
+        "product_name": "キウイサワーの素",
+        "product_name_romaji": "Kiui Sawā no Moto",
+        "drink": "liqueur",
+        "partly_read": true
+       },
+       {
+        "printed": "鬼おろし レモンサワーの素",
+        "name_ja": "鬼おろし",
+        "name_romaji": "Oniorosi",
+        "brewery_printed": false,
+        "product_name": "レモンサワーの素",
+        "product_name_romaji": "Remon Sawā no Moto",
+        "drink": "liqueur"
+       },
+       {
+        "printed": "鬼おろし みかんサワーの素",
+        "name_ja": "鬼おろし",
+        "name_romaji": "Oniorosi",
+        "brewery_printed": false,
+        "product_name": "みかんサワーの素",
+        "product_name_romaji": "Mikan Sawā no Moto",
+        "drink": "liqueur"
+       }
+      ],
+      "unreadable_count": 3
+     }
+    },
+    "maibijin_suigei_hakkaisan_shelf.jpg": {
+     "photoSha": "95e91a7c536a2037",
+     "latencyMs": 10323,
+     "usage": {
+      "inputTokens": 8054,
+      "outputTokens": 1820,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "MAIBIJIN Yamahai Junmai / Tokubetsujunmai",
+        "name_ja": "舞美人",
+        "name_romaji": "Maibijin",
+        "brewery_printed": false,
+        "other_names": [
+         "MAIBIJIN"
+        ],
+        "grade": "tokubetsu_junmai",
+        "styles": [
+         "yamahai"
+        ],
+        "drink": "sake",
+        "craft": false,
+        "partly_read": false
+       },
+       {
+        "printed": "SUIGEI 純米吟醸 吟麗",
+        "name_ja": "SUIGEI",
+        "name_romaji": "Suigei",
+        "brewery_printed": false,
+        "brewery_ja": "酔鯨酒造",
+        "other_names": [
+         "鯨"
+        ],
+        "product_name": "吟麗",
+        "product_name_romaji": "Ginrei",
+        "grade": "junmai_ginjo",
+        "drink": "sake",
+        "craft": false,
+        "partly_read": false
+       },
+       {
+        "printed": "八海山 清酒",
+        "name_ja": "八海山",
+        "name_romaji": "Hakkaisan",
+        "brewery_printed": true,
+        "brewery_ja": "八海醸造",
+        "other_names": [
+         "Hakkaisan"
+        ],
+        "drink": "sake",
+        "craft": false,
+        "partly_read": false
+       }
+      ],
+      "unreadable_count": 2,
+      "currency": "EUR"
+     }
+    },
+    "miura_hachinohe_nishida_several_on_table.jpg": {
+     "photoSha": "594a10c286f6d94b",
+     "latencyMs": 7726,
+     "usage": {
+      "inputTokens": 8054,
+      "outputTokens": 1482,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.9,
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "豊盃 純米吟醸 HOUHAI",
+        "name_ja": "豊盃",
+        "name_romaji": "Houhai",
+        "brewery_printed": true,
+        "other_names": [
+         "HOUHAI"
+        ],
+        "grade": "junmai_ginjo",
+        "drink": "sake",
+        "craft": false
+       },
+       {
+        "printed": "陸奥 八仙 特別純米 HASSEN",
+        "name_ja": "八仙",
+        "name_romaji": "Hassen",
+        "brewery_printed": false,
+        "brewery_ja": "八戸酒造",
+        "other_names": [
+         "HASSEN"
+        ],
+        "grade": "tokubetsu_junmai",
+        "drink": "sake",
+        "craft": false
+       },
+       {
+        "printed": "田酒 特別純米酒",
+        "name_ja": "田酒",
+        "name_romaji": "Denshu",
+        "brewery_printed": false,
+        "brewery_ja": "西田酒造店",
+        "other_names": [
+         "でんしゅ"
+        ],
+        "grade": "tokubetsu_junmai",
+        "drink": "sake",
+        "craft": false
+       }
+      ],
+      "unreadable_count": 0
+     }
+    },
+    "nate_zuiyo_iwasaki_shelf.jpg": {
+     "photoSha": "2eb34e4262b2515b",
+     "latencyMs": 3241,
+     "usage": {
+      "inputTokens": 8054,
+      "outputTokens": 280,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "黒牛 純米酒",
+        "name_ja": "黒牛",
+        "name_romaji": "Kurousi",
+        "brewery_printed": false,
+        "product_name": "黒牛",
+        "product_name_romaji": "Kurousi",
+        "grade": "junmai",
+        "drink": "sake"
+       },
+       {
+        "printed": "ZUI(くまモン)",
+        "name_ja": "ZUI",
+        "name_romaji": "ZUI",
+        "brewery_printed": false,
+        "drink": "unknown",
+        "partly_read": true
+       },
+       {
+        "printed": "福むすめ",
+        "name_ja": "福娘",
+        "name_romaji": "Fukumusume",
+        "brewery_printed": false,
+        "other_names": [
+         "FUKUMUSUME"
+        ],
+        "drink": "sake",
+        "partly_read": true
+       }
+      ],
+      "unreadable_count": 0,
+      "currency": "JPY"
+     }
+    },
+    "nikka_whisky_not_sake.jpg": {
+     "photoSha": "8ac5b53cd2bcc10c",
+     "latencyMs": 6902,
+     "usage": {
+      "inputTokens": 8054,
+      "outputTokens": 1147,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.85,
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "SINGLE MALT YOICHI 余市",
+        "name_ja": "余市",
+        "name_romaji": "Yoichi",
+        "brewery_printed": true,
+        "other_names": [
+         "YOICHI"
+        ],
+        "drink": "other"
+       },
+       {
+        "printed": "SINGLE CASK MALT WHISKY 余市 10 Years Old",
+        "name_ja": "余市",
+        "name_romaji": "Yoichi",
+        "brewery_printed": true,
+        "other_names": [
+         "YOICHI"
+        ],
+        "drink": "other"
+       }
+      ],
+      "unreadable_count": 0
+     }
+    },
+    "niseko_ezo_no_homare_kasseishu_shelf.jpg": {
+     "photoSha": "c87039ff805fdd6d",
+     "latencyMs": 2648,
+     "usage": {
+      "inputTokens": 8054,
+      "outputTokens": 231,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "えぞの誉 活性酒",
+        "name_ja": "えぞの誉",
+        "name_romaji": "Ezo no Homare",
+        "brewery_printed": false,
+        "brewery_ja": "旭川醸造",
+        "other_names": [],
+        "product_name": "えぞの誉",
+        "product_name_romaji": "Ezo no Homare",
+        "styles": [
+         "namachozo"
+        ],
+        "drink": "sake"
+       },
+       {
+        "printed": "えぞの誉",
+        "name_ja": "えぞの誉",
+        "name_romaji": "Ezo no Homare",
+        "drink": "sake",
+        "partly_read": true
+       }
+      ],
+      "unreadable_count": 2,
+      "currency": "JPY"
+     }
+    },
+    "niseko_ezo_no_homare_kasseishu_shelf_2.jpg": {
+     "photoSha": "b860f57a0604a384",
+     "latencyMs": 8649,
+     "usage": {
+      "inputTokens": 8054,
+      "outputTokens": 1106,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "元老の誉 生酒",
+        "name_ja": "元老の誉",
+        "name_romaji": "Genrō no Homare",
+        "drink": "sake",
+        "craft": false,
+        "warm": false,
+        "partly_read": false
+       }
+      ],
+      "unreadable_count": 2,
+      "currency": "JPY"
+     }
+    },
+    "niseko_shelf.jpg": {
+     "photoSha": "43d5db53b8d3c009",
+     "latencyMs": 16586,
+     "usage": {
+      "inputTokens": 8010,
+      "outputTokens": 3287,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "二世古 純米原酒",
+        "name_ja": "二世古",
+        "name_romaji": "Niseko",
+        "brewery_printed": true,
+        "brewery_ja": "二世古酒造",
+        "other_names": [],
+        "grade": "junmai",
+        "styles": [
+         "genshu"
+        ],
+        "drink": "sake"
+       },
+       {
+        "printed": "ニセコ 本醸造酒",
+        "name_ja": "ニセコ",
+        "name_romaji": "Niseko",
+        "brewery_printed": false,
+        "brewery_ja": "二世古酒造",
+        "other_names": [],
+        "grade": "honjozo",
+        "drink": "sake"
+       },
+       {
+        "printed": "ニセコ 純米",
+        "name_ja": "ニセコ",
+        "name_romaji": "Niseko",
+        "brewery_printed": false,
+        "brewery_ja": "二世古酒造",
+        "other_names": [],
+        "grade": "junmai",
+        "drink": "sake"
+       },
+       {
+        "printed": "倶知安 本醸造",
+        "name_ja": "倶知安",
+        "name_romaji": "Kuchan",
+        "brewery_printed": false,
+        "brewery_ja": "二世古酒造",
+        "other_names": [],
+        "grade": "honjozo",
+        "drink": "sake"
+       },
+       {
+        "printed": "倶知安 純米",
+        "name_ja": "倶知安",
+        "name_romaji": "Kuchan",
+        "brewery_printed": false,
+        "brewery_ja": "二世古酒造",
+        "other_names": [],
+        "grade": "junmai",
+        "drink": "sake"
+       },
+       {
+        "printed": "倶知安 吟醸酒 (原酒)",
+        "name_ja": "倶知安",
+        "name_romaji": "Kuchan",
+        "brewery_printed": false,
+        "brewery_ja": "二世古酒造",
+        "other_names": [],
+        "grade": "ginjo",
+        "styles": [
+         "genshu"
+        ],
+        "drink": "sake"
+       },
+       {
+        "printed": "くっちゃんの焼酎",
+        "name_ja": "くっちゃん",
+        "name_romaji": "Kuchan",
+        "brewery_printed": false,
+        "other_names": [],
+        "drink": "shochu"
+       }
+      ],
+      "unreadable_count": 1,
+      "currency": "JPY"
+     }
+    },
+    "niseko_shelf_2.jpg": {
+     "photoSha": "b281284521283df3",
+     "latencyMs": 5185,
+     "usage": {
+      "inputTokens": 7806,
+      "outputTokens": 764,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "くっちゃんの焼酎",
+        "name_ja": "くっちゃん",
+        "name_romaji": "Kuchan",
+        "brewery_printed": false,
+        "drink": "shochu"
+       }
+      ],
+      "unreadable_count": 5,
+      "currency": "JPY"
+     }
+    },
+    "niseko_shelf_3.jpg": {
+     "photoSha": "2ed895d473ca98fb",
+     "latencyMs": 15557,
+     "usage": {
+      "inputTokens": 8054,
+      "outputTokens": 2914,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "ニセコ 本醸造",
+        "name_ja": "ニセコ",
+        "name_romaji": "Niseko",
+        "brewery_printed": false,
+        "grade": "honjozo",
+        "drink": "sake"
+       },
+       {
+        "printed": "ニセコ 純米",
+        "name_ja": "ニセコ",
+        "name_romaji": "Niseko",
+        "brewery_printed": false,
+        "grade": "junmai",
+        "drink": "sake"
+       },
+       {
+        "printed": "倶知安",
+        "name_ja": "倶知安",
+        "name_romaji": "Kuchan",
+        "brewery_printed": false,
+        "drink": "sake"
+       },
+       {
+        "printed": "倶知安",
+        "name_ja": "倶知安",
+        "name_romaji": "Kuchan",
+        "brewery_printed": false,
+        "drink": "sake"
+       },
+       {
+        "printed": "倶知安",
+        "name_ja": "倶知安",
+        "name_romaji": "Kuchan",
+        "brewery_printed": false,
+        "drink": "sake"
+       },
+       {
+        "printed": "ニセコ 純米吟醸酒",
+        "name_ja": "ニセコ",
+        "name_romaji": "Niseko",
+        "brewery_printed": false,
+        "grade": "junmai_ginjo",
+        "drink": "sake"
+       }
+      ],
+      "unreadable_count": 7,
+      "currency": "JPY"
+     }
+    },
+    "niseko_shelf_4.jpg": {
+     "photoSha": "cfc53a5542d45951",
+     "latencyMs": 2352,
+     "usage": {
+      "inputTokens": 8054,
+      "outputTokens": 77,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "大吟醸",
+        "name_ja": "不明",
+        "drink": "unknown"
+       }
+      ],
+      "unreadable_count": 0,
+      "currency": "JPY"
+     }
+    },
+    "niseko_shelf_5.jpg": {
+     "photoSha": "b3c3277d177bcfca",
+     "latencyMs": 2332,
+     "usage": {
+      "inputTokens": 8054,
+      "outputTokens": 83,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "大吟醸",
+        "name_ja": "不明",
+        "drink": "unknown",
+        "partly_read": true
+       }
+      ],
+      "unreadable_count": 8,
+      "currency": "JPY"
+     }
+    },
+    "niseko_shelf_6.jpg": {
+     "photoSha": "b8be8cfd8e9afe96",
+     "latencyMs": 3850,
+     "usage": {
+      "inputTokens": 8054,
+      "outputTokens": 127,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "三芳菊 生酒",
+        "name_ja": "三芳菊",
+        "name_romaji": "Miyoshigiku",
+        "brewery_printed": false,
+        "product_name": "",
+        "drink": "sake",
+        "craft": false,
+        "partly_read": true
+       }
+      ],
+      "unreadable_count": 0,
+      "currency": "JPY"
+     }
+    },
+    "niseko_shochu_shelf_2.jpg": {
+     "photoSha": "a765dcdafe7f41b5",
+     "latencyMs": 9108,
+     "usage": {
+      "inputTokens": 7995,
+      "outputTokens": 1457,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "蔵元 二世古 乙類焼酎 30度",
+        "name_ja": "二世古",
+        "name_romaji": "Niseko",
+        "brewery_printed": true,
+        "brewery_ja": "二世古酒造",
+        "other_names": [
+         "NISEKO"
+        ],
+        "drink": "shochu",
+        "partly_read": true
+       },
+       {
+        "printed": "二世古 豪雪 米焼酎 39度",
+        "name_ja": "二世古",
+        "name_romaji": "Niseko",
+        "brewery_printed": true,
+        "brewery_ja": "二世古酒造",
+        "other_names": [
+         "GOUSETSU",
+         "NISEKO"
+        ],
+        "product_name": "豪雪",
+        "product_name_romaji": "Gousetsu",
+        "drink": "shochu"
+       }
+      ],
+      "unreadable_count": 0,
+      "currency": "JPY"
+     }
+    },
+    "ohki_chochin_dassai_menu.jpg": {
+     "photoSha": "64d15ae58ef2c611",
+     "latencyMs": 8099,
+     "usage": {
+      "inputTokens": 7996,
+      "outputTokens": 1601,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "kind": "menu",
+      "lines": [
+       {
+        "printed": "楽器政宗",
+        "name_ja": "楽器政宗",
+        "name_romaji": "Gakki Masamune",
+        "other_names": [
+         "Gakki Masamune"
+        ],
+        "drink": "sake",
+        "price": 600,
+        "partly_read": false
+       },
+       {
+        "printed": "長珍 特別純米",
+        "name_ja": "長珍",
+        "name_romaji": "Chochin",
+        "grade": "tokubetsu_junmai",
+        "drink": "sake",
+        "price": 650,
+        "partly_read": false
+       },
+       {
+        "printed": "獺祭 純米大吟醸 磨き三割九分",
+        "name_ja": "獺祭",
+        "name_romaji": "Dassai",
+        "other_names": [
+         "Dassai"
+        ],
+        "grade": "junmai_daiginjo",
+        "drink": "sake",
+        "price": 1100,
+        "partly_read": true
+       },
+       {
+        "printed": "コーラ",
+        "name_ja": "コーラ",
+        "name_romaji": "Cola",
+        "other_names": [
+         "Cola"
+        ],
+        "drink": "other",
+        "price": 550,
+        "partly_read": false
+       },
+       {
+        "printed": "ジンジャーエール",
+        "name_ja": "ジンジャーエール",
+        "name_romaji": "Jinjaēru",
+        "drink": "other",
+        "partly_read": true
+       }
+      ],
+      "unreadable_count": 0,
+      "currency": "JPY"
+     }
+    },
+    "okura_fukugen_omine_fujioka_takagi_izumi_menu.jpg": {
+     "photoSha": "b5178158b3c140ec",
+     "latencyMs": 11856,
+     "usage": {
+      "inputTokens": 8048,
+      "outputTokens": 2325,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "kind": "menu",
+      "lines": [
+       {
+        "printed": "大倉 愛山 直汲み 特別純米",
+        "name_ja": "大倉",
+        "name_romaji": "Okura",
+        "other_names": [
+         "Okura"
+        ],
+        "product_name": "愛山",
+        "product_name_romaji": "Aiyama",
+        "grade": "tokubetsu_junmai",
+        "styles": [
+         "muroka",
+         "genshu",
+         "nama"
+        ],
+        "drink": "sake"
+       },
+       {
+        "printed": "福源 蔵出し無濾過原酒 生貯蔵酒 純米吟醸",
+        "name_ja": "福源",
+        "name_romaji": "Fukugen",
+        "grade": "junmai_ginjo",
+        "styles": [
+         "muroka",
+         "genshu",
+         "namachozo"
+        ],
+        "drink": "sake"
+       },
+       {
+        "printed": "福海 純米",
+        "name_ja": "福海",
+        "name_romaji": "Fukukai",
+        "drink": "sake",
+        "partly_read": true
+       },
+       {
+        "printed": "大嶺 冬のおとずれ 純米",
+        "name_ja": "大嶺",
+        "name_romaji": "Omine",
+        "product_name": "冬のおとずれ",
+        "product_name_romaji": "Fuyu no Otozure",
+        "grade": "junmai",
+        "drink": "sake"
+       },
+       {
+        "printed": "蒼空 こうじましまし 純米吟醸",
+        "name_ja": "蒼空",
+        "name_romaji": "Sokuu",
+        "other_names": [
+         "Sokuu"
+        ],
+        "product_name": "こうじましまし",
+        "product_name_romaji": "Kojimashimashi",
+        "grade": "junmai_ginjo",
+        "drink": "sake"
+       },
+       {
+        "printed": "朝日鷹 低温貯蔵酒 本醸造",
+        "name_ja": "朝日鷹",
+        "name_romaji": "Asahidaka",
+        "other_names": [
+         "Asahidaka"
+        ],
+        "grade": "honjozo",
+        "drink": "sake"
+       },
+       {
+        "printed": "仙介 超辛口 純米吟醸",
+        "name_ja": "仙介",
+        "name_romaji": "Sensuke",
+        "grade": "junmai_ginjo",
+        "drink": "sake",
+        "partly_read": true
+       }
+      ],
+      "unreadable_count": 1,
+      "currency": "JPY"
+     }
+    },
+    "okura_omine_takagi_menu.jpg": {
+     "photoSha": "2a51e1aaa2d4100f",
+     "latencyMs": 12951,
+     "usage": {
+      "inputTokens": 8048,
+      "outputTokens": 1553,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.8,
+      "kind": "menu",
+      "lines": [
+       {
+        "printed": "大倉 愛山 直汲み 無濾過生原酒 特別純米",
+        "name_ja": "大倉",
+        "name_romaji": "Okura",
+        "brewery_printed": false,
+        "product_name": "愛山 直汲み",
+        "product_name_romaji": "Aiyama Jikugumi",
+        "grade": "tokubetsu_junmai",
+        "styles": [
+         "muroka",
+         "nama",
+         "genshu"
+        ],
+        "drink": "sake"
+       },
+       {
+        "printed": "大嶺 冬のおとずれ 純米",
+        "name_ja": "大嶺",
+        "name_romaji": "Omine",
+        "brewery_printed": false,
+        "product_name": "冬のおとずれ",
+        "product_name_romaji": "Fuyu no Otozure",
+        "grade": "junmai",
+        "drink": "sake"
+       },
+       {
+        "printed": "朝日鷹 低温貯蔵酒 本醸造",
+        "name_ja": "朝日鷹",
+        "name_romaji": "Asahidaka",
+        "brewery_printed": false,
+        "grade": "honjozo",
+        "drink": "sake"
+       }
+      ],
+      "unreadable_count": 3
+     }
+    },
+    "sasaki_matsui_shotoku_higashiyama_nagayama_kitagawa_sasaki_japanese_shelf.jpg": {
+     "photoSha": "a4412ac95adca53a",
+     "latencyMs": 9070,
+     "usage": {
+      "inputTokens": 4880,
+      "outputTokens": 1629,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "純米大吟醸 神蔵KAGURA 無濾過·無加水 一火",
+        "name_ja": "神蔵",
+        "name_romaji": "Kagura",
+        "brewery_printed": false,
+        "other_names": [
+         "KAGURA"
+        ],
+        "product_name": "",
+        "grade": "junmai_daiginjo",
+        "styles": [
+         "muroka"
+        ],
+        "drink": "sake",
+        "craft": false
+       },
+       {
+        "printed": "大吟醸 純米 富翁 吟麗",
+        "name_ja": "富翁",
+        "name_romaji": "Tomio",
+        "brewery_printed": false,
+        "other_names": [
+         "TOMIO"
+        ],
+        "product_name": "吟麗",
+        "product_name_romaji": "Ginrei",
+        "drink": "sake",
+        "craft": false
+       },
+       {
+        "printed": "富翁 山廃 純米",
+        "name_ja": "富翁",
+        "name_romaji": "Tomio",
+        "brewery_printed": false,
+        "other_names": [
+         "TOMIO"
+        ],
+        "drink": "sake",
+        "craft": false,
+        "warm": false,
+        "partly_read": true
+       },
+       {
+        "printed": "聚楽第",
+        "name_ja": "聚楽第",
+        "name_romaji": "Juraku",
+        "brewery_printed": false,
+        "drink": "sake",
+        "craft": false
+       }
+      ],
+      "unreadable_count": 6,
+      "currency": "JPY"
+     }
+    },
+    "shinshu_nekomasamune_multiple_shelf_with_pricetag.jpg": {
+     "photoSha": "b32ba0ab41228089",
+     "latencyMs": 7897,
+     "usage": {
+      "inputTokens": 8054,
+      "outputTokens": 1234,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.7,
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "信州ねこ正宗 HACHIWARE",
+        "name_ja": "信州ねこ正宗",
+        "name_romaji": "Shinshu Nekomasamune",
+        "brewery_printed": false,
+        "product_name": "HACHIWARE",
+        "product_name_romaji": "Hachiware",
+        "drink": "sake"
+       },
+       {
+        "printed": "信州ねこ正宗 SHIRONEKO",
+        "name_ja": "信州ねこ正宗",
+        "name_romaji": "Shinshu Nekomasamune",
+        "brewery_printed": false,
+        "product_name": "SHIRONEKO",
+        "product_name_romaji": "Shironeko",
+        "drink": "sake"
+       }
+      ],
+      "unreadable_count": 0
+     }
+    },
+    "sohomare_iwasaki_shelf.jpg": {
+     "photoSha": "37fb95f8a52588c4",
+     "latencyMs": 8416,
+     "usage": {
+      "inputTokens": 8054,
+      "outputTokens": 1195,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.6,
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "惣誉",
+        "name_ja": "惣誉",
+        "name_romaji": "Sohomare",
+        "brewery_printed": false,
+        "other_names": [],
+        "drink": "sake"
+       },
+       {
+        "printed": "福娘",
+        "name_ja": "福娘",
+        "name_romaji": "Fukumusume",
+        "brewery_printed": false,
+        "other_names": [
+         "FUKUMUSUME"
+        ],
+        "drink": "sake"
+       }
+      ],
+      "unreadable_count": 2,
+      "currency": "JPY"
+     }
+    },
+    "two_bottles_tsukasa_sjochu_AND_aioi_shochu_with_pricetag.jpg": {
+     "photoSha": "2aad9113c91ccf19",
+     "latencyMs": 5502,
+     "usage": {
+      "inputTokens": 4047,
+      "outputTokens": 1024,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "ソフトツカサ 20",
+        "name_ja": "ソフトツカサ",
+        "name_romaji": "Sofutotsukasa",
+        "brewery_printed": false,
+        "other_names": [
+         "司",
+         "TSUKASA SHOCHU"
+        ],
+        "drink": "shochu"
+       },
+       {
+        "printed": "相生焼酎 25",
+        "name_ja": "相生",
+        "name_romaji": "Aioi",
+        "brewery_printed": false,
+        "product_name": "焼酎",
+        "product_name_romaji": "Shochu",
+        "drink": "shochu",
+        "craft": false,
+        "partly_read": false
+       }
+      ],
+      "unreadable_count": 2,
+      "currency": "JPY"
+     }
+    },
+    "uehara_matsumoto_nanyo_asahi_yoshida_shimizu_kazuma_linne_aihara_menu.jpg": {
+     "photoSha": "599a96ab120a9452",
+     "latencyMs": 20241,
+     "usage": {
+      "inputTokens": 8048,
+      "outputTokens": 4554,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "kind": "menu",
+      "lines": [
+       {
+        "printed": "不老泉 酒母四段 無濾過生酒",
+        "name_ja": "不老泉",
+        "name_romaji": "Furousen",
+        "other_names": [],
+        "product_name": "酒母四段",
+        "product_name_romaji": "Shubo Yondan",
+        "styles": [
+         "muroka",
+         "nama"
+        ],
+        "drink": "sake"
+       },
+       {
+        "printed": "久保田 千寿 純米吟醸",
+        "name_ja": "久保田",
+        "name_romaji": "Kubota",
+        "product_name": "千寿",
+        "product_name_romaji": "Senju",
+        "grade": "junmai_ginjo",
+        "drink": "sake",
+        "partly_read": true
+       },
+       {
+        "printed": "竹葉 百万石乃白 特別純米 ひやおろし",
+        "name_ja": "竹葉",
+        "name_romaji": "Chikuha",
+        "product_name": "百万石乃白",
+        "product_name_romaji": "Hyakumangokunoshiro",
+        "grade": "tokubetsu_junmai",
+        "styles": [
+         "hiyaoroshi"
+        ],
+        "drink": "sake",
+        "partly_read": true
+       },
+       {
+        "printed": "澤屋まつもと 雄町 純米吟醸",
+        "name_ja": "澤屋まつもと",
+        "name_romaji": "Sawaya Matsumoto",
+        "brewery_printed": true,
+        "brewery_ja": "澤屋まつもと",
+        "other_names": [
+         "Sawaya Matsumoto"
+        ],
+        "product_name": "雄町",
+        "product_name_romaji": "Omachi",
+        "grade": "junmai_ginjo",
+        "drink": "sake"
+       },
+       {
+        "printed": "手取川 シャキッと辛口 生原酒 純米吟醸",
+        "name_ja": "手取川",
+        "name_romaji": "Tedorigawa",
+        "product_name": "シャキッと辛口",
+        "product_name_romaji": "Shakitto karakuchi",
+        "grade": "junmai_ginjo",
+        "styles": [
+         "genshu"
+        ],
+        "drink": "sake"
+       },
+       {
+        "printed": "LINNE 800 YAO 大麦",
+        "name_ja": "LINNE",
+        "name_romaji": "LINNE",
+        "other_names": [
+         "りんね"
+        ],
+        "product_name": "800 YAO 大麦",
+        "product_name_romaji": "800 YAO Ōmugi",
+        "drink": "sake",
+        "craft": true
+       },
+       {
+        "printed": "花陽浴 越後五百 純米大吟醸 無濾過生原酒",
+        "name_ja": "花陽浴",
+        "name_romaji": "Hanaabi",
+        "product_name": "越後五百",
+        "product_name_romaji": "Echigo Gohyaku",
+        "grade": "junmai_daiginjo",
+        "styles": [
+         "muroka",
+         "genshu"
+        ],
+        "drink": "sake",
+        "partly_read": true
+       },
+       {
+        "printed": "作 雅 純米大吟醸",
+        "name_ja": "作",
+        "name_romaji": "Zaku",
+        "product_name": "雅",
+        "product_name_romaji": "Miyabi",
+        "grade": "junmai_daiginjo",
+        "drink": "sake",
+        "partly_read": true
+       }
+      ],
+      "unreadable_count": 1,
+      "currency": "JPY"
+     }
+    },
+    "gokai_koitokame_menu.jpg": {
+     "photoSha": "4c11b8ae491b7bec",
+     "latencyMs": 5044,
+     "usage": {
+      "inputTokens": 4874,
+      "outputTokens": 851,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.6,
+      "kind": "menu",
+      "lines": [
+       {
+        "printed": "豪快",
+        "name_ja": "豪快",
+        "name_romaji": "Gokai",
+        "drink": "sake",
+        "price": 399,
+        "warm": true
+       },
+       {
+        "printed": "鯉と亀と生原酒",
+        "name_ja": "鯉と亀と生原酒",
+        "name_romaji": "Koi to Kame to Namagenshu",
+        "drink": "sake",
+        "price": 599,
+        "warm": false,
+        "partly_read": true
+       }
+      ],
+      "unreadable_count": 0,
+      "currency": "JPY"
+     }
+    },
+    "hachinohe_oliveyeast_kirekkire_kikumasamune_menu.jpg": {
+     "photoSha": "85f0de46b17f5429",
+     "latencyMs": 7743,
+     "usage": {
+      "inputTokens": 8024,
+      "outputTokens": 1475,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.9,
+      "kind": "menu",
+      "lines": [
+       {
+        "printed": "陸奥八仙 特別純米",
+        "name_ja": "陸奥八仙",
+        "name_romaji": "Mutsu Hassen",
+        "brewery_printed": false,
+        "brewery_ja": "八戸酒造",
+        "other_names": [
+         "MUTSU HASSEN"
+        ],
+        "grade": "tokubetsu_junmai",
+        "drink": "sake",
+        "price": 5.9
+       },
+       {
+        "printed": "Olive East N.315 純米吟醸",
+        "name_ja": "Olive East N.315",
+        "name_romaji": "Olive East N.315",
+        "brewery_printed": false,
+        "grade": "junmai_ginjo",
+        "drink": "sake",
+        "price": 5.9
+       },
+       {
+        "printed": "キレッキレ 純米吟醸",
+        "name_ja": "キレッキレ",
+        "name_romaji": "Kirekkire",
+        "brewery_printed": false,
+        "other_names": [
+         "Kirekkire"
+        ],
+        "grade": "junmai_ginjo",
+        "drink": "sake",
+        "price": 5.9
+       },
+       {
+        "printed": "House Sake Kikumasamune",
+        "name_ja": "Kikumasamune",
+        "name_romaji": "Kikumasamune",
+        "brewery_printed": false,
+        "drink": "sake",
+        "warm": true,
+        "partly_read": false
+       }
+      ],
+      "unreadable_count": 0,
+      "currency": "EUR"
+     }
+    },
+    "ide_menu_1.jpg": {
+     "photoSha": "d072a239cbb1e55a",
+     "latencyMs": 8001,
+     "usage": {
+      "inputTokens": 8048,
+      "outputTokens": 1575,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.8,
+      "kind": "menu",
+      "lines": [
+       {
+        "printed": "甲斐の開運 吟醸",
+        "name_ja": "甲斐の開運",
+        "name_romaji": "KAINO KAIUN",
+        "brewery_printed": true,
+        "brewery_ja": "井出醸造",
+        "other_names": [
+         "開運",
+         "KAINO KAIUN"
+        ],
+        "grade": "ginjo",
+        "drink": "sake",
+        "partly_read": true
+       },
+       {
+        "printed": "甲斐の開運 大吟醸",
+        "name_ja": "甲斐の開運",
+        "name_romaji": "KAINO KAIUN",
+        "brewery_printed": true,
+        "brewery_ja": "井出醸造",
+        "other_names": [
+         "開運",
+         "KAINO KAIUN"
+        ],
+        "grade": "daiginjo",
+        "drink": "sake",
+        "price": 968
+       }
+      ],
+      "unreadable_count": 0,
+      "currency": "JPY"
+     }
+    },
+    "ide_menu_2.jpg": {
+     "photoSha": "ee060bede0a73fc1",
+     "latencyMs": 11188,
+     "usage": {
+      "inputTokens": 8048,
+      "outputTokens": 2085,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "kind": "menu",
+      "lines": [
+       {
+        "printed": "<囲>Kakoi 特別純米生原酒",
+        "name_ja": "開運",
+        "name_romaji": "Kaiun",
+        "product_name": "囲 Kakoi",
+        "product_name_romaji": "Kakoi",
+        "grade": "tokubetsu_junmai",
+        "styles": [
+         "nama",
+         "genshu"
+        ],
+        "drink": "sake",
+        "price": 2200
+       },
+       {
+        "printed": "特別純米 北麓 Hokuroku (Tokubetsu Junmai)",
+        "name_ja": "北麓",
+        "name_romaji": "Hokuroku",
+        "other_names": [
+         "Hokuroku"
+        ],
+        "grade": "tokubetsu_junmai",
+        "drink": "sake",
+        "price": 1870
+       },
+       {
+        "printed": "純米 Junmai",
+        "name_ja": "開運",
+        "name_romaji": "Kaiun",
+        "grade": "junmai",
+        "drink": "sake",
+        "price": 1540,
+        "partly_read": true
+       }
+      ],
+      "unreadable_count": 2,
+      "currency": "JPY"
+     }
+    },
+    "ide_menu_3.jpg": {
+     "photoSha": "2daaec103db4b78e",
+     "latencyMs": 2689,
+     "usage": {
+      "inputTokens": 8048,
+      "outputTokens": 161,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "kind": "menu",
+      "lines": [
+       {
+        "printed": "天下山麓富士の山 本醸造",
+        "name_ja": "天下山麓",
+        "name_romaji": "Tenkasanroku",
+        "brewery_printed": false,
+        "product_name": "富士の山",
+        "product_name_romaji": "Fujinoyama",
+        "grade": "honjozo",
+        "drink": "sake",
+        "price": 1397,
+        "partly_read": false
+       }
+      ],
+      "unreadable_count": 0,
+      "currency": "JPY"
+     }
+    },
+    "ide_menu_4.jpg": {
+     "photoSha": "6dabb15cbcde3f7a",
+     "latencyMs": 18452,
+     "usage": {
+      "inputTokens": 8048,
+      "outputTokens": 3914,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "kind": "menu",
+      "lines": [
+       {
+        "printed": "天下山麓富士の山 本醸造",
+        "name_ja": "天下山麓",
+        "name_romaji": "Tenkasanroku",
+        "product_name": "富士の山",
+        "product_name_romaji": "Fujinoyama",
+        "grade": "honjozo",
+        "drink": "sake",
+        "price": 1397,
+        "partly_read": false
+       },
+       {
+        "printed": "梅酒",
+        "name_ja": "梅酒",
+        "name_romaji": "Umeshu",
+        "drink": "umeshu",
+        "price": 561
+       },
+       {
+        "printed": "純米大吟醸 冨麓",
+        "name_ja": "冨麓",
+        "name_romaji": "Furoku",
+        "brewery_printed": false,
+        "grade": "junmai_daiginjo",
+        "drink": "sake",
+        "price": 4290
+       },
+       {
+        "printed": "ひやおろし 純米吟醸生酒",
+        "name_ja": "甲斐の開運",
+        "name_romaji": "Kainokaiun",
+        "grade": "junmai_ginjo",
+        "styles": [
+         "hiyaoroshi",
+         "nama"
+        ],
+        "drink": "sake",
+        "price": 2200
+       },
+       {
+        "printed": "酒蔵限定販売酒 囲 Kakoi 特別純米生原酒",
+        "name_ja": "囲",
+        "name_romaji": "Kakoi",
+        "other_names": [
+         "Kakoi"
+        ],
+        "grade": "tokubetsu_junmai",
+        "styles": [
+         "genshu",
+         "nama"
+        ],
+        "drink": "sake",
+        "price": 2200
+       },
+       {
+        "printed": "特別純米 純米原酒",
+        "name_ja": "甲斐の開運",
+        "name_romaji": "Kainokaiun",
+        "grade": "tokubetsu_junmai",
+        "styles": [
+         "genshu"
+        ],
+        "drink": "sake",
+        "price": 1790
+       },
+       {
+        "printed": "純米甘口",
+        "name_ja": "甲斐の開運",
+        "name_romaji": "Kainokaiun",
+        "grade": "junmai",
+        "drink": "sake",
+        "price": 968
+       },
+       {
+        "printed": "Blended Whisky 大樹海",
+        "name_ja": "大樹海",
+        "name_romaji": "Daijukai",
+        "drink": "other",
+        "price": 4950
+       }
+      ],
+      "unreadable_count": 4,
+      "currency": "JPY"
+     }
+    },
+    "iichiko_shochu_menu.jpg": {
+     "photoSha": "71f520933969db84",
+     "latencyMs": 5129,
+     "usage": {
+      "inputTokens": 7968,
+      "outputTokens": 618,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.9,
+      "kind": "menu",
+      "lines": [
+       {
+        "printed": "いいちこ",
+        "name_ja": "いいちこ",
+        "name_romaji": "Iichiko",
+        "brewery_printed": false,
+        "brewery_ja": "三和酒類",
+        "other_names": [
+         "Iichiko"
+        ],
+        "drink": "shochu",
+        "price": 6.8
+       }
+      ],
+      "unreadable_count": 0,
+      "currency": "EUR"
+     }
+    },
+    "imo_shochu_menu.jpg": {
+     "photoSha": "d4d1498022f942b0",
+     "latencyMs": 6456,
+     "usage": {
+      "inputTokens": 8016,
+      "outputTokens": 871,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.9,
+      "kind": "menu",
+      "lines": [
+       {
+        "printed": "冨野宝山",
+        "name_ja": "冨野宝山",
+        "name_romaji": "Tomino Houzan",
+        "other_names": [
+         "TOMINO HOUZAN"
+        ],
+        "drink": "shochu",
+        "price": 6.8
+       },
+       {
+        "printed": "ダイヤメ",
+        "name_ja": "ダイヤメ",
+        "name_romaji": "Daiyame",
+        "other_names": [
+         "DAIYAME"
+        ],
+        "drink": "shochu",
+        "price": 6.8
+       }
+      ],
+      "unreadable_count": 0,
+      "currency": "EUR"
+     }
+    },
+    "kurokirishima_shochu_menu.jpg": {
+     "photoSha": "496ebae7542f8e1e",
+     "latencyMs": 5099,
+     "usage": {
+      "inputTokens": 7995,
+      "outputTokens": 736,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.92,
+      "kind": "menu",
+      "lines": [
+       {
+        "printed": "黒霧島",
+        "name_ja": "黒霧島",
+        "name_romaji": "Kurokirishima",
+        "brewery_printed": false,
+        "brewery_ja": "霧島酒造",
+        "other_names": [
+         "KUROKIRISHIMA"
+        ],
+        "drink": "shochu",
+        "price": 5.8
+       }
+      ],
+      "unreadable_count": 0,
+      "currency": "EUR"
+     }
+    },
+    "miyasaka_tsukasabotan_katokahachiro_menu.jpg": {
+     "photoSha": "19c4c900f3a0b46b",
+     "latencyMs": 8394,
+     "usage": {
+      "inputTokens": 7968,
+      "outputTokens": 1448,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.85,
+      "kind": "menu",
+      "lines": [
+       {
+        "printed": "真澄 純米吟醸 Junmai Ginjo",
+        "name_ja": "真澄",
+        "name_romaji": "Masumi",
+        "brewery_printed": false,
+        "brewery_ja": "宮坂醸造",
+        "other_names": [
+         "MASUMI"
+        ],
+        "grade": "junmai_ginjo",
+        "drink": "sake",
+        "price": 4.9
+       },
+       {
+        "printed": "船中八策 超辛口 純米酒",
+        "name_ja": "船中八策",
+        "name_romaji": "Senchu Hassaku",
+        "brewery_printed": false,
+        "other_names": [
+         "Senchu hassaku"
+        ],
+        "grade": "junmai",
+        "drink": "sake",
+        "price": 4.9
+       },
+       {
+        "printed": "大山十水 特別純米酒",
+        "name_ja": "大山十水",
+        "name_romaji": "Ooyamatomizu",
+        "brewery_printed": false,
+        "other_names": [
+         "Ooyamatomizu"
+        ],
+        "grade": "tokubetsu_junmai",
+        "drink": "sake",
+        "price": 4.9
+       }
+      ],
+      "unreadable_count": 0,
+      "currency": "EUR"
+     }
+    },
+    "mugi_shochu_menu.jpg": {
+     "photoSha": "d44810dec8d3ee37",
+     "latencyMs": 3675,
+     "usage": {
+      "inputTokens": 7994,
+      "outputTokens": 498,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "kind": "menu",
+      "lines": [
+       {
+        "printed": "泰明",
+        "name_ja": "泰明",
+        "name_romaji": "Taimei",
+        "other_names": [
+         "TAIMEI"
+        ],
+        "drink": "shochu",
+        "price": 6.8
+       },
+       {
+        "printed": "山乃守",
+        "name_ja": "山乃守",
+        "name_romaji": "Yamanomori",
+        "other_names": [
+         "YAMANOMORI"
+        ],
+        "drink": "shochu",
+        "price": 6.8
+       }
+      ],
+      "unreadable_count": 0,
+      "currency": "EUR"
+     }
+    },
+    "niseko_shochu_shelf.jpg": {
+     "photoSha": "57530d61550c06f4",
+     "latencyMs": 11098,
+     "usage": {
+      "inputTokens": 8054,
+      "outputTokens": 1871,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.6,
+      "kind": "shelf",
+      "lines": [
+       {
+        "printed": "二世古 珈琲",
+        "name_ja": "二世古",
+        "name_romaji": "Niseko",
+        "brewery_printed": false,
+        "brewery_ja": "二世古酒造",
+        "other_names": [
+         "Coffee"
+        ],
+        "product_name": "珈琲",
+        "product_name_romaji": "Kohi",
+        "drink": "shochu"
+       },
+       {
+        "printed": "正中",
+        "name_ja": "正中",
+        "name_romaji": "Seichū",
+        "brewery_printed": true,
+        "brewery_ja": "二世古酒造",
+        "drink": "shochu"
+       }
+      ],
+      "unreadable_count": 4
+     }
+    },
+    "shichida_junmai_shochu_menu_clear.jpg": {
+     "photoSha": "9aa517bf4812f8c4",
+     "latencyMs": 5326,
+     "usage": {
+      "inputTokens": 4041,
+      "outputTokens": 886,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "confidence": 0.85,
+      "kind": "menu",
+      "lines": [
+       {
+        "printed": "SHICHIDA",
+        "name_ja": "七田",
+        "name_romaji": "Shichida",
+        "brewery_printed": false,
+        "brewery_ja": "天山酒造",
+        "other_names": [
+         "SHICHIDA"
+        ],
+        "drink": "shochu",
+        "price": 7.8
+       }
+      ],
+      "unreadable_count": 0,
+      "currency": "EUR"
+     }
+    },
+    "shichida_shochu_menu_2.jpg": {
+     "photoSha": "8dfaa5344742af90",
+     "latencyMs": 6166,
+     "usage": {
+      "inputTokens": 7995,
+      "outputTokens": 867,
+      "cacheReadTokens": 3222,
+      "cacheWriteTokens": 0
+     },
+     "read": {
+      "source": "llm_extracted",
+      "kind": "menu",
+      "lines": [
+       {
+        "printed": "七田",
+        "name_ja": "七田",
+        "name_romaji": "Shichida",
+        "brewery_printed": false,
+        "brewery_ja": "天吹酒造",
+        "other_names": [
+         "SHICHIDA"
+        ],
+        "grade": "junmai",
+        "drink": "sake",
+        "price": 7.8
+       }
+      ],
+      "unreadable_count": 0,
+      "currency": "EUR"
+     }
+    }
+   }
+  }
+ }
+}

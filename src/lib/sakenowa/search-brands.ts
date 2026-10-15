@@ -200,8 +200,24 @@ const LABEL_QUALIFIERS_ROMAJI = [
  * is glued to a letter is not done here: only free-standing numbers go.
  */
 export function stripLabelQualifiers(query: string): string | null {
-  let out = query.trim()
+  const out = withoutLabelWords(query)
   if (out.length === 0) return null
+  if (out === query.trim()) return null
+  return out
+}
+
+/**
+ * Is this nothing but label words — a grade, a style, a rice, a number? A
+ * menu line read as "ひやおろし" or "大吟醸" names no sake, and looking it up
+ * finds the one brand that happens to be called that.
+ */
+export function isOnlyLabelWords(name: string): boolean {
+  return name.trim().length > 0 && withoutLabelWords(name).length === 0
+}
+
+function withoutLabelWords(query: string): string {
+  let out = query.trim()
+  if (out.length === 0) return out
 
   for (const word of LABEL_QUALIFIERS_JA) {
     out = out.split(word).join(' ')
@@ -215,11 +231,7 @@ export function stripLabelQualifiers(query: string): string | null {
   // Punctuation an age statement leaves behind once its number and "year"
   // are gone: "10-year" → "-".
   out = out.replace(/(?<=^|\s)[-–·,/]+(?=\s|$)/g, ' ')
-  out = out.replace(/\s+/g, ' ').trim()
-
-  if (out.length === 0) return null
-  if (out === query.trim()) return null
-  return out
+  return out.replace(/\s+/g, ' ').trim()
 }
 
 /** At most this many extra searches for one query that found nothing. */

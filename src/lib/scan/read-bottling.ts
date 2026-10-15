@@ -54,6 +54,10 @@ export function gradeLabel(grade: ScanGrade): string {
   return GRADE_LABEL[grade]
 }
 
+export function styleLabel(style: ScanStyle): string {
+  return STYLE_LABEL[style]
+}
+
 /** Whether the read says anything the line's name does not. */
 export function readNamesABottling(bottling: ScanBottling | undefined): bottling is ScanBottling {
   if (!bottling) return false

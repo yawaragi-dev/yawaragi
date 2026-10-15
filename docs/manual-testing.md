@@ -41,6 +41,15 @@ setScan = (name_ja, brewery_ja, confidence = 0.95, more = {}) =>
     `yawaragi_e2e_vision=${btoa(unescape(encodeURIComponent(
       JSON.stringify({ name_ja, brewery_ja, confidence, ...more }))))};path=/`
 
+// Inject the menu or shelf §7's "Rank these for you" reads (VISION_PROVIDER=e2e-stub).
+// The shape is ListScanExtraction without `source`; unset, a fixed short menu.
+setList = (list) =>
+  document.cookie =
+    `yawaragi_e2e_list=${btoa(unescape(encodeURIComponent(JSON.stringify(list))))};path=/`
+// e.g. setList({ kind: 'shelf', unreadable_count: 0, lines: [
+//   { printed: '獺祭 45', name_ja: '獺祭', drink: 'sake' },
+//   { printed: '十四代', name_ja: '十四代', drink: 'sake', partly_read: true } ] })
+
 // Pick a suggest/chat state.
 setSuggest = (mode) => document.cookie = `yawaragi_suggest_stub=${mode};path=/`
 
@@ -57,6 +66,7 @@ clearJournal = () => document.cookie = 'yawaragi_journal_stub=;path=/;max-age=0'
 |---|---|---|
 | `yawaragi_age_gate` | Accept the 18+ JMStV gate (no flavor data renders until accepted) | `{"v":1,"ts":<ms>}`, or click the modal |
 | `yawaragi_e2e_vision` | Inject a scan extraction `{name_ja, brewery_ja, confidence}` (base64) | `setScan(...)` — **needs #194** + `VISION_PROVIDER=e2e-stub` |
+| `yawaragi_e2e_list` | Inject the list §7 reads (base64 JSON, `ListScanExtraction` minus `source`) | `setList(...)` + `VISION_PROVIDER=e2e-stub` |
 | `yawaragi_suggest_stub` | Pick a suggest state without the env var | `setSuggest('ok')` etc. |
 | `yawaragi_journal_stub` | Stand in for a maintainer's journal on Home, Collection, Palate, the sake page and the bottling page (reads only; logging a sake or adding a bottling still needs a real maintainer sign-in). `populated` also carries one bottling of your own, at `/en/bottling/stub-bottling`, with one tasting logged against it | `setJournal('populated')` etc. |
 | `yawaragi_debug` | Debug panel + per-step server tracing (HttpOnly) | `?debug=1` URL param; `?debug=0` clears |
@@ -85,8 +95,9 @@ Every non-match lands on §5a's one outcome screen: kicker · "Scan again" in th
 | Several fit, one name at several breweries | `setScan('高砂','架空酒造銘柄')` | "A few fit — Which one is it?", 2 rows with brewery · prefecture, "Same name · {brewery}" |
 | Several fit, one brewery's sakes | `setScan('架空純米','せんきん')` | Same screen, up to 3 of せんきん's 5 sakes, "Same brewery · same name" |
 | Not sake | `setScan('赤兎馬','濱田酒造',0.8,{drink:'shochu'})` | "Not sake — This is shochu, not sake", one line about shochu, "What we read". No lookup: 濱田酒造's sake is not offered. Also `awamori`, `umeshu`, `liqueur`, `other` |
-| A menu | `setScan('七田','天山酒造',0.85,{subject:'menu'})` | "A menu — That's a menu, not a label", "What we read" with the first drink, "Type the name instead" |
-| Several bottles | `setScan('獺祭','獺祭',0.9,{subject:'several_bottles'})` | "Several bottles — More than one bottle in the photo" |
+| A menu, signed out | `setScan('七田','天山酒造',0.85,{subject:'menu'})` | "A menu — This looks like a menu", "Sign in to rank these" (→ the sign-in page, back to the camera), "What we read" with the first drink, "Type the name instead". Signed in without a journal: "That's a menu, not a label" |
+| A menu, ranked (journal needed) | `setJournal('populated')`, reload, `setScan('七田','天山酒造',0.85,{subject:'menu'})`, then "Rank these for you" | §7: "Reading the whole menu…", then the stub menu — Rihaku with its two bottlings under it, Dassai at ¥1,200, "Couldn't match · 1" (架空ノ月 純米, Search / Add it), "1 line we couldn't read", "Not sake · 1" (いいちこ · Shochu). Change the list with `setList(...)` below. `setJournal('empty')` shows the unranked screen, "Rate three sakes…" |
+| Several bottles | `setScan('獺祭','獺祭',0.9,{subject:'several_bottles'})` | "Several bottles — This looks like a shelf"; with a journal, "Rank these for you" opens §7 as a shelf ("Left to right", no prices) when the list is a shelf |
 | Match, label names the bottling (journal needed) | `setJournal('populated')`, reload, `setScan('獺祭','獺祭',0.95,{bottling:{grade:'junmai_daiginjo',styles:['nama']}})` | Under the card: "Add this bottling" showing "Dassai Junmai Daiginjō Nama"; tapping opens the name form filled in with it. With bottlings of your own on that sake, "Is it one of these bottlings?" lists them first |
 | Not in the catalogue, something near | `setScan('十四代本丸','架空酒造零')` | "What we read" (editable, Read by AI badge), then "Did you mean" with Juyondai 十四代 · "Similar name" |
 | Not in the catalogue, nothing near | `setScan('架空銘柄零一','架空酒造零')` | The same screen with no "Did you mean". Nothing in the catalogue is close, and we don't invent a guess |
