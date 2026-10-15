@@ -10,12 +10,12 @@ A sake companion. Three flagship surfaces: **label scan**, **chat recommender**,
 
 ## Milestone progress
 
-_Snapshot generated 2026-10-14 from GitHub Issues + merged PRs. Regenerate with `pnpm progress`. Detail: [docs/PROGRESS.md](./docs/PROGRESS.md)._
+_Snapshot generated 2026-10-15 from GitHub Issues + merged PRs. Regenerate with `pnpm progress`. Detail: [docs/PROGRESS.md](./docs/PROGRESS.md)._
 
 | Milestone | Progress | Issues | ETA (median) |
 | --- | --- | --- | --- |
 | **M1 (Phase 0) — Compliance & i18n foundation** | `████████████████████` 100% | 5 / 5 | done |
-| **M2 (Phase 2) — Data foundation** | `██████████████████░░` 92% | 11 / 12 | 2026-10-15 |
+| **M2 (Phase 2) — Data foundation** | `██████████████████░░` 92% | 11 / 12 | 2026-10-16 |
 | **M3 (Phases 3–5) — Flagship surfaces** | `████████████████████` 100% | 11 / 11 | done |
 
 <!-- progress:end -->
