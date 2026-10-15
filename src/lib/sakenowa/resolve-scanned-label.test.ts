@@ -629,9 +629,9 @@ describe('resolveScannedLabel — an unlisted sake of a brewery the catalogue kn
     source: 'sakenowa',
   }
   const NISEKO: Brand = { brandId: 1611, name: 'Niseko', nameKanji: '二世古', nameRomaji: 'Niseko', breweryId: 923, source: 'sakenowa' }
-  const breweryOnly = (extracted: string): FindSakeByExtractionResult => ({
+  const breweryOnly = (extracted: string, sake: Brand = NISEKO): FindSakeByExtractionResult => ({
     kind: 'matched_brewery_only',
-    sake: NISEKO,
+    sake,
     brewery: NISEKO_BREWERY,
     brandDivergence: { extracted, stored: '二世古' },
     query: { nameJa: extracted, breweryJa: '二世古酒造' },
@@ -656,7 +656,7 @@ describe('resolveScannedLabel — an unlisted sake of a brewery the catalogue kn
   it('keeps it when the name read is the brewery’s own house name', async () => {
     const result = await resolveScannedLabel(
       label({ name_ja: '二世古', brewery_ja: '二世古酒造', confidence: 0.8 }),
-      fakeExecutor({ byExtraction: { ...breweryOnly('二世古'), sake: { ...NISEKO, nameKanji: 'にせこ' } } }),
+      fakeExecutor({ byExtraction: breweryOnly('二世古', { ...NISEKO, nameKanji: 'にせこ' }) }),
     )
     expect(result.kind).toBe('matched_brewery_only')
   })
