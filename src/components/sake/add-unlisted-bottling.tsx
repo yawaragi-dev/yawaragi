@@ -145,3 +145,40 @@ export function AddItYourselfRow({ query }: { query: string }) {
     </button>
   )
 }
+
+/**
+ * §7's "Add it" on a menu line the catalogue has no row for (design v1.7 C5):
+ * the same naming form as "Add it yourself", opened in place under the line,
+ * with the line as printed to confirm or correct.
+ */
+export function AddListLineYourself({ printed, label }: { printed: string; label: string }) {
+  const { add, pending, failed } = useAddUnlistedBottling()
+  const [open, setOpen] = useState(false)
+
+  if (open) {
+    return (
+      <div className="basis-full pb-3">
+        <BottlingNameForm
+          initialName={printed}
+          withBrewery
+          pending={pending}
+          failed={failed}
+          onSubmit={(name, brewery) => add(name, brewery || undefined)}
+          onCancel={() => setOpen(false)}
+          testId="list-add-yourself"
+        />
+      </div>
+    )
+  }
+  return (
+    <button
+      type="button"
+      onClick={() => setOpen(true)}
+      className="flex min-h-11 items-center gap-1.5 rounded-md px-2 text-subtle font-medium text-ginshu-700 transition-colors hover:bg-ash-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+      data-testid="list-unmatched-add"
+    >
+      <PlusCircle size={16} aria-hidden="true" />
+      {label}
+    </button>
+  )
+}

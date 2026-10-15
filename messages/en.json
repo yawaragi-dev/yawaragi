@@ -903,17 +903,37 @@
       "menu": {
         "kicker": "A menu",
         "title": "That’s a menu, not a label",
-        "body": "We read one bottle at a time for now. Search for a name from the menu, or scan a bottle’s label."
+        "body": "We read one bottle at a time for now. Search for a name from the menu, or scan a bottle’s label.",
+        "rank": {
+          "title": "This looks like a menu",
+          "body": "Rank the sakes on it for your palate? Reading a whole list takes a few seconds."
+        },
+        "signedOut": {
+          "body": "Sign in and we’ll rank the sakes on it for your palate. Or search for one name from it."
+        }
       },
       "several_bottles": {
         "kicker": "Several bottles",
         "title": "More than one bottle in the photo",
-        "body": "We can’t tell which one you mean. Scan one bottle at a time."
+        "body": "We can’t tell which one you mean. Scan one bottle at a time.",
+        "rank": {
+          "title": "This looks like a shelf",
+          "body": "Rank the bottles in it for your palate? Reading a whole shelf takes a few seconds."
+        },
+        "signedOut": {
+          "body": "Sign in and we’ll rank the bottles in it for your palate. Or search for one name from it."
+        }
       },
       "no_bottle": {
         "kicker": "No bottle",
         "title": "We can’t see a bottle in this photo",
         "body": "Point the camera at one bottle, with its label filling most of the frame."
+      },
+      "rankThese": "Rank these for you",
+      "signInToRank": "Sign in to rank these",
+      "notAllowed": {
+        "title": "Ranking needs your tastings",
+        "body": "Lists are ranked against the sakes you have rated, and your account has no tasting journal yet."
       }
     },
     "rateLimited": {
@@ -934,6 +954,71 @@
     "notThisOne": "Not this one",
     "sureMatch": "Sure match",
     "bestGuess": "Best guess"
+  },
+  "listResults": {
+    "bar": "{kind, select, menu {From your photo · Menu} other {From your photo · Shelf}} · {count, plural, =1 {1 sake} other {# sakes}}",
+    "barReading": "{kind, select, menu {From your photo · Menu} other {From your photo · Shelf}}",
+    "barProblem": "From your photo",
+    "back": "Back to the scan",
+    "retake": "Retake",
+    "readingMenu": "Reading the whole menu…",
+    "readingShelf": "Reading the shelf…",
+    "readingBody": "This takes a few seconds. We’re finding each sake and placing it against your palate.",
+    "orderThe": "Order the {name}",
+    "tryThe": "Try the {name}",
+    "whatsOnMenu": "What’s on this menu",
+    "whatsOnShelf": "What’s on this shelf",
+    "rankedBy": "Ranked by how close each sake sits to what you rate highly.",
+    "inMenuOrder": "In menu order, each with its flavor shape.",
+    "leftToRightShapes": "Left to right, each with its flavor shape.",
+    "rateThree": "Rate three sakes and we’ll rank lists like this for you.",
+    "soFar": "{count} of {of} so far",
+    "findOne": "Find one",
+    "sortLabel": "Order",
+    "forYou": "For you",
+    "menuOrder": "Menu order",
+    "leftToRight": "Left to right",
+    "goodWarm": "Good warm",
+    "under": "Under {price}",
+    "newToMe": "New to me",
+    "noneForFilters": "Nothing on the list fits all of these.",
+    "craft": "(Craft sake)",
+    "fit": {
+      "close": "Close to what you rate highly",
+      "some": "Some of what you like",
+      "unusual": "Not your usual"
+    },
+    "yours": "★ {rating} · yours",
+    "partlyRead": "Partly read",
+    "bottlingsOnList": "{count} bottlings on this list · one chart for all",
+    "bottlingsOnShelf": "{count} bottlings on this shelf · one chart for all",
+    "couldntMatch": "Couldn’t match · {count}",
+    "search": "Search",
+    "addIt": "Add it",
+    "linesUnread": "{count, plural, =1 {1 line we couldn’t read} other {# lines we couldn’t read}}",
+    "bottlesUnread": "{count, plural, =1 {1 bottle we couldn’t read} other {# bottles we couldn’t read}}",
+    "linesUnreadHint": "Cut off at the edge or lost in glare. Retake closer to read them.",
+    "bottlesUnreadHint": "Turned away, cut off or too far. Retake closer to read more.",
+    "notSake": "Not sake · {count}",
+    "otherDrinks": "Sake and the other Japanese drinks",
+    "drink": {
+      "shochu": "Shochu",
+      "awamori": "Awamori",
+      "umeshu": "Umeshu",
+      "liqueur": "Liqueur",
+      "other": "Not sake"
+    },
+    "howRankedTitle": "How this is ranked",
+    "howRankedBody1": "Each sake is placed by how close its flavor chart (Sakenowa) sits to the sakes you rate highly. The reasons come from the charts and your ratings, nothing else.",
+    "howRankedBody2": "It works on the sake, not the bottling, so bottlings of one sake share a place. With only a few tastings it’s a rough guide, which is why it says so in words and not as a number.",
+    "reason": {
+      "shape": "{first} and {second}",
+      "tasted": "You gave it {rating}. {shape}.",
+      "like": "{shape}, like the {name} you gave {rating}.",
+      "axes": "{shape}.",
+      "unusual": "{shape}, not much like what you rate highly.",
+      "noChart": "No flavor chart for this one yet."
+    }
   },
   "bottling": {
     "addRowTitle": "Add your bottling",

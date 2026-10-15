@@ -26,7 +26,9 @@ import {
   ImageBroken,
   Lightning,
   ListBullets,
+  ListNumbers,
   MagnifyingGlass,
+  UserCircle,
   ListMagnifyingGlass,
   CaretRight,
   WarningCircle,
@@ -52,6 +54,7 @@ import { OtherCandidates } from '@/components/scan/other-candidates'
 import { ScanBottlings } from '@/components/scan/scan-bottlings'
 import { bottlingNameFromRead, detailsFromRead, gradeLabel } from '@/lib/scan/read-bottling'
 import NextLink from 'next/link'
+import { SignInInPlace } from '@/components/auth/sign-in-in-place'
 import { ScanOutcome, readName, type OutcomeCandidate } from '@/components/scan/scan-outcome'
 import { ScanResultCard } from '@/components/scan/scan-result-card'
 import type { DebugEvent } from '@/lib/debug/debug-log'
@@ -62,6 +65,9 @@ import {
   downscaleImage,
 } from '@/lib/scan/downscale'
 import { scanAction } from '@/lib/scan/scan-action'
+import { readListAction } from '@/lib/scan/list-action'
+import { INITIAL_LIST_ACTION_STATE, type ListActionState } from '@/lib/scan/list-action-state'
+import { ListProblem, ListReading, ListResults } from '@/components/scan/list-results'
 import {
   INITIAL_SCAN_ACTION_STATE,
   type BothPhotosGuess,
@@ -92,6 +98,14 @@ interface ScanFormProps {
    * star at all, because a star that saves nothing is a dead affordance.
    */
   canLog?: boolean
+  /**
+   * Whether the visitor is signed in at all. Design v1.7 §5a: a menu or a
+   * shelf offers "Rank these for you" to a visitor with a journal, "Sign in
+   * to rank these" to one who is signed out, and the one-bottle-at-a-time
+   * copy to anyone else — a signed-in visitor without a journal has no
+   * palate to rank for, and a sign-in prompt would loop.
+   */
+  signedIn?: boolean
 }
 
 /**
@@ -136,7 +150,7 @@ const NOT_ONE_BOTTLE = {
   no_bottle: { testId: 'scan-result-no-bottle', icon: SelectionSlash },
 } as const
 
-export function ScanForm({ locale, debugMode = false, canLog = false }: ScanFormProps) {
+export function ScanForm({ locale, debugMode = false, canLog = false, signedIn = false }: ScanFormProps) {
   const t = useTranslations('scan.form')
   // ProvenanceBadgeView + SakenowaAttributionView are the sync presentational
   // halves; we resolve their strings via the client-side translator since this
@@ -164,6 +178,21 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
     scanAction,
     INITIAL_SCAN_ACTION_STATE,
   )
+  // §7: the whole menu or shelf, read from the same photo on request.
+  const [listState, listFormAction, isListPending] = useActionState<ListActionState, FormData>(
+    readListAction,
+    INITIAL_LIST_ACTION_STATE,
+  )
+  /** The list screen is up, for this kind of list; `null` on the scan screens. */
+  const [listOpen, setListOpen] = useState<'menu' | 'shelf' | null>(null)
+  /**
+   * The downscaled photo last sent to the scan, for "Rank these for you" to
+   * send again. Memory only, like the preview: the server keeps no photo
+   * between the two calls (ADR-0009).
+   */
+  const photoBlobRef = useRef<Blob | null>(null)
+  /** The photo `listState` was read from. */
+  const listReadFor = useRef<Blob | null>(null)
   const [isDownscaling, setIsDownscaling] = useState(false)
   // Boolean rather than the raw error message — we surface a polite,
   // discovery-framed i18n string ('errorDownscale'), not the raw browser
@@ -319,6 +348,16 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
     appendDebugEvents(serverLog)
   }, [debugMode, state.debugLog])
 
+  // The list read's server trace, mirrored like the scan's.
+  const lastListLogRef = useRef<ReadonlyArray<DebugEvent> | null>(null)
+  useEffect(() => {
+    if (!debugMode) return
+    const serverLog = listState.debugLog
+    if (!serverLog || serverLog === lastListLogRef.current) return
+    lastListLogRef.current = serverLog
+    appendDebugEvents(serverLog)
+  }, [debugMode, listState.debugLog])
+
   function onUploadClick() {
     setDownscaleFailed(false)
     uploadInputRef.current?.click()
@@ -338,9 +377,26 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
    * `hasResult` reads. `handleFile` clears it, so the next result shows.
    */
   function onPickClick() {
+    setListOpen(null)
     setResultDismissed(true)
     setPhotoUrl(null)
     setDownscaleFailed(false)
+  }
+
+  /** §5a → §7: read the whole list in the photo just scanned. */
+  function onRankClick(kind: 'menu' | 'shelf') {
+    const photo = photoBlobRef.current
+    if (!photo) return
+    setListOpen(kind)
+    // Back from the list and "Rank these" again: the same photo was read
+    // already, and reading it twice pays twice for the same answer.
+    if (listReadFor.current === photo && listState.status === 'read') return
+    listReadFor.current = photo
+    const formData = new FormData()
+    formData.set('image', photo, 'list.jpg')
+    formData.set('kind', kind)
+    formData.set('locale', locale)
+    startTransition(() => listFormAction(formData))
   }
 
   async function onFileChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -385,6 +441,7 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
         `downscaled to ${downscaled.size} bytes in ${Date.now() - downscaleStart}ms`,
         { ratio: Number((downscaled.size / file.size).toFixed(2)) },
       )
+      photoBlobRef.current = downscaled
       const formData = new FormData()
       formData.set('image', downscaled, 'label.jpg')
       formData.set('locale', locale)
@@ -751,14 +808,18 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
             aboutOtherDrinks
           />
         )
-      case 'not_one_bottle':
+      case 'not_one_bottle': {
+        // Design v1.7 §5a (72, 73): a menu or a shelf is the way into §7.
+        const list = view.subject === 'menu' ? 'menu' : view.subject === 'several_bottles' ? 'shelf' : null
+        const ranking = list === null ? null : canLog ? 'rank' : signedIn ? null : 'signIn'
+        const copy = ranking === null ? '' : ranking === 'rank' ? '.rank' : '.signedOut'
         return (
           <ScanOutcome
             testId={NOT_ONE_BOTTLE[view.subject].testId}
             icon={icon(NOT_ONE_BOTTLE[view.subject].icon)}
             kicker={tOutcome(`notOneBottle.${view.subject}.kicker`)}
-            title={tOutcome(`notOneBottle.${view.subject}.title`)}
-            body={tOutcome(`notOneBottle.${view.subject}.body`)}
+            title={tOutcome(`notOneBottle.${view.subject}${ranking ? '.rank' : ''}.title`)}
+            body={tOutcome(`notOneBottle.${view.subject}${copy}.body`)}
             onRescan={onPickClick}
             // Design v1.7.1 (90): with no bottle there is no read worth
             // fixing, and shooting again is the whole answer.
@@ -774,8 +835,34 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
                     badge: readBadge('scan-outcome-not-one-bottle-badge'),
                   }
             }
-          />
+          >
+            {list && ranking === 'rank' && (
+              <button
+                type="button"
+                onClick={() => onRankClick(list)}
+                className="flex min-h-11 items-center justify-center gap-2 rounded-xl border-[1.5px] border-ginshu-400 px-4 text-body font-medium text-ginshu-700 transition-colors hover:bg-ginshu-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+                data-testid="scan-outcome-rank"
+              >
+                <ListNumbers size={18} aria-hidden="true" />
+                {tOutcome('notOneBottle.rankThese')}
+              </button>
+            )}
+            {list && ranking === 'signIn' && (
+              // Sign-in opens over this screen, so the photo (memory only)
+              // is still here afterwards and "Rank these for you" takes its
+              // place. Only the no-JS fallback goes to the sign-in page.
+              <SignInInPlace
+                href={`${getPathname({ locale, href: '/sign-in' })}?redirect_url=${encodeURIComponent(getPathname({ locale, href: '/scan' }))}`}
+                className="flex min-h-11 items-center justify-center gap-2 rounded-xl border-[1.5px] border-ginshu-400 px-4 text-body font-medium text-ginshu-700 transition-colors hover:bg-ginshu-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+                data-testid="scan-outcome-sign-in-to-rank"
+              >
+                <UserCircle size={18} aria-hidden="true" />
+                {tOutcome('notOneBottle.signInToRank')}
+              </SignInInPlace>
+            )}
+          </ScanOutcome>
         )
+      }
       case 'rate_limited':
         // v1.5's copy says "give it a minute"; our anonymous limit is per day
         // (5 scans / 24h), so the body keeps the honest wait in hours.
@@ -815,6 +902,25 @@ export function ScanForm({ locale, debugMode = false, canLog = false }: ScanForm
       default:
         return null
     }
+  }
+
+  // §7 sits outside the scan form: its "Add it" opens a naming form of its
+  // own, and forms do not nest.
+  if (listOpen) {
+    const back = () => setListOpen(null)
+    if (isListPending || listState.status === 'idle') {
+      return <ListReading kind={listOpen} onBack={back} onRetake={onPickClick} />
+    }
+    if (listState.status === 'read') {
+      return <ListResults result={listState.result} onBack={back} onRetake={onPickClick} />
+    }
+    const problem =
+      listState.status === 'rate_limited'
+        ? { title: tOutcome('rateLimited.title'), body: t('rateLimited', { hours: Math.max(1, Math.ceil(listState.retryAfterSec / 3600)) }) }
+        : listState.status === 'not_allowed'
+          ? { title: tOutcome('notOneBottle.notAllowed.title'), body: tOutcome('notOneBottle.notAllowed.body') }
+          : { title: tOutcome('failed.title'), body: tOutcome('failed.body') }
+    return <ListProblem {...problem} onBack={back} onRetake={onPickClick} />
   }
 
   // The form is JS-only: there is no no-JS submit path because the canvas

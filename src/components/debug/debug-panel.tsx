@@ -67,6 +67,9 @@ const SOURCE_COLORS: Record<DebugEventSource, string> = {
   Vision: 'bg-emerald-100 text-emerald-900 dark:bg-emerald-900 dark:text-emerald-100',
   Sakenowa: 'bg-rose-100 text-rose-900 dark:bg-rose-900 dark:text-rose-100',
   TasteAction: 'bg-fuchsia-100 text-fuchsia-900 dark:bg-fuchsia-900 dark:text-fuchsia-100',
+  // Dark-only (ADR-0023): one set of colours, no `dark:` branch.
+  ListReader: 'bg-lime-900 text-lime-100',
+  ListAction: 'bg-sky-900 text-sky-100',
 }
 
 const LEVEL_PREFIX = {

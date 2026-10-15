@@ -15,6 +15,7 @@ Personal-data touch points the project will have once it grows past Phase 0:
 | Clerk auth (Phase 2+) | email, name, OAuth tokens | contract (Art. 6(1)(b)) | Clerk, US — DPF + SCCs |
 | Supabase (Phase 2+) | taste profiles, corrections, ratings | consent / contract | Supabase, `eu-central-1` Frankfurt |
 | Label scan (Phase 3) | uploaded bottle images | consent (Art. 6(1)(a)) | Anthropic Claude vision, US — SCCs; Yawaragi does not persist past inference, but Anthropic retains up to 7 days (see §9) |
+| Menu / shelf ranking (design v1.7 §7, 2026-10-15) | the same photo, sent once more when the visitor taps "Rank these for you"; the ranking reads their own tasting journal on the server and returns nothing that is stored | consent (Art. 6(1)(a)), as the label scan; the journal under its existing basis (ADR-0020) | Anthropic Claude vision, US — SCCs; process-and-discard as the label scan. Journal-keeping visitors only. No new data stored |
 | Chat (Phase 4) | message content, may include incidentally personal info | consent | Anthropic, US — SCCs; 7d provider retention |
 | Langfuse traces | redacted prompts + completions | legitimate interest (Art. 6(1)(f)) — operational debugging | Langfuse Cloud, `eu-west-1` Ireland |
 | Analytics (Phase 7+) | usage events, no identifiers | consent (Art. 6(1)(a)) | provider TBD; only if user opts in via cookie banner |

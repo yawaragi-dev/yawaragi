@@ -30,7 +30,7 @@ import type { RateLimitBucket } from '@/lib/rate-limit/anonymous-rate-limit'
  * only its type is imported.
  */
 const BUCKETS = {
-  'vision-scan': '/scan, 5 a day',
+  'vision-scan': '/scan and its menu and shelf reads, 5 a day',
   suggestions: '/suggest, 3 a day',
   taste: 'taste-profile updates (rating, accepting a scan, picking a drink), 60 a day',
 } as const satisfies Record<RateLimitBucket, string>
