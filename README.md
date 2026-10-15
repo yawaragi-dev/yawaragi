@@ -109,7 +109,7 @@ pnpm dev
 | `pnpm typecheck`          | `tsc --noEmit`                                           |
 | `pnpm migrate`            | Apply pending SQL files in `supabase/migrations/`        |
 | `pnpm ingest`             | Refresh Sakenowa data into Supabase                      |
-| `pnpm rate-limit:reset`   | Reset the anonymous rate limits in Upstash so the next scan starts at 5/5 — **every visitor's**, not just yours; says how many and asks first (`-- --bucket vision-scan`, `-- --yes`) |
+| `pnpm rate-limit:reset`   | Reset the anonymous rate limits in Upstash so the next scan starts at 5/5 — **every visitor's**, not just yours; says how many and asks first (`-- --bucket scan` or `suggest`, `-- --yes`) |
 | `pnpm journal:export`     | Export a maintainer's tasting journal to JSON (GDPR portability + durability backstop). **Output holds personal data** — gitignored; delete when done |
 | `pnpm db:resync`          | One-shot: `db:reset --yes && migrate && ingest`          |
 | `pnpm verify`             | Full chain (lint + typecheck + test + integration + e2e + audits) — **needs Docker** |

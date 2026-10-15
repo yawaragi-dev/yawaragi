@@ -6,7 +6,7 @@
  *
  * Usage:
  *   pnpm rate-limit:reset                          # every bucket, asks first
- *   pnpm rate-limit:reset -- --bucket vision-scan  # one bucket
+ *   pnpm rate-limit:reset -- --bucket vision-scan  # one bucket (or `scan`)
  *   pnpm rate-limit:reset -- --yes                 # no question (scripts, CI)
  *
  * **It resets every visitor's budget, not just yours (#119).** The keys are
@@ -22,9 +22,31 @@
  * so a large database is not blocked while it looks.
  */
 import { createInterface } from 'node:readline/promises'
+import type { RateLimitBucket } from '@/lib/rate-limit/anonymous-rate-limit'
+
+/**
+ * Every bucket and what it limits. `satisfies` keeps this in step with
+ * `RateLimitBucket` at compile time; the module itself is server-only, so
+ * only its type is imported.
+ */
+const BUCKETS = {
+  'vision-scan': '/scan, 5 a day',
+  suggestions: '/suggest, 3 a day',
+  taste: 'taste-profile updates (rating, accepting a scan, picking a drink), 60 a day',
+} as const satisfies Record<RateLimitBucket, string>
+
+/** What a maintainer is likely to type: the screen, not the bucket. */
+const BUCKET_ALIASES: Readonly<Record<string, RateLimitBucket>> = {
+  scan: 'vision-scan',
+  suggest: 'suggestions',
+}
+
+function isBucket(name: string): name is RateLimitBucket {
+  return Object.hasOwn(BUCKETS, name)
+}
 
 export interface ResetArgs {
-  bucket: string | null
+  bucket: RateLimitBucket | null
   yes: boolean
 }
 
@@ -36,14 +58,20 @@ export function parseResetArgs(argv: readonly string[]): ResetArgs {
     else if (arg === '--bucket') {
       const value = argv[++i]
       if (!value || !/^[a-z0-9-]+$/.test(value)) throw new Error('--bucket takes a bucket name, e.g. vision-scan')
-      args.bucket = value
+      const bucket = BUCKET_ALIASES[value] ?? value
+      // An unknown name would SCAN nothing and report "Already clean",
+      // which reads as "your budget is fine" when it was never looked at.
+      if (!isBucket(bucket)) {
+        throw new Error(`No bucket "${value}". The buckets are ${Object.keys(BUCKETS).join(', ')} (or scan, suggest).`)
+      }
+      args.bucket = bucket
     } else throw new Error(`Unknown argument: ${arg}`)
   }
   return args
 }
 
 /** The pattern SCAN matches: one bucket, or every rate-limit key. */
-export function keyPattern(bucket: string | null): string {
+export function keyPattern(bucket: RateLimitBucket | null): string {
   return bucket ? `rl:${bucket}:*` : 'rl:*'
 }
 
@@ -107,7 +135,8 @@ async function main(): Promise<void> {
 
   console.log(`This resets the rate limit of every visitor, not just yours (${new URL(url).host}):`)
   for (const { bucket, keys: count, visitors } of summariseKeys(keys)) {
-    console.log(`  ${bucket}: ${count} key(s), ${visitors} visitor(s)`)
+    const what = isBucket(bucket) ? ` (${BUCKETS[bucket]})` : ''
+    console.log(`  ${bucket}${what}: ${count} key(s), ${visitors} visitor(s)`)
   }
 
   if (!args.yes) {
@@ -122,7 +151,7 @@ async function main(): Promise<void> {
 
   let deleted = 0
   for (let i = 0; i < keys.length; i += 500) deleted += (await exec(['DEL', ...keys.slice(i, i + 500)])) as number
-  console.log(`Deleted ${deleted} key(s). The next scan starts at 5 remaining.`)
+  console.log(`Deleted ${deleted} key(s). Those budgets start full again.`)
 }
 
 if (process.argv[1] && process.argv[1].endsWith('clear-rate-limit.ts')) {

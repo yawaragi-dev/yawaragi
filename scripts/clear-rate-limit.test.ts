@@ -29,4 +29,13 @@ describe('pnpm rate-limit:reset (#119)', () => {
     expect(() => parseResetArgs(['--bucket'])).toThrow(/bucket name/)
     expect(() => parseResetArgs(['--bucket', 'rl:*'])).toThrow(/bucket name/)
   })
+
+  it('refuses a bucket that does not exist instead of reporting it clean, and names the real ones', () => {
+    expect(() => parseResetArgs(['--bucket', 'scans'])).toThrow(/vision-scan, suggestions, taste/)
+  })
+
+  it('takes the names of the screens for their buckets', () => {
+    expect(parseResetArgs(['--bucket', 'scan']).bucket).toBe('vision-scan')
+    expect(parseResetArgs(['--bucket', 'suggest']).bucket).toBe('suggestions')
+  })
 })
