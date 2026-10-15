@@ -76,9 +76,14 @@ interface CameraCaptureProps {
   /**
    * A one-line message for the visitor — rate limit, an unreadable photo —
    * shown under the title, where it is on screen whatever state the camera
-   * is in. `testId` names the message for tests.
+   * is in. `testId` names the message for tests. `action` is a small button
+   * after the text that turns down what the message announces.
    */
-  notice?: { testId: string; text: string } | null
+  notice?: {
+    testId: string
+    text: string
+    action?: { label: string; ariaLabel: string; onClick: () => void }
+  } | null
 }
 
 type CameraState = 'starting' | 'live' | 'denied' | 'unavailable'
@@ -233,13 +238,25 @@ export function CameraCapture({
       </div>
 
       {notice && !isWorking && (
-        <p
-          role="alert"
-          className="mx-5 rounded-lg border border-ginshu-400 px-3.5 py-2.5 text-center text-meta text-camera-ink text-balance"
+        <div
+          className="mx-5 flex items-center justify-center gap-3 rounded-lg border border-ginshu-400 px-3.5 py-1.5 text-meta text-camera-ink"
           data-testid={notice.testId}
         >
-          {notice.text}
-        </p>
+          <p role="alert" className="py-1 text-center text-balance">
+            {notice.text}
+          </p>
+          {notice.action && (
+            <button
+              type="button"
+              onClick={notice.action.onClick}
+              aria-label={notice.action.ariaLabel}
+              className="min-h-11 shrink-0 rounded-md px-2 font-medium text-ginshu-700 underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+              data-testid={`${notice.testId}-dismiss`}
+            >
+              {notice.action.label}
+            </button>
+          )}
+        </div>
       )}
 
       {showFrame ? (
