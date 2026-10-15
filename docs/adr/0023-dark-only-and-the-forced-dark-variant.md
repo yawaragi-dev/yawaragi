@@ -34,4 +34,4 @@ So the flip forces a choice about those 40 files, and it has to be made in the s
 
 ## Amendment, 2026-10-15
 
-The leftovers are gone. Every `dark:` utility in `src/` (133 of them in 26 files, including the shadcn primitives) was collapsed to the value it rendered, and its dead light-branch sibling removed, by a mechanical pass: same property, same variant chain. Screenshots of 17 pages at 390×844 were pixel-identical before and after. The forced variant in `globals.css` stays, so a `dark:` that slips in still renders, but there is no longer any reason to write one.
+The leftovers are gone. Every `dark:` utility in `src/` (133 of them in 26 files, including the shadcn primitives) was collapsed to the value it rendered, and its dead light-branch sibling removed, by a mechanical pass: same property, same variant chain. Seventeen pages screenshotted whole (a 390×3000 viewport) on `main` and after were pixel-identical. The forced variant in `globals.css` stays, so a `dark:` that slips in still renders, but there is no longer any reason to write one.
