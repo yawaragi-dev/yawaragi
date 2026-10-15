@@ -85,7 +85,7 @@ export function SuggestStarterPrompts({
     >
       <h2
         id="suggest-starter-heading"
-        className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
+        className="text-sm font-medium text-zinc-300"
       >
         {t('heading')}
       </h2>
@@ -109,7 +109,7 @@ export function SuggestStarterPrompts({
                 aria-busy={isActive}
                 data-testid="suggest-starter-prompt"
                 data-active={isActive ? 'true' : undefined}
-                className="inline-flex items-center rounded-full border border-zinc-300 bg-zinc-50 px-3 py-1 text-sm text-zinc-800 transition-opacity hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-zinc-900 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40 data-[active=true]:opacity-70 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800 dark:focus-visible:ring-zinc-100"
+                className="inline-flex items-center rounded-full border px-3 py-1 text-sm transition-opacity focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40 data-[active=true]:opacity-70 border-zinc-700 bg-zinc-900 text-zinc-200 hover:bg-zinc-800 focus-visible:ring-zinc-100"
               >
                 {prompt}
               </button>

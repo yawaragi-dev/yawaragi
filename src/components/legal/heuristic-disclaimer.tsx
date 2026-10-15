@@ -72,13 +72,13 @@ export function HeuristicDisclaimerView({
         // helpful context, not an alert, so it recedes into the layout as a
         // calm neutral aside. Styling only — the title-visible + body-in-
         // tooltip structure stays (CLAUDE.md).
-        'group relative inline-flex w-fit items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400',
+        'group relative inline-flex w-fit items-center gap-1.5 text-xs text-zinc-400',
         className,
       )}
       data-testid="heuristic-disclaimer"
     >
       <span
-        className="font-medium text-zinc-700 dark:text-zinc-300"
+        className="font-medium text-zinc-300"
         data-testid="heuristic-disclaimer-title"
       >
         {title}
@@ -87,7 +87,7 @@ export function HeuristicDisclaimerView({
         type="button"
         aria-label={title}
         aria-describedby={tooltipId}
-        className="inline-flex items-center justify-center rounded-full text-zinc-400 hover:text-zinc-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 dark:text-zinc-500 dark:hover:text-zinc-300"
+        className="inline-flex items-center justify-center rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 text-zinc-500 hover:text-zinc-300"
       >
         <InfoIcon />
       </button>
@@ -101,7 +101,7 @@ export function HeuristicDisclaimerView({
           'rounded-md border border-zinc-200 bg-white px-3 py-2 leading-snug text-zinc-700 shadow-md',
           'opacity-0 transition-opacity duration-150',
           'group-hover:opacity-100 group-focus-within:opacity-100',
-          'dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300',
+          'border-zinc-700 bg-zinc-900 text-zinc-300',
         )}
         data-testid="heuristic-disclaimer-body"
       >

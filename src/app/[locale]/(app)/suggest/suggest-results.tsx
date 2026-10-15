@@ -92,7 +92,7 @@ async function SuggestCard({ suggestion }: SuggestCardProps) {
 
   return (
     <li
-      className="flex flex-col gap-2 rounded-md border border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950"
+      className="flex flex-col gap-2 rounded-md border px-4 py-3 border-zinc-800 bg-zinc-950"
       data-testid="suggest-card"
       data-brand-id={suggestion.brandId.value}
     >
@@ -109,7 +109,7 @@ async function SuggestCard({ suggestion }: SuggestCardProps) {
           {suggestion.name_ja.value}
         </Link>
         <span
-          className="text-base text-zinc-600 dark:text-zinc-400"
+          className="text-base text-zinc-400"
           lang="en"
           data-testid="suggest-card-name-romaji"
         >
@@ -118,11 +118,11 @@ async function SuggestCard({ suggestion }: SuggestCardProps) {
         <SakenowaAttribution placement="inline" />
       </div>
       <div className="flex flex-col gap-1">
-        <p className="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+        <p className="text-xs uppercase tracking-wide text-zinc-400">
           {t('reasonLabel')}
         </p>
         <p
-          className="flex items-baseline gap-2 text-sm text-zinc-800 dark:text-zinc-200"
+          className="flex items-baseline gap-2 text-sm text-zinc-200"
           data-testid="suggest-card-reason"
         >
           <span>{suggestion.reason.value}</span>
@@ -132,7 +132,7 @@ async function SuggestCard({ suggestion }: SuggestCardProps) {
       {suggestion.cross_beverage_descriptor !== undefined && (
         <div className="flex flex-col gap-2">
           <p
-            className="flex items-baseline gap-2 text-xs text-zinc-700 dark:text-zinc-300"
+            className="flex items-baseline gap-2 text-xs text-zinc-300"
             data-testid="suggest-card-cross-beverage"
           >
             <span lang="en">

@@ -380,7 +380,7 @@ export function ShibuyaRunner() {
         onPointerCancel={endHoldFromTap}
         onPointerLeave={endHoldFromTap}
         aria-label={t('canvasLabel')}
-        className="block rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 overflow-hidden cursor-pointer touch-none"
+        className="block rounded-md border border-zinc-800 bg-zinc-950 overflow-hidden cursor-pointer touch-none"
         data-testid="game-canvas-wrap"
       >
         <canvas

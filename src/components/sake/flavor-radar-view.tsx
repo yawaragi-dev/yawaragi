@@ -100,7 +100,7 @@ export function FlavorRadarView({ profile, instanceId }: FlavorRadarViewProps) {
           <polygon
             key={m}
             points={hexPointsAt(m)}
-            className="fill-none stroke-zinc-300 dark:stroke-zinc-700"
+            className="fill-none stroke-zinc-700"
             strokeWidth={1}
           />
         ))}
@@ -113,14 +113,14 @@ export function FlavorRadarView({ profile, instanceId }: FlavorRadarViewProps) {
               y1={CENTER}
               x2={tip.x}
               y2={tip.y}
-              className="stroke-zinc-300 dark:stroke-zinc-700"
+              className="stroke-zinc-700"
               strokeWidth={1}
             />
           )
         })}
         <polygon
           points={flavorRadarPolygonPoints(profile)}
-          className="fill-zinc-900/10 stroke-zinc-900 dark:fill-zinc-100/10 dark:stroke-zinc-100"
+          className="fill-zinc-100/10 stroke-zinc-100"
           strokeWidth={1.5}
           data-testid="taste-profile-sample-polygon"
         />
@@ -132,7 +132,7 @@ export function FlavorRadarView({ profile, instanceId }: FlavorRadarViewProps) {
               cx={p.x}
               cy={p.y}
               r={3}
-              className="fill-zinc-900 dark:fill-zinc-100"
+              className="fill-zinc-100"
             />
           )
         })}

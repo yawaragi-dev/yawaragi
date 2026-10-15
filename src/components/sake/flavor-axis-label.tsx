@@ -64,7 +64,7 @@ export function FlavorAxisLabelView({
       // Page palette, not Ginshu — see the note on `VARIANT` in
       // flavor-profile-view.tsx. Ginshu's text steps need their own ground.
       className={cn(
-        'text-sm font-medium text-zinc-700 dark:text-zinc-300',
+        'text-sm font-medium text-zinc-300',
         className,
       )}
       data-testid={`flavor-axis-${axis}`}

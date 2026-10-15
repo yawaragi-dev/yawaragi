@@ -39,28 +39,28 @@ export default async function ImprintPage({
           {t('title')}
         </h1>
         <p className="text-sm text-zinc-500">{t('lastUpdated')}</p>
-        <p className="text-base text-zinc-700 dark:text-zinc-300 max-w-prose">
+        <p className="text-base text-zinc-300 max-w-prose">
           {t('intro')}
         </p>
       </header>
 
       <section className="flex flex-col gap-2">
         <h2 className="text-xl font-medium">{t('providerHeading')}</h2>
-        <p className="text-base text-zinc-700 dark:text-zinc-300">
+        <p className="text-base text-zinc-300">
           {t('providerName')}
         </p>
       </section>
 
       <section className="flex flex-col gap-2">
         <h2 className="text-xl font-medium">{t('providerAddressHeading')}</h2>
-        <p className="text-base text-zinc-700 dark:text-zinc-300 whitespace-pre-line">
+        <p className="text-base text-zinc-300 whitespace-pre-line">
           {t('providerAddress')}
         </p>
       </section>
 
       <section className="flex flex-col gap-2">
         <h2 className="text-xl font-medium">{t('contactHeading')}</h2>
-        <p className="text-base text-zinc-700 dark:text-zinc-300">
+        <p className="text-base text-zinc-300">
           <span className="text-zinc-500">{t('providerEmailLabel')}: </span>
           <ProviderEmail email={t('providerEmail')} />
         </p>
@@ -68,21 +68,21 @@ export default async function ImprintPage({
 
       <section className="flex flex-col gap-2">
         <h2 className="text-xl font-medium">{t('responsibilityHeading')}</h2>
-        <p className="text-base text-zinc-700 dark:text-zinc-300 max-w-prose">
+        <p className="text-base text-zinc-300 max-w-prose">
           {t('responsibilityStatement')}
         </p>
       </section>
 
       <section className="flex flex-col gap-2">
         <h2 className="text-xl font-medium">{t('disputeResolutionHeading')}</h2>
-        <p className="text-base text-zinc-700 dark:text-zinc-300 max-w-prose">
+        <p className="text-base text-zinc-300 max-w-prose">
           {t('disputeResolutionBody')}
         </p>
       </section>
 
       <section className="flex flex-col gap-2">
         <h2 className="text-xl font-medium">{t('liabilityHeading')}</h2>
-        <p className="text-base text-zinc-700 dark:text-zinc-300 max-w-prose">
+        <p className="text-base text-zinc-300 max-w-prose">
           {t('liabilityBody')}
         </p>
       </section>
@@ -99,7 +99,7 @@ function ProviderEmail({ email }: { email: string }) {
   return (
     <a
       href={`mailto:${email}`}
-      className="underline underline-offset-4 hover:text-zinc-900 dark:hover:text-zinc-50"
+      className="underline underline-offset-4 hover:text-zinc-50"
     >
       {email}
     </a>
