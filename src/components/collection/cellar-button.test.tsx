@@ -53,6 +53,28 @@ describe('the cellar control on a bottle', () => {
     expect(screen.queryByTestId('cellar-sheet')).toBeNull()
   })
 
+  it('adds the bottles to what the scan decides when they are added, nama as the label says', async () => {
+    addToCellar.mockResolvedValue({ status: 'ok', count: 1 })
+    const resolveTarget = vi.fn().mockResolvedValue({ expressionId: 'b1' })
+    renderButton({ resolveTarget, initialNama: true })
+    fireEvent.click(screen.getByRole('button', { name: 'Add to cellar' }))
+    expect(screen.getByRole('switch', { name: /Nama/ }).getAttribute('aria-checked')).toBe('true')
+    expect(resolveTarget).not.toHaveBeenCalled()
+
+    fireEvent.click(screen.getByTestId('cellar-sheet-submit'))
+    await waitFor(() =>
+      expect(addToCellar).toHaveBeenCalledWith({ expressionId: 'b1' }, { count: 1, sizeMl: 720, nama: true }),
+    )
+  })
+
+  it('adds nothing when that bottling cannot be added', async () => {
+    renderButton({ resolveTarget: vi.fn().mockResolvedValue(null) })
+    fireEvent.click(screen.getByRole('button', { name: 'Add to cellar' }))
+    fireEvent.click(screen.getByTestId('cellar-sheet-submit'))
+    await waitFor(() => expect(sheet()).toBeTruthy())
+    expect(addToCellar).not.toHaveBeenCalled()
+  })
+
   it('will not go below one bottle', () => {
     renderButton()
     fireEvent.click(screen.getByRole('button', { name: 'Add to cellar' }))

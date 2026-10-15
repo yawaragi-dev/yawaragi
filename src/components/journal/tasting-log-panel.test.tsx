@@ -57,6 +57,27 @@ describe('§5 log panel', () => {
     expect(onSaved).toHaveBeenCalled()
   })
 
+  it('logs on the bottling the scan decides at the first tap, and only then', async () => {
+    const resolveExpressionId = vi.fn().mockResolvedValue('b1')
+    renderPanel({ resolveExpressionId })
+    expect(resolveExpressionId).not.toHaveBeenCalled()
+
+    fireEvent.click(screen.getByTestId('star-rating-4'))
+    await waitFor(() =>
+      expect(rateNewTasting).toHaveBeenCalledWith({ brandId: 7, rating: 4, expressionId: 'b1' }),
+    )
+    fireEvent.click(screen.getByTestId('star-rating-5'))
+    await waitFor(() => expect(updateTasting).toHaveBeenCalledWith('e1', { rating: 5 }))
+    expect(resolveExpressionId).toHaveBeenCalledTimes(1)
+  })
+
+  it('logs nothing when the bottling cannot be added, and says so', async () => {
+    renderPanel({ resolveExpressionId: vi.fn().mockResolvedValue(null) })
+    fireEvent.click(screen.getByTestId('star-rating-4'))
+    await waitFor(() => expect(screen.getByTestId('tasting-log-rating').textContent).not.toContain('4'))
+    expect(rateNewTasting).not.toHaveBeenCalled()
+  })
+
   it('re-rates the same entry on a second tap instead of logging another', async () => {
     renderPanel()
     fireEvent.click(screen.getByTestId('star-rating-3'))

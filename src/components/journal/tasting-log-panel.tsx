@@ -78,6 +78,7 @@ export function TastingLogPanel({
   onDone,
   existing,
   onDeleted,
+  resolveExpressionId,
 }: {
   /** The sake, or `null` for a bottling whose sake the catalogue lacks. */
   brandId: number | null
@@ -102,6 +103,12 @@ export function TastingLogPanel({
   /** Called once a tasting has been deleted. Without it the panel resets to
    *  "Your take", as after Undo. */
   onDeleted?: () => void
+  /**
+   * The bottling to log against, decided at the first tap rather than on the
+   * way in: a scan whose label names a bottling creates it then. `null` is a
+   * failure. Takes the place of `expressionId`.
+   */
+  resolveExpressionId?: () => Promise<string | null>
 }) {
   // Several panels can be open on one page (each "Edit" row opens its own).
   const uid = useId()
@@ -168,7 +175,13 @@ export function TastingLogPanel({
         changed()
         return
       }
-      const result = await rateNewTasting({ brandId, rating: value, expressionId })
+      const target = resolveExpressionId ? await resolveExpressionId() : expressionId
+      if (target === null) {
+        setRating(previous)
+        setFailed(true)
+        return
+      }
+      const result = await rateNewTasting({ brandId, rating: value, expressionId: target })
       if (result.status !== 'ok') {
         setRating(previous)
         setFailed(true)

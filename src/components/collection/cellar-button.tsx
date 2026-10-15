@@ -42,6 +42,8 @@ export function CellarButton({
   initialCount,
   alsoCounted = 0,
   refreshOnSave = true,
+  resolveTarget,
+  initialNama = false,
 }: {
   /** The sake, or the bottling, whose page this is: what "+" adds a bottle of. */
   target: CellarTarget
@@ -54,6 +56,14 @@ export function CellarButton({
   alsoCounted?: number
   /** Re-render the page after adding (off on /scan, where nothing reads the cellar). */
   refreshOnSave?: boolean
+  /**
+   * Decides what the bottles are of only when they are added: a scan whose
+   * label names a bottling creates it then, not on the way in. `null` is a
+   * failure. Without it, bottles go to `target`.
+   */
+  resolveTarget?: () => Promise<CellarTarget | null>
+  /** The sheet's nama switch to start from, e.g. when the label says nama. */
+  initialNama?: boolean
 }) {
   const t = useTranslations('cellar')
   const router = useRouter()
@@ -70,7 +80,12 @@ export function CellarButton({
   function add(values: CellarSheetValues) {
     setFailed(false)
     startTransition(async () => {
-      const result = await addToCellar(target, values)
+      const resolved = resolveTarget ? await resolveTarget() : target
+      if (!resolved) {
+        setFailed(true)
+        return
+      }
+      const result = await addToCellar(resolved, values)
       if (result.status !== 'ok') {
         setFailed(true)
         return
@@ -142,6 +157,7 @@ export function CellarButton({
           onOpenChange={setSheetOpen}
           mode="add"
           name={name}
+          {...(initialNama ? { initial: { count: 1, sizeMl: null, nama: true } } : {})}
           pending={isPending}
           failed={failed}
           onSubmit={add}
