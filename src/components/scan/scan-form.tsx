@@ -66,6 +66,7 @@ import {
 } from '@/lib/scan/downscale'
 import { scanAction } from '@/lib/scan/scan-action'
 import { readListAction } from '@/lib/scan/list-action'
+import { addOwnBottling } from '@/lib/collection/expression-actions'
 import { INITIAL_LIST_ACTION_STATE, type ListActionState } from '@/lib/scan/list-action-state'
 import { ListProblem, ListReading, ListResults } from '@/components/scan/list-results'
 import {
@@ -77,6 +78,7 @@ import {
 import { EARLIER_READ_TTL_MS, earlierReadOf } from '@/lib/scan/earlier-read'
 import { appendMatchToHistory } from '@/lib/scan/scan-history'
 import { rememberScannedPhoto } from '@/lib/scan/scanned-photo'
+import { rememberScannedBottling } from '@/lib/scan/scanned-bottling'
 import { useScanHistoryConsensus } from '@/lib/scan/use-scan-history-consensus'
 import type { Locale } from '@/i18n/routing'
 
@@ -226,6 +228,14 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
   // (design v1.7, 85): which photo and bottling it was said for, so the next
   // scan opens directly again.
   const [lineViewFor, setLineViewFor] = useState<string | null>(null)
+  /**
+   * The bottle in hand is logged as the bottling its label names, unless the
+   * visitor picked the sake as a whole for this photo (the photo it was said
+   * for, as `lineViewFor`).
+   */
+  const [anyBottlingFor, setAnyBottlingFor] = useState<string | null>(null)
+  /** Bottlings created from a label on this screen, by `brandId|name`. */
+  const [labelBottlingIds, setLabelBottlingIds] = useState<Readonly<Record<string, string>>>({})
   const tBottling = useTranslations('bottling')
   const tCard = useTranslations('scan.resultCard')
   // Per-scan timing origin. Initialized to 0 so the ref initializer
@@ -327,6 +337,15 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
         nameRomaji,
         tMs: Date.now(),
       })
+    }
+  }, [state])
+
+  // The label's bottling, for the sake page the result leads to: its "Add
+  // your bottling" starts from it (`scanned-bottling.ts`).
+  useEffect(() => {
+    if (state.status === 'matched') rememberScannedBottling(state.brandId, state.extraction.bottling)
+    else if ('bothPhotos' in state && state.bothPhotos) {
+      rememberScannedBottling(state.bothPhotos.brandId, state.extraction.bottling)
     }
   }, [state])
 
@@ -514,6 +533,156 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
       : undefined
   const fittingKey = fitting ? `${photoUrl}|${fitting.id}` : null
   const openFitting = fitting !== undefined && lineViewFor !== fittingKey
+
+  /**
+   * §5's log panel, "Add to cellar" and bottlings, for a visitor who keeps a
+   * journal. Which thing the bottle is logged against:
+   *
+   * - one of the visitor's bottlings fits the label (design v1.7, 85): that one;
+   * - the label names a bottling the visitor has not added ("Ikekame Junmai
+   *   Ginjō Nama"): that bottling, created at the first rating or bottle
+   *   added — not on the way in, so a scan that is only looked at adds
+   *   nothing. "Any {line}" logs against the sake instead. Without this, two
+   *   different bottles of one sake landed on one cellar row and one page;
+   * - otherwise the sake.
+   */
+  function logArea(matched: Extract<ScanActionState, { status: 'matched' }>) {
+    const lineName = matched.sakeRomaji ?? matched.extraction.name_romaji ?? matched.extraction.name_ja
+    const bottling = matched.extraction.bottling
+    const labelName = openFitting ? null : bottlingNameFromRead(lineName, bottling)
+    const labelKey = labelName === null ? null : `${matched.brandId}|${labelName}`
+    const onLabel = labelName !== null && anyBottlingFor !== photoUrl
+    const createdId = labelKey === null ? undefined : labelBottlingIds[labelKey]
+    const labelNama = (bottling?.styles ?? []).includes('nama')
+
+    /** The label's bottling, added the first time something is logged on it. */
+    async function labelBottlingId(): Promise<string | null> {
+      if (labelName === null || labelKey === null) return null
+      if (createdId) return createdId
+      const details = detailsFromRead(bottling)
+      const result = await addOwnBottling({
+        brandId: matched.brandId,
+        name: labelName,
+        ...(details ? { details } : {}),
+      })
+      if (result.status !== 'ok') return null
+      setLabelBottlingIds((ids) => ({ ...ids, [labelKey]: result.expressionId }))
+      return result.expressionId
+    }
+
+    const logName = openFitting ? fitting.name : onLabel ? labelName : lineName
+    const readBadge = (id: string) => (
+      <ProvenanceBadgeView
+        kind={resolveBadgeKind('llm_extracted')}
+        label={tBadge('label')}
+        explanation={tBadge('explanation')}
+        sheetTitle={tBadge('sheetTitle')}
+        closeLabel={tProvenanceSheet('closeLabel')}
+        id={id}
+      />
+    )
+
+    return (
+      // Keyed by what is logged: a rescan that lands on another sake, or a
+      // switch between the label's bottling and the sake, starts a fresh
+      // "Your take", not a re-rate of the other one's entry. No history meta
+      // before the first tap — the scan does not read the journal, and
+      // "First time for you" would be a guess.
+      <div key={openFitting ? fitting.id : `${matched.brandId}|${onLabel ? labelName : ''}`} className="flex flex-col gap-3">
+        {labelName !== null && (
+          <fieldset className="flex flex-col gap-2" data-testid="scan-log-as">
+            <div className="flex items-center justify-between gap-3">
+              <legend className="text-section-label uppercase text-ash-600">{tCard('logAs.legend')}</legend>
+              {readBadge('scan-log-as-badge')}
+            </div>
+            <div className="flex flex-col gap-1.5" role="radiogroup" aria-label={tCard('logAs.legend')}>
+              {[
+                { value: true, title: labelName, hint: tCard('logAs.labelHint'), testId: 'scan-log-as-label' },
+                { value: false, title: tCard('logAs.any', { line: lineName }), hint: tCard('logAs.anyHint'), testId: 'scan-log-as-any' },
+              ].map((option) => (
+                <button
+                  key={option.testId}
+                  type="button"
+                  role="radio"
+                  aria-checked={onLabel === option.value}
+                  onClick={() => setAnyBottlingFor(option.value ? null : photoUrl)}
+                  className={`flex min-h-12 items-center gap-3 rounded-xl border px-3.5 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600 ${
+                    onLabel === option.value ? 'border-ginshu-500 bg-ginshu-100' : 'border-ash-300 hover:bg-ash-100'
+                  }`}
+                  data-testid={option.testId}
+                >
+                  <span
+                    aria-hidden="true"
+                    className={`size-4 shrink-0 rounded-full border-2 ${
+                      onLabel === option.value ? 'border-ginshu-600 bg-ginshu-600 shadow-[inset_0_0_0_2px_var(--color-ground)]' : 'border-ash-500'
+                    }`}
+                  />
+                  <span className="flex min-w-0 flex-col">
+                    <span className="text-body font-medium text-ink">{option.title}</span>
+                    <span className="text-meta text-ash-700">{option.hint}</span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          </fieldset>
+        )}
+        <TastingLogPanel
+          brandId={matched.brandId}
+          // Design v1.7 (85): opened on the visitor's own bottling, the
+          // tasting lands on its page, not the line's.
+          {...(openFitting ? { expressionId: fitting.id } : onLabel ? { resolveExpressionId: labelBottlingId } : {})}
+          sakeName={logName}
+          chart={matched.flavorChart}
+          history={null}
+          // Nothing on /scan reads the journal, so there is nothing
+          // to refresh after a save.
+          onSaved={() => {}}
+        />
+        {/* §5's "Add to cellar" (wishlist is not built). The scan does not
+            read the cellar, so it starts at "Add to cellar"; the first tap
+            answers with the real count. */}
+        <div className="flex gap-2">
+          <CellarButton
+            target={openFitting ? { expressionId: fitting.id } : { brandId: matched.brandId }}
+            {...(!openFitting && onLabel
+              ? {
+                  resolveTarget: async () => {
+                    const id = await labelBottlingId()
+                    return id === null ? null : { expressionId: id }
+                  },
+                }
+              : {})}
+            name={logName}
+            initialNama={!openFitting && labelNama}
+            initialCount={0}
+            refreshOnSave={false}
+          />
+        </div>
+        {openFitting || (onLabel && createdId) ? (
+          <NextLink
+            href={getPathname({
+              locale,
+              href: { pathname: '/bottling/[id]', params: { id: openFitting ? fitting.id : createdId! } },
+            })}
+            className="flex min-h-11 w-fit items-center gap-1.5 text-subtle font-medium text-ginshu-700 hover:text-ginshu-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+            data-testid="scan-result-open-bottling"
+          >
+            {tCard('openBottling')}
+            <CaretRight size={14} aria-hidden="true" />
+          </NextLink>
+        ) : (
+          <ScanBottlings
+            brandId={matched.brandId}
+            lineName={lineName}
+            suggestedName={bottlingNameFromRead(lineName, bottling)}
+            readDetails={detailsFromRead(bottling)}
+            own={Array.isArray(matched.ownBottlings) ? matched.ownBottlings : []}
+            badge={readBadge('scan-bottling-read-badge')}
+          />
+        )}
+      </div>
+    )
+  }
 
   const join = (...parts: (string | null | undefined)[]) =>
     parts.filter((p): p is string => Boolean(p)).join(' · ') || null
@@ -1086,78 +1255,7 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
             // fading them tells the visitor "the previous match is
             // being replaced" without hiding their new bottle.
             isStale={isPending}
-            logPanel={
-              canLog && (
-                // Keyed by brand: a rescan that lands on another sake starts a
-                // fresh "Your take", not a re-rate of the last bottle's entry.
-                // No history meta before the first tap — the scan does not
-                // read the journal, and "First time for you" would be a guess.
-                <div key={openFitting ? fitting.id : view.brandId} className="flex flex-col gap-3">
-                  <TastingLogPanel
-                    brandId={view.brandId}
-                    // Design v1.7 (85): opened on the visitor's own bottling,
-                    // the tasting lands on its page, not the line's.
-                    {...(openFitting ? { expressionId: fitting.id } : {})}
-                    sakeName={
-                      openFitting
-                        ? fitting.name
-                        : (view.sakeRomaji ?? view.extraction.name_romaji ?? view.extraction.name_ja)
-                    }
-                    chart={view.flavorChart}
-                    history={null}
-                    // Nothing on /scan reads the journal, so there is nothing
-                    // to refresh after a save.
-                    onSaved={() => {}}
-                  />
-                  {/* §5's "Add to cellar" (wishlist is not built). The scan
-                      does not read the cellar, so it starts at "Add to
-                      cellar"; the first tap answers with the real count. */}
-                  <div className="flex gap-2">
-                    <CellarButton
-                      target={openFitting ? { expressionId: fitting.id } : { brandId: view.brandId }}
-                      name={
-                        openFitting
-                          ? fitting.name
-                          : (view.sakeRomaji ?? view.extraction.name_romaji ?? view.extraction.name_ja)
-                      }
-                      initialCount={0}
-                      refreshOnSave={false}
-                    />
-                  </div>
-                  {openFitting ? (
-                    <NextLink
-                      href={getPathname({ locale, href: { pathname: '/bottling/[id]', params: { id: fitting.id } } })}
-                      className="flex min-h-11 w-fit items-center gap-1.5 text-subtle font-medium text-ginshu-700 hover:text-ginshu-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
-                      data-testid="scan-result-open-bottling"
-                    >
-                      {tCard('openBottling')}
-                      <CaretRight size={14} aria-hidden="true" />
-                    </NextLink>
-                  ) : (
-                  <ScanBottlings
-                    brandId={view.brandId}
-                    lineName={view.sakeRomaji ?? view.extraction.name_romaji ?? view.extraction.name_ja}
-                    suggestedName={bottlingNameFromRead(
-                      view.sakeRomaji ?? view.extraction.name_romaji ?? view.extraction.name_ja,
-                      view.extraction.bottling,
-                    )}
-                    readDetails={detailsFromRead(view.extraction.bottling)}
-                    own={Array.isArray(view.ownBottlings) ? view.ownBottlings : []}
-                    badge={
-                      <ProvenanceBadgeView
-                        kind={resolveBadgeKind('llm_extracted')}
-                        label={tBadge('label')}
-                        explanation={tBadge('explanation')}
-                        sheetTitle={tBadge('sheetTitle')}
-                        closeLabel={tProvenanceSheet('closeLabel')}
-                        id="scan-bottling-read-badge"
-                      />
-                    }
-                  />
-                  )}
-                </div>
-              )
-            }
+            logPanel={canLog && logArea(view)}
           />
         )}
       </div>

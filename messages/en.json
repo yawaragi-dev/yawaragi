@@ -328,7 +328,13 @@
       "breweryNotOnLabelBody": "The label printed the name alone. The brewery shown is the one the catalogue lists for that name, not one we read, and two breweries can use the same name. If the back label names another brewery, tap “Not this one”.",
       "bottlingOf": "A bottling of {line}",
       "allBottlings": "Not this bottling? All {line} bottlings",
-      "openBottling": "Open its page"
+      "openBottling": "Open its page",
+      "logAs": {
+        "legend": "This bottle",
+        "labelHint": "As the label names it · added to your bottlings when you log it",
+        "any": "{line}, any bottling",
+        "anyHint": "Logged on the sake as a whole"
+      }
     },
     "returnHint": {
       "notThisOne": "Not the bottle you scanned?",

@@ -1,12 +1,16 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useSyncExternalStore, useTransition } from 'react'
 import { useTranslations } from 'next-intl'
 import { PlusCircle } from '@phosphor-icons/react/dist/ssr'
 import { useRouter } from '@/i18n/navigation'
 import { BottlingNameForm } from '@/components/sake/bottling-name-form'
 import { addOwnBottling } from '@/lib/collection/expression-actions'
 import type { BottlingDetails } from '@/lib/schemas/expression'
+import { bottlingNameFromRead, detailsFromRead } from '@/lib/scan/read-bottling'
+import { getScannedBottling, subscribeScannedBottling } from '@/lib/scan/scanned-bottling'
+import { ProvenanceBadgeView } from '@/components/sake/provenance-badge-view'
+import { resolveBadgeKind } from '@/lib/provenance/policy'
 
 /**
  * §9's dashed "Add your bottling" row (design v1.6.1, screenshots 63 and 55):
@@ -21,8 +25,8 @@ import type { BottlingDetails } from '@/lib/schemas/expression'
 export function AddBottlingRow({
   brandId,
   lineName,
-  suggestedName,
-  readDetails,
+  suggestedName: givenName,
+  readDetails: givenDetails,
 }: {
   brandId: number
   lineName: string
@@ -37,12 +41,24 @@ export function AddBottlingRow({
 }) {
   const t = useTranslations('bottling')
   const router = useRouter()
+  // On the sake's page, a scan that led here may have read the bottling off
+  // the label; without a name from the caller, start from that.
+  const scanned = useSyncExternalStore(
+    subscribeScannedBottling,
+    () => (givenName === undefined ? getScannedBottling(brandId) : null),
+    () => null,
+  )
+  const scannedName = givenName === undefined ? bottlingNameFromRead(lineName, scanned ?? undefined) : null
+  const suggestedName = givenName ?? scannedName ?? undefined
+  const tBadge = useTranslations('provenance.badge.llmExtracted')
+  const tSheet = useTranslations('provenance.sheet')
+  const readDetails = givenDetails ?? (scanned ? detailsFromRead(scanned) : undefined)
   const [open, setOpen] = useState(false)
   const [failed, setFailed] = useState(false)
   const [pending, startTransition] = useTransition()
 
   if (!open) {
-    return (
+    const row = (
       <button
         type="button"
         onClick={() => setOpen(true)}
@@ -59,6 +75,26 @@ export function AddBottlingRow({
           </span>
         </span>
       </button>
+    )
+    if (!scannedName) return row
+    // The name was read off a label by the model, so it carries the badge
+    // every value read by AI does — beside the row, since the badge is a
+    // button of its own and cannot sit inside this one.
+    return (
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center justify-between gap-3" data-testid="add-bottling-read">
+          <span className="text-section-label uppercase text-ash-600">{t('readOffLabel')}</span>
+          <ProvenanceBadgeView
+            kind={resolveBadgeKind('llm_extracted')}
+            label={tBadge('label')}
+            explanation={tBadge('explanation')}
+            sheetTitle={tBadge('sheetTitle')}
+            closeLabel={tSheet('closeLabel')}
+            id={`add-bottling-${brandId}`}
+          />
+        </div>
+        {row}
+      </div>
     )
   }
 

@@ -328,7 +328,13 @@
       "breweryNotOnLabelBody": "Auf dem Etikett stand nur der Name. Die angezeigte Brauerei ist die, die der Katalog für diesen Namen führt, nicht eine, die wir gelesen haben, und zwei Brauereien können denselben Namen verwenden. Steht auf dem Rückenetikett eine andere Brauerei, tippe auf „Nicht dieser“.",
       "bottlingOf": "Eine Abfüllung von {line}",
       "allBottlings": "Nicht diese Abfüllung? Alle Abfüllungen von {line}",
-      "openBottling": "Seite öffnen"
+      "openBottling": "Seite öffnen",
+      "logAs": {
+        "legend": "Diese Flasche",
+        "labelHint": "So, wie das Etikett sie nennt · kommt beim Eintragen zu deinen Abfüllungen",
+        "any": "{line}, irgendeine Abfüllung",
+        "anyHint": "Eingetragen beim Sake als Ganzem"
+      }
     },
     "returnHint": {
       "notThisOne": "Nicht die Flasche, die du gescannt hast?",

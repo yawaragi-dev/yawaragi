@@ -422,6 +422,94 @@ test.describe('scan result branches (#109 PR B)', () => {
     await context.close()
   })
 
+  test('a label that names a bottling the visitor has not added logs that bottle as it, not as the whole sake', async ({
+    browser,
+  }, testInfo) => {
+    testInfo.skip(!dbUp, 'Sakenowa mirror not available — DB-bound spec')
+    // Brand 1, 新十津川. The stub's own bottling of it ("Shintotsukawa Nama
+    // 2025") does not fit a junmai daiginjo nama with no product name.
+    const { context, page } = await scanPageWith(browser, [
+      injectionCookie({
+        name_ja: '新十津川',
+        brewery_ja: '金滴酒造',
+        confidence: 0.92,
+        bottling: { grade: 'junmai_daiginjo' },
+      }),
+      { name: 'yawaragi_journal_stub', value: 'populated', url: BASE_URL },
+    ])
+    await page.goto('/en/scan')
+    await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
+    await expect(page.getByTestId('scan-result-card')).toBeVisible()
+    const logAs = page.getByTestId('scan-log-as')
+    await logAs.waitFor({ state: 'visible' }).catch(() => {})
+    testInfo.skip(!(await logAs.isVisible()), '新十津川 / 金滴酒造 no longer resolves to brand 1 in the mirror')
+
+    // The label's bottling is what the bottle is logged as, unless changed.
+    const onLabel = page.getByTestId('scan-log-as-label')
+    await expect(onLabel).toContainText('Shintotsukawa Junmai Daiginjō')
+    await expect(onLabel).toHaveAttribute('aria-checked', 'true')
+    await expect(logAs.getByRole('button', { name: /Read by AI/ })).toBeVisible()
+
+    await page.getByTestId('scan-log-as-any').click()
+    await expect(page.getByTestId('scan-log-as-any')).toHaveAttribute('aria-checked', 'true')
+    await expect(onLabel).toHaveAttribute('aria-checked', 'false')
+    await onLabel.click()
+    await expect(onLabel).toHaveAttribute('aria-checked', 'true')
+
+    // "Add to cellar" names the bottling it adds to.
+    await page.getByTestId('cellar-add').click()
+    await expect(page.getByTestId('cellar-sheet')).toContainText('Shintotsukawa Junmai Daiginjō')
+    await context.close()
+  })
+
+  test('a label that says nama starts "Add to cellar" on nama', async ({ browser }, testInfo) => {
+    testInfo.skip(!dbUp, 'Sakenowa mirror not available — DB-bound spec')
+    const { context, page } = await scanPageWith(browser, [
+      injectionCookie({
+        name_ja: '新十津川',
+        brewery_ja: '金滴酒造',
+        confidence: 0.92,
+        bottling: { grade: 'junmai_ginjo', styles: ['nama'] },
+      }),
+      { name: 'yawaragi_journal_stub', value: 'populated', url: BASE_URL },
+    ])
+    await page.goto('/en/scan')
+    await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
+    await expect(page.getByTestId('scan-result-card')).toBeVisible()
+    const add = page.getByTestId('cellar-add')
+    await add.waitFor({ state: 'visible' }).catch(() => {})
+    testInfo.skip(!(await add.isVisible()), '新十津川 / 金滴酒造 no longer resolves to brand 1 in the mirror')
+    await add.click()
+    await expect(page.getByRole('switch', { name: /Nama/ })).toHaveAttribute('aria-checked', 'true')
+    await context.close()
+  })
+
+  test('the sake page a scan leads to offers the bottling the label named', async ({ browser }, testInfo) => {
+    testInfo.skip(!dbUp, 'Sakenowa mirror not available — DB-bound spec')
+    const { context, page } = await scanPageWith(browser, [
+      injectionCookie({
+        name_ja: '新十津川',
+        brewery_ja: '金滴酒造',
+        confidence: 0.92,
+        bottling: { grade: 'junmai_daiginjo' },
+      }),
+      { name: 'yawaragi_journal_stub', value: 'populated', url: BASE_URL },
+    ])
+    await page.goto('/en/scan')
+    await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
+    await expect(page.getByTestId('scan-result-card')).toBeVisible()
+    const logAs = page.getByTestId('scan-log-as')
+    await logAs.waitFor({ state: 'visible' }).catch(() => {})
+    testInfo.skip(!(await logAs.isVisible()), '新十津川 / 金滴酒造 no longer resolves to brand 1 in the mirror')
+
+    await page.getByTestId('scan-result-open-detail').click()
+    await page.waitForURL(/\/en\/sake\/1\?from=scan$/)
+    // Before, "Add your bottling" here started from the bare "Shintotsukawa".
+    await expect(page.getByTestId('add-bottling-hint')).toHaveText('Shintotsukawa Junmai Daiginjō')
+    await expect(page.getByTestId('add-bottling-read').getByRole('button', { name: /Read by AI/ })).toBeVisible()
+    await context.close()
+  })
+
   test('a bottle whose label says shochu is called shochu, not matched to the maker’s sake', async ({ browser }) => {
     // No catalogue needed: the lookup is not asked. 濱田酒造 is in the
     // catalogue for its sake, which is what this bottle used to come back as.
