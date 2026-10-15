@@ -46,6 +46,8 @@ export type PublicTable =
   // the triggers on brands/breweries today; listed so a future reader is
   // routed correctly.
   | 'name_romaji_overrides'
+  // 0018: curated brewery for a misfiled sake; read only by its trigger.
+  | 'brand_brewery_overrides'
 
 /**
  * Tables whose rows are scoped to a single Clerk user. Reads/writes MUST
