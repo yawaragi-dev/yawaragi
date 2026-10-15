@@ -618,3 +618,46 @@ describe("resolveScannedLabel — the label's other names", () => {
     expect(result).toEqual({ kind: 'exact', sake: DASSAI_BRAND })
   })
 })
+
+describe('resolveScannedLabel — an unlisted sake of a brewery the catalogue knows (#420)', () => {
+  const NISEKO_BREWERY: Brewery = {
+    breweryId: 923,
+    name: '二世古酒造',
+    nameKanji: '二世古酒造',
+    nameRomaji: 'Niseko Shuzo',
+    areaId: 1,
+    source: 'sakenowa',
+  }
+  const NISEKO: Brand = { brandId: 1611, name: 'Niseko', nameKanji: '二世古', nameRomaji: 'Niseko', breweryId: 923, source: 'sakenowa' }
+  const breweryOnly = (extracted: string): FindSakeByExtractionResult => ({
+    kind: 'matched_brewery_only',
+    sake: NISEKO,
+    brewery: NISEKO_BREWERY,
+    brandDivergence: { extracted, stored: '二世古' },
+    query: { nameJa: extracted, breweryJa: '二世古酒造' },
+  })
+
+  it('answers "not in the catalogue" when nothing on the label names the brewery’s one sake', async () => {
+    const result = await resolveScannedLabel(
+      label({ name_ja: '京極', brewery_ja: '二世古酒造', confidence: 0.8, other_names: ['名水辛口'] }),
+      fakeExecutor({ byExtraction: breweryOnly('京極') }),
+    )
+    expect(result.kind).toBe('no_match')
+  })
+
+  it('keeps the brewery’s sake when the name read is part of its name', async () => {
+    const result = await resolveScannedLabel(
+      label({ name_ja: '世古', brewery_ja: '二世古酒造', confidence: 0.8 }),
+      fakeExecutor({ byExtraction: breweryOnly('世古') }),
+    )
+    expect(result.kind).toBe('matched_brewery_only')
+  })
+
+  it('keeps it when the name read is the brewery’s own house name', async () => {
+    const result = await resolveScannedLabel(
+      label({ name_ja: '二世古', brewery_ja: '二世古酒造', confidence: 0.8 }),
+      fakeExecutor({ byExtraction: { ...breweryOnly('二世古'), sake: { ...NISEKO, nameKanji: 'にせこ' } } }),
+    )
+    expect(result.kind).toBe('matched_brewery_only')
+  })
+})
