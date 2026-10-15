@@ -31,6 +31,14 @@ import { markSignInPending } from '@/lib/auth/sign-in-pending'
  */
 const SOCIAL_BUTTON = '.cl-socialButtonsBlockButton, .cl-socialButtonsIconButton'
 
+/** Shared with `<SignInInPlace />`'s modal: no public sign-up (ADR-0020). */
+export const SIGN_IN_APPEARANCE = {
+  elements: {
+    // Hide the footer that links to sign-up.
+    footerAction: { display: 'none' },
+  },
+}
+
 export function SignInCard({ fallbackRedirectUrl }: { fallbackRedirectUrl: string }) {
   return (
     // A click on "Continue with Google" leaves the app, and the way back is a
@@ -51,12 +59,7 @@ export function SignInCard({ fallbackRedirectUrl }: { fallbackRedirectUrl: strin
         // dropped the visitor on a different tab. Most visible with Google: the
         // round trip through Google's pages leaves nothing to go "back" to.
         fallbackRedirectUrl={fallbackRedirectUrl}
-        appearance={{
-          elements: {
-            // No public sign-up (ADR-0020) — hide the footer that links to it.
-            footerAction: { display: 'none' },
-          },
-        }}
+        appearance={SIGN_IN_APPEARANCE}
       />
     </div>
   )

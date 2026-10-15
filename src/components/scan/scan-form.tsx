@@ -54,6 +54,7 @@ import { OtherCandidates } from '@/components/scan/other-candidates'
 import { ScanBottlings } from '@/components/scan/scan-bottlings'
 import { bottlingNameFromRead, detailsFromRead, gradeLabel } from '@/lib/scan/read-bottling'
 import NextLink from 'next/link'
+import { SignInInPlace } from '@/components/auth/sign-in-in-place'
 import { ScanOutcome, readName, type OutcomeCandidate } from '@/components/scan/scan-outcome'
 import { ScanResultCard } from '@/components/scan/scan-result-card'
 import type { DebugEvent } from '@/lib/debug/debug-log'
@@ -847,16 +848,17 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
               </button>
             )}
             {list && ranking === 'signIn' && (
-              // The sign-in page returns to the camera. The photo is not kept
-              // across it (memory only), so the visitor shoots the list again.
-              <NextLink
+              // Sign-in opens over this screen, so the photo (memory only)
+              // is still here afterwards and "Rank these for you" takes its
+              // place. Only the no-JS fallback goes to the sign-in page.
+              <SignInInPlace
                 href={`${getPathname({ locale, href: '/sign-in' })}?redirect_url=${encodeURIComponent(getPathname({ locale, href: '/scan' }))}`}
                 className="flex min-h-11 items-center justify-center gap-2 rounded-xl border-[1.5px] border-ginshu-400 px-4 text-body font-medium text-ginshu-700 transition-colors hover:bg-ginshu-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
                 data-testid="scan-outcome-sign-in-to-rank"
               >
                 <UserCircle size={18} aria-hidden="true" />
                 {tOutcome('notOneBottle.signInToRank')}
-              </NextLink>
+              </SignInInPlace>
             )}
           </ScanOutcome>
         )
