@@ -103,14 +103,31 @@ export function CameraCapture({
   const [torchAvailable, setTorchAvailable] = useState(false)
   const [torchOn, setTorchOn] = useState(false)
 
+  /**
+   * The mount that may hold a stream. Each mount gets its own token, so a
+   * stream opened for a mount that has since gone is stopped, not kept.
+   */
+  const mountRef = useRef<object | null>(null)
+
   const start = useCallback(async () => {
     if (!canUseLiveCamera()) {
       setState('unavailable')
       return
     }
     setState('starting')
+    const mount = mountRef.current
     try {
       const stream = await navigator.mediaDevices.getUserMedia(CAMERA_CONSTRAINTS)
+      // The camera takes a moment to open. If the screen went meanwhile — a
+      // photo picked from the library first, or React mounting it twice in
+      // development, whose first mount is gone before its stream opens — nothing else holds this stream, and the camera light
+      // stayed on until the browser collected it, a minute or so later.
+      if (mount === null || mountRef.current !== mount) {
+        stopStream(stream)
+        return
+      }
+      // "Try again" while a stream is open: keep one.
+      stopStream(streamRef.current)
       streamRef.current = stream
       if (videoRef.current) {
         videoRef.current.srcObject = stream
@@ -130,9 +147,12 @@ export function CameraCapture({
     // cascading-render smell, which is the right default; this is the
     // documented pattern for an SSR-safe browser-API read on mount, same as
     // `<ShibuyaRunner />`'s `matchMedia` read. One cascading render on mount.
+    const mount = {}
+    mountRef.current = mount
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void start()
     return () => {
+      if (mountRef.current === mount) mountRef.current = null
       stopStream(streamRef.current)
       streamRef.current = null
     }
