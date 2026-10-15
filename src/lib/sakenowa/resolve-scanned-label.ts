@@ -218,7 +218,11 @@ export async function resolveScannedLabel(
     tier,
   })
 
-  const { resolved, corroborated } = await withOtherNames(label, await resolveByShape(label, executor), executor)
+  const shaped = await withOtherNames(label, await resolveByShape(label, executor), executor)
+  const { corroborated } = shaped
+  const resolved = shaped.resolved.kind === 'matched_brewery_only' && !corroborated && !nameRelatesTo(label, shaped.resolved)
+    ? strangerOfTheBrewery(shaped.resolved)
+    : shaped.resolved
   if (tier === 'retry' && resolved.kind !== 'low_confidence' && !bothFieldsAgree(resolved) && !corroborated) {
     debugAdd(
       'ScanAction',
@@ -227,6 +231,41 @@ export async function resolveScannedLabel(
     return { kind: 'low_confidence' }
   }
   return resolved
+}
+
+/**
+ * #420: the brewery was found, and the one sake it was matched to is not
+ * named by anything the label prints — not the name read, not another name,
+ * not the brewery's own house name. Then it is another sake of a brewery the
+ * catalogue knows, and "not in the catalogue" is the honest answer; the
+ * brewery's sakes still reach the visitor as "Did you mean" ("Same
+ * brewery"). Before, a brewery with one sake in the catalogue had that sake
+ * offered as if it were the bottle: 京極 by 二世古酒造 came back as 二世古.
+ */
+function strangerOfTheBrewery(
+  resolved: Extract<ResolveScannedLabelResult, { kind: 'matched_brewery_only' }>,
+): ResolveScannedLabelResult {
+  debugAdd('ScanAction', `brewery found, but nothing on the label names its sake "${resolved.sake.nameKanji}" — answering no_match`, {
+    read: resolved.brandDivergence.extracted,
+  })
+  return { kind: 'no_match', query: resolved.query }
+}
+
+/** Does any name on the label name this sake, or part of it, or the house it comes from? */
+function nameRelatesTo(
+  label: ScannedLabel,
+  resolved: Extract<ResolveScannedLabelResult, { kind: 'matched_brewery_only' }>,
+): boolean {
+  const { sake, brewery } = resolved
+  // A one-character name is a misread, not a name (the single-character
+  // rescue above): it says nothing against the brewery's sake.
+  if (looksLikeSingleCharHallucination(label.name_ja)) return true
+  return [label.name_ja, ...otherNamesOf(label)].some(
+    (name) =>
+      namesBrand(name, sake) ||
+      namesOverlapping(name, [sake.nameKanji]).length > 0 ||
+      (Array.from(name).length >= 2 && brewery.nameKanji.includes(name)),
+  )
 }
 
 /**
@@ -369,7 +408,17 @@ async function withOtherNames(
   executor: ScannedLabelLookupExecutor,
 ): Promise<WithOtherNames> {
   const otherNames = otherNamesOf(label)
-  if (otherNames.length === 0) return { resolved, corroborated: false }
+  if (otherNames.length === 0) {
+    // #420, the brewery with several sakes: the same answer as for one
+    // (`strangerOfTheBrewery`). Before, 京極 by 二世古酒造 was "Which one is
+    // it?" between 二世古 and 倶知安 — a list the label fits none of. A
+    // one-character name is a misread, not a name, and keeps the list.
+    const unlisted =
+      resolved.kind === 'ambiguous' &&
+      !looksLikeSingleCharHallucination(label.name_ja) &&
+      (await isAnotherSakeOfTheBrewery(label, resolved, executor))
+    return { resolved: unlisted ? { kind: 'no_match', query: resolved.query } : resolved, corroborated: false }
+  }
 
   if (resolved.kind === 'exact' || resolved.kind === 'matched_brand_only' || resolved.kind === 'matched_brewery_only') {
     const sameSakeAgain = otherNames.some((name) => namesBrand(name, resolved.sake))
