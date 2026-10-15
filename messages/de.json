@@ -1729,5 +1729,17 @@
     "body": "Der Sake-Katalog ist vielleicht kurz nicht erreichbar. Versuch es in ein paar Sekunden noch einmal oder geh zurück zur Startseite.",
     "retry": "Noch einmal versuchen",
     "home": "Zur Startseite"
+  },
+  "sampleCollection": {
+    "bannerTitle": "Eine Beispielsammlung",
+    "bannerBody": "Erfundene Verkostungen echter Sakes. Hier wird nichts gespeichert.",
+    "leave": "Verlassen",
+    "enter": "Eine Beispielsammlung ansehen",
+    "notes": {
+      "hanaabi": "Ananas und weiße Traube, sanfte Süße, ein kurzer, klarer Abgang.",
+      "jikonOmachi": "Runder als der mit Yamada Nishiki: Reis, Melone, am Ende etwas Säure.",
+      "shirakawago": "Dick und süß, ein Nigori. Nichts für mich, zumindest nicht kalt.",
+      "aramasa": "Kräftige Säure, fast wie ein Weißwein. Nächstes Mal zum Essen."
+    }
   }
 }

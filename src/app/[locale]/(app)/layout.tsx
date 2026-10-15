@@ -6,6 +6,8 @@ import { LegalFooter } from '@/components/layout/legal-footer'
 import { NoticeHost } from '@/components/journal/undo-notice'
 import { DeletedBottlingNotice } from '@/components/sake/deleted-bottling-notice'
 import { TabBar, type TabBarMessages } from '@/components/layout/tab-bar'
+import { SampleCollectionBanner } from '@/components/demo/sample-collection-banner'
+import { isViewingSample } from '@/lib/demo/sample-mode'
 
 /**
  * The app shell — design v1.4 § "App structure" and rule 11.
@@ -42,7 +44,9 @@ import { TabBar, type TabBarMessages } from '@/components/layout/tab-bar'
  */
 export default async function AppShellLayout({ children }: { children: React.ReactNode }) {
   const t = await getTranslations('tabs')
-  const { consent } = getComplianceState(await cookies())
+  const cookieJar = await cookies()
+  const { consent } = getComplianceState(cookieJar)
+  const viewingSample = await isViewingSample(cookieJar)
 
   const messages: TabBarMessages = {
     navLabel: t('navLabel'),
@@ -66,6 +70,7 @@ export default async function AppShellLayout({ children }: { children: React.Rea
           this device, browser toolbars included. §4's camera does. Size
           containment is safe here: the pane's own size comes from the flex
           column, never from its content. */}
+      {viewingSample && <SampleCollectionBanner />}
       <main
         className="min-h-0 flex-1 overflow-y-auto overflow-x-clip overscroll-contain [container-type:size]"
         data-app-pane=""

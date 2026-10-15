@@ -23,9 +23,12 @@ interface TabPlaceholderProps {
   body: string
   /** Where the visitor can actually go instead. */
   link: { href: '/profile'; label: string }
+  /** A way to see the screen with something in it: the sample collection.
+   *  A plain href — following it sets a cookie, which a prefetch must not. */
+  sample?: { href: string; label: string }
 }
 
-export function TabPlaceholder({ title, body, link }: TabPlaceholderProps) {
+export function TabPlaceholder({ title, body, link, sample }: TabPlaceholderProps) {
   return (
     <div data-testid="tab-placeholder">
       <div className="flex flex-col gap-3 rounded-xl bg-surface p-5 shadow-yw-sm">
@@ -46,6 +49,15 @@ export function TabPlaceholder({ title, body, link }: TabPlaceholderProps) {
         >
           {link.label}
         </Link>
+        {sample && (
+          <a
+            href={sample.href}
+            className="self-start rounded-sm text-body font-medium text-ginshu-700 underline underline-offset-4 hover:text-ginshu-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+            data-testid="tab-placeholder-sample"
+          >
+            {sample.label}
+          </a>
+        )}
       </div>
     </div>
   )

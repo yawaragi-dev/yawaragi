@@ -1729,5 +1729,17 @@
     "body": "The sake catalogue may be out of reach for a moment. Try again in a few seconds, or go back home.",
     "retry": "Try again",
     "home": "Back to Home"
+  },
+  "sampleCollection": {
+    "bannerTitle": "A sample collection",
+    "bannerBody": "Made-up tastings of real sakes. Nothing here is saved.",
+    "leave": "Leave",
+    "enter": "Look through a sample collection",
+    "notes": {
+      "hanaabi": "Pineapple and white grape, a soft sweetness, a short clean finish.",
+      "jikonOmachi": "Rounder than the Yamada Nishiki one: rice, melon, a little acidity at the end.",
+      "shirakawago": "Thick and sweet, a nigori. Not for me, at least not cold.",
+      "aramasa": "Sharp acidity, almost like a white wine. With food next time."
+    }
   }
 }

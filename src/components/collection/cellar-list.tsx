@@ -24,9 +24,12 @@ import { cn } from '@/lib/utils'
 export async function CellarList({
   rows,
   now,
+  readOnly = false,
 }: {
   rows: readonly CellarBottle[]
   now: number
+  /** The sample collection: the rows, with no way to open, pour or edit. */
+  readOnly?: boolean
 }) {
   const t = await getTranslations('cellar')
 
@@ -115,15 +118,17 @@ export async function CellarList({
                       ? t('drinkSoon', { days: f.days })
                       : t(row.nama ? 'openNama' : 'open', { days: f.days })}
                 </span>
-                <CellarRowActions
-                  target={row.expression ? { expressionId: row.expression.id } : { brandId: row.brandId! }}
-                  rowKey={rowKey}
-                  name={name}
-                  isOpen={f.kind === 'open'}
-                  count={row.count}
-                  sizeMl={row.sizeMl}
-                  nama={row.nama}
-                />
+                {!readOnly && (
+                  <CellarRowActions
+                    target={row.expression ? { expressionId: row.expression.id } : { brandId: row.brandId! }}
+                    rowKey={rowKey}
+                    name={name}
+                    isOpen={f.kind === 'open'}
+                    count={row.count}
+                    sizeMl={row.sizeMl}
+                    nama={row.nama}
+                  />
+                )}
               </span>
             </li>
           )

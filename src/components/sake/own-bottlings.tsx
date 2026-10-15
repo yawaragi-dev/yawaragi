@@ -24,6 +24,7 @@ export async function OwnBottlings({
   lineName,
   bottlings,
   tastedIds,
+  readOnly = false,
 }: {
   brandId: number
   /** The sake's name as the page shows it; it prefills the form. */
@@ -32,12 +33,14 @@ export async function OwnBottlings({
   bottlings: readonly Expression[]
   /** Which of them have a tasting logged. */
   tastedIds: ReadonlySet<string>
+  /** The sample collection: list the bottlings, offer no way to add one. */
+  readOnly?: boolean
 }) {
   const t = await getTranslations('bottling')
-  const add = <AddBottlingRow brandId={brandId} lineName={lineName} />
+  const add = readOnly ? null : <AddBottlingRow brandId={brandId} lineName={lineName} />
 
   if (bottlings.length === 0) {
-    return <div data-testid="bottle-bottlings">{add}</div>
+    return add && <div data-testid="bottle-bottlings">{add}</div>
   }
 
   return (
@@ -68,7 +71,7 @@ export async function OwnBottlings({
           </li>
         ))}
       </ul>
-      <div className="pt-2">{add}</div>
+      {add && <div className="pt-2">{add}</div>}
     </BottleSection>
   )
 }

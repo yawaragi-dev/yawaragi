@@ -73,7 +73,7 @@ export default async function BottlingPage({ params, searchParams }: PageProps) 
   setRequestLocale(locale)
 
   const viewer = await resolveViewerJournal(await cookies())
-  const bottling = viewer.canLog ? viewer.expressions.find((e) => e.id === id) : undefined
+  const bottling = viewer.canView ? viewer.expressions.find((e) => e.id === id) : undefined
   if (!bottling) notFound()
   const { brandId, line } = bottling
 
@@ -181,27 +181,30 @@ export default async function BottlingPage({ params, searchParams }: PageProps) 
       </section>
 
       {/* -- §9a.3 Action row: §9's, without "Similar" ---------------------- */}
-      <BottleRateRow
-        brandId={brandId}
-        expressionId={bottling.id}
-        sakeName={bottling.name}
-        chart={chart}
-        history={
-          lastTasting && lastTasting.event.kind === 'rating'
-            ? { kind: 'last', triedAt: lastTasting.triedAt, rating: lastTasting.event.rating }
-            : { kind: 'first' }
-        }
-        similar={null}
-        // §9a: the count is this bottling's own row.
-        cellar={
-          <CellarButton
-            target={{ expressionId: bottling.id }}
-            name={bottling.name}
-            initialCount={bottlesOf(viewer.cellar, { expressionId: bottling.id })}
-          />
-        }
-        initiallyOpen={rateNow}
-      />
+      {/* The sample collection is read-only: no rating, no cellar, no rename. */}
+      {viewer.canLog && (
+        <BottleRateRow
+          brandId={brandId}
+          expressionId={bottling.id}
+          sakeName={bottling.name}
+          chart={chart}
+          history={
+            lastTasting && lastTasting.event.kind === 'rating'
+              ? { kind: 'last', triedAt: lastTasting.triedAt, rating: lastTasting.event.rating }
+              : { kind: 'first' }
+          }
+          similar={null}
+          // §9a: the count is this bottling's own row.
+          cellar={
+            <CellarButton
+              target={{ expressionId: bottling.id }}
+              name={bottling.name}
+              initialCount={bottlesOf(viewer.cellar, { expressionId: bottling.id })}
+            />
+          }
+          initiallyOpen={rateNow}
+        />
+      )}
 
       {/* -- §9a.4 You and this bottling ------------------------------------ */}
       <BottleHistory
@@ -210,6 +213,7 @@ export default async function BottlingPage({ params, searchParams }: PageProps) 
         entries={tastings}
         locale={locale}
         subject="bottling"
+        readOnly={!viewer.canLog}
       />
 
       {/* -- §9a.7 Other bottlings in this line ----------------------------- */}
@@ -243,14 +247,16 @@ export default async function BottlingPage({ params, searchParams }: PageProps) 
       )}
 
       {/* -- "This bottling" (v1.6.2): rename, delete — the last section ---- */}
-      <BottlingManage
-        expressionId={bottling.id}
-        name={bottling.name}
-        brewery={bottling.brewery}
-        details={{ grade: bottling.grade, styles: bottling.styles, polishingPct: bottling.polishingPct }}
-        sake={brandId !== null && lineName !== null ? { brandId, name: lineName } : null}
-        {...bottlingHoldings(bottling, { entries: viewer.entries, cellar: viewer.cellar })}
-      />
+      {viewer.canLog && (
+        <BottlingManage
+          expressionId={bottling.id}
+          name={bottling.name}
+          brewery={bottling.brewery}
+          details={{ grade: bottling.grade, styles: bottling.styles, polishingPct: bottling.polishingPct }}
+          sake={brandId !== null && lineName !== null ? { brandId, name: lineName } : null}
+          {...bottlingHoldings(bottling, { entries: viewer.entries, cellar: viewer.cellar })}
+        />
+      )}
     </main>
   )
 }
