@@ -967,7 +967,17 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
           // first scan has nothing to be read together with.
           notice={
             earlierRead && resultDismissed
-              ? { testId: 'scan-camera-both-photos', text: tOutcome('bothPhotos.cameraNotice') }
+              ? {
+                  testId: 'scan-camera-both-photos',
+                  text: tOutcome('bothPhotos.cameraNotice'),
+                  // The visitor knows this photo is of another bottle: the
+                  // last read is let go now, as the timer would later.
+                  action: {
+                    label: tOutcome('bothPhotos.dont'),
+                    ariaLabel: tOutcome('bothPhotos.dontAria'),
+                    onClick: () => setExpiredState(state),
+                  },
+                }
               : null
           }
         />

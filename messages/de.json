@@ -822,7 +822,9 @@
     "bothPhotos": {
       "label": "Aus beiden Fotos",
       "reason": "Dein letztes Foto und dieses passen zu diesem Sake",
-      "cameraNotice": "Dieses Foto wird zusammen mit deinem letzten gelesen."
+      "cameraNotice": "Dieses Foto wird zusammen mit deinem letzten gelesen.",
+      "dont": "Nicht",
+      "dontAria": "Das nächste Foto für sich lesen"
     },
     "brandOnly": {
       "kicker": "Teilweise gefunden",
