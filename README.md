@@ -2,9 +2,11 @@
 
 [![CI](https://github.com/yawaragi-dev/yawaragi/actions/workflows/ci.yml/badge.svg)](https://github.com/yawaragi-dev/yawaragi/actions/workflows/ci.yml)
 
-A sake companion. Three flagship surfaces: **label scan**, **chat recommender**, **taste profile**.
+A sake companion for people who can't read the label. Point the camera at a bottle, a menu or a shop shelf; Yawaragi tells you what it is, what it tastes like, and — once you have rated a few — which one on the list is for you.
 
-**Live:** <https://yawaragi.dev> — English preview is live. German edition is intentionally on a coming-soon page until the Impressum (§5 DDG) is in place; see [ADR-0008](./docs/adr/0008-en-first-launch-strategy.md).
+**Live:** <https://yawaragi.dev> — English is live. German is on a coming-soon page until the Impressum (§5 DDG) is in place; see [ADR-0008](./docs/adr/0008-en-first-launch-strategy.md).
+
+> *Yawaragi-mizu* (和らぎ水) is the water drunk between sake sips — a palate reset, not a replacement. This app accompanies and clarifies; it doesn't compete with the sake.
 
 <!-- progress:start -->
 
@@ -20,65 +22,85 @@ _Snapshot generated 2026-10-15 from GitHub Issues + merged PRs. Regenerate with 
 
 <!-- progress:end -->
 
-> *Yawaragi-mizu* (和らぎ水) is the water drunk between sake sips — a palate reset, not a replacement. This app accompanies and clarifies; it doesn't compete with the sake.
+## What it does
 
-Previously named "Kanpai"; renamed to avoid collision with [KANPAI London Craft Sake Brewery](https://kanpai.london/). Decision and rationale in [`docs/adr/0004-project-name-yawaragi.md`](./docs/adr/0004-project-name-yawaragi.md). Full naming research: [`docs/NAMING-RESEARCH.md`](./docs/NAMING-RESEARCH.md).
+**For anyone (after the 18+ gate):**
+
+- **Scan a label.** A photo of the front, the side or the importer's German back label is read by a vision model and matched against a mirror of the Sakenowa catalogue (about 3,300 sakes). A sure match shows the sake, its brewery, a six-axis flavor chart and what the label itself says (grade, styles, polishing). Everything else gets an honest answer instead of a guess: "Best guess" with the other candidates, "Did you mean", "not in the catalogue", "not sake" (shochu, awamori, umeshu), "a menu", "several bottles", "no name on this side".
+- **Type it.** Search by kanji, kana or Latin spelling.
+- **The bottle page.** Flavor chart, similar sakes (cosine similarity over the six axes, no model call), the brewery and its other sakes.
+- **Learn.** Eighteen hand-written entries — reading a label, the grades, polishing, nama, serving temperatures, the six flavor words — each with named sources.
+
+**With an account (a private beta today, see [ADR-0020](./docs/adr/0020-tasting-journal-spine-and-maintainer-only-persistence.md)):**
+
+- **Journal.** One-tap star rating from the scan result, quick tags, detailed notes, edit and undo.
+- **Palate.** A taste profile derived from the journal, with the axes you lean towards in words.
+- **Cellar.** The bottles you have at home — count, size, nama, the open bottle on a row of its own, and when a nama is best finished.
+- **Your own bottlings.** The catalogue knows a sake, not its bottlings; add the one you have (grade, styles, polishing — pre-filled from the label you just scanned), and log tastings and bottles against it.
+- **Menu and shelf ranking.** Photograph a drinks menu or a shop shelf; every sake on it is read, matched and ranked against your journal, with the reason in words ("Just as rich and dry, less floral").
+
+## What is worth a look
+
+- **Model choices are made on eval numbers.** A real-photo corpus of 202 images (bottles in shops and on tables, importer back labels, menus, shelves, shochu that looks like sake) scores every prompt and model change, from saved reads where nothing changed, so an experiment costs cents. On the full suite the cheap first tier alone (Haiku 5.5) lands on the right answer for 102 of 136 single-bottle photos, shows a wrong sake for 3, and handles all 48 menus, shelves, non-sake bottles and empty photos correctly; production adds a Sonnet 5.5 retry only where the first read is unsure. See [`evals/label-scan-jp/README.md`](./evals/label-scan-jp/README.md). A quarterly workflow opens an issue asking for the check again.
+- **Every value says where it came from.** Catalogue data, deterministic math, model output, hand curation and the user's own corrections carry distinct `source` values from the schema to the screen; anything a model produced wears a "Read by AI" badge with an explanation sheet ([ADR-0005](./docs/adr/0005-source-provenance.md)).
+- **Deterministic first, model second.** Similar sakes, "Did you mean", menu ranking and its reasons, and the cross-beverage bridge ("if you like Lagavulin 16…", a hand-curated table) involve no model call. The model reads photos; it does not invent mappings.
+- **Privacy by design, under German rules.** A GDPR posture with a records-of-processing table updated per feature ([ADR-0009](./docs/adr/0009-gdpr-compliance-posture.md)), photos discarded after the read, no Files API, a youth-protection age gate (JMStV), and a collection with versioned records, daily backups, export, restore and erasure ([ADR-0024](./docs/adr/0024-collection-storage-versioned-records-and-backup.md)).
+- **A designed product, ported screen by screen.** The Ginshu design system and its 91 reference screens live in [`design/`](./design); every port is checked against them, and [`docs/design-questions.md`](./docs/design-questions.md) is the running list of what the build asked the designers.
+- **Decisions are written down.** 26 ADRs in [`docs/adr/`](./docs/adr), 166 unit test files, 8 integration suites against a real Postgres, 22 Playwright specs.
+- **Open source where it is reusable.** The MCP server over the Sakenowa mirror is its own MIT package, [`@yawaragi/sakenowa-mcp`](https://github.com/yawaragi-dev/sakenowa-mcp).
+
+Previously named "Kanpai"; renamed to avoid collision with [KANPAI London Craft Sake Brewery](https://kanpai.london/) — see [ADR-0004](./docs/adr/0004-project-name-yawaragi.md).
 
 ## Stack
 
 - Next.js 16 (App Router, RSC by default) · TypeScript strict · Tailwind v4 + shadcn/ui
-- **Ginshu** design system — a warm-ash dark palette with a ginshu (銀朱) accent, built for reading a bottle label in a dim izakaya. Spec and reference screenshots in [`design/`](./design); tokens in `src/app/globals.css`.
-- Vercel AI SDK 7 for LLM work · `@ai-sdk/mcp` connecting to our own MCP server
-- Supabase (Postgres) · Clerk (auth) · Langfuse Cloud (tracing)
-- Vitest + happy-dom (unit) · Playwright (E2E + async RSC)
+- **Ginshu** design system — a warm-ash dark palette with a ginshu (銀朱) accent, built for reading a bottle label in a dim izakaya. Tokens in `src/app/globals.css`.
+- Vercel AI SDK 7 (Claude Haiku 5.5 and Sonnet 5.5) · `@ai-sdk/mcp` connecting to our own MCP server
+- Supabase Postgres (catalogue) · Upstash Redis (collection, rate limits) · Clerk (auth) · Langfuse Cloud (tracing)
+- next-intl (EN + DE) · Vitest + happy-dom · Playwright · testcontainers
 - pnpm
 
 ## Architecture
 
 ```mermaid
 flowchart TD
-  V[Visitor] -->|"any path"| P["src/proxy.ts<br/>clerkMiddleware → next-intl<br/>→ age-gate + coming-soon rewrites"]
-  P -->|"/en/* (launched)"| LL["[locale]/layout<br/>+ ClerkProvider<br/>+ NextIntlProvider<br/>+ cookie banner + footer"]
-  P -->|"/de/* (unlaunched)"| CS["[locale]/page<br/>(coming-soon)"]
-  LL --> Landing["[locale]/page<br/>(landing + age-gate)"]
-  LL --> Under18["[locale]/under-18"]
-  LL --> Sake["[locale]/sake/[brandId]"]
-  LL --> Scan["[locale]/scan<br/>(Phase 3 / S4 PR A, live)"]
-  Scan --> ScanAction["lib/scan/scan-action"]
-  ScanAction --> RateLimit["lib/rate-limit<br/>yawaragi_session + Upstash"]
-  ScanAction --> Vision["lib/ai/vision<br/>(Haiku 5.5 → Sonnet 5.5 retry)"]
-  ScanAction --> Lookup
-  ScanAction --> ReverseLookup["lib/cross-beverage/<br/>reverse-lookup<br/>(UX-C, live)"]
-  Sake --> Lookup["lib/sakenowa/lookup"]
-  Lookup --> DB[("Supabase Postgres<br/>mirror + manual_curation<br/>ADR-0014")]
-  Ingest["pnpm ingest"] --> DB
-  Manual["pnpm add-manual-brand<br/>(operator, ADR-0014)"] --> DB
-  CronRoute["GET /api/cron/ingest<br/>Bearer CRON_SECRET<br/>Vercel Cron"] --> Ingest
+  V[Visitor] --> P["src/proxy.ts<br/>Clerk → next-intl<br/>→ age gate, session cookie"]
+  P --> Site["(site): landing, Learn,<br/>privacy, imprint"]
+  P --> App["(app): Home · Scan · Collection · Palate<br/>sake, bottling, search, account"]
+
+  App --> ScanAction["lib/scan/scan-action"]
+  ScanAction --> RateLimit["lib/rate-limit<br/>anonymous session + Upstash"]
+  ScanAction --> Vision["lib/ai/vision<br/>Haiku 5.5 → Sonnet 5.5 retry"]
+  ScanAction --> Resolve["lib/sakenowa<br/>resolve-scanned-label"]
+  App --> ListAction["lib/scan/list-action<br/>menu and shelf"]
+  ListAction --> ListReader["lib/ai/vision/list-reader<br/>Sonnet 5.5"]
+  ListAction --> Rank["lib/scan/rank-list<br/>(no model call)"]
+  Resolve --> DB[("Supabase Postgres<br/>Sakenowa mirror<br/>+ manual curation")]
+  App --> DB
+
+  App --> Gate["lib/auth/maintainer<br/>(private beta allowlist)"]
+  Gate --> Stores["journal · cellar · own bottlings<br/>lib/taste, lib/collection"]
+  Stores --> KV[("Upstash Redis<br/>versioned records")]
+  Backup["/api/cron/backup-collection<br/>daily"] --> KV
+  Backup --> Bucket[("Supabase Storage<br/>private backups, 30 kept")]
+
+  Ingest["/api/cron/ingest<br/>daily"] --> DB
   Sakenowa["Sakenowa Data API"] --> Ingest
-  LL --> SignIn["[locale]/sign-in<br/>(maintainer login, no public sign-up<br/>Phase 5.5, ADR-0020)"]
-  SignIn --> Clerk["Clerk<br/>(session → auth().userId)"]
-  LL --> Profile["[locale]/profile<br/>(taste map, Phase 5, live)"]
-  Profile --> TasteRead["lib/taste/<br/>read-session-taste-profile<br/>+ taste-recommender"]
-  TasteRead --> KV[("Upstash Redis<br/>taste:&lt;sid&gt; 24h TTL")]
-  Profile -->|"maintainer only"| Journal["components/profile/journal<br/>(map hero + timeline, Phase 5.5)"]
-  Clerk --> Gate["lib/auth/maintainer<br/>(allowlist, fail-closed)"]
-  Gate --> Journal
-  Journal --> JournalStore["lib/taste/journal-store<br/>(port: in-memory | Upstash)"]
-  JournalStore --> JKV[("Upstash Redis<br/>journal:user:&lt;id&gt; no TTL")]
-  Export["pnpm journal:export<br/>(GDPR portability +<br/>durability backstop)"] --> JournalStore
-  LL --> Suggest["[locale]/suggest<br/>(Phase 4, live)"]
-  Suggest --> SuggestAction["lib/suggest/suggest-action"]
-  SuggestAction --> MCP["@yawaragi/sakenowa-mcp<br/>(v0.1.0, live)"]
-  SuggestAction --> CrossBev["lib/ai/tools/<br/>map-cross-beverage"]
-  SuggestAction --> Anthropic
-  Vision --> Anthropic["Anthropic Claude"]
+
+  App --> Suggest["suggest (behind a flag)<br/>AI SDK tool loop"]
+  Suggest --> MCP["@yawaragi/sakenowa-mcp"]
   MCP --> DB
-  Vision --> Trace["Langfuse traces<br/>(scan + suggest live)"]
-  Suggest --> Trace
-  UC["lib/supabase/user-client<br/>(Phase 5, deferred with auth)"] -.->|"deferred"| LL
+  Vision --> Anthropic["Anthropic Claude"]
+  ListReader --> Anthropic
+  Suggest --> Anthropic
+  Anthropic -.-> Langfuse["Langfuse (EU)<br/>traces, no prompts in prod"]
 ```
 
-Phase 0 (i18n + legal scaffolding + EN-first launch) and Phase 2 (data foundation, Sakenowa mirror, scheduled cron ingest, provenance schemas) are shipped. **Phase 3 (anonymous label scan)** is in flight — see the milestone bar above for the live status. The entry page + canvas downscale + Sakenowa lookup chain (S1), the anonymous-session rate limit (S2), the Anthropic vision provider (S3), the three-tier confidence UX + two-tier vision retry + manual-curation layer (S4 PR A), the in-place result card on `/scan` (UX-B, ADR-0015 — a confident match renders photo + kanji + flavor chart + deep-link in place, replacing the earlier auto-redirect), and the reverse cross-beverage exemplar layer on the scan card (UX-C — "interesting for those who like Lagavulin 16" via a 62-row hand-curated exemplar table + deterministic L2 lookup, with a `no-close-analog` sentinel for sakes that legitimately have no Western analog) are all live. S4 PR B (enriched disambiguation list, no-match enrichment, the "Not this one?" affordance, full Playwright matrix) is live; the label-scan eval harness (S5, `pnpm eval label-scan-jp`) is built and awaits its rights-cleared photo corpus. The UX redesign (#168) landed on top: a **landing hero that leads with a real example scan result** (UX-E — the maintainer's own 木戸泉 bottle + its real Sakenowa flavor chart + the reverse cross-beverage hook, shown only after the 18+ gate), and the **shared scan result card restyled as an elevated "bone" card** (UX-F) used by both the scan flow and that hero. Two-tier vision means Haiku 4.5 runs every scan; Sonnet 4.6 retries on any tier-1 result other than a clean first-pass match, recovering the calligraphic-kanji and field-swap cases at ~6× cost only on those bottles. The manual-curation layer (ADR-0014) lets the maintainer add brands missing from Sakenowa's public data (`pnpm add-manual-brand` — UMAMI is the seed). Note: the Sakenowa API is live and maintained into 2026 — the earlier "frozen 2024 dump" assumption was disproven; the real gap is sparse 6-axis flavor-chart coverage for new/imported bottles, addressed by a live re-sync + honest "coming soon" UX + a small curated EU/US delta ([ADR-0016](./docs/adr/0016-data-strategy-sakenowa-freshness-and-curated-delta.md)). **Phase 4 (single-shot suggestions over MCP + cross-beverage)** is shipped: the `/[locale]/suggest` surface takes a `?seed=<brandId>` from the sake detail page's "Find similar" link OR a freeform text query, runs a single AI SDK tool loop with the Sakenowa MCP tools + the deterministic `mapCrossBeverage` cross-beverage bridge, and returns a per-field-provenance card list with inline `<HeuristicDisclaimer />` on cross-beverage results. Every call is Langfuse-traced; the `evals/suggest-jp/` harness (`pnpm eval suggest-jp`) runs 15 seed queries with ground-truth recall@k. See PRD [#138](https://github.com/yawaragi-dev/yawaragi/issues/138). **Phase 5 (taste profile)** is largely shipped as an anonymous, **session-scoped v1** ([ADR-0019](./docs/adr/0019-taste-profile-derived-from-session-events.md)): a derived six-axis taste vector — fed by sake ratings, scan-accepts, and cross-beverage seeds — rendered as a flavor radar on `/[locale]/profile` with a similarity-based "Recommended for you" list. The vector is *derived from* stored TasteEvents (session-keyed in Upstash), never a stored snapshot; **account-based** persistence (a `user_taste_vectors` table) is deferred with auth resumption. Still open in the phase: recommender eval + the phase-close architecture pass. **Phase 5.5** (a tasting journal as the spine, IMDb-Bayesian rating display, context-weighted updates) is largely shipped per [ADR-0020](./docs/adr/0020-tasting-journal-spine-and-maintainer-only-persistence.md): a `JournalStore` port with in-memory + Upstash adapters, a Clerk maintainer allowlist, maintainer-gated write actions, a deterministic sake picker, the map-hero + timeline journal UI on `/[locale]/profile`, a maintainer sign-in surface, and `pnpm journal:export` for GDPR portability. Persistence is deliberately **maintainer-only** in v1 (private beta, no public sign-up); the public keeps the interactive-but-ephemeral example. Per-entry edit and delete shipped since (#372); still open: the phase-close architecture pass. Scoped originally per the journal/ratings/insights research ([`docs/research/journal-ratings-insights-feature-design.md`](./docs/research/journal-ratings-insights-feature-design.md)). Every Phase 3+ surface is designed to survive being wrapped in a native webview shell per [ADR-0012](./docs/adr/0012-webview-able-architecture.md). **The UI is ported to the Ginshu design** (handoff v1.4, then v1.5, 10 Oct 2026): a four-tab app shell (Home · Scan · Collection · Palate), the journal and the Cellar under Collection, the taste profile renamed Palate, the bottle page, search, and §5a's one outcome screen for every scan that isn't a clean match — with "Did you mean" and Best-guess candidates found by deterministic name/brewery similarity, no model call. The only v1.5 item not built is "Keep it anyway" (it needs the bottle-level record); CLAUDE.md's Design section records exactly what matches the spec.
+## Status
+
+Built: the catalogue mirror and its daily ingest, the scan with every outcome the design specifies, search, the bottle and bottling pages, Learn, and — for the private beta — the journal, Palate, Cellar, own bottlings and menu/shelf ranking. The UI matches design v1.7.1 except where [CLAUDE.md](./CLAUDE.md#design) says otherwise. Suggestions ("Ask") are built but hidden in v1 for cost and latency ([#299](https://github.com/yawaragi-dev/yawaragi/issues/299)).
+
+Before a public launch: opening the journal to everyone (with self-service export and deletion), separate data for production and previews, the remaining vendor DPAs, and the German Impressum. See [`docs/PRE-GO-LIVE.md`](./docs/PRE-GO-LIVE.md).
 
 ## Getting started
 
@@ -110,10 +132,12 @@ pnpm dev
 | `pnpm migrate`            | Apply pending SQL files in `supabase/migrations/`        |
 | `pnpm ingest`             | Refresh Sakenowa data into Supabase                      |
 | `pnpm rate-limit:reset`   | Reset the anonymous rate limits in Upstash so the next scan starts at 5/5 — **every visitor's**, not just yours; says how many and asks first (`-- --bucket scan` or `suggest`, `-- --yes`) |
-| `pnpm journal:export`     | Export a maintainer's tasting journal to JSON (GDPR portability + durability backstop). **Output holds personal data** — gitignored; delete when done |
+| `pnpm journal:export`     | Export a maintainer's collection (journal, cellar, own bottlings) to JSON — GDPR portability + durability backstop. **Output holds personal data** — gitignored; delete when done |
+| `pnpm journal:restore`    | Write an export or a daily backup back into Upstash (idempotent; `--dry-run` validates only) |
+| `pnpm journal:erase`      | GDPR erasure: a user's journal, cellar, own bottlings and backups (reports only without `--yes`) |
 | `pnpm db:resync`          | One-shot: `db:reset --yes && migrate && ingest`          |
 | `pnpm verify`             | Full chain (lint + typecheck + test + integration + e2e + audits) — **needs Docker** |
-| `pnpm eval <suite>`       | Run an eval suite (`suggest-jp` today). Informational — needs a dev server up. See `evals/<suite>/README.md`. |
+| `pnpm eval <suite>`       | Run an eval suite: `label-scan-jp`, `label-scan-pairs`, `list-read-jp`, `suggest-jp`. See `evals/<suite>/README.md` (the label scan runs offline from saved reads with `LABEL_SCAN_EVAL_OFFLINE=1`) |
 | `pnpm progress`           | Refresh the milestone-progress dashboard (README block + `docs/PROGRESS.md`) |
 
 ## Project documentation
