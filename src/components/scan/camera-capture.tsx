@@ -289,7 +289,7 @@ export function CameraCapture({
                 // the hint text below is what actually says "reading".
                 <span
                   aria-hidden="true"
-                  className="absolute inset-x-0 top-0 h-1/3 animate-yw-sweep bg-gradient-to-b from-transparent via-ginshu-500/35 to-transparent"
+                  className="absolute inset-x-0 top-0 h-[30%] animate-yw-sweep bg-gradient-to-b from-transparent via-ginshu-500/35 to-transparent"
                   data-testid="scan-camera-sweep"
                 />
               )}

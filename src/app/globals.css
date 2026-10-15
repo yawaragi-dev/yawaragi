@@ -307,12 +307,14 @@ body {
       transform: scale(1);
     }
   }
+  /* Percentages are of the band's own height: from just above the frame to
+     just below it for a 30%-high band (the prototype's 340%). */
   @keyframes yw-sweep {
     0% {
       transform: translateY(-100%);
     }
     100% {
-      transform: translateY(100%);
+      transform: translateY(340%);
     }
   }
 }
