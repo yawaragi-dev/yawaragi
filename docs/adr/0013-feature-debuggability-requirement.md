@@ -84,8 +84,21 @@ Reviewers checking a new feature's debuggability also check the inverse: every `
 
 - The exact UI of the panel (lives in the code, evolves freely).
 - The set of `DebugEventSource` values (closed enum, widens as new features land — non-breaking).
-- The production-hardening mechanism for the activation cookie (deferred to the linked follow-up).
+- The production-hardening mechanism for the activation cookie (deferred to the linked follow-up; settled by the 2026-10-14 amendment below).
 - Cross-feature event correlation IDs (every action's trace is currently self-contained; if cross-action correlation becomes valuable, that's a future amendment).
+
+## Amendment 2026-10-14 — activation needs the maintainer's token (#120)
+
+The trace maps the product's internal decisions, so from `public-launch` on a visitor must not be able to turn it on. Of #120's options, A (a bearer token) ships, and B (production refuses) comes with it for free when no token is configured:
+
+- **`DEBUG_TOKEN`** (env, ≥ 32 chars). Only `?debug=<DEBUG_TOKEN>` opens debug mode, compared in constant time; `?debug=1` and a wrong token are ignored and the page renders as usual, with no cookie. The proxy's redirect removes the param, so the token does not stay in the address bar.
+- **No token on a production build** (Production and Preview both run `NODE_ENV=production`) → debug mode cannot be turned on at all. **No token on a local dev server** → the plain `?debug=1` still works, so the e2e suite and local work are unchanged.
+- **The cookie is signed.** `yawaragi_debug` holds `<expiry>.<HMAC(token, expiry)>` instead of the literal `1`, which anyone could set by hand. The server checks both the signature and the 24-hour expiry. Rotating the token switches off every cookie issued so far; a cookie signed on a dev server opens nothing elsewhere.
+- **`?debug=0` still works for anyone** — turning the trace off is harmless.
+
+The "send the visitor a debug-enabled URL" win above no longer holds: the URL carries the token, so it is the maintainer's alone. Support reproduction means the maintainer redoes the visitor's action with debug on.
+
+The per-event audit #120 asked for was done with this change: no `debugAdd(...)` carries a secret, a full hash, a session id or a token. Events carry what the visitor submitted (the read kanji, their search text), catalogue ids and row counts, model ids and timings, and error messages cut to 300–500 characters.
 
 ## References
 

@@ -60,10 +60,10 @@ const Env = z.object({
   // availability incident. The warning exists so the operator is not misled
   // into thinking it worked.
   //
-  // Deliberately NOT wired to the `yawaragi_debug` cookie: that is
-  // visitor-activatable via `?debug=1`, so a visitor could opt their own
-  // prompts into 30-day Langfuse retention without meaningfully consenting.
-  // An env var keeps the decision with the maintainer.
+  // Deliberately NOT wired to the `yawaragi_debug` cookie: on a local dev
+  // server that is still set by a plain `?debug=1`, and a cookie is
+  // per-browser where this is per-deployment. An env var keeps the
+  // decision with the maintainer.
   LANGFUSE_RECORD_IO: empty(z.string().optional()),
   // Shared secret for the /api/cron/ingest route (#54). Required
   // because the route is the only auth gate — a missing secret would
@@ -83,6 +83,15 @@ const Env = z.object({
   // first use with a clear "set SESSION_COOKIE_SECRET" message in
   // production.
   SESSION_COOKIE_SECRET: empty(z.string().min(32).optional()),
+  // Opens the `?debug=` trace overlay (#120, ADR-0013): only
+  // `?debug=<DEBUG_TOKEN>` turns it on, and the token signs the
+  // `yawaragi_debug` cookie. Unset on a production build (Production
+  // and Preview) means debug mode cannot be turned on at all; unset on a
+  // local dev server keeps the plain `?debug=1`. `min(32)` for the same
+  // reason as the session secret — it is a bearer credential that sits
+  // in a URL. Rotate by changing the value; every issued cookie stops
+  // working.
+  DEBUG_TOKEN: empty(z.string().min(32).optional()),
   // SHA-256 salt for the transient IP hash used as the second
   // rate-limit identifier. Rotated server-side without notice; never
   // shipped to clients; never written to KV alongside the hash (so
