@@ -51,10 +51,10 @@ export const STUB_JOURNAL_ENTRIES: readonly JournalEntry[] = [
       target: STUB_JOURNAL_PROFILE,
       occurredAt: Date.UTC(2026, 6, 18),
     },
-    sake: { nameKanji: '而今', nameRomaji: 'Jikon' },
+    sake: { nameKanji: '新十津川', nameRomaji: 'Shintotsukawa' },
     // Logged against the stub's own bottling (`STUB_EXPRESSIONS`), so the
     // bottling-aware rows have one to draw.
-    expression: { id: 'stub-bottling', name: 'Jikon Nama 2025' },
+    expression: { id: 'stub-bottling', name: 'Shintotsukawa Nama 2025' },
     notes: 'Melon and white peach, gone in a clean line.',
     // §10's sheet, so the stub journal shows §11's "Full notes" chip.
     detail: { palate: { umami: 2, finish: 4 }, serve: { temperature: 'hanabie' } },
@@ -140,7 +140,7 @@ export const STUB_CELLAR: readonly CellarBottle[] = [
   {
     schemaVersion: 3,
     brandId: 1,
-    sake: { nameKanji: '而今', nameRomaji: 'Jikon' },
+    sake: { nameKanji: '新十津川', nameRomaji: 'Shintotsukawa' },
     sizeMl: 720,
     nama: false,
     count: 1,
@@ -153,8 +153,8 @@ export const STUB_CELLAR: readonly CellarBottle[] = [
   {
     schemaVersion: 3,
     brandId: 1,
-    expression: { id: 'stub-bottling', name: 'Jikon Nama 2025' },
-    sake: { nameKanji: '而今', nameRomaji: 'Jikon' },
+    expression: { id: 'stub-bottling', name: 'Shintotsukawa Nama 2025' },
+    sake: { nameKanji: '新十津川', nameRomaji: 'Shintotsukawa' },
     sizeMl: 720,
     nama: true,
     count: 1,
@@ -176,8 +176,8 @@ export const STUB_EXPRESSIONS: readonly Expression[] = [
     id: 'stub-bottling',
     own: true,
     brandId: 1,
-    line: { nameKanji: '而今', nameRomaji: 'Jikon' },
-    name: 'Jikon Nama 2025',
+    line: { nameKanji: '新十津川', nameRomaji: 'Shintotsukawa' },
+    name: 'Shintotsukawa Nama 2025',
     createdAt: Date.UTC(2026, 6, 10),
     updatedAt: Date.UTC(2026, 6, 10),
   },

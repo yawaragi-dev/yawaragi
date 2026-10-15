@@ -33,15 +33,15 @@ test.describe('own bottling page', () => {
     await page.setViewportSize({ width: 390, height: 844 })
     await page.goto('/en/bottling/stub-bottling')
 
-    await expect(page.getByTestId('bottling-name')).toHaveText('Jikon Nama 2025')
+    await expect(page.getByTestId('bottling-name')).toHaveText('Shintotsukawa Nama 2025')
     // "A bottling of {line} ›" leads back to the sake's page.
     const lineLink = page.getByTestId('bottling-line-link')
-    await expect(lineLink).toContainText('A bottling of Jikon')
-    await expect(lineLink.locator('[lang="ja"]')).toHaveText('而今')
+    await expect(lineLink).toContainText('A bottling of Shintotsukawa')
+    await expect(lineLink.locator('[lang="ja"]')).toHaveText('新十津川')
     await expect(lineLink).toHaveAttribute('href', '/en/sake/1')
     await expect(page.getByTestId('bottling-own-tag')).toHaveText('Your own entry')
     await expect(page.getByTestId('bottling-own-line')).toHaveText(
-      'Your own bottling of Jikon, not in the catalogue yet. Only you can see it.',
+      'Your own bottling of Shintotsukawa, not in the catalogue yet. Only you can see it.',
     )
     // The sake's name is Sakenowa's, so the credit stays above the fold.
     const credit = page.getByTestId('bottling-identity').getByRole('link', { name: /Sakenowa/ })
@@ -73,7 +73,7 @@ test.describe('own bottling page', () => {
     await page.goto('/en/bottling/stub-bottling')
 
     const block = page.getByTestId('bottling-line-block')
-    await expect(block.getByRole('heading', { name: /About the Jikon line/ })).toBeVisible()
+    await expect(block.getByRole('heading', { name: /About the Shintotsukawa line/ })).toBeVisible()
     // §16: the caveat is on screen, and the info button is described by it.
     const caveat = block.getByText('Measured for the whole line; bottlings vary.')
     await expect(caveat).toBeVisible()
@@ -84,7 +84,7 @@ test.describe('own bottling page', () => {
 
     await info.click()
     const sheet = page.getByRole('dialog')
-    await expect(sheet).toContainText('Sakenowa charts a sake — the Jikon line')
+    await expect(sheet).toContainText('Sakenowa charts a sake — the Shintotsukawa line')
     await expect(sheet).toContainText('about this bottling only')
 
     await context.close()
@@ -183,7 +183,7 @@ test.describe('own bottling page', () => {
 
     // Rename opens the naming form in place, with the name as it is.
     await page.getByTestId('bottling-rename-open').click()
-    await expect(page.getByTestId('bottling-rename-name')).toHaveValue('Jikon Nama 2025')
+    await expect(page.getByTestId('bottling-rename-name')).toHaveValue('Shintotsukawa Nama 2025')
     await expect(page.getByTestId('bottling-rename-submit')).toHaveText('Save')
     // Its sake is the catalogue's, so its brewery is not the visitor's to set.
     await expect(page.getByTestId('bottling-rename-brewery')).toHaveCount(0)
@@ -193,11 +193,11 @@ test.describe('own bottling page', () => {
     // Delete asks first (69): one tasting and one bottle, which stay under the sake.
     await page.getByTestId('bottling-delete-open').click()
     await expect(page.getByTestId('bottling-delete-confirm')).toContainText(
-      'Delete Jikon Nama 2025? Your 1 tasting and 1 bottle stay, under Jikon.',
+      'Delete Shintotsukawa Nama 2025? Your 1 tasting and 1 bottle stay, under Shintotsukawa.',
     )
     await page.getByTestId('bottling-delete-keep').click()
     await expect(page.getByTestId('bottling-delete-confirm')).toHaveCount(0)
-    await expect(page.getByTestId('bottling-name')).toHaveText('Jikon Nama 2025')
+    await expect(page.getByTestId('bottling-name')).toHaveText('Shintotsukawa Nama 2025')
 
     // A bottle with no sake: nothing logged against the stub's, so it only asks;
     // and its brewery can be corrected along with its name.
@@ -291,11 +291,11 @@ test.describe('bottlings on the sake page', () => {
     await expect(section.getByRole('heading', { name: 'Your bottlings' })).toBeVisible()
     await expect(section).toContainText('1 bottling')
     const row = page.getByTestId('own-bottling-link-stub-bottling')
-    await expect(row).toContainText('Jikon Nama 2025')
+    await expect(row).toContainText('Shintotsukawa Nama 2025')
     await expect(row).toContainText('Your own entry')
     await expect(row).toContainText('Tasted')
     // The tasting logged against it leads with the bottling's name (v1.6 §9).
-    await expect(page.getByTestId('bottle-history-bottling')).toHaveText('Jikon Nama 2025')
+    await expect(page.getByTestId('bottle-history-bottling')).toHaveText('Shintotsukawa Nama 2025')
     // v1.6.1 §9: the sake's page counts its bottlings' bottles too — one of
     // the sake, one of the bottling.
     await expect(page.getByTestId('cellar-view')).toContainText('In cellar · 2')
