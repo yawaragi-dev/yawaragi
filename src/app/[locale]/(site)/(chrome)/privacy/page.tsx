@@ -39,44 +39,44 @@ export default async function PrivacyPage({
           {t('title')}
         </h1>
         <p className="text-sm text-zinc-500">{t('lastUpdated')}</p>
-        <p className="text-base text-zinc-700 dark:text-zinc-300 max-w-prose">
+        <p className="text-base text-zinc-300 max-w-prose">
           {t('intro')}
         </p>
       </header>
 
       <section className="flex flex-col gap-3">
         <h2 className="text-xl font-medium">{t('anonymousSessionHeading')}</h2>
-        <p className="text-base text-zinc-700 dark:text-zinc-300 max-w-prose">
+        <p className="text-base text-zinc-300 max-w-prose">
           {t('anonymousSessionBody')}
         </p>
       </section>
 
       <section className="flex flex-col gap-3">
         <h2 className="text-xl font-medium">{t('processorsHeading')}</h2>
-        <p className="text-base text-zinc-700 dark:text-zinc-300 max-w-prose">
+        <p className="text-base text-zinc-300 max-w-prose">
           {t('processorVercel')}
         </p>
-        <p className="text-base text-zinc-700 dark:text-zinc-300 max-w-prose">
+        <p className="text-base text-zinc-300 max-w-prose">
           {t('processorSupabase')}
         </p>
-        <p className="text-base text-zinc-700 dark:text-zinc-300 max-w-prose">
+        <p className="text-base text-zinc-300 max-w-prose">
           {t('processorUpstash')}
         </p>
-        <p className="text-base text-zinc-700 dark:text-zinc-300 max-w-prose">
+        <p className="text-base text-zinc-300 max-w-prose">
           {t('sakenowaNote')}
         </p>
       </section>
 
       <section className="flex flex-col gap-2">
         <h2 className="text-xl font-medium">{t('retentionHeading')}</h2>
-        <p className="text-base text-zinc-700 dark:text-zinc-300 max-w-prose">
+        <p className="text-base text-zinc-300 max-w-prose">
           {t('retention')}
         </p>
       </section>
 
       <section className="flex flex-col gap-2">
         <h2 className="text-xl font-medium">{t('contactHeading')}</h2>
-        <p className="text-base text-zinc-700 dark:text-zinc-300 max-w-prose">
+        <p className="text-base text-zinc-300 max-w-prose">
           {t('contact')}
         </p>
       </section>

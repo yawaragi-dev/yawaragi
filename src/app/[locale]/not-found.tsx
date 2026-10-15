@@ -13,7 +13,7 @@ export default async function NotFound() {
       <h1 className="text-4xl font-semibold leading-tight tracking-tight">
         {t('title')}
       </h1>
-      <p className="text-base text-zinc-700 dark:text-zinc-300 max-w-prose">
+      <p className="text-base text-zinc-300 max-w-prose">
         {t('body')}
       </p>
       <Link
@@ -22,8 +22,8 @@ export default async function NotFound() {
       >
         {t('home')}
       </Link>
-      <hr className="border-zinc-200 dark:border-zinc-800 my-2" />
-      <p className="text-sm text-zinc-600 dark:text-zinc-400 max-w-prose">
+      <hr className="border-zinc-800 my-2" />
+      <p className="text-sm text-zinc-400 max-w-prose">
         {t('game.intro')}
       </p>
       <ShibuyaRunner />

@@ -215,8 +215,8 @@ function ValueText({
     <span
       className={
         rowTrailing
-          ? 'w-12 shrink-0 text-right text-xs tabular-nums text-zinc-600 dark:text-zinc-400'
-          : 'shrink-0 text-xs tabular-nums text-stone-400 dark:text-zinc-500'
+          ? 'w-12 shrink-0 text-right text-xs tabular-nums text-zinc-400'
+          : 'shrink-0 text-xs tabular-nums text-zinc-500'
       }
       data-testid={`flavor-axis-${axis}-value`}
     >

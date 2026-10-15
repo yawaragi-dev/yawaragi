@@ -88,7 +88,7 @@ export default async function SuggestPage({ params, searchParams }: PageProps) {
         <h1 className="text-4xl font-semibold leading-tight tracking-tight">
           {tComingSoon('title')}
         </h1>
-        <p className="text-base text-zinc-700 dark:text-zinc-300 max-w-prose">
+        <p className="text-base text-zinc-300 max-w-prose">
           {tComingSoon('body')}
         </p>
         <Link
@@ -142,7 +142,7 @@ export default async function SuggestPage({ params, searchParams }: PageProps) {
           <h1 className="text-4xl font-semibold leading-tight tracking-tight">
             {tEntry('title')}
           </h1>
-          <p className="text-base text-zinc-700 dark:text-zinc-300 max-w-prose">
+          <p className="text-base text-zinc-300 max-w-prose">
             {tEntry('intro')}
           </p>
           <SuggestEmptyInput starterPrompts={starterPrompts} />
@@ -172,7 +172,7 @@ export default async function SuggestPage({ params, searchParams }: PageProps) {
         <h1 className="text-4xl font-semibold leading-tight tracking-tight">
           {tEntry('title')}
         </h1>
-        <p className="text-base text-zinc-700 dark:text-zinc-300 max-w-prose">
+        <p className="text-base text-zinc-300 max-w-prose">
           {tEntry('intro')}
         </p>
         {/* The freeform form always renders in the result view so a
@@ -254,7 +254,7 @@ async function SuggestStateView({ state, locale }: SuggestStateViewProps) {
     if (state.suggestions.length === 0) {
       return (
         <p
-          className="rounded-md border border-zinc-200 bg-zinc-50 px-4 py-4 text-base text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300"
+          className="rounded-md border px-4 py-4 text-base border-zinc-800 bg-zinc-900 text-zinc-300"
           data-testid="suggest-no-match"
         >
           {tResults('noMatch')}
@@ -272,7 +272,7 @@ async function SuggestStateView({ state, locale }: SuggestStateViewProps) {
     const hours = Math.max(1, Math.round(state.retryAfterSec / 3600))
     return (
       <p
-        className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-base text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100"
+        className="rounded-md border px-4 py-3 text-base border-amber-700 bg-amber-950 text-amber-100"
         data-testid="suggest-error-rate-limited"
       >
         {tResults('rateLimited', { hours })}
@@ -283,7 +283,7 @@ async function SuggestStateView({ state, locale }: SuggestStateViewProps) {
   if (state.status === 'service_unavailable') {
     return (
       <p
-        className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-base text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100"
+        className="rounded-md border px-4 py-3 text-base border-amber-700 bg-amber-950 text-amber-100"
         data-testid="suggest-error-service-unavailable"
       >
         {tResults('serviceUnavailable')}
@@ -300,7 +300,7 @@ async function SuggestStateView({ state, locale }: SuggestStateViewProps) {
     // thrown exception.
     return (
       <p
-        className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-base text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100"
+        className="rounded-md border px-4 py-3 text-base border-amber-700 bg-amber-950 text-amber-100"
         data-testid="suggest-error-session-missing"
       >
         {tResults('sessionMissing')}
@@ -314,7 +314,7 @@ async function SuggestStateView({ state, locale }: SuggestStateViewProps) {
   // exhaustiveness demands we handle it.
   return (
     <p
-      className="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-base text-red-900 dark:border-red-700 dark:bg-red-950 dark:text-red-100"
+      className="rounded-md border px-4 py-3 text-base border-red-700 bg-red-950 text-red-100"
       data-testid="suggest-error-generic"
     >
       {tResults('error')}

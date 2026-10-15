@@ -31,3 +31,7 @@ So the flip forces a choice about those 40 files, and it has to be made in the s
 - **Strip the light branches from all 40 files in the flip PR.** Honest, and leaves no misleading variant. Rejected on collision: the PR would touch nearly every component in the app while the port MRs are rewriting those same components, and a conflict in a colour utility is the kind a rebase resolves wrongly and silently.
 - **Leave `dark:` gated on the OS preference and repoint only `:root`.** What the tokens-only PR (#302) deliberately did, and it worked precisely because the semantic tokens were then unused. Once they are live it produces the light-on-dark failure above for a real class of visitor.
 - **Keep a light theme.** Not ours to decide — the design specifies one palette, and inventing a second would be inventing design.
+
+## Amendment, 2026-10-15
+
+The leftovers are gone. Every `dark:` utility in `src/` (133 of them in 26 files, including the shadcn primitives) was collapsed to the value it rendered, and its dead light-branch sibling removed, by a mechanical pass: same property, same variant chain. Seventeen pages screenshotted whole (a 390×3000 viewport) on `main` and after were pixel-identical. The forced variant in `globals.css` stays, so a `dark:` that slips in still renders, but there is no longer any reason to write one.

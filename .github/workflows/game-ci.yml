@@ -21,6 +21,15 @@ concurrency:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   NEXT_TELEMETRY_DISABLED: 1
+  # The same env-schema stand-ins as ci.yml, which explains each one. The
+  # Playwright webServer parses src/env.ts on its first request; without
+  # these this job has failed to start the server since the schema began
+  # requiring them (it last ran, green, in May, before it did).
+  CRON_SECRET: ci-only-dummy-32-char-shared-secret
+  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+  CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+  ANTHROPIC_API_KEY: ci-only-dummy-anthropic-key
+  MCP_SAKENOWA_URL: https://mcp.example.invalid
 
 jobs:
   game:

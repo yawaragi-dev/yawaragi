@@ -33,7 +33,7 @@ export default async function SuggestLoading() {
       <h1 className="text-4xl font-semibold leading-tight tracking-tight">
         {t('title')}
       </h1>
-      <p className="text-base text-zinc-700 dark:text-zinc-300 max-w-prose">
+      <p className="text-base text-zinc-300 max-w-prose">
         {t('body')}
       </p>
       <section
@@ -46,7 +46,7 @@ export default async function SuggestLoading() {
           {[0, 1, 2].map((i) => (
             <li
               key={i}
-              className="flex flex-col gap-2 rounded-md border border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950"
+              className="flex flex-col gap-2 rounded-md border px-4 py-3 border-zinc-800 bg-zinc-950"
             >
               <Skeleton className="h-5 w-40" />
               <Skeleton className="h-3 w-24" />

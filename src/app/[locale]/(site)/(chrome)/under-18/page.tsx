@@ -9,7 +9,7 @@ export default async function Under18Page() {
       <h1 className="text-4xl font-semibold leading-tight tracking-tight">
         {t('title')}
       </h1>
-      <p className="text-base text-zinc-700 dark:text-zinc-300 max-w-prose">
+      <p className="text-base text-zinc-300 max-w-prose">
         {t('body')}
       </p>
       <p className="text-sm text-zinc-500">

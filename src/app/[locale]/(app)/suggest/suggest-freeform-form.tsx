@@ -186,7 +186,7 @@ function FreeformFormInner({
       aria-busy={isPending}
     >
       <label className="flex flex-col gap-2" htmlFor="suggest-freeform-input">
-        <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
+        <span className="text-sm font-medium text-zinc-200">
           {t('label')}
         </span>
         <input
@@ -199,7 +199,7 @@ function FreeformFormInner({
           autoComplete="off"
           spellCheck
           disabled={isPending}
-          className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-base text-zinc-900 outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:focus-visible:ring-zinc-100"
+          className="rounded-md border px-3 py-2 text-base outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-60 border-zinc-700 bg-zinc-950 text-zinc-100 focus-visible:ring-zinc-100"
           data-testid="suggest-freeform-input"
         />
       </label>

@@ -58,16 +58,15 @@ export interface DebugPanelProps {
 }
 
 const SOURCE_COLORS: Record<DebugEventSource, string> = {
-  ScanForm: 'bg-blue-100 text-blue-900 dark:bg-blue-900 dark:text-blue-100',
-  ScanAction: 'bg-indigo-100 text-indigo-900 dark:bg-indigo-900 dark:text-indigo-100',
-  SuggestAction: 'bg-violet-100 text-violet-900 dark:bg-violet-900 dark:text-violet-100',
-  MCP: 'bg-cyan-100 text-cyan-900 dark:bg-cyan-900 dark:text-cyan-100',
-  Hydrate: 'bg-teal-100 text-teal-900 dark:bg-teal-900 dark:text-teal-100',
-  RateLimit: 'bg-amber-100 text-amber-900 dark:bg-amber-900 dark:text-amber-100',
-  Vision: 'bg-emerald-100 text-emerald-900 dark:bg-emerald-900 dark:text-emerald-100',
-  Sakenowa: 'bg-rose-100 text-rose-900 dark:bg-rose-900 dark:text-rose-100',
-  TasteAction: 'bg-fuchsia-100 text-fuchsia-900 dark:bg-fuchsia-900 dark:text-fuchsia-100',
-  // Dark-only (ADR-0023): one set of colours, no `dark:` branch.
+  ScanForm: 'bg-blue-900 text-blue-100',
+  ScanAction: 'bg-indigo-900 text-indigo-100',
+  SuggestAction: 'bg-violet-900 text-violet-100',
+  MCP: 'bg-cyan-900 text-cyan-100',
+  Hydrate: 'bg-teal-900 text-teal-100',
+  RateLimit: 'bg-amber-900 text-amber-100',
+  Vision: 'bg-emerald-900 text-emerald-100',
+  Sakenowa: 'bg-rose-900 text-rose-100',
+  TasteAction: 'bg-fuchsia-900 text-fuchsia-100',
   ListReader: 'bg-lime-900 text-lime-100',
   ListAction: 'bg-sky-900 text-sky-100',
 }
@@ -195,7 +194,7 @@ export function DebugPanel({
       //     stays usable. The `md:flex md:flex-col` lets the header
       //     stay a natural-height child while the events list flexes
       //     to fill the remaining height.
-      className="fixed z-50 mx-auto max-w-2xl overflow-hidden border-t border-zinc-300 bg-zinc-50/95 backdrop-blur inset-x-0 dark:border-zinc-700 dark:bg-zinc-950/95 md:inset-x-auto md:right-0 md:top-0 md:mx-0 md:w-96 md:max-w-none md:border-l md:border-t-0 md:flex md:flex-col"
+      className="fixed z-50 mx-auto max-w-2xl overflow-hidden border-t backdrop-blur inset-x-0 border-zinc-700 bg-zinc-950/95 md:inset-x-auto md:right-0 md:top-0 md:mx-0 md:w-96 md:max-w-none md:border-l md:border-t-0 md:flex md:flex-col"
       // `bottom` is driven by a CSS custom property the cookie banner
       // publishes (see `cookie-banner.tsx`). When the banner is open,
       // the variable equals the banner's rendered height so the debug
@@ -209,7 +208,7 @@ export function DebugPanel({
       // gives screen readers a way to skip it.
       aria-label={title}
     >
-      <header className="flex items-center gap-2 border-b border-zinc-200 px-3 py-2 text-xs font-semibold dark:border-zinc-800">
+      <header className="flex items-center gap-2 border-b px-3 py-2 text-xs font-semibold border-zinc-800">
         {/*
           Title is hidden on the narrowest viewports because every
           pixel of horizontal real estate competes with the action
@@ -243,7 +242,7 @@ export function DebugPanel({
             onClick={onCopy}
             disabled={hasHydrated && events.length === 0}
             aria-label={copyLabel}
-            className="inline-flex h-6 items-center justify-center rounded px-1.5 text-zinc-500 hover:bg-zinc-200 hover:text-zinc-900 disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+            className="inline-flex h-6 items-center justify-center rounded px-1.5 text-zinc-500 disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-zinc-500 hover:bg-zinc-800 hover:text-zinc-100"
             data-testid="debug-panel-copy"
           >
             {justCopied ? copiedLabel : copyLabel}
@@ -252,7 +251,7 @@ export function DebugPanel({
             type="button"
             onClick={onClear}
             aria-label={clearLabel}
-            className="inline-flex h-6 items-center justify-center rounded px-1.5 text-zinc-500 hover:bg-zinc-200 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+            className="inline-flex h-6 items-center justify-center rounded px-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-zinc-100"
             data-testid="debug-panel-clear"
           >
             {clearLabel}
@@ -264,7 +263,7 @@ export function DebugPanel({
             // → unmount → next activation starts fresh.
             href="?debug=0"
             aria-label={closeLabel}
-            className="inline-flex h-6 w-6 items-center justify-center rounded text-zinc-500 hover:bg-zinc-200 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+            className="inline-flex h-6 w-6 items-center justify-center rounded text-zinc-500 hover:bg-zinc-800 hover:text-zinc-100"
             data-testid="debug-panel-close"
           >
             ×
@@ -319,7 +318,7 @@ export function DebugPanel({
                     {event.source}
                   </span>
                 </div>
-                <div className="min-w-0 overflow-hidden wrap-anywhere break-all text-zinc-800 dark:text-zinc-200">
+                <div className="min-w-0 overflow-hidden wrap-anywhere break-all text-zinc-200">
                   {/*
                     `break-all` (word-break: break-all) plus
                     `wrap-anywhere` is the same belt-and-braces pair
@@ -343,7 +342,7 @@ export function DebugPanel({
                     // with `break-all` for double-belt coverage on
                     // long ASCII-only segments inside the JSON
                     // (`breweryVariants`, `cookieKey`, `nameJa`, etc).
-                    <code className="mt-0.5 block max-w-full overflow-hidden whitespace-pre-wrap wrap-anywhere break-all rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] text-zinc-700 dark:bg-zinc-900 dark:text-zinc-300">
+                    <code className="mt-0.5 block max-w-full overflow-hidden whitespace-pre-wrap wrap-anywhere break-all rounded px-1.5 py-0.5 text-[10px] bg-zinc-900 text-zinc-300">
                       {JSON.stringify(event.data)}
                     </code>
                   )}
