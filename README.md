@@ -14,9 +14,9 @@ _Snapshot generated 2026-10-15 from GitHub Issues + merged PRs. Regenerate with 
 
 | Milestone | Progress | Issues | ETA (median) |
 | --- | --- | --- | --- |
-| **M1 (Phase 0) — Compliance & i18n foundation** | `████████████████████` 100% | 5 / 5 | done |
-| **M2 (Phase 2) — Data foundation** | `██████████████████░░` 92% | 11 / 12 | 2026-10-16 |
-| **M3 (Phases 3–5) — Flagship surfaces** | `████████████████████` 100% | 11 / 11 | done |
+| **M1 (Phase 0) — Compliance & i18n foundation** | `░░░░░░░░░░░░░░░░░░░░` n/a | 5 / 5 | done |
+| **M2 (Phase 2) — Data foundation** | `░░░░░░░░░░░░░░░░░░░░` n/a | 11 / 12 | done |
+| **M3 (Phases 3–5) — Flagship surfaces** | `░░░░░░░░░░░░░░░░░░░░` n/a | 11 / 11 | done |
 
 <!-- progress:end -->
 
