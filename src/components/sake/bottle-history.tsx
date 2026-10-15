@@ -4,6 +4,16 @@ import { StarRow } from '@/components/journal/star-row'
 import { EditableTasting } from '@/components/sake/editable-tasting'
 import type { FlavorChart } from '@/lib/schemas/flavor-chart'
 import type { JournalEntry } from '@/lib/schemas/journal-entry'
+import type { ComponentProps } from 'react'
+
+/** `<EditableTasting />`'s row without its Edit, for the sample collection. */
+function StaticTasting({ children }: ComponentProps<typeof EditableTasting>) {
+  return (
+    <li className="flex flex-col gap-2" data-testid="bottle-history-entry">
+      <div className="flex gap-3 rounded-md bg-surface px-3 py-2.5 shadow-yw-sm">{children}</div>
+    </li>
+  )
+}
 
 /**
  * §9.3 "You and this sake" — the visitor's own tastings of this bottle, newest
@@ -26,6 +36,7 @@ export async function BottleHistory({
   entries,
   locale,
   subject = 'sake',
+  readOnly = false,
 }: {
   /** The sake, or `null` for a bottling whose sake the catalogue lacks. */
   brandId: number | null
@@ -37,7 +48,10 @@ export async function BottleHistory({
   /** §9a's page lists one bottling's tastings under "You and this bottling";
    *  the sake's page lists them all and names the bottling on each (v1.6 §9). */
   subject?: 'sake' | 'bottling'
+  /** The sample collection: the same rows, with no Edit. */
+  readOnly?: boolean
 }) {
+  const Row = readOnly ? StaticTasting : EditableTasting
   const t = await getTranslations('tasting')
   const tJournal = await getTranslations('journal')
   const format = await getFormatter({ locale })
@@ -57,7 +71,7 @@ export async function BottleHistory({
           {entries.map((entry, i) => {
             const rating = entry.event.kind === 'rating' ? entry.event.rating : null
             return (
-              <EditableTasting
+              <Row
                 key={entry.id}
                 brandId={brandId}
                 sakeName={entry.expression?.name ?? entry.sake.nameRomaji ?? entry.sake.nameKanji}
@@ -97,7 +111,7 @@ export async function BottleHistory({
                     <span className="text-subtle italic text-ash-700">“{entry.notes}”</span>
                   )}
                 </span>
-              </EditableTasting>
+              </Row>
             )
           })}
         </ul>

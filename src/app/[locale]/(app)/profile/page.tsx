@@ -27,6 +27,7 @@ import { journalEntriesToTasteEvents } from '@/lib/schemas/journal-entry'
 import { catalogueMeanProfile } from '@/lib/taste/catalogue-mean'
 import { getJournalStore } from '@/lib/taste/get-journal-store'
 import { resolveJournalStub } from '@/lib/taste/journal-stub'
+import { readSampleJournal, wantsSampleCollection } from '@/lib/demo/sample-mode'
 import { resolveMaintainerJournal } from '@/lib/taste/resolve-maintainer-journal'
 import { getFlavorCandidatePool } from '@/lib/taste/flavor-candidate-pool'
 import { getTasteEventStore } from '@/lib/taste/get-taste-event-store'
@@ -139,7 +140,9 @@ async function resolveJournalTasteProfile(
             userId: (await auth()).userId,
             now: Date.now(),
           })
-        : null
+        : wantsSampleCollection(cookieJar)
+          ? (await readSampleJournal(Date.now())).journal
+          : null
   if (journal === null || journal.kind !== 'journal') return null
   return {
     kind: 'profile',

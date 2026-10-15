@@ -9,6 +9,7 @@ import { ColdStartChips, type ColdStartChipView } from '@/components/palate/cold
 import { HomeActionTiles } from '@/components/home/action-tiles'
 import { TabHeader } from '@/components/layout/screen-header'
 import { HomeFirstRunCard } from '@/components/home/first-run-card'
+import { readSampleJournal, wantsSampleCollection } from '@/lib/demo/sample-mode'
 import { HomeGreeting } from '@/components/home/greeting'
 import { HomePalateStrip } from '@/components/home/palate-strip'
 import { HomeRecentTastings } from '@/components/home/recent-tastings'
@@ -100,7 +101,11 @@ async function resolveJournalView(cookieJar: CookieJar): Promise<{
     // not a test that rewrites its own expectations overnight.
     return { journal: resolveJournalStub(journalStub), now: STUB_JOURNAL_NOW }
   }
-  if (!(await currentUserIsMaintainer())) return { journal: null, now }
+  if (!(await currentUserIsMaintainer())) {
+    // A visitor without an account who asked for the sample collection.
+    if (wantsSampleCollection(cookieJar)) return { journal: (await readSampleJournal(now)).journal, now }
+    return { journal: null, now }
+  }
   const { userId } = await auth()
   return {
     journal: await resolveMaintainerJournal({ store: getJournalStore(), userId, now }),

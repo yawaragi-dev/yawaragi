@@ -9,6 +9,7 @@ import { Link } from '@/i18n/navigation'
 import { CellarList } from '@/components/collection/cellar-list'
 import { JournalList } from '@/components/collection/journal-list'
 import { TabPlaceholder } from '@/components/layout/tab-placeholder'
+import { readSampleJournal, wantsSampleCollection } from '@/lib/demo/sample-mode'
 import { TabHeader } from '@/components/layout/screen-header'
 import { currentUserIsMaintainer } from '@/lib/auth/maintainer'
 import { isLaunched } from '@/i18n/launch-state'
@@ -74,6 +75,8 @@ type CookieJar = Awaited<ReturnType<typeof cookies>>
  */
 async function resolveJournalView(cookieJar: CookieJar): Promise<{
   isMaintainer: boolean
+  /** The sample collection, which nothing on this screen may change. */
+  readOnly: boolean
   journal: MaintainerJournalState | null
   cellar: readonly CellarBottle[]
   /** The instant the cellar's "open N days" is measured against. */
@@ -86,6 +89,7 @@ async function resolveJournalView(cookieJar: CookieJar): Promise<{
   if (journalStub != null) {
     return {
       isMaintainer: true,
+      readOnly: false,
       journal: resolveJournalStub(journalStub),
       cellar: resolveCellarStub(journalStub),
       now: STUB_JOURNAL_NOW,
@@ -93,7 +97,11 @@ async function resolveJournalView(cookieJar: CookieJar): Promise<{
   }
   const now = Date.now()
   if (!(await currentUserIsMaintainer())) {
-    return { isMaintainer: false, journal: null, cellar: [], now }
+    if (wantsSampleCollection(cookieJar)) {
+      const sample = await readSampleJournal(now)
+      return { isMaintainer: true, readOnly: true, journal: sample.journal, cellar: sample.cellar, now }
+    }
+    return { isMaintainer: false, readOnly: false, journal: null, cellar: [], now }
   }
   const { userId } = await auth()
   const cellarStore = getCellarStore()
@@ -101,7 +109,7 @@ async function resolveJournalView(cookieJar: CookieJar): Promise<{
     resolveMaintainerJournal({ store: getJournalStore(), userId, now }),
     userId && cellarStore ? cellarStore.read(userId) : Promise.resolve([]),
   ])
-  return { isMaintainer: true, journal, cellar, now }
+  return { isMaintainer: true, readOnly: false, journal, cellar, now }
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -162,6 +170,10 @@ export default async function CollectionTabPage({ params, searchParams }: PagePr
           title={tPlaceholder('title')}
           body={tPlaceholder('body')}
           link={{ href: '/profile', label: tPlaceholder('linkLabel') }}
+          sample={{
+            href: `/api/sample-collection?locale=${locale}`,
+            label: (await getTranslations({ locale, namespace: 'sampleCollection' }))('enter'),
+          }}
         />
       </div>
     )
@@ -219,7 +231,7 @@ export default async function CollectionTabPage({ params, searchParams }: PagePr
         </section>
       ) : segment === 'cellar' ? (
         <>
-          <CellarList rows={view.cellar} now={view.now} />
+          <CellarList rows={view.cellar} now={view.now} readOnly={view.readOnly} />
           {/* ADR-0014: the Sakenowa credit is line 1 of the end-of-screen
               block, rendered by the app shell directly under this list. */}
         </>

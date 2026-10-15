@@ -8,6 +8,7 @@ import { getExpressionStore } from '@/lib/collection/get-expression-store'
 import type { CellarBottle } from '@/lib/schemas/cellar-bottle'
 import type { Expression } from '@/lib/schemas/expression'
 import type { JournalEntry } from '@/lib/schemas/journal-entry'
+import { readSampleCollection, wantsSampleCollection } from '@/lib/demo/sample-mode'
 import { getJournalStore } from '@/lib/taste/get-journal-store'
 import {
   resolveCellarStub,
@@ -36,11 +37,14 @@ export async function resolveViewerJournal(
   cookieJar: CookieJar,
 ): Promise<{
   canLog: boolean
+  /** There is a collection to show: the visitor's own, or the sample a
+   *  visitor without an account asked to look through (read-only). */
+  canView: boolean
   entries: readonly JournalEntry[]
   cellar: readonly CellarBottle[]
   expressions: readonly Expression[]
 }> {
-  const none = { canLog: false, entries: [], cellar: [], expressions: [] } as const
+  const none = { canLog: false, canView: false, entries: [], cellar: [], expressions: [] } as const
   const stub =
     process.env.NODE_ENV !== 'production' ? cookieJar.get('yawaragi_journal_stub')?.value : undefined
   if (stub != null) {
@@ -48,13 +52,18 @@ export async function resolveViewerJournal(
     if (state.kind === 'unavailable') return none
     return {
       canLog: true,
+      canView: true,
       entries: state.kind === 'journal' ? state.entries : [],
       cellar: resolveCellarStub(stub),
       expressions: resolveExpressionsStub(stub),
     }
   }
 
-  if (!(await currentUserIsMaintainer())) return none
+  if (!(await currentUserIsMaintainer())) {
+    // Read-only: every write affordance keys off `canLog`.
+    if (!wantsSampleCollection(cookieJar)) return none
+    return { canLog: false, canView: true, ...(await readSampleCollection(Date.now())) }
+  }
   const { userId } = await auth()
   const journal = getJournalStore()
   const cellar = getCellarStore()
@@ -65,7 +74,7 @@ export async function resolveViewerJournal(
     cellar.read(userId),
     expressions.read(userId),
   ])
-  return { canLog: true, entries, cellar: rows, expressions: bottlings }
+  return { canLog: true, canView: true, entries, cellar: rows, expressions: bottlings }
 }
 
 /** One bottling's tastings, newest first. */

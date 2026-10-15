@@ -141,7 +141,7 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
 
   // §9.3: this sake's tastings, newest first — and the meta §5's panel shows
   // before the first tap ("Last logged 19 Sep · 4.5" / "First time for you").
-  const tastings = viewer.canLog ? entriesForBrand(viewer.entries, brandId) : []
+  const tastings = viewer.canView ? entriesForBrand(viewer.entries, brandId) : []
   const lastTasting = tastings[0]
   const ownBottlings = viewer.expressions.filter((e) => e.brandId === brandId)
 
@@ -378,8 +378,14 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
       )}
 
       {/* -- §9.3 You and this sake ---------------------------------------- */}
-      {viewer.canLog && (
-        <BottleHistory brandId={brandId} chart={flavorChart} entries={tastings} locale={locale} />
+      {viewer.canView && (
+        <BottleHistory
+          brandId={brandId}
+          chart={flavorChart}
+          entries={tastings}
+          locale={locale}
+          readOnly={!viewer.canLog}
+        />
       )}
 
       {/* -- §9.3a Bottlings ----------------------------------------------- */}
@@ -388,12 +394,13 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
         bottlings" above it once the visitor has added one (64). "Bottlings we
         know" needs catalogue bottlings, and there are none.
       */}
-      {viewer.canLog && (
+      {viewer.canView && (
         <OwnBottlings
           brandId={brandId}
           lineName={brand.nameRomaji ?? brand.nameKanji}
           bottlings={ownBottlings}
           tastedIds={new Set(tastings.flatMap((e) => (e.expression ? [e.expression.id] : [])))}
+          readOnly={!viewer.canLog}
         />
       )}
 
