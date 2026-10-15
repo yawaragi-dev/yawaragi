@@ -2,6 +2,8 @@
 
 Open questions the build has run into and settled provisionally, so they can be handed to the designers in one go. Each says what is built today, so nobody has to guess. Opened 2026-10-13; filed as #417.
 
+Round two (blocks I–L) starts at the end of the file.
+
 The design snapshot these refer to is `design/README.md`, v1.6.2.
 
 ## A. A bottle that is not sake
@@ -106,3 +108,51 @@ Built on branch `scan/read-romaji`: the model also gives the name, the brewery a
 1. Is a line under the field the right place, or should the Latin reading be the field's value with the kanji beside it?
 2. Reading first, then kanji ("Kyōgoku 京極"), for a kept name: right order, and right to keep both?
 3. The reading is the model's. It sits under the card's Read by AI badge; does it need its own mark where it appears in a saved name?
+
+---
+
+# Round two (opened 2026-10-15, against design v1.7.1)
+
+Blocks A–H were answered in v1.7 and v1.7.1. The blocks below are new: two are things built ahead of the spec that need drawing, three are ideas the maintainer wants designed before they are built.
+
+## I. Your own photo of a bottle
+
+Issue #448. Today the scan photo is discarded once read. The idea: let a visitor keep it, or add a photo later, so their journal and cellar show the bottles they actually had.
+
+Nothing is built. The legal side is settled enough to design against: keeping a photo is something the visitor asks for, so there is **no consent dialog** — one explicit, unticked control, and a line saying where the photo goes and that it can be deleted. Location data is stripped on the device before upload.
+
+1. On the scan result card: a control such as "Keep this photo with the bottle", off by default. Where on the card, and what does it look like once on?
+2. "Add a photo" later: on the bottling page, a journal entry, a cellar row — all three, or only the bottling?
+3. Where a kept photo shows: the bottling page's identity block, journal rows, cellar rows, Home's recent tastings? And what shows where there is none (today's placeholder, #334)?
+4. One photo per bottling, or one per tasting (the same bottle on different evenings)?
+5. Replacing and deleting a photo.
+
+## J. "Scan the back" when the front says too little
+
+Issue #449. Many front labels carry the name and little else; the grade, the polishing ratio, the rice and the importer's German sticker are on the back. The scan already reads a second photo together with the first ("This photo is read together with your last one"), but nothing tells the visitor a second photo is worth taking.
+
+Nothing is built. Proposed: on a matched card whose read has no bottling detail, one quiet line — "The back label usually says which bottling this is" — and "Scan the back", which opens the camera for a photo read together with this one.
+
+1. Copy, and where the line sits on the card (under "On this label"?).
+2. Does it also show on "not in the catalogue" and "Best guess", where the back label may decide the match?
+3. A visitor with one free scan left: show it, show it with a note, or hide it?
+
+## K. The landing page in motion
+
+Issue #450. The hero's phone is still a placeholder (§0: "replace with a real app screenshot"). The maintainer wants the three features shown in motion — the landing is also what a recruiter sees first.
+
+Nothing is built. Proposed: the hero's phone plays a short loop built from the real screens with demo data — a label being scanned, the result card, a one-tap rating, the palate chart filling in — a few seconds each; a still frame for visitors who prefer reduced motion. Optionally the phone stays pinned while "Three things, done well" scrolls past and its screen changes with each card.
+
+Constraints from the build: the landing sits before the age gate, so the loop cannot show a real sake's name, chart or rating — a made-up demo bottle, with the Yawaragi mark; no drinking shown; every word translated.
+
+1. The sequence and timing of the loop. Which moments?
+2. Pinned phone with scrolling features, or the loop in the hero only?
+3. The demo bottle: its label and name.
+4. Anything about how the app is built for the landing ("provenance on every value", evals, privacy), or does that stay in the README?
+
+## L. Built ahead of the spec, to be drawn
+
+Both shipped on 2026-10-15 and are in production; they work, but nobody has drawn them.
+
+1. **"This bottle"** on a matched card whose label names a bottling none of the visitor's own fits (#446): a choice between that bottling (the default; created at the first rating or bottle added) and "{line}, any bottling". "Add to cellar" starts on nama when the label says nama. The sake page the scan leads to starts "Add your bottling" from the label's bottling.
+2. **"Don't"** on the line "This photo is read together with your last one" (#445): reads the new photo on its own instead. DE "Nicht".
