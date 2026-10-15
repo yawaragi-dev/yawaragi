@@ -590,10 +590,26 @@ describe("resolveScannedLabel — the label's other names", () => {
       expect(result.kind).toBe('ambiguous')
     })
 
-    it('keeps the list when the label prints no second name — one unmatched string may be a misread', async () => {
+    it('says "not in the catalogue" with no second name too, when the name read is none of the brewery\'s lines (#420)', async () => {
+      // 京極 by 二世古酒造, once the catalogue had two sakes of that brewery:
+      // "Which one is it?" between two sakes the label fits neither of.
       const executor = fakeExecutor({ siblings: [TOWADA], byExtraction: lines({ nameJa: '隠し吟醸', breweryJa: '北鹿' }) })
 
       const result = await resolveScannedLabel(label({ name_ja: '隠し吟醸', brewery_ja: '北鹿' }), executor)
+
+      expect(result.kind).toBe('no_match')
+    })
+
+    it('keeps the list when the one name read is a single character, which is a misread', async () => {
+      // A single character never reaches the full lookup: the brewery alone is.
+      const executor = fakeExecutor({ siblings: [TOWADA], byBreweryOnly: {
+          kind: 'ambiguous',
+          candidates: [{ sake: KITAAKITA, brewery: HOKUSHIKA }],
+          query: { nameJa: '隠', breweryJa: '北鹿' },
+        },
+      })
+
+      const result = await resolveScannedLabel(label({ name_ja: '隠', brewery_ja: '北鹿' }), executor)
 
       expect(result.kind).toBe('ambiguous')
     })

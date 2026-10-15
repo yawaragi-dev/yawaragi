@@ -408,7 +408,17 @@ async function withOtherNames(
   executor: ScannedLabelLookupExecutor,
 ): Promise<WithOtherNames> {
   const otherNames = otherNamesOf(label)
-  if (otherNames.length === 0) return { resolved, corroborated: false }
+  if (otherNames.length === 0) {
+    // #420, the brewery with several sakes: the same answer as for one
+    // (`strangerOfTheBrewery`). Before, 京極 by 二世古酒造 was "Which one is
+    // it?" between 二世古 and 倶知安 — a list the label fits none of. A
+    // one-character name is a misread, not a name, and keeps the list.
+    const unlisted =
+      resolved.kind === 'ambiguous' &&
+      !looksLikeSingleCharHallucination(label.name_ja) &&
+      (await isAnotherSakeOfTheBrewery(label, resolved, executor))
+    return { resolved: unlisted ? { kind: 'no_match', query: resolved.query } : resolved, corroborated: false }
+  }
 
   if (resolved.kind === 'exact' || resolved.kind === 'matched_brand_only' || resolved.kind === 'matched_brewery_only') {
     const sameSakeAgain = otherNames.some((name) => namesBrand(name, resolved.sake))
