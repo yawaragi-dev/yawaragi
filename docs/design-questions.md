@@ -113,7 +113,7 @@ Built on branch `scan/read-romaji`: the model also gives the name, the brewery a
 
 # Round two (opened 2026-10-15, against design v1.7.1)
 
-Blocks A–H were answered in v1.7 and v1.7.1. The blocks below are new: two are things built ahead of the spec that need drawing, three are ideas the maintainer wants designed before they are built.
+Blocks A–H were answered in v1.7 and v1.7.1. The blocks below are new: I, J and K are ideas the maintainer wants designed before they are built; L is what was built ahead of the spec and needs drawing; M, N and O come from the 2026-10-11 review of what the app lacks.
 
 ## I. Your own photo of a bottle
 
