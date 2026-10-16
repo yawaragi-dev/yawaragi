@@ -2,6 +2,8 @@
 
 Open questions the build has run into and settled provisionally, so they can be handed to the designers in one go. Each says what is built today, so nobody has to guess. Opened 2026-10-13; filed as #417.
 
+Round two (blocks I–O) starts at the end of the file.
+
 The design snapshot these refer to is `design/README.md`, v1.6.2.
 
 ## A. A bottle that is not sake
@@ -106,3 +108,84 @@ Built on branch `scan/read-romaji`: the model also gives the name, the brewery a
 1. Is a line under the field the right place, or should the Latin reading be the field's value with the kanji beside it?
 2. Reading first, then kanji ("Kyōgoku 京極"), for a kept name: right order, and right to keep both?
 3. The reading is the model's. It sits under the card's Read by AI badge; does it need its own mark where it appears in a saved name?
+
+---
+
+# Round two (opened 2026-10-15, against design v1.7.1)
+
+Blocks A–H were answered in v1.7 and v1.7.1. The blocks below are new: I, J and K are ideas the maintainer wants designed before they are built; L is what was built ahead of the spec and needs drawing; M, N and O come from the 2026-10-11 review of what the app lacks.
+
+## I. Your own photo of a bottle
+
+Issue #448. Today the scan photo is discarded once read. The idea: let a visitor keep it, or add a photo later, so their journal and cellar show the bottles they actually had.
+
+Nothing is built. The legal side is settled enough to design against: keeping a photo is something the visitor asks for, so there is **no consent dialog** — one explicit, unticked control, and a line saying where the photo goes and that it can be deleted. Location data is stripped on the device before upload.
+
+1. On the scan result card: a control such as "Keep this photo with the bottle", off by default. Where on the card, and what does it look like once on?
+2. "Add a photo" later: on the bottling page, a journal entry, a cellar row — all three, or only the bottling?
+3. Where a kept photo shows: the bottling page's identity block, journal rows, cellar rows, Home's recent tastings? And what shows where there is none (today's placeholder, #334)?
+4. One photo per bottling, or one per tasting (the same bottle on different evenings)?
+5. Replacing and deleting a photo.
+
+## J. "Scan the back" when the front says too little
+
+Issue #449. Many front labels carry the name and little else; the grade, the polishing ratio, the rice and the importer's German sticker are on the back. The scan already reads a second photo together with the first ("This photo is read together with your last one"), but nothing tells the visitor a second photo is worth taking.
+
+Nothing is built. Proposed: on a matched card whose read has no bottling detail, one quiet line — "The back label usually says which bottling this is" — and "Scan the back", which opens the camera for a photo read together with this one.
+
+1. Copy, and where the line sits on the card (under "On this label"?).
+2. Does it also show on "not in the catalogue" and "Best guess", where the back label may decide the match?
+3. A visitor with one free scan left: show it, show it with a note, or hide it?
+
+## K. The landing page in motion
+
+Issue #450. The hero's phone is still a placeholder (§0: "replace with a real app screenshot"). The maintainer wants the three features shown in motion — the landing is also what a recruiter sees first.
+
+Nothing is built. Proposed: the hero's phone plays a short loop built from the real screens with demo data — a label being scanned, the result card, a one-tap rating, the palate chart filling in — a few seconds each; a still frame for visitors who prefer reduced motion. Optionally the phone stays pinned while "Three things, done well" scrolls past and its screen changes with each card.
+
+Constraints from the build: the landing sits before the age gate, so the loop cannot show a real sake's name, chart or rating — a made-up demo bottle, with the Yawaragi mark; no drinking shown; every word translated.
+
+1. The sequence and timing of the loop. Which moments?
+2. Pinned phone with scrolling features, or the loop in the hero only?
+3. The demo bottle: its label and name.
+4. Anything about how the app is built for the landing ("provenance on every value", evals, privacy), or does that stay in the README?
+
+## L. Built ahead of the spec, to be drawn
+
+All four are in production; they work, but nobody has drawn them.
+
+1. **"This bottle"** on a matched card whose label names a bottling none of the visitor's own fits (#446): a choice between that bottling (the default; created at the first rating or bottle added) and "{line}, any bottling". "Add to cellar" starts on nama when the label says nama. The sake page the scan leads to starts "Add your bottling" from the label's bottling.
+2. **"Don't"** on the line "This photo is read together with your last one" (#445): reads the new photo on its own instead. DE "Nicht".
+3. **The sample collection** (#455): a visitor without an account can open "Look through a sample collection" from the empty Collection tab. It shows made-up tastings of real sakes, a cellar and one own bottling on Home, Collection, Palate, the sake page and the bottling page, all read-only. A line across the top says "A sample collection · Made-up tastings of real sakes. Nothing here is saved." with **Leave**. Is that line the right shape? Should the landing link to it too (for people deciding whether to try the app)?
+4. **"Sign in to rank these" opens sign-in over the scan** (#440) instead of going to the sign-in page as 1.7 drew it. The page lost the menu photo on the way back; the sheet keeps it. Google opens in a pop-up.
+
+## M. Finding a sake without its name
+
+From the 2026-10-11 review: search finds a sake only by name. The catalogue already holds what browsing needs — the prefecture, the six-axis chart (for 44% of sakes), Sakenowa's rankings, and Sakenowa's 141 flavor words (グレープフルーツ, 柑橘, 酸味, ワイン, メロン …). Issue #451 adds the last as "flavors in your own words": "grapefruit" finds the sakes tagged グレープフルーツ, with no model call.
+
+Nothing is built.
+
+1. Where does it live: filter chips on §8 Search, a "Browse" view of its own, or both?
+2. Which filters first: prefecture, "more / less" on a flavor axis, a flavor word, grade?
+3. A flavor word typed in English or German that matches a Japanese tag: how is the match shown, so it does not read as our own tasting note? ("Tagged グレープフルーツ by Sakenowa drinkers"?)
+4. Rankings: does a popularity order belong in the app at all, given the age-gate and non-promotional rules?
+
+## N. Price and place on a tasting
+
+From the 2026-10-11 review: a tasting holds stars, notes, tags and the §10 sheet, but not what was paid or where it was had or bought. Competitors keep both.
+
+Nothing is built.
+
+1. In §10's sheet, or as two quiet optional fields on §5's panel?
+2. Price: per bottle or per glass, and in which currency (the visitor's, or free text)?
+3. Place: free text only (a bar's name), never a map or location — confirm.
+
+## O. Yawaragi on the home screen
+
+From the 2026-10-11 review: the app is used on a phone in a bar, but it cannot be installed — there is no web app manifest.
+
+Nothing is built. The build would add a manifest (name, icons, the dark ground as theme colour) so "Add to Home Screen" gives a proper icon and opens without the browser's bar.
+
+1. App icon at the sizes a manifest needs (192, 512, maskable), and the short name under it ("Yawaragi"?).
+2. Does the app ever suggest installing, or only the browser's own menu?
+3. The splash colour and whether the status bar is dark.
