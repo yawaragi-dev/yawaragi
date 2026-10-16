@@ -31,7 +31,7 @@ _Snapshot generated 2026-10-16 from GitHub Issues + merged PRs. Regenerate with 
 - **The bottle page.** Flavor chart, similar sakes (cosine similarity over the six axes, no model call), the brewery and its other sakes.
 - **Learn.** Eighteen hand-written entries — reading a label, the grades, polishing, nama, serving temperatures, the six flavor words — each with named sources.
 
-**With an account (a private beta today, see [ADR-0020](./docs/adr/0020-tasting-journal-spine-and-maintainer-only-persistence.md)):**
+**With an account (a private beta today, see [ADR-0020](./docs/adr/0020-tasting-journal-spine-and-maintainer-only-persistence.md)).** Without one, [look through a sample collection](https://yawaragi.dev/api/sample-collection?locale=en) — made-up tastings of real sakes, read-only:
 
 - **Journal.** One-tap star rating from the scan result, quick tags, detailed notes, edit and undo.
 - **Palate.** A taste profile derived from the journal, with the axes you lean towards in words.
