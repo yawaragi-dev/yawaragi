@@ -152,7 +152,40 @@ Constraints from the build: the landing sits before the age gate, so the loop ca
 
 ## L. Built ahead of the spec, to be drawn
 
-Both shipped on 2026-10-15 and are in production; they work, but nobody has drawn them.
+All four are in production; they work, but nobody has drawn them.
 
 1. **"This bottle"** on a matched card whose label names a bottling none of the visitor's own fits (#446): a choice between that bottling (the default; created at the first rating or bottle added) and "{line}, any bottling". "Add to cellar" starts on nama when the label says nama. The sake page the scan leads to starts "Add your bottling" from the label's bottling.
 2. **"Don't"** on the line "This photo is read together with your last one" (#445): reads the new photo on its own instead. DE "Nicht".
+3. **The sample collection** (#455): a visitor without an account can open "Look through a sample collection" from the empty Collection tab. It shows made-up tastings of real sakes, a cellar and one own bottling on Home, Collection, Palate, the sake page and the bottling page, all read-only. A line across the top says "A sample collection · Made-up tastings of real sakes. Nothing here is saved." with **Leave**. Is that line the right shape? Should the landing link to it too (for people deciding whether to try the app)?
+4. **"Sign in to rank these" opens sign-in over the scan** (#440) instead of going to the sign-in page as 1.7 drew it. The page lost the menu photo on the way back; the sheet keeps it. Google opens in a pop-up.
+
+## M. Finding a sake without its name
+
+From the 2026-10-11 review: search finds a sake only by name. The catalogue already holds what browsing needs — the prefecture, the six-axis chart (for 44% of sakes), Sakenowa's rankings, and Sakenowa's 141 flavor words (グレープフルーツ, 柑橘, 酸味, ワイン, メロン …). Issue #451 adds the last as "flavors in your own words": "grapefruit" finds the sakes tagged グレープフルーツ, with no model call.
+
+Nothing is built.
+
+1. Where does it live: filter chips on §8 Search, a "Browse" view of its own, or both?
+2. Which filters first: prefecture, "more / less" on a flavor axis, a flavor word, grade?
+3. A flavor word typed in English or German that matches a Japanese tag: how is the match shown, so it does not read as our own tasting note? ("Tagged グレープフルーツ by Sakenowa drinkers"?)
+4. Rankings: does a popularity order belong in the app at all, given the age-gate and non-promotional rules?
+
+## N. Price and place on a tasting
+
+From the 2026-10-11 review: a tasting holds stars, notes, tags and the §10 sheet, but not what was paid or where it was had or bought. Competitors keep both.
+
+Nothing is built.
+
+1. In §10's sheet, or as two quiet optional fields on §5's panel?
+2. Price: per bottle or per glass, and in which currency (the visitor's, or free text)?
+3. Place: free text only (a bar's name), never a map or location — confirm.
+
+## O. Yawaragi on the home screen
+
+From the 2026-10-11 review: the app is used on a phone in a bar, but it cannot be installed — there is no web app manifest.
+
+Nothing is built. The build would add a manifest (name, icons, the dark ground as theme colour) so "Add to Home Screen" gives a proper icon and opens without the browser's bar.
+
+1. App icon at the sizes a manifest needs (192, 512, maskable), and the short name under it ("Yawaragi"?).
+2. Does the app ever suggest installing, or only the browser's own menu?
+3. The splash colour and whether the status bar is dark.
