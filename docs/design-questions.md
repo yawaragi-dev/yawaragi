@@ -2,7 +2,7 @@
 
 Open questions the build has run into and settled provisionally, so they can be handed to the designers in one go. Each says what is built today, so nobody has to guess. Opened 2026-10-13; filed as #417.
 
-Round two (blocks I–L) starts at the end of the file.
+Round two (blocks I–O) starts at the end of the file.
 
 The design snapshot these refer to is `design/README.md`, v1.6.2.
 
