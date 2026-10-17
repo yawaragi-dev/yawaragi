@@ -393,22 +393,25 @@ function ListRowItem({
           <span className="pb-1 text-section-label tracking-normal text-ash-600">
             {t(isMenu ? 'bottlingsOnList' : 'bottlingsOnShelf', { count: row.lines.length })}
           </span>
-          {row.lines.map((line) => (
-            <NextLink
-              key={line.index}
-              href={row.sakeHref}
-              className="flex min-h-11 items-center gap-3 border-t border-divider text-subtle text-ink transition-colors hover:bg-ash-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
-              data-testid="list-row-bottling"
-            >
-              <span className="flex min-w-0 flex-1 flex-col">
-                <span lang="ja">{line.printed}</span>
-                {/* What the printed name means, for a visitor who cannot read it. */}
-                {bottlingWords(line) && <span className="text-meta text-ash-600">{bottlingWords(line)}</span>}
-              </span>
-              {isMenu && price(line.price) && <span className="shrink-0">{price(line.price)}</span>}
-              <CaretRight size={14} aria-hidden="true" className="shrink-0 text-ash-500" />
-            </NextLink>
-          ))}
+          {row.lines.map((line) => {
+            const words = bottlingWords(line)
+            return (
+              <NextLink
+                key={line.index}
+                href={row.sakeHref}
+                className="flex min-h-11 items-center gap-3 border-t border-divider text-subtle text-ink transition-colors hover:bg-ash-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+                data-testid="list-row-bottling"
+              >
+                <span className="flex min-w-0 flex-1 flex-col">
+                  <span lang="ja">{line.printed}</span>
+                  {/* What the printed name means, for a visitor who cannot read it. */}
+                  {words && <span className="text-meta text-ash-600">{words}</span>}
+                </span>
+                {isMenu && price(line.price) && <span className="shrink-0">{price(line.price)}</span>}
+                <CaretRight size={14} aria-hidden="true" className="shrink-0 text-ash-500" />
+              </NextLink>
+            )
+          })}
         </div>
       )}
     </li>
