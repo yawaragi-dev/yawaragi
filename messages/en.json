@@ -1745,13 +1745,19 @@
     "serve": "Usually served {temperatures}.",
     "temperature": "{kanji} {romaji}, about {degrees}°C",
     "or": " or ",
-    "caveatChart": "From the flavor chart (Sakenowa), for the whole line: pairings for {kind}. Bottlings vary.",
-    "caveatStyle": "Pairings often given for {kind}.",
+    "caveat": {
+      "style": "Pairings often given for {kind}.",
+      "grade": "{grade} is usually fragrant: pairings often given for {kind}.",
+      "chart": "From the flavor chart (Sakenowa), for the whole line: pairings for {kind}. Bottlings vary."
+    },
     "sheet": {
       "triggerLabel": "Where these pairings come from",
       "title": "Where these pairings come from",
-      "howChart": "We compare this sake's flavor chart with the average of every sake in the catalogue and look for the one direction it clearly stands out in. That points to {kind}, and the foods are the ones the sources below give for that kind. The chart describes the whole line, so a bottling of it may differ.",
-      "howStyle": "This bottling is {kind}. The foods are the ones the sources below give for that kind of sake.",
+      "how": {
+        "style": "This bottling is {kind}. The foods are the ones the sources below give for it.",
+        "grade": "This bottling is a {grade}. Ginjo grades are usually fragrant sake, {kind}, so the foods are the ones the sources below give for that kind. A restrained, dry ginjo may suit lighter dishes better.",
+        "chart": "We compare this sake's flavor chart with the average of every sake in the catalogue and look for the one direction it clearly stands out in. That points to {kind}, and the foods are the ones the sources below give for that kind. The chart describes the whole line, so a bottling of it may differ."
+      },
       "startingPoint": "They are starting points to try, not rules. Where the chart or the label says too little, we show none.",
       "sources": "Sources"
     },
@@ -1760,98 +1766,100 @@
         "kind": "kunshu (薫酒), fragrant sake",
         "sashimi": {
           "name": "Sashimi and other raw fish",
-          "reason": "Delicate dishes let the fruity aroma lead."
+          "reason": "Sake keeps raw fish from tasting fishy, and a delicate dish leaves its aroma room."
         },
         "crab": {
           "name": "Crab and sweet shellfish",
-          "reason": "Their sweetness meets the sake's soft fruit."
+          "reason": "Their gentle sweetness sits alongside the fruit without covering it."
         },
         "freshCheese": {
           "name": "Fresh, mild cheese, with tomato",
-          "reason": "A light dairy note that leaves the aroma room."
+          "reason": "Mild and milky: nothing to drown the aroma."
         }
       },
       "junshu": {
         "kind": "junshu (醇酒), rich sake",
         "oden": {
-          "name": "Oden and simmered dishes",
-          "reason": "Broth and slow-cooked daikon match its umami."
+          "name": "Oden and other dishes in dashi",
+          "reason": "Kelp and bonito broth: two umami sources that strengthen each other, met by an umami-rich sake."
         },
         "sukiyaki": {
-          "name": "Sukiyaki and savory braised meat",
-          "reason": "Sweet soy and beef stand up to its weight."
+          "name": "Sukiyaki",
+          "reason": "Soy sauce, like sake, is made with koji and yeast; their savory notes carry each other."
         },
-        "agedCheese": {
-          "name": "Aged cheese",
-          "reason": "Two fermented foods with deep umami."
+        "porkDaikon": {
+          "name": "Pork and daikon simmered in soy",
+          "reason": "Slow-cooked and savory, with the weight to stand beside a full sake."
         }
       },
       "soshu": {
         "kind": "soshu (爽酒), light, smooth sake",
         "coldTofu": {
           "name": "Chilled tofu, hiyayakko",
-          "reason": "Clean and light, like the sake."
+          "reason": "Plain and cool, it lets a clean sake show."
         },
         "oysters": {
           "name": "Raw oysters",
-          "reason": "Its crisp finish keeps up with the brine."
+          "reason": "Sake leaves less of the fishy note wine can bring out in shellfish."
         },
         "friedFish": {
           "name": "Fried white fish",
-          "reason": "The dry finish lifts the batter."
+          "reason": "A clean, dry finish cuts through the oil of the batter."
         }
       },
       "koshu": {
         "kind": "koshu (古酒), aged sake",
-        "agedCheese": {
-          "name": "Aged hard or blue cheese",
-          "reason": "Nutty, caramel depth meets savory depth."
+        "hardCheese": {
+          "name": "Hard, mature cheese: Comté, Parmesan, aged Cheddar",
+          "reason": "Both come from long fermentation and aging; their savory, nutty notes meet."
         },
         "unagi": {
           "name": "Grilled eel, unagi",
-          "reason": "Its sweet glaze matches the sake's richness."
+          "reason": "A sweet soy glaze to match the sake's caramel depth."
         },
         "driedFruit": {
           "name": "Dried fruit and nuts",
-          "reason": "Echo the dried-fruit notes of aging."
+          "reason": "They echo the dried-fruit notes that aging brings."
         }
       },
       "kijoshu": {
         "kind": "kijoshu (貴醸酒), brewed with sake in place of some water",
         "darkChocolate": {
           "name": "Dark chocolate",
-          "reason": "Sweet and dense enough to meet it."
+          "reason": "Sweet and dense, it needs something as rich."
         },
-        "desserts": {
-          "name": "Rich desserts",
-          "reason": "Its sweetness belongs with the end of a meal."
+        "iceCream": {
+          "name": "Vanilla ice cream",
+          "reason": "Served beside it, or poured over it."
+        },
+        "foieGras": {
+          "name": "Foie gras",
+          "reason": "Rich and fatty, the way sweet wine is served with it."
         }
       },
       "sparkling": {
         "kind": "sparkling sake",
-        "aperitif": {
-          "name": "Before the meal",
-          "reason": "Light and lively, often served as an aperitif."
-        },
         "freshCheese": {
-          "name": "Fresh cheese",
-          "reason": "Soft and mild beside the bubbles."
+          "name": "Fresh cheese: chèvre, ricotta",
+          "reason": "Bubbles and a little sweetness lift a clean, milky cheese."
         },
-        "lightDishes": {
-          "name": "Light dishes and salads",
-          "reason": "Nothing heavy to flatten it."
-        }
+        "fruitDesserts": {
+          "name": "Fruit desserts",
+          "reason": "A slightly sweet sparkling sake meets fruit."
+        },
+        "note": "Often served as an aperitif, before the meal."
       },
       "nigori": {
         "kind": "nigori (にごり), cloudy sake",
         "spicyDishes": {
-          "name": "Spicy dishes",
-          "reason": "The creamy body softens the heat."
+          "name": "Spicy dishes: curry, kimchi",
+          "reason": "Its sweetness and rice solids soften chili heat — less so in a strong, dry nigori."
         },
         "washedRindCheese": {
-          "name": "Washed-rind cheese",
-          "reason": "Rich textures meet each other."
-        }
+          "name": "Washed-rind cheese: Taleggio, Époisses",
+          "reason": "A creamy body and a hint of sweetness soften a pungent cheese."
+        },
+        "note": "Nigori runs from sweet and creamy to dry; these suit the sweeter, creamier ones."
       }
     }
   }

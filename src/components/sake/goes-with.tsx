@@ -8,7 +8,7 @@ import {
   Cookie,
   Fish,
   ForkKnife,
-  Leaf,
+  IceCream,
   Orange,
   Pepper,
   Shrimp,
@@ -17,6 +17,7 @@ import { BottleSection } from '@/components/sake/bottle-section'
 import { InfoSheet } from '@/components/ui/info-sheet'
 import type { Pairing } from '@/lib/pairing/resolve-pairing'
 import { SERVING_TEMPERATURE_TERMS } from '@/lib/schemas/detailed-notes'
+import { gradeLabel } from '@/lib/scan/read-bottling'
 
 const FOOD_ICON: Record<string, typeof Fish> = {
   sashimi: Fish,
@@ -24,16 +25,17 @@ const FOOD_ICON: Record<string, typeof Fish> = {
   freshCheese: Cheese,
   oden: BowlSteam,
   sukiyaki: CookingPot,
-  agedCheese: Cheese,
+  porkDaikon: CookingPot,
   coldTofu: BowlFood,
   oysters: Fish,
   friedFish: Fish,
+  hardCheese: Cheese,
   unagi: Fish,
   driedFruit: Orange,
   darkChocolate: Cookie,
-  desserts: Cake,
-  aperitif: ForkKnife,
-  lightDishes: Leaf,
+  iceCream: IceCream,
+  foieGras: ForkKnife,
+  fruitDesserts: Cake,
   spicyDishes: Pepper,
   washedRindCheese: Cheese,
 }
@@ -45,15 +47,17 @@ const FOOD_ICON: Record<string, typeof Fish> = {
  * Rendered only when `resolvePairing` found a row — no fallback sentence: the
  * design's "By its style, try it with grilled or savory dishes" names a style
  * we would not have (design question Q). The caveat line says where the row
- * came from — the bottling's style or grade (`manual_curation`), or the
- * line's flavor chart (`sakenowa_inferred`, a claim about every bottling of
- * the line) — and its sheet names the sources (§16 pattern).
+ * came from — a style the bottling names, its ginjo-family grade ("usually
+ * fragrant", an inference the copy says as such), or the line's flavor chart
+ * (`sakenowa_inferred`, a claim about every bottling of the line) — and its
+ * sheet names the sources (§16 pattern).
  */
 export async function GoesWith({ pairing, id }: { pairing: Pairing; id: string }) {
   const t = await getTranslations('pairings')
   const tSheet = await getTranslations('provenance.sheet')
-  const { row, source } = pairing
+  const { row, source, basis } = pairing
   const kind = t(`rows.${row.id}.kind`)
+  const grade = pairing.grade ? gradeLabel(pairing.grade) : ''
 
   return (
     <BottleSection label={t('heading')} testId="bottle-pairings">
@@ -71,6 +75,11 @@ export async function GoesWith({ pairing, id }: { pairing: Pairing; id: string }
           )
         })}
       </ul>
+      {row.note && (
+        <p className="mt-3 text-meta text-ash-700" data-testid="pairing-note">
+          {t(`rows.${row.id}.note`)}
+        </p>
+      )}
       <p className="mt-3 text-meta text-ash-700" data-testid="pairing-serve">
         {t('serve', {
           temperatures: row.serve
@@ -84,12 +93,12 @@ export async function GoesWith({ pairing, id }: { pairing: Pairing; id: string }
       <div className="mt-2" data-testid={`pairing-source-${source}`}>
         <InfoSheet
           id={`pairings-${id}`}
-          caveat={source === 'sakenowa_inferred' ? t('caveatChart', { kind }) : t('caveatStyle', { kind })}
+          caveat={t(`caveat.${basis}`, { kind, grade })}
           triggerLabel={t('sheet.triggerLabel')}
           title={t('sheet.title')}
           closeLabel={tSheet('closeLabel')}
         >
-          <p className="mb-3">{source === 'sakenowa_inferred' ? t('sheet.howChart', { kind }) : t('sheet.howStyle', { kind })}</p>
+          <p className="mb-3">{t(`sheet.how.${basis}`, { kind, grade })}</p>
           <p className="mb-3">{t('sheet.startingPoint')}</p>
           <p className="mb-1 font-medium text-ink">{t('sheet.sources')}</p>
           <ul className="flex flex-col gap-1" role="list">
