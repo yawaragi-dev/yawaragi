@@ -17,8 +17,6 @@ export const FEATURES = {
   bottleServing: false,
   /** §9.5 "The sake" — brewing specs (rice, polishing, yeast, SMV). #339 */
   bottleSpecs: false,
-  /** §9.7 "Goes with" — food pairings on the bottle page. #336 */
-  bottlePairings: false,
   /** §9.8 "What others noticed" — community tasting notes. #337 */
   bottleCommunityNotes: false,
   /** §9.10 "Where to find it" — shops and venues. #338 */

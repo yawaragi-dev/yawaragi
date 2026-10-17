@@ -1,6 +1,7 @@
 import 'server-only'
 
 import { cache } from 'react'
+import { unstable_cache } from 'next/cache'
 import type { Pool } from 'pg'
 import { publicQuery } from '@/lib/supabase/public-query'
 import { getServerDbPool } from '@/lib/supabase/server-client'
@@ -66,6 +67,63 @@ export async function catalogueMeanProfileFromPool(pool: Pool): Promise<FlavorPr
 export const catalogueMeanProfile = cache(async (): Promise<FlavorProfile | null> => {
   try {
     return await catalogueMeanProfileFromPool(getServerDbPool())
+  } catch {
+    return null
+  }
+})
+
+interface StatsRow extends MeanRow {
+  s1: string | null
+  s2: string | null
+  s3: string | null
+  s4: string | null
+  s5: string | null
+  s6: string | null
+}
+
+const SELECT_CATALOGUE_STATS = `
+  SELECT AVG(fc.f1) AS f1, AVG(fc.f2) AS f2, AVG(fc.f3) AS f3,
+         AVG(fc.f4) AS f4, AVG(fc.f5) AS f5, AVG(fc.f6) AS f6,
+         STDDEV_SAMP(fc.f1) AS s1, STDDEV_SAMP(fc.f2) AS s2, STDDEV_SAMP(fc.f3) AS s3,
+         STDDEV_SAMP(fc.f4) AS s4, STDDEV_SAMP(fc.f5) AS s5, STDDEV_SAMP(fc.f6) AS s6
+  FROM flavor_charts fc
+  JOIN brands b ON b.brand_id = fc.brand_id
+  WHERE b.superseded_at IS NULL
+`
+
+export type AxisStats = { mean: FlavorProfile; sd: FlavorProfile }
+
+/** Pure row → stats mapper. `null` when the mirror has too few charts for a spread. */
+export function statsRowToAxisStats(row: StatsRow | undefined): AxisStats | null {
+  const mean = meanRowToProfile(row)
+  const sd = row ? meanRowToProfile({ f1: row.s1, f2: row.s2, f3: row.s3, f4: row.s4, f5: row.s5, f6: row.s6 }) : null
+  if (!mean || !sd || Object.values(sd).some((value) => value <= 0)) return null
+  return { mean, sd }
+}
+
+/**
+ * The catalogue's mean and spread on each axis, for placing one sake against
+ * all of them (§9.7's pairing reads which axis a sake stands out on).
+ *
+ * One query, cached across requests for six hours: the figures move only when
+ * the nightly ingest adds charts, and every sake and bottling page asks for
+ * them. A failed read throws inside the cache so it is not cached, and comes
+ * out as `null` — the page then says nothing rather than guess.
+ */
+const cachedAxisStats = unstable_cache(
+  async (): Promise<AxisStats> => {
+    const { rows } = await publicQuery<StatsRow>('flavor_charts', SELECT_CATALOGUE_STATS, [], getServerDbPool())
+    const stats = statsRowToAxisStats(rows[0])
+    if (!stats) throw new Error('catalogue has no flavor-chart spread')
+    return stats
+  },
+  ['catalogue-axis-stats-v1'],
+  { revalidate: 6 * 60 * 60 },
+)
+
+export const catalogueAxisStats = cache(async (): Promise<AxisStats | null> => {
+  try {
+    return await cachedAxisStats()
   } catch {
     return null
   }

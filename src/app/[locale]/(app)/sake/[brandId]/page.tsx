@@ -29,6 +29,9 @@ import {
   requiresSakenowaAttribution,
 } from '@/components/sake/sakenowa-attribution'
 import { FEATURES } from '@/lib/features'
+import { GoesWith } from '@/components/sake/goes-with'
+import { resolvePairing } from '@/lib/pairing/resolve-pairing'
+import { catalogueAxisStats } from '@/lib/taste/catalogue-mean'
 import { hasArrivedViaScan } from '@/lib/scan/arrived-via-scan'
 import { entriesForBrand, resolveViewerJournal } from '@/lib/taste/viewer-journal'
 
@@ -125,12 +128,13 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
     notFound()
   }
 
-  const [brand, brewery, flavorChart, siblings, viewer] = await Promise.all([
+  const [brand, brewery, flavorChart, siblings, viewer, axisStats] = await Promise.all([
     lookupBrandCached(brandId),
     lookupBreweryCached(brandId),
     lookupFlavorChartCached(brandId),
     listSiblingBrandsSafe(brandId),
     cookies().then(resolveViewerJournal),
+    catalogueAxisStats(),
   ])
   if (!brand) {
     notFound()
@@ -173,6 +177,7 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
   // carries, so its absence is the honest proxy — and ADR-0016 records that
   // roughly half the catalogue has none. The tag is a statement about our
   // knowledge, not about the sake.
+  const pairing = resolvePairing({ chart: flavorChart, stats: axisStats })
   const littlePublished = flavorChart === null
 
   // ADR-0014: render Sakenowa attribution only when at least one rendered
@@ -453,11 +458,9 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
       )}
 
       {/* -- §9.7 Goes with ----------------------------------------------- */}
-      {FEATURES.bottlePairings && (
-        <BottleSection label={t('pairingsLabel')} testId="bottle-pairings">
-          <p className="text-body text-ash-600">{t('pairingsEmpty')}</p>
-        </BottleSection>
-      )}
+      {/* The line's chart against the catalogue; nothing when no axis
+          clearly leads or the mirror is unreachable (#336). */}
+      {pairing && <GoesWith pairing={pairing} id={`sake-${brandId}`} />}
 
       {/* -- §9.8 What others noticed ------------------------------------- */}
       {FEATURES.bottleCommunityNotes && (

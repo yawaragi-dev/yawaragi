@@ -203,7 +203,6 @@ test.describe('sake brand page', () => {
     for (const section of [
       'bottle-serve',
       'bottle-specs',
-      'bottle-pairings',
       'bottle-community',
       'bottle-shops',
     ]) {

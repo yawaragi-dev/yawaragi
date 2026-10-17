@@ -208,8 +208,6 @@
       "notPublished": "Nicht veröffentlicht",
       "flavorChartLabel": "Flavor Chart (Sakenowa)",
       "flavorChartEmpty": "Noch kein Flavor Chart.",
-      "pairingsLabel": "Passt zu",
-      "pairingsEmpty": "Für diesen Sake gibt es noch keine Empfehlungen. Dem Stil nach passt er zu Gegrilltem oder herzhaften Gerichten.",
       "communityLabel": "Was anderen aufgefallen ist",
       "communityEmpty": "Über diese Flasche hat noch niemand etwas geschrieben.",
       "theBreweryLabel": "Die Brauerei",
@@ -1740,6 +1738,129 @@
       "jikonOmachi": "Runder als der mit Yamada Nishiki: Reis, Melone, am Ende etwas Säure.",
       "shirakawago": "Dick und süß, ein Nigori. Nichts für mich, zumindest nicht kalt.",
       "aramasa": "Kräftige Säure, fast wie ein Weißwein. Nächstes Mal zum Essen."
+    }
+  },
+  "pairings": {
+    "heading": "Passt zu",
+    "serve": "Meist serviert {temperatures}.",
+    "temperature": "{kanji} {romaji}, etwa {degrees} °C",
+    "or": " oder ",
+    "caveat": {
+      "style": "Oft genannte Begleiter der Art {kind}.",
+      "grade": "Ein {grade} ist meist duftend: oft genannte Begleiter der Art {kind}.",
+      "chart": "Aus dem Geschmacksprofil (Sakenowa), für die ganze Linie: Begleiter der Art {kind}. Abfüllungen können abweichen."
+    },
+    "sheet": {
+      "triggerLabel": "Woher diese Vorschläge kommen",
+      "title": "Woher diese Vorschläge kommen",
+      "how": {
+        "style": "Diese Abfüllung gehört zur Art {kind}. Die Speisen sind die, die die Quellen unten dafür nennen.",
+        "grade": "Diese Abfüllung ist ein {grade}. Ginjo-Grade sind meist duftend, Art {kind}; die Speisen sind die, die die Quellen unten dafür nennen. Ein zurückhaltender, trockener Ginjo passt vielleicht besser zu leichteren Gerichten.",
+        "chart": "Wir vergleichen das Geschmacksprofil dieses Sakes mit dem Durchschnitt aller Sakes im Katalog und suchen die eine Richtung, in der er deutlich heraussticht. Sie weist auf die Art {kind}; die Speisen sind die, die die Quellen unten dafür nennen. Das Profil beschreibt die ganze Linie, eine einzelne Abfüllung kann abweichen."
+      },
+      "startingPoint": "Sie sind Anregungen zum Probieren, keine Regeln. Wo Profil oder Etikett zu wenig sagen, zeigen wir keine.",
+      "sources": "Quellen"
+    },
+    "rows": {
+      "kunshu": {
+        "kind": "Kunshu (薫酒), duftender Sake",
+        "sashimi": {
+          "name": "Sashimi und anderer roher Fisch",
+          "reason": "Sake lässt rohen Fisch nicht fischig schmecken, und ein feines Gericht lässt dem Duft Raum."
+        },
+        "crab": {
+          "name": "Krabbe und süße Schalentiere",
+          "reason": "Ihre sanfte Süße steht neben der Frucht, ohne sie zu überdecken."
+        },
+        "freshCheese": {
+          "name": "Frischer, milder Käse, mit Tomate",
+          "reason": "Mild und milchig: nichts, was den Duft überdeckt."
+        }
+      },
+      "junshu": {
+        "kind": "Junshu (醇酒), vollmundiger Sake",
+        "oden": {
+          "name": "Oden und andere Gerichte in Dashi",
+          "reason": "Brühe aus Kombu und Bonito: zwei Umami-Quellen, die sich gegenseitig verstärken, dazu ein Sake reich an Umami."
+        },
+        "sukiyaki": {
+          "name": "Sukiyaki",
+          "reason": "Sojasauce entsteht wie Sake mit Koji und Hefe; ihre herzhaften Noten tragen einander."
+        },
+        "porkDaikon": {
+          "name": "Schwein und Rettich, in Soja geschmort",
+          "reason": "Lange gegart und herzhaft, mit genug Körper für einen vollen Sake."
+        }
+      },
+      "soshu": {
+        "kind": "Soshu (爽酒), leichter, glatter Sake",
+        "coldTofu": {
+          "name": "Kalter Tofu, Hiyayakko",
+          "reason": "Schlicht und kühl, lässt er einen klaren Sake zur Geltung kommen."
+        },
+        "oysters": {
+          "name": "Rohe Austern",
+          "reason": "Sake bringt die fischige Note, die Wein bei Schalentieren hervorrufen kann, kaum hervor."
+        },
+        "friedFish": {
+          "name": "Frittierter weißer Fisch",
+          "reason": "Ein klarer, trockener Abgang schneidet durch das Fett des Teigs."
+        }
+      },
+      "koshu": {
+        "kind": "Koshu (古酒), gereifter Sake",
+        "hardCheese": {
+          "name": "Gereifter Hartkäse: Comté, Parmesan, alter Cheddar",
+          "reason": "Beide entstehen durch lange Gärung und Reifung; ihre herzhaften, nussigen Noten treffen sich."
+        },
+        "unagi": {
+          "name": "Gegrillter Aal, Unagi",
+          "reason": "Eine süße Sojaglasur zur Karamelltiefe des Sakes."
+        },
+        "driedFruit": {
+          "name": "Trockenfrüchte und Nüsse",
+          "reason": "Sie greifen die Trockenfrucht-Noten der Reifung auf."
+        }
+      },
+      "kijoshu": {
+        "kind": "Kijoshu (貴醸酒), mit Sake statt eines Teils des Wassers gebraut",
+        "darkChocolate": {
+          "name": "Dunkle Schokolade",
+          "reason": "Süß und dicht, er braucht etwas ebenso Gehaltvolles."
+        },
+        "iceCream": {
+          "name": "Vanilleeis",
+          "reason": "Daneben serviert oder darübergegossen."
+        },
+        "foieGras": {
+          "name": "Foie gras",
+          "reason": "Reichhaltig und fett, so wie man sie mit süßem Wein serviert."
+        }
+      },
+      "sparkling": {
+        "kind": "Sparkling Sake",
+        "freshCheese": {
+          "name": "Frischkäse: Ziegenfrischkäse, Ricotta",
+          "reason": "Perlage und etwas Süße heben einen klaren, milchigen Käse."
+        },
+        "fruitDesserts": {
+          "name": "Obstdesserts",
+          "reason": "Ein leicht süßer Sparkling Sake trifft auf Frucht."
+        },
+        "note": "Oft als Aperitif gereicht, vor dem Essen."
+      },
+      "nigori": {
+        "kind": "Nigori (にごり), trüber Sake",
+        "spicyDishes": {
+          "name": "Scharfe Gerichte: Curry, Kimchi",
+          "reason": "Seine Süße und die Reispartikel mildern die Schärfe – weniger bei einem kräftigen, trockenen Nigori."
+        },
+        "washedRindCheese": {
+          "name": "Rotschmierkäse: Taleggio, Époisses",
+          "reason": "Cremiger Körper und etwas Süße mildern einen kräftigen Käse."
+        },
+        "note": "Nigori reicht von süß und cremig bis trocken; diese passen zu den süßeren, cremigeren."
+      }
     }
   }
 }
