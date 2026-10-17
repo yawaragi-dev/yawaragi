@@ -92,4 +92,28 @@ describe('§7 — a menu ranked for the visitor', () => {
     expect(screen.queryByTestId('list-sort-forYou')).toBeNull()
     expect(screen.queryByTestId('list-row-fit')).toBeNull()
   })
+
+  it('marks what it read off the menu as read by AI', () => {
+    renderList(RANKED)
+    expect(screen.getByTestId('list-read-badge').textContent).toContain('Read by AI')
+  })
+
+  it('says what each bottling of one sake is, not only how it was printed', () => {
+    renderList({
+      ...RANKED,
+      rows: [
+        row({
+          brandId: 3,
+          nameRomaji: 'Jikon',
+          lines: [
+            { index: 0, printed: '而今 純米吟醸 生', nameAsPrinted: '而今', grade: 'junmai_ginjo', styles: ['nama'] },
+            { index: 1, printed: '而今 特別純米', nameAsPrinted: '而今', grade: 'tokubetsu_junmai' },
+          ],
+        }),
+      ],
+    })
+    const [nama, tokujun] = screen.getAllByTestId('list-row-bottling')
+    expect(nama.textContent).toContain('Junmai Ginjō · Nama')
+    expect(tokujun.textContent).toContain('Tokubetsu Junmai')
+  })
 })

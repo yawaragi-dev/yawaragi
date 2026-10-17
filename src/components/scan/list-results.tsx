@@ -24,6 +24,8 @@ import {
 import { Link } from '@/i18n/navigation'
 import { AddListLineYourself } from '@/components/sake/add-unlisted-bottling'
 import { InfoSheetPanel } from '@/components/ui/info-sheet'
+import { ProvenanceBadgeView } from '@/components/sake/provenance-badge'
+import { resolveBadgeKind } from '@/lib/provenance/policy'
 import { Sheet, SheetTrigger } from '@/components/ui/sheet'
 import { FLAVOR_AXES, type FlavorAxis, type FlavorChart } from '@/lib/schemas/flavor-chart'
 import type { ListLine, ListReason, ListResult, ListRow } from '@/lib/scan/list-action-state'
@@ -100,6 +102,13 @@ export function ListResults({
         ) : (
           <p className="text-subtle leading-normal text-ash-700">{t(isMenu ? 'inMenuOrder' : 'leftToRightShapes')}</p>
         )}
+        {/* Names, grades, styles and prices on this screen are the model's
+            reading of the photo (CLAUDE.md: no llm_extracted value without
+            the badge). One badge for the list, not one per row. §7 draws
+            none; placement is a design question (block P). */}
+        <div className="self-start" data-testid="list-read-badge">
+          <ReadByAiBadge />
+        </div>
       </div>
 
       {!result.ranked && (
@@ -384,23 +393,48 @@ function ListRowItem({
           <span className="pb-1 text-section-label tracking-normal text-ash-600">
             {t(isMenu ? 'bottlingsOnList' : 'bottlingsOnShelf', { count: row.lines.length })}
           </span>
-          {row.lines.map((line) => (
-            <NextLink
-              key={line.index}
-              href={row.sakeHref}
-              className="flex min-h-11 items-center gap-3 border-t border-divider text-subtle text-ink transition-colors hover:bg-ash-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
-              data-testid="list-row-bottling"
-            >
-              <span className="min-w-0 flex-1" lang="ja">
-                {line.printed}
-              </span>
-              {isMenu && price(line.price) && <span className="shrink-0">{price(line.price)}</span>}
-              <CaretRight size={14} aria-hidden="true" className="shrink-0 text-ash-500" />
-            </NextLink>
-          ))}
+          {row.lines.map((line) => {
+            const words = bottlingWords(line)
+            return (
+              <NextLink
+                key={line.index}
+                href={row.sakeHref}
+                className="flex min-h-11 items-center gap-3 border-t border-divider text-subtle text-ink transition-colors hover:bg-ash-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+                data-testid="list-row-bottling"
+              >
+                <span className="flex min-w-0 flex-1 flex-col">
+                  <span lang="ja">{line.printed}</span>
+                  {/* What the printed name means, for a visitor who cannot read it. */}
+                  {words && <span className="text-meta text-ash-600">{words}</span>}
+                </span>
+                {isMenu && price(line.price) && <span className="shrink-0">{price(line.price)}</span>}
+                <CaretRight size={14} aria-hidden="true" className="shrink-0 text-ash-500" />
+              </NextLink>
+            )
+          })}
         </div>
       )}
     </li>
+  )
+}
+
+/** "Junmai Ginjō · Nama · Genshu": a bottling's grade and every style read, in words. */
+function bottlingWords(line: ListLine): string {
+  return [...(line.grade ? [gradeLabel(line.grade)] : []), ...(line.styles ?? []).map(styleLabel)].join(' · ')
+}
+
+function ReadByAiBadge() {
+  const tBadge = useTranslations('provenance.badge.llmExtracted')
+  const tSheet = useTranslations('provenance.sheet')
+  return (
+    <ProvenanceBadgeView
+      kind={resolveBadgeKind('llm_extracted')}
+      label={tBadge('label')}
+      explanation={tBadge('explanation')}
+      sheetTitle={tBadge('sheetTitle')}
+      closeLabel={tSheet('closeLabel')}
+      id="list-read-badge"
+    />
   )
 }
 
