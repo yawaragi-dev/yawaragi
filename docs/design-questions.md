@@ -2,7 +2,7 @@
 
 Open questions the build has run into and settled provisionally, so they can be handed to the designers in one go. Each says what is built today, so nobody has to guess. Opened 2026-10-13; filed as #417.
 
-Round two (blocks I–O) starts at the end of the file.
+Round two (blocks I–P) starts at the end of the file.
 
 The design snapshot these refer to is `design/README.md`, v1.6.2.
 
@@ -113,7 +113,7 @@ Built on branch `scan/read-romaji`: the model also gives the name, the brewery a
 
 # Round two (opened 2026-10-15, against design v1.7.1)
 
-Blocks A–H were answered in v1.7 and v1.7.1. The blocks below are new: I, J and K are ideas the maintainer wants designed before they are built; L is what was built ahead of the spec and needs drawing; M, N and O come from the 2026-10-11 review of what the app lacks.
+Blocks A–H were answered in v1.7 and v1.7.1. The blocks below are new: I, J and K are ideas the maintainer wants designed before they are built; L is what was built ahead of the spec and needs drawing; M, N and O come from the 2026-10-11 review of what the app lacks; P is a maintainer idea for §7.
 
 ## I. Your own photo of a bottle
 
@@ -189,3 +189,18 @@ Nothing is built. The build would add a manifest (name, icons, the dark ground a
 1. App icon at the sizes a manifest needs (192, 512, maskable), and the short name under it ("Yawaragi"?).
 2. Does the app ever suggest installing, or only the browser's own menu?
 3. The splash colour and whether the status bar is dark.
+
+## P. What is unusual on a menu or shelf
+
+The maintainer's idea: besides ranking by palate, a menu or shelf result should point out the bottlings a visitor might otherwise miss — a kijoshu, a koshu, a fukurozuri, a very low polishing ratio, a seasonal release such as hiyaoroshi.
+
+Built: §7 reads each line's grade and up to thirteen style words (nama, namachozo, namazume, genshu, muroka, nigori, sparkling, koshu, kimoto, yamahai, taruzake, kijoshu, hiyaoroshi) and shows the grade and the first two styles in words on the row's "what was read" line (§7 draws the grade only). Since 2026-10-17 a sake's several bottlings on one list each show their grade and every style in words under the line as printed, and the list carries one "Read by AI" badge under the head — the names, grades, styles and prices on it are the model's reading, and §7 drew no badge. Nothing ranks or groups by style; "For you" / "Menu order" sorts by palate or by list position only. We hold no rarity or price-tier data: "rare" or "premium" cannot be sourced, and would read as promotion (JMStV).
+
+What our photos say (49 menus and shelves, 142 sake lines): a median of 3 sakes on a menu, 2 on a shelf, 10 at most. 27% of lines print a style, but on bar lists most do (7 of 8 on one menu), so nama, genshu and muroka are the norm there, not the exception. Kijoshu, sparkling and award marks: none yet. Fukurozuri once, a polishing number twice, seasonal words four times.
+
+1. Is this a highlight at all, or is the style on the "what was read" line enough?
+2. If a highlight: a tag on the row, a short group above or below the ranking ("Less usual on this list"), a filter chip per style present (beside "Good warm", "Under €10", "New to me"), or a third sort? Rows already carry fit, rating, "Good warm" and "Partly read".
+3. "Unusual" relative to what: styles only one or two lines on this list carry, a fixed short list (kijoshu, koshu, taruzake, shizuku, polishing 40% or less), or both?
+4. Wording that stays discovery, not promotion: "Less usual on this list", "Worth a look"? Should each open the matching Learn entry (there are entries for nama, muroka, genshu, nigori, koshu, sparkling, kimoto and yamahai, polishing and the grades; none yet for kijoshu or taruzake)?
+5. Price: may "the dearest on this list" ever be said, or does price stay a filter only?
+6. Where does the list's one "Read by AI" badge belong? It sits under the head today; §5's card puts it beside "On this label".
