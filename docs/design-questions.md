@@ -2,7 +2,7 @@
 
 Open questions the build has run into and settled provisionally, so they can be handed to the designers in one go. Each says what is built today, so nobody has to guess. Opened 2026-10-13; filed as #417.
 
-Round two (blocks I–P) starts at the end of the file.
+Round two (blocks I–R) starts at the end of the file.
 
 The design snapshot these refer to is `design/README.md`, v1.6.2.
 
@@ -113,7 +113,7 @@ Built on branch `scan/read-romaji`: the model also gives the name, the brewery a
 
 # Round two (opened 2026-10-15, against design v1.7.1)
 
-Blocks A–H were answered in v1.7 and v1.7.1. The blocks below are new: I, J and K are ideas the maintainer wants designed before they are built; L is what was built ahead of the spec and needs drawing; M, N and O come from the 2026-10-11 review of what the app lacks; P is a maintainer idea for §7.
+Blocks A–H were answered in v1.7 and v1.7.1. The blocks below are new: I, J and K are ideas the maintainer wants designed before they are built; L is what was built ahead of the spec and needs drawing; M, N and O come from the 2026-10-11 review of what the app lacks; P is a maintainer idea for §7; Q is §9.7 "Goes with", built on 2026-10-17; R is how to tell a visitor which part of a bottle to photograph.
 
 ## I. Your own photo of a bottle
 
@@ -204,3 +204,38 @@ What our photos say (49 menus and shelves, 142 sake lines): a median of 3 sakes 
 4. Wording that stays discovery, not promotion: "Less usual on this list", "Worth a look"? Should each open the matching Learn entry (there are entries for nama, muroka, genshu, nigori, koshu, sparkling, kimoto and yamahai, polishing and the grades; none yet for kijoshu or taruzake)?
 5. Price: may "the dearest on this list" ever be said, or does price stay a filter only?
 6. Where does the list's one "Read by AI" badge belong? It sits under the head today; §5's card puts it beside "On this label".
+
+## Q. "Goes with", now that it has a source
+
+Issue #336; research summary on that issue (2026-10-17). §9.7 drew three pairing rows and a fallback line. Built on 2026-10-17:
+
+- A hand-curated table of seven rows with named sources (the Sake Service Institute's types 薫酒 kunshu, 醇酒 junshu and 爽酒 soshu; and koshu, kijoshu, sparkling, nigori). Each row: two or three foods, each with a one-line reason; how it is usually served (e.g. "花冷え hanahie, about 10°C or 涼冷え suzuhie, about 15°C"); a caveat line with an ⓘ opening the sources (§16 pattern).
+- **What picks the row:** the bottling's style (koshu, kijoshu, sparkling, nigori, kimoto / yamahai, nama) or a ginjo-family grade — "Pairings often given for kunshu (薫酒), fragrant sake." Failing that, the line's flavor chart against the catalogue average — "From the flavor chart (Sakenowa), for the whole line: pairings for …. Bottlings vary." Failing that, **nothing**: a plain junmai or honjozo, or a chart with no clear lead, gets no section.
+- **Where:** §9 (the line, chart only) and §9a (the bottling, its style first) — §9a has no "Goes with" in the spec; it sits after "You and this bottling". Not on §5's card.
+
+1. The design's fallback "No pairings for this one yet. By its style, try it with grilled or savoury dishes." is left out: it names a style we would not have. Hidden, as rule 4 does for sections with no source — agreed?
+2. §9a: is "Goes with" wanted there, and where in its order?
+3. §5's result card: should a matched scan show it (the style there was read by the model, so it would carry the Read by AI badge), or is the bottle page enough?
+4. The "Usually served …" line overlaps §9.4 "Serve it" (#340), which is not built. Keep it in "Goes with" until "Serve it" exists, or move it there then?
+5. The food icons are Phosphor's nearest (fish, shrimp, cheese, bowl, pot, cake, pepper, leaf). Fine, or an icon set of our own?
+6. The caveat line names the type in two scripts and English ("kunshu (薫酒), fragrant sake"). Too much for one line?
+
+## R. Telling a visitor which part of the bottle to photograph
+
+The more the scan does, the more it depends on *which side* was photographed — and a visitor who cannot read Japanese cannot tell. From our 136 photos of one bottle (2026-10-15, cheap tier alone): the side label is read right 88% of the time, the importer's German or French sticker 78%, the front 73%, the Japanese back label 60% (only five photos). The front carries the name, often in brushstroke calligraphy the model misreads; the back carries what a bottling is (grade, 精米歩合 polishing, 原料米 rice, アルコール分 alcohol, 製造年月 date); the importer's sticker carries the name in Latin letters.
+
+Built today: "How to read a label" under the viewfinder (06, opening Learn); the second photo read together with the last ("This photo is read together with your last one", with "Don't"); "No name on this side" (75); question J proposes "Scan the back" after a match that says too little.
+
+Proposed — how a non-reader recognises each part, by look rather than by language:
+- **The name:** the largest characters on the bottle, often brushstrokes, usually on the front.
+- **The details:** a smaller label with several lines of small print, numbers with **%** (alcohol, polishing), and a date — usually on the back or side.
+- **The importer's sticker:** a printed sticker in German, English or French, usually on the back.
+
+1. **Before the first scan:** one small drawing of a bottle with the three parts marked, in place of or beside "How to read a label"? Shown until the visitor has scanned a few times, then folded away?
+2. **While aiming:** a frame guide on the viewfinder ("fill the frame with the label") — we cannot read text live (no browser API on iPhone), so nothing can say "that's the back" before the photo.
+3. **After a scan,** the nudge follows what was missing — one line, one button, never more than one:
+   - matched, but nothing about the bottling → "The small label with numbers says which bottling this is" + "Scan it" (J);
+   - unsure, and the name was read in calligraphy → "The name is often printed plainly on the side or the importer's sticker" + "Scan the side";
+   - nothing written on this side → today's "No name on this side".
+4. Should the drawing show the actual characters to look for (精米歩合, アルコール分, a "%" sign) as shapes, for visitors who recognise characters without reading them?
+5. A second photo costs a scan against the free five. Does the after-scan nudge show when the visitor has one left, and how is that said (#346)?

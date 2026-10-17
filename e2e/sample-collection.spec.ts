@@ -60,3 +60,22 @@ test.describe('the sample collection', () => {
     await expect(page.getByTestId('tab-placeholder')).toBeVisible()
   })
 })
+
+test.describe('what a bottling goes with', () => {
+  test('a junmai ginjo bottling lists what fragrant sake is often served with, and where that comes from', async ({
+    context,
+    page,
+  }) => {
+    await context.addCookies([AGE_GATE_COOKIE, CONSENT_COOKIE])
+    await page.goto(`${BASE_URL}/api/sample-collection?locale=en`)
+    await page.goto(`${BASE_URL}/en/bottling/sample-jikon-omachi`)
+
+    const section = page.getByTestId('bottle-pairings')
+    await expect(section).toContainText('Goes with')
+    await expect(section.getByTestId('pairing-food')).toHaveCount(3)
+    await expect(section).toContainText('Sashimi and other raw fish')
+    await expect(section.getByTestId('pairing-serve')).toContainText('花冷え')
+    // The grade picked the row, not the line's chart.
+    await expect(section.getByTestId('pairing-source-manual_curation')).toBeVisible()
+  })
+})

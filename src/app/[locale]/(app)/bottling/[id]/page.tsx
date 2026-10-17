@@ -1,5 +1,8 @@
 import { cookies } from 'next/headers'
 import { notFound } from 'next/navigation'
+import { GoesWith } from '@/components/sake/goes-with'
+import { resolvePairing, stylesFromWords } from '@/lib/pairing/resolve-pairing'
+import { catalogueAxisStats } from '@/lib/taste/catalogue-mean'
 import type { Metadata } from 'next'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { CaretRight } from '@phosphor-icons/react/dist/ssr'
@@ -77,10 +80,19 @@ export default async function BottlingPage({ params, searchParams }: PageProps) 
   if (!bottling) notFound()
   const { brandId, line } = bottling
 
-  const [chart, t] = await Promise.all([
+  const [chart, t, axisStats] = await Promise.all([
     brandId === null ? null : lookupFlavorChartSafe(brandId),
     getTranslations('bottling'),
+    brandId === null ? null : catalogueAxisStats(),
   ])
+  // The bottling's own grade and styles first; its line's chart only when
+  // they say nothing a pairing can use (#336).
+  const pairing = resolvePairing({
+    styles: stylesFromWords(bottling.styles ?? []),
+    grade: bottling.grade,
+    chart,
+    stats: axisStats,
+  })
 
   const tastings = entriesForExpression(viewer.entries, bottling.id)
   const lastTasting = tastings[0]
@@ -215,6 +227,9 @@ export default async function BottlingPage({ params, searchParams }: PageProps) 
         subject="bottling"
         readOnly={!viewer.canLog}
       />
+
+      {/* -- Goes with: §9.7's section, on the bottling (design question Q) -- */}
+      {pairing && <GoesWith pairing={pairing} id={`bottling-${bottling.id}`} />}
 
       {/* -- §9a.7 Other bottlings in this line ----------------------------- */}
       {others.length > 0 && (

@@ -70,3 +70,35 @@ export const catalogueMeanProfile = cache(async (): Promise<FlavorProfile | null
     return null
   }
 })
+
+const SELECT_CATALOGUE_SPREAD = `
+  SELECT STDDEV_SAMP(fc.f1) AS f1, STDDEV_SAMP(fc.f2) AS f2, STDDEV_SAMP(fc.f3) AS f3,
+         STDDEV_SAMP(fc.f4) AS f4, STDDEV_SAMP(fc.f5) AS f5, STDDEV_SAMP(fc.f6) AS f6
+  FROM flavor_charts fc
+  JOIN brands b ON b.brand_id = fc.brand_id
+  WHERE b.superseded_at IS NULL
+`
+
+/**
+ * The catalogue's mean and spread on each axis, for placing one sake against
+ * all of them (§9.7's pairing reads which axis a sake stands out on). `null`
+ * when the mirror is unreachable or empty, so the caller says nothing rather
+ * than guess. Cached per request, like the mean.
+ */
+export const catalogueAxisStats = cache(
+  async (): Promise<{ mean: FlavorProfile; sd: FlavorProfile } | null> => {
+    try {
+      const pool = getServerDbPool()
+      const [mean, spread] = await Promise.all([
+        catalogueMeanProfileFromPool(pool),
+        publicQuery<MeanRow>('flavor_charts', SELECT_CATALOGUE_SPREAD, [], pool).then(({ rows }) =>
+          meanRowToProfile(rows[0]),
+        ),
+      ])
+      if (!mean || !spread || Object.values(spread).some((sd) => sd <= 0)) return null
+      return { mean, sd: spread }
+    } catch {
+      return null
+    }
+  },
+)
