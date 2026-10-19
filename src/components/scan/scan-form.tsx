@@ -83,7 +83,7 @@ import { EARLIER_READ_TTL_MS, earlierReadOf } from '@/lib/scan/earlier-read'
 import { appendMatchToHistory } from '@/lib/scan/scan-history'
 import { rememberScannedPhoto } from '@/lib/scan/scanned-photo'
 import { rememberScannedBottling } from '@/lib/scan/scanned-bottling'
-import { useScanHistoryConsensus } from '@/lib/scan/use-scan-history-consensus'
+import { useScanHistoryConsensus, useScanHistoryCount } from '@/lib/scan/use-scan-history-consensus'
 import type { Locale } from '@/i18n/routing'
 
 interface ScanFormProps {
@@ -159,6 +159,9 @@ const SCAN_TIMEOUT_MS = 60_000
 /** A bottling saved from the label: "unavailable" when the network loses it (S6). */
 const addOwnBottling = reachable(addOwnBottlingAction)
 
+/** §4 shows the shape cards until the tab has this many matches (v1.8, R1). */
+const FIRST_SCANS = 3
+
 /** Which part of the bottle an after-scan nudge asks for (design v1.8, J). */
 type NudgeKind = 'details' | 'side' | 'sticker'
 
@@ -206,6 +209,7 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
    * S). Shown in place of the result, with the photo, so the visitor can send
    * it again instead of landing on the error page with the photo gone.
    */
+  const scanCount = useScanHistoryCount()
   const [connectionFailure, setConnectionFailure] = useState<ConnectionFailure | null>(null)
   /**
    * The part of the bottle the after-scan nudge asked for (design v1.8, J /
@@ -1252,6 +1256,7 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
           onChoosePhoto={onUploadClick}
           typeItHref="/search"
           stillUrl={photoUrl}
+          firstScans={scanCount < FIRST_SCANS}
           askedFor={
             askedFor && earlierRead
               ? { title: tCamera(`askedFor.${askedFor}.title`), hint: tCamera(`askedFor.${askedFor}.hint`) }

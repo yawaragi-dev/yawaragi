@@ -3,6 +3,7 @@ import {
   appendMatchToHistory,
   clearScanHistory,
   getConsensusFromHistory,
+  getScanHistoryCount,
   type ScanHistoryEntry,
 } from './scan-history'
 
@@ -173,6 +174,17 @@ describe('scan-history', () => {
       expect(b).not.toBeNull()
       expect(a).not.toBe(b)
       expect(b?.votes).toBe(3)
+    })
+  })
+
+  describe('getScanHistoryCount', () => {
+    it('counts the matches this tab has scanned, from none', () => {
+      expect(getScanHistoryCount()).toBe(0)
+      appendMatchToHistory(entry(1))
+      appendMatchToHistory(entry(2))
+      expect(getScanHistoryCount()).toBe(2)
+      clearScanHistory()
+      expect(getScanHistoryCount()).toBe(0)
     })
   })
 })

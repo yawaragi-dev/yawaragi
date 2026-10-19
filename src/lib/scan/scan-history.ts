@@ -185,6 +185,16 @@ export function clearScanHistory(): void {
  */
 export const SCAN_HISTORY_CHANGE_EVENT = 'yawaragi:scan-history-change'
 
+/**
+ * How many matches this tab has scanned (up to the history's cap). §4 shows
+ * its first-scan shape cards until there are three (design v1.8, R1): a
+ * count of what the history already holds, so the hint needs no storage of
+ * its own.
+ */
+export function getScanHistoryCount(): number {
+  return readHistory().length
+}
+
 function readHistory(): ScanHistoryEntry[] {
   if (typeof window === 'undefined') return []
   try {

@@ -3,6 +3,7 @@
 import { useSyncExternalStore } from 'react'
 import {
   getConsensusFromHistory,
+  getScanHistoryCount,
   SCAN_HISTORY_CHANGE_EVENT,
   type ConsensusMatch,
 } from './scan-history'
@@ -23,6 +24,11 @@ import {
  */
 export function useScanHistoryConsensus(): ConsensusMatch | null {
   return useSyncExternalStore(subscribe, getConsensusFromHistory, () => null)
+}
+
+/** The tab's match count, for §4's first-scan hint. 0 on the server. */
+export function useScanHistoryCount(): number {
+  return useSyncExternalStore(subscribe, getScanHistoryCount, () => 0)
 }
 
 function subscribe(onChange: () => void): () => void {
