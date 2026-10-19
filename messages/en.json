@@ -959,7 +959,19 @@
     "matchedKicker": "Matched from your photo",
     "notThisOne": "Not this one",
     "sureMatch": "Sure match",
-    "bestGuess": "Best guess"
+    "bestGuess": "Best guess",
+    "offline": {
+      "kicker": "Not sent",
+      "title": "No connection",
+      "body": "Your photo is kept. Send it again once you’re back online."
+    },
+    "timedOut": {
+      "kicker": "No answer",
+      "title": "This is taking too long",
+      "body": "The connection may be slow. Your photo is kept, so you can send it again."
+    },
+    "noConnectionPhoto": "Your photo, kept on this phone",
+    "sendAgain": "Send again"
   },
   "listResults": {
     "bar": "{kind, select, menu {From your photo · Menu} other {From your photo · Shelf}} · {count, plural, =1 {1 sake} other {# sakes}}",

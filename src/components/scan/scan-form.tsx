@@ -32,6 +32,7 @@ import {
   ListMagnifyingGlass,
   CaretRight,
   WarningCircle,
+  WifiSlash,
 } from '@phosphor-icons/react/dist/ssr'
 import { useRouter } from 'next/navigation'
 import { getPathname } from '@/i18n/navigation'
@@ -65,6 +66,7 @@ import {
   downscaleImage,
 } from '@/lib/scan/downscale'
 import { scanAction } from '@/lib/scan/scan-action'
+import { browserIsOnline, settleRequest, type ConnectionFailure } from '@/lib/network/settle-request'
 import { readListAction } from '@/lib/scan/list-action'
 import { addOwnBottling } from '@/lib/collection/expression-actions'
 import { INITIAL_LIST_ACTION_STATE, type ListActionState } from '@/lib/scan/list-action-state'
@@ -145,6 +147,13 @@ interface ScanFormProps {
  * why. A "Scan again" dismisses the result and the viewfinder returns; see
  * `view` for why that is one value rather than five conditions.
  */
+/**
+ * How long a scan or a list read may take before the screen gives up on it
+ * and offers to send the photo again. Well past a slow read (the second tier
+ * included), so it only fires on a connection that has stopped answering.
+ */
+const SCAN_TIMEOUT_MS = 60_000
+
 /** The three §5a outcomes for a photo that is not of one bottle. */
 const NOT_ONE_BOTTLE = {
   menu: { testId: 'scan-result-menu', icon: Receipt },
@@ -176,13 +185,38 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
   // this input. Keeping a hidden `capture` input beside the camera would be a
   // third capture path with no affordance pointing at it.
   const uploadInputRef = useRef<HTMLInputElement | null>(null)
+  /**
+   * The last scan did not come back because of the network (design question
+   * S). Shown in place of the result, with the photo, so the visitor can send
+   * it again instead of landing on the error page with the photo gone.
+   */
+  const [connectionFailure, setConnectionFailure] = useState<ConnectionFailure | null>(null)
+  /** What the last scan sent, for "Send again" to send unchanged. */
+  const lastScanFormRef = useRef<FormData | null>(null)
   const [state, formAction, isActionPending] = useActionState<ScanActionState, FormData>(
-    scanAction,
+    async (previous, formData) => {
+      const settled = await settleRequest(scanAction(previous, formData), {
+        timeoutMs: SCAN_TIMEOUT_MS,
+        isOnline: browserIsOnline,
+      })
+      if (settled.ok) return settled.value
+      pushClientEvent(`scan not answered: ${settled.failure}`)
+      setConnectionFailure(settled.failure)
+      return previous
+    },
     INITIAL_SCAN_ACTION_STATE,
   )
-  // §7: the whole menu or shelf, read from the same photo on request.
+  // §7: the whole menu or shelf, read from the same photo on request. A list
+  // that could not be read for the network says so the way any other failed
+  // read does.
   const [listState, listFormAction, isListPending] = useActionState<ListActionState, FormData>(
-    readListAction,
+    async (previous, formData) => {
+      const settled = await settleRequest(readListAction(previous, formData), {
+        timeoutMs: SCAN_TIMEOUT_MS,
+        isOnline: browserIsOnline,
+      })
+      return settled.ok ? settled.value : { status: 'failed' }
+    },
     INITIAL_LIST_ACTION_STATE,
   )
   /** The list screen is up, for this kind of list; `null` on the scan screens. */
@@ -395,7 +429,17 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
    * `useActionState` has no reset, so dismissal is local state that
    * `hasResult` reads. `handleFile` clears it, so the next result shows.
    */
+  /** "Send again" after a scan the network lost: the same photo, unchanged. */
+  function onSendAgain() {
+    const formData = lastScanFormRef.current
+    if (!formData) return
+    setConnectionFailure(null)
+    setResultDismissed(false)
+    startTransition(() => formAction(formData))
+  }
+
   function onPickClick() {
+    setConnectionFailure(null)
     setListOpen(null)
     setResultDismissed(true)
     setPhotoUrl(null)
@@ -433,6 +477,7 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
    */
   async function handleFile(file: File) {
     setDownscaleFailed(false)
+    setConnectionFailure(null)
     // A new attempt supersedes whatever the visitor dismissed to get here.
     setResultDismissed(false)
     setIsDownscaling(true)
@@ -468,6 +513,7 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
       // resolved with both. The server reads this photo blind and uses the
       // earlier read only if this one finds no single sake by itself.
       if (earlierRead) formData.set('earlierRead', JSON.stringify(earlierRead))
+      lastScanFormRef.current = formData
       pushClientEvent('submitting FormData to scanAction')
       // useActionState's action must be invoked from a transition. We
       // can't keep the await above inside startTransition (transitions
@@ -524,7 +570,9 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
   // the label…". Before this, a rescan from a result put the OLD result back,
   // faded, for the whole read — `handleFile` clears the dismissal at the start
   // of the read — so the working state only ever appeared on a first scan.
-  const view = resultDismissed || isPending ? INITIAL_SCAN_ACTION_STATE : state
+  // A scan the network lost shows its own screen; the result before it (kept
+  // in `state` so the retry still sends the earlier read) is not drawn under it.
+  const view = resultDismissed || isPending || connectionFailure ? INITIAL_SCAN_ACTION_STATE : state
   // Design v1.7 (85): one of the visitor's bottlings fits the label, so the
   // scan opens it rather than the line.
   const fitting =
@@ -749,6 +797,30 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
           body={tOutcome('badPhoto.body')}
           onRescan={onPickClick}
         />
+      )
+    }
+    if (connectionFailure) {
+      const copy = connectionFailure === 'offline' ? 'offline' : 'timedOut'
+      return (
+        <ScanOutcome
+          testId={`scan-error-${connectionFailure === 'offline' ? 'offline' : 'timed-out'}`}
+          icon={icon(WifiSlash)}
+          kicker={tOutcome(`${copy}.kicker`)}
+          title={tOutcome(`${copy}.title`)}
+          body={tOutcome(`${copy}.body`)}
+          onRescan={onPickClick}
+          photo={photoUrl ? { url: photoUrl, caption: tOutcome('noConnectionPhoto') } : undefined}
+        >
+          <button
+            type="button"
+            onClick={onSendAgain}
+            className="flex min-h-11 items-center justify-center gap-2 rounded-xl border-[1.5px] border-ginshu-400 px-4 text-body font-medium text-ginshu-700 transition-colors hover:bg-ginshu-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+            data-testid="scan-send-again"
+          >
+            <ArrowsClockwise size={16} aria-hidden="true" />
+            {tOutcome('sendAgain')}
+          </button>
+        </ScanOutcome>
       )
     }
     switch (view.status) {
