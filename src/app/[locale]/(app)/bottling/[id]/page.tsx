@@ -228,9 +228,6 @@ export default async function BottlingPage({ params, searchParams }: PageProps) 
         readOnly={!viewer.canLog}
       />
 
-      {/* -- Goes with: §9.7's section, on the bottling (design question Q) -- */}
-      {pairing && <GoesWith pairing={pairing} id={`bottling-${bottling.id}`} />}
-
       {/* -- §9a.7 Other bottlings in this line ----------------------------- */}
       {others.length > 0 && (
         <BottleSection
@@ -260,6 +257,9 @@ export default async function BottlingPage({ params, searchParams }: PageProps) 
       {brandId !== null && lineName !== null && (
         <LineBlock brandId={brandId} lineName={lineName} lineKanji={lineKanji} chart={chart} />
       )}
+
+      {/* -- Goes with: §9.7's section, after the line block (v1.8 Q2) ------ */}
+      {pairing && <GoesWith pairing={pairing} id={`bottling-${bottling.id}`} />}
 
       {/* -- "This bottling" (v1.6.2): rename, delete — the last section ---- */}
       {viewer.canLog && (

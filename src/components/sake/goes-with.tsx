@@ -14,6 +14,7 @@ import {
   Shrimp,
 } from '@phosphor-icons/react/dist/ssr'
 import { BottleSection } from '@/components/sake/bottle-section'
+import { keepBracketsTogether } from '@/lib/text/keep-brackets-together'
 import { InfoSheet } from '@/components/ui/info-sheet'
 import type { Pairing } from '@/lib/pairing/resolve-pairing'
 import { SERVING_TEMPERATURE_TERMS } from '@/lib/schemas/detailed-notes'
@@ -56,7 +57,7 @@ export async function GoesWith({ pairing, id }: { pairing: Pairing; id: string }
   const t = await getTranslations('pairings')
   const tSheet = await getTranslations('provenance.sheet')
   const { row, source, basis } = pairing
-  const kind = t(`rows.${row.id}.kind`)
+  const kind = keepBracketsTogether(t(`rows.${row.id}.kind`))
   const grade = pairing.grade ? gradeLabel(pairing.grade) : ''
 
   return (
@@ -98,7 +99,10 @@ export async function GoesWith({ pairing, id }: { pairing: Pairing; id: string }
           title={t('sheet.title')}
           closeLabel={tSheet('closeLabel')}
         >
-          <p className="mb-3">{t(`sheet.how.${basis}`, { kind, grade })}</p>
+          <p className="mb-3">{keepBracketsTogether(t('sheet.intro'))}</p>
+          <p className="mb-3">
+            <span className="font-medium text-ink">{t('sheet.whyHere')}</span> {t(`sheet.how.${basis}`, { kind, grade })}
+          </p>
           <p className="mb-3">{t('sheet.startingPoint')}</p>
           <p className="mb-1 font-medium text-ink">{t('sheet.sources')}</p>
           <ul className="flex flex-col gap-1" role="list">

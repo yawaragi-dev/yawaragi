@@ -77,5 +77,13 @@ test.describe('what a bottling goes with', () => {
     await expect(section.getByTestId('pairing-serve')).toContainText('花冷え')
     // The grade picked the row, not the line's chart.
     await expect(section.getByTestId('pairing-source-manual_curation')).toBeVisible()
+    // v1.8 Q2: after the line block, as on the sake page.
+    const following = await page
+      .getByTestId('bottling-line-block')
+      .evaluate((line) => {
+        const pairings = document.querySelector('[data-testid="bottle-pairings"]')
+        return pairings !== null && Boolean(line.compareDocumentPosition(pairings) & Node.DOCUMENT_POSITION_FOLLOWING)
+      })
+    expect(following).toBe(true)
   })
 })
