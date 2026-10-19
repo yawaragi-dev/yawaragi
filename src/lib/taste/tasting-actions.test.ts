@@ -241,3 +241,22 @@ describe('after the first tap', () => {
     expect(await journal().read(USER)).toEqual([])
   })
 })
+
+describe('when the journal cannot be reached', () => {
+  it('a delete that fails says so instead of taking the screen down, and logs nothing personal', async () => {
+    const { entryId } = await rated()
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+    vi.spyOn(journal(), 'remove').mockRejectedValueOnce(
+      new Error('Upstash REST error 429 for command HDEL'),
+    )
+
+    expect(await undoTasting(entryId)).toEqual({ status: 'unavailable' })
+
+    expect(error).toHaveBeenCalledTimes(1)
+    const logged = JSON.stringify(error.mock.calls[0])
+    expect(logged).toContain('Upstash REST error 429')
+    expect(logged).not.toContain(USER)
+    expect(logged).not.toContain(entryId)
+    error.mockRestore()
+  })
+})
