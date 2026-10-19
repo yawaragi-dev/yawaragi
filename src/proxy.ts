@@ -14,6 +14,7 @@ import { isGatedPath, isPublicContentPath } from '@/lib/legal/age-gate-cookie'
 import { canonicalGermanLegalRedirect } from '@/lib/legal/canonical-german-legal-paths'
 import { getComplianceState } from '@/lib/legal/compliance-state'
 import { ensureAnonymousSessionCookie } from '@/lib/session/middleware-issue'
+import { leaveSampleOnScan } from '@/lib/demo/leave-sample-on-scan'
 
 const handleI18n = createMiddleware(routing)
 
@@ -97,6 +98,9 @@ function runIntlAndAgeGate(request: NextRequest) {
     target.pathname = canonicalGermanLegalPath
     return withSessionCookie(request, NextResponse.redirect(target, 308))
   }
+
+  const leftSample = leaveSampleOnScan(request)
+  if (leftSample !== null) return withSessionCookie(request, leftSample)
 
   const intlResponse = handleI18n(request)
 
