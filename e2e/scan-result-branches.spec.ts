@@ -925,11 +925,14 @@ test.describe('scan result branches (#109 PR B)', () => {
     )
     if (!fixture) return
     const [firstBrandId] = fixture.brandIds
-    // Garbage name + a real multi-brand brewery kanji → the brewery-only
-    // pass returns the ambiguous candidate list.
+    // A one-character name + a real multi-brand brewery → the brewery-only
+    // pass returns the candidate list. Since #443 a name of two or more
+    // characters that names none of the brewery's sakes is "not in the
+    // catalogue"; a single character is a misread, not a name, and keeps the
+    // list (#420).
     const { context, page } = await scanPageWith(browser, [
       injectionCookie({
-        name_ja: '架空銘柄零一',
+        name_ja: '零',
         brewery_ja: fixture.breweryJa,
         confidence: 0.95,
       }),
@@ -988,11 +991,13 @@ test.describe('scan result branches (#109 PR B)', () => {
     const fixture = await findMonoBrandBreweryFixture()
     testInfo.skip(fixture === null, 'No mono-brand brewery in the mirror — DB-bound spec')
     if (!fixture) return
-    // Garbage brand + a real mono-brand brewery → first pass + brand-only
-    // miss, brewery-only finds the single brand → matched_brewery_only.
+    // A one-character brand + a real mono-brand brewery → first pass and
+    // brand-only miss, brewery-only finds the single brand →
+    // matched_brewery_only. A longer made-up name answers "not in the
+    // catalogue" since #443; a single character is a misread and keeps it.
     const { context, page } = await scanPageWith(browser, [
       injectionCookie({
-        name_ja: '架空銘柄零一',
+        name_ja: '零',
         brewery_ja: fixture.breweryJa,
         confidence: 0.95,
       }),
@@ -1003,7 +1008,7 @@ test.describe('scan result branches (#109 PR B)', () => {
     await expect(page.getByTestId('scan-result-matched-brewery-only')).toBeVisible()
     // §5a: "From this brewery" — the row says the label read another name.
     const link = page.getByTestId(`scan-outcome-candidate-${fixture.brandId}`)
-    await expect(link).toContainText('架空銘柄零一')
+    await expect(link).toContainText('零')
     await expect(link).toHaveAttribute('href', new RegExp(`/en/sake/${fixture.brandId}\\?from=scan$`))
     await context.close()
   })
