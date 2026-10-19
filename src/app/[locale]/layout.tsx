@@ -3,7 +3,7 @@ import { hasLocale, NextIntlClientProvider } from 'next-intl'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { Geist_Mono, Inter } from 'next/font/google'
 import { notFound } from 'next/navigation'
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { ClerkProvider } from '@clerk/nextjs'
 import { auth } from '@clerk/nextjs/server'
 import { routing } from '@/i18n/routing'
@@ -23,6 +23,12 @@ const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin']
 export const metadata: Metadata = {
   title: 'Yawaragi',
   description: 'A companion for discovering sake.',
+}
+
+// The status bar and browser chrome take the Ginshu ground (design v1.8, O3).
+export const viewport: Viewport = {
+  themeColor: '#1b1a19',
+  colorScheme: 'dark',
 }
 
 export default async function LocaleLayout({
