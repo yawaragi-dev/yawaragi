@@ -78,6 +78,7 @@ export function ScanOutcome({
   primaryRescan = false,
   photo,
   aboutOtherDrinks = false,
+  nudge,
   children,
 }: {
   testId: string
@@ -107,6 +108,8 @@ export function ScanOutcome({
    *  v1.7 §5a `not_sake`, 71). */
   aboutOtherDrinks?: boolean
   /** Branch-specific actions under the status block (the consensus's Yes / No). */
+  /** The after-scan nudge (design v1.8, J2): under "What we read", above the candidates. */
+  nudge?: ReactNode
   children?: ReactNode
 }) {
   const t = useTranslations('scanOutcome')
@@ -196,6 +199,8 @@ export function ScanOutcome({
           onBrewery={setBrewery}
         />
       )}
+
+      {nudge}
 
       {candidates && candidates.rows.length > 0 && (
         <div className="flex flex-col">

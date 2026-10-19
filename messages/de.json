@@ -259,7 +259,7 @@
     "camera": {
       "title": "Etikett scannen",
       "torchLabel": "Licht",
-      "frameTitle": "Richte die Kamera auf das Etikett",
+      "frameTitle": "Füll den Rahmen mit einem Etikett",
       "readALabel": "Ein Etikett lesen",
       "workingTitle": "Etikett wird gelesen …",
       "workingHint": "Wird mit dem Katalog abgeglichen.",
@@ -273,7 +273,21 @@
       "typeNameInstead": "Stattdessen Namen eingeben",
       "unavailableTitle": "Keine Kamera vorhanden",
       "unavailableBody": "Füge stattdessen ein Foto des Etiketts hinzu — aus deinen Dateien oder als Screenshot — oder gib den Namen ein.",
-      "dropZone": "Etikettenfoto hierher ziehen oder zum Auswählen klicken"
+      "dropZone": "Etikettenfoto hierher ziehen oder zum Auswählen klicken",
+      "askedFor": {
+        "details": {
+          "title": "Nimm das kleine Etikett mit den Zahlen auf",
+          "hint": "Meist hinten: kleine Schrift, ein %-Zeichen und ein Datum."
+        },
+        "side": {
+          "title": "Nimm den Namen auf, wo er schlicht gedruckt ist",
+          "hint": "Oft an der Seite oder auf dem Etikett des Importeurs."
+        },
+        "sticker": {
+          "title": "Nimm das Etikett des Importeurs auf",
+          "hint": "Ein gedrucktes Etikett auf Deutsch, Englisch oder Französisch, meist hinten."
+        }
+      }
     },
     "form": {
       "pending": "Etikett wird gelesen…",
@@ -984,7 +998,22 @@
       "body": "Die Verbindung ist vielleicht langsam. Dein Foto bleibt hier, du kannst es noch einmal senden."
     },
     "noConnectionPhoto": "Dein Foto, auf diesem Handy behalten",
-    "sendAgain": "Noch einmal senden"
+    "sendAgain": "Noch einmal senden",
+    "nudge": {
+      "details": {
+        "text": "Das kleine Etikett mit den Zahlen sagt, welche Abfüllung das ist.",
+        "action": "Scannen"
+      },
+      "side": {
+        "text": "Der Name steht oft schlicht gedruckt an der Seite oder auf dem Etikett des Importeurs.",
+        "action": "Seite scannen"
+      },
+      "sticker": {
+        "text": "Auf dem Etikett des Importeurs steht der Name oft in lateinischen Buchstaben.",
+        "action": "Etikett scannen"
+      },
+      "lastFree": "Nutzt deinen letzten kostenlosen Scan für die nächsten 24 Stunden."
+    }
   },
   "listResults": {
     "bar": "{kind, select, menu {Von deinem Foto · Karte} other {Von deinem Foto · Regal}} · {count, plural, =1 {1 Sake} other {# Sake}}",

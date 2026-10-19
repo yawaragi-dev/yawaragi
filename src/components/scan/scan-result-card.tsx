@@ -115,6 +115,11 @@ export interface ScanResultCardProps {
    * §5 Best guess: the "Not sure? {n} other candidates" row, under the
    * identity and log panel and above the chart. Absent on a sure match.
    */
+  /**
+   * The after-scan nudge (design v1.8, J): which part of the bottle to scan
+   * next. Under the panel, above "Not sure?" and the chart.
+   */
+  nudge?: ReactNode
   otherCandidates?: ReactNode
   /**
    * What the read found on the label beyond the line's name (design v1.7
@@ -151,6 +156,7 @@ export function ScanResultCard({
   exampleLabel,
   isStale = false,
   logPanel,
+  nudge,
   otherCandidates,
   readBottling,
   breweryPrinted,
@@ -381,6 +387,8 @@ export function ScanResultCard({
                 chart: rating is the reason to be on this screen, and the chart
                 is reference. */}
             {logPanel}
+
+            {nudge}
 
             {otherCandidates}
 

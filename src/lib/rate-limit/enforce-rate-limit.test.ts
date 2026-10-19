@@ -24,7 +24,7 @@ vi.mock('@/lib/rate-limit/upstash-kv-client', () => ({
 }))
 
 // Every anonymous budget in these tests is spent.
-const anonymousRateLimit = vi.fn(async () => ({
+const anonymousRateLimit = vi.fn(async (): Promise<{ allowed: boolean; remaining: number; retryAfterSec: number }> => ({
   allowed: false,
   remaining: 0,
   retryAfterSec: 3600,
@@ -57,5 +57,18 @@ describe('the anonymous rate limit', () => {
     const decision = await enforceRateLimit({ bucket: 'vision-scan', logPrefix: '[test]' })
     expect(decision.kind).toBe('allowed')
     expect(anonymousRateLimit).not.toHaveBeenCalled()
+  })
+
+  it('says how many free scans a visitor has left after this one', async () => {
+    currentUserIsMaintainer.mockResolvedValue(false)
+    anonymousRateLimit.mockResolvedValueOnce({ allowed: true, remaining: 1, retryAfterSec: 0 })
+    const decision = await enforceRateLimit({ bucket: 'vision-scan', logPrefix: '[test]' })
+    expect(decision).toMatchObject({ kind: 'allowed', remaining: 1 })
+  })
+
+  it('counts nothing for a maintainer, so no "last free scan" is ever said to them', async () => {
+    currentUserIsMaintainer.mockResolvedValue(true)
+    const decision = await enforceRateLimit({ bucket: 'vision-scan', logPrefix: '[test]' })
+    expect(decision).not.toHaveProperty('remaining')
   })
 })

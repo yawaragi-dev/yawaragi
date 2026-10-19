@@ -84,6 +84,12 @@ interface CameraCaptureProps {
     text: string
     action?: { label: string; ariaLabel: string; onClick: () => void }
   } | null
+  /**
+   * The part of the bottle an after-scan nudge asked for (design v1.8, R3):
+   * its title and hint take the place of the frame title and "How to read a
+   * label", so the camera says what to frame this time.
+   */
+  askedFor?: { title: string; hint: string } | null
 }
 
 type CameraState = 'starting' | 'live' | 'denied' | 'unavailable'
@@ -95,6 +101,7 @@ export function CameraCapture({
   typeItHref,
   stillUrl,
   notice = null,
+  askedFor = null,
 }: CameraCaptureProps) {
   const t = useTranslations('scan.camera')
   const videoRef = useRef<HTMLVideoElement | null>(null)
@@ -341,10 +348,12 @@ export function CameraCapture({
             aria-live="polite"
           >
             <p className="text-md-alt font-medium">
-              {isWorking ? t('workingTitle') : t('frameTitle')}
+              {isWorking ? t('workingTitle') : (askedFor?.title ?? t('frameTitle'))}
             </p>
-            {isWorking ? (
-              <p className="text-meta leading-relaxed text-camera-ink/70">{t('workingHint')}</p>
+            {isWorking || askedFor ? (
+              <p className="text-meta leading-relaxed text-camera-ink/70" data-testid={askedFor && !isWorking ? 'scan-camera-asked-hint' : undefined}>
+                {isWorking ? t('workingHint') : askedFor?.hint}
+              </p>
             ) : (
               // v1.6.2 §4: "How to read a label" takes the hint's line — the
               // one place on this screen with room for it. 13px, underlined,

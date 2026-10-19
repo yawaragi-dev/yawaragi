@@ -33,6 +33,7 @@ import {
   CaretRight,
   WarningCircle,
   WifiSlash,
+  IdentificationCard,
 } from '@phosphor-icons/react/dist/ssr'
 import { useRouter } from 'next/navigation'
 import { getPathname } from '@/i18n/navigation'
@@ -53,7 +54,7 @@ import { CellarButton } from '@/components/collection/cellar-button'
 import { TastingLogPanel } from '@/components/journal/tasting-log-panel'
 import { OtherCandidates } from '@/components/scan/other-candidates'
 import { ScanBottlings } from '@/components/scan/scan-bottlings'
-import { bottlingNameFromRead, detailsFromRead, gradeLabel } from '@/lib/scan/read-bottling'
+import { bottlingNameFromRead, detailsFromRead, gradeLabel, onThisLabelParts } from '@/lib/scan/read-bottling'
 import NextLink from 'next/link'
 import { SignInInPlace } from '@/components/auth/sign-in-in-place'
 import { ScanOutcome, readName, type OutcomeCandidate } from '@/components/scan/scan-outcome'
@@ -67,6 +68,7 @@ import {
 } from '@/lib/scan/downscale'
 import { scanAction } from '@/lib/scan/scan-action'
 import { browserIsOnline, settleRequest, type ConnectionFailure } from '@/lib/network/settle-request'
+import { ScanNudge } from '@/components/scan/scan-nudge'
 import { readListAction } from '@/lib/scan/list-action'
 import { addOwnBottling } from '@/lib/collection/expression-actions'
 import { INITIAL_LIST_ACTION_STATE, type ListActionState } from '@/lib/scan/list-action-state'
@@ -154,6 +156,16 @@ interface ScanFormProps {
  */
 const SCAN_TIMEOUT_MS = 60_000
 
+/** Which part of the bottle an after-scan nudge asks for (design v1.8, J). */
+type NudgeKind = 'details' | 'side' | 'sticker'
+
+/** Each nudge's icon, as 92, 110 and 109 draw them. */
+const NUDGE_ICON: Record<NudgeKind, typeof Camera> = {
+  details: ListNumbers,
+  side: ArrowsClockwise,
+  sticker: IdentificationCard,
+}
+
 /** The three §5a outcomes for a photo that is not of one bottle. */
 const NOT_ONE_BOTTLE = {
   menu: { testId: 'scan-result-menu', icon: Receipt },
@@ -174,6 +186,7 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
   // same label the sake detail page and result card render).
   // §8's "Type it": the bridge the non-match states offer.
   const tOutcome = useTranslations('scanOutcome')
+  const tCamera = useTranslations('scan.camera')
   const router = useRouter()
   // One file input: the photo library.
   //
@@ -191,6 +204,11 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
    * it again instead of landing on the error page with the photo gone.
    */
   const [connectionFailure, setConnectionFailure] = useState<ConnectionFailure | null>(null)
+  /**
+   * The part of the bottle the after-scan nudge asked for (design v1.8, J /
+   * R3), so the camera it opens says what to frame. Cleared by the next photo.
+   */
+  const [askedFor, setAskedFor] = useState<NudgeKind | null>(null)
   /** What the last scan sent, for "Send again" to send unchanged. */
   const lastScanFormRef = useRef<FormData | null>(null)
   const [state, formAction, isActionPending] = useActionState<ScanActionState, FormData>(
@@ -429,6 +447,28 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
    * `useActionState` has no reset, so dismissal is local state that
    * `hasResult` reads. `handleFile` clears it, so the next result shows.
    */
+  /**
+   * The one after-scan nudge (design v1.8, J): none when the visitor has no
+   * free scan left, since the button would only meet the limit; with one left,
+   * it says so. The button opens the camera paired with this scan.
+   */
+  function nudgeFor(kind: NudgeKind, scansLeft: number | undefined) {
+    if (scansLeft === 0) return null
+    return (
+      <ScanNudge
+        testId={`scan-nudge-${kind}`}
+        icon={NUDGE_ICON[kind]}
+        text={tOutcome(`nudge.${kind}.text`)}
+        action={tOutcome(`nudge.${kind}.action`)}
+        note={scansLeft === 1 ? tOutcome('nudge.lastFree') : null}
+        onAction={() => {
+          onPickClick()
+          setAskedFor(kind)
+        }}
+      />
+    )
+  }
+
   /** "Send again" after a scan the network lost: the same photo, unchanged. */
   function onSendAgain() {
     const formData = lastScanFormRef.current
@@ -440,6 +480,7 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
 
   function onPickClick() {
     setConnectionFailure(null)
+    setAskedFor(null)
     setListOpen(null)
     setResultDismissed(true)
     setPhotoUrl(null)
@@ -478,6 +519,7 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
   async function handleFile(file: File) {
     setDownscaleFailed(false)
     setConnectionFailure(null)
+    setAskedFor(null)
     // A new attempt supersedes whatever the visitor dismissed to get here.
     setResultDismissed(false)
     setIsDownscaling(true)
@@ -934,6 +976,7 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
         // reason in words. Older states (and an unreachable catalogue) carry
         // none, and the read card is the way forward then.
         const candidates = Array.isArray(view.candidates) ? view.candidates : []
+        const stickerNudge = nudgeFor('sticker', view.scansLeft)
         return (
           <ScanOutcome
             testId="scan-result-no-match"
@@ -942,7 +985,8 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
             title={tOutcome('noMatch.title')}
             body={tOutcome('noMatch.body')}
             onRescan={onPickClick}
-            suggestOtherSide
+            // v1.8 J2: the sticker nudge says it with a button; one, never two.
+            suggestOtherSide={stickerNudge === null}
             bothPhotos={bothPhotosRow(view.bothPhotos)}
             canKeep={canLog}
             read={{
@@ -960,6 +1004,7 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
                   }
                 : undefined
             }
+            nudge={stickerNudge}
           />
         )
       }
@@ -1204,6 +1249,11 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
           onChoosePhoto={onUploadClick}
           typeItHref="/search"
           stillUrl={photoUrl}
+          askedFor={
+            askedFor && earlierRead
+              ? { title: tCamera(`askedFor.${askedFor}.title`), hint: tCamera(`askedFor.${askedFor}.hint`) }
+              : null
+          }
           // Only once the visitor is back at the camera from a result: a
           // first scan has nothing to be read together with.
           notice={
@@ -1216,7 +1266,10 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
                   action: {
                     label: tOutcome('bothPhotos.dont'),
                     ariaLabel: tOutcome('bothPhotos.dontAria'),
-                    onClick: () => setExpiredState(state),
+                    onClick: () => {
+                      setExpiredState(state)
+                      setAskedFor(null)
+                    },
                   },
                 }
               : null
@@ -1298,6 +1351,15 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
             breweryPrinted={view.extraction.brewery_printed}
             // §5 Best guess: "Not sure? {n} other candidates" under the card.
             // Empty on a sure match, so the row is absent there.
+            nudge={
+              // Best guess wins over missing detail (J2); an own bottling that
+              // fits the label already says which bottling this is.
+              view.extraction.confidence < 0.85 && !openFitting
+                ? nudgeFor('side', view.scansLeft)
+                : onThisLabelParts(view.extraction.bottling).length === 0 && !openFitting
+                  ? nudgeFor('details', view.scansLeft)
+                  : null
+            }
             otherCandidates={
               openFitting ? (
                 <button

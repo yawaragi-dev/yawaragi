@@ -259,7 +259,7 @@
     "camera": {
       "title": "Scan a label",
       "torchLabel": "Light",
-      "frameTitle": "Frame the bottle label",
+      "frameTitle": "Fill the frame with one label",
       "readALabel": "How to read a label",
       "workingTitle": "Reading the label…",
       "workingHint": "Matching it against the catalogue.",
@@ -273,7 +273,21 @@
       "typeNameInstead": "Type the name instead",
       "unavailableTitle": "No camera here",
       "unavailableBody": "Add a photo of the label instead — from your files or a screenshot — or type the name.",
-      "dropZone": "Drop a label photo here, or click to choose"
+      "dropZone": "Drop a label photo here, or click to choose",
+      "askedFor": {
+        "details": {
+          "title": "Frame the small label with numbers",
+          "hint": "Usually on the back: small print, a % sign and a date."
+        },
+        "side": {
+          "title": "Frame the name where it is printed plainly",
+          "hint": "Often on the side, or on the importer’s sticker."
+        },
+        "sticker": {
+          "title": "Frame the importer’s sticker",
+          "hint": "A printed sticker in English, German or French, usually on the back."
+        }
+      }
     },
     "form": {
       "pending": "Reading the label…",
@@ -984,7 +998,22 @@
       "body": "The connection may be slow. Your photo is kept, so you can send it again."
     },
     "noConnectionPhoto": "Your photo, kept on this phone",
-    "sendAgain": "Send again"
+    "sendAgain": "Send again",
+    "nudge": {
+      "details": {
+        "text": "The small label with numbers says which bottling this is.",
+        "action": "Scan it"
+      },
+      "side": {
+        "text": "The name is often printed plainly on the side or on the importer’s sticker.",
+        "action": "Scan the side"
+      },
+      "sticker": {
+        "text": "The importer’s sticker often spells the name in Latin letters.",
+        "action": "Scan the sticker"
+      },
+      "lastFree": "Uses your last free scan for the next 24 hours."
+    }
   },
   "listResults": {
     "bar": "{kind, select, menu {From your photo · Menu} other {From your photo · Shelf}} · {count, plural, =1 {1 sake} other {# sakes}}",

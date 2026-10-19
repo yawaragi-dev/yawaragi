@@ -20,7 +20,12 @@ import { UpstashKVClient } from '@/lib/rate-limit/upstash-kv-client'
  *  - `allowed` — the call may proceed.
  */
 export type RateLimitDecision =
-  | { kind: 'allowed'; allowed: true; retryAfterSec: number }
+  /**
+   * `remaining`: scans (or suggestions) left in the budget after this one, for
+   * a visitor the budget applies to. Absent where nothing is counted: the
+   * bypass, a maintainer, or no rate-limit env outside Production.
+   */
+  | { kind: 'allowed'; allowed: true; retryAfterSec: number; remaining?: number }
   | { kind: 'denied'; allowed: false; retryAfterSec: number }
   | { kind: 'session_missing' }
 
@@ -140,6 +145,6 @@ export async function enforceRateLimit({
   )
 
   return result.allowed
-    ? { kind: 'allowed', allowed: true, retryAfterSec: result.retryAfterSec }
+    ? { kind: 'allowed', allowed: true, retryAfterSec: result.retryAfterSec, remaining: result.remaining }
     : { kind: 'denied', allowed: false, retryAfterSec: result.retryAfterSec }
 }
