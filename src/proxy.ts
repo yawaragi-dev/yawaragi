@@ -43,10 +43,14 @@ function withSessionCookie(
 
 /**
  * Handle `?debug=...` activation / deactivation at the edge:
- *   - On `enable` (1 / true): set the debug cookie + redirect to the
- *     same URL with the param stripped, so the address bar stays clean.
+ *   - On `enable` (`?debug=<DEBUG_TOKEN>`, or 1 / true on a local dev
+ *     server without a token): set the signed debug cookie + redirect to
+ *     the same URL with the param stripped, so neither the token nor the
+ *     param stays in the address bar.
  *   - On `disable` (0 / false): clear the cookie + redirect.
- *   - On no debug param: pass through (returns null).
+ *   - On no debug param, or a value that does not open debug mode
+ *     (a wrong token, `?debug=1` where a token is required): pass
+ *     through (returns null) — the page renders, no cookie is set.
  *
  * The redirect carries the cookie set / clear directly so the next
  * navigation sees the updated state — no race between cookie write
