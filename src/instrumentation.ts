@@ -1,7 +1,10 @@
+import type { Instrumentation } from 'next'
+import { reportRequestError } from '@/lib/observability/request-error'
+
 /**
  * Next.js 16 instrumentation hook — runs once per server cold start
  * (Node.js runtime only; Edge cold starts call `register()` from the
- * Edge runtime branch). Two responsibilities:
+ * Edge runtime branch). Two responsibilities, plus `onRequestError` (3):
  *
  * 1. Fail-closed at deploy time when the rate-limit env is misconfigured
  *    in production. Without the boot-time gate, a misconfigured
@@ -21,6 +24,15 @@
  *    Runs in every environment that has the `LANGFUSE_*` env vars set;
  *    no-ops otherwise so local dev works without Langfuse credentials.
  */
+/**
+ * 3. Log every request error with its route pattern and request kind, and
+ *    nothing personal (`src/lib/observability/request-error.ts`), so a crash
+ *    shows up in Vercel's runtime logs with enough to place it.
+ */
+export const onRequestError: Instrumentation.onRequestError = (...args) => {
+  reportRequestError(...args)
+}
+
 export async function register() {
   if (process.env.NEXT_RUNTIME !== 'nodejs') return
 

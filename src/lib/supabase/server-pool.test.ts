@@ -1,6 +1,6 @@
 import { EventEmitter } from 'node:events'
 import { afterEach, describe, expect, it } from 'vitest'
-import type { Pool } from 'pg'
+import type { Pool, PoolConfig } from 'pg'
 import { SERVER_POOL_MAX, createServerPool } from '@/lib/supabase/server-pool'
 
 /**
@@ -19,33 +19,37 @@ const POOLER_SLOTS = 15
 class FakePooler {
   open = 0
   refused = 0
-  client() {
-    const pooler = this
-    return class FakeClient extends EventEmitter {
-      _queryable = true
-      _ending = false
-      connect(cb: (err?: Error) => void) {
-        if (pooler.open >= POOLER_SLOTS) {
-          pooler.refused++
-          setImmediate(() => cb(new Error('(EMAXCONNSESSION) max clients reached in session mode')))
-          return
-        }
-        pooler.open++
-        setImmediate(() => cb())
+  client(): NonNullable<PoolConfig['Client']> {
+    return fakeClientOf(this)
+  }
+}
+
+/** Only what pg-pool calls on a client: connect, query, end, and its events. */
+function fakeClientOf(pooler: FakePooler): NonNullable<PoolConfig['Client']> {
+  return class FakeClient extends EventEmitter {
+    _queryable = true
+    _ending = false
+    connect(cb: (err?: Error) => void) {
+      if (pooler.open >= POOLER_SLOTS) {
+        pooler.refused++
+        setImmediate(() => cb(new Error('(EMAXCONNSESSION) max clients reached in session mode')))
+        return
       }
-      query(_text: string, _values: unknown, cb: (err: Error | null, res: unknown) => void) {
-        setTimeout(() => cb(null, { rows: [] }), 5)
-      }
-      end(cb?: () => void) {
-        if (!this._ending) {
-          this._ending = true
-          pooler.open--
+      pooler.open++
+      setImmediate(() => cb())
+    }
+    query(_text: string, _values: unknown, cb: (err: Error | null, res: unknown) => void) {
+      setTimeout(() => cb(null, { rows: [] }), 5)
+    }
+    end(cb?: () => void) {
+      if (!this._ending) {
+        this._ending = true
+        pooler.open--
         }
         this.emit('end')
         cb?.()
       }
-    }
-  }
+    } as unknown as NonNullable<PoolConfig['Client']>
 }
 
 /** The bottle page's render: brand, brewery, chart, the brewery's other sakes

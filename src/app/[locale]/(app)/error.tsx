@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { ArrowsClockwise, CloudWarning, House } from '@phosphor-icons/react/dist/ssr'
 import { Link } from '@/i18n/navigation'
@@ -15,9 +16,28 @@ import { Link } from '@/i18n/navigation'
  * and the cookie banner stay. The error itself is not shown: a server error
  * reaches the browser as a generic message with a digest, which means nothing
  * to a visitor (the digest is in the server log).
+ *
+ * A crash in the BROWSER has no server log, so this screen reports it once to
+ * `/api/client-error`: the message and the path, no cookies, nothing else
+ * (`client-error-report.ts` logs the path as a pattern). An error carrying a
+ * digest came from the server, which has logged it already.
  */
-export default function AppError({ unstable_retry }: { error: Error & { digest?: string }; unstable_retry: () => void }) {
+export default function AppError({ error, unstable_retry }: { error: Error & { digest?: string }; unstable_retry: () => void }) {
   const t = useTranslations('appError')
+  // Reporting is a side effect of the screen appearing for this error, which
+  // is what an effect is for; it sets no state.
+  useEffect(() => {
+    if (error.digest) return
+    void fetch('/api/client-error', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ message: error.message.slice(0, 1000) || error.name, path: window.location.pathname }),
+      credentials: 'omit',
+      keepalive: true,
+    }).catch(() => {
+      // A report that cannot be sent is dropped; the screen is what matters.
+    })
+  }, [error])
   return (
     <main className="flex flex-1 flex-col gap-5 overflow-y-auto px-5 py-8" data-testid="app-error" data-no-catalogue-data="">
       <span className="text-ash-600" aria-hidden="true">

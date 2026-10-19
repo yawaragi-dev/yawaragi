@@ -32,7 +32,6 @@ export function oneLine(value: unknown, max = MAX_MESSAGE): string | undefined {
   if (typeof value !== 'string' || value.length === 0) return undefined
   // Collapse line breaks and control characters, so a message cannot forge a
   // second log line.
-  // eslint-disable-next-line no-control-regex
   const flat = value.replace(/[\u0000-\u001f\u007f]+/g, ' ').trim()
   return flat.length > max ? `${flat.slice(0, max)}…` : flat
 }
