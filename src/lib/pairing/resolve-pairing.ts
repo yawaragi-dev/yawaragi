@@ -2,6 +2,7 @@ import type { FlavorProfile } from '@/lib/schemas/flavor-profile'
 import { ScanStyleSchema, type ScanGrade, type ScanStyle } from '@/lib/schemas/label-scan-extraction'
 import type { PairingRow } from '@/lib/schemas/pairing'
 import { pairingRow, type PairingRowId } from '@/lib/pairing/pairing-table'
+import { CLEARLY_DIFFERENT_Z } from '@/lib/taste/clearly-different'
 
 /** The catalogue's mean and spread on each axis (`catalogueAxisStats`). */
 export interface AxisStats {
@@ -74,7 +75,7 @@ const AXIS_ROW: Record<keyof FlavorProfile, PairingRowId | null> = {
  * nothing for 841; the leading axis is spread evenly (220–282 sakes each), so
  * hojun's narrow spread does not tilt the split towards junshu.
  */
-const MIN_LEAD = 1
+const MIN_LEAD = CLEARLY_DIFFERENT_Z
 const MIN_GAP = 0.3
 
 function rowFromChart(chart: FlavorProfile, stats: AxisStats): PairingRowId | null {

@@ -401,7 +401,21 @@
     "unavailableBody": "Das liegt an uns, nicht an dir — der Suchindex ist kurz nicht verfügbar. Versuche es gleich noch einmal, oder lies stattdessen ein Etikett.",
     "breweryUnknown": "Brauerei nicht erfasst",
     "cta": "Eintippen",
-    "searchedInstead": "Keine Treffer für „{typed}“. Hier sind die zu „{used}“ — im Katalog steht der Sake, nicht jede Flasche."
+    "searchedInstead": "Keine Treffer für „{typed}“. Hier sind die zu „{used}“ — im Katalog steht der Sake, nicht jede Flasche.",
+    "browse": {
+      "prefecture": "Präfektur",
+      "flavor": "Geschmack",
+      "clear": "Zurücksetzen",
+      "less": "Weniger",
+      "more": "Mehr",
+      "moreAxis": "{axis}: mehr",
+      "lessAxis": "{axis}: weniger",
+      "caveat": "Verglichen mit dem Durchschnitt des Katalogs im Geschmacksprofil (Sakenowa). Sake ohne Profil erscheinen hier nicht.",
+      "count": "{count, plural, one {# Sake} other {# Sake}} · {filters} · A–Z",
+      "countCapped": "Die ersten {count} Sake · {filters} · A–Z",
+      "noneTitle": "Kein Sake passt dazu",
+      "noneBody": "Versuch eine andere Präfektur oder nur den Geschmack."
+    }
   },
   "suggest": {
     "entry": {

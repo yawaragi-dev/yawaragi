@@ -11,6 +11,10 @@ import { RomajiDisclosure } from '@/components/sake/romaji-disclosure'
 import { getPathname, Link } from '@/i18n/navigation'
 import { routing } from '@/i18n/routing'
 import { resolveViewerJournal } from '@/lib/taste/viewer-journal'
+import { flavorWords, SearchBrowse } from '@/components/search/search-browse'
+import { browseCatalogue, MAX_BROWSE_RESULTS, prefectureCounts } from '@/lib/sakenowa/browse-catalogue'
+import { hasBrowseFilter, parseBrowseFilter } from '@/lib/sakenowa/browse-filter'
+import { getPrefectureNames } from '@/lib/sakenowa/prefecture'
 import {
   isCatalogueQuerySpecific,
   MAX_CATALOGUE_SEARCH_RESULTS,
@@ -66,7 +70,7 @@ import {
 
 interface PageProps {
   params: Promise<{ locale: string }>
-  searchParams: Promise<{ q?: string | string[] }>
+  searchParams: Promise<{ q?: string | string[]; pref?: string | string[]; flavor?: string | string[] }>
 }
 
 /** Shared with `<FocusFieldAtEnd />`, which puts the caret back in it. */
@@ -93,7 +97,11 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
   if (!hasLocale(routing.locales, locale)) notFound()
   setRequestLocale(locale)
 
-  const query = firstQueryValue((await searchParams).q).slice(0, 80)
+  const search = await searchParams
+  const query = firstQueryValue(search.q).slice(0, 80)
+  // §8's browse (design v1.8, M) applies only to an empty field.
+  const filter = parseBrowseFilter(search)
+  const browsing = query.length === 0 && hasBrowseFilter(filter)
   const t = await getTranslations('search')
   const tHeader = await getTranslations('header')
 
@@ -102,11 +110,17 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
   // `unavailable` rather than 500ing a screen whose field, empty state and
   // camera bridge all still work. See its docstring for why this surface
   // degrades where `/sake/*` does not.
-  const [outcome, viewer] = await Promise.all([
+  const [outcome, viewer, browsed, counts] = await Promise.all([
     specific ? searchCatalogue(query) : NO_SEARCH,
     cookies().then(resolveViewerJournal),
+    browsing ? browseCatalogue(filter) : null,
+    query.length === 0 ? prefectureCounts() : null,
   ])
-  const matches = outcome.kind === 'ok' ? outcome.matches : []
+  const matches = browsed ? (browsed.kind === 'ok' ? browsed.matches : []) : outcome.kind === 'ok' ? outcome.matches : []
+  const filterWords = [
+    ...(filter.areaId !== null ? [getPrefectureNames(filter.areaId)?.nameEn ?? ''] : []),
+    ...(filter.flavor ? [await flavorWords(filter.flavor, locale)] : []),
+  ].join(' · ')
 
   // Back goes to the scan screen for a cold deep-link: §8 is reached from
   // there ("Type it"), so that is where a visitor with no history came from in
@@ -204,7 +218,37 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
         </form>
       </div>
 
-      {query.length === 0 ? (
+      {query.length === 0 && <SearchBrowse filter={filter} counts={counts} locale={locale} />}
+
+      {browsing ? (
+        browsed?.kind === 'unavailable' ? (
+          <section className="flex flex-col gap-2" data-testid="search-unavailable">
+            <h1 className="text-card-heading font-medium text-ink">{t('unavailableTitle')}</h1>
+            <p className="text-body text-ash-600">{t('unavailableBody')}</p>
+          </section>
+        ) : matches.length === 0 ? (
+          <section className="flex flex-col gap-2" data-testid="search-browse-none">
+            <h1 className="text-card-heading font-medium text-ink">{t('browse.noneTitle')}</h1>
+            <p className="text-body text-ash-600">{t('browse.noneBody')}</p>
+          </section>
+        ) : (
+          <>
+            <h1 className="text-section-label uppercase text-ash-600" data-testid="search-count">
+              {matches.length === MAX_BROWSE_RESULTS
+                ? t('browse.countCapped', { count: matches.length, filters: filterWords })
+                : t('browse.count', { count: matches.length, filters: filterWords })}
+            </h1>
+            <ol className="flex flex-col" data-testid="search-results">
+              {matches.map((match) => (
+                <SearchResultRow key={match.brandId} match={match} breweryUnknown={t('breweryUnknown')} />
+              ))}
+            </ol>
+            <div className="flex flex-col gap-1.5">
+              <RomajiDisclosure id="search-romaji" />
+            </div>
+          </>
+        )
+      ) : query.length === 0 ? (
         <section className="flex flex-col gap-2" data-testid="search-empty">
           <h1 className="text-card-heading font-medium text-ink">{t('emptyTitle')}</h1>
           {/* §8's own empty state is "Recently tasted", which needs a journal

@@ -401,7 +401,21 @@
     "unavailableBody": "This is on our side, not yours — the search index is briefly unavailable. Try again in a moment, or read a label instead.",
     "breweryUnknown": "Brewery not recorded",
     "cta": "Type it",
-    "searchedInstead": "Nothing for “{typed}”. Showing matches for “{used}” — the catalogue lists the sake, not each bottle."
+    "searchedInstead": "Nothing for “{typed}”. Showing matches for “{used}” — the catalogue lists the sake, not each bottle.",
+    "browse": {
+      "prefecture": "Prefecture",
+      "flavor": "Flavor",
+      "clear": "Clear",
+      "less": "Less",
+      "more": "More",
+      "moreAxis": "More {axisLower}",
+      "lessAxis": "Less {axisLower}",
+      "caveat": "Compared with the catalogue average on the flavor chart (Sakenowa). Sakes without a chart don’t show here.",
+      "count": "{count, plural, one {# sake} other {# sakes}} · {filters} · A–Z",
+      "countCapped": "First {count} sakes · {filters} · A–Z",
+      "noneTitle": "No sakes match this",
+      "noneBody": "Try another prefecture, or a flavor on its own."
+    }
   },
   "suggest": {
     "entry": {
