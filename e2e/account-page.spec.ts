@@ -234,8 +234,17 @@ test.describe('§15 account', () => {
     const manifest = await (await page.request.get('/manifest.webmanifest')).json()
     expect(manifest).toMatchObject({ short_name: 'Yawaragi', display: 'standalone', theme_color: '#1b1a19' })
     expect(manifest.icons.map((icon: { purpose: string }) => icon.purpose)).toContain('maskable')
-    for (const icon of manifest.icons as { src: string }[]) {
-      expect((await page.request.get(icon.src)).headers()['content-type']).toBe('image/png')
+    expect(manifest.id).toBe('/home')
+    const images = [
+      ...manifest.icons,
+      ...manifest.screenshots,
+      ...manifest.shortcuts.flatMap((shortcut: { icons: unknown[] }) => shortcut.icons),
+    ] as { src: string }[]
+    for (const image of images) {
+      expect((await page.request.get(image.src)).headers()['content-type']).toBe('image/png')
+    }
+    for (const shortcut of manifest.shortcuts as { url: string }[]) {
+      expect((await page.request.get(shortcut.url)).status()).toBe(200)
     }
 
     await context.close()
