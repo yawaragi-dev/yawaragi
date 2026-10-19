@@ -576,7 +576,20 @@
     "languageValue": "English",
     "languageSub": "Deutsch — coming soon",
     "cookieSettingsLabel": "Cookie settings",
-    "cookieSettingsSub": "Choose what we store"
+    "cookieSettingsSub": "Choose what we store",
+    "groupHelp": "Help",
+    "homeScreenLabel": "Add Yawaragi to your home screen",
+    "homeScreenSub": "Open it like an app, from its own icon",
+    "homeScreenTitle": "Add Yawaragi to your home screen",
+    "homeScreenOther": "On another phone",
+    "homeScreenIos": {
+      "name": "iPhone and iPad (Safari)",
+      "how": "Tap Share, the square with an arrow, then “Add to Home Screen”."
+    },
+    "homeScreenAndroid": {
+      "name": "Android (Chrome, Firefox and others)",
+      "how": "Open the browser’s ⋮ menu, then “Add to Home screen” or “Install app”."
+    }
   },
   "tasting": {
     "yourTake": "Your take",

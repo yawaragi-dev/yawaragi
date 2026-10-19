@@ -576,7 +576,20 @@
     "languageValue": "English",
     "languageSub": "Deutsch — folgt in Kürze",
     "cookieSettingsLabel": "Cookie-Einstellungen",
-    "cookieSettingsSub": "Wähle, was wir speichern"
+    "cookieSettingsSub": "Wähle, was wir speichern",
+    "groupHelp": "Hilfe",
+    "homeScreenLabel": "Yawaragi zum Home-Bildschirm hinzufügen",
+    "homeScreenSub": "Öffne es wie eine App, über ein eigenes Symbol",
+    "homeScreenTitle": "Yawaragi zum Home-Bildschirm hinzufügen",
+    "homeScreenOther": "Auf einem anderen Handy",
+    "homeScreenIos": {
+      "name": "iPhone und iPad (Safari)",
+      "how": "Tippe auf Teilen, das Quadrat mit dem Pfeil, dann auf „Zum Home-Bildschirm“."
+    },
+    "homeScreenAndroid": {
+      "name": "Android (Chrome, Firefox und andere)",
+      "how": "Öffne das ⋮-Menü des Browsers, dann „Zum Startbildschirm hinzufügen“ oder „App installieren“."
+    }
   },
   "tasting": {
     "yourTake": "Dein Eindruck",

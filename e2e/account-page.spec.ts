@@ -219,4 +219,25 @@ test.describe('§15 account', () => {
 
     await context.close()
   })
+
+  test('Help says how to add Yawaragi to the home screen, and the app can be added', async ({ browser }) => {
+    const { context, page } = await appPage(browser)
+    await page.goto('/en/account')
+
+    await page.getByTestId('account-home-screen').click()
+    const steps = page.getByTestId('home-screen-steps')
+    await expect(steps).toBeVisible()
+    await expect(steps).toContainText('Add to Home Screen')
+    await expect(steps).toContainText('Install app')
+
+    // What the phone reads when the visitor follows those steps (design v1.8, O).
+    const manifest = await (await page.request.get('/manifest.webmanifest')).json()
+    expect(manifest).toMatchObject({ short_name: 'Yawaragi', display: 'standalone', theme_color: '#1b1a19' })
+    expect(manifest.icons.map((icon: { purpose: string }) => icon.purpose)).toContain('maskable')
+    for (const icon of manifest.icons as { src: string }[]) {
+      expect((await page.request.get(icon.src)).headers()['content-type']).toBe('image/png')
+    }
+
+    await context.close()
+  })
 })

@@ -7,6 +7,7 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { SignOutRow } from '@/components/account/sign-out-row'
 import { CookieSettingsRow } from '@/components/account/cookie-settings-row'
+import { HomeScreenRow } from '@/components/account/home-screen-row'
 import { SettingsGroup, SettingsLinkRow, SettingsRow } from '@/components/account/settings-row'
 import { Link } from '@/i18n/navigation'
 import { routing } from '@/i18n/routing'
@@ -76,6 +77,7 @@ export default async function AccountPage({ params }: PageProps) {
   // copy from `/scan`; this one would have been its twin.
   const t = await getTranslations('account')
   const tSignIn = await getTranslations('signIn')
+  const tSheet = await getTranslations('provenance.sheet')
 
   return (
     <main
@@ -123,6 +125,19 @@ export default async function AccountPage({ params }: PageProps) {
           inside the app. It opens the public pages (ADR-0026). */}
       <SettingsGroup title={t('groupLearn')} testId="account-group-learn">
         <SettingsLinkRow icon={BookOpen} label={t('learnLabel')} href="/learn" testId="account-learn" />
+      </SettingsGroup>
+
+      {/* Help (design v1.8, O2): the app never prompts to be added to the
+          home screen; this row says how. */}
+      <SettingsGroup title={t('groupHelp')} testId="account-group-help">
+        <HomeScreenRow
+          label={t('homeScreenLabel')}
+          sub={t('homeScreenSub')}
+          title={t('homeScreenTitle')}
+          closeLabel={tSheet('closeLabel')}
+          steps={{ ios: { name: t('homeScreenIos.name'), how: t('homeScreenIos.how') }, android: { name: t('homeScreenAndroid.name'), how: t('homeScreenAndroid.how') } }}
+          otherPhones={t('homeScreenOther')}
+        />
       </SettingsGroup>
 
       <SettingsGroup title={t('groupPrivacy')} testId="account-group-privacy">
