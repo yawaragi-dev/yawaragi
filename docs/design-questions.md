@@ -283,28 +283,32 @@ Nothing in the app says that a tap was received when the network is slow or gone
 
 ## T. Photos with tastings, not only with the bottle
 
-v1.8 answered block I with **one photo per bottling**, kept from the scan or added on the bottle page, and shown on the bottle page, journal rows and cellar rows (I1–I5, 92, 97, 99). The maintainer would like the photo to belong to the **tasting** as well: the photo taken at the scan is logged with that tasting when there is one, and a tasting being created or edited can take a photo (or one from the library). The cellar shows them.
+v1.8 answered block I with **one photo per bottling**, kept from the scan or added on the bottle page, and shown on the bottle page, journal rows and cellar rows (I1–I5, 92, 97, 99).
 
-**How it would work, as far as it matters for drawing:**
-- **The photo already exists at the moment of logging** after a scan. Today it lives only in the phone's memory and is discarded after the read (ADR-0009). Keeping it is a new, opt-in processing of personal data (open decision 14): stored in a private EU bucket, location and other EXIF data removed on the phone before upload, readable only by the visitor, deleted with the tasting or the account, and part of the export.
-- **Only for a visitor who can keep a journal.** The photo is uploaded when the tasting is saved, so a save without a connection follows S6.
-- **Size.** We would keep one reduced copy, about 1600 px on the long side, plus a thumbnail. A photo per tasting means many more files than one per bottling. That is fine for storage, but it is more to delete and more to show.
+**What the maintainer wants (settled):** a photo can be added **separately** to each of three things — **an own bottling**, **a cellar row** and **a tasting in the journal** — to any one of them, several, or none. A photo on one does not have to be on the others. The scan photo is the natural first candidate for all three; a tasting or a cellar row being created or edited can also take a new photo or one from the library. How this looks and how many taps it takes is yours to decide; below is what the build can and cannot do, so the drawing does not run into it later.
 
-1. **Per tasting, per bottling, or both?** I4 chose one per bottling: "a photo per tasting would put the same label on every row". With per tasting, two tastings of the same bottle show the same label twice, but each records that evening (a different glass, a restaurant). Options:
-   - (a) per tasting only;
-   - (b) per bottling only (v1.8);
-   - (c) per tasting, with the bottling showing its latest tasting's photo unless one was chosen for it.
-   
-   Engineering leans to (c). It is one kind of record, and the bottle page still has one face.
-2. **Logging with the scan photo.** On §5, after a scan, is "Keep this photo" (I1) the same switch for "with this tasting", or two (bottle / tasting)? Should it default on once the visitor has kept a photo before, or stay unticked every time (I1 says unticked)?
-3. **A tasting created without a scan** (search, "Add it yourself", "Rate a new tasting" on a sake page). Where does "Add a photo" sit: on §5's panel after the first star, or only in §10 detailed notes? Camera, library, or both? The camera here is photo-only mode (R, v1.8), which reads nothing and costs no scan.
-4. **Editing.** In §10, as its own part, like "Where and what it cost" (N)? Replace / Delete as on the bottle page (I5: delete is final, inline confirm)?
-5. **More than one photo?** For example, the front label and the glass. One per tasting keeps rows simple; say so if more is wanted, and how rows show it (the first one, or a count).
-6. **Where it shows.**
-   - **Journal row:** the tasting's own photo (I3 drew the bottling's).
-   - **Cellar row:** a bottle has no tasting until it is poured. Is the cellar row's photo the bottling's (c), the latest tasting's, or one taken when adding the bottle to the cellar ("Add to cellar" could offer the camera)?
-   - **Home's recent tastings:** I3 kept Home text-only. Still so?
-7. **Opening a photo.** Tapping a thumbnail opens it full screen, with the date and where (N's "Where"), and Replace / Delete?
-8. **What it is not.** These photos are private. They never feed the chart, the ranking or any public surface. #476 (a vote on the most beautiful labels, and label badges) would need its own, separate consent to show a photo to anyone. Should anything in this flow mention that, or nothing until #476 is designed?
+**Constraints from how the app works:**
+- **Three records, three slots.** A bottling, a cellar row and a tasting are separate records already. Each can hold its own photo reference. One stored file can be referenced by several of them, so "use this photo for the tasting and the bottling" uploads once. Deleting the photo from one place leaves it in the others; the file goes when nothing refers to it.
+- **A bottling exists only when the visitor made one.** There are no catalogue bottlings (51–56 are unbuilt). A tasting or a cellar row logged against the sake as a whole ("{line}, any bottling") has no bottling to put a photo on, so there the photo can only be the tasting's or the row's. A catalogue sake page never shows a visitor's photo as the sake's own picture; at most inside "You and this sake".
+- **A cellar row is not one bottle.** Since v1.6.2 a row is "this sake or bottling, this size, nama or not", with a count; only the open bottle has a row of its own (67). So a cellar photo belongs to the row (all its bottles). A photo per physical bottle would mean splitting rows by photo — say so if that is wanted, and how the count looks then.
+- **From cellar to journal.** "Pour & rate" turns a cellar bottle into a tasting. Should the row's photo carry over to that tasting by default, be offered, or not?
+- **The photo exists at logging time only after a scan.** Today it lives in the phone's memory and is discarded after the read (ADR-0009). Keeping it is a new, opt-in processing of personal data (open decision 14): a private EU bucket, location and other EXIF data stripped on the phone before upload, readable only by the visitor, deleted with its record or the account, and part of the export.
+- **Only for a visitor who can keep a journal.** Signed-out visitors and the sample collection keep nothing; the sample collection is read-only and has no "Add a photo".
+- **Upload needs a connection and takes a moment.** The photo is reduced on the phone (about 1600 px on the long side, plus a thumbnail) and uploaded when its record is saved. That save needs the S6 treatment for a lost connection, and a visible "uploading" state of its own: a few hundred kB on a slow network takes seconds, longer than a rating.
+- **Undo.** Deleting a tasting or a bottling has Undo today. With a photo attached, the photo comes back with the Undo; it is removed from storage only after the Undo is gone. I5's "Delete photo is final, no Undo" stays as drawn for deleting just the photo.
+- **Size and limits.** A photo per tasting and per cellar row means many more files than one per bottling. Storage is cheap, but at launch there may be a per-account cap. If there is one, what does reaching it look like?
+- **One photo per slot** keeps rows and storage simple. More than one per tasting (label and glass, say) is possible, but each extra multiplies storage, export size and the row's layout question.
+- **What it is not.** These photos are private. They never feed the chart, the ranking or any public surface. #476 (a vote on the most beautiful labels, and label badges) would need its own, separate consent to show a photo to anyone.
+
+**Questions:**
+
+1. **When a slot is empty, what shows?** Each of the three may have its own photo. When one has none, does it borrow — a journal row showing its bottling's photo, a bottle page its latest tasting's, a cellar row its bottling's — or does it show nothing (rule 14: no image, no slot)? Engineering leans to borrowing in one direction only, from the bottling down to its rows, marked so the visitor can tell "this tasting's photo" from "the bottling's".
+2. **Keeping the scan photo.** After a scan, I1 has one unticked "Keep this photo". With three possible homes, is that one switch that keeps it where the visitor then logs (rating → tasting, "Add to cellar" → row, "Add your bottling" → bottling), or a choice of where? Should it default on once the visitor has kept a photo before, or stay unticked every time?
+3. **Adding one without a scan.** Where does "Add a photo" sit for a tasting (§5's panel after the first star, or only in §10 detailed notes), for a cellar row (the "Add to cellar" sheet, 66), and for a bottling (its page, I5)? Camera, library, or both? The camera here is photo-only mode (R, v1.8), which reads nothing and costs no scan.
+4. **Editing.** Replace / Delete in the same place on all three, as on the bottle page (I5)? In §10, as its own part like "Where and what it cost" (N)?
+5. **More than one photo per slot?** Say so if wanted, and how rows show it (the first one, or a count).
+6. **Where each shows.** Journal row (the tasting's photo, I3 drew the bottling's), cellar row, bottle page, Home's recent tastings (I3 kept Home text-only — still so?).
+7. **Opening a photo.** Tapping a thumbnail opens it full screen, with what it belongs to, the date and (for a tasting) N's "Where", and Replace / Delete?
+8. **Saying it is private.** Should anything in this flow say these photos are only the visitor's, or nothing until #476 is designed?
 
 Built today: nothing of I or T. The scan photo stays in memory for the result and the bottle page of that session only (`scanned-photo.ts`).
