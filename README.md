@@ -12,7 +12,7 @@ A sake companion for people who can't read the label. Point the camera at a bott
 
 ## Milestone progress
 
-_Snapshot generated 2026-10-17 from GitHub Issues + merged PRs. Regenerate with `pnpm progress`. Detail: [docs/PROGRESS.md](./docs/PROGRESS.md)._
+_Snapshot generated 2026-10-19 from GitHub Issues + merged PRs. Regenerate with `pnpm progress`. Detail: [docs/PROGRESS.md](./docs/PROGRESS.md)._
 
 | Milestone | Progress | Issues | ETA (median) |
 | --- | --- | --- | --- |
