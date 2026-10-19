@@ -1765,6 +1765,8 @@
     "sheet": {
       "triggerLabel": "Where these pairings come from",
       "title": "Where these pairings come from",
+      "intro": "These are general pairings for a kind of sake, not notes written for this one. Each kind comes from a named source: the Sake Service Institute’s types — kunshu (薫酒) fragrant, soshu (爽酒) light, junshu (醇酒) rich — and published guidance for koshu, kijoshu, sparkling and nigori.",
+      "whyHere": "Why this kind here:",
       "how": {
         "style": "This bottling is {kind}. The foods are the ones the sources below give for it.",
         "grade": "This bottling is a {grade}. Ginjo grades are usually fragrant sake, {kind}, so the foods are the ones the sources below give for that kind. A restrained, dry ginjo may suit lighter dishes better.",

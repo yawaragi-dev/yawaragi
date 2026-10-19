@@ -12,8 +12,10 @@ import {
   Orange,
   Pepper,
   Shrimp,
+  ThermometerSimple,
 } from '@phosphor-icons/react/dist/ssr'
 import { BottleSection } from '@/components/sake/bottle-section'
+import { keepBracketsTogether } from '@/lib/text/keep-brackets-together'
 import { InfoSheet } from '@/components/ui/info-sheet'
 import type { Pairing } from '@/lib/pairing/resolve-pairing'
 import { SERVING_TEMPERATURE_TERMS } from '@/lib/schemas/detailed-notes'
@@ -56,11 +58,36 @@ export async function GoesWith({ pairing, id }: { pairing: Pairing; id: string }
   const t = await getTranslations('pairings')
   const tSheet = await getTranslations('provenance.sheet')
   const { row, source, basis } = pairing
-  const kind = t(`rows.${row.id}.kind`)
+  const kind = keepBracketsTogether(t(`rows.${row.id}.kind`))
   const grade = pairing.grade ? gradeLabel(pairing.grade) : ''
 
   return (
     <BottleSection label={t('heading')} testId="bottle-pairings">
+      <div className="mb-3" data-testid={`pairing-source-${source}`}>
+        <InfoSheet
+          id={`pairings-${id}`}
+          caveat={t(`caveat.${basis}`, { kind, grade })}
+          triggerLabel={t('sheet.triggerLabel')}
+          title={t('sheet.title')}
+          closeLabel={tSheet('closeLabel')}
+        >
+          <p className="mb-3">{keepBracketsTogether(t('sheet.intro'))}</p>
+          <p className="mb-3">
+            <span className="font-medium text-ink">{t('sheet.whyHere')}</span> {t(`sheet.how.${basis}`, { kind, grade })}
+          </p>
+          <p className="mb-3">{t('sheet.startingPoint')}</p>
+          <p className="mb-1 font-medium text-ink">{t('sheet.sources')}</p>
+          <ul className="flex flex-col gap-1" role="list">
+            {row.sources.map((s) => (
+              <li key={s.url}>
+                <a href={s.url} target="_blank" rel="noopener noreferrer" className="text-ginshu-700 underline underline-offset-4">
+                  {s.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </InfoSheet>
+      </div>
       <ul className="flex flex-col gap-3" role="list">
         {row.foods.map((food) => {
           const FoodIcon = FOOD_ICON[food] ?? ForkKnife
@@ -80,38 +107,19 @@ export async function GoesWith({ pairing, id }: { pairing: Pairing; id: string }
           {t(`rows.${row.id}.note`)}
         </p>
       )}
-      <p className="mt-3 text-meta text-ash-700" data-testid="pairing-serve">
-        {t('serve', {
-          temperatures: row.serve
-            .map((key) => {
-              const term = SERVING_TEMPERATURE_TERMS[key]
-              return t('temperature', { kanji: term.kanji, romaji: term.romaji, degrees: term.degrees })
-            })
-            .join(t('or')),
-        })}
+      <p className="mt-3 flex items-start gap-2 text-meta text-ash-700" data-testid="pairing-serve">
+        <ThermometerSimple size={16} aria-hidden="true" className="mt-px shrink-0 text-ash-600" />
+        <span>
+          {t('serve', {
+            temperatures: row.serve
+              .map((key) => {
+                const term = SERVING_TEMPERATURE_TERMS[key]
+                return t('temperature', { kanji: term.kanji, romaji: term.romaji, degrees: term.degrees })
+              })
+              .join(t('or')),
+          })}
+        </span>
       </p>
-      <div className="mt-2" data-testid={`pairing-source-${source}`}>
-        <InfoSheet
-          id={`pairings-${id}`}
-          caveat={t(`caveat.${basis}`, { kind, grade })}
-          triggerLabel={t('sheet.triggerLabel')}
-          title={t('sheet.title')}
-          closeLabel={tSheet('closeLabel')}
-        >
-          <p className="mb-3">{t(`sheet.how.${basis}`, { kind, grade })}</p>
-          <p className="mb-3">{t('sheet.startingPoint')}</p>
-          <p className="mb-1 font-medium text-ink">{t('sheet.sources')}</p>
-          <ul className="flex flex-col gap-1" role="list">
-            {row.sources.map((s) => (
-              <li key={s.url}>
-                <a href={s.url} target="_blank" rel="noopener noreferrer" className="text-ginshu-700 underline underline-offset-4">
-                  {s.label}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </InfoSheet>
-      </div>
     </BottleSection>
   )
 }

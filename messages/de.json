@@ -1765,6 +1765,8 @@
     "sheet": {
       "triggerLabel": "Woher diese Vorschläge kommen",
       "title": "Woher diese Vorschläge kommen",
+      "intro": "Das sind allgemeine Begleiter für eine Art Sake, keine Notizen zu genau diesem. Jede Art stammt aus einer genannten Quelle: den Typen des Sake Service Institute — Kunshu (薫酒) duftend, Soshu (爽酒) leicht, Junshu (醇酒) vollmundig — und veröffentlichten Empfehlungen für Koshu, Kijoshu, Sparkling Sake und Nigori.",
+      "whyHere": "Warum diese Art hier:",
       "how": {
         "style": "Diese Abfüllung gehört zur Art {kind}. Die Speisen sind die, die die Quellen unten dafür nennen.",
         "grade": "Diese Abfüllung ist ein {grade}. Ginjo-Grade sind meist duftend, Art {kind}; die Speisen sind die, die die Quellen unten dafür nennen. Ein zurückhaltender, trockener Ginjo passt vielleicht besser zu leichteren Gerichten.",
