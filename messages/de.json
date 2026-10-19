@@ -959,7 +959,19 @@
     "matchedKicker": "Aus deinem Foto erkannt",
     "notThisOne": "Nicht dieser",
     "sureMatch": "Sicherer Treffer",
-    "bestGuess": "Beste Vermutung"
+    "bestGuess": "Beste Vermutung",
+    "offline": {
+      "kicker": "Nicht gesendet",
+      "title": "Keine Verbindung",
+      "body": "Dein Foto bleibt hier. Sende es noch einmal, sobald du wieder online bist."
+    },
+    "timedOut": {
+      "kicker": "Keine Antwort",
+      "title": "Das dauert zu lange",
+      "body": "Die Verbindung ist vielleicht langsam. Dein Foto bleibt hier, du kannst es noch einmal senden."
+    },
+    "noConnectionPhoto": "Dein Foto, auf diesem Handy behalten",
+    "sendAgain": "Noch einmal senden"
   },
   "listResults": {
     "bar": "{kind, select, menu {Von deinem Foto · Karte} other {Von deinem Foto · Regal}} · {count, plural, =1 {1 Sake} other {# Sake}}",
