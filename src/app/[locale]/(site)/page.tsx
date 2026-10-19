@@ -84,6 +84,17 @@ export default async function LandingPage({
                 {t('ctaHow')}
               </a>
           </div>
+          {/* §0 (design v1.8, L3): the app with a made-up collection in it, for
+              a visitor who wants to look before scanning anything. A plain
+              link: the route sets the sample cookie and sends the visitor on
+              to Collection, through the 18+ gate like any app screen. */}
+          <a
+            href={`/api/sample-collection?locale=${locale}`}
+            className="w-fit rounded-sm text-subtle text-ash-700 underline decoration-ash-500 underline-offset-4 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+            data-testid="landing-sample-link"
+          >
+            {t('sampleLink')}
+          </a>
           <p className="text-meta text-ash-500">{t('smallPrint')}</p>
           </div>
 

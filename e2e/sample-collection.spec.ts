@@ -33,6 +33,26 @@ test.describe('the sample collection', () => {
     await expect(page.getByTestId('collection-page')).toContainText('Hanaabi')
   })
 
+  test('opens from the landing page too (design v1.8, L3)', async ({ page }) => {
+    await page.goto(`${BASE_URL}/en`)
+    await page.getByTestId('landing-sample-link').click()
+
+    await expect(page).toHaveURL(/\/en\/collection$/)
+    await expect(page.getByTestId('sample-collection-banner')).toContainText('A sample collection')
+  })
+
+  test('starting a scan leaves the sample first (design v1.8, L3)', async ({ page }) => {
+    await page.goto(`${BASE_URL}/api/sample-collection?locale=en`)
+    await expect(page.getByTestId('sample-collection-banner')).toBeVisible()
+    await page.goto(`${BASE_URL}/en/scan`)
+    await expect(page).toHaveURL(/\/en\/scan$/)
+    await expect(page.getByTestId('scan-form')).toBeVisible()
+    await expect(page.getByTestId('sample-collection-banner')).toHaveCount(0)
+    // And it stays left: Collection is the visitor's own again.
+    await page.goto(`${BASE_URL}/en/collection`)
+    await expect(page.getByTestId('sample-collection-banner')).toHaveCount(0)
+  })
+
   test('shows the cellar with no way to change it', async ({ page }) => {
     await page.goto(`${BASE_URL}/api/sample-collection?locale=en`)
     await page.goto(`${BASE_URL}/en/collection?tab=cellar`)
