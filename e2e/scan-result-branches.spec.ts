@@ -646,6 +646,10 @@ test.describe('scan result branches (#109 PR B)', () => {
     await expect(dassai.getByTestId('list-row-reason')).not.toBeEmpty()
     // Fit is in words, never a percentage (C7).
     await expect(page.getByTestId('list-rows')).not.toContainText('%')
+    // The one less usual bottling on the list gets its line (design v1.8, P).
+    const lessUsual = page.getByTestId('list-row-less-usual')
+    await expect(lessUsual).toHaveCount(1)
+    await expect(lessUsual).toHaveText('Less usual · Hiyaoroshi (ひやおろし), the autumn release')
     await context.close()
   })
 

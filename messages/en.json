@@ -1122,6 +1122,15 @@
       "axes": "{shape}.",
       "unusual": "{shape}, not much like what you rate highly.",
       "noChart": "No flavor chart for this one yet."
+    },
+    "lessUsual": {
+      "line": "Less usual · {style}",
+      "styles": {
+        "kijoshu": "Kijoshu (貴醸酒), brewed with sake in place of some water",
+        "koshu": "Koshu (古酒), aged sake",
+        "taruzake": "Taruzake (樽酒), rested in cedar casks",
+        "hiyaoroshi": "Hiyaoroshi (ひやおろし), the autumn release"
+      }
     }
   },
   "bottling": {

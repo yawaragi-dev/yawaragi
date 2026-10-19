@@ -20,8 +20,11 @@ import {
   Info,
   MagnifyingGlass,
   Question,
+  Sparkle,
 } from '@phosphor-icons/react/dist/ssr'
 import { Link } from '@/i18n/navigation'
+import { lessUsualStyle, type LessUsualStyle } from '@/lib/scan/less-usual'
+import type { GuideSlug } from '@/lib/guide/entries'
 import { AddListLineYourself } from '@/components/sake/add-unlisted-bottling'
 import { InfoSheetPanel } from '@/components/ui/info-sheet'
 import { ProvenanceBadgeView } from '@/components/sake/provenance-badge'
@@ -336,6 +339,7 @@ function ListRowItem({
   const asRead = single ? whatWasRead(single) : { kanji: row.nameKanji, rest: '' }
   const warm = row.lines.some((l) => l.warm)
   const partly = row.lines.some((l) => l.partlyRead)
+  const lessUsual = lessUsualStyle(row.lines)
 
   return (
     <li className="flex flex-col border-b border-divider" data-testid="list-row" data-brand-id={row.brandId}>
@@ -387,6 +391,7 @@ function ListRowItem({
           </span>
         </span>
       </NextLink>
+      {lessUsual && <LessUsualLine style={lessUsual} />}
       {row.lines.length > 1 && (
         // C10: one row for the sake, its bottlings as printed under it.
         <div className="flex flex-col pb-3 pl-[34px]" data-testid="list-row-bottlings">
@@ -419,6 +424,40 @@ function ListRowItem({
 }
 
 /** "Junmai Ginjō · Nama · Genshu": a bottling's grade and every style read, in words. */
+/** Learn entries for the less usual styles; the others are named without a link (open decision 15). */
+const LESS_USUAL_ENTRY: Partial<Record<LessUsualStyle, GuideSlug>> = { koshu: 'koshu' }
+
+/**
+ * "Less usual · Koshu (古酒), aged sake" under a row (design v1.8, P; 105):
+ * one line, indented to the name, never a tag, a group or a sort. It opens
+ * the style's Learn entry where there is one and is plain text where not.
+ */
+function LessUsualLine({ style }: { style: LessUsualStyle }) {
+  const t = useTranslations('listResults.lessUsual')
+  const slug = LESS_USUAL_ENTRY[style]
+  const words = (
+    <>
+      <Sparkle size={14} aria-hidden="true" className="shrink-0 text-ginshu-600" />
+      <span>{t('line', { style: t(`styles.${style}`) })}</span>
+      {slug && <BookOpen size={13} aria-hidden="true" className="shrink-0 text-ash-600" />}
+    </>
+  )
+  const className = 'flex min-h-9 items-center gap-2 pb-3 pl-[34px] text-meta text-ash-800'
+  return slug ? (
+    <Link
+      href={{ pathname: '/learn/[slug]', params: { slug } }}
+      className={`${className} hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600`}
+      data-testid="list-row-less-usual"
+    >
+      {words}
+    </Link>
+  ) : (
+    <p className={className} data-testid="list-row-less-usual">
+      {words}
+    </p>
+  )
+}
+
 function bottlingWords(line: ListLine): string {
   return [...(line.grade ? [gradeLabel(line.grade)] : []), ...(line.styles ?? []).map(styleLabel)].join(' · ')
 }

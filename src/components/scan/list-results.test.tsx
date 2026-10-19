@@ -116,4 +116,22 @@ describe('§7 — a menu ranked for the visitor', () => {
     expect(nama.textContent).toContain('Junmai Ginjō · Nama')
     expect(tokujun.textContent).toContain('Tokubetsu Junmai')
   })
+
+  it('points out what is less usual on the list, in one line, and only that', () => {
+    renderList({
+      ...RANKED,
+      rows: [
+        row({ brandId: 4, nameRomaji: 'Akishika', lines: [{ index: 0, printed: '秋鹿 古酒', nameAsPrinted: '秋鹿', styles: ['koshu'] }] }),
+        row({ brandId: 5, nameRomaji: 'Kenbishi', lines: [{ index: 1, printed: '剣菱 樽酒', nameAsPrinted: '剣菱', styles: ['taruzake'] }] }),
+        row({ brandId: 6, nameRomaji: 'Jikon', lines: [{ index: 2, printed: '而今 生 原酒', nameAsPrinted: '而今', styles: ['nama', 'genshu'] }] }),
+      ],
+    })
+    const [koshu, taruzake] = screen.getAllByTestId('list-row-less-usual')
+    expect(screen.getAllByTestId('list-row-less-usual')).toHaveLength(2)
+    expect(koshu.textContent).toBe('Less usual · Koshu (古酒), aged sake')
+    // Koshu has a Learn entry; taruzake does not yet (open decision 15).
+    expect(koshu.tagName).toBe('A')
+    expect(koshu.getAttribute('href')).toContain('/learn/koshu')
+    expect(taruzake.tagName).toBe('P')
+  })
 })
