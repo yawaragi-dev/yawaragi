@@ -71,4 +71,6 @@ vi.mock('next/navigation', () => ({
   redirect: vi.fn(),
   permanentRedirect: vi.fn(),
   notFound: vi.fn(),
+  // A no-op: no error a unit test throws is one of Next's control-flow errors.
+  unstable_rethrow: vi.fn(),
 }))

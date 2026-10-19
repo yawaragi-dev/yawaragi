@@ -1,6 +1,8 @@
 import 'server-only'
 
 import { auth } from '@clerk/nextjs/server'
+import { unstable_rethrow } from 'next/navigation'
+import { describeError, logFailure } from '@/lib/observability/log-failure'
 import { currentUserIsMaintainer } from '@/lib/auth/maintainer'
 import type { CellarStore } from '@/lib/collection/cellar-store'
 import type { ExpressionStore } from '@/lib/collection/expression-store'
@@ -38,5 +40,17 @@ export async function withMaintainerCollection<T>(
   const cellar = getCellarStore()
   const expressions = getExpressionStore()
   if (!journal || !cellar || !expressions) return { status: 'unavailable' }
-  return run({ userId, journal, cellar, expressions })
+  try {
+    return await run({ userId, journal, cellar, expressions })
+  } catch (error) {
+    // A store that cannot be reached (an Upstash 5xx or 429, a dropped
+    // connection, the catalogue's pg pool full) used to escape as a thrown
+    // error. Thrown from a Server Action awaited in a transition, it reaches
+    // the screen's error boundary, and "Delete tasting" took the whole page
+    // down instead of saying "Couldn't save". Every caller already renders
+    // `unavailable`, so the failure becomes that, and a log line.
+    unstable_rethrow(error)
+    logFailure({ where: 'collection action', ...describeError(error) })
+    return { status: 'unavailable' }
+  }
 }
