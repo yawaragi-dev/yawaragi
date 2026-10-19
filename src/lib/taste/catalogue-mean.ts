@@ -65,11 +65,8 @@ export async function catalogueMeanProfileFromPool(pool: Pool): Promise<FlavorPr
  * no `DATABASE_URL` at all.
  */
 export const catalogueMeanProfile = cache(async (): Promise<FlavorProfile | null> => {
-  try {
-    return await catalogueMeanProfileFromPool(getServerDbPool())
-  } catch {
-    return null
-  }
+  // The mean is half of the cached axis stats: no query of its own per render.
+  return (await catalogueAxisStats())?.mean ?? null
 })
 
 interface StatsRow extends MeanRow {

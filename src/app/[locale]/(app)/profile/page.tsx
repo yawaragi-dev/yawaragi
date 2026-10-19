@@ -30,6 +30,7 @@ import { resolveJournalStub } from '@/lib/taste/journal-stub'
 import { readSampleJournal, wantsSampleCollection } from '@/lib/demo/sample-mode'
 import { resolveMaintainerJournal } from '@/lib/taste/resolve-maintainer-journal'
 import { getFlavorCandidatePool } from '@/lib/taste/flavor-candidate-pool'
+import { timeStep } from '@/lib/observability/time-step'
 import { getTasteEventStore } from '@/lib/taste/get-taste-event-store'
 import {
   PALATE_FIRM_THRESHOLD,
@@ -335,8 +336,8 @@ export default async function PalatePage({
   // The journal first, the anonymous session second. A maintainer's tastings
   // are the real thing; the session store is what an anonymous visitor builds
   // from scans and cross-beverage seeds.
-  const journalSession = await resolveJournalTasteProfile(cookieJar)
-  const session = journalSession ?? (await resolveSessionTasteProfile(cookieJar))
+  const journalSession = await timeStep('palate/journal', () => resolveJournalTasteProfile(cookieJar))
+  const session = journalSession ?? (await timeStep('palate/session', () => resolveSessionTasteProfile(cookieJar)))
   // v1.5 §12: the rating slot shows only once rating is available to the
   // visitor — today, someone who keeps a journal (ADR-0020).
   const canRate = journalSession !== null
@@ -345,11 +346,11 @@ export default async function PalatePage({
   const ratingCount = countRatings(events)
   const stage = palateStage(ratingCount)
 
-  const [reference, recommendations, lastRated] = await Promise.all([
+  const [reference, recommendations, lastRated] = await timeStep('palate/data', () => Promise.all([
     stage === 'read' ? catalogueMeanProfile() : Promise.resolve(null),
     profile ? resolveRecommendations(cookieJar, events) : Promise.resolve([]),
     stage === 'taking_shape' ? resolveLastRated(events) : Promise.resolve(null),
-  ])
+  ]))
 
   // §12's title. At a read it names the two strongest axes — the display word
   // for the first (ADR-0022: Floral, Mellow, Rich, Mild, Dry, Light) and a
@@ -384,7 +385,7 @@ export default async function PalatePage({
   const shownRecommendations = stage === 'read' ? recommendations : recommendations.slice(0, 3)
   // Nothing to rank against yet: show three clear shapes instead (§12).
   const shapes =
-    stage !== 'read' && shownRecommendations.length === 0 ? await resolveDistinctShapes(cookieJar) : []
+    stage !== 'read' && shownRecommendations.length === 0 ? await timeStep('palate/shapes', () => resolveDistinctShapes(cookieJar)) : []
   const cards =
     shapes.length > 0
       ? shapes.map(({ candidate, lean }) => ({ rec: candidate, lean, reason: 'shape' as const }))
