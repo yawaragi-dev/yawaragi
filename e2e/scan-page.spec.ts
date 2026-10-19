@@ -78,6 +78,37 @@ test.describe('scan entry route', () => {
     await context.close()
   })
 
+  test('a first scan is shown the three parts of a label, and which side to photograph (design v1.8, R)', async ({
+    browser,
+  }) => {
+    const context = await browser.newContext({ locale: 'en-US', viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true })
+    await context.addCookies([AGE_GATE_COOKIE])
+    const page = await context.newPage()
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, 'mediaDevices', {
+        configurable: true,
+        value: { getUserMedia: () => new Promise(() => {}) },
+      })
+    })
+    await page.goto('/en/scan')
+
+    const cards = page.getByTestId('scan-camera-which-side')
+    await expect(cards).toContainText('Name · front')
+    await expect(cards).toContainText('Details · back')
+    await expect(cards).toContainText('Importer · back')
+    await expect(page.getByTestId('scan-camera-read-a-label')).toHaveCount(0)
+    // The shutter stays on screen: the frame gives way, not the controls.
+    const shutter = (await page.getByTestId('scan-camera-shutter').boundingBox())!
+    expect(shutter.y + shutter.height).toBeLessThanOrEqual(844)
+
+    await page.getByTestId('scan-camera-which-side-link').click()
+    const sheet = page.getByTestId('info-sheet-which-side-panel')
+    await expect(sheet).toContainText('The details')
+    await expect(sheet).toContainText('精米歩合')
+    await expect(sheet.getByTestId('learn-more-how-to-read-a-label')).toBeVisible()
+    await context.close()
+  })
+
   test('under the viewfinder, "How to read a label" opens the Learn entry, and the camera layout holds', async ({
     browser,
   }) => {
@@ -96,6 +127,14 @@ test.describe('scan entry route', () => {
         configurable: true,
         value: { getUserMedia: () => new Promise(() => {}) },
       })
+      // Three matches already in this tab: past the first-scan shape cards
+      // (design v1.8, R1), so the link is back.
+      window.sessionStorage.setItem(
+        'yawaragi_scan_history',
+        JSON.stringify(
+          [1, 2, 3].map((brandId) => ({ brandId, sakeHref: `/en/sake/${brandId}`, nameKanji: '酒', nameRomaji: null, tMs: Date.now() })),
+        ),
+      )
     })
     await page.goto('/en/scan')
 
