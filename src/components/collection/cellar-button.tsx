@@ -7,9 +7,14 @@ import { CaretRight, Plus, Stack, StackPlus } from '@phosphor-icons/react/dist/s
 import { CellarSheet } from '@/components/collection/cellar-sheet'
 import { ViewNotice } from '@/components/journal/undo-notice'
 import { Link } from '@/i18n/navigation'
-import { addToCellar } from '@/lib/collection/cellar-actions'
+import * as saves from '@/lib/collection/cellar-actions'
+import { reachable } from '@/lib/network/settle-request'
 import type { CellarSheetValues, CellarTarget } from '@/lib/schemas/cellar-input'
 import { cn } from '@/lib/utils'
+
+// Saves that the network loses answer "unavailable" (Couldn't save) instead
+// of throwing to the error page (design question S6).
+const addToCellar = reachable(saves.addToCellar)
 
 const NOTICE_MS = 3400
 const CELLAR_HREF = { pathname: '/collection', query: { tab: 'cellar' } } as const

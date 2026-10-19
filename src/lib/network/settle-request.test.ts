@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { settleRequest } from './settle-request'
+import { reachable, settleRequest } from './settle-request'
 
 const online = () => true
 const offline = () => false
@@ -40,5 +40,19 @@ describe('settleRequest', () => {
   it('lets a server error through, so the error page and the server log still see it', async () => {
     const failed = Promise.reject(new Error('Internal error'))
     await expect(settleRequest(failed, { timeoutMs: 1000, isOnline: online })).rejects.toThrow('Internal error')
+  })
+})
+
+describe('reachable', () => {
+  it('answers "unavailable" for a save the network lost, so the screen can say it was not saved', async () => {
+    const save = reachable(async (rating: number): Promise<{ status: 'ok'; rating: number }> => {
+      throw new TypeError(`Failed to fetch (rating ${rating})`)
+    })
+    await expect(save(4)).resolves.toEqual({ status: 'unavailable' })
+  })
+
+  it('passes a save that arrived through unchanged', async () => {
+    const save = reachable(async (rating: number) => ({ status: 'ok' as const, rating }))
+    await expect(save(4)).resolves.toEqual({ status: 'ok', rating: 4 })
   })
 })

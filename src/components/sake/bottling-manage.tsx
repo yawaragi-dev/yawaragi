@@ -6,8 +6,14 @@ import { CaretRight, PencilSimple, Trash } from '@phosphor-icons/react/dist/ssr'
 import { BottlingNameForm } from '@/components/sake/bottling-name-form'
 import { useRouter } from '@/i18n/navigation'
 import { setPendingUndo } from '@/lib/collection/deleted-bottling-store'
-import { deleteOwnBottling, renameOwnBottling } from '@/lib/collection/expression-actions'
+import * as saves from '@/lib/collection/expression-actions'
+import { reachable } from '@/lib/network/settle-request'
 import type { BottlingDetails } from '@/lib/schemas/expression'
+
+// Saves that the network loses answer "unavailable" (Couldn't save) instead
+// of throwing to the error page (design question S6).
+const deleteOwnBottling = reachable(saves.deleteOwnBottling)
+const renameOwnBottling = reachable(saves.renameOwnBottling)
 
 /**
  * §9a's "This bottling" group (design v1.6.2, screenshots 68–70): the last
