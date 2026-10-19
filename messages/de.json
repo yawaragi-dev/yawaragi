@@ -643,7 +643,7 @@
     "homeScreenOther": "Auf einem anderen Handy",
     "homeScreenIos": {
       "name": "iPhone und iPad (Safari)",
-      "how": "Tippe auf Teilen, das Quadrat mit dem Pfeil, dann auf „Zum Home-Bildschirm“."
+      "how": "Tippe auf Teilen, das Quadrat mit dem Pfeil, dann auf „Zum Home-Bildschirm“. Das Symbol öffnet Yawaragi mit eigener Anmeldung: Dort bestätigst du dein Alter und meldest dich einmal neu an."
     },
     "homeScreenAndroid": {
       "name": "Android (Chrome, Firefox und andere)",

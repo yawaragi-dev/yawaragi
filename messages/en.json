@@ -643,7 +643,7 @@
     "homeScreenOther": "On another phone",
     "homeScreenIos": {
       "name": "iPhone and iPad (Safari)",
-      "how": "Tap Share, the square with an arrow, then “Add to Home Screen”."
+      "how": "Tap Share, the square with an arrow, then “Add to Home Screen”. The icon opens with its own sign-in, so you confirm your age and sign in once more there."
     },
     "homeScreenAndroid": {
       "name": "Android (Chrome, Firefox and others)",

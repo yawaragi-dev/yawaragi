@@ -23,6 +23,10 @@ const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin']
 export const metadata: Metadata = {
   title: 'Yawaragi',
   description: 'A companion for discovering sake.',
+  // Added to the iPhone home screen, the app opens full screen under this
+  // name. A black status bar sits closest to the Ginshu ground without
+  // `black-translucent`, which would draw the page under the clock.
+  appleWebApp: { capable: true, title: 'Yawaragi', statusBarStyle: 'black' },
 }
 
 // The status bar and browser chrome take the Ginshu ground (design v1.8, O3).

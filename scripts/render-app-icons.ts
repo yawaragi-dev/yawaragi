@@ -12,8 +12,15 @@
  * file's (`design/Yawaragi App Icon.dc.html`): the maskable icon's glyph is
  * 150/256 of the side, inside the 80% safe circle; the "any" icons use the
  * 96px specimen's 58/96.
+ *
+ * It also draws the two 96px icons for the manifest's shortcuts (a long press
+ * on the home-screen icon): the tab bar's camera and magnifier, in accent on
+ * the same ground.
  */
+import { Camera, MagnifyingGlass } from '@phosphor-icons/react/dist/ssr'
 import { firefox } from '@playwright/test'
+import { createElement, type ComponentType } from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
 
 interface IconSpec {
   file: string
@@ -46,16 +53,34 @@ function html(icon: IconSpec): string {
 </div></body></html>`
 }
 
+const SHORTCUT_SIZE = 96
+
+const SHORTCUTS: { file: string; glyph: ComponentType<{ size: number; color: string }> }[] = [
+  { file: 'public/icons/shortcut-scan.png', glyph: Camera },
+  { file: 'public/icons/shortcut-search.png', glyph: MagnifyingGlass },
+]
+
+function shortcutHtml(glyph: ComponentType<{ size: number; color: string }>): string {
+  const svg = renderToStaticMarkup(createElement(glyph, { size: 52, color: '#cf8a6e' }))
+  return `<!doctype html><html><body style="margin:0">
+<div style="width:${SHORTCUT_SIZE}px;height:${SHORTCUT_SIZE}px;background:radial-gradient(120% 90% at 30% 20%,#2a2826 0%,#1b1a19 60%);display:grid;place-items:center">${svg}</div>
+</body></html>`
+}
+
 async function main(): Promise<void> {
   const browser = await firefox.launch()
   try {
-    for (const icon of ICONS) {
-      const page = await browser.newPage({ viewport: { width: icon.size, height: icon.size } })
-      await page.setContent(html(icon))
+    const jobs = [
+      ...ICONS.map((icon) => ({ file: icon.file, size: icon.size, content: html(icon) })),
+      ...SHORTCUTS.map((s) => ({ file: s.file, size: SHORTCUT_SIZE, content: shortcutHtml(s.glyph) })),
+    ]
+    for (const job of jobs) {
+      const page = await browser.newPage({ viewport: { width: job.size, height: job.size } })
+      await page.setContent(job.content)
       await page.evaluate(() => document.fonts.ready)
-      await page.screenshot({ path: icon.file, clip: { x: 0, y: 0, width: icon.size, height: icon.size } })
+      await page.screenshot({ path: job.file, clip: { x: 0, y: 0, width: job.size, height: job.size } })
       await page.close()
-      console.log(`wrote ${icon.file}`)
+      console.log(`wrote ${job.file}`)
     }
   } finally {
     await browser.close()
