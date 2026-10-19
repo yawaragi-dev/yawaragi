@@ -21,6 +21,7 @@ import {
   searchCatalogue,
   type CatalogueSearchResult,
 } from '@/lib/sakenowa/search-brands'
+import { countUsage } from '@/lib/stats/count-usage'
 
 /**
  * §8 Search ("Type it") — `/[locale]/search`.
@@ -106,6 +107,8 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
   const tHeader = await getTranslations('header')
 
   const specific = isCatalogueQuerySpecific(query)
+  if (specific) countUsage('search')
+  else if (browsing) countUsage('browse')
   // `searchCatalogue` never throws — a mirror failure comes back as
   // `unavailable` rather than 500ing a screen whose field, empty state and
   // camera bridge all still work. See its docstring for why this surface

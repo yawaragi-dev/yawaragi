@@ -15,6 +15,8 @@ import { canonicalGermanLegalRedirect } from '@/lib/legal/canonical-german-legal
 import { getComplianceState } from '@/lib/legal/compliance-state'
 import { ensureAnonymousSessionCookie } from '@/lib/session/middleware-issue'
 import { leaveSampleOnScan } from '@/lib/demo/leave-sample-on-scan'
+import { countUsage } from '@/lib/stats/count-usage'
+import { ANONYMOUS_SESSION_COOKIE_NAME } from '@/lib/legal/anonymous-session-cookie'
 
 const handleI18n = createMiddleware(routing)
 
@@ -36,9 +38,23 @@ function withSessionCookie(
   request: NextRequest,
   response: NextResponse,
 ): NextResponse {
-  return ensureAnonymousSessionCookie(request, response, {
+  const hadSession = response.cookies.has(ANONYMOUS_SESSION_COOKIE_NAME)
+  const withSession = ensureAnonymousSessionCookie(request, response, {
     SESSION_COOKIE_SECRET: env.SESSION_COOKIE_SECRET,
   })
+  // A visit: a fresh session stamped on a page a browser navigated to. The
+  // session lives 24 hours from its first stamp, so this is roughly one count
+  // per visitor per day. Crawlers send no `Sec-Fetch-Mode`, and prefetches
+  // and RSC fetches are not navigations, so neither counts.
+  if (
+    !hadSession &&
+    withSession.cookies.has(ANONYMOUS_SESSION_COOKIE_NAME) &&
+    request.method === 'GET' &&
+    request.headers.get('sec-fetch-mode') === 'navigate'
+  ) {
+    countUsage('visit')
+  }
+  return withSession
 }
 
 /**

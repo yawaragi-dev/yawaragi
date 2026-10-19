@@ -98,6 +98,10 @@ const Env = z.object({
   // before Production deployment.
   UPSTASH_REDIS_REST_URL: empty(z.string().url().optional()),
   UPSTASH_REDIS_REST_TOKEN: empty(z.string().optional()),
+  // Set by Vercel on every deployment. The usage counters (#454 §6) file
+  // their daily tallies under it, so preview builds — which share the
+  // Upstash database today — never count as the live site. Unset locally.
+  VERCEL_ENV: empty(z.enum(['production', 'preview', 'development']).optional()),
   // -------- Phase 3 / S3 — vision provider seam (#108) ----------------
   // Named key into the vision-provider registry. Default is
   // `anthropic-haiku-5-5`. The eventual second vendor (Phase 4-ish

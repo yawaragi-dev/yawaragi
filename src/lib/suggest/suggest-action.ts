@@ -21,6 +21,7 @@ import {
 import { classifySuggestOutcome } from './suggest-outcome'
 import { SUGGEST_MODEL } from './suggest-model'
 import { buildSuggestToolSet } from './tool-set'
+import { countUsage } from '@/lib/stats/count-usage'
 
 /**
  * Phase 4 / S5–S6 (#143, #144) — `suggestAction`.
@@ -59,6 +60,7 @@ export async function suggestAction(seed: SuggestSeed): Promise<SuggestActionSta
   // The outcome is derived at this boundary rather than at the dozen
   // `return` sites inside, so a future return path cannot ship
   // untelemetered — which is how #270 stayed invisible for a month.
+  countUsage('suggest')
   return withActionSpan(
     {
       name: 'suggest-action',

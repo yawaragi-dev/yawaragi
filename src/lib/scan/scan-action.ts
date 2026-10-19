@@ -34,6 +34,7 @@ import type { LabelScanExtraction } from '@/lib/schemas/label-scan-extraction'
 import type { ScanActionState, ScanCandidate } from './scan-action-state'
 import { CONFIDENCE_AUTO_THRESHOLD } from './confidence-tier'
 import { classifyScanOutcome } from './scan-outcome'
+import { countUsage } from '@/lib/stats/count-usage'
 
 /**
  * Phase 3 / S1 + S2 + S3 scan Server Action.
@@ -181,10 +182,12 @@ export async function scanAction(
   // recorded on it. Sonnet 4.6 costs ~6x Haiku and fires on every tier-1
   // status except a clean `matched`, so the retry rate is the dominant
   // driver of scan spend and nothing tracked it before.
-  return withActionSpan(
+  const result = await withActionSpan(
     { name: 'scan-action', classify: classifyScanOutcome },
     () => runScanAction(_prev, formData),
   )
+  countUsage(`scan:${result.status}`)
+  return result
 }
 
 async function runScanAction(

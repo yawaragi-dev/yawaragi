@@ -23,6 +23,7 @@ import {
 } from '@/lib/schemas/expression-input'
 import { lookupBrand } from '@/lib/sakenowa/lookup'
 import { type MaintainerCollection, withMaintainerCollection } from '@/lib/taste/maintainer-collection'
+import { countUsage } from '@/lib/stats/count-usage'
 
 /**
  * Adding a bottling of your own (design v1.6, ADR-0025). With a sake — "Add
@@ -80,6 +81,7 @@ export async function addOwnBottling(input: AddOwnBottlingInput): Promise<AddOwn
       updatedAt: now,
     }
     await expressions.put(userId, expression)
+    countUsage('bottling_added')
     return { status: 'ok', expressionId: expression.id }
   })
 }

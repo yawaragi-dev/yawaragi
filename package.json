@@ -33,6 +33,7 @@
     "add-manual-brand": "tsx --env-file=.env.local scripts/add-manual-brand.ts",
     "sakenowa:freshness": "tsx --env-file=.env.local scripts/sakenowa-freshness-check.ts",
     "rate-limit:reset": "tsx --env-file=.env.local scripts/clear-rate-limit.ts",
+    "stats": "tsx --env-file=.env.local scripts/usage-stats.ts",
     "journal:export": "tsx --conditions react-server --env-file=.env.local scripts/export-journal.ts",
     "journal:restore": "tsx --conditions react-server --env-file=.env.local scripts/restore-journal.ts",
     "journal:erase": "tsx --conditions react-server --env-file=.env.local scripts/erase-collection.ts",
