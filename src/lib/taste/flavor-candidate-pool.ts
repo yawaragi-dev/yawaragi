@@ -1,5 +1,6 @@
 import 'server-only'
 
+import { unstable_cache } from 'next/cache'
 import type { Pool } from 'pg'
 import { publicQuery } from '@/lib/supabase/public-query'
 import { getServerDbPool } from '@/lib/supabase/server-client'
@@ -54,10 +55,7 @@ export function poolRowToCandidate(row: PoolQueryRow): FlavorCandidatePoolRow {
   }
 }
 
-// Bounded — the recommender ranks in-memory, and the pool is re-fetched per
-// /profile render today.
-// TODO(perf): cache this. The pool is identical for all users and only changes
-// on ingest, so it belongs behind unstable_cache with an ingest-scale revalidate.
+// Bounded — the recommender ranks in-memory over the whole pool.
 export const FLAVOR_CANDIDATE_POOL_LIMIT = 2000
 
 const SELECT_FLAVOR_CANDIDATE_POOL = `
@@ -95,8 +93,20 @@ export async function getFlavorCandidatePool(
   limit: number = FLAVOR_CANDIDATE_POOL_LIMIT,
 ): Promise<FlavorCandidatePoolRow[]> {
   try {
-    return await getFlavorCandidatePoolFromPool(getServerDbPool(), limit)
+    return await cachedCandidatePool(limit)
   } catch {
     return []
   }
 }
+
+/**
+ * The pool is the same for every visitor and changes only when the nightly
+ * ingest adds charts, so it is read once per six hours, not once per Palate
+ * render: ~1,500 rows on every tap of the Palate tab was most of that
+ * screen's wait. A failed read throws inside the cache, so it is not cached.
+ */
+const cachedCandidatePool = unstable_cache(
+  async (limit: number): Promise<FlavorCandidatePoolRow[]> => getFlavorCandidatePoolFromPool(getServerDbPool(), limit),
+  ['flavor-candidate-pool-v1'],
+  { revalidate: 6 * 60 * 60 },
+)
