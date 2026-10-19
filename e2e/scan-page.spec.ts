@@ -101,7 +101,7 @@ test.describe('scan entry route', () => {
 
     // Design v1.6.2 §4, screenshot 06: the link takes the hint's line.
     const hint = page.getByTestId('scan-camera-hint')
-    await expect(hint).toContainText('Frame the bottle label')
+    await expect(hint).toContainText('Fill the frame with one label')
     const link = page.getByTestId('scan-camera-read-a-label')
     await expect(link).toHaveText('How to read a label')
     await expect(hint).not.toContainText('whichever the bottle gives you')

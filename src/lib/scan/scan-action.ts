@@ -200,6 +200,7 @@ async function runScanAction(
   const cookieJar = await cookies()
   const log = isDebugEnabledFromCookies(cookieJar) ? new DebugLog() : undefined
 
+  let scansLeft: number | undefined
   const result = await runWithDebugLog(log, async (): Promise<ScanActionState> => {
     const image = formData.get('image')
     if (!(image instanceof Blob) || image.size === 0) {
@@ -238,6 +239,7 @@ async function runScanAction(
     if (!rateLimit.allowed) {
       return { status: 'rate_limited', retryAfterSec: rateLimit.retryAfterSec }
     }
+    scansLeft = rateLimit.remaining
 
     // Two-tier vision strategy. Tier 1 is the cheap model
     // (`DEFAULT_VISION_PROVIDER_KEY`), sufficient for clear bottles.
@@ -373,7 +375,8 @@ async function runScanAction(
 
   // Attach the accumulated trace to the response. Stripped when debug
   // is off so non-debug visitors never see it.
-  return log ? { ...result, debugLog: log.toArray() } : result
+  const counted = scansLeft === undefined ? result : { ...result, scansLeft }
+  return log ? { ...counted, debugLog: log.toArray() } : counted
 }
 
 /**

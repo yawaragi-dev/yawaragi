@@ -149,6 +149,37 @@ test.describe('scan result branches (#109 PR B)', () => {
     await sure.context.close()
   })
 
+  test('after a scan, one nudge says which part of the bottle to scan next, and opens the camera for it', async ({
+    browser,
+  }, testInfo) => {
+    testInfo.skip(!dbUp, 'Sakenowa mirror not populated — DB-bound spec')
+    // A sure match whose label said nothing about the bottling: the small
+    // label with numbers would (design v1.8, J1).
+    const sure = await scanPageWith(browser, [
+      injectionCookie({ name_ja: '而今', brewery_ja: '木屋正酒造', confidence: 0.95 }),
+    ])
+    await sure.page.goto('/en/scan')
+    await sure.page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
+    const details = sure.page.getByTestId('scan-nudge-details')
+    await expect(details).toContainText('The small label with numbers says which bottling this is.')
+    await expect(sure.page.getByTestId('scan-nudge-side')).toHaveCount(0)
+    // The dev server's scans are not counted, so there is no "last free scan" line.
+    await expect(sure.page.getByTestId('scan-nudge-details-note')).toHaveCount(0)
+    await sure.page.getByTestId('scan-nudge-details-action').click()
+    await expect(sure.page.getByTestId('scan-camera')).toBeVisible()
+    await sure.context.close()
+
+    // A best guess asks for the side instead, and only that (J2).
+    const best = await scanPageWith(browser, [
+      injectionCookie({ name_ja: '而今', brewery_ja: '木屋正酒造', confidence: 0.7 }),
+    ])
+    await best.page.goto('/en/scan')
+    await best.page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
+    await expect(best.page.getByTestId('scan-nudge-side')).toContainText('importer’s sticker')
+    await expect(best.page.getByTestId('scan-nudge-details')).toHaveCount(0)
+    await best.context.close()
+  })
+
   test('§5 "Your take" rides on the card only for a visitor who can keep a journal', async ({
     browser,
   }, testInfo) => {
@@ -873,8 +904,10 @@ test.describe('scan result branches (#109 PR B)', () => {
 
     await expect(page.getByTestId('scan-result-no-match')).toBeVisible()
     await expect(page.getByTestId('scan-outcome-both-photos')).toHaveCount(0)
-    // …and the screen says a second photo may help.
-    await expect(page.getByTestId('scan-outcome-other-side')).toBeVisible()
+    // …and the screen says a second photo may help: the sticker nudge, which
+    // takes the place of the plain "another side" line (design v1.8, J2).
+    await expect(page.getByTestId('scan-nudge-sticker')).toBeVisible()
+    await expect(page.getByTestId('scan-outcome-other-side')).toHaveCount(0)
     await context.close()
   })
 

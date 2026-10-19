@@ -311,6 +311,12 @@ type ScanActionStateBase =
  */
 export type ScanActionState = ScanActionStateBase & {
   debugLog?: ReadonlyArray<DebugEvent>
+  /**
+   * Free scans left after this one, when the visitor's scans are counted
+   * (design v1.8, J3): 1 adds "Uses your last free scan" to the after-scan
+   * nudge, 0 hides the nudge. Absent where nothing is counted.
+   */
+  scansLeft?: number
 }
 
 export const INITIAL_SCAN_ACTION_STATE: ScanActionState = { status: 'idle' }
