@@ -287,6 +287,36 @@
           "title": "Frame the importer’s sticker",
           "hint": "A printed sticker in English, German or French, usually on the back."
         }
+      },
+      "whichSide": {
+        "link": "Which side to photograph",
+        "cardsLabel": "The three parts of a label",
+        "cards": {
+          "name": "Name · front",
+          "details": "Details · back",
+          "importer": "Importer · back"
+        },
+        "title": "Which side to photograph",
+        "intro": "You don’t need to read Japanese to pick the right side. Look for these shapes.",
+        "front": "Front",
+        "back": "Back or side",
+        "name": {
+          "title": "The name",
+          "body": "The largest characters on the bottle, often brushstrokes. Usually on the front."
+        },
+        "details": {
+          "title": "The details",
+          "body": "A smaller label with several lines of small print, numbers with a % sign, and a date. Usually on the back or side. It says which bottling this is.",
+          "polishing": "polishing",
+          "alcohol": "alcohol",
+          "percent": "a % sign"
+        },
+        "importer": {
+          "title": "The importer’s sticker",
+          "body": "A printed sticker in German, English or French, usually on the back. It often spells the name in Latin letters."
+        },
+        "outro": "Start with the front. If the result can’t tell which bottling it is, it will ask for the back.",
+        "learnMore": "How to read a label"
       }
     },
     "form": {

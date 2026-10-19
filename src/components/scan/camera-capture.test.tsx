@@ -13,7 +13,8 @@ function fakeStream() {
 function renderCamera({
   strict = false,
   askedFor = null,
-}: { strict?: boolean; askedFor?: { title: string; hint: string } | null } = {}) {
+  firstScans = false,
+}: { strict?: boolean; askedFor?: { title: string; hint: string } | null; firstScans?: boolean } = {}) {
   const camera = (
     <NextIntlClientProvider locale="en" messages={en} timeZone="UTC">
       <CameraCapture
@@ -23,6 +24,7 @@ function renderCamera({
         typeItHref={null}
         stillUrl={null}
         askedFor={askedFor}
+        firstScans={firstScans}
       />
     </NextIntlClientProvider>
   )
@@ -111,5 +113,22 @@ describe('the live camera', () => {
     expect(hint.textContent).toContain('Frame the small label with numbers')
     expect(asked.getByTestId('scan-camera-asked-hint').textContent).toContain('a % sign and a date')
     expect(asked.queryByTestId('scan-camera-read-a-label')).toBeNull()
+  })
+
+  it('shows a first scan the three parts of a label instead of the reading guide link', async () => {
+    const srcObject = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, 'srcObject')
+    Object.defineProperty(HTMLMediaElement.prototype, 'srcObject', { configurable: true, get: () => null, set: () => {} })
+    onTestFinished(() => {
+      if (srcObject) Object.defineProperty(HTMLMediaElement.prototype, 'srcObject', srcObject)
+    })
+
+    const first = renderCamera({ firstScans: true })
+    await act(async () => resolveStream(fakeStream().stream))
+    const hint = first.getByTestId('scan-camera-which-side')
+    expect(hint.textContent).toContain('Name · front')
+    expect(hint.textContent).toContain('Details · back')
+    expect(hint.textContent).toContain('Importer · back')
+    expect(first.getByTestId('scan-camera-which-side-link').textContent).toBe('Which side to photograph')
+    expect(first.queryByTestId('scan-camera-read-a-label')).toBeNull()
   })
 })

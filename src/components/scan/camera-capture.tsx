@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { WhichSide } from '@/components/scan/which-side'
 import {
   CameraSlash,
   Desktop,
@@ -90,6 +91,11 @@ interface CameraCaptureProps {
    * label", so the camera says what to frame this time.
    */
   askedFor?: { title: string; hint: string } | null
+  /**
+   * The tab's first scans (design v1.8, R1): the three shape cards and
+   * "Which side to photograph" take the place of "How to read a label".
+   */
+  firstScans?: boolean
 }
 
 type CameraState = 'starting' | 'live' | 'denied' | 'unavailable'
@@ -102,6 +108,7 @@ export function CameraCapture({
   stillUrl,
   notice = null,
   askedFor = null,
+  firstScans = false,
 }: CameraCaptureProps) {
   const t = useTranslations('scan.camera')
   const videoRef = useRef<HTMLVideoElement | null>(null)
@@ -354,6 +361,8 @@ export function CameraCapture({
               <p className="text-meta leading-relaxed text-camera-ink/70" data-testid={askedFor && !isWorking ? 'scan-camera-asked-hint' : undefined}>
                 {isWorking ? t('workingHint') : askedFor?.hint}
               </p>
+            ) : firstScans ? (
+              <WhichSide />
             ) : (
               // v1.6.2 §4: "How to read a label" takes the hint's line — the
               // one place on this screen with room for it. 13px, underlined,

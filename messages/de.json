@@ -287,6 +287,36 @@
           "title": "Nimm das Etikett des Importeurs auf",
           "hint": "Ein gedrucktes Etikett auf Deutsch, Englisch oder Französisch, meist hinten."
         }
+      },
+      "whichSide": {
+        "link": "Welche Seite fotografieren",
+        "cardsLabel": "Die drei Teile eines Etiketts",
+        "cards": {
+          "name": "Name · vorn",
+          "details": "Details · hinten",
+          "importer": "Importeur · hinten"
+        },
+        "title": "Welche Seite fotografieren",
+        "intro": "Du musst kein Japanisch lesen, um die richtige Seite zu finden. Achte auf diese Formen.",
+        "front": "Vorn",
+        "back": "Hinten oder Seite",
+        "name": {
+          "title": "Der Name",
+          "body": "Die größten Zeichen auf der Flasche, oft Pinselstriche. Meist vorn."
+        },
+        "details": {
+          "title": "Die Details",
+          "body": "Ein kleineres Etikett mit mehreren Zeilen kleiner Schrift, Zahlen mit %-Zeichen und einem Datum. Meist hinten oder an der Seite. Es sagt, welche Abfüllung das ist.",
+          "polishing": "Polierung",
+          "alcohol": "Alkohol",
+          "percent": "ein %-Zeichen"
+        },
+        "importer": {
+          "title": "Das Etikett des Importeurs",
+          "body": "Ein gedrucktes Etikett auf Deutsch, Englisch oder Französisch, meist hinten. Darauf steht der Name oft in lateinischen Buchstaben."
+        },
+        "outro": "Fang mit der Vorderseite an. Wenn das Ergebnis nicht sagen kann, welche Abfüllung es ist, fragt es nach der Rückseite.",
+        "learnMore": "Wie man ein Etikett liest"
       }
     },
     "form": {
