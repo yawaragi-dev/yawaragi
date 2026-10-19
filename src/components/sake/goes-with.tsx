@@ -12,6 +12,7 @@ import {
   Orange,
   Pepper,
   Shrimp,
+  ThermometerSimple,
 } from '@phosphor-icons/react/dist/ssr'
 import { BottleSection } from '@/components/sake/bottle-section'
 import { keepBracketsTogether } from '@/lib/text/keep-brackets-together'
@@ -62,36 +63,7 @@ export async function GoesWith({ pairing, id }: { pairing: Pairing; id: string }
 
   return (
     <BottleSection label={t('heading')} testId="bottle-pairings">
-      <ul className="flex flex-col gap-3" role="list">
-        {row.foods.map((food) => {
-          const FoodIcon = FOOD_ICON[food] ?? ForkKnife
-          return (
-            <li key={food} className="flex items-start gap-3" data-testid="pairing-food">
-              <FoodIcon size={18} aria-hidden="true" className="mt-0.5 shrink-0 text-ginshu-600" />
-              <span className="flex min-w-0 flex-col">
-                <span className="text-body text-ink">{t(`rows.${row.id}.${food}.name`)}</span>
-                <span className="text-meta text-ash-700">{t(`rows.${row.id}.${food}.reason`)}</span>
-              </span>
-            </li>
-          )
-        })}
-      </ul>
-      {row.note && (
-        <p className="mt-3 text-meta text-ash-700" data-testid="pairing-note">
-          {t(`rows.${row.id}.note`)}
-        </p>
-      )}
-      <p className="mt-3 text-meta text-ash-700" data-testid="pairing-serve">
-        {t('serve', {
-          temperatures: row.serve
-            .map((key) => {
-              const term = SERVING_TEMPERATURE_TERMS[key]
-              return t('temperature', { kanji: term.kanji, romaji: term.romaji, degrees: term.degrees })
-            })
-            .join(t('or')),
-        })}
-      </p>
-      <div className="mt-2" data-testid={`pairing-source-${source}`}>
+      <div className="mb-3" data-testid={`pairing-source-${source}`}>
         <InfoSheet
           id={`pairings-${id}`}
           caveat={t(`caveat.${basis}`, { kind, grade })}
@@ -116,6 +88,38 @@ export async function GoesWith({ pairing, id }: { pairing: Pairing; id: string }
           </ul>
         </InfoSheet>
       </div>
+      <ul className="flex flex-col gap-3" role="list">
+        {row.foods.map((food) => {
+          const FoodIcon = FOOD_ICON[food] ?? ForkKnife
+          return (
+            <li key={food} className="flex items-start gap-3" data-testid="pairing-food">
+              <FoodIcon size={18} aria-hidden="true" className="mt-0.5 shrink-0 text-ginshu-600" />
+              <span className="flex min-w-0 flex-col">
+                <span className="text-body text-ink">{t(`rows.${row.id}.${food}.name`)}</span>
+                <span className="text-meta text-ash-700">{t(`rows.${row.id}.${food}.reason`)}</span>
+              </span>
+            </li>
+          )
+        })}
+      </ul>
+      {row.note && (
+        <p className="mt-3 text-meta text-ash-700" data-testid="pairing-note">
+          {t(`rows.${row.id}.note`)}
+        </p>
+      )}
+      <p className="mt-3 flex items-start gap-2 text-meta text-ash-700" data-testid="pairing-serve">
+        <ThermometerSimple size={16} aria-hidden="true" className="mt-px shrink-0 text-ash-600" />
+        <span>
+          {t('serve', {
+            temperatures: row.serve
+              .map((key) => {
+                const term = SERVING_TEMPERATURE_TERMS[key]
+                return t('temperature', { kanji: term.kanji, romaji: term.romaji, degrees: term.degrees })
+              })
+              .join(t('or')),
+          })}
+        </span>
+      </p>
     </BottleSection>
   )
 }
