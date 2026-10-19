@@ -1,6 +1,6 @@
 # Handoff: Yawaragi mobile app (webview)
 
-**Design version 1.7.1 · 14 Oct 2026.** Source of truth is the Claude Design project; this folder is a snapshot. When a new version arrives, read the Changelog at the bottom first and implement only what changed. **If this README and the prototype disagree, the prototype wins** — and please report the mismatch.
+**Design version 1.8.1 · 19 Oct 2026.** Source of truth is the Claude Design project; this folder is a snapshot. When a new version arrives, read the Changelog at the bottom first and implement only what changed. **If this README and the prototype disagree, the prototype wins** — and please report the mismatch.
 
 ## Overview
 Yawaragi (和らぎ) is a sake companion app. You scan a bottle label (or a menu or a shop shelf, to rank what's on it), rate the sake with one tap, and build a journal. That journal also feeds a taste profile ("Palate") and a chat assistant ("Ask"). The main job is **identifying and assessing a sake at the table**. Logging is a side effect of rating.
@@ -26,6 +26,7 @@ Open `Yawaragi Mobile.dc.html` in a browser, served over HTTP (e.g. `npx serve .
 ---
 
 ## App structure
+- **Sample collection (1.8, L3; 106–107).** A persistent strip under the status bar on every screen while it is open: Phosphor `books` 16px accent-700 · "**A sample collection** · Made-up tastings of real sakes. Nothing here is saved." 12px neutral-800 · secondary "Leave" 36px. Ground neutral-200, a 1px divider under it; not dismissable. Everything is read-only; starting a scan or any save leaves the sample first, so nothing mixes. Leave returns to the empty Collection.
 - **Tab bar** (4 tabs, fixed at the bottom): Home · Scan · Collection · Palate. It is on **every screen except the age gate**, including the camera, results, detail screens and Ask. Sheets cover it while open. See rule 11.
 - **Account** opens from the avatar at the top right of Home, Collection and Palate.
 - **Camera:** one mode. There is **no Label / Menu toggle** (removed in 1.7): the read itself tells a label from a menu, a shelf, two bottles, another drink or a side with no text, and §5a says which. Ranking a menu or shelf (§7) is offered from there, signed-in only.
@@ -48,6 +49,7 @@ Each screen below lists its reference screenshots (`screenshots/NN-*.png`, 390×
 ## Screens
 
 ### 0. Landing page (outside the app) · `Yawaragi Landing.dc.html`
+**1.8 (K, L3):** the hero phone becomes a short loop (storyboard in appendix "v1.8", K); a secondary text link under the hero CTA, "Or look through a sample collection", opens the app in sample mode through the age gate.
 A normal scrolling web page, not locked to the screen. Build it in the **port MR** (it's today's entry route and a legal-link home). If the full page must wait, ship the footer first.
 - **Header** (max-width 1120px, padding 18px clamp(20px,5vw,56px)): "Yawaragi" 18px/500 plus 和らぎ 13px neutral-600 · locale switch **EN (selected) · "DE · soon"** (see §15 Language) · secondary button "Open the app" (38px).
 - **Hero** (two columns that stack below ~700px): kicker with the accent mark "A journal for sake" · h1 "Know what's in the cup." (clamp 36–58px, −0.03em) · lead 17px · primary "Scan your first label" (48px, camera icon) · ghost "How it works" · small print "Free · no account needed · for adults 18+". Right: phone placeholder (9:19, radius 34) — **replace with a real app screenshot**.
@@ -93,6 +95,7 @@ A normal scrolling web page, not locked to the screen. Build it in the **port MR
 - Ends with the end-of-screen block.
 
 ### 4. Camera (Scan tab) · 06 (retaken 1.5), 07, 08
+**1.8 (J, L2, R; 94–96):** title "Fill the frame with one label" (a guide only; nothing is read live). **First three scans:** the "How to read a label" link is replaced by three shape cards (酒 "Name · front", 15% "Details · back", Aa "Importer · back"; 1px rgba(246,242,234,.18) ring, radius 8) and the link "Which side to photograph", which opens its sheet (drawing of front and back with the three parts numbered, the characters 精米歩合 / アルコール分 / % as shapes, then "How to read a label"). From the fourth scan the link returns. **Paired photo:** a pill at the top of the viewfinder, Phosphor `link-simple` · "This photo is read together with your last one" · underlined "Don't" (DE "Nicht"); the title and hint follow the part asked for ("Frame the small label with numbers" / "Usually on the back: small print, a % sign and a date."). **Photo-only mode** (from "Add a photo" / "Replace"): title "Photograph your bottle", hint "Just a photo. Nothing is read, and it doesn't use a scan."; the shutter saves and returns to the page.
 - Ground is a fixed `#121110`. **The tab bar is shown**, with Scan active. **There is no ✕** — the tabs are the way out.
 - **Top row:** a 3-column grid, `44px minmax(0,1fr) 44px`, padding 12px 14px, everything centred:
   - Left: empty 44px slot.
@@ -111,6 +114,10 @@ A normal scrolling web page, not locked to the screen. Build it in the **port MR
 - **Every "scan again" lands here** — this screen, with the live camera — on every device. It never opens the photo library directly; the gallery button on this screen does that.
 
 ### 5. Result card (the core screen) · 09, 10, 29 (Ask on), 34 (Done), 40 (best guess), 54–55 (line only), 65 (own entry), 83–87 (1.7)
+**1.8 (I, J, L1; 92, 93, 110):** under the identity block, full width, in this order:
+- **"This bottle"** (L1, 93) when the label names a bottling none of the visitor's own fits: label 11px uppercase, two radio rows 48px+ (radius-md, 1px divider; selected accent-500 border on accent-100): "{composed name}" / "The bottling on this label. Added to your bottlings when you rate it or add it to your cellar." (default) and "{line}, any bottling" / "The tasting goes on the sake's page." It replaces the dashed "Add this bottling" in this state; catalogue rows under "Is it one of these bottlings?" stay. "Add to cellar" starts on nama when the label says nama.
+- **"Keep this photo with the bottle"** (I1, 92): only where the rating panel shows, to a visitor who can keep a journal (signed in); hidden otherwise (rule 4). Checkbox row 44px+, unticked, behind a hairline. Sub "Only you see it. Location data is removed first, and you can delete it any time." Ticked: box accent-600 with check, label "Photo kept with {name}", sub "It shows on its page and in your journal and cellar. Untick to discard it.", the thumbnail gains a 1.5px accent ring and a pin mark. It follows the "This bottle" choice. No dialog.
+- **One nudge, outside the card** (J, R3), directly under it, above everything else: 1px divider box, icon 18px neutral-600, text 13px, secondary button 36px with `camera-plus`. Matched with no bottling detail → "The small label with numbers says which bottling this is." + "Scan it". Best guess → "The name is often printed plainly on the side or on the importer's sticker." + "Scan the side" (110). The button opens the camera paired. Signed out with one free scan left: note "Uses your last free scan for the next 24 hours." 11px (DE "Nutzt deinen letzten kostenlosen Scan für die nächsten 24 Stunden."); with none left: no nudge. Never more than one.
 **1.7 additions (bottling read off the label, D; brewery cue, F):**
 - **"On this label"** (83): when the read found more than the line's name, the identity block gains a block under the tags, above the credit: hairline divider · label 11px uppercase "On this label" with the **Read by AI** badge at the right (→ the §16 Read by AI sheet) · one line 13px neutral-800: product as printed · grade · up to two styles · "{n}% polished" ("雄町 · Junmai Ginjō · Nama · 50% polished"). This is model-read text, so the badge rule applies; the rest of the card stays catalogue data.
 - **"Add this bottling" shows whenever the label says more than the line's name** — even with no known bottlings (replaces 1.6.1's "no section"). Without bottlings it is the dashed row alone, no heading; its sub reads "Starts from what the label says".
@@ -149,6 +156,7 @@ Card: surface, radius-lg, shadow-md.
 - **Added by you** (not in the catalogue — an **own bottling**, see §9a; 65): chart, cross-beverage and similar are replaced by a dashed card "Added by you" / "Not in the catalogue yet, so there's no flavour chart." + **only when it has a line:** " It counts toward your palate through its sake's chart." + " We'll link it if the sake turns up later. Only you can see it." · ghost "Open its page ›" → its §9a page. An own bottling with `line: null` has no axes and **does not feed the palate**. The end-of-screen block drops its line 1 (rule 15). No "Add a label photo" — photos are discarded after reading.
 
 ### 5a. Scan outcomes · 41–49 (retaken 1.6), 71–75 (1.7)
+**1.8 (J2; 109):** `not_in_catalogue` gets the same nudge under "What we read": "The importer's sticker often spells the name in Latin letters." + "Scan the sticker".
 The pipeline's outcomes stay as the pipeline produces them; the design does not collapse them to three. Two share the §5 card (`matched` ≥ 0.85 "Sure match", 0.60–0.84 "Best guess"). Everything else is **one screen, `outcome`, with one shared vocabulary**:
 - **Top bar** as §5: back · kicker · ghost **"Scan again"** (camera-rotate icon) → the camera, §4. **This replaces every inline "Scan again" button.**
 - **Status block:** 28px icon in neutral-600 (never accent — nothing here is good news), title 21px/500, one or two lines of 13px neutral-700.
@@ -188,6 +196,7 @@ Message-only states are not "plain copy on the ground": they get the same status
 - Empty (no profile for this sake): a short line and the bottle-page link.
 
 ### 7. Menu and shelf results (redrawn 1.7) · 76–82 (33 is superseded)
+**1.8 (P; 105):** one "Read by AI" badge under the head (the whole list is read). A row whose line carries a style from the fixed short list gets one line under the row, indented to the name: Phosphor `sparkle` accent-600 · "Less usual · Koshu (古酒), aged sake" 12px · book icon → its Learn entry (no icon and no tap where there is no entry). At most one per row; nothing ranks, groups or filters by it.
 One screen for "what should I order from this menu, or take from this shelf?". **Signed-in only.** Reached only from §5a's `menu` / shelf outcome ("Rank these for you"); no camera mode, no Home entry.
 - **Reading (76):** after "Rank these for you", the screen opens at once in a reading state: title "Reading the whole menu…" / "Reading the shelf…" 21px · "This takes a few seconds. We're finding each sake and placing it against your palate." · three skeleton rows (neutral-200 bars, `yw-pulse`). Expect 5–10s.
 - **Top bar:** back · "From your photo · Menu · 8 sakes" (or "Shelf · 5 sakes"; counts sakes, not lines) · ghost "Retake" → §4.
@@ -206,6 +215,7 @@ One screen for "what should I order from this menu, or take from this shelf?". *
 - Prototype: §5a outcome *Menu in photo* or *Shelf in photo*, sign in, "Rank these for you". The *listPalate* tweak shows 80.
 
 ### 8. Search ("Type it") · 18, 56 (bottlings) — 1.6
+**1.8 (M; 102–104):** placeholder "Name, brewery, kanji or a flavour". With an empty query, above "Recently tasted": two chips, **Prefecture** (opens a wrap of prefecture buttons with counts) and **Flavour** (opens the six axes with a Less · More segmented each; More / Less = clearly above / below the catalogue average on that axis, the same comparison "Goes with" uses — never the raw chart value, which Sakenowa scales per sake), plus "Clear" when one is set; under them "Or type a flavour — "grapefruit", "melon" — to find sakes drinkers describe that way." With a filter set, the list is "{n} sakes · {filters} · A–Z"; rows carry no axis figure or word (1.8.1), the chip already says it. The caveat under the axes reads "Compared with the catalogue average on the flavour chart (Sakenowa). Sakes without a chart don't show here." A typed flavour word (EN or DE) that matches a Sakenowa tag lists the tagged sakes, "{n} sakes tagged "grapefruit"", each row "Tagged グレープフルーツ (grapefruit) by Sakenowa drinkers"; no "Add it yourself" row then. No popularity order anywhere (M4).
 - 44px field, accent-500 border, autofocus, placeholder "Name, brewery or kanji".
 - Empty query: "Recently tasted". With a query: "{n} matches" (searches name, kana, brewery).
 - Rows 58px, **text only**: name + kanji · meta · "Tasted" accent tag if you've had it. Tap → result card. **Mixed and ranked by match; on a tie bottlings come first.** Meta: a bottling "Bottling · 李白 · {grade}"; a sake with catalogue bottlings "{brewery} · Sake · 3 bottlings"; **a sake with none (the launch state): the v1.5 row, brewery only** — a line has no grade tags to list. Matching covers the name as printed on the label, including an importer's product name, grade or age attached to it ("Rihaku Wandering Poet" → 李白). No visual change.
@@ -213,6 +223,7 @@ One screen for "what should I order from this menu, or take from this shelf?". *
 - **Other names (1.7, E1, #413; 88):** search also matches a sake's other names (other readings, export and importer names). When the row matched only through one, it adds a line under the meta, 12px neutral-700: "Also sold as {name}" — the same words §9 uses.
 
 ### 9. Bottle page (one per sake) · **1.7: "Also sold as {names}"** (12px neutral-600, comma-separated) under the kanji, above "formerly …", when the sake has other names (E2) · 16, 17 (little published), 35 (panel open), 36 (in cellar), 37 (edit + delete), 53 (bottlings), 62 (former name), 63 (no bottlings), 64 (own only)
+**1.8 (I, Q; 100–101):** kept photo block (as §9a) when tastings or bottles sit on the sake. **"Goes with" redrawn:** heading · caveat line naming how the kind was picked + inline ⓘ → "Where these pairings come from" sheet · 2–3 food rows (icon accent-600, food 14px, reason 12px) · optional style note · "Usually served …" with `thermometer-simple`, **only while the page has no "Serve it" section**. No section when nothing places the sake (rule 4); the old fallback line is gone. Caveat text never breaks inside brackets (`word-break: keep-all`).
 - Header: back · name (ellipsis). **Nothing else** — wishlist and cellar live in the content. **No sticky bottom bar** — the tab bar is the only thing on the bottom edge.
 - Order, personal to general:
   1. **Identity**, text only (no bottle slot, rule 14): name 25px, kanji, brewery · place, **a former brewery name when on record** ("formerly Asahi Shuzō 旭酒造", its own 12px neutral-600 line under the brewery; 62, on the line "Dassai 獺祭"), **no grade or style tags** (Sakenowa has none for a line; guide-linked tags appear only on bottlings) — the only tag a line page carries is "Little published"; "Little published" neutral-outline tag when data is thin. Last line: **"Catalogue data · Powered by Sakenowa ↗"**, 11px neutral-700, underlined link, on the content column (x = the gutter, like every other line). This is the above-the-fold Sakenowa credit (see Answers, B8). Hidden for your own entries.
@@ -238,6 +249,7 @@ One screen for "what should I order from this menu, or take from this shelf?". *
 - The bottling page is §9a.
 
 ### 9a. Bottling page (new in 1.6) · 51, 52, 57 (own bottling)
+**1.8 (I, Q; 97–98):** last in the identity block, the kept photo: 84×112 radius 8 · "Your photo · kept {date}" 12px neutral-600 · ghost "Replace" (photo-only camera) and "Delete" (inline confirm: "Delete this photo? It goes from this page and from your journal and cellar rows. Your tastings stay." Keep it · Delete photo). With no photo, and a tasting or bottle of it: ghost "Add a photo of your bottle" (`camera-plus`). "Goes with" as §9, placed after "About the {line} line" and before "What others noticed"; the style the bottling names comes first.
 **1.7.1 (H3, 91):** an own bottling whose name or brewery holds a reading the model gave carries one quiet line under the own-entry text: Phosphor `scan` 12px · "Reading by AI" 11px neutral-600 · caret → the Read by AI sheet. **No mark inside the name**, anywhere it appears (journal, cellar, search). Stored per field, `aiName` and `aiBrewery`. **Renaming the bottling clears `aiName`**: a name the visitor wrote is theirs, not a reading. The line goes once neither field holds a reading.
 One template, §9's order, sections dropping out by what is known (rule 4: hidden, not stated). Naming per the B-Line table: "sake" = line, "bottling" = expression, "bottle" only for what you own.
 1. **Header:** back · bottling name. Nothing else.
@@ -271,6 +283,7 @@ One template, §9's order, sections dropping out by what is known (rule 4: hidde
 - No Save button; everything persists as you go.
 
 ### 11. Collection · 19, 20, 21 — retaken 1.6
+**1.8 (I3, L3; 99, 106):** a row whose bottle has a kept photo shows it — journal 36×48 between the date and the name, cellar 40×54 at the left; rows without one stay as they are (no placeholder; rule 14). Empty journal, signed out: ghost "Look through a sample collection" under "Scan a label".
 - Header "Collection" 26px · search icon · avatar. Segmented: Journal · Cellar · Wishlist. **Wishlist is hidden until it ships**; never show an empty segment for an unbuilt feature.
 - **Which segment opens:** the last one used (stored on the device). A first visit opens Journal. Links that name a segment (Home's "All →", a notice's "View", the bottle page's "In cellar · n ›") keep naming it.
 - **Journal:** date block (18px day, 10px month) · **Latin name 16px, kanji 12px under it** — a bottling leads with the bottling name ("Rihaku Wandering Poet") with the line's kanji under it · 11px stars at the right · italic note 12px neutral-700 · a **"Full notes"** neutral tag-button (list-checks icon, 28px, aligned with the name) on entries that have detailed notes, opening §10 for that tasting. Newest first. **Tapping a row opens the page of what the tasting was logged against: a bottling's row → §9a, a sake's row → §9.** "Edit" lives there. Rows are divided by 1px divider lines.
@@ -309,6 +322,7 @@ Unchanged from v1.0; build only when the flag is on.
 - The prototype's replies are canned. Production: an LLM with the journal and palate as context, subject to the "Use my palate for Ask" toggle.
 
 ### 14. Sign-in (bottom sheet) · 25
+**1.8 (L4; 108):** from a §5a menu or shelf outcome the sheet opens over the scan, title "Rank lists for your palate"; the photo and the outcome survive it, and success goes straight to "Rank these for you". Google opens in a pop-up; if it is blocked, fall back to the redirect and restore the photo from the session. This supersedes 73's route to the sign-in page.
 - Opens about 650ms after the first save (tasting, wishlist or cellar), or from the journal card / Account.
 - Apple · Google · email. **No passwords.** Email → "Send code" (enabled once valid) → 6-digit field (56px, 24px, 0.5em tracking, centred), auto-submits at the 6th digit; "Wrong address?" · "Resend".
 - Title and lead by trigger: first log "Keep this tasting" / "It's saved on this phone. Sign in so it's backed up and your palate follows you." · wishlist "Keep your wishlist" / "…and to get a note when it's in stock nearby." · cellar "Keep track of your cellar" / "…bottles and open dates are backed up." · manual "Keep your journal".
@@ -473,14 +487,18 @@ Phosphor, regular and fill weights (`@phosphor-icons/web` 2.1.1). Sizes: 22 tab 
 11. **Craft sake (1.7).** Listed and matched as sake, marked "(Craft sake)". It is not sake in Japanese law; confirm the catalogue source marks it, and that nothing in legal copy calls it 清酒.
 12. **Keeping other drinks (1.7).** Planned, not designed: a non-sake bottle in the journal would need its own kind and must stay out of the palate and charts. Until then §5a's `not_sake` has no keep.
 13. **A match from artwork alone (G3).** Not possible today. If it becomes possible it gets its own provenance wording ("Matched by its picture"), not "Read by AI".
+14. **Kept photos (1.8, I).** Where they are stored, how long, and that deleting the account deletes them. Location stripping on the device is assumed; confirm it also strips the other EXIF fields.
+15. **Learn entries for kijoshu and taruzake (1.8, P4).** Until written, "Less usual" names them without a link.
+16. **Demo bottle on the landing (1.8, K3) — CHECKED 19 Oct 2026.** No "Mihon (見本)" in the catalogue (~3,300 lines) or on the web. Still open: a J-PlatPat class 33 trademark search, to close it formally before the loop ships.
 
 ## Files in this bundle
-- `Yawaragi Mobile.dc.html`: **the main prototype.** All screens, all behaviour. Logic is in the `class Component` block at the bottom. Tweaks: market, Ask, Menu scan, camera permission, iOS webview, two-tone bars, first run, **Scan outcome** (which §5a branch the next capture lands on; 1.6 adds *Matched, line only*; 1.7 adds *Matched, your bottling fits*, *Matched, brewery not on label*, *Not sake*, *Menu in photo*, *Shelf in photo*, *Two bottles*, *No name on this side*; 1.7.1 adds *No bottle*), **notSakeDrink** (which drink `not_sake` names), **menuScan** (list ranking on/off, default on in 1.7), **listPalate** (§7's fewer-than-three state), **Rating live** (§12's rating slot) and **Sake guide public** (§18's pre-gate mode).
+- `Yawaragi Mobile.dc.html`: **the main prototype.** All screens, all behaviour. Logic is in the `class Component` block at the bottom. Tweaks: market, Ask, Menu scan, camera permission, iOS webview, two-tone bars, first run, **Scan outcome** (which §5a branch the next capture lands on; 1.6 adds *Matched, line only*; 1.7 adds *Matched, your bottling fits*, *Matched, brewery not on label*, *Not sake*, *Menu in photo*, *Shelf in photo*, *Two bottles*, *No name on this side*; 1.7.1 adds *No bottle*), **freeScans** (1.8: *Plenty* · *One left* · *None left*, for the nudge note), **notSakeDrink** (which drink `not_sake` names), **menuScan** (list ranking on/off, default on in 1.7), **listPalate** (§7's fewer-than-three state), **Rating live** (§12's rating slot) and **Sake guide public** (§18's pre-gate mode).
 - `Yawaragi Mobile (phone).html`: a self-contained single-file build of the same prototype. It opens directly on a phone.
 - `Yawaragi Tokens.dc.html`: the token and component reference (colour ramps, type scale, every component specimen, behaviour rules). "Added in 1.5" holds the provenance badge, AI-written note, floating surface, caveat line, horizontal row edge, tile vs button, end-of-screen block, tab placeholder and cellar control.
 - `Yawaragi Core Loop v2.dc.html`: decision record. It shows the result-card options (1a chosen), the thin-data states, and the colour exploration that led to Ginshu (turns 2–6).
-- `screenshots/`: 65 reference PNGs at 390×844 (index in the Decision log; each Screens section lists its own). 1.6 retook the changed ones and added 51–62.
+- `screenshots/`: 110 reference PNGs at 390×844 (index under Decision log → Screenshots; each Screens section lists its own).
 - `Yawaragi Landing.dc.html`: the public landing page, outside the app shell.
+- `Yawaragi App Icon.dc.html` (1.8, O): the home-screen icon (1a chosen), sizes, safe zone and manifest values.
 - `Yawaragi Account.dc.html`: decision record. It shows the sign-in timing options (1a chosen) and the account screen spec (1c).
 - `support.js`: the prototype runtime (needed only to open the `.dc.html` files; don't port it).
 - `_ds/…`: the Nocturne design-system stylesheet and bundle the prototypes load.
@@ -514,11 +532,11 @@ Phosphor, regular and fill weights (`@phosphor-icons/web` 2.1.1). Sizes: 22 tab 
 - **Legal wording:** Austria/Switzerland gate lines and the cookie category descriptions.
 
 ### Screenshots
-`screenshots/` holds 91 PNGs at 390×844 (1×), captured from the prototype.
+`screenshots/` holds 110 PNGs at 390×844 (1×), captured from the prototype.
 - **01–26 are the base: EU (Germany), Ask off, Label only.**
 - **27–32 are the variants where Japan or Ask-on differ.**
 - **33 is the v1.0 menu screen, superseded by 76–82** (kept for the record).
-- **34–50 are new in 1.5; 51–62 new in 1.6; 63–65 new in 1.6.1** (1.6.1 also retook 09, 16, 57, 61, 62); **66–70 new in 1.6.2** (1.6.2 also retook 06, 58); **71–89 new in 1.7**; **90–91 new in 1.7.1** (1.7.1 also retook 44) (06 unchanged: the Menu toggle was never on in it). Retaken in 1.6: 04, 06, 09, 16, 18, 19, 20, 26, 44 (marked ●). Others differ only by the guide-linked tag icon and the extra journal row; the prototype wins.
+- **34–50 are new in 1.5; 51–62 new in 1.6; 63–65 new in 1.6.1** (1.6.1 also retook 09, 16, 57, 61, 62); **66–70 new in 1.6.2** (1.6.2 also retook 06, 58); **71–89 new in 1.7**; **90–91 new in 1.7.1** (1.7.1 also retook 44); **92–110 new in 1.8** (06 unchanged: the Menu toggle was never on in it). Retaken in 1.6: 04, 06, 09, 16, 18, 19, 20, 26, 44 (marked ●). Others differ only by the guide-linked tag icon and the extra journal row; the prototype wins.
 
 | # | Screen |
 |---|---|
@@ -613,6 +631,25 @@ Phosphor, regular and fill weights (`@phosphor-icons/web` 2.1.1). Sizes: 22 tab 
 | 89 | §18 "Sake and the other Japanese drinks" |
 | 90 | §5a no bottle in the photo |
 | 91 | Own bottling kept from a read: "Reading by AI" |
+| 92 | §5 "Keep this photo with the bottle", ticked |
+| 93 | §5 "This bottle": the label's bottling or any bottling |
+| 94 | §4 "Read together with your last one" · Don't |
+| 95 | §4 first scans: the three parts to look for |
+| 96 | "Which side to photograph" sheet |
+| 97 | §9a kept photo · Replace · Delete |
+| 98 | §9a Goes with, picked by grade (kunshu) |
+| 99 | §11 journal rows with kept photos |
+| 100 | §9 Goes with, picked by chart (junshu); served line hidden because Serve it is shown |
+| 101 | "Where these pairings come from" sheet |
+| 102 | §8 browse: Flavour open, More rich |
+| 103 | §8 browse results: Chiba · more rich · A–Z |
+| 104 | §8 flavour word "grapefruit" |
+| 105 | §7 "Less usual · Koshu" and the list's Read by AI badge |
+| 106 | §11 empty journal: "Look through a sample collection" |
+| 107 | Sample collection strip |
+| 108 | §14 sign-in sheet over the menu outcome |
+| 109 | §5a not in catalogue: "Scan the sticker" |
+| 110 | §5 best guess: "Scan the side" |
 
 Screenshots that sit in sheets or overlays show the full screen behind them with the scrim.
 
@@ -733,6 +770,28 @@ Folded into the Screens sections and the prototype; this is the index.
 6. **Fixed, as you read it:** a bottling's row opens §9a, a sake's row opens §9.
 
 ## Changelog
+### 1.8.1 · 19 Oct 2026
+Engineering follow-up on v1.8 (appendix "v1.8.1"). 92, 102, 103 retaken.
+- **§8** — More / Less against the catalogue average; no figure on rows.
+- **§5** — keep-photo row only for visitors who can keep a journal; 24-hour scan note.
+- **Files** — screenshot count corrected.
+- **Open decisions** — 16 checked (catalogue and web); J-PlatPat class 33 search pending.
+
+### 1.8 · 18 Oct 2026
+Answers to #417 round two, blocks I–R (appendix "v1.8"). 19 screenshots added (92–110). New file: App Icon.
+- **§0** — hero loop storyboard (K); sample-collection link.
+- **App structure** — sample-collection strip.
+- **§4** — frame guide title; three parts for first scans + sheet; paired pill with "Don't"; photo-only mode.
+- **§5** — "This bottle" choice; keep-photo checkbox; one after-scan nudge.
+- **§5a** — "Scan the sticker" on not in the catalogue.
+- **§7** — "Less usual" line; one Read by AI badge.
+- **§8** — Prefecture and Flavour browse; flavour words.
+- **§9, §9a** — kept photo; "Goes with" from the curated table, fallback removed.
+- **§10** — "Where and what it cost" part (written, not drawn; N).
+- **§11** — photo thumbs; sample link.
+- **§14** — sign-in over the scan.
+- **Open decisions** — 14–16 added.
+
 ### 1.7.1 · 14 Oct 2026
 - Follow-up: "Search again" uses the kanji while unedited; renaming clears "Reading by AI".
 Answers to the latest #417 (G "No bottle", H). 90–91 added, 44 retaken.
@@ -900,3 +959,88 @@ Each answer is spec and is drawn in the prototype unless it says otherwise. Scre
 3. **No mark inside a saved name.** The bottling's page says it once, quietly: "Reading by AI" → the Read by AI sheet (91). It goes when the visitor renames the bottling, unless the brewery still holds a reading.
 
 E1 is confirmed as "Also sold as Ichimi" (not "searched for … instead").
+
+
+---
+
+## v1.8 · Answers to round two (#417, I–R)
+Drawn in the prototype unless marked "written". Screenshots 92–110.
+
+### I. Your own photo of a bottle (92, 97, 99)
+1. **Under the identity block, full width**, a checkbox row: "Keep this photo with the bottle" / "Only you see it. Location data is removed first, and you can delete it any time." Unticked. Ticked: "Photo kept with {name}" / "It shows on its page and in your journal and cellar. Untick to discard it.", and the thumbnail gets an accent ring and a pin. It follows the "This bottle" choice (L1). **1.8.1:** shown only where the rating panel shows, to visitors who can keep a journal; hidden otherwise. (Supersedes "stays on the phone … uploads at sign-in".)
+2. **Only on the bottle page** (the bottling, or the sake when the tastings sit there): "Add a photo of your bottle", shown when the visitor has a tasting or a bottle of it. It opens the camera in photo-only mode, which reads nothing and costs no scan. Journal and cellar rows don't get their own control. One place to add means one place to delete.
+3. **Bottle page identity, journal rows, cellar rows.** Not Home's recent tastings: Home stays text-only so it reads at a glance. Where there is none, show nothing. The row is as today and #334's placeholder retires (rule 14).
+4. **One per bottling** (or per sake when no bottling is known). The photo is there so the visitor recognises the bottle. A photo per tasting would put the same label on every row, and there would be many more photos to delete. A new "Keep" on a bottle that already has a photo asks first: "Replace your photo from {date}?"
+5. **On the bottle page:** "Replace" opens the photo-only camera. "Delete" confirms inline and is final, with no Undo, because the file is removed from storage. The tastings stay. Open decision 14.
+
+### J. "Scan the back" (92, 110, 109)
+1. **"The small label with numbers says which bottling this is." + "Scan it"**, in R3's wording, because it says what to look for, not where. It sits **under the card, outside it**: the card is about this sake, the nudge is about the next photo.
+2. **Yes, both:** on Best guess, "The name is often printed plainly on the side or on the importer's sticker." + "Scan the side"; on not in the catalogue, "The importer's sticker often spells the name in Latin letters." + "Scan the sticker". Only one nudge ever shows. Best guess wins over missing detail.
+3. **One left: show it, with "Uses your last free scan for the next 24 hours."** (1.8.1 wording) None left: hide it. Signed in: no note.
+
+### K. The landing page in motion · written
+1. **One loop, about 11 s, from the real screens with demo data:**
+   - 0.0–2.5 s **Scan.** Viewfinder over the demo bottle's label, the accent sweep running. Caption "Point at the label."
+   - 2.5–5.0 s **Result.** The card rises (yw-rise, 340 ms), "Sure match", the six bars fill left to right (60 ms stagger).
+   - 5.0–7.0 s **Rate.** One tap on the fourth star (yw-pop), "Logged · 4" notice.
+   - 7.0–10.0 s **Palate.** The hexagon grows from the centre to its shape over 1.2 s, then the title "Rich, umami-forward" fades in.
+   - 10.0–11.0 s Hold, then a 300 ms crossfade back to the start.
+   **Reduced motion:** the Result frame, still. Captions are real text, translated, outside the phone.
+2. **In the hero only.** A pinned phone tied to scrolling is fragile on mobile and slows down a reader who scans the page. The three cards stay as they are.
+3. **"Mihon (見本)"**, Junmai, "Demo bottle" in small print, with the 和 mark in the corner. 見本 means "sample", so it can't be read as a real sake (open decision 16). Its chart and rating are made up. The loop shows no glass and no pouring.
+4. **One row of three plain lines** below the features, with no numbers: "Every value says where it came from" · "Tested against real label photos" · "Your journal stays private". It ends with a link to the repository. The detail stays in the README.
+
+### L. Built ahead, now drawn
+1. **"This bottle"** (93). Accepted as built. It replaces "Add this bottling" in that state. Starting on nama, and the sake page starting "Add your bottling" from the label, are both accepted.
+2. **"Don't"** (94). It sits on a pill at the top of the viewfinder, as an underlined text button with a 36px row and a 44px hit area. DE "Nicht" is accepted (open: a longer DE string would wrap the pill to two lines, which is allowed).
+3. **Sample collection** (106, 107). The strip is the right shape. It stays put and can't be dismissed, and starting a scan or any save leaves the sample first. Yes, the landing links to it (§0).
+4. **Sign-in over the scan** (108). This is spec now, and it supersedes the 1.7 route. The Google pop-up is fine, with the redirect as the fallback.
+
+### M. Finding a sake without its name (102–104)
+1. **Filter chips on §8 Search, shown with an empty query.** There is no Browse view: the field is already where people go to find something.
+2. **Prefecture, and More / Less on a flavour axis**, first. Flavour words are typed, not picked. Grade waits until bottlings carry it, because a line has no grade.
+3. **"Tagged グレープフルーツ (grapefruit) by Sakenowa drinkers"** on the row. The heading reads "{n} sakes tagged "grapefruit"".
+4. **No popularity order.** Results are A–Z.
+
+### N. Price and place on a tasting · written
+1. **In §10, as its last part, "Where and what it cost".** It is not on §5's panel: one tap must stay one tap.
+2. **A Glass · Bottle segmented, then an amount in the visitor's currency.** The currency comes from the locale and can be changed. Nothing is converted. Optional.
+3. **Confirmed: free text only.** The field is "Where" with a "Had at · Bought at" segmented control. Never a map, never a location. It is private, never shared, and never part of chart contribution.
+
+### O. Yawaragi on the home screen · `Yawaragi App Icon.dc.html`
+1. **1a, the 和 glyph** in accent on the ground, with the short solid accent rule under it. Sizes: 192 any, 512 any, 512 maskable with the glyph inside the 80% safe circle, and an apple-touch-icon at 180. Short name **"Yawaragi"**.
+2. **Never prompts.** One row in Account → Help: "Add Yawaragi to your home screen", with the steps for the visitor's browser.
+3. **Splash and theme colour #1b1a19, status bar dark, `display: standalone`.**
+
+### P. What is unusual on a menu or shelf (105)
+1. **A small highlight**, because the "what was read" line alone gets lost among the other words.
+2. **One line under the row**: "Less usual · {style}". It is not a tag (rows already carry four kinds), not a group (with a median of three sakes it would repeat the list), and not a sort or a filter.
+3. **A fixed short list only:** kijoshu, koshu, taruzake, shizuku / fukurozuri, hiyaoroshi, polishing 40% or less. Relative rarity on a three-line list means nothing, and on bar lists nama, genshu and muroka are the norm.
+4. **"Less usual"** describes; it doesn't recommend. It opens the Learn entry where one exists and is plain text where none does (open decision 15).
+5. **Never "the dearest".** Price stays a filter.
+6. **Under the head, once.** It is §5's rule too: the badge sits on the heading of what it qualifies, and here that is the whole list.
+
+### Q. "Goes with" (98, 100, 101)
+1. **Agreed:** hidden, and the fallback line is removed.
+2. **Yes, in §9a**, after "About the {line} line" and before "What others noticed", the same place as on §9.
+3. **Not on §5's card.** The card is for identifying and rating; the bottle page is enough.
+4. **Never say it twice.** "Usually served …" shows only while the page has no "Serve it" section. When §9.4 ships, the line drops on every page that has it.
+5. **Phosphor is fine.**
+6. **Keep the form, once, in the caveat only:** "kunshu (薫酒), fragrant sake", reading then kanji in brackets as in H. It never breaks inside the brackets. The sources sheet repeats the four types once.
+
+### R. Which part of the bottle to photograph (94–96)
+1. **Yes:** for the first three scans, three shape cards under the viewfinder take the place of "How to read a label". Tapping them opens the drawing. After that the link returns.
+2. **Guide only:** the title is "Fill the frame with one label". Nothing claims to know the side.
+3. **As proposed**, with one line and one button, and never more than one (J). The paired camera's title follows the part that was asked for.
+4. **Yes, in the sheet:** 精米歩合, アルコール分 and a "%" as shapes, each with its English word under it.
+5. See J3.
+
+---
+
+## v1.8.1 · Answers to the follow-up on v1.8
+1. **Browse by flavour: accepted.** "More rich" means clearly above the catalogue average on that axis, and "Less" clearly below, using the same threshold as "Goes with". **Rows show nothing extra:** no figure and no axis word, because the chip already says it and a word on every row would only repeat it. The caveat under the axes now names the comparison. 102 and 103 are retaken.
+2. **Accepted:** "Uses your last free scan for the next 24 hours." DE: "Nutzt deinen letzten kostenlosen Scan für die nächsten 24 Stunden."
+3. **Confirmed.** The "Keep this photo" row shows only where the rating panel shows, to visitors who can keep a journal, and is hidden otherwise (rule 4). The "uploads at sign-in" sentence is withdrawn. 92 is retaken signed in.
+4. **Fixed:** Files now says 110.
+
+Noted: kept photos ship last, after open decision 14 and the privacy-policy update.
