@@ -157,7 +157,7 @@ const STUB_LIST: Omit<ListScanExtraction, 'source'> = {
   lines: [
     { printed: '獺祭 純米大吟醸 45', name_ja: '獺祭', name_romaji: 'Dassai', brewery_printed: false, brewery_ja: '旭酒造', grade: 'junmai_daiginjo', drink: 'sake', price: 1200 },
     { printed: '李白 純米吟醸 Wandering Poet', name_ja: '李白', name_romaji: 'Rihaku', brewery_printed: false, brewery_ja: '李白酒造', product_name: 'Wandering Poet', product_name_romaji: 'Wandering Poet', grade: 'junmai_ginjo', drink: 'sake', price: 1100, warm: true },
-    { printed: '李白 特別純米 超辛口', name_ja: '李白', name_romaji: 'Rihaku', brewery_printed: false, brewery_ja: '李白酒造', grade: 'tokubetsu_junmai', drink: 'sake', price: 950 },
+    { printed: '李白 特別純米 ひやおろし', name_ja: '李白', name_romaji: 'Rihaku', brewery_printed: false, brewery_ja: '李白酒造', grade: 'tokubetsu_junmai', styles: ['hiyaoroshi'], drink: 'sake', price: 950 },
     { printed: '架空ノ月 純米', name_ja: '架空ノ月', name_romaji: 'Kakū no Tsuki', drink: 'sake', grade: 'junmai', price: 800 },
     { printed: 'いいちこ', name_ja: 'いいちこ', name_romaji: 'Iichiko', drink: 'shochu', price: 600 },
   ],

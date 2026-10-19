@@ -1122,6 +1122,15 @@
       "axes": "{shape}.",
       "unusual": "{shape}, nicht sehr wie das, was du hoch bewertest.",
       "noChart": "Für diesen gibt es noch kein Geschmacksdiagramm."
+    },
+    "lessUsual": {
+      "line": "Seltener · {style}",
+      "styles": {
+        "kijoshu": "Kijoshu (貴醸酒), mit Sake statt eines Teils des Wassers gebraut",
+        "koshu": "Koshu (古酒), gereifter Sake",
+        "taruzake": "Taruzake (樽酒), im Zedernfass gelagert",
+        "hiyaoroshi": "Hiyaoroshi (ひやおろし), die Herbstabfüllung"
+      }
     }
   },
   "bottling": {
