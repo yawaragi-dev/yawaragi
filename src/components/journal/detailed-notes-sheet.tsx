@@ -32,9 +32,14 @@ import {
   isPartFilled,
 } from '@/lib/schemas/detailed-notes'
 import { EARLIEST_TASTING_DAY } from '@/lib/schemas/tasting-input'
-import { updateTasting } from '@/lib/taste/tasting-actions'
+import * as saves from '@/lib/taste/tasting-actions'
+import { reachable } from '@/lib/network/settle-request'
 import { europeanDay } from '@/lib/taste/tasting-day'
 import { cn } from '@/lib/utils'
+
+// Saves that the network loses answer "unavailable" (Couldn't save) instead
+// of throwing to the error page (design question S6).
+const updateTasting = reachable(saves.updateTasting)
 
 /**
  * §10 Detailed notes — the bottom sheet. Reference screenshot 11.

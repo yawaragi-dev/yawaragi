@@ -18,8 +18,15 @@ import type { QuickTag } from '@/lib/schemas/journal-entry'
 import { isAxisQuickTag, quickTagAxis, quickTagsFor } from '@/lib/taste/quick-tags'
 import { europeanDay, tastingDayOf } from '@/lib/taste/tasting-day'
 import { ratingBand } from '@/lib/taste/rating-band'
-import { rateNewTasting, undoTasting, updateTasting } from '@/lib/taste/tasting-actions'
+import * as saves from '@/lib/taste/tasting-actions'
+import { reachable } from '@/lib/network/settle-request'
 import { cn } from '@/lib/utils'
+
+// Saves that the network loses answer "unavailable" (Couldn't save) instead
+// of throwing to the error page (design question S6).
+const rateNewTasting = reachable(saves.rateNewTasting)
+const undoTasting = reachable(saves.undoTasting)
+const updateTasting = reachable(saves.updateTasting)
 
 /**
  * §5's log panel — "Your take". Reference screenshots 09 (before) and 10

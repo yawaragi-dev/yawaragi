@@ -27,11 +27,11 @@ export type Settled<T> = { ok: true; value: T } | { ok: false; failure: Connecti
  */
 export async function settleRequest<T>(
   request: Promise<T>,
-  { timeoutMs, isOnline }: { timeoutMs: number; isOnline: () => boolean },
+  { timeoutMs, isOnline }: { timeoutMs: number | null; isOnline: () => boolean },
 ): Promise<Settled<T>> {
   let timer: ReturnType<typeof setTimeout> | undefined
   const timedOut = new Promise<Settled<T>>((resolve) => {
-    timer = setTimeout(() => resolve({ ok: false, failure: 'timed_out' }), timeoutMs)
+    if (timeoutMs !== null) timer = setTimeout(() => resolve({ ok: false, failure: 'timed_out' }), timeoutMs)
   })
   const answered = request.then(
     (value): Settled<T> => ({ ok: true, value }),
@@ -50,4 +50,23 @@ export async function settleRequest<T>(
 /** `navigator.onLine`, read where there is a navigator. */
 export function browserIsOnline(): boolean {
   return typeof navigator === 'undefined' ? true : navigator.onLine
+}
+
+/**
+ * A Server Action that saves something (a rating, a note, a cellar bottle),
+ * made to answer `{ status: 'unavailable' }` — the "Couldn't save" every
+ * caller already shows — when the network loses it, instead of throwing to
+ * the error page and taking the tapped star with it (design question S6).
+ *
+ * No time limit: a save that reached the server may have been made even if
+ * its answer is slow, and calling it lost would invite a second tap and a
+ * second tasting.
+ */
+export function reachable<A extends unknown[], R>(
+  action: (...args: A) => Promise<R>,
+): (...args: A) => Promise<R | { status: 'unavailable' }> {
+  return async (...args) => {
+    const settled = await settleRequest(action(...args), { timeoutMs: null, isOnline: browserIsOnline })
+    return settled.ok ? settled.value : { status: 'unavailable' }
+  }
 }

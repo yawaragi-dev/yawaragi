@@ -5,12 +5,17 @@ import { useTranslations } from 'next-intl'
 import { PlusCircle } from '@phosphor-icons/react/dist/ssr'
 import { useRouter } from '@/i18n/navigation'
 import { BottlingNameForm } from '@/components/sake/bottling-name-form'
-import { addOwnBottling } from '@/lib/collection/expression-actions'
+import * as saves from '@/lib/collection/expression-actions'
+import { reachable } from '@/lib/network/settle-request'
 import type { BottlingDetails } from '@/lib/schemas/expression'
 import { bottlingNameFromRead, detailsFromRead } from '@/lib/scan/read-bottling'
 import { getScannedBottling, subscribeScannedBottling } from '@/lib/scan/scanned-bottling'
 import { ProvenanceBadgeView } from '@/components/sake/provenance-badge-view'
 import { resolveBadgeKind } from '@/lib/provenance/policy'
+
+// Saves that the network loses answer "unavailable" (Couldn't save) instead
+// of throwing to the error page (design question S6).
+const addOwnBottling = reachable(saves.addOwnBottling)
 
 /**
  * §9's dashed "Add your bottling" row (design v1.6.1, screenshots 63 and 55):

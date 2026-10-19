@@ -10,7 +10,12 @@ import {
   setPendingUndo,
   subscribePendingUndo,
 } from '@/lib/collection/deleted-bottling-store'
-import { restoreOwnBottling } from '@/lib/collection/expression-actions'
+import * as saves from '@/lib/collection/expression-actions'
+import { reachable } from '@/lib/network/settle-request'
+
+// Saves that the network loses answer "unavailable" (Couldn't save) instead
+// of throwing to the error page (design question S6).
+const restoreOwnBottling = reachable(saves.restoreOwnBottling)
 
 /** Rule 1: every Undo notice stays for 6.8s. */
 const NOTICE_MS = 6800

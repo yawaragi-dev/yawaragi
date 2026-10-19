@@ -5,7 +5,12 @@ import { useTranslations } from 'next-intl'
 import { PlusCircle } from '@phosphor-icons/react/dist/ssr'
 import { BottlingNameForm } from '@/components/sake/bottling-name-form'
 import { useRouter } from '@/i18n/navigation'
-import { addOwnBottling } from '@/lib/collection/expression-actions'
+import * as saves from '@/lib/collection/expression-actions'
+import { reachable } from '@/lib/network/settle-request'
+
+// Saves that the network loses answer "unavailable" (Couldn't save) instead
+// of throwing to the error page (design question S6).
+const addOwnBottling = reachable(saves.addOwnBottling)
 
 /**
  * The two ways to keep a bottle the catalogue does not know (design v1.6,

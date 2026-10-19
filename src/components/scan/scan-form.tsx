@@ -67,10 +67,10 @@ import {
   downscaleImage,
 } from '@/lib/scan/downscale'
 import { scanAction } from '@/lib/scan/scan-action'
-import { browserIsOnline, settleRequest, type ConnectionFailure } from '@/lib/network/settle-request'
+import { browserIsOnline, reachable, settleRequest, type ConnectionFailure } from '@/lib/network/settle-request'
 import { ScanNudge } from '@/components/scan/scan-nudge'
 import { readListAction } from '@/lib/scan/list-action'
-import { addOwnBottling } from '@/lib/collection/expression-actions'
+import { addOwnBottling as addOwnBottlingAction } from '@/lib/collection/expression-actions'
 import { INITIAL_LIST_ACTION_STATE, type ListActionState } from '@/lib/scan/list-action-state'
 import { ListProblem, ListReading, ListResults } from '@/components/scan/list-results'
 import {
@@ -155,6 +155,9 @@ interface ScanFormProps {
  * included), so it only fires on a connection that has stopped answering.
  */
 const SCAN_TIMEOUT_MS = 60_000
+
+/** A bottling saved from the label: "unavailable" when the network loses it (S6). */
+const addOwnBottling = reachable(addOwnBottlingAction)
 
 /** Which part of the bottle an after-scan nudge asks for (design v1.8, J). */
 type NudgeKind = 'details' | 'side' | 'sticker'

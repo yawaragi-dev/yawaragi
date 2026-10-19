@@ -6,14 +6,17 @@ import { useRouter } from 'next/navigation'
 import { LockSimpleOpen, Star } from '@phosphor-icons/react/dist/ssr'
 import { Link } from '@/i18n/navigation'
 import { CellarSheet } from '@/components/collection/cellar-sheet'
-import {
-  editCellarRow,
-  finishCellarBottle,
-  openCellarBottle,
-  removeFromCellar,
-} from '@/lib/collection/cellar-actions'
+import * as saves from '@/lib/collection/cellar-actions'
+import { reachable } from '@/lib/network/settle-request'
 import type { CellarSize } from '@/lib/schemas/cellar-bottle'
 import type { CellarSheetValues, CellarTarget } from '@/lib/schemas/cellar-input'
+
+// Saves that the network loses answer "unavailable" (Couldn't save) instead
+// of throwing to the error page (design question S6).
+const editCellarRow = reachable(saves.editCellarRow)
+const finishCellarBottle = reachable(saves.finishCellarBottle)
+const openCellarBottle = reachable(saves.openCellarBottle)
+const removeFromCellar = reachable(saves.removeFromCellar)
 
 /**
  * A Cellar row's two buttons (§11). Open bottle: "Pour & rate" (to the page of
