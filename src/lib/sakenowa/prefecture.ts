@@ -103,3 +103,6 @@ export function getPrefectureNames(areaId: number): PrefectureNames | null {
 
 /** Total number of mapped entries. Useful for tests. */
 export const PREFECTURE_COUNT = PREFECTURES.length
+
+/** The 47 prefectures in Sakenowa's order, without the "International" sentinel. */
+export const JAPAN_PREFECTURES: ReadonlyArray<PrefectureNames> = PREFECTURES.filter((p) => p.id > 0)

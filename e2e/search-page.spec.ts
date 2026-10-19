@@ -353,3 +353,39 @@ test.describe('§8 search', () => {
     await context.close()
   })
 })
+
+test.describe('§8 browse without a name (design v1.8, M)', () => {
+  test('an empty search lists sakes by prefecture and by a flavor they clearly stand out on, A–Z', async ({ browser }) => {
+    test.skip((await findAnyBrandId()) === null, 'Sakenowa mirror not populated — DB-bound spec')
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([AGE_GATE_COOKIE])
+    const page = await context.newPage()
+    await page.goto('/en/search')
+
+    // Flavor: the six axes, each with Less · More, and the comparison named.
+    await page.getByTestId('search-browse-flavor').locator('summary').click()
+    await expect(page.getByTestId('search-browse-flavor')).toContainText('Compared with the catalogue average')
+    await page.getByTestId('search-browse-more-f3').click()
+    await page.waitForURL(/flavor=more-f3/)
+    await expect(page.getByTestId('search-count')).toContainText('More rich')
+    await expect(page.getByTestId('search-count')).toContainText('A–Z')
+    await expect(page.getByTestId('search-result-row').first()).toBeVisible()
+
+    // Prefecture narrows it further and keeps the flavor.
+    await page.getByTestId('search-browse-prefecture').locator('summary').click()
+    await page.getByTestId('search-browse-pref-12').click()
+    await page.waitForURL(/pref=12/)
+    await expect(page.getByTestId('search-count')).toContainText('Chiba · More rich')
+
+    // A–Z, never by popularity (M4).
+    const names = await page.getByTestId('search-result-row').evaluateAll((rows) =>
+      rows.map((row) => (row.querySelector('.text-subtle')?.textContent ?? row.querySelector('[lang="ja"]')?.textContent ?? '').toLowerCase()),
+    )
+    expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b)))
+
+    await page.getByTestId('search-browse-clear').click()
+    await page.waitForURL(/\/en\/search$/)
+    await expect(page.getByTestId('search-empty')).toBeVisible()
+    await context.close()
+  })
+})
