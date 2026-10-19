@@ -1,6 +1,7 @@
 import 'server-only'
 import { Pool } from 'pg'
 import { env } from '@/env'
+import { createServerPool } from '@/lib/supabase/server-pool'
 
 /**
  * Phase 2 deviates from the PRD's literal "supabase-js client" wording: this slice
@@ -20,7 +21,8 @@ export function getServerDbPool(): Pool {
     )
   }
   if (!cachedPool) {
-    cachedPool = new Pool({ connectionString: env.DATABASE_URL })
+    // Sized for many serverless instances sharing one pooler — see server-pool.ts.
+    cachedPool = createServerPool(env.DATABASE_URL)
   }
   return cachedPool
 }
