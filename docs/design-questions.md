@@ -113,7 +113,7 @@ Built on branch `scan/read-romaji`: the model also gives the name, the brewery a
 
 # Round two (opened 2026-10-15, against design v1.7.1)
 
-Blocks A–H were answered in v1.7 and v1.7.1. The blocks below are new: I, J and K are ideas the maintainer wants designed before they are built; L is what was built ahead of the spec and needs drawing; M, N and O come from the 2026-10-11 review of what the app lacks; P is a maintainer idea for §7; Q is §9.7 "Goes with", built on 2026-10-17; R is how to tell a visitor which part of a bottle to photograph.
+Blocks A–H were answered in v1.7 and v1.7.1. **Blocks I–R were answered in v1.8 (18 Oct 2026), with four follow-ups settled in v1.8.1 (19 Oct 2026)**; the answers are the appendices "v1.8" and "v1.8.1" of `design/README.md`. The blocks below are kept as asked: I, J and K are ideas the maintainer wants designed before they are built; L is what was built ahead of the spec and needs drawing; M, N and O come from the 2026-10-11 review of what the app lacks; P is a maintainer idea for §7; Q is §9.7 "Goes with", built on 2026-10-17; R is how to tell a visitor which part of a bottle to photograph.
 
 ## I. Your own photo of a bottle
 

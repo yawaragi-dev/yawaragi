@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/nocturne-9c99b1eb-b42d-45c4-9cc2-5ee7dbf09ad5/styles.css">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@500&display=swap">
+<style>body{margin:0;background:#121110;color:#e8e4dd;font-family:var(--font-body)} a{color:#e0a88f} a:hover{color:#cf8a6e}</style>
+</helmet>
+<section style="padding:48px;display:flex;flex-direction:column;gap:28px">
+  <div style="display:flex;flex-direction:column;gap:6px;max-width:720px">
+    <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#e0a88f">Yawaragi · O · Home-screen icon · v1.8</div>
+    <div style="font-family:var(--font-heading);font-weight:500;font-size:28px;letter-spacing:-.02em">App icon and manifest</div>
+    <div style="font-size:14px;color:#bdb9b1;line-height:1.55;text-wrap:pretty">Two options. 1a is recommended: the 和 already marks the app in the age gate, the landing header and the bundle thumbnail. Safe zone for the maskable icon is the inner 80% circle (dashed).</div>
+  </div>
+  <div style="display:flex;gap:40px;flex-wrap:wrap;align-items:flex-start">
+    <div id="1a" style="display:flex;flex-direction:column;gap:16px">
+      <div style="display:flex;align-items:center;gap:10px"><span style="font-size:12px;font-weight:500;padding:3px 8px;border-radius:6px;background:#3a2a23;color:#eec2ae">1a</span><span style="font-size:14px">和 glyph · recommended</span></div>
+      <div style="display:flex;gap:24px;align-items:flex-end">
+        <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-start">
+          <div style="position:relative;width:256px;height:256px;border-radius:0;background:radial-gradient(120% 90% at 30% 20%,#2a2826 0%,#1b1a19 60%);display:grid;place-items:center;overflow:hidden">
+            <span lang="ja" style="font-family:'Noto Serif JP',serif;font-weight:500;font-size:150px;line-height:1;color:#cf8a6e;transform:translateY(-6px)">和</span>
+            <span style="position:absolute;left:50%;bottom:44px;width:56px;height:2px;margin-left:-28px;background:#cf8a6e"></span>
+            <span style="position:absolute;inset:25.6px;border-radius:50%;border:1px dashed rgba(232,228,221,.28)"></span>
+          </div>
+          <span style="font-size:12px;color:#a8a49c">512 · maskable (shown at half size, safe zone dashed)</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="width:96px;height:96px;border-radius:22px;background:radial-gradient(120% 90% at 30% 20%,#2a2826 0%,#1b1a19 60%);display:grid;place-items:center;box-shadow:0 0 0 1px #302e2c;position:relative;overflow:hidden">
+            <span lang="ja" style="font-family:'Noto Serif JP',serif;font-weight:500;font-size:58px;line-height:1;color:#cf8a6e;transform:translateY(-3px)">和</span>
+            <span style="position:absolute;left:50%;bottom:16px;width:22px;height:1.5px;margin-left:-11px;background:#cf8a6e"></span>
+          </div>
+          <span style="font-size:12px;color:#a8a49c">192 · any</span>
+        </div>
+      </div>
+    </div>
+    <div id="1b" style="display:flex;flex-direction:column;gap:16px">
+      <div style="display:flex;align-items:center;gap:10px"><span style="font-size:12px;font-weight:500;padding:3px 8px;border-radius:6px;background:#2d2b29;color:#d6d2ca">1b</span><span style="font-size:14px">Latin initial</span></div>
+      <div style="display:flex;gap:24px;align-items:flex-end">
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="position:relative;width:256px;height:256px;background:radial-gradient(120% 90% at 30% 20%,#2a2826 0%,#1b1a19 60%);display:grid;place-items:center;overflow:hidden">
+            <span style="font-family:var(--font-heading);font-weight:500;font-size:132px;letter-spacing:-.04em;line-height:1;color:#e8e4dd">Y<span style="color:#cf8a6e">.</span></span>
+            <span style="position:absolute;inset:25.6px;border-radius:50%;border:1px dashed rgba(232,228,221,.28)"></span>
+          </div>
+          <span style="font-size:12px;color:#a8a49c">512 · maskable</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="width:96px;height:96px;border-radius:22px;background:radial-gradient(120% 90% at 30% 20%,#2a2826 0%,#1b1a19 60%);display:grid;place-items:center;box-shadow:0 0 0 1px #302e2c">
+            <span style="font-family:var(--font-heading);font-weight:500;font-size:50px;letter-spacing:-.04em;line-height:1;color:#e8e4dd">Y<span style="color:#cf8a6e">.</span></span>
+          </div>
+          <span style="font-size:12px;color:#a8a49c">192 · any</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="display:flex;gap:40px;flex-wrap:wrap;align-items:flex-start">
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#a8a49c">On the home screen (1a)</div>
+      <div style="width:300px;padding:28px 24px;border-radius:28px;background:linear-gradient(160deg,#3a3532,#1f1d1c);display:grid;grid-template-columns:repeat(4,1fr);gap:22px 12px">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:56px;height:56px;border-radius:13px;background:#5a5450"></div><span style="font-size:11px;color:#ece8e1">Maps</span></div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:56px;height:56px;border-radius:13px;background:radial-gradient(120% 90% at 30% 20%,#2a2826 0%,#1b1a19 60%);display:grid;place-items:center;box-shadow:0 0 0 1px #302e2c"><span lang="ja" style="font-family:'Noto Serif JP',serif;font-weight:500;font-size:34px;line-height:1;color:#cf8a6e;transform:translateY(-2px)">和</span></div><span style="font-size:11px;color:#ece8e1">Yawaragi</span></div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:56px;height:56px;border-radius:13px;background:#6b6560"></div><span style="font-size:11px;color:#ece8e1">Notes</span></div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:56px;height:56px;border-radius:13px;background:#4a4744"></div><span style="font-size:11px;color:#ece8e1">Camera</span></div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;max-width:420px">
+      <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#a8a49c">Manifest</div>
+      <div style="font-family:ui-monospace,monospace;font-size:12px;line-height:1.7;color:#d6d2ca;padding:14px 16px;border-radius:8px;background:#232221;box-shadow:0 0 0 1px #302e2c;white-space:pre-wrap">name: "Yawaragi"
+short_name: "Yawaragi"
+display: "standalone"
+background_color: "#1b1a19"   (splash)
+theme_color: "#1b1a19"        (status bar: dark)
+icons: 192 any · 512 any · 512 maskable
+apple-touch-icon: 180, no transparency</div>
+      <div style="font-size:13px;color:#bdb9b1;line-height:1.55;text-wrap:pretty">The glyph is set in Noto Serif JP 500 and exported as outlines; no font loads at runtime. The short accent mark under it is the system’s solid short rule.</div>
+    </div>
+  </div>
+</section>
+</x-dc>
+</body>
+</html>

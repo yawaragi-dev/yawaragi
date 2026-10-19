@@ -62,6 +62,13 @@ textarea::placeholder,input::placeholder{font-style:italic}
       <span style="display:flex;gap:5px"><i class="ph ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span>
     </div>
 
+    <sc-if value="{{ sampleOn }}">
+      <div role="status" style="flex:none;display:flex;align-items:center;gap:10px;padding:8px 10px 8px 16px;background:var(--color-neutral-200);box-shadow:0 1px 0 var(--color-divider);z-index:2">
+        <i class="ph ph-books" style="font-size:16px;color:var(--color-accent-700);flex:none"></i>
+        <div style="flex:1;min-width:0;font-size:12px;line-height:1.4;color:var(--color-neutral-800);text-wrap:pretty"><span style="color:var(--color-text);font-weight:500">A sample collection</span> · Made-up tastings of real sakes. Nothing here is saved.</div>
+        <button class="btn btn-secondary" style="height:36px;font-size:12px;padding-inline:12px;flex:none" onClick="{{ leaveSample }}">Leave</button>
+      </div>
+    </sc-if>
     <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
       <div style="flex:1;min-height:0;display:flex;flex-direction:column">
         <div style="padding:14px 22px 12px;display:flex;align-items:flex-start;justify-content:space-between;flex:none">
@@ -168,6 +175,13 @@ textarea::placeholder,input::placeholder{font-style:italic}
         <sc-if value="{{ camLive }}">
         <div style="flex:1;min-height:0;position:relative;display:flex;flex-direction:column;justify-content:center;align-items:center;overflow:hidden">
           <div style="position:absolute;inset:0;background:repeating-linear-gradient(135deg,#24211b,#24211b 7px,#2c2822 7px,#2c2822 14px)"></div>
+          <sc-if value="{{ camPaired }}">
+            <div style="position:absolute;top:12px;left:16px;right:16px;display:flex;align-items:center;gap:8px;padding:4px 4px 4px 12px;border-radius:999px;background:rgba(18,17,16,.82);box-shadow:0 0 0 1px rgba(246,242,234,.16);z-index:1;animation:yw-fade .2s ease-out">
+              <i class="ph ph-link-simple" style="font-size:15px;color:#eec2ae;flex:none"></i>
+              <span style="flex:1;min-width:0;font-size:12px;line-height:1.35;color:rgba(246,242,234,.9)">This photo is read together with your last one</span>
+              <button onClick="{{ unpair }}" style="flex:none;height:36px;padding:0 12px;border-radius:999px;border:0;background:transparent;color:#f6f2ea;font-family:var(--font-body);font-size:12px;text-decoration:underline;text-decoration-color:rgba(246,242,234,.4);text-underline-offset:3px;cursor:pointer">Don’t</button>
+            </div>
+          </sc-if>
 
           <div style="position:relative;width:{{ frameW }};height:{{ frameH }};transition:width .28s ease,height .28s ease">
             <div style="position:absolute;inset:0;border-radius:10px;overflow:hidden;background:{{ frameFill }};transition:background .25s">
@@ -184,6 +198,19 @@ textarea::placeholder,input::placeholder{font-style:italic}
           <div style="position:relative;margin-top:24px;text-align:center;padding:0 40px;min-height:58px;box-sizing:border-box">
             <div style="font-family:var(--font-heading);font-weight:500;font-size:16px;color:#f6f2ea">{{ scanTitle }}</div>
             <sc-if value="{{ camHintOn }}"><div style="font-size:12px;line-height:1.45;color:rgba(246,242,234,.7);margin-top:5px;text-wrap:balance">{{ scanHint }}</div></sc-if>
+            <sc-if value="{{ camParts }}">
+              <button onClick="{{ openParts }}" aria-label="Which side to photograph" style="margin-top:12px;display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;padding:0;border:0;background:transparent;cursor:pointer;font-family:var(--font-body)">
+                <span style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;width:100%">
+                  <sc-for list="{{ camPartList }}" as="cp" hint-placeholder-count="3">
+                    <span style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 2px 7px;border-radius:8px;box-shadow:0 0 0 1px rgba(246,242,234,.18)">
+                      <span lang="{{ cp.lang }}" style="font-family:{{ cp.font }};font-size:{{ cp.size }};line-height:1;color:#f6f2ea;height:22px;display:flex;align-items:center">{{ cp.glyph }}</span>
+                      <span style="font-size:11px;color:rgba(246,242,234,.78);white-space:nowrap">{{ cp.label }}</span>
+                    </span>
+                  </sc-for>
+                </span>
+                <span style="font-size:12px;color:rgba(246,242,234,.85);text-decoration:underline;text-decoration-color:rgba(246,242,234,.35);text-underline-offset:3px;min-height:28px;display:flex;align-items:center">Which side to photograph</span>
+              </button>
+            </sc-if>
             <sc-if value="{{ camLabelLink }}"><button onClick="{{ openLabelGuide }}" style="margin-top:2px;min-height:32px;padding:0 6px;border:0;background:transparent;cursor:pointer;font-family:var(--font-body);font-size:12px;color:rgba(246,242,234,.85);text-decoration:underline;text-decoration-color:rgba(246,242,234,.35);text-underline-offset:3px">How to read a label</button></sc-if>
           </div>
         </div>
@@ -305,6 +332,7 @@ textarea::placeholder,input::placeholder{font-style:italic}
               <div style="font-size:13px;color:var(--color-neutral-700);text-wrap:pretty;flex:1;min-width:0">{{ menuSub }}</div>
               <sc-if value="{{ listRanked }}"><button onClick="{{ openRankInfo }}" aria-label="How this is ranked" style="width:28px;height:28px;margin:-5px -6px 0 0;border:0;background:transparent;cursor:pointer;display:grid;place-items:center;color:var(--color-neutral-600);flex:none"><i class="ph ph-info" style="font-size:15px"></i></button></sc-if>
             </div>
+            <div style="display:flex;margin-top:8px"><button onClick="{{ openProv }}" aria-label="Read by AI — what this means" style="display:inline-flex;align-items:center;gap:4px;align-self:flex-start;height:24px;padding:0 9px;border-radius:999px;border:1px solid var(--color-neutral-400);background:transparent;color:var(--color-neutral-700);font-size:11px;font-family:var(--font-body);cursor:pointer;box-sizing:border-box" style-hover="background:var(--color-neutral-200)"><i class="ph ph-scan" style="font-size:12px"></i>Read by AI</button></div>
           </div>
           <sc-if value="{{ listEarly }}">
             <div style="padding:12px 13px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm);display:flex;align-items:center;gap:12px">
@@ -357,6 +385,9 @@ textarea::placeholder,input::placeholder{font-style:italic}
                 </div>
               </div>
             </button>
+            <sc-if value="{{ m.hasUnusual }}">
+              <button onClick="{{ m.learnUnusual }}" style="display:flex;align-items:center;gap:7px;min-height:36px;margin:-8px 0 8px 34px;padding:0;border:0;background:transparent;text-align:left;cursor:pointer;font-family:var(--font-body);font-size:12px;color:var(--color-neutral-800)"><i class="ph ph-sparkle" style="font-size:13px;color:var(--color-accent-600)"></i><span>Less usual · {{ m.unusualLabel }}</span><i class="ph ph-book-open" style="font-size:11px;color:var(--color-neutral-600)"></i></button>
+            </sc-if>
             <sc-if value="{{ m.hasLines }}">
               <div style="display:flex;flex-direction:column;margin:-4px 0 10px 34px">
                 <div style="font-size:11px;color:var(--color-neutral-600);margin-bottom:2px">{{ m.linesHead }}</div>
@@ -427,13 +458,45 @@ textarea::placeholder,input::placeholder{font-style:italic}
           <button class="btn" style="padding-inline:4px" onClick="{{ back }}" aria-label="Back"><i class="ph ph-arrow-left" style="font-size:19px"></i></button>
           <div style="flex:1;min-width:0;display:flex;align-items:center;gap:8px;padding:0 12px;height:44px;border-radius:var(--radius-md);border:1px solid var(--color-accent-500);background:var(--color-surface)">
             <i class="ph ph-magnifying-glass" style="font-size:17px;color:var(--color-neutral-600)"></i>
-            <input class="input" autofocus="{{ true }}" placeholder="Name, brewery or kanji" value="{{ query }}" onChange="{{ setQuery }}" style="flex:1;min-width:0;border:0;background:transparent;padding:0;min-height:0;font-size:15px" />
+            <input class="input" autofocus="{{ true }}" placeholder="Name, brewery, kanji or a flavour" value="{{ query }}" onChange="{{ setQuery }}" style="flex:1;min-width:0;border:0;background:transparent;padding:0;min-height:0;font-size:15px" />
             <sc-if value="{{ hasQuery }}">
               <button class="btn" style="padding-inline:2px" onClick="{{ clearQuery }}" aria-label="Clear"><i class="ph ph-x-circle" style="font-size:17px;color:var(--color-neutral-600)"></i></button>
             </sc-if>
           </div>
         </div>
         <div style="flex:1;min-height:0;overflow-y:auto;padding:16px 22px 20px;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 18px);mask-image:linear-gradient(to bottom,transparent 0,#000 18px)">
+          <sc-if value="{{ brShow }}">
+            <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
+              <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center">
+                <sc-for list="{{ brChips }}" as="bc" hint-placeholder-count="2">
+                  <button onClick="{{ bc.pick }}" aria-expanded="{{ bc.open }}" style="display:inline-flex;align-items:center;gap:5px;min-height:34px;padding:6px 12px;border-radius:999px;border:1px solid {{ bc.border }};background:{{ bc.bg }};color:{{ bc.fg }};font-size:12px;font-family:var(--font-body);cursor:pointer"><i class="ph {{ bc.icon }}" style="font-size:14px"></i>{{ bc.label }}<i class="ph {{ bc.caret }}" style="font-size:11px"></i></button>
+                </sc-for>
+                <sc-if value="{{ brAny }}"><button class="btn btn-ghost" style="height:34px;font-size:12px;padding-inline:6px" onClick="{{ brClear }}">Clear</button></sc-if>
+              </div>
+              <sc-if value="{{ brPrefOpen }}">
+                <div style="display:flex;gap:6px;flex-wrap:wrap;animation:yw-fade .2s ease-out">
+                  <sc-for list="{{ brPrefs }}" as="bp" hint-placeholder-count="6">
+                    <button onClick="{{ bp.pick }}" style="display:inline-flex;gap:5px;min-height:34px;align-items:center;padding:6px 11px;border-radius:var(--radius-md);border:1px solid {{ bp.border }};background:{{ bp.bg }};color:{{ bp.fg }};font-size:12px;font-family:var(--font-body);cursor:pointer">{{ bp.label }}<span style="color:var(--color-neutral-600)">{{ bp.n }}</span></button>
+                  </sc-for>
+                </div>
+              </sc-if>
+              <sc-if value="{{ brFlavOpen }}">
+                <div style="display:flex;flex-direction:column;animation:yw-fade .2s ease-out">
+                  <sc-for list="{{ brAxes }}" as="ba" hint-placeholder-count="6">
+                    <div style="display:flex;align-items:center;gap:10px;min-height:46px;border-bottom:1px solid var(--color-divider)">
+                      <span style="flex:1;min-width:0;font-size:13px">{{ ba.label }} <span lang="ja" style="font-size:12px;color:var(--color-neutral-600)">{{ ba.jp }}</span></span>
+                      <div style="display:inline-flex;border:1px solid var(--color-divider);border-radius:var(--radius-md);overflow:hidden">
+                        <button onClick="{{ ba.less }}" aria-pressed="{{ ba.isLess }}" style="min-height:34px;padding:0 12px;font-size:12px;border:0;cursor:pointer;font-family:var(--font-body);background:{{ ba.lessBg }};color:{{ ba.lessFg }}">Less</button>
+                        <button onClick="{{ ba.more }}" aria-pressed="{{ ba.isMore }}" style="min-height:34px;padding:0 12px;font-size:12px;border:0;border-left:1px solid var(--color-divider);cursor:pointer;font-family:var(--font-body);background:{{ ba.moreBg }};color:{{ ba.moreFg }}">More</button>
+                      </div>
+                    </div>
+                  </sc-for>
+                  <div style="font-size:11px;color:var(--color-neutral-700);padding-top:8px;line-height:1.5;text-wrap:pretty">Compared with the catalogue average on the flavour chart (Sakenowa). Sakes without a chart don’t show here.</div>
+                </div>
+              </sc-if>
+              <div style="font-size:12px;color:var(--color-neutral-600);line-height:1.5;text-wrap:pretty">Or type a flavour — “grapefruit”, “melon” — to find sakes drinkers describe that way.</div>
+            </div>
+          </sc-if>
           <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-600);margin:6px 0 4px">{{ searchHeading }}</div>
           <sc-for list="{{ searchResults }}" as="it" hint-placeholder-count="4">
             <button onClick="{{ it.pick }}" style="display:flex;align-items:center;gap:12px;width:100%;min-height:58px;padding:9px 0;border:0;border-bottom:1px solid var(--color-divider);background:transparent;text-align:left;cursor:pointer;font-family:var(--font-body);color:var(--color-text)">
@@ -444,6 +507,7 @@ textarea::placeholder,input::placeholder{font-style:italic}
                 </div>
                 <div style="font-size:12px;color:var(--color-neutral-600);margin-top:2px">{{ it.meta }}</div>
                 <sc-if value="{{ it.hasAlt }}"><div style="font-size:12px;color:var(--color-neutral-700);margin-top:2px">Also sold as {{ it.alt }}</div></sc-if>
+                <sc-if value="{{ it.hasTag }}"><div style="font-size:12px;color:var(--color-neutral-700);margin-top:2px">Tagged <span lang="ja">{{ it.tagJa }}</span> ({{ it.tagEn }}) by Sakenowa drinkers</div></sc-if>
               </div>
               <sc-if value="{{ it.tasted }}"><span class="tag tag-accent">Tasted</span></sc-if>
             </button>
@@ -451,7 +515,7 @@ textarea::placeholder,input::placeholder{font-style:italic}
           <sc-if value="{{ noResults }}">
             <div style="font-size:13px;color:var(--color-neutral-700);padding:14px 0 4px">Nothing in the catalogue matches.</div>
           </sc-if>
-          <sc-if value="{{ hasQuery }}">
+          <sc-if value="{{ showAddManual }}">
             <button onClick="{{ addManual }}" style="display:flex;align-items:center;gap:12px;width:100%;min-height:56px;margin-top:6px;padding:10px 12px;border-radius:var(--radius-md);border:1px dashed var(--color-neutral-400);background:transparent;text-align:left;cursor:pointer;font-family:var(--font-body);color:var(--color-text)">
               <i class="ph ph-plus-circle" style="font-size:20px;color:var(--color-accent-600)"></i>
               <div style="flex:1;min-width:0">
@@ -476,8 +540,9 @@ textarea::placeholder,input::placeholder{font-style:italic}
           <article style="border-radius:var(--radius-lg);background:var(--color-surface);box-shadow:var(--shadow-md);overflow:hidden">
             <div style="display:flex;gap:14px;padding:14px">
               <sc-if value="{{ pickFromPhoto }}">
-              <div style="width:92px;height:122px;flex:none;border-radius:8px;background:repeating-linear-gradient(135deg,#2a2826,#2a2826 5px,#33302d 5px,#33302d 10px);display:grid;place-items:end center;padding-bottom:8px">
+              <div style="position:relative;width:92px;height:122px;flex:none;border-radius:8px;background:repeating-linear-gradient(135deg,#2a2826,#2a2826 5px,#33302d 5px,#33302d 10px);display:grid;place-items:end center;padding-bottom:8px;box-shadow:{{ keepRing }}">
                 <span style="font-family:ui-monospace,monospace;font-size:10px;color:var(--color-neutral-700)">your photo</span>
+                <sc-if value="{{ keepOn }}"><span style="position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:50%;background:var(--color-accent-600);display:grid;place-items:center"><i class="ph-fill ph-push-pin" style="font-size:12px;color:#1b1a19"></i></span></sc-if>
               </div>
               </sc-if>
               <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">
@@ -499,6 +564,25 @@ textarea::placeholder,input::placeholder{font-style:italic}
                 <sc-if value="{{ pickInCatalogue }}"><div style="font-size:11px;color:var(--color-neutral-700);margin-top:6px">Catalogue data · <a href="https://sakenowa.com" target="_blank" rel="noopener" style="color:var(--color-neutral-700);text-decoration:underline;text-decoration-color:var(--color-neutral-500);text-underline-offset:2px">Powered by Sakenowa ↗</a></div></sc-if>
               </div>
             </div>
+            <sc-if value="{{ tbShow }}">
+              <div role="radiogroup" aria-labelledby="yw-tb-h" style="padding:0 14px 12px;display:flex;flex-direction:column;gap:6px">
+                <div id="yw-tb-h" style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600)">This bottle</div>
+                <sc-for list="{{ tbOpts }}" as="o" hint-placeholder-count="2">
+                  <button role="radio" aria-checked="{{ o.on }}" onClick="{{ o.pick }}" style="display:flex;align-items:flex-start;gap:10px;min-height:48px;padding:9px 11px;border-radius:var(--radius-md);border:1px solid {{ o.border }};background:{{ o.bg }};text-align:left;cursor:pointer;font-family:var(--font-body);color:var(--color-text)">
+                    <span style="width:16px;height:16px;border-radius:50%;border:1.5px solid {{ o.ring }};display:grid;place-items:center;flex:none;margin-top:1px;box-sizing:border-box"><span style="width:8px;height:8px;border-radius:50%;background:{{ o.dot }}"></span></span>
+                    <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:1px"><span style="font-size:14px;line-height:1.3;text-wrap:pretty">{{ o.label }}</span><span style="font-size:12px;color:var(--color-neutral-600);line-height:1.4;text-wrap:pretty">{{ o.sub }}</span></span>
+                  </button>
+                </sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ keepRowOn }}">
+              <div style="padding:0 14px 6px;border-top:1px solid var(--color-divider)">
+                <button role="checkbox" aria-checked="{{ keepOn }}" onClick="{{ toggleKeep }}" style="display:flex;align-items:flex-start;gap:10px;width:100%;min-height:44px;padding:10px 0 6px;border:0;background:transparent;text-align:left;cursor:pointer;font-family:var(--font-body);color:var(--color-text)">
+                  <span style="width:18px;height:18px;border-radius:4px;border:1.5px solid {{ keepBox }};background:{{ keepFill }};display:grid;place-items:center;flex:none;margin-top:1px;box-sizing:border-box"><sc-if value="{{ keepOn }}"><i class="ph ph-check" style="font-size:12px;color:#1b1a19"></i></sc-if></span>
+                  <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span style="font-size:13px;line-height:1.35;text-wrap:pretty">{{ keepLabel }}</span><span style="font-size:12px;color:var(--color-neutral-600);line-height:1.45;text-wrap:pretty">{{ keepSub }}</span></span>
+                </button>
+              </div>
+            </sc-if>
             <div style="border-top:1px solid var(--color-divider)">
             <sc-if value="{{ rFolded }}">
               <button onClick="{{ rUnfold }}" style="display:flex;align-items:center;gap:10px;width:100%;min-height:52px;padding:12px 14px;border:0;background:var(--color-accent-100);text-align:left;cursor:pointer;font-family:var(--font-body);color:var(--color-text);animation:yw-fade .2s ease-out">
@@ -562,6 +646,15 @@ textarea::placeholder,input::placeholder{font-style:italic}
             </div>
           </article>
         </div>
+        <sc-if value="{{ nudgeOn }}">
+          <div style="padding:10px 18px 0">
+            <div style="display:flex;align-items:center;gap:10px;padding:10px 10px 10px 12px;border-radius:var(--radius-md);border:1px solid var(--color-divider)">
+              <i class="ph {{ nudgeIcon }}" style="font-size:18px;color:var(--color-neutral-600);flex:none"></i>
+              <div style="flex:1;min-width:0"><div style="font-size:13px;line-height:1.4;text-wrap:pretty">{{ nudgeText }}</div><sc-if value="{{ nudgeHasNote }}"><div style="font-size:11px;color:var(--color-neutral-600);margin-top:2px">{{ nudgeNote }}</div></sc-if></div>
+              <button class="btn btn-secondary" style="height:36px;font-size:12px;gap:5px;padding-inline:11px;flex:none" onClick="{{ nudgeGo }}"><i class="ph ph-camera-plus" style="font-size:14px"></i>{{ nudgeBtn }}</button>
+            </div>
+          </div>
+        </sc-if>
 
         <sc-if value="{{ pickFits }}">
           <div style="padding:6px 18px 0">
@@ -737,6 +830,13 @@ textarea::placeholder,input::placeholder{font-style:italic}
               <button class="btn btn-secondary btn-block" style="height:42px;font-size:13px;gap:7px;margin:0" onClick="{{ ocSearch }}"><i class="ph ph-magnifying-glass" style="font-size:15px"></i>Search again</button>
             </div>
           </sc-if>
+          <sc-if value="{{ nudgeOn }}">
+            <div style="display:flex;align-items:center;gap:10px;padding:10px 10px 10px 12px;margin-top:-8px;border-radius:var(--radius-md);border:1px solid var(--color-divider)">
+              <i class="ph {{ nudgeIcon }}" style="font-size:18px;color:var(--color-neutral-600);flex:none"></i>
+              <div style="flex:1;min-width:0"><div style="font-size:13px;line-height:1.4;text-wrap:pretty">{{ nudgeText }}</div><sc-if value="{{ nudgeHasNote }}"><div style="font-size:11px;color:var(--color-neutral-600);margin-top:2px">{{ nudgeNote }}</div></sc-if></div>
+              <button class="btn btn-secondary" style="height:36px;font-size:12px;gap:5px;padding-inline:11px;flex:none" onClick="{{ nudgeGo }}"><i class="ph ph-camera-plus" style="font-size:14px"></i>{{ nudgeBtn }}</button>
+            </div>
+          </sc-if>
           <sc-if value="{{ oc.hasCands }}">
             <div style="display:flex;flex-direction:column">
               <h6 style="margin:0 0 2px;font-size:11px;letter-spacing:.1em;color:var(--color-neutral-600)">{{ oc.candLabel }}</h6>
@@ -847,6 +947,25 @@ textarea::placeholder,input::placeholder{font-style:italic}
               <sc-if value="{{ sk.thin }}"><span class="tag" style="border:1px solid var(--color-neutral-400);color:var(--color-neutral-700)">Little published</span></sc-if>
             </div>
             <sc-if value="{{ sk.fromCatalogue }}"><div style="font-size:11px;color:var(--color-neutral-700);margin-top:8px">Catalogue data · <a href="https://sakenowa.com" target="_blank" rel="noopener" style="color:var(--color-neutral-700);text-decoration:underline;text-decoration-color:var(--color-neutral-500);text-underline-offset:2px">Powered by Sakenowa ↗</a></div></sc-if>
+            <sc-if value="{{ ph.has }}">
+              <div style="display:flex;align-items:flex-end;gap:12px;margin-top:12px">
+                <div style="width:84px;height:112px;flex:none;border-radius:8px;background:repeating-linear-gradient(135deg,#2a2826,#2a2826 5px,#33302d 5px,#33302d 10px);display:grid;place-items:end center;padding-bottom:6px;box-sizing:border-box"><span style="font-family:ui-monospace,monospace;font-size:9px;color:var(--color-neutral-700)">your photo</span></div>
+                <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+                  <div style="font-size:12px;color:var(--color-neutral-600)">{{ ph.meta }}</div>
+                  <div style="display:flex;gap:14px"><button class="btn btn-ghost" style="height:40px;font-size:13px;gap:5px;padding-inline:0" onClick="{{ ph.replace }}"><i class="ph ph-camera-rotate" style="font-size:15px"></i>Replace</button><button class="btn btn-ghost" style="height:40px;font-size:13px;gap:5px;padding-inline:0" onClick="{{ ph.askDelete }}"><i class="ph ph-trash" style="font-size:15px"></i>Delete</button></div>
+                </div>
+              </div>
+              <sc-if value="{{ ph.confirm }}">
+                <div role="alert" style="margin-top:8px;padding:12px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm);display:flex;flex-direction:column;gap:10px;animation:yw-fade .2s ease-out">
+                  <div style="font-size:13px;line-height:1.5;text-wrap:pretty">Delete this photo? It goes from this page and from your journal and cellar rows. Your tastings stay.</div>
+                  <div style="display:flex;gap:8px">
+                    <button class="btn btn-ghost" style="flex:1;height:40px;font-size:13px" onClick="{{ ph.cancelDelete }}">Keep it</button>
+                    <button onClick="{{ ph.confirmDelete }}" style="flex:1;height:40px;font-size:13px;border-radius:var(--radius-md);border:1px solid var(--color-accent-700);background:var(--color-accent-100);color:var(--color-accent-800);font-family:var(--font-body);cursor:pointer">Delete photo</button>
+                  </div>
+                </div>
+              </sc-if>
+            </sc-if>
+            <sc-if value="{{ ph.none }}"><button class="btn btn-ghost" style="align-self:flex-start;height:40px;font-size:13px;gap:6px;padding-inline:0;margin-top:4px" onClick="{{ ph.add }}"><i class="ph ph-camera-plus" style="font-size:16px"></i>Add a photo of your bottle</button></sc-if>
           </div>
           <sc-if value="{{ skPanelClosed }}">
             <div style="display:flex;gap:8px;padding:10px 20px 0">
@@ -1038,11 +1157,12 @@ textarea::placeholder,input::placeholder{font-style:italic}
             <sc-if value="{{ sk.noChart }}"><div style="font-size:13px;color:var(--color-neutral-700);line-height:1.5;text-wrap:pretty">{{ noChartCopy }}</div></sc-if>
           </div>
 
-          <div style="padding:24px 20px 0;display:flex;flex-direction:column;gap:10px">
-            <div style="display:flex;align-items:baseline;justify-content:space-between"><h6 style="margin:0;font-size:11px;letter-spacing:.1em;color:var(--color-neutral-600)">Goes with</h6><span style="font-size:11px;color:var(--color-neutral-700)">{{ sk.pairMeta }}</span></div>
-            <sc-if value="{{ sk.hasPairs }}">
+          <sc-if value="{{ gw.has }}">
+            <div style="padding:24px 20px 0;display:flex;flex-direction:column;gap:8px">
+              <h6 style="margin:0;font-size:11px;letter-spacing:.1em;color:var(--color-neutral-600)">Goes with</h6>
+              <div id="yw-gw-sk" style="font-size:11px;color:var(--color-neutral-700);line-height:1.5;text-wrap:pretty;word-break:keep-all">{{ gw.caveat }} <button onClick="{{ openPairInfo }}" aria-label="Where these pairings come from" aria-describedby="yw-gw-sk" style="display:inline-grid;place-items:center;width:20px;height:20px;margin:-4px 0 -4px 1px;padding:0;border:0;background:transparent;cursor:pointer;color:var(--color-neutral-600);vertical-align:middle"><i class="ph ph-info" style="font-size:13px"></i></button></div>
               <div style="display:flex;flex-direction:column">
-                <sc-for list="{{ sk.pairs }}" as="pr" hint-placeholder-count="3">
+                <sc-for list="{{ gw.foods }}" as="pr" hint-placeholder-count="3">
                   <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid var(--color-divider)">
                     <i class="ph {{ pr.icon }}" style="font-size:18px;color:var(--color-accent-600);flex:none;margin-top:1px"></i>
                     <div style="flex:1;min-width:0">
@@ -1052,9 +1172,10 @@ textarea::placeholder,input::placeholder{font-style:italic}
                   </div>
                 </sc-for>
               </div>
-            </sc-if>
-            <sc-if value="{{ sk.noPairs }}"><div style="font-size:13px;color:var(--color-neutral-700);line-height:1.5;text-wrap:pretty">No pairings for this one yet. By its style, try it with grilled or savoury dishes.</div></sc-if>
-          </div>
+              <sc-if value="{{ gw.hasNote }}"><div style="font-size:12px;color:var(--color-neutral-700);line-height:1.5;text-wrap:pretty">{{ gw.note }}</div></sc-if>
+              <sc-if value="{{ gw.hasServed }}"><div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--color-neutral-700);line-height:1.5"><i class="ph ph-thermometer-simple" style="font-size:15px;color:var(--color-neutral-600);flex:none;margin-top:1px"></i><span>Usually served {{ gw.served }}</span></div></sc-if>
+            </div>
+          </sc-if>
 
           <div style="padding:24px 20px 0;display:flex;flex-direction:column;gap:10px">
             <div style="display:flex;align-items:baseline;justify-content:space-between"><h6 style="margin:0;font-size:11px;letter-spacing:.1em;color:var(--color-neutral-600)">What others noticed</h6><span style="font-size:11px;color:var(--color-neutral-700)">{{ sk.notesMeta }}</span></div>
@@ -1126,6 +1247,25 @@ textarea::placeholder,input::placeholder{font-style:italic}
             <sc-if value="{{ bt.fromCatalogue }}"><div style="font-size:11px;color:var(--color-neutral-700);margin-top:8px">Catalogue data · <a href="https://sakenowa.com" target="_blank" rel="noopener" style="color:var(--color-neutral-700);text-decoration:underline;text-decoration-color:var(--color-neutral-500);text-underline-offset:2px">Powered by Sakenowa ↗</a></div></sc-if>
             <sc-if value="{{ bt.isOwn }}"><div style="font-size:12px;color:var(--color-neutral-700);margin-top:8px;line-height:1.5;text-wrap:pretty">{{ bt.ownLine }}</div></sc-if>
             <sc-if value="{{ bt.aiReading }}"><button onClick="{{ openProv }}" style="display:inline-flex;align-items:center;gap:4px;align-self:flex-start;min-height:32px;margin:2px 0 -6px;padding:0;border:0;background:transparent;cursor:pointer;font-family:var(--font-body);font-size:11px;color:var(--color-neutral-600)"><i class="ph ph-scan" style="font-size:12px"></i>Reading by AI<i class="ph ph-caret-right" style="font-size:10px"></i></button></sc-if>
+            <sc-if value="{{ ph.has }}">
+              <div style="display:flex;align-items:flex-end;gap:12px;margin-top:12px">
+                <div style="width:84px;height:112px;flex:none;border-radius:8px;background:repeating-linear-gradient(135deg,#2a2826,#2a2826 5px,#33302d 5px,#33302d 10px);display:grid;place-items:end center;padding-bottom:6px;box-sizing:border-box"><span style="font-family:ui-monospace,monospace;font-size:9px;color:var(--color-neutral-700)">your photo</span></div>
+                <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+                  <div style="font-size:12px;color:var(--color-neutral-600)">{{ ph.meta }}</div>
+                  <div style="display:flex;gap:14px"><button class="btn btn-ghost" style="height:40px;font-size:13px;gap:5px;padding-inline:0" onClick="{{ ph.replace }}"><i class="ph ph-camera-rotate" style="font-size:15px"></i>Replace</button><button class="btn btn-ghost" style="height:40px;font-size:13px;gap:5px;padding-inline:0" onClick="{{ ph.askDelete }}"><i class="ph ph-trash" style="font-size:15px"></i>Delete</button></div>
+                </div>
+              </div>
+              <sc-if value="{{ ph.confirm }}">
+                <div role="alert" style="margin-top:8px;padding:12px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm);display:flex;flex-direction:column;gap:10px;animation:yw-fade .2s ease-out">
+                  <div style="font-size:13px;line-height:1.5;text-wrap:pretty">Delete this photo? It goes from this page and from your journal and cellar rows. Your tastings stay.</div>
+                  <div style="display:flex;gap:8px">
+                    <button class="btn btn-ghost" style="flex:1;height:40px;font-size:13px" onClick="{{ ph.cancelDelete }}">Keep it</button>
+                    <button onClick="{{ ph.confirmDelete }}" style="flex:1;height:40px;font-size:13px;border-radius:var(--radius-md);border:1px solid var(--color-accent-700);background:var(--color-accent-100);color:var(--color-accent-800);font-family:var(--font-body);cursor:pointer">Delete photo</button>
+                  </div>
+                </div>
+              </sc-if>
+            </sc-if>
+            <sc-if value="{{ ph.none }}"><button class="btn btn-ghost" style="align-self:flex-start;height:40px;font-size:13px;gap:6px;padding-inline:0;margin-top:4px" onClick="{{ ph.add }}"><i class="ph ph-camera-plus" style="font-size:16px"></i>Add a photo of your bottle</button></sc-if>
           </div>
           <sc-if value="{{ skPanelClosed }}">
             <div style="display:flex;gap:8px;padding:10px 20px 0">
@@ -1291,6 +1431,26 @@ textarea::placeholder,input::placeholder{font-style:italic}
                 </sc-if>
                 <button onClick="{{ openSimilar }}" style="display:flex;align-items:center;gap:8px;padding:11px 12px;border-radius:var(--radius-md);border:1px solid var(--color-divider);background:transparent;cursor:pointer;text-align:left;font-family:var(--font-body);color:var(--color-text);font-size:13px"><i class="ph ph-arrows-split" style="font-size:17px;color:var(--color-accent-600)"></i><span style="flex:1">Sakes similar to {{ bt.line }}</span><i class="ph ph-caret-right" style="font-size:14px;color:var(--color-neutral-500)"></i></button>
               </section>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ gw.has }}">
+            <div style="padding:24px 20px 0;display:flex;flex-direction:column;gap:8px">
+              <h6 style="margin:0;font-size:11px;letter-spacing:.1em;color:var(--color-neutral-600)">Goes with</h6>
+              <div id="yw-gw-bt" style="font-size:11px;color:var(--color-neutral-700);line-height:1.5;text-wrap:pretty;word-break:keep-all">{{ gw.caveat }} <button onClick="{{ openPairInfo }}" aria-label="Where these pairings come from" aria-describedby="yw-gw-bt" style="display:inline-grid;place-items:center;width:20px;height:20px;margin:-4px 0 -4px 1px;padding:0;border:0;background:transparent;cursor:pointer;color:var(--color-neutral-600);vertical-align:middle"><i class="ph ph-info" style="font-size:13px"></i></button></div>
+              <div style="display:flex;flex-direction:column">
+                <sc-for list="{{ gw.foods }}" as="pr" hint-placeholder-count="3">
+                  <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid var(--color-divider)">
+                    <i class="ph {{ pr.icon }}" style="font-size:18px;color:var(--color-accent-600);flex:none;margin-top:1px"></i>
+                    <div style="flex:1;min-width:0">
+                      <div style="font-size:14px">{{ pr.food }}</div>
+                      <div style="font-size:12px;color:var(--color-neutral-600);margin-top:2px;line-height:1.45;text-wrap:pretty">{{ pr.why }}</div>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+              <sc-if value="{{ gw.hasNote }}"><div style="font-size:12px;color:var(--color-neutral-700);line-height:1.5;text-wrap:pretty">{{ gw.note }}</div></sc-if>
+              <sc-if value="{{ gw.hasServed }}"><div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--color-neutral-700);line-height:1.5"><i class="ph ph-thermometer-simple" style="font-size:15px;color:var(--color-neutral-600);flex:none;margin-top:1px"></i><span>Usually served {{ gw.served }}</span></div></sc-if>
             </div>
           </sc-if>
 
@@ -1518,6 +1678,7 @@ textarea::placeholder,input::placeholder{font-style:italic}
                   <div style="font-family:var(--font-heading);font-weight:500;font-size:17px">Your journal starts with one star</div>
                   <div style="font-size:13px;color:var(--color-neutral-600);max-width:240px;text-wrap:pretty">Scan or type any sake and rate it. Every tasting lands here, newest first.</div>
                   <button class="btn btn-primary" style="height:44px;font-size:13px;gap:7px;margin-top:6px" onClick="{{ goScan }}"><i class="ph ph-camera" style="font-size:16px"></i>Scan a label</button>
+                  <sc-if value="{{ showSampleLink }}"><button class="btn btn-ghost" style="height:44px;font-size:13px;gap:6px" onClick="{{ openSample }}"><i class="ph ph-books" style="font-size:16px"></i>Look through a sample collection</button></sc-if>
                 </div>
               </sc-if>
               <sc-if value="{{ showBackupNudge }}">
@@ -1545,6 +1706,7 @@ textarea::placeholder,input::placeholder{font-style:italic}
                       <div style="font-family:var(--font-heading);font-size:18px;line-height:1">{{ e.day }}</div>
                       <div style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600)">{{ e.mon }}</div>
                     </div>
+                    <sc-if value="{{ e.hasPhoto }}"><div aria-hidden="true" style="width:36px;height:48px;flex:none;border-radius:6px;background:repeating-linear-gradient(135deg,#2a2826,#2a2826 5px,#33302d 5px,#33302d 10px)"></div></sc-if>
                     <div style="flex:1;min-width:0">
                       <div style="font-family:var(--font-heading);font-weight:500;font-size:16px">{{ e.name }}</div>
                       <sc-if value="{{ e.hasKana }}"><div style="font-size:12px;color:var(--color-neutral-600);margin-top:1px" lang="ja">{{ e.kana }}</div></sc-if>
@@ -1566,6 +1728,7 @@ textarea::placeholder,input::placeholder{font-style:italic}
               <div style="font-size:12px;color:var(--color-neutral-700);padding:2px 0 8px">{{ cellarSummary }}</div>
               <sc-for list="{{ cellarRows }}" as="c" hint-placeholder-count="3">
                 <div style="display:flex;gap:13px;padding:13px 0;border-bottom:1px solid var(--color-divider)">
+                  <sc-if value="{{ c.hasPhoto }}"><div aria-hidden="true" style="width:40px;height:54px;flex:none;border-radius:6px;background:repeating-linear-gradient(135deg,#2a2826,#2a2826 5px,#33302d 5px,#33302d 10px)"></div></sc-if>
                   <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px">
                     <div style="display:flex;align-items:baseline;gap:8px">
                       <div style="font-family:var(--font-heading);font-weight:500;font-size:15px;flex:1;min-width:0">{{ c.name }}</div>
@@ -2199,6 +2362,66 @@ textarea::placeholder,input::placeholder{font-style:italic}
     </div>
   </sc-if>
 
+  <sc-if value="{{ partsOpen }}">
+    <div style="position:absolute;inset:0;background:rgba(0,0,0,.55);display:flex;flex-direction:column;justify-content:flex-end;z-index:8;animation:yw-fade .2s ease-out">
+      <button onClick="{{ closeParts }}" aria-label="Dismiss" style="flex:1;border:0;background:transparent;cursor:pointer"></button>
+      <div role="dialog" aria-labelledby="yw-parts-title" style="background:var(--color-surface);border-radius:20px 20px 0 0;padding:10px 20px 26px;box-shadow:var(--shadow-lg);animation:yw-sheet .26s ease-out;display:flex;flex-direction:column;gap:12px;max-height:88%;overflow-y:auto">
+        <span style="width:36px;height:4px;border-radius:2px;background:var(--color-neutral-400);align-self:center;flex:none"></span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div id="yw-parts-title" style="font-family:var(--font-heading);font-weight:500;font-size:19px;flex:1">Which side to photograph</div>
+          <button class="btn" style="padding-inline:2px" onClick="{{ closeParts }}" aria-label="Close"><i class="ph ph-x" style="font-size:18px"></i></button>
+        </div>
+        <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.55;text-wrap:pretty">You don’t need to read Japanese to pick the right side. Look for these shapes.</div>
+        <svg viewBox="0 0 300 150" role="img" aria-label="A bottle from the front and from the back, with the three parts marked" style="width:100%;height:auto;display:block;margin:4px 0 2px">
+          <g fill="none" stroke="#8a867e" stroke-width="1.5">
+            <path d="M70 12h20v22c0 8 16 14 16 30v74a6 6 0 0 1-6 6H60a6 6 0 0 1-6-6V64c0-16 16-22 16-30z"/>
+            <path d="M200 12h20v22c0 8 16 14 16 30v74a6 6 0 0 1-6 6h-40a6 6 0 0 1-6-6V64c0-16 16-22 16-30z"/>
+          </g>
+          <rect x="60" y="66" width="40" height="64" rx="3" fill="#2d2b29" stroke="#cf8a6e" stroke-width="1.5"/>
+          <text x="80" y="108" text-anchor="middle" font-size="30" fill="#e8e4dd" font-family="serif">酒</text>
+          <rect x="190" y="70" width="40" height="34" rx="2" fill="#2d2b29" stroke="#cf8a6e" stroke-width="1.5"/>
+          <g stroke="#a8a49c" stroke-width="1.2"><path d="M195 77h30M195 82h26M195 87h30M195 92h22"/></g>
+          <text x="210" y="101" text-anchor="middle" font-size="7" fill="#e8e4dd" font-family="sans-serif">15%</text>
+          <rect x="190" y="110" width="40" height="18" rx="2" fill="#383634" stroke="#cf8a6e" stroke-width="1.5" stroke-dasharray="3 2"/>
+          <g stroke="#a8a49c" stroke-width="1.2"><path d="M195 116h28M195 121h20"/></g>
+          <g font-family="sans-serif" font-size="10" fill="#e0a88f" text-anchor="middle"><circle cx="40" cy="98" r="8" fill="none" stroke="#cf8a6e" stroke-width="1.2"/><text x="40" y="101.5">1</text><circle cx="254" cy="87" r="8" fill="none" stroke="#cf8a6e" stroke-width="1.2"/><text x="254" y="90.5">2</text><circle cx="254" cy="119" r="8" fill="none" stroke="#cf8a6e" stroke-width="1.2"/><text x="254" y="122.5">3</text></g>
+          <g font-family="sans-serif" font-size="10" fill="#a8a49c" text-anchor="middle"><text x="80" y="148">Front</text><text x="210" y="148">Back or side</text></g>
+        </svg>
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <span style="width:22px;height:22px;border-radius:50%;border:1.5px solid #cf8a6e;color:#e0a88f;display:grid;place-items:center;font-size:11px;font-weight:500;flex:none;box-sizing:border-box">1</span>
+          <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px"><div style="font-size:14px">The name</div><div style="font-size:13px;color:var(--color-neutral-700);line-height:1.55;text-wrap:pretty">The largest characters on the bottle, often brushstrokes. Usually on the front.</div></div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <span style="width:22px;height:22px;border-radius:50%;border:1.5px solid #cf8a6e;color:#e0a88f;display:grid;place-items:center;font-size:11px;font-weight:500;flex:none;box-sizing:border-box">2</span>
+          <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px"><div style="font-size:14px">The details</div><div style="font-size:13px;color:var(--color-neutral-700);line-height:1.55;text-wrap:pretty">A smaller label with several lines of small print, numbers with a % sign, and a date. Usually on the back or side. It says which bottling this is.</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px"><span style="display:inline-flex;flex-direction:column;align-items:flex-start;gap:2px;padding:6px 9px;border-radius:6px;background:var(--color-bg)"><span lang="ja" style="font-size:15px;color:var(--color-text);line-height:1.1">精米歩合</span><span style="font-size:11px;color:var(--color-neutral-600)">polishing</span></span><span style="display:inline-flex;flex-direction:column;align-items:flex-start;gap:2px;padding:6px 9px;border-radius:6px;background:var(--color-bg)"><span lang="ja" style="font-size:15px;color:var(--color-text);line-height:1.1">アルコール分</span><span style="font-size:11px;color:var(--color-neutral-600)">alcohol</span></span><span style="display:inline-flex;flex-direction:column;align-items:flex-start;gap:2px;padding:6px 9px;border-radius:6px;background:var(--color-bg)"><span lang="ja" style="font-size:15px;color:var(--color-text);line-height:1.1">15%</span><span style="font-size:11px;color:var(--color-neutral-600)">a % sign</span></span></div></div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <span style="width:22px;height:22px;border-radius:50%;border:1.5px solid #cf8a6e;color:#e0a88f;display:grid;place-items:center;font-size:11px;font-weight:500;flex:none;box-sizing:border-box">3</span>
+          <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px"><div style="font-size:14px">The importer’s sticker</div><div style="font-size:13px;color:var(--color-neutral-700);line-height:1.55;text-wrap:pretty">A printed sticker in German, English or French, usually on the back. It often spells the name in Latin letters.</div></div>
+        </div>
+        <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.55;text-wrap:pretty">Start with the front. If the result can’t tell which bottling it is, it will ask for the back.</div>
+        <button class="btn btn-ghost" style="height:44px;font-size:13px;gap:6px;align-self:flex-start;padding-inline:0" onClick="{{ partsToGuide }}"><i class="ph ph-book-open-text" style="font-size:16px"></i>How to read a label</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ pairInfoOpen }}">
+    <div style="position:absolute;inset:0;background:rgba(0,0,0,.55);display:flex;flex-direction:column;justify-content:flex-end;z-index:8;animation:yw-fade .2s ease-out">
+      <button onClick="{{ closePairInfo }}" aria-label="Dismiss" style="flex:1;border:0;background:transparent;cursor:pointer"></button>
+      <div role="dialog" aria-labelledby="yw-pair-title" style="word-break:keep-all;background:var(--color-surface);border-radius:20px 20px 0 0;padding:10px 20px 26px;box-shadow:var(--shadow-lg);animation:yw-sheet .26s ease-out;display:flex;flex-direction:column;gap:12px;max-height:88%;overflow-y:auto">
+        <span style="width:36px;height:4px;border-radius:2px;background:var(--color-neutral-400);align-self:center;flex:none"></span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div id="yw-pair-title" style="font-family:var(--font-heading);font-weight:500;font-size:19px;flex:1">Where these pairings come from</div>
+          <button class="btn" style="padding-inline:2px" onClick="{{ closePairInfo }}" aria-label="Close"><i class="ph ph-x" style="font-size:18px"></i></button>
+        </div>
+        <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.55;text-wrap:pretty">These are general pairings for a kind of sake, not notes written for this one. Each kind comes from a named source: the Sake Service Institute’s types — kunshu (薫酒) fragrant, sōshu (爽酒) light, junshu (醇酒) rich — and published guidance for koshu, kijoshu, sparkling and nigori.</div>
+        <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.55;text-wrap:pretty"><span style="color:var(--color-text)">Why this kind here:</span> {{ gw.why }}</div>
+        <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.55;text-wrap:pretty">Bottlings and kitchens vary. Take it as a place to start.</div>
+        <div style="display:flex;flex-direction:column;gap:2px;font-size:12px;color:var(--color-neutral-600);line-height:1.5"><div>Sources</div><div style="color:var(--color-neutral-800)">Sake Service Institute (SSI) · the four sake types</div><div style="color:var(--color-neutral-800)">Japan Sake and Shochu Makers Association · serving temperatures</div></div>
+      </div>
+    </div>
+  </sc-if>
+
   <sc-if value="{{ rankInfoOpen }}">
     <div style="position:absolute;inset:0;background:rgba(0,0,0,.55);display:flex;flex-direction:column;justify-content:flex-end;z-index:8;animation:yw-fade .2s ease-out">
       <button onClick="{{ closeRankInfo }}" aria-label="Dismiss" style="flex:1;border:0;background:transparent;cursor:pointer"></button>
@@ -2225,7 +2448,7 @@ textarea::placeholder,input::placeholder{font-style:italic}
         </div>
         <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.55;text-wrap:pretty">An AI model read these words off your photo. It can misread a character or run two names together, so check them against the label.</div>
         <sc-if value="{{ provBrewery }}"><div style="font-size:13px;color:var(--color-neutral-700);line-height:1.55;text-wrap:pretty"><span style="color:var(--color-text)">Brewery not on this label.</span> The label printed the name alone. The brewery shown is the one the catalogue lists for that name, not one we read, and two breweries can use the same name. If the back label names another brewery, tap “Not this one”.</div></sc-if>
-        <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.55;text-wrap:pretty">How sure it was: <span style="color:var(--color-text)">{{ ocConfidence }}</span>. Your photo is discarded once it has been read.</div>
+        <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.55;text-wrap:pretty">How sure it was: <span style="color:var(--color-text)">{{ ocConfidence }}</span>. Your photo is discarded once it has been read, unless you tick “Keep this photo”.</div>
       </div>
     </div>
   </sc-if>
@@ -2357,7 +2580,7 @@ textarea::placeholder,input::placeholder{font-style:italic}
 </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;firstRun&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;market&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;EU (Germany)&quot;,&quot;Japan&quot;],&quot;default&quot;:&quot;EU (Germany)&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;askEnabled&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;menuScan&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Scan&quot;},&quot;camera&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Allowed&quot;,&quot;Permission denied&quot;,&quot;Desktop / none&quot;],&quot;default&quot;:&quot;Allowed&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;iosWebview&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;twoToneBars&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;scanOutcome&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Matched&quot;,&quot;Matched, best guess&quot;,&quot;Matched, line only&quot;,&quot;Matched, your bottling fits&quot;,&quot;Matched, brewery not on label&quot;,&quot;Brand only&quot;,&quot;Brewery only&quot;,&quot;Several fit&quot;,&quot;Not in catalogue&quot;,&quot;Not sake&quot;,&quot;Menu in photo&quot;,&quot;Shelf in photo&quot;,&quot;Two bottles&quot;,&quot;No name on this side&quot;,&quot;No bottle&quot;,&quot;Unclear, recent scans agree&quot;,&quot;Unclear, nothing read&quot;,&quot;Rate limited&quot;,&quot;Something went wrong&quot;,&quot;Photo unusable&quot;],&quot;default&quot;:&quot;Matched&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Scan&quot;},&quot;guidePublic&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Sake guide&quot;},&quot;ratingLive&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;notSakeDrink&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Shochu&quot;,&quot;Awamori&quot;,&quot;Umeshu&quot;,&quot;Liqueur&quot;,&quot;Other drink&quot;],&quot;default&quot;:&quot;Shochu&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Scan&quot;},&quot;listPalate&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;From journal&quot;,&quot;Under three tastings&quot;],&quot;default&quot;:&quot;From journal&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Scan&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;firstRun&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;market&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;EU (Germany)&quot;,&quot;Japan&quot;],&quot;default&quot;:&quot;EU (Germany)&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;askEnabled&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;menuScan&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Scan&quot;},&quot;camera&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Allowed&quot;,&quot;Permission denied&quot;,&quot;Desktop / none&quot;],&quot;default&quot;:&quot;Allowed&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;iosWebview&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;twoToneBars&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;scanOutcome&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Matched&quot;,&quot;Matched, best guess&quot;,&quot;Matched, line only&quot;,&quot;Matched, your bottling fits&quot;,&quot;Matched, brewery not on label&quot;,&quot;Brand only&quot;,&quot;Brewery only&quot;,&quot;Several fit&quot;,&quot;Not in catalogue&quot;,&quot;Not sake&quot;,&quot;Menu in photo&quot;,&quot;Shelf in photo&quot;,&quot;Two bottles&quot;,&quot;No name on this side&quot;,&quot;No bottle&quot;,&quot;Unclear, recent scans agree&quot;,&quot;Unclear, nothing read&quot;,&quot;Rate limited&quot;,&quot;Something went wrong&quot;,&quot;Photo unusable&quot;],&quot;default&quot;:&quot;Matched&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Scan&quot;},&quot;guidePublic&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Sake guide&quot;},&quot;ratingLive&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;notSakeDrink&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Shochu&quot;,&quot;Awamori&quot;,&quot;Umeshu&quot;,&quot;Liqueur&quot;,&quot;Other drink&quot;],&quot;default&quot;:&quot;Shochu&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Scan&quot;},&quot;listPalate&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;From journal&quot;,&quot;Under three tastings&quot;],&quot;default&quot;:&quot;From journal&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Scan&quot;},&quot;freeScans&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Plenty&quot;,&quot;One left&quot;,&quot;None left&quot;],&quot;default&quot;:&quot;Plenty&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Scan&quot;}}">
 const SEED = [
   { id: 4, day: '20', mon: 'Sep', ago: '1d', name: 'Rihaku Wandering Poet', brewery: 'Rihaku Shuzō · Shimane', note: '“Melon and steamed rice, then a dry snap. Easy to like.”', rating: 4, hasDetail: false },
   { id: 3, day: '19', mon: 'Sep', ago: '2d', name: 'Kidoizumi AFS', brewery: 'Kidoizumi Shuzō · Chiba', note: '“Sour apple, almost cider — nothing like the others.”', rating: 4.5, hasDetail: true },
@@ -2526,6 +2749,29 @@ const PAIRINGS = {
   ],
 }
 const AXIS_ORDER = ['Floral', 'Mellow', 'Rich', 'Mild', 'Dry', 'Light']
+const AXIS_JP = ['華やか', '芳醇', '重厚', '穏やか', 'ドライ', '軽快']
+// Q (#336): hand-curated pairing rows by kind of sake, each with a named source. Sample copy.
+const PAIR_TYPES = {
+  kunshu: { label: 'kunshu (薫酒), fragrant sake', served: 'chilled: hanahie (花冷え), about 10°C, or suzuhie (涼冷え), about 15°C', foods: [
+    { icon: 'ph-fish-simple', food: 'Sashimi, white fish', why: 'The aroma stays in front and the fish stays clean.' },
+    { icon: 'ph-leaf', food: 'Lightly dressed salads, steamed vegetables', why: 'Nothing heavy to fight the fruit.' },
+    { icon: 'ph-shrimp', food: 'Shellfish, simply cooked', why: 'Sweetness on both sides.' }] },
+  junshu: { label: 'junshu (醇酒), rich sake', served: 'at room temperature or warm: nurukan (ぬる燗), about 40°C', foods: [
+    { icon: 'ph-fish', food: 'Grilled oily fish', why: 'Body and acidity carry the fat.' },
+    { icon: 'ph-cooking-pot', food: 'Simmered dishes, oden', why: 'Savoury depth on both sides.' },
+    { icon: 'ph-cheese', food: 'Aged hard cheese', why: 'Rich meets rich.' }] },
+  soshu: { label: 'sōshu (爽酒), light sake', served: 'cold: reishu (冷酒), 5–10°C', foods: [
+    { icon: 'ph-fish-simple', food: 'Sashimi, cold tofu', why: 'Light and clean with light and clean.' },
+    { icon: 'ph-leaf', food: 'Vegetables, tempura', why: 'Washes the oil away.' }] },
+  koshu: { label: 'koshu (古酒), aged sake', served: 'at room temperature or warm: nurukan (ぬる燗), about 40°C', foods: [
+    { icon: 'ph-cake', food: 'Dark chocolate, dried fruit', why: 'Caramel and nut against bitter and sweet.' },
+    { icon: 'ph-cheese', food: 'Blue cheese', why: 'Strong enough to stand up to it.' },
+    { icon: 'ph-bowl-food', food: 'Soy-glazed and braised dishes', why: 'Soy and age share a note.' }] },
+}
+const CHART_TYPE = { 'Kidoizumi AFS': 'junshu', 'Kamoshibito Kuheiji': 'kunshu', 'Akishika Okuharuka': 'junshu', 'Rihaku': 'kunshu', 'Dassai 45': 'kunshu' }
+// M (#451): Sakenowa flavour tags and the words that find them. Sample data.
+const FLAVOR_TAGS = { 'Kamoshibito Kuheiji': ['グレープフルーツ', '柑橘', 'ワイン'], 'Kidoizumi AFS': ['酸味', 'ワイン'], 'Dassai 45': ['メロン'], 'Jikon Tokubetsu Junmai': ['グレープフルーツ', 'メロン'], 'Rihaku': ['メロン'] }
+const FLAVOR_WORDS = { grapefruit: 'グレープフルーツ', pampelmuse: 'グレープフルーツ', melon: 'メロン', melone: 'メロン', citrus: '柑橘', zitrus: '柑橘', sour: '酸味', sauer: '酸味', wine: 'ワイン', wein: 'ワイン' }
 // Euclidean (L2) distance on the six 0–100 axes; magnitude carries signal, so not cosine. Shown as "% alike" = 1 − d / max distance.
 const l2Sim = (a, b) => { let d = 0; for (let i = 0; i < 6; i++) d += (a[i] - b[i]) ** 2; return 1 - Math.sqrt(d) / (100 * Math.sqrt(6)) }
 const topAxes = (p, n) => AXIS_ORDER.map((l, i) => ({ l, v: p[i] })).sort((a, b) => b.v - a.v).slice(0, n).map((x) => x.l)
@@ -2594,7 +2840,7 @@ const WISH_SEED = [
 // §7 v2: a list read (menu or shelf). Sample data; cat = CATALOGUE index.
 const RIHAKU_LINES = [{ asRead: '李白 純米吟醸 Wandering Poet', price: '¥1,100', bt: 'Rihaku Wandering Poet' }, { asRead: '李白 特別純米 超辛口', price: '¥950', bt: 'Rihaku Tokubetsu Junmai Chōkarakuchi' }, { asRead: '李白 山田錦55 原酒 生', price: '¥1,300', bt: 'Rihaku Yamada Nishiki 55 Genshu' }]
 const MENU = [
-  { cat: 3, asRead: '秋鹿 奥鹿', read: 'Junmai · aged', price: '¥1,100', warm: true },
+  { cat: 3, asRead: '秋鹿 奥鹿 古酒', read: 'Junmai · Koshu', price: '¥1,100', warm: true, unusual: { label: 'Koshu (古酒), aged sake', key: 'koshu' } },
   { cat: 4, asRead: '神亀 甲子', read: 'Junmai', price: '¥900', warm: true },
   { cat: 8, asRead: '李白', lines: RIHAKU_LINES },
   { cat: 2, asRead: '寺田本家 香取90', read: 'Kimoto', price: '¥1,000', warm: true },
@@ -2859,6 +3105,143 @@ class Component extends DCLogic {
     this.setState({ view: 'result', own, addBt: null, pick: { ...p, manual: !!manual, bottling: !!(p.bottling || manual), own: !!(p.own || manual) }, bestGuess: false, query: '', dn: {}, r: { rating: 0, note: '', tags: [], id: null, toast: false, pop: 0 } })
   }
 
+  tbInfo(s, view) {
+    const pk = s.pick || {}
+    const lr = pk.labelRead
+    if (view !== 'result' || !lr || pk.bottling || pk.manual) return { show: false }
+    const fits = Object.keys(s.own || {}).some((n) => { const o = s.own[n]; return o.line === pk.name && o.grade === lr.grade && (o.styles || []).join() === (lr.styles || []).join() })
+    return { show: !fits, name: composeName(pk.name, lr), lr }
+  }
+
+  v18Vals(s, view) {
+    const pk = s.pick || { ...CATALOGUE[0], manual: false }
+    const photos = s.photos || {}
+    const working = s.scan === 'working'
+    const paired = !!s.paired
+    const pf = s.photoFor
+    const cam = {}
+    if (view === null || view === undefined) {
+      const kind = s.pairKind || 'back'
+      const PT = { back: ['Frame the small label with numbers', 'Usually on the back: small print, a % sign and a date.'], side: ['Frame the side label', 'Plain print, often in Latin letters.'], sticker: ['Frame the importer’s sticker', 'A printed sticker in German, English or French.'] }
+      if (pf) Object.assign(cam, { scanTitle: 'Photograph your bottle', scanHint: 'Just a photo. Nothing is read, and it doesn’t use a scan.', camHintOn: true, camLabelLink: false })
+      else if (paired) Object.assign(cam, { scanTitle: working ? 'Reading both photos…' : PT[kind][0], scanHint: working ? 'Reading this photo together with your last one' : PT[kind][1], camHintOn: true, camLabelLink: false })
+      else if (!working) Object.assign(cam, { scanTitle: 'Fill the frame with one label' })
+    }
+    const parts = !working && !paired && !pf && (s.scanCount || 0) < 3
+    // I: keep photo
+    const ti = this.tbInfo(s, view)
+    const tb = s.tb || 'label'
+    const target = ti.show && tb === 'label' ? ti.name : pk.name
+    const keepOn = !!s.keep
+    // J / R3: one nudge, never more
+    const left = this.pp.freeScans ?? 'Plenty'
+    const signed = !!(s.auth || {}).signedIn
+    let nd = null
+    if (view === 'result' && (!s.pick || pk.photo) && !pk.manual) {
+      if (s.bestGuess) nd = { kind: 'side', icon: 'ph-arrows-clockwise', text: 'The name is often printed plainly on the side or on the importer’s sticker.', btn: 'Scan the side' }
+      else if (!pk.labelRead && !pk.bottling) nd = { kind: 'back', icon: 'ph-list-numbers', text: 'The small label with numbers says which bottling this is.', btn: 'Scan it' }
+    }
+    if (view === 'outcome' && s.outcome === 'Not in catalogue') nd = { kind: 'sticker', icon: 'ph-identification-card', text: 'The importer’s sticker often spells the name in Latin letters.', btn: 'Scan the sticker' }
+    if (nd && !signed && left === 'None left') nd = null
+    const note = nd && !signed && left === 'One left' ? 'Uses your last free scan for the next 24 hours.' : ''
+    // photo block on sake / bottling pages
+    const pn = s.sakeName || ''
+    const ph = photos[pn]
+    const yours = s.entries.some((e) => e.name === pn) || (s.cellar || CELLAR_SEED).some((c) => c.name === pn)
+    const toCam = () => this.setState({ tab: 'scan', view: null, scan: 'idle', photoFor: pn, photoBack: { tab: s.tab, view } })
+    // Q: goes with
+    const gwFor = (name) => {
+      const b = BOTTLINGS[name] || (s.own || {})[name]
+      if (b) {
+        const st = (b.flags || b.styles || []).map((x) => x.toLowerCase())
+        const named = ['koshu', 'kijoshu', 'sparkling', 'nigori'].find((x) => st.indexOf(x) >= 0)
+        if (named && PAIR_TYPES[named]) return { t: named, caveat: 'Pairings often given for ' + PAIR_TYPES[named].label + '.', why: 'the bottling names its style, ' + named + '.' }
+        if (st.some((x) => ['genshu', 'muroka', 'taruzake'].indexOf(x) >= 0)) return null
+        if (st.some((x) => x === 'kimoto' || x === 'yamahai')) return { t: 'junshu', caveat: 'Kimoto and yamahai are usually rich: pairings often given for ' + PAIR_TYPES.junshu.label + '.', why: 'the bottling is made the kimoto or yamahai way.' }
+        if (st.length === 1 && st[0] === 'nama') return { t: 'soshu', caveat: 'Nama is usually light and fresh: pairings often given for ' + PAIR_TYPES.soshu.label + '.', why: 'the bottling is nama and names no other style.' }
+        if (/ginj/i.test(b.grade || '')) return { t: 'kunshu', caveat: b.grade + ' is usually fragrant: pairings often given for ' + PAIR_TYPES.kunshu.label + '.', why: 'its grade, ' + b.grade + ', is in the ginjō family.' }
+        if (!b.line || !CHART_TYPE[b.line]) return null
+        const t = CHART_TYPE[b.line]
+        return { t, caveat: 'From the flavour chart (Sakenowa), for the whole ' + b.line + ' line: pairings often given for ' + PAIR_TYPES[t].label + '. Bottlings vary.', why: 'the ' + b.line + ' line’s flavour chart, against the catalogue average.' }
+      }
+      const t = CHART_TYPE[name]
+      return t ? { t, caveat: 'From the flavour chart (Sakenowa): pairings often given for ' + PAIR_TYPES[t].label + '.', why: 'its flavour chart, against the catalogue average.' } : null
+    }
+    const g = (view === 'sake' || view === 'bottling') ? gwFor(pn) : null
+    const T = g ? PAIR_TYPES[g.t] : null
+    const hasServe = view === 'sake' ? ((SAKE_INFO[pn] || {}).tempsOn || []).length > 0 : ((BOTTLINGS[pn] || {}).tempsOn || []).length > 0
+    // M: browse
+    const q = (s.query || '').trim().toLowerCase()
+    const br = s.br || {}
+    const prefOf = (c) => (c.brewery.split(' · ')[1] || '')
+    const srch = {}
+    if (view === 'search') {
+      const row = (c, extra) => ({ ...c, hasAlt: false, alt: '', hasTag: false, tagJa: '', tagEn: '', meta: c.brewery, tasted: s.entries.some((e) => e.name === c.name), pick: () => this.pickSake(c), ...(extra || {}) })
+      const fw = FLAVOR_WORDS[q]
+      if (fw) {
+        const L = CATALOGUE.filter((c) => (FLAVOR_TAGS[c.name] || []).indexOf(fw) >= 0)
+        srch.searchHeading = L.length + (L.length === 1 ? ' sake' : ' sakes') + ' tagged “' + q + '”'
+        srch.searchResults = L.map((c) => row(c, { hasTag: true, tagJa: fw, tagEn: q }))
+        srch.noResults = L.length === 0
+      } else if (!q && (br.pref || br.axis)) {
+        const ai = AXIS_ORDER.indexOf(br.axis)
+        const ks = Object.keys(PROFILES)
+        const avg = ai >= 0 ? ks.reduce((n, k) => n + PROFILES[k][ai], 0) / ks.length : 0
+        const L = CATALOGUE.filter((c) => (!br.pref || prefOf(c) === br.pref) && (!br.axis || (PROFILES[c.name] && (br.dir === 'more' ? PROFILES[c.name][ai] >= avg + 12 : PROFILES[c.name][ai] <= avg - 12)))).sort((a, b) => a.name.localeCompare(b.name))
+        srch.searchHeading = L.length + (L.length === 1 ? ' sake' : ' sakes') + ' · ' + [br.pref, br.axis && (br.dir === 'more' ? 'more ' : 'less ') + br.axis.toLowerCase()].filter(Boolean).join(' · ') + ' · A–Z'
+        srch.searchResults = L.map((c) => row(c))
+        srch.noResults = false
+      }
+    }
+    const setBr = (p) => this.setState({ br: { ...br, ...p } })
+    const chip = (on, open) => ({ border: on ? 'var(--color-accent-500)' : 'var(--color-divider)', bg: on ? 'var(--color-accent-100)' : 'transparent', fg: on ? 'var(--color-accent-700)' : 'var(--color-neutral-800)', caret: open ? 'ph-caret-up' : 'ph-caret-down', open })
+    const prefs = Array.from(new Set(CATALOGUE.map(prefOf))).filter(Boolean).sort().map((p) => ({ label: p, n: String(CATALOGUE.filter((c) => prefOf(c) === p).length) }))
+    return {
+      ...cam,
+      camPaired: paired && !pf, unpair: () => this.setState({ paired: false }),
+      camParts: parts, ...(parts ? { camLabelLink: false } : {}),
+      camPartList: [
+        { glyph: '酒', lang: 'ja', font: 'serif', size: '22px', label: 'Name · front' },
+        { glyph: '15%', lang: 'en', font: 'var(--font-body)', size: '15px', label: 'Details · back' },
+        { glyph: 'Aa', lang: 'en', font: 'var(--font-body)', size: '15px', label: 'Importer · back' },
+      ],
+      partsOpen: !!s.partsOpen, openParts: () => this.setState({ partsOpen: true }), closeParts: () => this.setState({ partsOpen: false }),
+      partsToGuide: () => this.setState({ partsOpen: false, view: 'guideEntry', guideKey: 'label' }),
+      tbShow: ti.show, ...(ti.show ? { addBtClosed: false } : {}),
+      tbOpts: ti.show ? [
+        { k: 'label', label: ti.name, sub: 'The bottling on this label. Added to your bottlings when you rate it or add it to your cellar.' },
+        { k: 'line', label: pk.name + ', any bottling', sub: 'The tasting goes on the sake’s page.' },
+      ].map((o) => { const on = tb === o.k; return { ...o, on, border: on ? 'var(--color-accent-500)' : 'var(--color-divider)', bg: on ? 'var(--color-accent-100)' : 'transparent', ring: on ? 'var(--color-accent-600)' : 'var(--color-neutral-500)', dot: on ? 'var(--color-accent-600)' : 'transparent', pick: () => { const p = { ...photos }; if (keepOn) { delete p[target]; p[o.k === 'label' ? ti.name : pk.name] = { date: '18.10.2026' } } this.setState({ tb: o.k, photos: p }) } } }) : [],
+      keepRowOn: (!s.pick || !!pk.photo) && signed && (this.pp.ratingLive ?? true) !== false && !s.sample,
+      keepOn, keepRing: keepOn ? '0 0 0 1.5px var(--color-accent-600)' : 'none',
+      keepBox: keepOn ? 'var(--color-accent-600)' : 'var(--color-neutral-500)', keepFill: keepOn ? 'var(--color-accent-600)' : 'transparent',
+      keepLabel: keepOn ? 'Photo kept with ' + target : 'Keep this photo with the bottle',
+      keepSub: keepOn ? 'It shows on its page and in your journal and cellar. Untick to discard it.' : 'Only you see it. Location data is removed first, and you can delete it any time.',
+      toggleKeep: () => { const p = { ...photos }; if (keepOn) delete p[target]; else p[target] = { date: '18.10.2026' }; this.setState({ keep: !keepOn, photos: p }) },
+      nudgeOn: !!nd, nudgeIcon: nd ? nd.icon : '', nudgeText: nd ? nd.text : '', nudgeBtn: nd ? nd.btn : '', nudgeHasNote: !!note, nudgeNote: note,
+      nudgeGo: () => nd && this.setState({ tab: 'scan', view: null, scan: 'idle', paired: true, pairKind: nd.kind }),
+      ph: { has: !!ph, none: !ph && yours && !s.sample, meta: ph ? 'Your photo · kept ' + ph.date : '', confirm: !!ph && s.phDel === pn, replace: toCam, add: toCam, askDelete: () => this.setState({ phDel: pn }), cancelDelete: () => this.setState({ phDel: null }), confirmDelete: () => { const p = { ...photos }; delete p[pn]; this.setState({ photos: p, phDel: null }) } },
+      gw: { has: !!g, caveat: g ? g.caveat : '', why: g ? 'we used ' + g.why : '', foods: T ? T.foods : [], hasNote: false, note: '', hasServed: !!T && !hasServe, served: T ? T.served + '.' : '' },
+      pairInfoOpen: !!s.pairInfoOpen, openPairInfo: () => this.setState({ pairInfoOpen: true }), closePairInfo: () => this.setState({ pairInfoOpen: false }),
+      ...srch,
+      showAddManual: !!q && !FLAVOR_WORDS[q],
+      brShow: view === 'search' && !q, brAny: !!(br.pref || br.axis),
+      brChips: [
+        { k: 'pref', icon: 'ph-map-pin', label: br.pref || 'Prefecture', ...chip(!!br.pref, s.brOpen === 'pref') },
+        { k: 'flav', icon: 'ph-hexagon', label: br.axis ? (br.dir === 'more' ? 'More ' : 'Less ') + br.axis.toLowerCase() : 'Flavour', ...chip(!!br.axis, s.brOpen === 'flav') },
+      ].map((c) => ({ ...c, pick: () => this.setState({ brOpen: s.brOpen === c.k ? null : c.k }) })),
+      brClear: () => this.setState({ br: {}, brOpen: null }),
+      brPrefOpen: s.brOpen === 'pref', brFlavOpen: s.brOpen === 'flav',
+      brPrefs: prefs.map((p) => ({ ...p, ...chip(br.pref === p.label, false), pick: () => { setBr({ pref: br.pref === p.label ? null : p.label }); this.setState({ brOpen: null }) } })),
+      brAxes: AXIS_ORDER.map((a, i) => { const L = br.axis === a && br.dir === 'less', M = br.axis === a && br.dir === 'more'; return { label: a, jp: AXIS_JP[i], isLess: L, isMore: M, lessBg: L ? 'var(--color-accent-100)' : 'transparent', lessFg: L ? 'var(--color-accent-700)' : 'var(--color-neutral-800)', moreBg: M ? 'var(--color-accent-100)' : 'transparent', moreFg: M ? 'var(--color-accent-700)' : 'var(--color-neutral-800)', less: () => setBr(L ? { axis: null, dir: null } : { axis: a, dir: 'less' }), more: () => setBr(M ? { axis: null, dir: null } : { axis: a, dir: 'more' }) } }),
+      // L3: sample collection
+      sampleOn: !!s.sample, ...(s.sample ? { showBackupNudge: false } : {}),
+      showSampleLink: !signed && !s.sample,
+      openSample: () => { this._pre = { entries: s.entries, cellar: s.cellar, wish: s.wish }; this.setState({ sample: true, entries: SEED, cellar: CELLAR_SEED, view: null, tab: 'collection' }) },
+      leaveSample: () => { const p = this._pre || { entries: [], cellar: [], wish: [] }; this.setState({ sample: false, entries: p.entries, cellar: p.cellar, wish: p.wish, view: null }) },
+    }
+  }
+
   setDn(p) { this.setState((st) => ({ dn: { ...(st.dn || {}), ...p } })) }
 
   startList(kind) {
@@ -2889,8 +3272,16 @@ class Component extends DCLogic {
       this.setR({ rating: v, pop: Date.now() })
       return
     }
+    if (this.state.sample) return
     const id = Date.now()
-    const pk = this.state.pick || CATALOGUE[0]
+    let pk = this.state.pick || CATALOGUE[0]
+    const ti = this.tbInfo(this.state, 'result')
+    if (ti.show && (this.state.tb || 'label') === 'label') {
+      const lr = pk.labelRead
+      const own = { ...(this.state.own || {}), [ti.name]: { own: true, aiName: true, line: pk.name, grade: lr.grade, styles: lr.styles, polishing: lr.polishing } }
+      pk = { ...findSake(ti.name, own), photo: true, bottling: true, own: true, labelRead: lr }
+      this.setState({ own, pick: { ...pk, manual: false } })
+    }
     const entry = { id, day: '21', mon: 'Sep', ago: 'now', name: pk.name, brewery: pk.brewery, note: '“No note.”', rating: v, hasDetail: false, tags: [] }
     this.setState((st) => ({ entries: [entry, ...st.entries] }))
     this.setR({ rating: v, id, toast: true, pop: Date.now(), folded: false, confirm: false })
@@ -2924,6 +3315,13 @@ class Component extends DCLogic {
   }
 
   capture = () => {
+    const pf = this.state.photoFor
+    if (pf) {
+      this.setState({ shutter: true })
+      clearTimeout(this._t)
+      this._t = setTimeout(() => this.setState((st) => ({ shutter: false, photoFor: null, photos: { ...(st.photos || {}), [pf]: { date: '18.10.2026' } }, tab: st.photoBack.tab, view: st.photoBack.view, sakeName: pf })), 380)
+      return
+    }
     this.setState({ shutter: true })
     clearTimeout(this._t)
     this._t = setTimeout(() => this.setState({ scan: 'working', shutter: false }), 220)
@@ -2940,7 +3338,7 @@ class Component extends DCLogic {
       lineOnly = { ...findSake(nm, own), photo: true, manual: true, bottling: true, own: true, labelRead: LABEL_READ, fits: true }
     }
     const read = oc && oc.notSake ? { ...(NOT_SAKE[this.pp.notSakeDrink ?? 'Shochu'] || NOT_SAKE.Shochu).read } : oc && oc.read ? { ...oc.read } : null
-    this._u = setTimeout(() => this.setState({ own, view: oc ? 'outcome' : 'result', outcome: oc ? out : null, ocRead: withReading(read), bestGuess: out === 'Matched, best guess', candsOpen: false, menuSort: 'you', menuFilter: [], scan: 'idle', addBt: null, pick: lineOnly, dn: {}, r: { rating: 0, note: '', tags: [], id: null, toast: false, pop: 0 } }), 2000)
+    this._u = setTimeout(() => this.setState({ own, view: oc ? 'outcome' : 'result', outcome: oc ? out : null, ocRead: withReading(read), bestGuess: out === 'Matched, best guess', candsOpen: false, scanCount: (this.state.scanCount || 0) + 1, paired: false, keep: false, tb: 'label', menuSort: 'you', menuFilter: [], scan: 'idle', addBt: null, pick: lineOnly, dn: {}, r: { rating: 0, note: '', tags: [], id: null, toast: false, pop: 0 } }), 2000)
   }
 
 
@@ -2967,7 +3365,7 @@ class Component extends DCLogic {
 
     const openEntry = (e) => { const f = findSake(e.name, s.own); this.setState({ view: f && f.bottling ? 'bottling' : 'sake', sakeName: e.name, skPanel: false }) }
     const tagBtn = (label) => ({ label, hasEntry: !!TAG_GUIDE[label], noEntry: !TAG_GUIDE[label], aria: label + ' — open in Learn', learn: () => this.setState({ view: 'guideEntry', guideKey: TAG_GUIDE[label] }) })
-    const decorate = (e) => ({ ...e, kana: kanaOf(e.name, s.own), hasKana: !!kanaOf(e.name, s.own), stars: this.starsFor(e.rating), open: () => openEntry(e), openNotes: () => this.setState({ sheet: 'detail', dnEntry: e.id, dn: { open: 'App' } }) })
+    const decorate = (e) => ({ ...e, hasPhoto: !!(s.photos || {})[e.name], kana: kanaOf(e.name, s.own), hasKana: !!kanaOf(e.name, s.own), stars: this.starsFor(e.rating), open: () => openEntry(e), openNotes: () => this.setState({ sheet: 'detail', dnEntry: e.id, dn: { open: 'App' } }) })
 
 
     const collectionTabs = [
@@ -3308,7 +3706,7 @@ class Component extends DCLogic {
           setQuery: (ev) => this.setState({ query: ev.target.value }),
           clearQuery: () => this.setState({ query: '' }),
           searchHeading: q ? (list.length ? list.length + (list.length === 1 ? ' match' : ' matches') : 'No matches') : 'Recently tasted',
-          searchResults: list.map((c) => ({ ...c, ...(() => { const a = q && (c.name + ' ' + c.kana).toLowerCase().indexOf(q) < 0 ? (ALT[c.name] || []).find((x) => x.toLowerCase().indexOf(q) >= 0) : null; return { hasAlt: !!a, alt: a || '' } })(), meta: c.bottling ? 'Bottling · ' + c.kana + (c.tags.length ? ' · ' + c.tags.join(', ') : '') : nb(c.name) ? c.brewery + ' · Sake · ' + nb(c.name) + ' bottlings' : c.brewery, tasted: tasted(c.name), pick: () => this.pickSake(c) })),
+          searchResults: list.map((c) => ({ ...c, ...(() => { const a = q && (c.name + ' ' + c.kana).toLowerCase().indexOf(q) < 0 ? (ALT[c.name] || []).find((x) => x.toLowerCase().indexOf(q) >= 0) : null; return { hasAlt: !!a, alt: a || '' } })(), meta: c.bottling ? 'Bottling · ' + c.kana + (c.tags.length ? ' · ' + c.tags.join(', ') : '') : nb(c.name) ? c.brewery + ' · Sake · ' + nb(c.name) + ' bottlings' : c.brewery, tasted: tasted(c.name), hasTag: false, tagJa: '', tagEn: '', pick: () => this.pickSake(c) })),
           addBtClosed: !addBt.open, addBtOpen: !!addBt.open, addBtName: addBt.name || '',
           addBtLabel: view === 'sake' ? 'Add your bottling' : 'Add this bottling',
           openAddBt: () => { const lr = view === 'sake' ? null : pk.labelRead; this.setState({ addBt: lr ? { open: true, fromLabel: true, name: composeName(lineRow, lr), grade: lr.grade, styles: (lr.styles || []).join(', '), pol: lr.polishing } : { open: true, name: lineRow + ' ', grade: '', styles: '', pol: '' } }) },
@@ -3595,7 +3993,7 @@ class Component extends DCLogic {
             const isOpen = c.openedDaysAgo !== null
             const hurry = soon(c)
             return {
-              ...c, kana: kanaOf(c.name, s.own), hasKana: !!kanaOf(c.name, s.own),
+              ...c, hasPhoto: !!(s.photos || {})[c.name], kana: kanaOf(c.name, s.own), hasKana: !!kanaOf(c.name, s.own),
               countLabel: c.size ? '× ' + c.count + ' · ' + c.size : c.count > 1 ? '× ' + c.count : '',
               state: !isOpen ? 'Unopened' + (c.nama ? ' · nama, keep cold' : ' · keeps for months, cool and dark')
                 : hurry ? 'Open ' + c.openedDaysAgo + ' days — best finished this week'
@@ -3713,7 +4111,7 @@ class Component extends DCLogic {
             rankColor: sort === 'you' && i === 0 ? '#cf8a6e' : '#8a867e',
             hasFit: !early, fitWord: fitWord(m.fit), fitTone: m.fit >= 0.82 ? 'tag-accent' : 'tag-neutral',
             tasted: !!m.t, yourRating: m.t ? m.t.rating : '',
-            warm: !!m.warm, partial: !!m.partial,
+            warm: !!m.warm, partial: !!m.partial, hasUnusual: !!m.unusual, unusualLabel: m.unusual ? m.unusual.label : '', learnUnusual: () => m.unusual && this.setState({ view: 'guideEntry', guideKey: m.unusual.key }),
             hasLines: m.lines.length > 0, lines: m.lines, linesHead: m.lines.length + ' bottlings ' + (isMenuL ? 'on this list' : 'on this shelf') + ' · one chart for all',
             bars: PROFILES[m.c.name].map((v) => ({ h: Math.max(2, Math.round(v / 100 * 20)) + 'px' })),
             shapeLabel: 'Flavour shape: ' + AXIS_ORDER.map((l, j) => l + ' ' + PROFILES[m.c.name][j]).join(', '),
@@ -3853,6 +4251,7 @@ class Component extends DCLogic {
       recs: [CATALOGUE[4], CATALOGUE[3]].map((c, i) => ({ name: c.name, meta: c.brewery.split(' · ')[1] + ' · ' + (i ? '88' : '92') + '% match', open: () => this.pickSake(c) })),
       toast: s.toast,
       dismissToast: () => this.setState({ toast: false }),
+      ...this.v18Vals(s, view),
     }
   }
 }
