@@ -2,7 +2,7 @@
 
 Open questions the build has run into and settled provisionally, so they can be handed to the designers in one go. Each says what is built today, so nobody has to guess. Opened 2026-10-13; filed as #417.
 
-Round two (blocks I–R) starts at the end of the file.
+Round two (blocks I–R) and round three (block S) are at the end of the file.
 
 The design snapshot these refer to is `design/README.md`, v1.6.2.
 
@@ -240,3 +240,43 @@ Proposed — how a non-reader recognises each part, by look rather than by langu
    - nothing written on this side → today's "No name on this side".
 4. Should the drawing show the actual characters to look for (精米歩合, アルコール分, a "%" sign) as shapes, for visitors who recognise characters without reading them?
 5. A second photo costs a scan against the free five. Does the after-scan nudge show when the visitor has one left, and how is that said (#346)?
+
+# Round three (opened 2026-10-19, against design v1.8.1)
+
+## S. A slow or missing connection
+
+Nothing in the app says that a tap was received when the network is slow or gone. The maintainer tapped "Scan" with no connection and saw no change at all. The spec draws the happy path and one error page (#324). It has no "waiting" or "offline" state for any screen.
+
+**How the app works, as far as this matters:**
+- **Every screen comes from the server.** Moving to a new screen fetches it; the tab bar and header stay on the phone. There is no offline mode and no service worker. A screen visited a moment ago, or one the app fetched ahead (the four tabs, usually), can open without the network for a short while. Anything else needs it.
+- **The journal and cellar live on the server**, not on the phone. A rating, a note, "Add to cellar" and a delete are each one request. Each saves the moment it is tapped (rule 1).
+- **A scan is one upload.** The phone shrinks the photo, then sends it once. Reading it takes a few seconds on a good connection.
+- **The phone can say "offline" reliably**, but not "online": a phone on a captive Wi-Fi or a dead mobile signal still reports a connection. So we can always detect slow, but we can detect gone only some of the time.
+
+**What happens today** (checked on 19 Oct 2026 in a browser at 390×844, by cutting the connection or by holding every request open):
+- **A tap on a tab, on a slow or hanging connection:** the tapped tab lights up and the screen stays as it was, for as long as the request hangs. A tap on anything else (the Home card's "Scan a label", a sake row, "Similar") shows nothing at all.
+- **A scan with no connection:** the app's error page replaces the camera: "We couldn't load this page. The sake catalogue may be out of reach for a moment." The copy is wrong for this case, and the photo is lost.
+- **A scan on a hanging connection:** the reading sweep runs with no end. Twenty seconds in, nothing has changed, and there is no way to stop it.
+- **A rating with no connection:** not checked on real data. The code suggests it ends on the same error page, and the tapped star is lost with it.
+
+**Engineering will fix without waiting for drawings:** no tap ends on the error page because of the network, and no photo is lost to it. Until S is drawn, a failed scan stays on the camera with the photo and an inline line, and a failed save keeps what was tapped and uses the panel's existing "couldn't save" line. Everything below is the visible part, which is yours.
+
+1. **A tap that is on its way.** What shows between a tap and the next screen? Options we can build:
+   - (a) a thin accent bar under the top edge, shown only after ~300 ms, so a fast connection never sees it;
+   - (b) the tapped thing's own pressed state, held until the screen arrives (rows, tiles, buttons);
+   - (c) the next screen's outline straight away (header, section labels, grey rows), filled in as it arrives.
+   
+   (c) costs one drawing per screen. Which one, or which combination? If (c), which screens first?
+2. **Pressed state.** Rows, tiles and buttons have no drawn pressed state; only the tab has one. Could rule 1's "feedback within 100 ms" get a token: a press colour or an inset for each of row, tile, button and chip?
+3. **"You're offline".** When the phone says it is offline, should a line say so, and where? The sample collection's strip already sits under the header, and the cookie banner floats over the bottom. Does it stay until the connection is back, and what does the line say once it is ("Back online", or nothing)?
+4. **Taking longer than usual.** After how long does a wait stop being normal? We would say ~10 s for a scan and ~5 s for a screen. What does it say then, and what can the visitor do: "Try again", "Cancel", both? For the scan:
+   - Is "Try again" the same photo sent again, with no new shot?
+   - The free-scan count: a photo that never reached us costs nothing. One that did reach us was read, and costs a scan even if the answer was lost on the way back. Do we say so?
+5. **A scan that could not be sent.** Please draw it on the camera, not on the error page: the photo stays, with one line ("No connection. Your photo is kept.") and "Send again". Does it send itself when the connection comes back, or wait for the tap?
+6. **A save that could not be made** (rating, note, quick tag, "Add to cellar", delete, Undo). Two ways:
+   - (a) **refuse, visibly:** the tapped star stays, marked "Not saved, no connection" with "Try again";
+   - (b) **keep it on the phone** and send it later.
+   
+   (b) feels better, but it means a journal that is briefly different on the phone and on the server, and on two devices. It also makes delete and Undo harder: we are investigating a crash when several tastings are deleted quickly. Engineering proposes (a) for v1. Please draw (a) for the rating panel, the notes sheet and the cellar sheet.
+7. **The error page itself (#324).** It always blames the catalogue. Should it have a "no connection" version when the phone says it is offline, and what does it say? Does it keep "Try again" and "Back to Home"?
+8. **The landing and Learn** are outside the app and are mostly fixed text. Should they work offline once visited (cached on the phone), or is that not worth it before the home-screen icon (O) ships?
