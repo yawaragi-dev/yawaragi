@@ -416,6 +416,9 @@
       "countCapped": "First {count} sakes · {filters} · A–Z",
       "noneTitle": "No sakes match this",
       "noneBody": "Try another prefecture, or a flavor on its own."
+    },
+    "suggestions": {
+      "label": "Matching sakes"
     }
   },
   "suggest": {

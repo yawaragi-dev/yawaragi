@@ -22,7 +22,7 @@ import { cn } from '@/lib/utils'
  * including inside the otherwise-translated "Powered by" phrase.
  */
 
-const SAKENOWA_URL = 'https://sakenowa.com'
+export const SAKENOWA_URL = 'https://sakenowa.com'
 
 /**
  * Per ADR-0014: pages render `<SakenowaAttribution />` only when at

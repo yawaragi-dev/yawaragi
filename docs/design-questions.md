@@ -2,7 +2,7 @@
 
 Open questions the build has run into and settled provisionally, so they can be handed to the designers in one go. Each says what is built today, so nobody has to guess. Opened 2026-10-13; filed as #417.
 
-Round two (blocks I–R) and round three (blocks S and T) are at the end of the file.
+Round two (blocks I–R) and round three (blocks S, T and U) are at the end of the file.
 
 The design snapshot these refer to is `design/README.md`, v1.6.2.
 
@@ -312,3 +312,17 @@ v1.8 answered block I with **one photo per bottling**, kept from the scan or add
 8. **Saying it is private.** Should anything in this flow say these photos are only the visitor's, or nothing until #476 is designed?
 
 Built today: nothing of I or T. The scan photo stays in memory for the result and the bottle page of that session only (`scanned-photo.ts`).
+
+## U. Matches as you type in Search (built ahead of the spec)
+
+§8 draws a field and a list of results after Enter. The maintainer asked for matches while typing (#326), and it is built:
+
+- From two Latin letters or one kanji or kana, a list of **up to six** sakes opens under the field, 150 ms after typing pauses: kanji name, Latin reading, brewery. Under the rows, one line: "Latin spellings are machine transliterations. · Powered by Sakenowa ↗" (the rows are Sakenowa data with machine-read names, so both are said where they are shown).
+- **Tapping a row opens that sake's page.** Enter with no row chosen runs the full search, as before; arrow keys move through the rows, Escape closes the list. With JavaScript off it is the old form.
+- The list never opens for the query whose results are already on the screen, and it does not try the shortened query ("Dassai 23" → "Dassai") that the full search falls back to, so it does not jump mid-word.
+
+1. Does the row look right as a lighter version of §8's result row, or should it be name-only?
+2. Should a row fill the field and run the full search instead of opening the sake?
+3. The list sits over the browse chips and the empty state. Should it push them down instead?
+4. Should the visitor's own bottlings that match (the "Add it yourself" ones) appear in the list too, above the catalogue?
+

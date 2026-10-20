@@ -5,6 +5,8 @@ import { cookies } from 'next/headers'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { FocusFieldAtEnd } from '@/components/search/focus-field-at-end'
+import { SearchField } from '@/components/search/search-field'
+import { SAKENOWA_URL } from '@/components/sake/sakenowa-attribution'
 import { BackLink } from '@/components/layout/back-link'
 import { AddItYourselfRow } from '@/components/sake/add-unlisted-bottling'
 import { RomajiDisclosure } from '@/components/sake/romaji-disclosure'
@@ -32,11 +34,11 @@ import { countUsage } from '@/lib/stats/count-usage'
  * a paid call per question — so every scan dead-end that used to bridge there
  * now has somewhere cheaper to go.
  *
- * **No client components, on purpose.** The field is a plain GET form: typing
- * and pressing Enter navigates to `?q=…`, the server renders the matches, and
- * the whole thing works with JavaScript off and needs no debounce, no
- * `useState`, and no loading state. §8 specifies no as-you-type behaviour, so
- * there is nothing to give up. "Clear" is a link back to `/search` rather than
+ * **The search itself is a plain GET form**: typing and pressing Enter
+ * navigates to `?q=…`, the server renders the matches, and the whole thing
+ * works with JavaScript off. One client island sits on top: the list of
+ * matching sakes that opens under the field while typing (#326, ahead of the
+ * design; `<SearchField />`), whose rows open a sake's page directly. "Clear" is a link back to `/search` rather than
  * a button that resets state, for the same reason.
  *
  * Age gating is the proxy's job: `/search` is absent from
@@ -105,6 +107,8 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
   const browsing = query.length === 0 && hasBrowseFilter(filter)
   const t = await getTranslations('search')
   const tHeader = await getTranslations('header')
+  const tRomaji = await getTranslations('provenance.romajiDisclosure')
+  const tCredit = await getTranslations('sakenowaAttribution')
 
   const specific = isCatalogueQuerySpecific(query)
   if (specific) countUsage('search')
@@ -150,56 +154,49 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
         */}
         <form action="" method="get" className="flex min-w-0 flex-1 items-center gap-2">
           <label
-            className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-md border border-ginshu-500 bg-surface px-3"
+            className="relative flex h-11 min-w-0 flex-1 items-center gap-2 rounded-md border border-ginshu-500 bg-surface px-3"
             data-testid="search-field"
           >
             <MagnifyingGlass size={17} className="shrink-0 text-ash-600" aria-hidden="true" />
             <span className="sr-only">{t('fieldLabel')}</span>
-            <input
-              // `type="text"` with the searchbox role, not `type="search"`.
-              // Chrome paints `type="search"` its own clear button — bright
-              // blue, off-palette on a warm dark ground, and a second control
-              // doing what the ✕ beside it already does. Hiding it means
-              // fighting a UA pseudo-element whose computed style is not even
-              // readable from script, so it is simpler not to summon it: the
-              // role carries the same semantics to assistive tech, and
-              // `inputMode`/`enterKeyHint` carry the same keyboard hints.
-              type="text"
-              role="searchbox"
-              inputMode="search"
-              name="q"
-              defaultValue={query}
-              // §8 specifies autofocus — for the EMPTY field, which is the
-              // entry state this screen opens in. Not once a query has run,
-              // and that distinction is a bug report, not a nicety.
-              //
-              // `autofocus` focuses the element but says nothing about the
-              // caret, so a browser is free to park it at offset 0. Firefox
-              // does: measured on `/en/search?q=yama`, the field is focused
-              // with `selectionStart === 0` — the caret sits at the far left,
-              // tucked against the magnifying glass, which is what was
-              // reported as "my cursor disappears". Worse than invisible, it
-              // is wrong: typing `45` after submitting `yama` produced
-              // `45yama`, silently corrupting the next query. Chromium parks
-              // it at 0 too; Firefox just makes it visible.
-              //
-              // After a search, refocusing would keep a phone keyboard over the
-              // results the visitor just asked for and trap a screen reader in
-              // the field. So the field claims focus only when there is
-              // nothing in it, plus one exception: "One more letter" asks for
-              // more typing, and `<FocusFieldAtEnd />` puts the caret back
-              // after the text (autofocus alone would park it at offset 0).
-              //
-              // No lint suppression needed: the repo's config does not enable
-              // `jsx-a11y/no-autofocus`.
-              autoFocus={query.length === 0}
-              maxLength={80}
-              enterKeyHint="search"
-              autoComplete="off"
-              placeholder={t('placeholder')}
-              className="min-w-0 flex-1 bg-transparent text-card-heading text-ink placeholder:text-ash-500 focus:outline-none"
+            {/*
+              The field and its as-you-type list (#326) are a client island;
+              the GET form around them is still the whole search with
+              JavaScript off. The input keeps every choice explained below.
+
+              `type="text"` with a combobox role, not `type="search"`: Chrome
+              paints `type="search"` its own bright-blue clear button, a second
+              control doing what the ✕ beside it already does.
+
+              §8 specifies autofocus — for the EMPTY field only. After a search,
+              refocusing would keep a phone keyboard over the results and trap a
+              screen reader in the field; `<FocusFieldAtEnd />` handles the one
+              exception ("One more letter") and puts the caret after the text,
+              since `autofocus` alone parks it at offset 0 (the "my cursor
+              disappears" report in Firefox, where typing after `yama` gave
+              `45yama`).
+            */}
+            <SearchField
               id={SEARCH_FIELD_ID}
-              data-testid="search-input"
+              defaultValue={query}
+              autoFocus={query.length === 0}
+              placeholder={t('placeholder')}
+              locale={locale}
+              listLabel={t('suggestions.label')}
+              footer={
+                <>
+                  {tRomaji('caveat')} ·{' '}
+                  <a
+                    href={SAKENOWA_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline underline-offset-4 hover:text-ink"
+                    data-testid="search-suggestions-credit"
+                  >
+                    {tCredit('poweredBy')} ↗
+                  </a>
+                </>
+              }
             />
             {query.length > 0 && (
               // §8 draws the clear affordance INSIDE the field. A link back to

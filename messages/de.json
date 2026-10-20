@@ -416,6 +416,9 @@
       "countCapped": "Die ersten {count} Sake · {filters} · A–Z",
       "noneTitle": "Kein Sake passt dazu",
       "noneBody": "Versuch eine andere Präfektur oder nur den Geschmack."
+    },
+    "suggestions": {
+      "label": "Passende Sake"
     }
   },
   "suggest": {

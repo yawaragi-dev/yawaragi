@@ -5,6 +5,7 @@ import { getServerDbPool } from '@/lib/supabase/server-client'
 import { kanaToRomaji } from '@/lib/sakenowa/kana-romaji'
 import { getRomajiIndex, type RomajiIndex } from '@/lib/sakenowa/romaji-index'
 import { looseRomajiKey, romajiKey } from '@/lib/sakenowa/romaji-key'
+import { isCatalogueQuerySpecific } from './catalogue-query'
 
 /**
  * Deterministic sake search over the public `brands` mirror (ADR-0010, pg-direct)
@@ -80,22 +81,7 @@ export function escapeLikePattern(input: string): string {
  */
 export const MAX_CATALOGUE_SEARCH_RESULTS = 20
 
-/**
- * Shortest query §8 will run.
- *
- * One character of kanji is a real query — 山 is a word — but one Latin letter
- * is not: "a" matches a large fraction of the romaji column and tells the
- * visitor nothing. So the floor is one character of non-ASCII input and two of
- * ASCII. Below it the page renders its empty state instead of a list.
- */
-export function isCatalogueQuerySpecific(query: string): boolean {
-  const trimmed = query.trim()
-  if (trimmed.length === 0) return false
-  // Anything outside printable ASCII is kanji, kana or a macron'd vowel — any
-  // one of those is specific enough on its own.
-  if (/[^\x20-\x7e]/.test(trimmed)) return true
-  return trimmed.length >= 2
-}
+export { isCatalogueQuerySpecific } from './catalogue-query'
 
 /**
  * Label words that narrow a bottle but are not part of the sake's NAME.

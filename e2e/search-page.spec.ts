@@ -389,3 +389,33 @@ test.describe('§8 browse without a name (design v1.8, M)', () => {
     await context.close()
   })
 })
+
+test.describe('§8 matches as you type (#326)', () => {
+  test('typing lists matching sakes under the field, and the arrow keys and Enter open one', async ({ browser }) => {
+    test.skip((await findAnyBrandId()) === null, 'Sakenowa mirror not populated — DB-bound spec')
+    const { context, page } = await searchPage(browser)
+    await page.goto('/en/search')
+
+    const field = page.getByRole('combobox')
+    await field.pressSequentially('山', { delay: 50 })
+    await expect(page.getByTestId('search-suggestion').first()).toBeVisible()
+    expect(await page.getByTestId('search-suggestion').count()).toBeLessThanOrEqual(6)
+    // The rows are Sakenowa's, with machine-read Latin names: both said under them.
+    await expect(page.getByTestId('search-suggestions')).toContainText('machine transliterations')
+    await expect(page.getByTestId('search-suggestions-credit')).toHaveAttribute('href', 'https://sakenowa.com')
+
+    await field.press('ArrowDown')
+    await expect(field).toHaveAttribute('aria-activedescendant', /.+/)
+    await field.press('Enter')
+    await page.waitForURL(/\/en\/sake\/\d+$/, { timeout: 15_000 })
+
+    await context.close()
+  })
+
+  test('the list’s source shows nothing before the 18+ gate (JMStV)', async ({ playwright }) => {
+    const request = await playwright.request.newContext({ baseURL: BASE_URL })
+    const response = await request.get('/api/search-suggest?q=%E5%B1%B1')
+    expect(response.status()).toBe(403)
+    await request.dispose()
+  })
+})
