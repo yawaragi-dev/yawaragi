@@ -68,7 +68,11 @@ test.describe('sign-in page', () => {
 
     await page.goto('/de/sign-in')
     await expect(page.getByTestId('sign-in-page')).toBeVisible()
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Anmelden')
+    // Two headings once Clerk mounts — the bar's and the widget's — so each is
+    // checked by name. A bare `level: 1` raced the widget: strict mode failed
+    // whenever Clerk rendered before the assertion settled (CI, 2026-10-19).
+    await expect(page.getByTestId('screen-bar-title')).toHaveText('Anmelden')
+    await expect(page.getByRole('heading', { name: 'Bei Yawaragi anmelden' })).toBeVisible()
 
     await context.close()
   })

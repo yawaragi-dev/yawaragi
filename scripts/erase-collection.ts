@@ -17,6 +17,7 @@
  */
 import { BACKUP_BUCKET, backupPrefix } from '@/lib/collection/backup-storage'
 import { cellarKey } from '@/lib/collection/cellar-store'
+import { eraseCollection } from '@/lib/collection/erase-collection'
 import { expressionsKey } from '@/lib/collection/expression-store'
 import { SupabaseBackupStorage } from '@/lib/collection/supabase-backup-storage'
 import { UpstashCellarStore } from '@/lib/collection/upstash-cellar-store'
@@ -68,8 +69,7 @@ async function main(): Promise<number> {
     return 0
   }
 
-  await Promise.all([journal.clear(userId), cellar.clear(userId), expressions.clear(userId)])
-  await storage.remove(backups.map((name) => `${prefix}/${name}`))
+  await eraseCollection({ userId, journal, cellar, expressions, backups: storage })
   console.log('Erased.')
   return 0
 }

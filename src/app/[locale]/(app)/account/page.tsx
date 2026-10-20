@@ -1,5 +1,6 @@
 import { BookOpen, Globe } from '@phosphor-icons/react/dist/ssr'
 import { Show } from '@clerk/nextjs'
+import { auth } from '@clerk/nextjs/server'
 import { hasLocale } from 'next-intl'
 import { ScreenBar } from '@/components/layout/screen-header'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
@@ -8,9 +9,11 @@ import type { Metadata } from 'next'
 import { SignOutRow } from '@/components/account/sign-out-row'
 import { CookieSettingsRow } from '@/components/account/cookie-settings-row'
 import { HomeScreenRow } from '@/components/account/home-screen-row'
+import { DeleteAccountRow, ExportJournalRow } from '@/components/account/your-data-rows'
 import { SettingsGroup, SettingsLinkRow, SettingsRow } from '@/components/account/settings-row'
 import { Link } from '@/i18n/navigation'
 import { routing } from '@/i18n/routing'
+import { getJournalStore } from '@/lib/taste/get-journal-store'
 
 /**
  * §15 Account — the first slice.
@@ -147,12 +150,38 @@ export default async function AccountPage({ params }: PageProps) {
         />
       </SettingsGroup>
 
+      {/* §15's "Your journal" and "Delete account": the visitor's own
+          export and erasure (GDPR Art. 15, 17, 20), for every signed-in
+          visitor — not only the maintainers who can keep a journal today. */}
+      <Show when="signed-in">
+        <SettingsGroup title={t('groupYourJournal')} testId="account-group-your-journal">
+          <ExportJournalRow />
+        </SettingsGroup>
+      </Show>
+
       <Show when="signed-in">
         <SettingsGroup title={t('groupAccount')} testId="account-group-account">
           <SignOutRow label={tSignIn('signOut')} pendingLabel={tSignIn('signingOut')} />
+          <DeleteAccountRow tastingCount={await tastingCountOfViewer()} />
         </SettingsGroup>
       </Show>
 
     </main>
   )
+}
+
+/**
+ * How many tastings the delete dialog says will go. `null` (the dialog then
+ * names what goes without a number) when signed out, without a journal store,
+ * or when the store cannot be read — the page must not fail over a count.
+ */
+async function tastingCountOfViewer(): Promise<number | null> {
+  const { userId } = await auth()
+  const journal = getJournalStore()
+  if (!userId || !journal) return null
+  try {
+    return (await journal.read(userId)).length
+  } catch {
+    return null
+  }
 }
