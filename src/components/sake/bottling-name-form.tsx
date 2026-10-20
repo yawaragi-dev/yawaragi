@@ -2,9 +2,28 @@
 
 import { type FormEvent, useId, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { type BottlingDetails, MAX_EXPRESSION_TEXT } from '@/lib/schemas/expression'
-import { ScanGradeSchema, type ScanGrade } from '@/lib/schemas/label-scan-extraction'
-import { gradeLabel } from '@/lib/scan/read-bottling'
+import { type BottlingDetails, type Koji, KojiSchema, MAX_EXPRESSION_TEXT, MAX_STYLES } from '@/lib/schemas/expression'
+import { ScanGradeSchema, ScanStyleSchema, type ScanGrade, type ScanStyle } from '@/lib/schemas/label-scan-extraction'
+import { gradeLabel, styleLabel } from '@/lib/scan/read-bottling'
+import { cn } from '@/lib/utils'
+
+/**
+ * Stored style words split into the ones the form offers as checkboxes and
+ * the rest, which go to "Other". Matched without case, so "nama" written by
+ * hand ticks Nama.
+ */
+export function splitStyles(words: readonly string[]): { known: ScanStyle[]; other: string[] } {
+  const known: ScanStyle[] = []
+  const other: string[] = []
+  for (const word of words) {
+    const style = ScanStyleSchema.options.find(
+      (s) => s === word.toLowerCase() || styleLabel(s).toLowerCase() === word.toLowerCase(),
+    )
+    if (style && !known.includes(style)) known.push(style)
+    else if (!style) other.push(word)
+  }
+  return { known, other }
+}
 
 /**
  * The form a bottling of your own is named in (design v1.6, screenshot 55): a
@@ -20,9 +39,12 @@ import { gradeLabel } from '@/lib/scan/read-bottling'
  * The same form renames a bottling (`mode="rename"`): the fields start from
  * what is stored and the button says "Save".
  *
- * `withDetails` adds Grade, Polishing and Style (design v1.7 D5, screenshot
- * 84), all optional; `initialDetails` fills them from a scan's read or from
- * what is stored.
+ * `withDetails` adds Grade, Polishing, Koji and Style (design v1.7 D5,
+ * screenshot 84), all optional; `initialDetails` fills them from a scan's read
+ * or from what is stored. Style is a set of checkboxes — the words a label
+ * prints (Nama, Muroka, Genshu …, the same list the scan reads) — plus
+ * "Other" for anything else, stored together as the bottling's style words.
+ * Koji is ahead of the design (question V).
  *
  * The caller owns the saving (`onSubmit`) and says how it is going (`pending`,
  * `failed`); the form owns the fields.
@@ -63,11 +85,15 @@ export function BottlingNameForm({
   const gradeId = useId()
   const polishingId = useId()
   const styleId = useId()
+  const kojiId = useId()
   const [name, setName] = useState(initialName)
   const [brewery, setBrewery] = useState(initialBrewery)
   const [grade, setGrade] = useState<ScanGrade | ''>(initialDetails?.grade ?? '')
   const [polishing, setPolishing] = useState(initialDetails?.polishingPct ? String(initialDetails.polishingPct) : '')
-  const [styles, setStyles] = useState((initialDetails?.styles ?? []).join(', '))
+  const initialStyles = splitStyles(initialDetails?.styles ?? [])
+  const [checked, setChecked] = useState<ScanStyle[]>(initialStyles.known)
+  const [otherStyles, setOtherStyles] = useState(initialStyles.other.join(', '))
+  const [koji, setKoji] = useState<Koji | ''>(initialDetails?.koji ?? '')
   const trimmed = name.trim()
   const field =
     'min-h-11 rounded-lg border border-ash-300 bg-ground px-3 text-card-heading text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600'
@@ -80,13 +106,17 @@ export function BottlingNameForm({
       return
     }
     const pct = Number.parseInt(polishing, 10)
-    const words = styles.split(/[,、]/).map((s) => s.trim()).filter(Boolean).slice(0, 6)
+    const words = [
+      ...ScanStyleSchema.options.filter((s) => checked.includes(s)).map(styleLabel),
+      ...otherStyles.split(/[,、]/).map((s) => s.trim()).filter(Boolean),
+    ].slice(0, MAX_STYLES)
     // Only what is filled in: an empty form sends `{}`, which on a rename
     // clears what was stored.
     onSubmit(trimmed, brewery.trim(), {
       ...(grade ? { grade } : {}),
       ...(words.length > 0 ? { styles: words } : {}),
       ...(pct >= 1 && pct <= 100 ? { polishingPct: pct } : {}),
+      ...(koji ? { koji } : {}),
     })
   }
 
@@ -172,19 +202,64 @@ export function BottlingNameForm({
               </div>
             </div>
           </div>
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor={styleId} className="text-section-label uppercase text-ash-600">
-              {t('styleLabel')}
+          <div className="flex min-w-0 flex-col gap-1.5">
+            <label htmlFor={kojiId} className="text-section-label uppercase text-ash-600">
+              {t('kojiLabel')}
+            </label>
+            <select
+              id={kojiId}
+              value={koji}
+              onChange={(event) => setKoji(event.target.value as Koji | '')}
+              className={field}
+              data-testid={`${testId}-koji`}
+            >
+              <option value="">{t('kojiNone')}</option>
+              {KojiSchema.options.map((k) => (
+                <option key={k} value={k}>
+                  {t(`koji.${k}`)}
+                </option>
+              ))}
+            </select>
+          </div>
+          <fieldset className="flex flex-col gap-2">
+            <legend className="mb-1.5 text-section-label uppercase text-ash-600">{t('styleLabel')}</legend>
+            <div className="flex flex-wrap gap-2" data-testid={`${testId}-style-options`}>
+              {ScanStyleSchema.options.map((style) => {
+                const on = checked.includes(style)
+                return (
+                  <label key={style} className="cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={on}
+                      onChange={() => setChecked((current) => (on ? current.filter((s) => s !== style) : [...current, style]))}
+                      className="peer sr-only"
+                      data-testid={`${testId}-style-${style}`}
+                    />
+                    <span
+                      className={cn(
+                        'flex min-h-9 items-center rounded-full border px-3 text-meta transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-ginshu-600',
+                        on ? 'border-ginshu-500 bg-ginshu-100 text-ginshu-800' : 'border-ash-300 text-ink hover:bg-ash-100',
+                      )}
+                    >
+                      {styleLabel(style)}
+                    </span>
+                  </label>
+                )
+              })}
+            </div>
+            <label htmlFor={styleId} className="sr-only">
+              {t('styleOther')}
             </label>
             <input
               id={styleId}
-              value={styles}
-              onChange={(event) => setStyles(event.target.value)}
+              value={otherStyles}
+              onChange={(event) => setOtherStyles(event.target.value)}
+              placeholder={t('styleOther')}
               autoComplete="off"
               className={field}
               data-testid={`${testId}-styles`}
             />
-          </div>
+          </fieldset>
         </>
       )}
       {mode === 'add' && (

@@ -158,6 +158,7 @@ export default async function BottlingPage({ params, searchParams }: PageProps) 
               ...(bottling.grade ? [gradeLabel(bottling.grade)] : []),
               ...(bottling.styles ?? []),
               ...(bottling.polishingPct ? [t('polishedTo', { n: bottling.polishingPct })] : []),
+              ...(bottling.koji ? [t(`koji.${bottling.koji}`)] : []),
             ].map((tag) => (
               <span
                 key={tag}
@@ -267,7 +268,7 @@ export default async function BottlingPage({ params, searchParams }: PageProps) 
           expressionId={bottling.id}
           name={bottling.name}
           brewery={bottling.brewery}
-          details={{ grade: bottling.grade, styles: bottling.styles, polishingPct: bottling.polishingPct }}
+          details={{ grade: bottling.grade, styles: bottling.styles, polishingPct: bottling.polishingPct, koji: bottling.koji }}
           sake={brandId !== null && lineName !== null ? { brandId, name: lineName } : null}
           {...bottlingHoldings(bottling, { entries: viewer.entries, cellar: viewer.cellar })}
         />

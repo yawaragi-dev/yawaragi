@@ -50,6 +50,16 @@ export const MAX_STYLES = 6
 export const StyleWord = z.string().trim().min(1).max(24)
 
 /**
+ * The koji the rice was made with, which shapes the taste: yellow (黄麹, what
+ * almost every sake uses), white (白麹) or black (黒麹), both brought over
+ * from shochu and awamori for their acidity. The visitor's statement, from the
+ * label; optional and additive (no schema version bump), built ahead of the
+ * design (question V).
+ */
+export const KojiSchema = z.enum(['yellow', 'white', 'black'])
+export type Koji = z.infer<typeof KojiSchema>
+
+/**
  * What a bottling says about itself beyond its name (design v1.7 D5), as the
  * naming form sends it: a style field left blank is dropped on saving.
  */
@@ -57,6 +67,7 @@ export const BottlingDetailsSchema = z.object({
   grade: ScanGradeSchema.optional(),
   styles: z.array(z.string().trim().max(24)).max(MAX_STYLES).optional(),
   polishingPct: z.number().int().min(1).max(100).optional(),
+  koji: KojiSchema.optional(),
 })
 export type BottlingDetails = z.infer<typeof BottlingDetailsSchema>
 
@@ -90,6 +101,8 @@ export const ExpressionSchema = z
     styles: z.array(StyleWord).min(1).max(MAX_STYLES).optional(),
     /** The polishing ratio in percent (精米歩合 50% → 50). */
     polishingPct: z.number().int().min(1).max(100).optional(),
+    /** The koji, as the visitor gave it. */
+    koji: KojiSchema.optional(),
     /** The name is still the Latin reading the scan's model gave. */
     aiName: z.literal(true).optional(),
     /** The brewery is still the Latin reading the scan's model gave. */

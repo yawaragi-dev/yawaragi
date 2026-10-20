@@ -1224,8 +1224,16 @@
     "polishingLabel": "Poliergrad",
     "styleLabel": "Stil",
     "formHintFromLabel": "Vom Etikett gelesen. Korrigiere, was falsch gelesen ist; Größe und den Rest kannst du später in den ausführlichen Notizen ergänzen. Nur du kannst es sehen.",
-    "formHintDetails": "Qualitätsstufe, Stil und Poliergrad sind optional; Größe und den Rest kannst du später in den ausführlichen Notizen ergänzen. Nur du kannst es sehen.",
-    "polishedTo": "auf {n} % poliert"
+    "formHintDetails": "Qualitätsstufe, Poliergrad, Koji und Stil sind optional; Größe und den Rest kannst du später in den ausführlichen Notizen ergänzen. Nur du kannst es sehen.",
+    "polishedTo": "auf {n} % poliert",
+    "kojiLabel": "Koji",
+    "kojiNone": "Keine Angabe",
+    "koji": {
+      "yellow": "Gelber Koji",
+      "white": "Weißer Koji",
+      "black": "Schwarzer Koji"
+    },
+    "styleOther": "Weitere Stilwörter, durch Komma getrennt"
   },
   "learn": {
     "title": "Wissen",

@@ -195,17 +195,24 @@ describe('"This bottling": deleting', () => {
     }
   })
 
-  it('edits the grade, polishing and style it was saved with', async () => {
+  it('edits the grade, polishing, styles and koji it was saved with', async () => {
     renameOwnBottling.mockResolvedValue({ status: 'ok' })
-    renderManage({ details: { grade: 'junmai_ginjo', styles: ['Nama'], polishingPct: 55 } })
+    renderManage({ details: { grade: 'junmai_ginjo', styles: ['Nama', 'Hand-pressed'], polishingPct: 55 } })
     fireEvent.click(screen.getByRole('button', { name: /Rename/ }))
     expect((screen.getByLabelText('Grade') as HTMLSelectElement).value).toBe('junmai_ginjo')
     expect((screen.getByLabelText('Polishing') as HTMLInputElement).value).toBe('55')
-    fireEvent.change(screen.getByLabelText('Style'), { target: { value: 'Nama, Genshu' } })
+    // A known style word is a ticked box; anything else waits in "Other".
+    expect((screen.getByRole('checkbox', { name: 'Nama' }) as HTMLInputElement).checked).toBe(true)
+    expect((screen.getByLabelText(/Other style words/) as HTMLInputElement).value).toBe('Hand-pressed')
+
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Muroka' }))
+    fireEvent.change(screen.getByLabelText('Koji'), { target: { value: 'white' } })
     fireEvent.click(screen.getByRole('button', { name: 'Save' }))
     await waitFor(() =>
       expect(renameOwnBottling).toHaveBeenCalledWith(
-        expect.objectContaining({ details: { grade: 'junmai_ginjo', styles: ['Nama', 'Genshu'], polishingPct: 55 } }),
+        expect.objectContaining({
+          details: { grade: 'junmai_ginjo', styles: ['Nama', 'Muroka', 'Hand-pressed'], polishingPct: 55, koji: 'white' },
+        }),
       ),
     )
   })

@@ -86,7 +86,7 @@ export async function addOwnBottling(input: AddOwnBottlingInput): Promise<AddOwn
   })
 }
 
-/** Grade, styles and polishing as stored: what was given, nothing empty. */
+/** Grade, styles, polishing and koji as stored: what was given, nothing empty. */
 function detailFields(details: BottlingDetails | undefined): Partial<Expression> {
   if (!details) return {}
   const styles = (details.styles ?? []).map((s) => s.trim()).filter(Boolean)
@@ -94,6 +94,7 @@ function detailFields(details: BottlingDetails | undefined): Partial<Expression>
     ...(details.grade ? { grade: details.grade } : {}),
     ...(styles.length > 0 ? { styles } : {}),
     ...(details.polishingPct ? { polishingPct: details.polishingPct } : {}),
+    ...(details.koji ? { koji: details.koji } : {}),
   }
 }
 
@@ -137,6 +138,7 @@ export async function renameOwnBottling(
       delete next.grade
       delete next.styles
       delete next.polishingPct
+      delete next.koji
       Object.assign(next, detailFields(parsed.data.details))
     }
     // A name the visitor wrote is theirs, not a reading (design v1.7.1, H3).

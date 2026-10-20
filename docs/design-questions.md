@@ -2,7 +2,7 @@
 
 Open questions the build has run into and settled provisionally, so they can be handed to the designers in one go. Each says what is built today, so nobody has to guess. Opened 2026-10-13; filed as #417.
 
-Round two (blocks I–R) and round three (blocks S, T and U) are at the end of the file.
+Round two (blocks I–R) and round three (blocks S, T, U and V) are at the end of the file.
 
 The design snapshot these refer to is `design/README.md`, v1.6.2.
 
@@ -325,4 +325,17 @@ Built today: nothing of I or T. The scan photo stays in memory for the result an
 2. Should a row fill the field and run the full search instead of opening the sake?
 3. The list sits over the browse chips and the empty state. Should it push them down instead?
 4. Should the visitor's own bottlings that match (the "Add it yourself" ones) appear in the list too, above the catalogue?
+
+## V. The bottling form: style boxes and koji (built ahead of the spec)
+
+Asked for by the maintainer and built:
+
+- **Style is a set of boxes to tick** instead of a free-text field: Nama, Namachozō, Namazume, Genshu, Muroka, Nigori, Sparkling, Koshu, Kimoto, Yamahai, Taruzake, Kijōshu, Hiyaoroshi (the words the scan reads), as pills like §8's chips, plus one "Other style words" field for anything else. A label read prefills the boxes.
+- **Koji**, a new optional field beside Grade: Yellow koji (黄麹, what almost all sake uses), White koji (白麹), Black koji (黒麹), "Not given" by default. It shows as a tag on §9a like the grade.
+- "Add it yourself" in search now has the same details as "Add your bottling" (it had name and brewery only).
+
+1. Thirteen pills is a lot on a phone. Group them (Unpasteurised: nama, namachozō, namazume · Process: genshu, muroka · Starter: kimoto, yamahai · Kind: nigori, sparkling, koshu, taruzake, kijōshu, hiyaoroshi), or keep the most common six and put the rest behind "More"?
+2. Koji as a select, or three pills like the styles? Should its tag look different from the grade's?
+3. Should the koji have a line in the Learn entries (it changes the taste: white and black koji give citric acidity), and a ⓘ beside the field?
+4. The scan does not read koji off a label yet (that needs a prompt change and an eval run, parked with the others). Once it does, should "What we read" show it?
 
