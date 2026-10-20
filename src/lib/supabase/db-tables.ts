@@ -48,6 +48,9 @@ export type PublicTable =
   | 'name_romaji_overrides'
   // 0018: curated brewery for a misfiled sake; read only by its trigger.
   | 'brand_brewery_overrides'
+  // 0019: other names a sake or brewery is sold under (#413); read by the
+  // romaji index for search and scan, and by the bottle page.
+  | 'name_aliases'
 
 /**
  * Tables whose rows are scoped to a single Clerk user. Reads/writes MUST

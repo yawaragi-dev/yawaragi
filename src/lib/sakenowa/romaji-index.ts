@@ -21,14 +21,30 @@ export interface RomajiIndexEntry {
   /** Key of the brewery's romaji, or `null` where it has none. */
   readonly breweryKey: string | null
   readonly looseBrandKeys: readonly string[]
+  /**
+   * Other names the sake is sold under (`name_aliases`, #413), each with its
+   * key. Apart from `brandKeys` on purpose: a hit on an alias ranks below a
+   * hit on the name, and the row says which name matched.
+   */
+  readonly aliases: readonly { readonly key: string; readonly alias: string }[]
 }
 
 export interface RomajiIndex {
   readonly entries: readonly RomajiIndexEntry[]
-  /** Sakes whose own Latin name is one of `keys`. */
-  brandIdsNamed(keys: readonly string[], options?: { loose?: boolean }): number[]
-  /** Breweries whose romaji is one of `keys`. */
+  /**
+   * Sakes whose own Latin name is one of `keys`. `withAliases` adds the sakes
+   * one of whose other names is (the scan's Latin lookup, where a match by
+   * either needs a second witness anyway).
+   */
+  brandIdsNamed(keys: readonly string[], options?: { loose?: boolean; withAliases?: boolean }): number[]
+  /** Breweries whose romaji, or one of whose other names, is one of `keys`. */
   breweryIdsNamed(keys: readonly string[]): number[]
+}
+
+export interface AliasRow {
+  kind: 'brand' | 'brewery'
+  id: number
+  alias: string
 }
 
 interface IndexRow {
@@ -47,6 +63,10 @@ const SELECT_LATIN_NAMES = `
     AND b.superseded_at IS NULL
 `
 
+// A database the 0019 migration has not reached yet reads as "no aliases",
+// so search and scan keep working while it rolls out.
+const SELECT_ALIASES = `SELECT kind, id, alias FROM name_aliases`
+
 /** Latin letters only: a `name` that is kanji has no key worth holding. */
 const keysOf = (...names: (string | null | undefined)[]) => [
   ...new Set(
@@ -56,7 +76,18 @@ const keysOf = (...names: (string | null | undefined)[]) => [
   ),
 ]
 
-export function buildRomajiIndex(rows: readonly IndexRow[]): RomajiIndex {
+export function buildRomajiIndex(rows: readonly IndexRow[], aliasRows: readonly AliasRow[] = []): RomajiIndex {
+  const aliasesOf = (kind: AliasRow['kind'], id: number) =>
+    aliasRows
+      .filter((a) => a.kind === kind && a.id === id)
+      .map((a) => ({ key: romajiKey(a.alias), alias: a.alias }))
+      .filter((a) => a.key.length > 0)
+  const breweryAliasKeys = new Map<number, string[]>()
+  for (const a of aliasRows) {
+    if (a.kind !== 'brewery') continue
+    const key = romajiKey(a.alias)
+    if (key.length > 0) breweryAliasKeys.set(a.id, [...(breweryAliasKeys.get(a.id) ?? []), key])
+  }
   const entries: RomajiIndexEntry[] = rows.map((row) => {
     const latinNames = [row.name, row.name_romaji].filter((n): n is string => typeof n === 'string' && /[A-Za-z]/.test(n))
     return {
@@ -65,6 +96,7 @@ export function buildRomajiIndex(rows: readonly IndexRow[]): RomajiIndex {
       brandKeys: keysOf(row.name, row.name_romaji),
       breweryKey: row.brewery_romaji ? romajiKey(row.brewery_romaji) : null,
       looseBrandKeys: [...new Set(latinNames.map(looseRomajiKey))],
+      aliases: aliasesOf('brand', row.brand_id),
     }
   })
   return {
@@ -72,12 +104,26 @@ export function buildRomajiIndex(rows: readonly IndexRow[]): RomajiIndex {
     brandIdsNamed(keys, options) {
       const wanted = new Set(keys)
       return entries
-        .filter((e) => (options?.loose ? e.looseBrandKeys : e.brandKeys).some((k) => wanted.has(k)))
+        .filter(
+          (e) =>
+            (options?.loose ? e.looseBrandKeys : e.brandKeys).some((k) => wanted.has(k)) ||
+            (options?.withAliases === true && e.aliases.some((a) => wanted.has(a.key))),
+        )
         .map((e) => e.brandId)
     },
     breweryIdsNamed(keys) {
       const wanted = new Set(keys)
-      return [...new Set(entries.filter((e) => e.breweryKey !== null && wanted.has(e.breweryKey)).map((e) => e.breweryId))]
+      return [
+        ...new Set(
+          entries
+            .filter(
+              (e) =>
+                (e.breweryKey !== null && wanted.has(e.breweryKey)) ||
+                (breweryAliasKeys.get(e.breweryId) ?? []).some((k) => wanted.has(k)),
+            )
+            .map((e) => e.breweryId),
+        ),
+      ]
     },
   }
 }
@@ -88,7 +134,10 @@ const cache = new WeakMap<Pool, { at: number; index: Promise<RomajiIndex> }>()
 export async function getRomajiIndex(pool: Pool): Promise<RomajiIndex> {
   const held = cache.get(pool)
   if (held && Date.now() - held.at < TTL_MS) return held.index
-  const index = publicQuery<IndexRow>('brands', SELECT_LATIN_NAMES, [], pool).then(({ rows }) => buildRomajiIndex(rows))
+  const index = Promise.all([
+    publicQuery<IndexRow>('brands', SELECT_LATIN_NAMES, [], pool),
+    publicQuery<AliasRow>('name_aliases', SELECT_ALIASES, [], pool).catch(() => ({ rows: [] as AliasRow[] })),
+  ]).then(([names, aliases]) => buildRomajiIndex(names.rows, aliases.rows))
   cache.set(pool, { at: Date.now(), index })
   // A failed read must not be served for five minutes.
   index.catch(() => cache.delete(pool))

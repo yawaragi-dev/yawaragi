@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { Pool } from 'pg'
 import {
+  aliasMatches,
   MAX_CATALOGUE_SEARCH_RESULTS,
   escapeLikePattern,
   isCatalogueQuerySpecific,
@@ -320,6 +321,39 @@ describe('latinKeyMatchIds — rows a plain text match cannot see', () => {
   it('finds nothing for kanji, or for a key too short to mean anything', () => {
     expect(latinKeyMatchIds('不動', index)).toEqual([])
     expect(latinKeyMatchIds('fu', index)).toEqual([])
+  })
+})
+
+describe('aliasMatches — a sake found under another name it is sold by (#413)', () => {
+  const index = buildRomajiIndex(
+    [
+      { brand_id: 846, brewery_id: 20, name: '李白', name_romaji: 'Rihaku', brewery_romaji: 'Rihaku Shuzo' },
+      { brand_id: 3776, brewery_id: 21, name: '水尾', name_romaji: 'Mizuo', brewery_romaji: 'Tanakaya Shuzoten' },
+      { brand_id: 7, brewery_id: 22, name: '詩人', name_romaji: 'Shijin', brewery_romaji: 'Poet Shuzo' },
+    ],
+    [
+      { kind: 'brand', id: 846, alias: 'Wandering Poet' },
+      { kind: 'brand', id: 3776, alias: 'Ichiaji' },
+    ],
+  )
+
+  it('finds the sake by its export name, and says which name matched', () => {
+    expect(aliasMatches('Wandering Poet', index)).toEqual([{ brandId: 846, alias: 'Wandering Poet' }])
+    expect(aliasMatches('wanderingpoet', index)).toEqual([{ brandId: 846, alias: 'Wandering Poet' }])
+  })
+
+  it('finds it with the line’s own name before or after the other name: "Rihaku Wandering Poet", "Mizuo Ichiaji"', () => {
+    expect(aliasMatches('Rihaku Wandering Poet', index)).toEqual([{ brandId: 846, alias: 'Wandering Poet' }])
+    expect(aliasMatches('Mizuo Ichiaji', index)).toEqual([{ brandId: 3776, alias: 'Ichiaji' }])
+  })
+
+  it('never matches on one word of an export name', () => {
+    expect(aliasMatches('poet', index)).toEqual([])
+    expect(aliasMatches('Wandering', index)).toEqual([])
+  })
+
+  it('keeps aliases out of the matching on the name itself', () => {
+    expect(latinKeyMatchIds('wandering poet', index)).toEqual([])
   })
 })
 

@@ -1015,7 +1015,10 @@ export async function findSakeByLatinBrandFromPool(
   const { rows } = await publicQuery<BrandWithBreweryRow>(
     'brands',
     SELECT_BRANDS_AND_BREWERIES_BY_LATIN_NAME,
-    [candidates, (await getRomajiIndex(pool)).brandIdsNamed(candidates.map(romajiKey))],
+    // Other names it is sold under count as Latin names here (#413): the
+    // result is still `matched_brand_only`, so it needs the same second
+    // witness a romaji match needs.
+    [candidates, (await getRomajiIndex(pool)).brandIdsNamed(candidates.map(romajiKey), { withAliases: true })],
     pool,
   )
   debugAdd('Sakenowa', `latin-name lookup returned ${rows.length} row(s)`)

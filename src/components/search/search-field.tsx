@@ -11,6 +11,8 @@ export interface Suggestion {
   nameRomaji: string | null
   breweryKanji: string | null
   breweryRomaji: string | null
+  /** Found only under another name it is sold by (#413). */
+  matchedAlias?: string
   href: string
 }
 
@@ -42,6 +44,7 @@ export function SearchField({
   placeholder,
   locale,
   listLabel,
+  alsoSoldAs,
   footer,
   fetchSuggestions = defaultFetch,
 }: {
@@ -51,6 +54,8 @@ export function SearchField({
   placeholder: string
   locale: string
   listLabel: string
+  /** "Also sold as {name}", with `{name}` left in for the row's other name. */
+  alsoSoldAs: string
   /** Under the rows: the romaji caveat and the Sakenowa credit. */
   footer: React.ReactNode
   fetchSuggestions?: (query: string, locale: string, signal: AbortSignal) => Promise<Fetched>
@@ -171,6 +176,9 @@ export function SearchField({
                     <span lang="ja">{row.breweryKanji}</span>
                     {row.breweryRomaji && ` (${row.breweryRomaji})`}
                   </span>
+                )}
+                {row.matchedAlias && (
+                  <span className="text-meta text-ash-700">{alsoSoldAs.replace('{name}', row.matchedAlias)}</span>
                 )}
               </li>
             ))}
