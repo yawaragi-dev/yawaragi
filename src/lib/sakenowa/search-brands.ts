@@ -275,6 +275,12 @@ export interface CatalogueSearchResult {
   readonly nameRomaji: string | null
   readonly breweryKanji: string | null
   readonly breweryRomaji: string | null
+  /**
+   * Set when the row was found only through another name the sake is sold
+   * under (#413). The row says so ("Also sold as …"); the displayed names stay
+   * the catalogue's.
+   */
+  readonly matchedAlias?: string
 }
 
 interface CatalogueSearchRow {
@@ -357,6 +363,27 @@ export function latinKeyMatchIds(query: string, index: RomajiIndex): number[] {
   const loose = looseRomajiKey(latin)
   if (loose.length < MIN_KEY_LENGTH + 1) return []
   return index.entries.filter((e) => e.looseBrandKeys.some((k) => k.startsWith(loose))).map((e) => e.brandId)
+}
+
+/**
+ * Sakes one of whose other names (`name_aliases`, #413) is the query: the
+ * whole alias, alone or after or before the line's own name ("Rihaku
+ * Wandering Poet", "Mizuo Ichiaji"). Never one word of it — "Poet" must not
+ * find Rihaku — so an export name made of ordinary words stays a name.
+ */
+export function aliasMatches(query: string, index: RomajiIndex): { brandId: number; alias: string }[] {
+  const latin = latinFormOf(query)
+  if (latin === null) return []
+  const key = romajiKey(latin)
+  if (key.length < MIN_KEY_LENGTH) return []
+  const found: { brandId: number; alias: string }[] = []
+  for (const entry of index.entries) {
+    const hit = entry.aliases.find(
+      (a) => a.key === key || entry.brandKeys.some((name) => key === name + a.key || key === a.key + name),
+    )
+    if (hit) found.push({ brandId: entry.brandId, alias: hit.alias })
+  }
+  return found
 }
 
 const SEARCH_CATALOGUE_BY_IDS = `
@@ -455,7 +482,8 @@ export async function searchCatalogueFromPool(
   // Plus the rows only a romaji key can find — another spacing, another
   // spelling of a long vowel, another romanisation, kana for a kanji name.
   const seen = new Set(rows.map((row) => row.brand_id))
-  const byKey = latinKeyMatchIds(query, await getRomajiIndex(pool)).filter((id) => !seen.has(id))
+  const index = await getRomajiIndex(pool)
+  const byKey = latinKeyMatchIds(query, index).filter((id) => !seen.has(id))
   const extra =
     byKey.length === 0
       ? []
@@ -471,7 +499,19 @@ export async function searchCatalogueFromPool(
   // Fetch a window, rank it, then cut. Ranking after the cut would only
   // reorder rows the database had already chosen for an unrelated reason —
   // see `CATALOGUE_CANDIDATE_WINDOW`.
-  return rankCatalogueMatches(query, [...rows, ...extra].map(toCatalogueResult)).slice(0, capped)
+  const named = rankCatalogueMatches(query, [...rows, ...extra].map(toCatalogueResult))
+
+  // Then the sakes found only under another name, below every sake whose own
+  // name matched (#413), each saying which name it was found by.
+  const listed = new Set(named.map((m) => m.brandId))
+  const byAlias = aliasMatches(query, index).filter((m) => !listed.has(m.brandId))
+  const aliased =
+    byAlias.length === 0
+      ? []
+      : (await publicQuery<CatalogueSearchRow>('brands', SEARCH_CATALOGUE_BY_IDS, [byAlias.map((m) => m.brandId), CATALOGUE_CANDIDATE_WINDOW], pool)).rows.map(
+          (row) => ({ ...toCatalogueResult(row), matchedAlias: byAlias.find((m) => m.brandId === row.brand_id)!.alias }),
+        )
+  return [...named, ...aliased].slice(0, capped)
 }
 
 /**

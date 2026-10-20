@@ -214,7 +214,8 @@
       "theBreweryLabel": "The brewery",
       "otherSakesIntro": "Also from this brewery",
       "shopsLabel": "Where to find it",
-      "shopsEmpty": "Not tracked in any shop yet."
+      "shopsEmpty": "Not tracked in any shop yet.",
+      "alsoSoldAs": "Also sold as {names}"
     },
     "similar": {
       "title": "Like {name}",
@@ -419,7 +420,8 @@
     },
     "suggestions": {
       "label": "Matching sakes"
-    }
+    },
+    "alsoSoldAs": "Also sold as {name}"
   },
   "suggest": {
     "entry": {

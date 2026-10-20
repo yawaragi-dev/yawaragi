@@ -214,7 +214,8 @@
       "theBreweryLabel": "Die Brauerei",
       "otherSakesIntro": "Ebenfalls aus dieser Brauerei",
       "shopsLabel": "Wo du ihn findest",
-      "shopsEmpty": "Noch in keinem Shop erfasst."
+      "shopsEmpty": "Noch in keinem Shop erfasst.",
+      "alsoSoldAs": "Auch erhältlich als {names}"
     },
     "similar": {
       "title": "Wie {name}",
@@ -419,7 +420,8 @@
     },
     "suggestions": {
       "label": "Passende Sake"
-    }
+    },
+    "alsoSoldAs": "Auch erhältlich als {name}"
   },
   "suggest": {
     "entry": {

@@ -11,6 +11,7 @@ import {
   lookupFlavorChart,
 } from '@/lib/sakenowa/lookup'
 import { formerBreweryNameOf } from '@/lib/sakenowa/former-brewery-names'
+import { otherNamesOf } from '@/lib/sakenowa/name-aliases'
 import { getPrefectureNames } from '@/lib/sakenowa/prefecture'
 import { BottleHistory } from '@/components/sake/bottle-history'
 import { OwnBottlings } from '@/components/sake/own-bottlings'
@@ -128,13 +129,14 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
     notFound()
   }
 
-  const [brand, brewery, flavorChart, siblings, viewer, axisStats] = await Promise.all([
+  const [brand, brewery, flavorChart, siblings, viewer, axisStats, otherNames] = await Promise.all([
     lookupBrandCached(brandId),
     lookupBreweryCached(brandId),
     lookupFlavorChartCached(brandId),
     listSiblingBrandsSafe(brandId),
     cookies().then(resolveViewerJournal),
     catalogueAxisStats(),
+    otherNamesOf(brandId),
   ])
   if (!brand) {
     notFound()
@@ -254,6 +256,13 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
               >
                 {brand.nameKanji}
               </h1>
+            )}
+            {/* Design v1.7 (E2): the curated names it is also sold under, under
+                the kanji and above "formerly". */}
+            {otherNames.length > 0 && (
+              <p className="text-meta text-ash-600" data-testid="bottle-also-sold-as">
+                {t('alsoSoldAs', { names: otherNames.join(', ') })}
+              </p>
             )}
             {showBrewery && (
               <p className="text-body text-ash-600" data-testid="bottle-brewery-line">

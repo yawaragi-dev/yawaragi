@@ -29,6 +29,7 @@ function field(fetchSuggestions: (q: string, l: string, s: AbortSignal) => Promi
           placeholder="Name"
           locale="en"
           listLabel="Matching sakes"
+          alsoSoldAs="Also sold as {name}"
           footer="Latin spellings are machine transliterations."
           fetchSuggestions={fetchSuggestions}
         />

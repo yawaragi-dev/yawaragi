@@ -419,3 +419,19 @@ test.describe('§8 matches as you type (#326)', () => {
     await request.dispose()
   })
 })
+
+test.describe('other names a sake is sold under (#413, design v1.7 E1)', () => {
+  test('an export name finds the sake and says which name matched; one word of it does not', async ({ browser }) => {
+    test.skip((await findAnyBrandId()) === null, 'Sakenowa mirror not populated — DB-bound spec')
+    const { context, page } = await searchPage(browser)
+
+    await page.goto('/en/search?q=Wandering%20Poet')
+    await expect(page.getByTestId('search-result-row').first()).toContainText('李白')
+    await expect(page.getByTestId('search-result-also-sold-as').first()).toHaveText('Also sold as Wandering Poet')
+
+    await page.goto('/en/search?q=poet')
+    await expect(page.getByTestId('search-result-also-sold-as')).toHaveCount(0)
+
+    await context.close()
+  })
+})

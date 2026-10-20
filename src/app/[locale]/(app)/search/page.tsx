@@ -183,6 +183,7 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
               placeholder={t('placeholder')}
               locale={locale}
               listLabel={t('suggestions.label')}
+              alsoSoldAs={t.raw('alsoSoldAs') as string}
               footer={
                 <>
                   {tRomaji('caveat')} ·{' '}
@@ -240,7 +241,12 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
             </h1>
             <ol className="flex flex-col" data-testid="search-results">
               {matches.map((match) => (
-                <SearchResultRow key={match.brandId} match={match} breweryUnknown={t('breweryUnknown')} />
+                <SearchResultRow
+                  key={match.brandId}
+                  match={match}
+                  breweryUnknown={t('breweryUnknown')}
+                  alsoSoldAs={match.matchedAlias ? t('alsoSoldAs', { name: match.matchedAlias }) : undefined}
+                />
               ))}
             </ol>
             <div className="flex flex-col gap-1.5">
@@ -317,6 +323,7 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
                 key={match.brandId}
                 match={match}
                 breweryUnknown={t('breweryUnknown')}
+                alsoSoldAs={match.matchedAlias ? t('alsoSoldAs', { name: match.matchedAlias }) : undefined}
               />
             ))}
           </ol>
@@ -364,9 +371,12 @@ const CATALOGUE_SIZE = 3300
 function SearchResultRow({
   match,
   breweryUnknown,
+  alsoSoldAs,
 }: {
   match: CatalogueSearchResult
   breweryUnknown: string
+  /** "Also sold as {name}" when the row matched only through another name (#413). */
+  alsoSoldAs?: string
 }) {
   return (
     <li>
@@ -396,6 +406,12 @@ function SearchResultRow({
               <span>{breweryUnknown}</span>
             )}
           </span>
+          {alsoSoldAs && (
+            // Design v1.7 (E1, 88): 12px neutral-700, under the meta.
+            <span className="text-meta text-ash-700" data-testid="search-result-also-sold-as">
+              {alsoSoldAs}
+            </span>
+          )}
         </span>
         <CaretRight size={16} className="ml-auto shrink-0 text-ash-500" aria-hidden="true" />
       </Link>
