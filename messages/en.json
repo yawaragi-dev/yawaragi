@@ -181,7 +181,7 @@
   "cookieBanner": {
     "label": "Cookie preferences",
     "title": "Cookies and similar storage",
-    "description": "We need some storage to run the app. With your permission we would also like anonymous usage stats and crash reports. Nothing loads until you choose.",
+    "description": "We need some storage to run the app. With your permission we would also use analytics cookies and crash reports; nothing loads until you choose. Either way we count plain daily totals, such as how many scans there were, which say nothing about you.",
     "customizeTitle": "Choose what we store",
     "categoriesLegend": "Cookie categories",
     "categoryNecessary": "Essential (always on)",

@@ -181,7 +181,7 @@
   "cookieBanner": {
     "label": "Cookie-Einstellungen",
     "title": "Cookies und ähnliche Speicherung",
-    "description": "Etwas Speicher brauchen wir, damit die App läuft. Mit deiner Erlaubnis hätten wir gern anonyme Nutzungsstatistiken und Absturzberichte. Vor deiner Wahl lädt nichts davon.",
+    "description": "Etwas Speicher brauchen wir, damit die App läuft. Mit deiner Erlaubnis nutzen wir zusätzlich Analyse-Cookies und Absturzberichte; vor deiner Wahl lädt nichts davon. In jedem Fall zählen wir reine Tagessummen, etwa wie viele Scans es gab – sie verraten nichts über dich.",
     "customizeTitle": "Wähle, was wir speichern",
     "categoriesLegend": "Cookie-Kategorien",
     "categoryNecessary": "Essenziell (immer aktiv)",
