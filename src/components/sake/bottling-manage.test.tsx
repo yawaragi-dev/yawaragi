@@ -201,8 +201,8 @@ describe('"This bottling": deleting', () => {
     fireEvent.click(screen.getByRole('button', { name: /Rename/ }))
     expect((screen.getByLabelText('Grade') as HTMLSelectElement).value).toBe('junmai_ginjo')
     expect((screen.getByLabelText('Polishing') as HTMLInputElement).value).toBe('55')
-    // A known style word is a ticked box; anything else waits in "Other".
-    expect((screen.getByRole('checkbox', { name: 'Nama' }) as HTMLInputElement).checked).toBe(true)
+    // Nama is the pasteurisation; anything the form does not know waits in "Other".
+    expect((screen.getByLabelText('Pasteurisation') as HTMLSelectElement).value).toBe('nama')
     expect((screen.getByLabelText(/Other style words/) as HTMLInputElement).value).toBe('Hand-pressed')
 
     fireEvent.click(screen.getByRole('checkbox', { name: 'Muroka' }))

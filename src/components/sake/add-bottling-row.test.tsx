@@ -55,7 +55,7 @@ describe('"Add this bottling" after a scan that read more than the sake’s name
     fireEvent.click(screen.getByRole('button', { name: /Add this bottling/ }))
     expect((screen.getByLabelText('Grade') as HTMLSelectElement).value).toBe('junmai_ginjo')
     expect((screen.getByLabelText('Polishing') as HTMLInputElement).value).toBe('50')
-    expect((screen.getByRole('checkbox', { name: 'Nama' }) as HTMLInputElement).checked).toBe(true)
+    expect((screen.getByLabelText('Pasteurisation') as HTMLSelectElement).value).toBe('nama')
     expect((screen.getByRole('checkbox', { name: 'Genshu' }) as HTMLInputElement).checked).toBe(false)
     expect(screen.getByText(/Read from the label/)).toBeTruthy()
 

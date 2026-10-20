@@ -7,22 +7,49 @@ import { ScanGradeSchema, ScanStyleSchema, type ScanGrade, type ScanStyle } from
 import { gradeLabel, styleLabel } from '@/lib/scan/read-bottling'
 import { cn } from '@/lib/utils'
 
+/** One of these at most: how the bottle was pasteurised (or not). */
+export const PASTEURISATION = ['nama', 'namachozo', 'namazume'] as const satisfies readonly ScanStyle[]
+/** One of these at most: the yeast starter. */
+export const STARTER = ['kimoto', 'yamahai'] as const satisfies readonly ScanStyle[]
+/** Everything else, which can be combined freely. */
+export const FREE_STYLES = ScanStyleSchema.options.filter(
+  (s) => !(PASTEURISATION as readonly string[]).includes(s) && !(STARTER as readonly string[]).includes(s),
+)
+
+type Pasteurisation = (typeof PASTEURISATION)[number]
+type Starter = (typeof STARTER)[number]
+
 /**
- * Stored style words split into the ones the form offers as checkboxes and
- * the rest, which go to "Other". Matched without case, so "nama" written by
- * hand ticks Nama.
+ * Stored style words, sorted back into the form's parts: the pasteurisation
+ * and the starter (one each), the free styles, and the rest for "Other".
+ * Matched without case, so "nama" written by hand selects Nama. A second
+ * pasteurisation or starter word (which the old free-text field allowed) goes
+ * to "Other" rather than being lost.
  */
-export function splitStyles(words: readonly string[]): { known: ScanStyle[]; other: string[] } {
-  const known: ScanStyle[] = []
+export function splitStyles(words: readonly string[]): {
+  pasteurisation: Pasteurisation | ''
+  starter: Starter | ''
+  free: ScanStyle[]
+  other: string[]
+} {
+  let pasteurisation: Pasteurisation | '' = ''
+  let starter: Starter | '' = ''
+  const free: ScanStyle[] = []
   const other: string[] = []
   for (const word of words) {
     const style = ScanStyleSchema.options.find(
       (s) => s === word.toLowerCase() || styleLabel(s).toLowerCase() === word.toLowerCase(),
     )
-    if (style && !known.includes(style)) known.push(style)
-    else if (!style) other.push(word)
+    if (!style) other.push(word)
+    else if ((PASTEURISATION as readonly string[]).includes(style)) {
+      if (pasteurisation === '') pasteurisation = style as Pasteurisation
+      else if (style !== pasteurisation) other.push(word)
+    } else if ((STARTER as readonly string[]).includes(style)) {
+      if (starter === '') starter = style as Starter
+      else if (style !== starter) other.push(word)
+    } else if (!free.includes(style)) free.push(style)
   }
-  return { known, other }
+  return { pasteurisation, starter, free, other }
 }
 
 /**
@@ -41,9 +68,11 @@ export function splitStyles(words: readonly string[]): { known: ScanStyle[]; oth
  *
  * `withDetails` adds Grade, Polishing, Koji and Style (design v1.7 D5,
  * screenshot 84), all optional; `initialDetails` fills them from a scan's read
- * or from what is stored. Style is a set of checkboxes — the words a label
- * prints (Nama, Muroka, Genshu …, the same list the scan reads) — plus
- * "Other" for anything else, stored together as the bottling's style words.
+ * or from what is stored. The style words a label prints (the list the scan
+ * reads) are split by what can go together: Pasteurisation (Nama /
+ * Namachozō / Namazume) and Starter (Kimoto / Yamahai) are one choice each,
+ * the rest (Genshu, Muroka, Nigori …) boxes to tick, plus "Other" for
+ * anything else — all stored together as the bottling's style words.
  * Koji is ahead of the design (question V).
  *
  * The caller owns the saving (`onSubmit`) and says how it is going (`pending`,
@@ -86,12 +115,16 @@ export function BottlingNameForm({
   const polishingId = useId()
   const styleId = useId()
   const kojiId = useId()
+  const pasteurisationId = useId()
+  const starterId = useId()
   const [name, setName] = useState(initialName)
   const [brewery, setBrewery] = useState(initialBrewery)
   const [grade, setGrade] = useState<ScanGrade | ''>(initialDetails?.grade ?? '')
   const [polishing, setPolishing] = useState(initialDetails?.polishingPct ? String(initialDetails.polishingPct) : '')
   const initialStyles = splitStyles(initialDetails?.styles ?? [])
-  const [checked, setChecked] = useState<ScanStyle[]>(initialStyles.known)
+  const [pasteurisation, setPasteurisation] = useState<Pasteurisation | ''>(initialStyles.pasteurisation)
+  const [starter, setStarter] = useState<Starter | ''>(initialStyles.starter)
+  const [checked, setChecked] = useState<ScanStyle[]>(initialStyles.free)
   const [otherStyles, setOtherStyles] = useState(initialStyles.other.join(', '))
   const [koji, setKoji] = useState<Koji | ''>(initialDetails?.koji ?? '')
   const trimmed = name.trim()
@@ -107,7 +140,9 @@ export function BottlingNameForm({
     }
     const pct = Number.parseInt(polishing, 10)
     const words = [
-      ...ScanStyleSchema.options.filter((s) => checked.includes(s)).map(styleLabel),
+      ...(pasteurisation ? [styleLabel(pasteurisation)] : []),
+      ...(starter ? [styleLabel(starter)] : []),
+      ...FREE_STYLES.filter((s) => checked.includes(s)).map(styleLabel),
       ...otherStyles.split(/[,、]/).map((s) => s.trim()).filter(Boolean),
     ].slice(0, MAX_STYLES)
     // Only what is filled in: an empty form sends `{}`, which on a rename
@@ -202,21 +237,61 @@ export function BottlingNameForm({
               </div>
             </div>
           </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex min-w-0 flex-col gap-1.5">
+              <label htmlFor={kojiId} className="text-section-label uppercase text-ash-600">
+                {t('kojiLabel')}
+              </label>
+              <select
+                id={kojiId}
+                value={koji}
+                onChange={(event) => setKoji(event.target.value as Koji | '')}
+                className={field}
+                data-testid={`${testId}-koji`}
+              >
+                <option value="">{t('notGiven')}</option>
+                {KojiSchema.options.map((k) => (
+                  <option key={k} value={k}>
+                    {t(`koji.${k}`)}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex min-w-0 flex-col gap-1.5">
+              <label htmlFor={starterId} className="text-section-label uppercase text-ash-600">
+                {t('starterLabel')}
+              </label>
+              <select
+                id={starterId}
+                value={starter}
+                onChange={(event) => setStarter(event.target.value as Starter | '')}
+                className={field}
+                data-testid={`${testId}-starter`}
+              >
+                <option value="">{t('notGiven')}</option>
+                {STARTER.map((s) => (
+                  <option key={s} value={s}>
+                    {styleLabel(s)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
           <div className="flex min-w-0 flex-col gap-1.5">
-            <label htmlFor={kojiId} className="text-section-label uppercase text-ash-600">
-              {t('kojiLabel')}
+            <label htmlFor={pasteurisationId} className="text-section-label uppercase text-ash-600">
+              {t('pasteurisationLabel')}
             </label>
             <select
-              id={kojiId}
-              value={koji}
-              onChange={(event) => setKoji(event.target.value as Koji | '')}
+              id={pasteurisationId}
+              value={pasteurisation}
+              onChange={(event) => setPasteurisation(event.target.value as Pasteurisation | '')}
               className={field}
-              data-testid={`${testId}-koji`}
+              data-testid={`${testId}-pasteurisation`}
             >
-              <option value="">{t('kojiNone')}</option>
-              {KojiSchema.options.map((k) => (
-                <option key={k} value={k}>
-                  {t(`koji.${k}`)}
+              <option value="">{t('notGiven')}</option>
+              {PASTEURISATION.map((s) => (
+                <option key={s} value={s}>
+                  {t(`pasteurisation.${s}`)}
                 </option>
               ))}
             </select>
@@ -224,7 +299,7 @@ export function BottlingNameForm({
           <fieldset className="flex flex-col gap-2">
             <legend className="mb-1.5 text-section-label uppercase text-ash-600">{t('styleLabel')}</legend>
             <div className="flex flex-wrap gap-2" data-testid={`${testId}-style-options`}>
-              {ScanStyleSchema.options.map((style) => {
+              {FREE_STYLES.map((style) => {
                 const on = checked.includes(style)
                 return (
                   <label key={style} className="cursor-pointer">
