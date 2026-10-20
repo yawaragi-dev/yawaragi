@@ -15,6 +15,7 @@ import {
 import { lookupBrand, lookupFlavorChart } from '@/lib/sakenowa/lookup'
 import { withMaintainerCollection } from '@/lib/taste/maintainer-collection'
 import { tastingDayAt } from '@/lib/taste/tasting-day'
+import { countUsage } from '@/lib/stats/count-usage'
 
 const HOUR = 3_600_000
 
@@ -100,6 +101,7 @@ export async function rateNewTasting(input: RateTastingInput): Promise<RateTasti
       createdAt: now,
     }
     await journal.put(userId, entry)
+    countUsage('tasting_rated')
 
     const entries = await journal.read(userId)
     // A bottling's tastings are counted on their own: "2nd time" is about

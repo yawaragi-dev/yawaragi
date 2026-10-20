@@ -16,6 +16,7 @@ import type { ListActionState } from './list-action-state'
 import { classifyListOutcome } from './list-outcome'
 import { matchList } from './match-list'
 import { rankList } from './rank-list'
+import { countUsage } from '@/lib/stats/count-usage'
 
 /**
  * Design v1.7 §7: "Rank these for you". Reads the whole menu or shelf in the
@@ -32,7 +33,9 @@ import { rankList } from './rank-list'
  * the two calls. It is read inline and dropped, like the label read.
  */
 export async function readListAction(_prev: ListActionState, formData: FormData): Promise<ListActionState> {
-  return withActionSpan({ name: 'list-action', classify: classifyListOutcome }, () => run(formData))
+  const result = await withActionSpan({ name: 'list-action', classify: classifyListOutcome }, () => run(formData))
+  if (result.status === 'read') countUsage('list_read')
+  return result
 }
 
 async function run(formData: FormData): Promise<ListActionState> {

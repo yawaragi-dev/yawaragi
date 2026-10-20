@@ -22,6 +22,7 @@ import {
 } from '@/lib/schemas/cellar-input'
 import { lookupBrand } from '@/lib/sakenowa/lookup'
 import { type MaintainerCollection, withMaintainerCollection } from '@/lib/taste/maintainer-collection'
+import { countUsage } from '@/lib/stats/count-usage'
 
 /**
  * The Cellar's write actions (design v1.4 §11, v1.6.2; ADR-0024): add bottles
@@ -85,6 +86,7 @@ export async function addToCellar(
     if (!subject) return { status: 'not_found' }
     const change = addBottles(rows, subject, { sizeMl, nama }, count, Date.now())
     await writeCellarChange(collection, change)
+    countUsage('cellar_added')
     return { status: 'ok', count: bottlesOf(applyCellarChange(rows, change), parsedTarget.data) }
   })
 }

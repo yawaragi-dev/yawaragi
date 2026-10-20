@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { hasLocale } from 'next-intl'
 import { routing } from '@/i18n/routing'
 import { SAMPLE_COLLECTION_COOKIE } from '@/lib/demo/sample-flag'
+import { countUsage } from '@/lib/stats/count-usage'
 
 /**
  * `/api/sample-collection` — look through the sample collection, or stop.
@@ -26,6 +27,7 @@ export function GET(request: Request): NextResponse {
   if (leave) {
     res.cookies.set(SAMPLE_COLLECTION_COOKIE, '', { path: '/', maxAge: 0 })
   } else {
+    countUsage('sample_opened')
     res.cookies.set(SAMPLE_COLLECTION_COOKIE, '1', {
       path: '/',
       httpOnly: true,
