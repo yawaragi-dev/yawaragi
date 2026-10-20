@@ -58,7 +58,10 @@ test.describe('Learn', () => {
     await page.setViewportSize({ width: 390, height: 844 })
     await page.goto('/en/learn')
     await page.getByTestId('learn-row-yeast-starters').click()
-    await expect(page).toHaveURL(/\/en\/learn\/yeast-starters$/)
+    // The URL changes only once the entry's page has arrived, and on CI's cold
+    // dev server that is the first compile of `/learn/[slug]` (2 s on a
+    // laptop, past the default 5 s on a busy runner, 2026-10-20).
+    await expect(page).toHaveURL(/\/en\/learn\/yeast-starters$/, { timeout: 15_000 })
 
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Starters: sokujō, kimoto, yamahai')
     const kanji = page.getByTestId('learn-entry-kanji')
