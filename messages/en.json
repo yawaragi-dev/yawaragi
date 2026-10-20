@@ -1224,8 +1224,23 @@
     "polishingLabel": "Polishing",
     "styleLabel": "Style",
     "formHintFromLabel": "Read from the label. Fix anything misread; size and the rest can wait for Detailed notes. Only you can see it.",
-    "formHintDetails": "Grade, style and polishing are optional; size and the rest can wait for Detailed notes. Only you can see it.",
-    "polishedTo": "polished to {n}%"
+    "formHintDetails": "All of these are optional; size and the rest can wait for Detailed notes. Only you can see it.",
+    "polishedTo": "polished to {n}%",
+    "kojiLabel": "Koji",
+    "koji": {
+      "yellow": "Yellow koji",
+      "white": "White koji",
+      "black": "Black koji"
+    },
+    "styleOther": "Other style words, comma-separated",
+    "notGiven": "Not given",
+    "starterLabel": "Starter",
+    "pasteurisationLabel": "Pasteurisation",
+    "pasteurisation": {
+      "nama": "Nama (unpasteurised)",
+      "namachozo": "Namachozō (once, at bottling)",
+      "namazume": "Namazume (once, before storage)"
+    }
   },
   "learn": {
     "title": "Learn",

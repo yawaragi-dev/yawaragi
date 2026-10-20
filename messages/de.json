@@ -1224,8 +1224,23 @@
     "polishingLabel": "Poliergrad",
     "styleLabel": "Stil",
     "formHintFromLabel": "Vom Etikett gelesen. Korrigiere, was falsch gelesen ist; Größe und den Rest kannst du später in den ausführlichen Notizen ergänzen. Nur du kannst es sehen.",
-    "formHintDetails": "Qualitätsstufe, Stil und Poliergrad sind optional; Größe und den Rest kannst du später in den ausführlichen Notizen ergänzen. Nur du kannst es sehen.",
-    "polishedTo": "auf {n} % poliert"
+    "formHintDetails": "Alles hier ist optional; Größe und den Rest kannst du später in den ausführlichen Notizen ergänzen. Nur du kannst es sehen.",
+    "polishedTo": "auf {n} % poliert",
+    "kojiLabel": "Koji",
+    "koji": {
+      "yellow": "Gelber Koji",
+      "white": "Weißer Koji",
+      "black": "Schwarzer Koji"
+    },
+    "styleOther": "Weitere Stilwörter, durch Komma getrennt",
+    "notGiven": "Keine Angabe",
+    "starterLabel": "Hefeansatz",
+    "pasteurisationLabel": "Pasteurisierung",
+    "pasteurisation": {
+      "nama": "Nama (unpasteurisiert)",
+      "namachozo": "Namachozō (einmal, beim Abfüllen)",
+      "namazume": "Namazume (einmal, vor Lagerung)"
+    }
   },
   "learn": {
     "title": "Wissen",

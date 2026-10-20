@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { useTranslations } from 'next-intl'
 import { PlusCircle } from '@phosphor-icons/react/dist/ssr'
 import { BottlingNameForm } from '@/components/sake/bottling-name-form'
+import type { BottlingDetails } from '@/lib/schemas/expression'
 import { useRouter } from '@/i18n/navigation'
 import * as saves from '@/lib/collection/expression-actions'
 import { reachable } from '@/lib/network/settle-request'
@@ -29,7 +30,12 @@ function useAddUnlistedBottling() {
   const [failed, setFailed] = useState(false)
   const [pending, startTransition] = useTransition()
 
-  function add(name: string, brewery?: string, read?: { aiName?: boolean; aiBrewery?: boolean }) {
+  function add(
+    name: string,
+    brewery?: string,
+    read?: { aiName?: boolean; aiBrewery?: boolean },
+    details?: BottlingDetails,
+  ) {
     const trimmed = name.trim()
     if (trimmed.length === 0 || pending) return
     setFailed(false)
@@ -40,6 +46,7 @@ function useAddUnlistedBottling() {
         brewery,
         ...(read?.aiName ? { aiName: true } : {}),
         ...(read?.aiBrewery && brewery?.trim() ? { aiBrewery: true } : {}),
+        ...(details && Object.keys(details).length > 0 ? { details } : {}),
       })
       if (result.status !== 'ok') {
         setFailed(true)
@@ -124,9 +131,10 @@ export function AddItYourselfRow({ query }: { query: string }) {
       <BottlingNameForm
         initialName={query}
         withBrewery
+        withDetails
         pending={pending}
         failed={failed}
-        onSubmit={(name, brewery) => add(name, brewery || undefined)}
+        onSubmit={(name, brewery, details) => add(name, brewery || undefined, undefined, details)}
         onCancel={() => setOpen(false)}
         testId="search-add-yourself"
       />
@@ -166,9 +174,10 @@ export function AddListLineYourself({ printed, label }: { printed: string; label
         <BottlingNameForm
           initialName={printed}
           withBrewery
+          withDetails
           pending={pending}
           failed={failed}
-          onSubmit={(name, brewery) => add(name, brewery || undefined)}
+          onSubmit={(name, brewery, details) => add(name, brewery || undefined, undefined, details)}
           onCancel={() => setOpen(false)}
           testId="list-add-yourself"
         />

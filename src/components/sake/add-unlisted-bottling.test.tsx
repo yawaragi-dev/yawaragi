@@ -67,6 +67,29 @@ describe('"Add it yourself" in search', () => {
     )
   })
 
+  it('can say what the bottle is: grade, pasteurisation, starter, styles to tick, polishing and koji', async () => {
+    addOwnBottling.mockResolvedValue({ status: 'ok', expressionId: 'x7' })
+    renderRow('Fukuchiyo')
+    fireEvent.click(screen.getByTestId('search-add-yourself'))
+
+    fireEvent.change(screen.getByLabelText('Grade'), { target: { value: 'junmai_daiginjo' } })
+    fireEvent.change(screen.getByLabelText('Pasteurisation'), { target: { value: 'nama' } })
+    fireEvent.change(screen.getByLabelText('Starter'), { target: { value: 'kimoto' } })
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Muroka' }))
+    fireEvent.change(screen.getByLabelText('Polishing'), { target: { value: '40' } })
+    fireEvent.change(screen.getByLabelText('Koji'), { target: { value: 'white' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Add bottling' }))
+
+    await waitFor(() =>
+      expect(addOwnBottling).toHaveBeenCalledWith({
+        brandId: null,
+        name: 'Fukuchiyo',
+        brewery: undefined,
+        details: { grade: 'junmai_daiginjo', styles: ['Nama', 'Kimoto', 'Muroka'], polishingPct: 40, koji: 'white' },
+      }),
+    )
+  })
+
   it('Cancel puts the row back and saves nothing', () => {
     renderRow()
     fireEvent.click(screen.getByRole('button', { name: /Add “fukuchiyo” yourself/ }))

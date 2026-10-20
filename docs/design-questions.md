@@ -2,7 +2,7 @@
 
 Open questions the build has run into and settled provisionally, so they can be handed to the designers in one go. Each says what is built today, so nobody has to guess. Opened 2026-10-13; filed as #417.
 
-Round two (blocks I–R) and round three (blocks S, T and U) are at the end of the file.
+Round two (blocks I–R) and round three (blocks S, T, U and V) are at the end of the file.
 
 The design snapshot these refer to is `design/README.md`, v1.6.2.
 
@@ -326,3 +326,15 @@ Built today: nothing of I or T. The scan photo stays in memory for the result an
 3. The list sits over the browse chips and the empty state. Should it push them down instead?
 4. Should the visitor's own bottlings that match (the "Add it yourself" ones) appear in the list too, above the catalogue?
 
+## V. The bottling form: pasteurisation, starter, styles and koji (built ahead of the spec)
+
+Asked for by the maintainer and built:
+
+- The style words the scan reads are split by what can go together. **Pasteurisation** is one choice: Nama (unpasteurised), Namachozō (once, at bottling), Namazume (once, before storage). **Starter** is one choice: Kimoto, Yamahai. The rest are **boxes to tick**, as pills like §8's chips: Genshu, Muroka, Nigori, Sparkling, Koshu, Taruzake, Kijōshu, Hiyaoroshi; plus one "Other style words" field. All of it is still stored as the bottling's style words, and a label read prefills it.
+- **Koji**, a new optional field: Yellow koji (黄麹, what almost all sake uses), White koji (白麹), Black koji (黒麹). It shows as a tag on §9a like the grade.
+- "Add it yourself" in search now has the same details as "Add your bottling" (it had name and brewery only).
+
+1. Three selects and eight pills: is that the right split on a phone, or should Starter and Koji sit behind a "More details" toggle?
+2. Should the tags on §9a show the pasteurisation in words ("Namazume") or with its gloss ("pasteurised once")?
+3. Should koji and the pasteurisation kinds get a line in the Learn entries (nama has one), and a ⓘ beside their fields?
+4. The scan does not read koji off a label yet (that needs a prompt change and an eval run, parked with the others). Once it does, should "What we read" show it?
