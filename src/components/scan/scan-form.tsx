@@ -6,7 +6,7 @@
 // `useActionState`. Every one of those is a concrete client-only need
 // per CLAUDE.md.
 
-import { startTransition, useActionState, useEffect, useRef, useState } from 'react'
+import { startTransition, useActionState, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import type { FormEvent } from 'react'
 import { useTranslations } from 'next-intl'
 import {
@@ -32,7 +32,7 @@ import {
   ListMagnifyingGlass,
   CaretRight,
   WarningCircle,
-  WifiSlash,
+  PaperPlaneTilt,
   IdentificationCard,
 } from '@phosphor-icons/react/dist/ssr'
 import { useRouter } from 'next/navigation'
@@ -154,7 +154,18 @@ interface ScanFormProps {
  * and offers to send the photo again. Well past a slow read (the second tier
  * included), so it only fires on a connection that has stopped answering.
  */
-const SCAN_TIMEOUT_MS = 60_000
+const SCAN_TIMEOUT_MS = 30_000
+/** Design v1.9 S4: past this, the camera says "Taking longer than usual" with Cancel. */
+const SCAN_SLOW_MS = 10_000
+
+function subscribeOnline(onChange: () => void) {
+  window.addEventListener('online', onChange)
+  window.addEventListener('offline', onChange)
+  return () => {
+    window.removeEventListener('online', onChange)
+    window.removeEventListener('offline', onChange)
+  }
+}
 
 /** A bottling saved from the label: "unavailable" when the network loses it (S6). */
 const addOwnBottling = reachable(addOwnBottlingAction)
@@ -218,15 +229,32 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
   const [askedFor, setAskedFor] = useState<NudgeKind | null>(null)
   /** What the last scan sent, for "Send again" to send unchanged. */
   const lastScanFormRef = useRef<FormData | null>(null)
+  /** The send in flight, and whether it has run past {@link SCAN_SLOW_MS} (v1.9 S4). */
+  const [sending, setSending] = useState<{ token: number; slow: boolean } | null>(null)
+  const sendTokenRef = useRef(0)
+  /** Stops waiting for the read in flight (S4's Cancel). */
+  const cancelScanRef = useRef<(() => void) | null>(null)
+  /** Sends of this photo that found no connection in a row: the second says "Still no connection" (S5). */
+  const [offlineTries, setOfflineTries] = useState(0)
+  const online = useSyncExternalStore(subscribeOnline, browserIsOnline, () => true)
   const [state, formAction, isActionPending] = useActionState<ScanActionState, FormData>(
     async (previous, formData) => {
+      const cancelled = new Promise<void>((resolve) => {
+        cancelScanRef.current = resolve
+      })
       const settled = await settleRequest(scanAction(previous, formData), {
         timeoutMs: SCAN_TIMEOUT_MS,
         isOnline: browserIsOnline,
+        cancelled,
       })
-      if (settled.ok) return settled.value
+      cancelScanRef.current = null
+      if (settled.ok) {
+        setOfflineTries(0)
+        return settled.value
+      }
       pushClientEvent(`scan not answered: ${settled.failure}`)
       setConnectionFailure(settled.failure)
+      if (settled.failure === 'offline') setOfflineTries((n) => n + 1)
       return previous
     },
     INITIAL_SCAN_ACTION_STATE,
@@ -477,12 +505,23 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
   }
 
   /** "Send again" after a scan the network lost: the same photo, unchanged. */
+  /** Send a scan, and start the clock for "Taking longer than usual". */
+  function sendScan(formData: FormData) {
+    const token = ++sendTokenRef.current
+    setSending({ token, slow: false })
+    window.setTimeout(
+      () => setSending((now) => (now?.token === token ? { token, slow: true } : now)),
+      SCAN_SLOW_MS,
+    )
+    startTransition(() => formAction(formData))
+  }
+
   function onSendAgain() {
     const formData = lastScanFormRef.current
     if (!formData) return
     setConnectionFailure(null)
     setResultDismissed(false)
-    startTransition(() => formAction(formData))
+    sendScan(formData)
   }
 
   function onPickClick() {
@@ -563,12 +602,13 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
       // earlier read only if this one finds no single sake by itself.
       if (earlierRead) formData.set('earlierRead', JSON.stringify(earlierRead))
       lastScanFormRef.current = formData
+      setOfflineTries(0)
       pushClientEvent('submitting FormData to scanAction')
       // useActionState's action must be invoked from a transition. We
       // can't keep the await above inside startTransition (transitions
-      // can't span an async boundary), so we open one here once the
-      // blob is ready and let React schedule the action.
-      startTransition(() => formAction(formData))
+      // can't span an async boundary), so `sendScan` opens one here once
+      // the blob is ready and lets React schedule the action.
+      sendScan(formData)
     } catch {
       // The downscale uses standard browser APIs (createImageBitmap,
       // canvas.toBlob) so a failure here usually means the file isn't
@@ -818,6 +858,54 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
 
 
   /**
+   * Design v1.9 S4 and S5, said on the camera: a read past 10 s, or a photo
+   * the network lost. Offline, the photo was never sent and costs nothing;
+   * a read that timed out or was cancelled may have reached us, and with no
+   * stored-read cache (S4's "keep each read for 10 minutes") a resend is read
+   * again, so the count is said. Back online, the button says so.
+   */
+  function connectionStatus() {
+    if (isActionPending && sending?.slow) {
+      return {
+        testId: 'scan-camera-slow',
+        title: tCamera('slowTitle'),
+        hint: tCamera('slowHint'),
+        action: { label: tCamera('cancel'), testId: 'scan-camera-cancel', onClick: () => cancelScanRef.current?.() },
+        foot: tCamera('countLine'),
+      }
+    }
+    if (!connectionFailure || isPending) return null
+    const sendIcon = <PaperPlaneTilt size={16} aria-hidden="true" />
+    if (connectionFailure === 'offline') {
+      const back = online && offlineTries > 0
+      return {
+        testId: 'scan-error-offline',
+        held: true,
+        title: back ? tOutcome('offline.back') : tOutcome('offline.title'),
+        hint: tOutcome('offline.body'),
+        action: {
+          label: back ? tOutcome('sendNow') : tOutcome('sendAgain'),
+          testId: 'scan-send-again',
+          onClick: onSendAgain,
+          icon: sendIcon,
+          accent: true,
+        },
+        after: !back && offlineTries > 1 ? tOutcome('offline.still') : null,
+        foot: tOutcome('newPhoto'),
+      }
+    }
+    return {
+      testId: 'scan-error-timed-out',
+      held: true,
+      title: tOutcome('timedOut.title'),
+      hint: tOutcome('timedOut.body'),
+      action: { label: tOutcome('sendAgain'), testId: 'scan-send-again', onClick: onSendAgain, icon: sendIcon, accent: true },
+      after: tCamera('countLine'),
+      foot: tOutcome('newPhoto'),
+    }
+  }
+
+  /**
    * §5a (design v1.5): the outcome screen for everything that is not a
    * match, or `null` while the camera is up or a match is showing. Each
    * branch only fills in the shared vocabulary of `<ScanOutcome />`.
@@ -848,30 +936,9 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
         />
       )
     }
-    if (connectionFailure) {
-      const copy = connectionFailure === 'offline' ? 'offline' : 'timedOut'
-      return (
-        <ScanOutcome
-          testId={`scan-error-${connectionFailure === 'offline' ? 'offline' : 'timed-out'}`}
-          icon={icon(WifiSlash)}
-          kicker={tOutcome(`${copy}.kicker`)}
-          title={tOutcome(`${copy}.title`)}
-          body={tOutcome(`${copy}.body`)}
-          onRescan={onPickClick}
-          photo={photoUrl ? { url: photoUrl, caption: tOutcome('noConnectionPhoto') } : undefined}
-        >
-          <button
-            type="button"
-            onClick={onSendAgain}
-            className="flex min-h-11 items-center justify-center gap-2 rounded-xl border-[1.5px] border-ginshu-400 px-4 text-body font-medium text-ginshu-700 transition-colors hover:bg-ginshu-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
-            data-testid="scan-send-again"
-          >
-            <ArrowsClockwise size={16} aria-hidden="true" />
-            {tOutcome('sendAgain')}
-          </button>
-        </ScanOutcome>
-      )
-    }
+    // A photo the network lost is not an outcome: the camera keeps it, with
+    // Send again (design v1.9 S5, 114). See `connectionStatus`.
+    if (connectionFailure) return null
     switch (view.status) {
       case 'matched_brand_only':
         return (
@@ -1256,6 +1323,7 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
           onChoosePhoto={onUploadClick}
           typeItHref="/search"
           stillUrl={photoUrl}
+          status={connectionStatus()}
           firstScans={scanCount < FIRST_SCANS}
           askedFor={
             askedFor && earlierRead

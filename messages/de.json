@@ -347,7 +347,11 @@
         },
         "outro": "Fang mit der Vorderseite an. Wenn das Ergebnis nicht sagen kann, welche Abfüllung es ist, fragt es nach der Rückseite.",
         "learnMore": "Wie man ein Etikett liest"
-      }
+      },
+      "slowTitle": "Dauert länger als sonst",
+      "slowHint": "Die Verbindung ist langsam. Dein Foto bleibt hier.",
+      "cancel": "Abbrechen",
+      "countLine": "Falls es angekommen ist, zählt es als ein Scan."
     },
     "form": {
       "pending": "Etikett wird gelesen…",
@@ -1084,12 +1088,14 @@
     "offline": {
       "kicker": "Nicht gesendet",
       "title": "Keine Verbindung",
-      "body": "Dein Foto bleibt hier. Sende es noch einmal, sobald du wieder online bist."
+      "body": "Dein Foto bleibt hier. Es wurde nicht gesendet und zählt nicht als Scan.",
+      "still": "Immer noch keine Verbindung.",
+      "back": "Die Verbindung ist zurück"
     },
     "timedOut": {
       "kicker": "Keine Antwort",
-      "title": "Das dauert zu lange",
-      "body": "Die Verbindung ist vielleicht langsam. Dein Foto bleibt hier, du kannst es noch einmal senden."
+      "title": "Noch keine Antwort",
+      "body": "Die Verbindung ist langsam. Dein Foto bleibt hier."
     },
     "noConnectionPhoto": "Dein Foto, auf diesem Handy behalten",
     "sendAgain": "Noch einmal senden",
@@ -1107,7 +1113,9 @@
         "action": "Etikett scannen"
       },
       "lastFree": "Nutzt deinen letzten kostenlosen Scan für die nächsten 24 Stunden."
-    }
+    },
+    "sendNow": "Jetzt senden",
+    "newPhoto": "Oder mach ein neues Foto"
   },
   "listResults": {
     "bar": "{kind, select, menu {Von deinem Foto · Karte} other {Von deinem Foto · Regal}} · {count, plural, =1 {1 Sake} other {# Sake}}",

@@ -347,7 +347,11 @@
         },
         "outro": "Start with the front. If the result can’t tell which bottling it is, it will ask for the back.",
         "learnMore": "How to read a label"
-      }
+      },
+      "slowTitle": "Taking longer than usual",
+      "slowHint": "The connection is slow. Your photo is kept.",
+      "cancel": "Cancel",
+      "countLine": "If it arrived, it counts as one scan."
     },
     "form": {
       "pending": "Reading the label…",
@@ -1084,12 +1088,14 @@
     "offline": {
       "kicker": "Not sent",
       "title": "No connection",
-      "body": "Your photo is kept. Send it again once you’re back online."
+      "body": "Your photo is kept. It wasn’t sent, so it doesn’t use a scan.",
+      "still": "Still no connection.",
+      "back": "Connection is back"
     },
     "timedOut": {
       "kicker": "No answer",
-      "title": "This is taking too long",
-      "body": "The connection may be slow. Your photo is kept, so you can send it again."
+      "title": "No answer yet",
+      "body": "The connection is slow. Your photo is kept."
     },
     "noConnectionPhoto": "Your photo, kept on this phone",
     "sendAgain": "Send again",
@@ -1107,7 +1113,9 @@
         "action": "Scan the sticker"
       },
       "lastFree": "Uses your last free scan for the next 24 hours."
-    }
+    },
+    "sendNow": "Send now",
+    "newPhoto": "Or take a new photo"
   },
   "listResults": {
     "bar": "{kind, select, menu {From your photo · Menu} other {From your photo · Shelf}} · {count, plural, =1 {1 sake} other {# sakes}}",

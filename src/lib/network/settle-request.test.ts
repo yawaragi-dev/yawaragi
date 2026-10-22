@@ -5,6 +5,15 @@ const online = () => true
 const offline = () => false
 
 describe('settleRequest', () => {
+  it('stops waiting when the visitor cancels, as if it had timed out', async () => {
+    let cancel!: () => void
+    const cancelled = new Promise<void>((resolve) => (cancel = resolve))
+    const never = new Promise<number>(() => {})
+    const settled = settleRequest(never, { timeoutMs: null, isOnline: () => true, cancelled })
+    cancel()
+    await expect(settled).resolves.toEqual({ ok: false, failure: 'timed_out' })
+  })
+
   afterEach(() => vi.useRealTimers())
 
   it('hands back the answer when the request arrives', async () => {
