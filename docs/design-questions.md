@@ -2,7 +2,7 @@
 
 Open questions the build has run into and settled provisionally, so they can be handed to the designers in one go. Each says what is built today, so nobody has to guess. Opened 2026-10-13; filed as #417.
 
-Round two (blocks I–R) and round three (blocks S, T, U and V) are at the end of the file.
+Round two (blocks I–R), round three (blocks S, T, U and V) and round four (blocks W–Z, with a priority order across everything still open) are at the end of the file.
 
 The design snapshot these refer to is `design/README.md`, v1.6.2.
 
@@ -338,3 +338,105 @@ Asked for by the maintainer and built:
 2. Should the tags on §9a show the pasteurisation in words ("Namazume") or with its gloss ("pasteurised once")?
 3. Should koji and the pasteurisation kinds get a line in the Learn entries (nama has one), and a ⓘ beside their fields?
 4. The scan does not read koji off a label yet (that needs a prompt change and an eval run, parked with the others). Once it does, should "What we read" show it?
+
+---
+
+# Round four (2026-10-22)
+
+Four new blocks, W–Z, from features the maintainer wants next. Engineering starts on W and X straight away, ahead of the spec, as with U and V. Y needs words before it needs drawings. Z waits on S.
+
+## Priority across everything still open
+
+The order we would like answers in. Each is ranked by what is already built and waiting on a drawing, then by what blocks real users.
+
+1. **S. A slow or missing connection.** A tap with no visible effect is the worst bug a visitor can see today, and Z depends on S's answers. Questions 1, 5 and 6 first.
+2. **W. Filtering the journal.** Being built now, so the sooner it is drawn, the less is redone.
+3. **X. Your journal in numbers.** Being built now; same reason.
+4. **V. The bottling form.** Built and live; question 1 (how much to show on a phone) matters most.
+5. **U. Matches as you type.** Built and live; small.
+6. **Z. The journal and cellar without a connection.** Built once S is answered.
+7. **Y. About the region.** Words first: it needs the text format and where it sits, not a full screen.
+8. **T. Photos with tastings.** Waits on open decision 14 and a GDPR review anyway.
+9. **I. Your own photo of a bottle.** Same.
+10. **K. The landing in motion.** Showcase, not blocking.
+
+## W. Filtering the journal (built ahead of the spec)
+
+The maintainer wants to narrow the journal to, say, "everything from Niigata" or "my five-star junmai ginjo". §11's header already draws a search icon that was never specified.
+
+**What we can filter by**, all without asking the visitor for anything new:
+- **prefecture** of the brewery (from the catalogue, for every tasting of a catalogue sake; an own bottling with no sake has none);
+- **rating** (1–5 stars);
+- **grade** (junmai, ginjo, daiginjo… ; only on tastings logged against a bottling that has one);
+- **style words** (nama, genshu, kimoto… ; same);
+- **koji** (same, rarely set);
+- **brewery**;
+- **date** (a month or a year).
+
+Most journals will have the sake for every row, but the grade and styles only where the visitor added a bottling. A filter on grade therefore quietly drops every plain-sake row.
+
+**What we will build until it is drawn:** a row of filter chips under the Journal / Cellar control, opening in place like §8's Prefecture and Flavor chips: Prefecture, Rating, Grade, and "More" for the rest. Above the list there is one line, "{n} of {total} tastings · {filters} · Clear". A chip only offers values that occur in this journal, each with its count ("Niigata · 7"). The filters live in the URL, so Back and a shared link keep them.
+
+1. Chips under the segment control, or behind §11's search icon as a sheet?
+2. Should free-text search (a name, a word in a note) sit with the filters, or is it a separate thing?
+3. Should the grade filter say how many rows it cannot judge ("12 tastings have no grade")?
+4. Does the Cellar get the same filters, or only Journal?
+
+## X. Your journal in numbers (built ahead of the spec)
+
+A screen of statistics about the visitor's own tastings, computed from what is stored. No new data and no one else's data.
+
+**What we can show:**
+- a **map of Japan** with the prefectures tasted shaded by count, plus "{n} of 47 prefectures";
+- **counts**: tastings, sakes, breweries, bottles in the cellar (and litres);
+- **ratings**: the spread of 1–5 stars, the average, the highest-rated breweries;
+- **grades and styles**: how the tastings divide (only where a bottling says);
+- **palate over time**: the six flavor axes month by month. That is the §17 vocabulary, so it needs the same disclosure sheet;
+- **"the surprise"**: the five-star tasting furthest from the visitor's own palate;
+- **streaks**: months in a row with a tasting.
+
+**Constraints:**
+- The flavor axes need the §17 disclosure wherever they appear.
+- A sake's prefecture comes from Sakenowa, so the map needs the Sakenowa credit on the screen.
+- None of this is shared; it stays the visitor's.
+- Under ~5 tastings most of it is empty.
+
+**What we will build until it is drawn:** a "Your journal in numbers" section at the end of Palate (§12), from 5 tastings on: the counts row, the map, the star spread and the top three breweries. The over-time chart and "the surprise" come after a drawing.
+
+1. A section on Palate, its own screen (from Palate or from Collection's header), or a card on Home?
+2. The map: real outlines (needs a small Japan SVG, which we can source with a licence), a tile grid of 47 squares, or a list with bars?
+3. Which of the items above are worth a place, and in what order?
+4. What does it show at 1–4 tastings: nothing, or a teaser ("{n} more and your map appears")?
+5. Anything to avoid? For example, no "you drank 14 bottles this month": counting consumption is JMStV-adjacent.
+
+## Y. About the region (words, then a place)
+
+On §9 the brewery's prefecture is a single line today (新潟県 Niigata). The maintainer wants a short paragraph about the region's sake: water, climate, rice and typical style ("Niigata: soft water and cold winters; light, dry, clean sake; Gohyakumangoku rice").
+
+**Constraints:**
+- Sakenowa has no such text. It is hand-written with named sources, exactly like the Learn entries (`manual_curation`, ADR-0026), never model-written.
+- We start with 8–10 prefectures (Niigata, Hyōgo, Kyoto, Yamagata, Akita, Hiroshima, Fukushima, Yamaguchi, Shizuoka, Nagano) and add the rest over time. A prefecture without text shows the plain line it has today.
+- The text is about a region's brewing tradition, not about one sake. That keeps it inside Learn's rule (no sake or brewery names) if it lives there too.
+
+**What we will build until it is drawn:** on §9, under the brewery line, the first sentence of the region's text with "About {prefecture} ›" opening a Learn entry under a new "Regions" group. Each entry is 3–5 short paragraphs with its sources at the foot, like the other entries.
+
+1. On §9: one sentence and a link, a collapsed block, or only a link on the prefecture name?
+2. Is "Regions" a group in Learn, or its own index (a map of Japan again, shared with X)?
+3. Should Search's Prefecture chip (§8) link to the region's entry too?
+
+## Z. The journal and cellar without a connection (read-only)
+
+The maintainer wants the journal and the cellar to open without a network. The first step is **read-only**:
+- the phone keeps the last copy it saw (in the browser's own storage, on that device only, wiped on sign-out);
+- with no connection Journal and Cellar show that copy, and every action that would save something is unavailable;
+- writing offline (rating with no signal, sent later) is a later step, and S question 6 recommends against it for v1.
+
+**Constraints:**
+- The copy can be out of date, for example after a rating on another device. We know when it was taken.
+- It is the visitor's own data on their own phone, but it is personal data at rest. It is wiped on sign-out, and the privacy notice says so.
+- The rest of the app (sake pages, search, scan) still needs the network. A tap into a sake page from an offline journal row can only show the copy's name, not the page.
+
+1. How does the screen say it is a saved copy? A line under the header ("Offline · as of 14:02"), the S3 offline line, or both?
+2. What happens to the actions: hidden, greyed with a reason, or tappable with "Needs a connection"?
+3. A row tapped offline: nothing, a small sheet with what the copy holds (name, stars, note, date), or the offline page?
+4. Does Home's "Recent tastings" use the copy too?
