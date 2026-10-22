@@ -473,7 +473,9 @@
       "noneBody": "Try another prefecture, or a flavor on its own."
     },
     "suggestions": {
-      "label": "Matching sakes"
+      "label": "Matching sakes",
+      "yours": "Yours",
+      "yourBottling": "Your bottling"
     },
     "alsoSoldAs": "Also sold as {name}"
   },

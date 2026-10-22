@@ -18,7 +18,7 @@ const row = (brandId: number, nameKanji: string, nameRomaji: string) => ({
   href: `/en/sake/${brandId}`,
 })
 
-function field(fetchSuggestions: (q: string, l: string, s: AbortSignal) => Promise<{ query: string; rows: ReturnType<typeof row>[] }>, defaultValue = '') {
+function field(fetchSuggestions: (q: string, l: string, s: AbortSignal) => Promise<{ query: string; rows: (ReturnType<typeof row> & { prefecture?: string })[]; own?: { id: string; name: string; href: string }[] }>, defaultValue = '') {
   render(
     <form>
       <label>
@@ -30,6 +30,8 @@ function field(fetchSuggestions: (q: string, l: string, s: AbortSignal) => Promi
           locale="en"
           listLabel="Matching sakes"
           alsoSoldAs="Also sold as {name}"
+          yours="Yours"
+          yourBottling="Your bottling"
           footer="Latin spellings are machine transliterations."
           fetchSuggestions={fetchSuggestions}
         />
@@ -158,5 +160,20 @@ describe('§8 search field: matches as you type', () => {
     await type(input, 'da')
 
     expect(screen.queryByRole('listbox')).toBeNull()
+  })
+
+  it('lists the visitor’s own bottlings first, marked as theirs, then the catalogue — Latin name first', async () => {
+    const input = field(async (q) => ({
+      query: q,
+      own: [{ id: 'x', name: 'Rihaku Wandering Poet', href: '/en/bottling/x' }],
+      rows: [{ ...row(1, '李白', 'Rihaku'), prefecture: 'Shimane' }],
+    }))
+    await type(input, 'rih')
+
+    const options = screen.getAllByRole('option')
+    expect(options[0]!.textContent).toBe('Rihaku Wandering PoetYoursYour bottling')
+    expect(options[1]!.textContent).toBe('Rihaku李白Asahi Shuzo · Shimane')
+    fireEvent.click(options[0]!)
+    expect(push).toHaveBeenCalledWith('/en/bottling/x')
   })
 })

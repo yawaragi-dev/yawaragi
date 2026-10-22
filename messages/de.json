@@ -473,7 +473,9 @@
       "noneBody": "Versuch eine andere Präfektur oder nur den Geschmack."
     },
     "suggestions": {
-      "label": "Passende Sake"
+      "label": "Passende Sake",
+      "yours": "Deins",
+      "yourBottling": "Deine Abfüllung"
     },
     "alsoSoldAs": "Auch erhältlich als {name}"
   },
