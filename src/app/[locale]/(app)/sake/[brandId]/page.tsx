@@ -13,6 +13,7 @@ import {
 import { formerBreweryNameOf } from '@/lib/sakenowa/former-brewery-names'
 import { otherNamesOf } from '@/lib/sakenowa/name-aliases'
 import { getPrefectureNames } from '@/lib/sakenowa/prefecture'
+import { regionEntryFor } from '@/lib/guide/regions'
 import { BottleHistory } from '@/components/sake/bottle-history'
 import { OwnBottlings } from '@/components/sake/own-bottlings'
 import { ScreenBar } from '@/components/layout/screen-header'
@@ -164,6 +165,10 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
   // Prefecture is editorially mapped (manual_curation per ADR-0005) because
   // Sakenowa's /areas endpoint publishes Japanese names only.
   const prefecture = showBrewery ? getPrefectureNames(brewery.areaId) : null
+  // Design question Y: a hand-written note on the prefecture's sake, from its
+  // geographical indication, where Learn has one.
+  const regionSlug = showBrewery ? regionEntryFor(brewery.areaId) : null
+  const regionLead = regionSlug ? firstSentence((await getTranslations('learn.entries'))(`${regionSlug}.answer`)) : null
   const breweryRomaji = showBrewery ? brewery.nameRomaji : null
   // v1.6 §9: the name older bottles carry, when a rename is on record — so
   // the brewery on the bottle in hand appears somewhere on its page.
@@ -319,6 +324,21 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
             )}
           </div>
         </div>
+        {/* Below the romaji caveat, whose ⓘ has a wide tap area, and above
+            the Sakenowa credit, which stays the block's last line: this
+            text is ours (manual_curation), not Sakenowa's. */}
+        {regionSlug && regionLead && prefecture && (
+          <p className="max-w-prose text-meta text-ash-700" data-testid="bottle-region">
+            {regionLead}{' '}
+            <Link
+              href={{ pathname: '/learn/[slug]', params: { slug: regionSlug } }}
+              className="whitespace-nowrap font-medium text-ginshu-700 hover:text-ginshu-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+              data-testid="bottle-region-link"
+            >
+              {t('aboutRegion', { prefecture: prefecture.nameEn })}
+            </Link>
+          </p>
+        )}
         {/*
           v1.5 §9 / B8: the above-the-fold Sakenowa credit is the identity
           block's last line — after the name, still above the fold at
@@ -549,4 +569,10 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
       )}
     </main>
   )
+}
+
+/** A Learn entry's answer up to its first full stop, for a one-line lead. */
+function firstSentence(text: string): string {
+  const end = text.search(/[.!?](\s|$)/)
+  return end === -1 ? text : text.slice(0, end + 1)
 }

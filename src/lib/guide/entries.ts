@@ -38,6 +38,11 @@ const NTA_2022: GuideSource = {
   url: 'https://www.nta.go.jp/law/kokuji/220729/01.htm',
 }
 
+const NTA_GI_LIST: GuideSource = {
+  label: 'National Tax Agency, “酒類の地理的表示一覧” (the list of geographical indications for alcoholic drinks)',
+  url: 'https://www.nta.go.jp/taxes/sake/hyoji/chiri/ichiran.htm',
+}
+
 const NTA_CATEGORIES: GuideSource = {
   label: 'National Tax Agency, “酒のしおり” (2025), “酒税法における酒類の分類及び定義”',
   url: 'https://www.nta.go.jp/taxes/sake/shiori-gaikyo/shiori/2025/pdf/0009.pdf',
@@ -382,6 +387,247 @@ const ENTRIES = [
       },
     ],
     verifiedOn: '2026-10-14',
+  },
+  // Regions (design question Y): a prefecture's sake as its geographical
+  // indication describes it. Every fact is from the GI's production standard
+  // (国税庁, 生産基準), which states the character of the sake and the water,
+  // climate and people behind it. A region holds no sake's or brewery's name.
+  {
+    slug: 'region-niigata',
+    group: 'regions',
+    kanji: '新潟県',
+    romaji: 'Niigata',
+    facts: [
+      { id: 'character', kanji: '淡麗', romaji: 'tanrei' },
+      { id: 'water', kanji: '軟水', romaji: 'nansui' },
+      { id: 'winter' },
+      { id: 'brewers', kanji: '越後杜氏', romaji: 'Echigo tōji' },
+      { id: 'gi', kanji: '地理的表示「新潟」' },
+    ],
+    paragraphs: 2,
+    related: ['sake-rice', 'serving-temperatures'],
+    sources: [
+      {
+        label: 'National Tax Agency, geographical indication “新潟” for sake, production standard',
+        url: 'https://www.nta.go.jp/taxes/sake/hyoji/chiri/220207_niigata_besshi01.htm',
+      },
+      NTA_GI_LIST,
+    ],
+    verifiedOn: '2026-10-22',
+  },
+  {
+    slug: 'region-hyogo',
+    group: 'regions',
+    kanji: '兵庫県',
+    romaji: 'Hyōgo',
+    facts: [
+      { id: 'nada', kanji: '灘五郷', romaji: 'Nada Gogō' },
+      { id: 'miyamizu', kanji: '宮水', romaji: 'miyamizu' },
+      { id: 'winter', kanji: '六甲おろし', romaji: 'Rokkō oroshi' },
+      { id: 'harima', kanji: 'はりま', romaji: 'Harima' },
+      { id: 'yamadanishiki', kanji: '山田錦', romaji: 'Yamada Nishiki' },
+      { id: 'brewers', kanji: '丹波杜氏', romaji: 'Tanba tōji' },
+    ],
+    paragraphs: 2,
+    related: ['sake-rice', 'serving-temperatures'],
+    sources: [
+      {
+        label: 'National Tax Agency, geographical indication “灘五郷” for sake, production standard',
+        url: 'https://www.nta.go.jp/taxes/sake/hyoji/chiri/1806_besshi02.htm',
+      },
+      {
+        label: 'National Tax Agency, geographical indication “はりま” for sake, production standard',
+        url: 'https://www.nta.go.jp/taxes/sake/hyoji/chiri/200316_besshi01.htm',
+      },
+      NTA_GI_LIST,
+    ],
+    verifiedOn: '2026-10-22',
+  },
+  {
+    slug: 'region-kyoto',
+    group: 'regions',
+    kanji: '京都府',
+    romaji: 'Kyōto',
+    facts: [
+      { id: 'character' },
+      { id: 'water', kanji: '軟水 · 中硬水' },
+      { id: 'winter', kanji: '底冷え', romaji: 'sokobie' },
+      { id: 'food', kanji: '京料理', romaji: 'kyō-ryōri' },
+      { id: 'gi', kanji: '地理的表示「京都」' },
+    ],
+    paragraphs: 2,
+    related: ['sake-rice', 'serving-temperatures'],
+    sources: [
+      {
+        label: 'National Tax Agency, geographical indication “京都” for sake, production standard',
+        url: 'https://www.nta.go.jp/taxes/sake/hyoji/chiri/251001_kyoto_besshi01.htm',
+      },
+      NTA_GI_LIST,
+    ],
+    verifiedOn: '2026-10-22',
+  },
+  {
+    slug: 'region-yamagata',
+    group: 'regions',
+    kanji: '山形県',
+    romaji: 'Yamagata',
+    facts: [
+      { id: 'character' },
+      { id: 'water', kanji: '軟水', romaji: 'nansui' },
+      { id: 'winter' },
+      { id: 'aroma' },
+      { id: 'gi', kanji: '地理的表示「山形」' },
+    ],
+    paragraphs: 2,
+    related: ['sake-rice', 'serving-temperatures'],
+    sources: [
+      {
+        label: 'National Tax Agency, geographical indication “山形” for sake, production standard',
+        url: 'https://www.nta.go.jp/taxes/sake/hyoji/chiri/161216_besshi01.htm#seishu',
+      },
+      NTA_GI_LIST,
+    ],
+    verifiedOn: '2026-10-22',
+  },
+  {
+    slug: 'region-nagano',
+    group: 'regions',
+    kanji: '長野県',
+    romaji: 'Nagano',
+    facts: [
+      { id: 'character' },
+      { id: 'rice' },
+      { id: 'water' },
+      { id: 'food', kanji: '味噌 · 漬物', romaji: 'miso · tsukemono' },
+      { id: 'gi', kanji: '地理的表示「長野」' },
+    ],
+    paragraphs: 2,
+    related: ['sake-rice', 'serving-temperatures'],
+    sources: [
+      {
+        label: 'National Tax Agency, geographical indication “長野” for sake, production standard',
+        url: 'https://www.nta.go.jp/taxes/sake/hyoji/chiri/210630_nagano_besshi01.htm#seishu',
+      },
+      NTA_GI_LIST,
+    ],
+    verifiedOn: '2026-10-22',
+  },
+  {
+    slug: 'region-shizuoka',
+    group: 'regions',
+    kanji: '静岡県',
+    romaji: 'Shizuoka',
+    facts: [
+      { id: 'character' },
+      { id: 'aroma' },
+      { id: 'water', kanji: '軟水', romaji: 'nansui' },
+      { id: 'yeast', kanji: '静岡酵母', romaji: 'Shizuoka kōbo' },
+      { id: 'brewers', kanji: '志太杜氏', romaji: 'Shida tōji' },
+      { id: 'gi', kanji: '地理的表示「静岡」' },
+    ],
+    paragraphs: 2,
+    related: ['sake-rice', 'serving-temperatures'],
+    sources: [
+      {
+        label: 'National Tax Agency, geographical indication “静岡” for sake, production standard',
+        url: 'https://www.nta.go.jp/taxes/sake/hyoji/chiri/231130_shizuoka_besshi01.htm',
+      },
+      NTA_GI_LIST,
+    ],
+    verifiedOn: '2026-10-22',
+  },
+  {
+    slug: 'region-iwate',
+    group: 'regions',
+    kanji: '岩手県',
+    romaji: 'Iwate',
+    facts: [
+      { id: 'character' },
+      { id: 'water' },
+      { id: 'winter' },
+      { id: 'brewers', kanji: '南部杜氏', romaji: 'Nanbu tōji' },
+      { id: 'rice', kanji: '吟ぎんが · 結の香', romaji: 'Gin Ginga · Yui no Kaori' },
+      { id: 'gi', kanji: '地理的表示「岩手」' },
+    ],
+    paragraphs: 2,
+    related: ['sake-rice', 'serving-temperatures'],
+    sources: [
+      {
+        label: 'National Tax Agency, geographical indication “岩手” for sake, production standard',
+        url: 'https://www.nta.go.jp/taxes/sake/hyoji/chiri/230925_iwate_besshi01.htm',
+      },
+      NTA_GI_LIST,
+    ],
+    verifiedOn: '2026-10-22',
+  },
+  {
+    slug: 'region-saga',
+    group: 'regions',
+    kanji: '佐賀県',
+    romaji: 'Saga',
+    facts: [
+      { id: 'character', kanji: '芳醇旨口', romaji: 'hōjun umakuchi' },
+      { id: 'land', kanji: '佐賀平野', romaji: 'Saga heiya' },
+      { id: 'water' },
+      { id: 'history' },
+      { id: 'gi', kanji: '地理的表示「佐賀」' },
+    ],
+    paragraphs: 2,
+    related: ['sake-rice', 'serving-temperatures'],
+    sources: [
+      {
+        label: 'National Tax Agency, geographical indication “佐賀” for sake, production standard',
+        url: 'https://www.nta.go.jp/taxes/sake/hyoji/chiri/210614_besshi01.htm',
+      },
+      NTA_GI_LIST,
+    ],
+    verifiedOn: '2026-10-22',
+  },
+  {
+    slug: 'region-mie',
+    group: 'regions',
+    kanji: '三重県',
+    romaji: 'Mie',
+    facts: [
+      { id: 'character' },
+      { id: 'winter', kanji: '鈴鹿おろし', romaji: 'Suzuka oroshi' },
+      { id: 'water' },
+      { id: 'food' },
+      { id: 'gi', kanji: '地理的表示「三重」' },
+    ],
+    paragraphs: 2,
+    related: ['sake-rice', 'serving-temperatures'],
+    sources: [
+      {
+        label: 'National Tax Agency, geographical indication “三重” for sake, production standard',
+        url: 'https://www.nta.go.jp/taxes/sake/hyoji/chiri/200619_besshi01.htm',
+      },
+      NTA_GI_LIST,
+    ],
+    verifiedOn: '2026-10-22',
+  },
+  {
+    slug: 'region-shiga',
+    group: 'regions',
+    kanji: '滋賀県',
+    romaji: 'Shiga',
+    facts: [
+      { id: 'character' },
+      { id: 'water' },
+      { id: 'rice', kanji: '近江米', romaji: 'Ōmi-mai' },
+      { id: 'winter', kanji: '底冷え', romaji: 'sokobie' },
+      { id: 'gi', kanji: '地理的表示「滋賀」' },
+    ],
+    paragraphs: 2,
+    related: ['sake-rice', 'serving-temperatures'],
+    sources: [
+      {
+        label: 'National Tax Agency, geographical indication “滋賀” for sake, production standard',
+        url: 'https://www.nta.go.jp/taxes/sake/hyoji/chiri/220413_shiga_besshi01.htm',
+      },
+      NTA_GI_LIST,
+    ],
+    verifiedOn: '2026-10-22',
   },
 ] as const satisfies ReadonlyArray<
   Omit<GuideEntry, 'source' | 'verifiedOn' | 'facts'> & {

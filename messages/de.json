@@ -242,7 +242,8 @@
       "otherSakesIntro": "Ebenfalls aus dieser Brauerei",
       "shopsLabel": "Wo du ihn findest",
       "shopsEmpty": "Noch in keinem Shop erfasst.",
-      "alsoSoldAs": "Auch erhältlich als {names}"
+      "alsoSoldAs": "Auch erhältlich als {names}",
+      "aboutRegion": "Über {prefecture} ›"
     },
     "similar": {
       "title": "Wie {name}",
@@ -1288,6 +1289,7 @@
       "styles": "Stile und Verfahren",
       "rice": "Reis",
       "tasting": "Servieren und Verkosten",
+      "regions": "Regionen",
       "around": "Rund um Sake"
     },
     "groupKicker": {
@@ -1296,6 +1298,7 @@
       "styles": "Stil",
       "rice": "Reis",
       "tasting": "Verkostung",
+      "regions": "Region",
       "around": "Rund um Sake"
     },
     "entries": {
@@ -1889,6 +1892,381 @@
         "detail": {
           "p1": "Das japanische Recht ordnet jedes Getränk einer Kategorie zu, und die Flasche muss sie auf Japanisch auf der Seite mit der Marke tragen: 清酒 für Sake, 焼酎 für Shochu, リキュール für Likör. Dieses Wort entscheidet, was in der Flasche ist, egal wer sie gemacht hat.",
           "p2": "Der Katalog von Yawaragi enthält Sake. Ein Scan liest Craft-Sake als Sake; Shochu, Awamori, Umeshu und andere Liköre haben hier keine Seite."
+        }
+      },
+      "region-niigata": {
+        "title": "Niigata",
+        "answer": "Sake aus Niigata ist tanrei: leicht und klar, mit wenig Fehlnoten. Weiches Wasser kommt aus Flüssen, die starker Schneefall speist, und die Winterkälte bleibt Tag und Nacht gleichmäßig.",
+        "factsTitle": "Auf einen Blick",
+        "facts": {
+          "character": {
+            "term": "Charakter",
+            "value": "Leicht und klar",
+            "note": "Ein sanfter Duft, glatt im Mund, eine leichte Süße vom Reis, die in einem langen Abgang vergeht."
+          },
+          "water": {
+            "term": "Wasser",
+            "value": "Weich",
+            "note": "Aus den vielen Flüssen, die die Berge speisen, darunter Shinano und Agano."
+          },
+          "winter": {
+            "term": "Winter",
+            "value": "Schneereich, gleichmäßig kalt",
+            "note": "Wenig Unterschied zwischen Tag und Nacht – gut für Koji und Hefe."
+          },
+          "brewers": {
+            "term": "Brauer",
+            "value": "Echigo-tōji",
+            "note": "Bauern, die Mitte der Edo-Zeit im Westen Japans das Brauen lernten und dann im ganzen Land brauten."
+          },
+          "gi": {
+            "term": "Geografische Angabe",
+            "value": "„Niigata“, seit 2022",
+            "note": "Reis aus Japan, Wasser aus Niigata; in der Präfektur hergestellt, gelagert und abgefüllt."
+          }
+        },
+        "detail": {
+          "p1": "1930 eröffnete Niigata ein präfekturales Brauinstitut, das einzige in Japan, das als eigenständige Einrichtung geführt wird. Es machte das Können der Echigo-Brauer zur Theorie, damit sich aus Reis jeder Qualität guter Sake brauen lässt.",
+          "p2": "Als es weniger Braumeister gab, gründete der Brauereiverband der Präfektur Japans erste Schule für Sake-Brauer, die Niigata Seishu Gakkō."
+        }
+      },
+      "region-hyogo": {
+        "title": "Hyōgo",
+        "answer": "Hyōgo hat drei geografische Angaben für Sake: Nada Gogō an der Küste unter dem Rokkō-Gebirge, Harima weiter westlich und Itami. Hier wurde auch Yamada Nishiki gezüchtet, der bekannteste Sake-Reis.",
+        "factsTitle": "Auf einen Blick",
+        "facts": {
+          "nada": {
+            "term": "Nada Gogō",
+            "value": "Ausgewogen, mit klarem Abgang",
+            "note": "Fünf Braubezirke zwischen Kōbe und Nishinomiya. Über den Sommer gelagerter Sake wird runder; die Brauer nennen das aki-agari."
+          },
+          "miyamizu": {
+            "term": "Miyamizu",
+            "value": "Hartes Wasser",
+            "note": "Brunnenwasser mit den Mineralien, die die Hefe braucht, und fast ohne Eisen, das den Sake färben würde."
+          },
+          "winter": {
+            "term": "Winter",
+            "value": "Rokkō-oroshi",
+            "note": "Ein kalter Fallwind von den Bergen, gut fürs Brauen im Winter."
+          },
+          "harima": {
+            "term": "Harima",
+            "value": "Weich und rund, leichter Abgang",
+            "note": "Ginjo hat hier laut seiner geografischen Angabe einen süßen, apfelartigen Duft."
+          },
+          "yamadanishiki": {
+            "term": "Yamada Nishiki",
+            "value": "Gezüchtet in Hyōgo, 1936",
+            "note": "An der Versuchsstation der Präfektur für Sake-Reis, eröffnet 1928."
+          },
+          "brewers": {
+            "term": "Brauer",
+            "value": "Tanba-tōji",
+            "note": "Eine der drei großen Brauergilden Japans, neben den Nanbu- und Echigo-tōji."
+          }
+        },
+        "detail": {
+          "p1": "Die älteste Aufzeichnung über Sake mit Reis-Koji stammt aus Harima, aus dem Harima no Kuni Fudoki der Nara-Zeit.",
+          "p2": "In Nada Gogō wird im Winter gebrauter Sake bis April pasteurisiert und reift über den Sommer. Was ab September ohne zweites Erhitzen in den Handel kommt, ist Hiyaoroshi."
+        }
+      },
+      "region-kyoto": {
+        "title": "Kyoto",
+        "answer": "Sake aus Kyoto ist rund und weich, mit maßvollem Umami und maßvoller Süße und einem feinen Duft. Er soll neben Kyotos Dashi-Küche bestehen, nicht über sie hinweg.",
+        "factsTitle": "Auf einen Blick",
+        "facts": {
+          "character": {
+            "term": "Charakter",
+            "value": "Rund und weich",
+            "note": "Eine vollere Mitte aus Umami und Süße, mit feinem Duft."
+          },
+          "water": {
+            "term": "Wasser",
+            "value": "Weich bis mittelhart",
+            "note": "Wasser, das durch Granit gesickert ist, aus den Flusssystemen von Yura und Yodo."
+          },
+          "winter": {
+            "term": "Winter",
+            "value": "Sokobie",
+            "note": "Die tiefe Kälte des Kyoto-Beckens, im Norden viel Schnee. Die Gärung läuft langsam."
+          },
+          "food": {
+            "term": "Küche",
+            "value": "Kyō-ryōri",
+            "note": "Feine Küche auf Dashi-Basis: Der Sake soll das Gericht zur Geltung bringen."
+          },
+          "gi": {
+            "term": "Geografische Angabe",
+            "value": "„Kyoto“, seit 2025",
+            "note": "Von der Nationalen Steuerbehörde am 1. Oktober 2025 festgelegt."
+          }
+        },
+        "detail": {
+          "p1": "In der Heian-Zeit hatte der Hof ein eigenes Amt für das Brauen, das Miki no Tsukasa. Das Engishiki verzeichnet dreizehn Sorten Sake, die für den Hof gebraut wurden.",
+          "p2": "In der Meiji-Zeit ersetzten Brauer in Kyoto die Salicylsäure durch hitzesterilisierte, verschlossene Glasflaschen – der erste Sake Japans ohne Konservierungsstoff. Nach dem Krieg führten sie als Erste das ganzjährige Brauen ein."
+        }
+      },
+      "region-yamagata": {
+        "title": "Yamagata",
+        "answer": "Sake aus Yamagata ist weich und klar, „transparent“ in den Worten seiner geografischen Angabe. Das Grundwasser aus Bergschnee ist weich und eisenarm, und die Winter sind kalt genug für eine lange, langsame Ginjo-Gärung.",
+        "factsTitle": "Auf einen Blick",
+        "facts": {
+          "character": {
+            "term": "Charakter",
+            "value": "Weich und klar",
+            "note": "Junmai und Honjozo: Säure und Umami im Gleichgewicht. Ginjo: fruchtiger Duft und weiches Mundgefühl."
+          },
+          "water": {
+            "term": "Wasser",
+            "value": "Weich, eisenarm",
+            "note": "Grundwasser aus dem Schnee der Bergketten."
+          },
+          "winter": {
+            "term": "Winter",
+            "value": "Strenge Kälte",
+            "note": "Hält unerwünschte Mikroben fern und passt zu langer, kühler Gärung."
+          },
+          "aroma": {
+            "term": "Duft",
+            "value": "Heimisches Obst",
+            "note": "Neben Banane das Obst, das Yamagata anbaut: Fuji-Apfel, Melone, La-France-Birne."
+          },
+          "gi": {
+            "term": "Geografische Angabe",
+            "value": "„Yamagata“, seit 2016",
+            "note": "Festgelegt am 16. Dezember 2016."
+          }
+        },
+        "detail": {
+          "p1": "Seit 1978 bieten das Technologiezentrum der Präfektur und der Brauereiverband kurze Braukurse an. 1987 gründeten Brauer und Mitarbeiter des Zentrums eine Arbeitsgruppe für das Ginjo-Brauen.",
+          "p2": "Die Brauer hier lernten, die Frische von frisch gepresstem Sake durch Filtern, Pasteurisieren und Lagern zu bewahren, und das Verfahren verbreitete sich in der ganzen Präfektur."
+        }
+      },
+      "region-nagano": {
+        "title": "Nagano",
+        "answer": "Sake aus Nagano ist kräftig und doch klar, mit ruhigem Duft. Der Reis wächst in hohen Tälern mit heißen Tagen und kalten Nächten, das Wasser kommt von einigen der höchsten Berge Japans, und eine Küche aus Miso und Eingelegtem verlangte einen volleren Sake.",
+        "factsTitle": "Auf einen Blick",
+        "facts": {
+          "character": {
+            "term": "Charakter",
+            "value": "Kräftig, klar, ruhiger Duft",
+            "note": "Süße und Säure über einem konzentrierten Reisgeschmack, mit wenig Fehlnoten."
+          },
+          "rice": {
+            "term": "Reis",
+            "value": "Aus hohen Tälern",
+            "note": "Heiße Sommertage und kalte Nächte füllen das Korn mit Stärke. Ein sehr hoher Anteil wird in die erste Güteklasse eingestuft."
+          },
+          "water": {
+            "term": "Wasser",
+            "value": "Bergwasser",
+            "note": "Regen und Schnee aus Gebirgen von 2.000–3.000 m, getragen von den Flüssen Chikuma, Sai und Tenryū."
+          },
+          "food": {
+            "term": "Küche",
+            "value": "Miso und Eingelegtes",
+            "note": "Lange Winter machten haltbares, kräftig gewürztes Essen zur Regel, und die Brauer suchten einen passenden Sake."
+          },
+          "gi": {
+            "term": "Geografische Angabe",
+            "value": "„Nagano“, seit 2021",
+            "note": "Festgelegt am 30. Juni 2021."
+          }
+        },
+        "detail": {
+          "p1": "Ab 1917 beschäftigte die Präfektur einen eigenen Brauingenieur, ab 1919 bildete sie heimische Tōji aus. 1941 eröffnete sie ein präfekturales Brauinstitut, das neue Hefen entwickelte.",
+          "p2": "Seit 2003 zertifiziert die Nagano Appellation Control Sake, wie auch andere Erzeugnisse, nach Zutaten, Verfahren und Geschmack."
+        }
+      },
+      "region-shizuoka": {
+        "title": "Shizuoka",
+        "answer": "Sake aus Shizuoka ist säurearm, leicht und sanft würzig, mit einem ruhigen, bananenartigen Duft aus der eigenen Hefe. Er soll zu Bonito, Thunfisch und Shirasu von der Küste passen.",
+        "factsTitle": "Auf einen Blick",
+        "facts": {
+          "character": {
+            "term": "Charakter",
+            "value": "Leicht und rund, säurearm",
+            "note": "Weich im Mund, mit schnellem, klarem Abgang."
+          },
+          "aroma": {
+            "term": "Duft",
+            "value": "Banane; Melone beim Ginjo",
+            "note": "Eher ruhig als laut."
+          },
+          "water": {
+            "term": "Wasser",
+            "value": "Weich",
+            "note": "Grundwasser der Flüsse Fuji, Ōi, Abe und Tenryū und Quellwasser vom Fuji."
+          },
+          "yeast": {
+            "term": "Hefe",
+            "value": "Shizuoka-Hefe",
+            "note": "Ende der 1970er oder Anfang der 1980er Jahre an der Versuchsanstalt der Präfektur entwickelt, gemeinsam mit Brauereien."
+          },
+          "brewers": {
+            "term": "Brauer",
+            "value": "Shida-tōji",
+            "note": "Bauern und Fischer aus der Shida-Ebene, die in den Wintermonaten brauten."
+          },
+          "gi": {
+            "term": "Geografische Angabe",
+            "value": "„Shizuoka“, seit 2023",
+            "note": "Festgelegt am 30. November 2023."
+          }
+        },
+        "detail": {
+          "p1": "Beim nationalen Wettbewerb für neuen Sake 1986 gewannen zehn Brauereien aus Shizuoka Gold, und ihr Ginjo wurde als „Shizuoka-Ginjo“ bekannt.",
+          "p2": "Die meisten Brauereien liegen an der alten Tōkaidō-Straße nahe der Küste, wo die Poststationen für Reisende brauten, passend zum Fang aus dem Meer."
+        }
+      },
+      "region-iwate": {
+        "title": "Iwate",
+        "answer": "Sake aus Iwate ist weich im Mund, mit vollem Umami vom Reis und einem frischen Duft wie junger Bambus. Er ist das Werk der Nanbu-tōji, der größten Brauergilde Japans, und eines mineralreichen Quellwassers.",
+        "factsTitle": "Auf einen Blick",
+        "facts": {
+          "character": {
+            "term": "Charakter",
+            "value": "Weich, volles Umami",
+            "note": "Ginjo bringt grünen Apfel und Birne dazu."
+          },
+          "water": {
+            "term": "Wasser",
+            "value": "Reich an Calcium und Magnesium",
+            "note": "Alte und junge Gesteinsschichten gemischt. Die Mineralien helfen der Hefe beim Wachsen und dem Koji, seine Enzyme abzugeben."
+          },
+          "winter": {
+            "term": "Winter",
+            "value": "Bis −20 °C",
+            "note": "In Teilen des Binnenlands. Die Kälte passt zur langen, kühlen Ginjo-Gärung."
+          },
+          "brewers": {
+            "term": "Brauer",
+            "value": "Nanbu-tōji",
+            "note": "Die größte Brauergilde Japans. Sie begann 1678, als ein Kaufmann aus Ōmi Brauer aus dem Kansai nach Shiwa holte."
+          },
+          "rice": {
+            "term": "Reis",
+            "value": "Gin Ginga, Yui no Kaori",
+            "note": "Sake-Reis, gezüchtet für Iwates Kälte."
+          },
+          "gi": {
+            "term": "Geografische Angabe",
+            "value": "„Iwate“, seit 2023",
+            "note": "Festgelegt am 25. September 2023."
+          }
+        },
+        "detail": {
+          "p1": "Bauern der Gegend lernten das Handwerk, indem sie im Auftrag unter wandernden Meistern brauten. Im Winter arbeiteten sie dann in Brauereien anderer Regionen, wo man sie als Nanbu-tōji schätzte.",
+          "p2": "Nach dem Erdbeben und Tsunami von 2011 begannen der Brauereiverband und das Technologiezentrum der Präfektur mit „All-Iwate“-Sake, ausschließlich aus Zutaten aus Iwate."
+        }
+      },
+      "region-saga": {
+        "title": "Saga",
+        "answer": "Sake aus Saga ist voll und rund und behält viel vom Umami und der Süße des Reises, gebraut für Kyushus süße, mit Sojasauce gewürzte Küche. Seine geografische Angabe verlangt sogar, dass einfacher Sake auf der süßen Seite liegt.",
+        "factsTitle": "Auf einen Blick",
+        "facts": {
+          "character": {
+            "term": "Charakter",
+            "value": "Voll, süß und würzig",
+            "note": "Mild im Mund; die Süße breitet sich aus, bevor ein festes Umami folgt."
+          },
+          "land": {
+            "term": "Land",
+            "value": "Die Saga-Ebene",
+            "note": "Warm, flach und bewässert, seit Langem eines der wichtigsten Reisgebiete Kyushus."
+          },
+          "water": {
+            "term": "Wasser",
+            "value": "Grundwasser",
+            "note": "Aus dem Sefuri-Gebirge und vom Berg Tara."
+          },
+          "history": {
+            "term": "Geschichte",
+            "value": "Ab den 1850er Jahren",
+            "note": "Der Fürst Nabeshima Naomasa förderte das Brauen, um die Finanzen seines Lehens zu sanieren."
+          },
+          "gi": {
+            "term": "Geografische Angabe",
+            "value": "„Saga“, seit 2021",
+            "note": "Festgelegt am 14. Juni 2021."
+          }
+        },
+        "detail": {
+          "p1": "Für Sake außerhalb der besonderen Klassen legt die Angabe einen Test fest: Ein Süßeindex aus Sake-Meter-Wert und Säure muss über null liegen, also auf der süßen Seite.",
+          "p2": "Ein Ausschuss der Präfektur zertifiziert „The SAGA“-Sake, nur aus Reis und Wasser aus Saga und von einem Verkostungsgremium geprüft."
+        }
+      },
+      "region-mie": {
+        "title": "Mie",
+        "answer": "Sake aus Mie ist warm und voll: glattes Umami vom ersten Schluck, sanfte Süße und Trockenheit, eine frische Säure. Er soll zu Muscheln und dem Fang aus der Ise-Bucht passen.",
+        "factsTitle": "Auf einen Blick",
+        "facts": {
+          "character": {
+            "term": "Charakter",
+            "value": "Warm und voll",
+            "note": "Sanfte Süße und Trockenheit, frische Säure, ein klarer Abgang."
+          },
+          "winter": {
+            "term": "Winter",
+            "value": "Suzuka-oroshi",
+            "note": "Ein trockener, kalter Wind über die Berge. Im Iga-Becken im Binnenland schwanken die Temperaturen stark."
+          },
+          "water": {
+            "term": "Wasser",
+            "value": "Schnee und Regen",
+            "note": "Schnee auf dem Suzuka-Gebirge und Regen aus dem Kii-Gebirge, einer der regenreichsten Gegenden Japans."
+          },
+          "food": {
+            "term": "Küche",
+            "value": "Muscheln und Krustentiere",
+            "note": "Die Säure überdeckt Fischiges, und das Umami des einen hebt das des anderen."
+          },
+          "gi": {
+            "term": "Geografische Angabe",
+            "value": "„Mie“, seit 2020",
+            "note": "Festgelegt am 19. Juni 2020."
+          }
+        },
+        "detail": {
+          "p1": "In der Edo-Zeit wuchs das Brauen mit den Pilgern zum Ise-Schrein, als Sake, um sie zu empfangen.",
+          "p2": "Die Brauer arbeiten mit dem Forschungsinstitut der Präfektur an eigenen Hefen, und junge Brauer tauschen sich in einer Arbeitsgruppe für Sake aus Mie aus."
+        }
+      },
+      "region-shiga": {
+        "title": "Shiga",
+        "answer": "Sake aus Shiga hat eine volle Süße und ein Umami vom Reis und eine feste Säure, gut gekühlt wie erwärmt. Er kommt von den Reisfeldern um den Biwa-See und aus dem Grundwasser der Berge, die den See umgeben.",
+        "factsTitle": "Auf einen Blick",
+        "facts": {
+          "character": {
+            "term": "Charakter",
+            "value": "Voll, süß, feste Säure",
+            "note": "Gut bei vielen Temperaturen, gekühlt bis erwärmt."
+          },
+          "water": {
+            "term": "Wasser",
+            "value": "Grundwasser",
+            "note": "Aus den Bergen um den Biwa-See. Rund 460 Flüsse münden in den See."
+          },
+          "rice": {
+            "term": "Reis",
+            "value": "Ōmi-Reis",
+            "note": "Auch Sake-Reis: Gin Fubuki, Tamasakae, Yamada Nishiki und Shiga Watabune Nr. 6, wiederbelebt 2004."
+          },
+          "winter": {
+            "term": "Winter",
+            "value": "Sokobie",
+            "note": "Die tiefe Winterkälte des Beckens sorgt für eine sanftere Gärung."
+          },
+          "gi": {
+            "term": "Geografische Angabe",
+            "value": "„Shiga“, seit 2022",
+            "note": "Festgelegt am 13. April 2022."
+          }
+        },
+        "detail": {
+          "p1": "Kaufleute aus Ōmi brauten in ganz Japan Sake, und viele Brauereien anderswo führen ihre Wurzeln auf sie zurück.",
+          "p2": "In der Meiji-Zeit vermittelte eine Agentur in Ōtsu Noto-tōji an Shigas Brauereien. In der Taishō-Zeit arbeiteten über 200 Brauereien in der Präfektur."
         }
       }
     }
