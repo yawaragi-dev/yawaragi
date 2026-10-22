@@ -2417,6 +2417,17 @@
   "offline": {
     "title": "Du bist offline",
     "body": "Yawaragi braucht eine Verbindung, um Sake nachzuschlagen und dein Journal zu führen. Prüfe deine Verbindung und versuch es noch einmal.",
-    "retry": "Noch einmal versuchen"
+    "retry": "Noch einmal versuchen",
+    "collection": {
+      "title": "Sammlung",
+      "saved": "Gespeicherte Kopie vom {date}",
+      "readOnly": "Du bist offline. Das ist die Kopie auf diesem Telefon; ändern lässt sich nichts, bis die Verbindung zurück ist.",
+      "journal": "Journal",
+      "cellar": "Keller",
+      "none": "Auf diesem Telefon ist noch keine Kopie deiner Sammlung gespeichert. Sie wird jedes Mal gespeichert, wenn du die Sammlung mit Verbindung öffnest.",
+      "stars": "{n} von 5 Sternen",
+      "open": "offen",
+      "nama": "nama"
+    }
   }
 }

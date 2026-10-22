@@ -2417,6 +2417,17 @@
   "offline": {
     "title": "You’re offline",
     "body": "Yawaragi needs a connection to look up sakes and keep your journal. Check your connection and try again.",
-    "retry": "Try again"
+    "retry": "Try again",
+    "collection": {
+      "title": "Collection",
+      "saved": "Saved copy from {date}",
+      "readOnly": "You’re offline. This is the copy saved on this phone; nothing can be changed until the connection is back.",
+      "journal": "Journal",
+      "cellar": "Cellar",
+      "none": "No copy of your collection is saved on this phone yet. It is saved each time you open Collection with a connection.",
+      "stars": "{n} of 5 stars",
+      "open": "open",
+      "nama": "nama"
+    }
   }
 }

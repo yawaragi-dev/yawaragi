@@ -16,6 +16,8 @@ import { currentUserIsMaintainer } from '@/lib/auth/maintainer'
 import { isLaunched } from '@/i18n/launch-state'
 import { routing } from '@/i18n/routing'
 import { RememberCollectionSegment } from '@/components/collection/remember-collection-segment'
+import { SaveOfflineCopy } from '@/components/offline/save-offline-copy'
+import { toOfflineCopy } from '@/lib/offline/collection-copy'
 import { getCellarStore } from '@/lib/collection/get-cellar-store'
 import { getExpressionStore } from '@/lib/collection/get-expression-store'
 import { lookupJournalFacts } from '@/lib/collection/journal-facts'
@@ -89,6 +91,8 @@ async function resolveJournalView(cookieJar: CookieJar): Promise<{
   expressions: readonly Expression[]
   /** The instant the cellar's "open N days" is measured against. */
   now: number
+  /** Who the offline copy is saved for; absent when nothing may be saved (the sample). */
+  copyOwner?: string | null
 }> {
   const journalStub =
     process.env.NODE_ENV !== 'production'
@@ -102,6 +106,7 @@ async function resolveJournalView(cookieJar: CookieJar): Promise<{
       cellar: resolveCellarStub(journalStub),
       expressions: [],
       now: STUB_JOURNAL_NOW,
+      copyOwner: null,
     }
   }
   const now = Date.now()
@@ -129,7 +134,7 @@ async function resolveJournalView(cookieJar: CookieJar): Promise<{
     // never the journal without its list.
     userId && expressionStore ? expressionStore.read(userId).catch(() => []) : Promise.resolve([]),
   ])
-  return { isMaintainer: true, readOnly: false, journal, cellar, expressions, now }
+  return { isMaintainer: true, readOnly: false, journal, cellar, expressions, now, copyOwner: userId }
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -202,6 +207,11 @@ export default async function CollectionTabPage({ params, searchParams }: PagePr
 
   const t = await getTranslations('collection')
   const journal = view.journal
+  // Design question Z: the read-only copy for when Collection cannot load.
+  const offlineCopy =
+    view.copyOwner !== undefined && journal.kind !== 'unavailable'
+      ? toOfflineCopy(journal.kind === 'journal' ? journal.entries : [], view.cellar, view.copyOwner, view.now)
+      : null
 
   return (
     <main
@@ -245,6 +255,7 @@ export default async function CollectionTabPage({ params, searchParams }: PagePr
       </nav>
       {/* Remember a segment the visitor chose, not one we fell back to. */}
       {parseCollectionSegment(tabParam) && <RememberCollectionSegment segment={segment} />}
+      {offlineCopy && <SaveOfflineCopy copy={offlineCopy} />}
 
       {journal.kind === 'unavailable' ? (
         <section data-testid="journal-unavailable">
