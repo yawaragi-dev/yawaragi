@@ -7,84 +7,97 @@ import {
   journalFacetsUnder,
   journalFilterQuery,
   parseJournalFilter,
-  withJournalFilter,
+  starBand,
+  toggleValue,
 } from './journal-filter'
 
-function entry(id: string, rating: number, brandId: number | null): JournalEntry {
+function entry(id: string, rating: number, brandId: number | null, extra: Partial<JournalEntry> = {}): JournalEntry {
   return {
     schemaVersion: 3,
     id,
     event: { kind: 'rating', rating, brandId, target: null, occurredAt: 1 },
-    sake: { nameKanji: '酒', nameRomaji: null },
+    sake: { nameKanji: '酒', nameRomaji: `Sake ${id}` },
     ...(brandId === null ? { expression: { id: `x-${id}`, name: 'Own' } } : {}),
-    triedAt: 1,
+    triedAt: Date.UTC(2026, 8, 20),
     createdAt: 1,
+    ...extra,
   } as JournalEntry
 }
 
 const NIIGATA = 15
 const HYOGO = 28
+const ASAHI = { id: 10, nameKanji: '朝日酒造', nameRomaji: 'Asahi Shuzo' }
 const facts: Record<string, EntryFacts> = {
-  a: { areaId: NIIGATA, grade: 'junmai_ginjo', styles: ['Nama'], koji: null },
-  b: { areaId: NIIGATA, grade: null, styles: [], koji: null },
-  c: { areaId: HYOGO, grade: 'junmai_ginjo', styles: ['Kimoto', 'nama'], koji: 'white' },
-  d: { areaId: null, grade: null, styles: [], koji: null },
+  a: { areaId: NIIGATA, grade: 'junmai_ginjo', styles: ['Nama'], koji: null, brewery: ASAHI },
+  b: { areaId: NIIGATA, grade: null, styles: [], koji: null, brewery: ASAHI },
+  c: { areaId: HYOGO, grade: 'junmai_ginjo', styles: ['Kimoto', 'nama'], koji: 'white', brewery: null },
+  d: { areaId: null, grade: null, styles: [], koji: null, brewery: null },
 }
-const entries = [entry('a', 5, 1), entry('b', 3, 2), entry('c', 5, 3), entry('d', 4, null)]
+const entries = [
+  entry('a', 5, 1, { notes: 'Melon and steamed rice' }),
+  entry('b', 3.5, 2, { triedAt: Date.UTC(2026, 7, 2) }),
+  entry('c', 4.5, 3),
+  entry('d', 4, null),
+]
 const factsOf = (e: JournalEntry) => facts[e.id]!
+const ids = (list: JournalEntry[]) => list.map((e) => e.id)
 
 describe('filtering the journal', () => {
   it('keeps every tasting with no filter set', () => {
-    expect(filterJournal(entries, factsOf, parseJournalFilter({})).map((e) => e.id)).toEqual(['a', 'b', 'c', 'd'])
+    expect(ids(filterJournal(entries, factsOf, parseJournalFilter({})))).toEqual(['a', 'b', 'c', 'd'])
   })
 
-  it('narrows to one prefecture, and to five stars within it', () => {
-    expect(filterJournal(entries, factsOf, parseJournalFilter({ pref: '15' })).map((e) => e.id)).toEqual(['a', 'b'])
-    expect(filterJournal(entries, factsOf, parseJournalFilter({ pref: '15', stars: '5' })).map((e) => e.id)).toEqual(['a'])
+  it('reads several values in one chip as "any of", and chips together as "all of"', () => {
+    expect(ids(filterJournal(entries, factsOf, parseJournalFilter({ pref: ['15', '28'] })))).toEqual(['a', 'b', 'c'])
+    expect(ids(filterJournal(entries, factsOf, parseJournalFilter({ pref: ['15', '28'], stars: '4' })))).toEqual(['c'])
   })
 
-  it('matches a style word whatever its case, as the visitor typed it', () => {
-    expect(filterJournal(entries, factsOf, parseJournalFilter({ style: 'NAMA' })).map((e) => e.id)).toEqual(['a', 'c'])
+  it('bands the stars: 4 and 4.5 are "4–4.5 stars", 5 is "5 stars"', () => {
+    expect([5, 4.5, 4, 3.5, 1, 0.5].map(starBand)).toEqual([5, 4, 4, 3, 1, 1])
+    expect(ids(filterJournal(entries, factsOf, parseJournalFilter({ stars: '4' })))).toEqual(['c', 'd'])
   })
 
-  it('filters by grade and koji, which only bottlings carry', () => {
-    expect(filterJournal(entries, factsOf, parseJournalFilter({ grade: 'junmai_ginjo' })).map((e) => e.id)).toEqual(['a', 'c'])
-    expect(filterJournal(entries, factsOf, parseJournalFilter({ koji: 'white' })).map((e) => e.id)).toEqual(['c'])
+  it('finds a word in a name, a brewery or a note, whatever its case', () => {
+    expect(ids(filterJournal(entries, factsOf, parseJournalFilter({ q: 'MELON' })))).toEqual(['a'])
+    expect(ids(filterJournal(entries, factsOf, parseJournalFilter({ q: 'asahi' })))).toEqual(['a', 'b'])
   })
 
-  it('ignores filter values it cannot read, rather than emptying the list', () => {
-    expect(parseJournalFilter({ pref: 'tokyo', stars: '9', grade: 'nonsense', koji: 'green' })).toEqual(parseJournalFilter({}))
+  it('filters by style words without case, by brewery and by month', () => {
+    expect(ids(filterJournal(entries, factsOf, parseJournalFilter({ style: 'NAMA' })))).toEqual(['a', 'c'])
+    expect(ids(filterJournal(entries, factsOf, parseJournalFilter({ brewery: '10' })))).toEqual(['a', 'b'])
+    expect(ids(filterJournal(entries, factsOf, parseJournalFilter({ month: '2026-08' })))).toEqual(['b'])
+  })
+
+  it('ignores values it cannot read, rather than emptying the list', () => {
+    expect(parseJournalFilter({ pref: 'tokyo', stars: '9', grade: 'nonsense', month: '2026-13', q: '  ' })).toEqual(
+      parseJournalFilter({}),
+    )
   })
 })
 
-describe('what the journal can be filtered by', () => {
-  it('offers only values that occur, with how many tastings each would leave', () => {
+describe('what the chips offer', () => {
+  it('offers only values that occur, with counts, and says how many tastings name no grade', () => {
     const facets = journalFacets(entries, factsOf)
     expect(facets.prefectures).toEqual([
       { value: NIIGATA, count: 2 },
       { value: HYOGO, count: 1 },
     ])
     expect(facets.stars).toEqual([
-      { value: 5, count: 2 },
-      { value: 4, count: 1 },
+      { value: 5, count: 1 },
+      { value: 4, count: 2 },
       { value: 3, count: 1 },
     ])
-    expect(facets.grades).toEqual([{ value: 'junmai_ginjo', count: 2 }])
-    expect(facets.styles).toEqual([
-      { value: 'Nama', count: 2 },
-      { value: 'Kimoto', count: 1 },
+    expect(facets.breweries).toEqual([{ value: ASAHI, count: 2 }])
+    expect(facets.months).toEqual([
+      { value: '2026-09', count: 3 },
+      { value: '2026-08', count: 1 },
     ])
-    expect(facets.koji).toEqual([{ value: 'white', count: 1 }])
+    expect(facets.noGrade).toBe(2)
   })
-})
 
-describe('the chips while a filter is set', () => {
-  it('count what each value would leave with the other filters applied, and keep their own alternatives', () => {
+  it('counts each chip with the other filters on, keeping its own alternatives', () => {
     const facets = journalFacetsUnder(entries, factsOf, parseJournalFilter({ pref: '15', stars: '5' }))
-    expect(facets.prefectures).toEqual([
-      { value: NIIGATA, count: 1 },
-      { value: HYOGO, count: 1 },
-    ])
+    expect(facets.prefectures).toEqual([{ value: NIIGATA, count: 1 }])
     expect(facets.stars).toEqual([
       { value: 5, count: 1 },
       { value: 3, count: 1 },
@@ -93,9 +106,16 @@ describe('the chips while a filter is set', () => {
 })
 
 describe('the filter in the address', () => {
-  it('round-trips through the query, and a patch clears one filter without touching the others', () => {
-    const filter = parseJournalFilter({ pref: '15', stars: '5', style: 'Nama' })
+  it('round-trips, and a tap adds or takes away one value', () => {
+    const filter = parseJournalFilter({ pref: ['15', '28'], stars: '5', style: 'Nama', q: 'melon' })
     expect(parseJournalFilter(journalFilterQuery(filter))).toEqual(filter)
-    expect(journalFilterQuery(withJournalFilter(filter, { stars: null }))).toEqual({ tab: 'journal', pref: '15', style: 'Nama' })
+    expect(journalFilterQuery(toggleValue(filter, 'areaIds', 28))).toEqual({
+      tab: 'journal',
+      pref: ['15'],
+      stars: ['5'],
+      style: ['Nama'],
+      q: 'melon',
+    })
+    expect(toggleValue(filter, 'styles', 'nama').styles).toEqual([])
   })
 })

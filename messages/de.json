@@ -16,15 +16,20 @@
     "filters": {
       "label": "Journal filtern",
       "prefecture": "Präfektur",
-      "stars": "Sterne",
-      "starsValue": "{n, plural, one {# Stern} other {# Sterne}}",
+      "rating": "Bewertung",
       "grade": "Klasse",
+      "more": "Mehr",
       "style": "Stil",
-      "koji": "Koji",
+      "brewery": "Brauerei",
+      "month": "Monat",
+      "fiveStars": "5 Sterne",
+      "starBand": "{from}–{to} Sterne",
+      "noGrade": "{count, plural, one {# Verkostung nennt} other {# Verkostungen nennen}} keine Klasse, ein Klassenfilter lässt {count, plural, one {sie} other {sie}} also weg. Eine Klasse kommt von einer Abfüllung, die du angelegt hast.",
       "clear": "Zurücksetzen",
       "shown": "{shown} von {total} Verkostungen",
-      "none": "Keine Verkostung passt. Setz einen Filter zurück, um mehr zu sehen.",
-      "bottlingOnly": "Klasse, Stil und Koji stammen aus Abfüllungen, die du angelegt hast; Verkostungen eines Sake allein haben keine."
+      "none": "Keine Verkostung passt zu all dem. Nimm einen Filter weg oder setz alle zurück.",
+      "searchLabel": "Journal durchsuchen",
+      "searchPlaceholder": "Ein Name, eine Brauerei oder ein Wort aus einer Notiz"
     }
   },
   "home": {

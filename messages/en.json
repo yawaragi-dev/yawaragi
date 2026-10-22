@@ -16,15 +16,20 @@
     "filters": {
       "label": "Filter the journal",
       "prefecture": "Prefecture",
-      "stars": "Stars",
-      "starsValue": "{n, plural, one {# star} other {# stars}}",
+      "rating": "Rating",
       "grade": "Grade",
+      "more": "More",
       "style": "Style",
-      "koji": "Koji",
+      "brewery": "Brewery",
+      "month": "Month",
+      "fiveStars": "5 stars",
+      "starBand": "{from}–{to} stars",
+      "noGrade": "{count, plural, one {# tasting names} other {# tastings name}} no grade, so a grade filter leaves {count, plural, one {it} other {them}} out. A grade comes from a bottling you added.",
       "clear": "Clear",
       "shown": "{shown} of {total} tastings",
-      "none": "No tastings match. Clear a filter to see more.",
-      "bottlingOnly": "Grade, style and koji come from bottlings you added; tastings of a sake alone have none."
+      "none": "No tastings match all of these. Take one away, or clear them.",
+      "searchLabel": "Search your journal",
+      "searchPlaceholder": "A name, a brewery or a word in a note"
     }
   },
   "home": {

@@ -91,19 +91,26 @@ test.describe('the sample collection', () => {
     await expect(page.getByTestId('journal-filter-summary')).toBeVisible()
   })
 
-  test('narrows the journal by stars, says how many are left, and clears back to all', async ({ page }) => {
+  test('narrows the journal by rating, says how many are left, searches it, and clears back to all', async ({ page }) => {
     await page.goto(`${BASE_URL}/api/sample-collection?locale=en`)
     await page.goto(`${BASE_URL}/en/collection?tab=journal`)
     const total = await page.getByTestId('journal-entry').count()
 
-    await page.getByTestId('journal-filter-stars').locator('summary').click()
-    const first = page.getByTestId('journal-filter-stars-option').first()
+    // v1.9 W: a chip opens its values below the row; each value counts.
+    await page.getByTestId('journal-filter-rating').click()
+    const first = page.getByTestId('journal-filter-rating-option').first()
     const kept = Number(await first.locator('span').last().textContent())
     await first.click()
 
     await expect(page).toHaveURL(/[?&]stars=\d/)
     await expect(page.getByTestId('journal-entry')).toHaveCount(kept)
     await expect(page.getByTestId('journal-filter-summary')).toContainText(`${kept} of ${total} tastings`)
+
+    // The search icon opens a field above the chips; it combines with them.
+    await page.getByTestId('journal-search-toggle').click()
+    await page.getByTestId('journal-search-input').fill('zzzz-no-such-word')
+    await page.getByTestId('journal-search-input').press('Enter')
+    await expect(page.getByTestId('journal-filter-none')).toContainText('No tastings match all of these')
 
     await page.getByTestId('journal-filter-clear').click()
     await expect(page.getByTestId('journal-entry')).toHaveCount(total)
