@@ -1,7 +1,7 @@
 /**
  * Apply pending Supabase migrations to a Postgres connection.
  *
- * CLI usage: `pnpm migrate` (reads DATABASE_URL from env).
+ * CLI usage: `pnpm migrate` (reads MIGRATE_DATABASE_URL — the Session pooler string — from .env.local).
  * Programmatic usage: import { runMigrations } and pass a connection string —
  * used by tests/integration/setup.ts to migrate the testcontainer DB.
  */
@@ -72,12 +72,34 @@ export async function runMigrations(connectionString: string): Promise<Migration
   return { applied, skipped }
 }
 
+/**
+ * The connection `pnpm migrate` uses: `MIGRATE_DATABASE_URL`, the Supabase
+ * **Session pooler** string, kept apart from the app's `DATABASE_URL` (the
+ * Transaction pooler on Vercel). DDL and the `_migrations` bookkeeping belong
+ * on a session, so there is deliberately no fallback to `DATABASE_URL`: a
+ * missing variable stops the run instead of quietly migrating through the
+ * transaction pooler.
+ */
+export function migrationConnectionString(
+  env: Readonly<Record<string, string | undefined>>,
+): { ok: true; connectionString: string } | { ok: false; message: string } {
+  const value = env.MIGRATE_DATABASE_URL?.trim()
+  if (value) return { ok: true, connectionString: value }
+  return {
+    ok: false,
+    message:
+      'MIGRATE_DATABASE_URL is not set. Put the Supabase "Session pooler" string in .env.local ' +
+      "(the project dashboard's Connect button → Session pooler). It is separate from DATABASE_URL on purpose.",
+  }
+}
+
 async function main(): Promise<number> {
-  const connectionString = process.env.DATABASE_URL
-  if (!connectionString) {
-    console.error('DATABASE_URL is not set. Add it to .env.local or your shell env.')
+  const resolved = migrationConnectionString(process.env)
+  if (!resolved.ok) {
+    console.error(resolved.message)
     return 1
   }
+  const { connectionString } = resolved
   try {
     const { applied, skipped } = await runMigrations(connectionString)
     for (const f of skipped) console.log(`✓ ${f} (already applied)`)
