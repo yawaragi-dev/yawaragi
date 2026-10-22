@@ -18,6 +18,8 @@ export interface EntryFacts {
   /** The bottling's style words as the visitor stored them. */
   styles: readonly string[]
   koji: Koji | null
+  /** The sake's brewery, for the journal's numbers; absent where it is not looked up. */
+  brewery?: { id: number; nameKanji: string; nameRomaji: string | null } | null
 }
 
 export interface JournalFilter {

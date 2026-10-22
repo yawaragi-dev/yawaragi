@@ -9,6 +9,12 @@ import { ColdStartChips, type ColdStartChipView } from '@/components/palate/cold
 import { PalateAxisRows, type PalateAxisStrings } from '@/components/palate/palate-axis-rows'
 import { PalateConfidence } from '@/components/palate/palate-confidence'
 import { PalateProgress } from '@/components/palate/palate-progress'
+import { JournalNumbersSection } from '@/components/palate/journal-numbers'
+import { getExpressionStore } from '@/lib/collection/get-expression-store'
+import { lookupJournalFacts } from '@/lib/collection/journal-facts'
+import { JOURNAL_NUMBERS_FROM, journalNumbers } from '@/lib/collection/journal-stats'
+import type { Expression } from '@/lib/schemas/expression'
+import type { JournalEntry } from '@/lib/schemas/journal-entry'
 import { TabHeader } from '@/components/layout/screen-header'
 import { TasteProvenanceSummary } from '@/components/profile/taste-provenance-summary'
 import { FlavorRadarView } from '@/components/sake/flavor-radar-view'
@@ -28,7 +34,7 @@ import { catalogueMeanProfile } from '@/lib/taste/catalogue-mean'
 import { getJournalStore } from '@/lib/taste/get-journal-store'
 import { resolveJournalStub } from '@/lib/taste/journal-stub'
 import { readSampleJournal, wantsSampleCollection } from '@/lib/demo/sample-mode'
-import { resolveMaintainerJournal } from '@/lib/taste/resolve-maintainer-journal'
+import { type MaintainerJournalState, resolveMaintainerJournal } from '@/lib/taste/resolve-maintainer-journal'
 import { getFlavorCandidatePool } from '@/lib/taste/flavor-candidate-pool'
 import { timeStep } from '@/lib/observability/time-step'
 import { getTasteEventStore } from '@/lib/taste/get-taste-event-store'
@@ -127,29 +133,42 @@ const tp = (
  */
 async function resolveJournalTasteProfile(
   cookieJar: CookieJar,
-): Promise<SessionTasteProfile | null> {
+): Promise<JournalTasteProfile | null> {
   const journalStub =
     process.env.NODE_ENV !== 'production'
       ? cookieJar.get('yawaragi_journal_stub')?.value
       : undefined
-  const journal =
-    journalStub != null
-      ? resolveJournalStub(journalStub)
-      : (await currentUserIsMaintainer())
-        ? await resolveMaintainerJournal({
-            store: getJournalStore(),
-            userId: (await auth()).userId,
-            now: Date.now(),
-          })
-        : wantsSampleCollection(cookieJar)
-          ? (await readSampleJournal(Date.now())).journal
-          : null
+  let expressions: readonly Expression[] = []
+  let journal: MaintainerJournalState | null = null
+  if (journalStub != null) {
+    journal = resolveJournalStub(journalStub)
+  } else if (await currentUserIsMaintainer()) {
+    const userId = (await auth()).userId
+    const expressionStore = getExpressionStore()
+    ;[journal, expressions] = await Promise.all([
+      resolveMaintainerJournal({ store: getJournalStore(), userId, now: Date.now() }),
+      // Only for "in numbers"; a failed read leaves it without grades.
+      userId && expressionStore ? expressionStore.read(userId).catch(() => []) : Promise.resolve([]),
+    ])
+  } else if (wantsSampleCollection(cookieJar)) {
+    const sample = await readSampleJournal(Date.now())
+    journal = sample.journal
+    expressions = sample.expressions
+  }
   if (journal === null || journal.kind !== 'journal') return null
   return {
     kind: 'profile',
     profile: journal.profile,
     events: journalEntriesToTasteEvents(journal.entries),
+    entries: journal.entries,
+    expressions,
   }
+}
+
+/** The journal's profile, with the tastings and bottlings "in numbers" counts. */
+type JournalTasteProfile = Extract<SessionTasteProfile, { kind: 'profile' }> & {
+  entries: readonly JournalEntry[]
+  expressions: readonly Expression[]
 }
 
 /**
@@ -346,10 +365,15 @@ export default async function PalatePage({
   const ratingCount = countRatings(events)
   const stage = palateStage(ratingCount)
 
-  const [reference, recommendations, lastRated] = await timeStep('palate/data', () => Promise.all([
+  const [reference, recommendations, lastRated, numbers] = await timeStep('palate/data', () => Promise.all([
     stage === 'read' ? catalogueMeanProfile() : Promise.resolve(null),
     profile ? resolveRecommendations(cookieJar, events) : Promise.resolve([]),
     stage === 'taking_shape' ? resolveLastRated(events) : Promise.resolve(null),
+    journalSession && journalSession.entries.length >= JOURNAL_NUMBERS_FROM
+      ? lookupJournalFacts(journalSession.entries, journalSession.expressions).then((factsOf) =>
+          journalNumbers(journalSession.entries, factsOf),
+        )
+      : Promise.resolve(null),
   ]))
 
   // §12's title. At a read it names the two strongest axes — the display word
@@ -555,6 +579,9 @@ export default async function PalatePage({
           </ul>
         </section>
       )}
+      {/* Design question X, built ahead of the spec: after the read and the
+          sakes to try, the journal counted. */}
+      {numbers && <JournalNumbersSection numbers={numbers} locale={locale} />}
     </main>
   )
 }

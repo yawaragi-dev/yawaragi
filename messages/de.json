@@ -127,7 +127,21 @@
     "reasonDrink": "Gleiche Form wie {drink}: {first} und {second}.",
     "reasonPalate": "Nah an deinem Gaumen: {first} und {second}.",
     "leadShapes": "Drei klare, ganz verschiedene Formen für den Anfang. Wähle oben ein Getränk, dann richten sie sich danach.",
-    "reasonShape": "Eine klare Form: {first} und {second}."
+    "reasonShape": "Eine klare Form: {first} und {second}.",
+    "numbers": {
+      "heading": "Dein Journal in Zahlen",
+      "tastings": "{n, plural, one {Verkostung} other {Verkostungen}}",
+      "sakes": "{n, plural, one {Sake} other {Sake}}",
+      "breweries": "{n, plural, one {Brauerei} other {Brauereien}}",
+      "prefectures": "von 47 Präfekturen",
+      "starsHeading": "Deine Sterne",
+      "average": "Durchschnitt {average}",
+      "starsRow": "{n, plural, one {# Stern} other {# Sterne}}",
+      "placesHeading": "Woher sie kommen",
+      "breweriesHeading": "Brauereien, zu denen du zurückkehrst",
+      "breweryLine": "{count, plural, one {# Verkostung} other {# Verkostungen}} · Durchschnitt {average}",
+      "barLabel": "{label}: {count}"
+    }
   },
   "landing": {
     "title": "Yawaragi",
