@@ -2,7 +2,7 @@
 
 Open questions the build has run into and settled provisionally, so they can be handed to the designers in one go. Each says what is built today, so nobody has to guess. Opened 2026-10-13; filed as #417.
 
-Round two (blocks I–R), round three (blocks S, T, U and V) and round four (blocks W–Z, with a priority order across everything still open) are at the end of the file.
+Round two (blocks I–R), round three (blocks S, T, U and V), round four (blocks W–Z, with a priority order across everything still open) and round five (block AA) are at the end of the file.
 
 The design snapshot these refer to is `design/README.md`, v1.6.2.
 
@@ -440,3 +440,33 @@ The maintainer wants the journal and the cellar to open without a network. The f
 2. What happens to the actions: hidden, greyed with a reason, or tappable with "Needs a connection"?
 3. A row tapped offline: nothing, a small sheet with what the copy holds (name, stars, note, date), or the offline page?
 4. Does Home's "Recent tastings" use the copy too?
+
+---
+
+# Round five (2026-10-22)
+
+## AA. Feedback, and an "About" page
+
+The maintainer wants a way for visitors to tell us something (a wrong read, a missing sake, a bug, an idea), and possibly an "About Yawaragi" page. §15 has neither today. Account → Help holds only "Add Yawaragi to your home screen".
+
+**What we can build, and what each costs:**
+- **(a) A link that opens the visitor's mail app**, addressed to the contact address in the Impressum, with the subject filled in, and the app version and screen in the body. No form and no storage: nothing new in the privacy notice beyond the address it already names. The visitor leaves the app, and gets no answer in the app.
+- **(b) A short form in the app:** a kind (Something's wrong · A sake is missing · An idea · Other), a text field (up to ~1,000 characters), and an **optional** email for a reply. It is stored on our side (Supabase, EU) and read by the maintainer. This is new personal data (the text, and the email if given), so it needs a privacy-notice line, a retention period (we would say 12 months, or until handled) and an erasure path. No new vendor: we would not send email from the app (there is no mail provider yet, #481).
+- **(c) "Report this read"** on a scan result and on an AI-written line, which CLAUDE.md already asks for ("an improve / report affordance" on model-written text). It prefills (b) with what was read; the photo is never attached (it is discarded after the read).
+
+Engineering proposes **(b) with (c) feeding it**, and (a) as the fallback for a visitor who has turned storage off or is offline.
+
+1. **Where does "Send feedback" live?** Engineering suggests Account → Help, under the home-screen row, plus (c) where it applies. Anywhere else, such as Home, the camera's "Don't", or the end-of-screen block?
+2. **The form:** one screen or a sheet? Which kinds, and is the kind required? Does the optional email field say what it is for ("Only to answer you; deleted with the message")?
+3. **After sending:** a notice ("Thanks — sent") and back where they were, or a page? Does the visitor see what they sent?
+4. **Signed out:** can a visitor without an account send one? We would say yes, with the same daily limit the scan uses, to keep spam down.
+5. **"About Yawaragi":** what goes on it? We would list:
+   - what the app is;
+   - where the data comes from (Sakenowa, the National Tax Agency for regions, the hand-written Learn sources);
+   - the AI that reads labels and what it keeps;
+   - the open-source parts (the Sakenowa MCP server);
+   - the app version;
+   - links to the Impressum, the privacy notice and feedback.
+
+   Is it a page of its own (Account → Help → About), or does it fold into the landing?
+6. **Version string:** shown on About only, or also as a line at the foot of Account (useful when a visitor reports a bug)?
