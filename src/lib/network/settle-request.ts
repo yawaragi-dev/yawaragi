@@ -80,3 +80,13 @@ export function reachable<A extends unknown[], R>(
     return settled.ok ? settled.value : { status: 'unavailable' }
   }
 }
+
+/** For `useSyncExternalStore`: re-read `navigator.onLine` when the browser says it changed. */
+export function subscribeOnline(onChange: () => void): () => void {
+  window.addEventListener('online', onChange)
+  window.addEventListener('offline', onChange)
+  return () => {
+    window.removeEventListener('online', onChange)
+    window.removeEventListener('offline', onChange)
+  }
+}

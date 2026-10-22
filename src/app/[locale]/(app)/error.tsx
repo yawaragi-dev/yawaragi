@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useSyncExternalStore } from 'react'
 import { useTranslations } from 'next-intl'
-import { ArrowsClockwise, CloudWarning, House } from '@phosphor-icons/react/dist/ssr'
+import { ArrowsClockwise, CloudWarning, House, WifiSlash } from '@phosphor-icons/react/dist/ssr'
+import { browserIsOnline, subscribeOnline } from '@/lib/network/settle-request'
 import { Link } from '@/i18n/navigation'
 
 /**
@@ -24,6 +25,9 @@ import { Link } from '@/i18n/navigation'
  */
 export default function AppError({ error, unstable_retry }: { error: Error & { digest?: string }; unstable_retry: () => void }) {
   const t = useTranslations('appError')
+  // Design v1.9 S7: when the phone says it is offline, the page says that
+  // rather than blaming the catalogue, which keeps its copy for real errors.
+  const online = useSyncExternalStore(subscribeOnline, browserIsOnline, () => true)
   // Reporting is a side effect of the screen appearing for this error, which
   // is what an effect is for; it sets no state.
   useEffect(() => {
@@ -41,11 +45,11 @@ export default function AppError({ error, unstable_retry }: { error: Error & { d
   return (
     <main className="flex flex-1 flex-col gap-5 overflow-y-auto px-5 py-8" data-testid="app-error" data-no-catalogue-data="">
       <span className="text-ash-600" aria-hidden="true">
-        <CloudWarning size={28} />
+        {online ? <CloudWarning size={28} /> : <WifiSlash size={28} />}
       </span>
-      <div className="flex flex-col gap-2">
-        <h1 className="text-title font-medium text-ink">{t('title')}</h1>
-        <p className="text-subtle leading-normal text-ash-700">{t('body')}</p>
+      <div className="flex flex-col gap-2" data-testid={online ? undefined : 'app-error-offline'}>
+        <h1 className="text-title font-medium text-ink">{online ? t('title') : t('offlineTitle')}</h1>
+        <p className="text-subtle leading-normal text-ash-700">{online ? t('body') : t('offlineBody')}</p>
       </div>
       <button
         type="button"

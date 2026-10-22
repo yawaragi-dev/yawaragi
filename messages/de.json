@@ -739,7 +739,11 @@
     "deleteNo": "Behalten",
     "deleted": "Verkostung gelöscht",
     "yourTastingOn": "Deine Verkostung · {date}",
-    "savesAsYouGo": "Änderungen werden sofort gespeichert"
+    "savesAsYouGo": "Änderungen werden sofort gespeichert",
+    "notSavedValue": "{rating} · Nicht gespeichert",
+    "noConnectionRating": "Keine Verbindung, deshalb steht das noch nicht in deinem Journal.",
+    "stillNoConnection": "Immer noch keine Verbindung. Deine Sterne bleiben hier, bis sie zurück ist.",
+    "tryAgain": "Noch einmal versuchen"
   },
   "cellar": {
     "add": "In den Keller",
@@ -774,7 +778,10 @@
     "unopenedNama": "Ungeöffnet · Nama, kalt lagern",
     "openNama": "{days, plural, =0 {Heute geöffnet} one {Seit # Tag offen} other {Seit # Tagen offen}} · Nama, kalt lagern",
     "edit": "Bearbeiten",
-    "addedMany": "{added, plural, one {Flasche hinzugefügt} other {# Flaschen hinzugefügt}} · {count} im Keller"
+    "addedMany": "{added, plural, one {Flasche hinzugefügt} other {# Flaschen hinzugefügt}} · {count} im Keller",
+    "notAddedOffline": "Nicht hinzugefügt · keine Verbindung. Hier geht nichts verloren.",
+    "notSavedOffline": "Nicht gespeichert · keine Verbindung. Hier geht nichts verloren.",
+    "tryAgain": "Noch einmal versuchen"
   },
   "detailedNotes": {
     "title": "Ausführliche Notizen",
@@ -2283,7 +2290,9 @@
     "title": "Diese Seite ließ sich nicht laden",
     "body": "Der Sake-Katalog ist vielleicht kurz nicht erreichbar. Versuch es in ein paar Sekunden noch einmal oder geh zurück zur Startseite.",
     "retry": "Noch einmal versuchen",
-    "home": "Zur Startseite"
+    "home": "Zur Startseite",
+    "offlineTitle": "Keine Verbindung",
+    "offlineBody": "Diese Seite braucht das Internet. Alles, was du vorher gespeichert hast, ist sicher."
   },
   "sampleCollection": {
     "bannerTitle": "Eine Beispielsammlung",

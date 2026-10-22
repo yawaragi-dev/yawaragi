@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useSyncExternalStore } from 'react'
 import { useTranslations } from 'next-intl'
 import { Minus, Plus, Stack } from '@phosphor-icons/react/dist/ssr'
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
+import { browserIsOnline, subscribeOnline } from '@/lib/network/settle-request'
 import {
   CELLAR_SIZES,
   type CellarSize,
@@ -47,6 +48,10 @@ export function CellarSheet({
   onSubmit: (values: CellarSheetValues) => void
 }) {
   const t = useTranslations('cellar')
+  // Design v1.9 S6 (117): a save the network lost keeps the sheet and its
+  // values, says so above the button, and the button becomes Try again.
+  const online = useSyncExternalStore(subscribeOnline, browserIsOnline, () => true)
+  const lostToNetwork = failed && !online
   const [count, setCount] = useState(initial?.count ?? 1)
   const [sizeMl, setSizeMl] = useState<CellarSize>(initial?.sizeMl ?? DEFAULT_CELLAR_SIZE)
   const [nama, setNama] = useState(initial?.nama ?? false)
@@ -161,10 +166,16 @@ export function CellarSheet({
             </button>
           </div>
 
-          {failed && (
-            <p role="alert" className="pb-2 text-meta text-ginshu-700" data-testid="cellar-sheet-error">
-              {t('error')}
+          {lostToNetwork ? (
+            <p role="alert" className="pb-2 text-meta text-ash-700" data-testid="cellar-sheet-not-added">
+              {mode === 'edit' ? t('notSavedOffline') : t('notAddedOffline')}
             </p>
+          ) : (
+            failed && (
+              <p role="alert" className="pb-2 text-meta text-ginshu-700" data-testid="cellar-sheet-error">
+                {t('error')}
+              </p>
+            )
           )}
           <button
             type="button"
@@ -175,7 +186,7 @@ export function CellarSheet({
             data-testid="cellar-sheet-submit"
           >
             <Stack size={17} aria-hidden="true" />
-            {mode === 'edit' ? t('sheetSave') : t('add')}
+            {lostToNetwork ? t('tryAgain') : mode === 'edit' ? t('sheetSave') : t('add')}
           </button>
         </div>
       </SheetContent>
