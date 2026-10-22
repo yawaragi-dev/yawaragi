@@ -120,10 +120,16 @@ function TabContents({ icon: Icon, label, active }: TabContentsProps) {
   return (
     <span
       className={cn(
-        'flex flex-col items-center gap-1 py-1.5 text-micro transition-colors',
+        'flex flex-col items-center gap-1 rounded-md px-3 py-1.5 text-micro transition-colors',
         lit ? 'text-ginshu-600' : 'text-ash-600 hover:text-ash-800',
+        // Rule 16's tab press token (v1.9, 111): a neutral-200 pill behind the
+        // icon and label, held until the screen arrives. The tab that was lit
+        // dims meanwhile — see `[data-tab-pending]` in globals.css.
+        pending && 'bg-ash-200',
       )}
       data-active={lit ? 'true' : undefined}
+      data-tab-pending={pending ? 'true' : undefined}
+      data-tab-current={active ? 'true' : undefined}
     >
       <Icon
         size={22}

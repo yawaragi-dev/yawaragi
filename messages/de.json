@@ -2429,5 +2429,16 @@
       "open": "offen",
       "nama": "nama"
     }
+  },
+  "connection": {
+    "slowTitle": "Dauert länger als sonst",
+    "slowBody": "Die Verbindung ist langsam.",
+    "cancel": "Abbrechen",
+    "offline": "Offline · Speichern und Scannen brauchen eine Verbindung.",
+    "backOnline": "Wieder online",
+    "journalAsOf": "Offline · Dein Journal von {time}",
+    "cellarAsOf": "Offline · Dein Keller von {time}",
+    "homeAsOf": "Offline · Letzte Verkostungen von {time}",
+    "changesWait": "Änderungen warten auf eine Verbindung."
   }
 }

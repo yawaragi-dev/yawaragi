@@ -340,3 +340,50 @@ body {
 [data-app-pane]:has([data-no-catalogue-data]) [data-footer-credit] {
   display: none;
 }
+
+/*
+ * Design v1.9, rule 16: a tap is answered at once, and the answer is held.
+ * <NavigationFeedback /> marks the link a visitor tapped with `data-pressed`
+ * until its screen arrives (or the wait is cancelled); these are the press
+ * tokens. A row or tile takes neutral-200 on the ground and neutral-300 on a
+ * surface; a chip the accent-200 fill. Buttons keep their own active state.
+ */
+[data-pressed] {
+  background-color: var(--color-ash-200);
+}
+.bg-surface [data-pressed],
+.bg-card [data-pressed] {
+  background-color: var(--color-ash-300);
+}
+[data-pressed].rounded-full {
+  background-color: var(--color-ginshu-200);
+}
+/* A tab's press is its own pill (tab-bar.tsx), not the whole cell. */
+[data-testid='tab-bar'] [data-pressed] {
+  background-color: transparent;
+}
+/* The tab that was lit dims while the tapped one waits (111). */
+[data-testid='tab-bar']:has([data-tab-pending]) [data-tab-current]:not([data-tab-pending]) {
+  opacity: 0.5;
+}
+
+/* Rule 16: the 2px accent-500 bar along the top edge, after 300 ms. */
+@keyframes yw-progress {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(250%);
+  }
+}
+.yw-progress-bar {
+  animation: yw-progress 1.2s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .yw-progress-bar {
+    animation: none;
+    transform: none;
+    width: 100%;
+    opacity: 0.6;
+  }
+}
