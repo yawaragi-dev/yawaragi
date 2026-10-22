@@ -7,6 +7,7 @@ import { notFound } from 'next/navigation'
 import { Camera, Keyboard } from '@phosphor-icons/react/dist/ssr'
 import { Link } from '@/i18n/navigation'
 import { CellarList } from '@/components/collection/cellar-list'
+import { JournalFilters } from '@/components/collection/journal-filters'
 import { JournalList } from '@/components/collection/journal-list'
 import { TabPlaceholder } from '@/components/layout/tab-placeholder'
 import { readSampleJournal, wantsSampleCollection } from '@/lib/demo/sample-mode'
@@ -16,6 +17,10 @@ import { isLaunched } from '@/i18n/launch-state'
 import { routing } from '@/i18n/routing'
 import { RememberCollectionSegment } from '@/components/collection/remember-collection-segment'
 import { getCellarStore } from '@/lib/collection/get-cellar-store'
+import { getExpressionStore } from '@/lib/collection/get-expression-store'
+import { lookupJournalFacts } from '@/lib/collection/journal-facts'
+import { filterJournal, journalFacetsUnder, parseJournalFilter } from '@/lib/collection/journal-filter'
+import type { Expression } from '@/lib/schemas/expression'
 import {
   COLLECTION_SEGMENT_COOKIE,
   type CollectionSegment,
@@ -23,6 +28,7 @@ import {
   pickCollectionSegment,
 } from '@/lib/collection/segment'
 import type { CellarBottle } from '@/lib/schemas/cellar-bottle'
+import type { JournalEntry } from '@/lib/schemas/journal-entry'
 import { getJournalStore } from '@/lib/taste/get-journal-store'
 import { STUB_JOURNAL_NOW, resolveCellarStub, resolveJournalStub } from '@/lib/taste/journal-stub'
 import {
@@ -79,6 +85,8 @@ async function resolveJournalView(cookieJar: CookieJar): Promise<{
   readOnly: boolean
   journal: MaintainerJournalState | null
   cellar: readonly CellarBottle[]
+  /** The bottlings the visitor added, for the journal's grade, style and koji filters. */
+  expressions: readonly Expression[]
   /** The instant the cellar's "open N days" is measured against. */
   now: number
 }> {
@@ -92,6 +100,7 @@ async function resolveJournalView(cookieJar: CookieJar): Promise<{
       readOnly: false,
       journal: resolveJournalStub(journalStub),
       cellar: resolveCellarStub(journalStub),
+      expressions: [],
       now: STUB_JOURNAL_NOW,
     }
   }
@@ -99,17 +108,28 @@ async function resolveJournalView(cookieJar: CookieJar): Promise<{
   if (!(await currentUserIsMaintainer())) {
     if (wantsSampleCollection(cookieJar)) {
       const sample = await readSampleJournal(now)
-      return { isMaintainer: true, readOnly: true, journal: sample.journal, cellar: sample.cellar, now }
+      return {
+        isMaintainer: true,
+        readOnly: true,
+        journal: sample.journal,
+        cellar: sample.cellar,
+        expressions: sample.expressions,
+        now,
+      }
     }
-    return { isMaintainer: false, readOnly: false, journal: null, cellar: [], now }
+    return { isMaintainer: false, readOnly: false, journal: null, cellar: [], expressions: [], now }
   }
   const { userId } = await auth()
   const cellarStore = getCellarStore()
-  const [journal, cellar] = await Promise.all([
+  const expressionStore = getExpressionStore()
+  const [journal, cellar, expressions] = await Promise.all([
     resolveMaintainerJournal({ store: getJournalStore(), userId, now }),
     userId && cellarStore ? cellarStore.read(userId) : Promise.resolve([]),
+    // Only for the filters: a store that fails leaves them without grades,
+    // never the journal without its list.
+    userId && expressionStore ? expressionStore.read(userId).catch(() => []) : Promise.resolve([]),
   ])
-  return { isMaintainer: true, readOnly: false, journal, cellar, now }
+  return { isMaintainer: true, readOnly: false, journal, cellar, expressions, now }
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -121,7 +141,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function CollectionTabPage({ params, searchParams }: PageProps) {
   const { locale } = await params
-  const tabParam = (await searchParams).tab
+  const query = await searchParams
+  const tabParam = query.tab
 
   if (!hasLocale(routing.locales, locale)) {
     notFound()
@@ -262,11 +283,50 @@ export default async function CollectionTabPage({ params, searchParams }: PagePr
         </section>
       ) : (
         <>
-          <JournalList entries={journal.entries} locale={locale} />
+          <FilteredJournal entries={journal.entries} expressions={view.expressions} query={query} locale={locale} />
           {/* ADR-0014: the Sakenowa credit is line 1 of the end-of-screen
               block, rendered by the app shell directly under this list. */}
         </>
       )}
     </main>
+  )
+}
+
+/**
+ * The journal with design question W's filters over it: chips for what this
+ * journal holds, the list narrowed to the filter in the URL, and a line when
+ * nothing is left.
+ */
+async function FilteredJournal({
+  entries,
+  expressions,
+  query,
+  locale,
+}: {
+  entries: readonly JournalEntry[]
+  expressions: readonly Expression[]
+  query: Record<string, string | string[] | undefined>
+  locale: string
+}) {
+  const filter = parseJournalFilter(query)
+  const factsOf = await lookupJournalFacts(entries, expressions)
+  const shown = filterJournal(entries, factsOf, filter)
+  const t = await getTranslations('collection.filters')
+  return (
+    <>
+      <JournalFilters
+        filter={filter}
+        facets={journalFacetsUnder(entries, factsOf, filter)}
+        shown={shown.length}
+        total={entries.length}
+      />
+      {shown.length > 0 ? (
+        <JournalList entries={shown} locale={locale} />
+      ) : (
+        <p className="max-w-prose text-body text-ash-600" data-testid="journal-filter-none">
+          {t('none')}
+        </p>
+      )}
+    </>
   )
 }

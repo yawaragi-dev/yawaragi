@@ -79,6 +79,23 @@ test.describe('the sample collection', () => {
     await page.goto(`${BASE_URL}/en/collection`)
     await expect(page.getByTestId('tab-placeholder')).toBeVisible()
   })
+  test('narrows the journal by stars, says how many are left, and clears back to all', async ({ page }) => {
+    await page.goto(`${BASE_URL}/api/sample-collection?locale=en`)
+    await page.goto(`${BASE_URL}/en/collection?tab=journal`)
+    const total = await page.getByTestId('journal-entry').count()
+
+    await page.getByTestId('journal-filter-stars').locator('summary').click()
+    const first = page.getByTestId('journal-filter-stars-option').first()
+    const kept = Number(await first.locator('span').last().textContent())
+    await first.click()
+
+    await expect(page).toHaveURL(/[?&]stars=\d/)
+    await expect(page.getByTestId('journal-entry')).toHaveCount(kept)
+    await expect(page.getByTestId('journal-filter-summary')).toContainText(`${kept} of ${total} tastings`)
+
+    await page.getByTestId('journal-filter-clear').click()
+    await expect(page.getByTestId('journal-entry')).toHaveCount(total)
+  })
 })
 
 test.describe('what a bottling goes with', () => {

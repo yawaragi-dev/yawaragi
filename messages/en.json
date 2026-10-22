@@ -12,7 +12,20 @@
     "emptyTypeIt": "Type the name",
     "sectionsLabel": "Collection sections",
     "segmentJournal": "Journal",
-    "segmentCellar": "Cellar"
+    "segmentCellar": "Cellar",
+    "filters": {
+      "label": "Filter the journal",
+      "prefecture": "Prefecture",
+      "stars": "Stars",
+      "starsValue": "{n, plural, one {# star} other {# stars}}",
+      "grade": "Grade",
+      "style": "Style",
+      "koji": "Koji",
+      "clear": "Clear",
+      "shown": "{shown} of {total} tastings",
+      "none": "No tastings match. Clear a filter to see more.",
+      "bottlingOnly": "Grade, style and koji come from bottlings you added; tastings of a sake alone have none."
+    }
   },
   "home": {
     "title": "Home",
