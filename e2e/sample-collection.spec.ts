@@ -79,6 +79,18 @@ test.describe('the sample collection', () => {
     await page.goto(`${BASE_URL}/en/collection`)
     await expect(page.getByTestId('tab-placeholder')).toBeVisible()
   })
+  test('counts the journal on Palate, and a star bar opens the journal at those stars', async ({ page }) => {
+    await page.goto(`${BASE_URL}/api/sample-collection?locale=en`)
+    await page.goto(`${BASE_URL}/en/profile`)
+    const numbers = page.getByTestId('journal-numbers')
+    await expect(numbers).toBeVisible()
+    await expect(numbers.getByTestId('journal-numbers-tastings')).toContainText('tastings')
+
+    await numbers.getByRole('link', { name: /^5 stars: \d+$/ }).click()
+    await expect(page).toHaveURL(/\/en\/collection\?.*stars=5/)
+    await expect(page.getByTestId('journal-filter-summary')).toBeVisible()
+  })
+
   test('narrows the journal by stars, says how many are left, and clears back to all', async ({ page }) => {
     await page.goto(`${BASE_URL}/api/sample-collection?locale=en`)
     await page.goto(`${BASE_URL}/en/collection?tab=journal`)

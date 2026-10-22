@@ -6,32 +6,53 @@ import type { Expression } from '@/lib/schemas/expression'
 import type { JournalEntry } from '@/lib/schemas/journal-entry'
 import type { EntryFacts } from './journal-filter'
 
+interface BrandPlace {
+  areaId: number | null
+  brewery: { id: number; nameKanji: string; nameRomaji: string | null }
+}
+
 /**
- * The brewery prefecture of each catalogue sake in a journal, in one query.
- * An empty map when the catalogue cannot be read (CI has no database): the
- * journal still lists, the Prefecture chip just has nothing to offer.
+ * The brewery and its prefecture for each catalogue sake in a journal, in
+ * one query. An empty map when the catalogue cannot be read (CI has no
+ * database): the journal still lists, the Prefecture chip just has nothing to
+ * offer.
  */
-export async function brandPrefectures(brandIds: readonly number[]): Promise<Map<number, number>> {
+export async function brandPlaces(brandIds: readonly number[]): Promise<Map<number, BrandPlace>> {
   const ids = [...new Set(brandIds)]
   if (ids.length === 0) return new Map()
   try {
-    const { rows } = await publicQuery<{ brand_id: number; area_id: number }>(
+    const { rows } = await publicQuery<{
+      brand_id: number
+      area_id: number
+      brewery_id: number
+      name_kanji: string
+      name_romaji: string | null
+    }>(
       'brands',
-      `SELECT b.brand_id, br.area_id
+      `SELECT b.brand_id, br.area_id, br.brewery_id, br.name_kanji, br.name_romaji
          FROM brands b
          JOIN breweries br ON br.brewery_id = b.brewery_id
-        WHERE b.brand_id = ANY($1::int[]) AND br.area_id > 0`,
+        WHERE b.brand_id = ANY($1::int[])`,
       [ids],
       getServerDbPool(),
     )
-    return new Map(rows.map((row) => [row.brand_id, row.area_id]))
+    return new Map(
+      rows.map((row) => [
+        row.brand_id,
+        {
+          // areaId 0 is Sakenowa's "Other": a brewery outside Japan's prefectures.
+          areaId: row.area_id > 0 ? row.area_id : null,
+          brewery: { id: row.brewery_id, nameKanji: row.name_kanji, nameRomaji: row.name_romaji },
+        },
+      ]),
+    )
   } catch {
     return new Map()
   }
 }
 
 /**
- * What each tasting can be filtered and counted by: its sake's prefecture,
+ * What each tasting can be filtered and counted by: its sake's brewery and prefecture,
  * and the grade, styles and koji of the bottling it was logged against. A
  * bottling without a sake has no prefecture; a sake without a bottling has
  * no grade.
@@ -43,13 +64,15 @@ export async function lookupJournalFacts(
   const brandIds = entries.flatMap((entry) =>
     entry.event.kind === 'rating' && entry.event.brandId !== null ? [entry.event.brandId] : [],
   )
-  const areas = await brandPrefectures(brandIds)
+  const places = await brandPlaces(brandIds)
   const byId = new Map(expressions.map((expression) => [expression.id, expression]))
   return (entry) => {
     const brandId = entry.event.kind === 'rating' ? entry.event.brandId : null
     const bottling = entry.expression ? byId.get(entry.expression.id) : undefined
+    const place = brandId !== null ? places.get(brandId) : undefined
     return {
-      areaId: brandId !== null ? (areas.get(brandId) ?? null) : null,
+      areaId: place?.areaId ?? null,
+      brewery: place?.brewery ?? null,
       grade: bottling?.grade ?? null,
       styles: bottling?.styles ?? [],
       koji: bottling?.koji ?? null,

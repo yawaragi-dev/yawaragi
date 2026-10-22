@@ -127,7 +127,21 @@
     "reasonDrink": "Same shape as {drink}: {first} and {second}.",
     "reasonPalate": "Close to your palate: {first} and {second}.",
     "leadShapes": "Three clear, different shapes to start with. Pick a drink above and these follow it.",
-    "reasonShape": "A clear shape: {first} and {second}."
+    "reasonShape": "A clear shape: {first} and {second}.",
+    "numbers": {
+      "heading": "Your journal in numbers",
+      "tastings": "{n, plural, one {tasting} other {tastings}}",
+      "sakes": "{n, plural, one {sake} other {sakes}}",
+      "breweries": "{n, plural, one {brewery} other {breweries}}",
+      "prefectures": "of 47 prefectures",
+      "starsHeading": "Your stars",
+      "average": "Average {average}",
+      "starsRow": "{n, plural, one {# star} other {# stars}}",
+      "placesHeading": "Where they come from",
+      "breweriesHeading": "Breweries you return to",
+      "breweryLine": "{count, plural, one {# tasting} other {# tastings}} · average {average}",
+      "barLabel": "{label}: {count}"
+    }
   },
   "landing": {
     "title": "Yawaragi",
