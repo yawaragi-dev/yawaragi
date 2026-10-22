@@ -47,7 +47,7 @@
     "@ai-sdk/mcp": "^2.0.71",
     "@ai-sdk/react": "^4.0.136",
     "@base-ui/react": "^1.8.0",
-    "@clerk/nextjs": "^7.9.4",
+    "@clerk/nextjs": "^7.9.12",
     "@langfuse/otel": "5.11.1",
     "@langfuse/tracing": "5.11.1",
     "@langfuse/vercel-ai-sdk": "5.11.1",
