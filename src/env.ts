@@ -24,8 +24,9 @@ const Env = z.object({
   // Development on Vercel (see PR #92 § "tighten env check all
   // environments" memory).
   ANTHROPIC_API_KEY: empty(z.string().min(1)),
-  // Postgres connection string for the Supabase project (Project → Settings →
-  // Database → Connection string). Used by the pg.Pool in server-client.ts.
+  // Postgres connection string for the Supabase project: the dashboard's
+  // Connect button → "Transaction pooler" (see .env.example). Used by the
+  // pg.Pool in server-client.ts.
   // Stays optional in the schema so the app boots without it; the pool
   // constructor throws at first use with a clear message.
   DATABASE_URL: empty(z.string().url().optional()),

@@ -17,7 +17,7 @@ let cachedPool: Pool | undefined
 export function getServerDbPool(): Pool {
   if (!env.DATABASE_URL) {
     throw new Error(
-      'DATABASE_URL is not set. Set the Supabase project connection string (Project → Settings → Database → Connection string) in .env.local and Vercel env vars.',
+      'DATABASE_URL is not set. Set the Supabase connection string (the project dashboard\'s Connect button → Transaction pooler) in .env.local and Vercel env vars.',
     )
   }
   if (!cachedPool) {
