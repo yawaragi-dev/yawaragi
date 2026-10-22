@@ -56,7 +56,6 @@ test('a scan that is slow says so after 10 s, and Cancel keeps the photo to send
   await page.locator('input[type=file]').first().setInputFiles('e2e/fixtures/dassai-label.jpg')
 
   await expect(page.getByTestId('scan-camera-slow')).toHaveText('Taking longer than usual', { timeout: 13_000 })
-  await expect(page.getByText('If it arrived, it counts as one scan.')).toBeVisible()
   await page.getByTestId('scan-camera-cancel').click()
 
   await expect(page.getByTestId('scan-error-timed-out')).toBeVisible()

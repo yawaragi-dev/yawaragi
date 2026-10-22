@@ -860,9 +860,10 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
   /**
    * Design v1.9 S4 and S5, said on the camera: a read past 10 s, or a photo
    * the network lost. Offline, the photo was never sent and costs nothing;
-   * a read that timed out or was cancelled may have reached us, and with no
-   * stored-read cache (S4's "keep each read for 10 minutes") a resend is read
-   * again, so the count is said. Back online, the button says so.
+   * a read that timed out or was cancelled may have reached us, and its
+   * answer is kept for ten minutes (`read-cache.ts`), so a resend of the same
+   * photo costs nothing either and there is no count to warn about. Back
+   * online, the button says so.
    */
   function connectionStatus() {
     if (isActionPending && sending?.slow) {
@@ -871,7 +872,6 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
         title: tCamera('slowTitle'),
         hint: tCamera('slowHint'),
         action: { label: tCamera('cancel'), testId: 'scan-camera-cancel', onClick: () => cancelScanRef.current?.() },
-        foot: tCamera('countLine'),
       }
     }
     if (!connectionFailure || isPending) return null
@@ -900,7 +900,6 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
       title: tOutcome('timedOut.title'),
       hint: tOutcome('timedOut.body'),
       action: { label: tOutcome('sendAgain'), testId: 'scan-send-again', onClick: onSendAgain, icon: sendIcon, accent: true },
-      after: tCamera('countLine'),
       foot: tOutcome('newPhoto'),
     }
   }

@@ -350,8 +350,7 @@
       },
       "slowTitle": "Dauert länger als sonst",
       "slowHint": "Die Verbindung ist langsam. Dein Foto bleibt hier.",
-      "cancel": "Abbrechen",
-      "countLine": "Falls es angekommen ist, zählt es als ein Scan."
+      "cancel": "Abbrechen"
     },
     "form": {
       "pending": "Etikett wird gelesen…",

@@ -1,6 +1,9 @@
 'use server'
 
 import { cookies } from 'next/headers'
+import { env } from '@/env'
+import { readAnonymousSessionCookie } from '@/lib/legal/anonymous-session-cookie'
+import { type ReadCache, readCacheKey, upstashReadCache } from './read-cache'
 import { getPathname } from '@/i18n/navigation'
 import { ARRIVED_VIA_SCAN_QUERY } from '@/lib/scan/arrived-via-scan'
 import { ownBottlingForRead } from '@/lib/scan/read-bottling'
@@ -223,6 +226,25 @@ async function runScanAction(
     // answer. Malformed or absent is the same as a first scan.
     const earlierRead = parseEarlierScanRead(formData.get('earlierRead'))
 
+    // Design v1.9 S4: the same photo sent again within ten minutes (its
+    // answer was lost on the way back) gets the stored answer — before the
+    // rate limit, so it does not use another free scan, and with no model
+    // call. The visitor's own bottlings are looked up fresh either way.
+    const cached = await openReadCache(cookieJar, image, localeRaw, earlierRead)
+    if (cached) {
+      const hit = await cached.cache.get(cached.key)
+      if (hit) {
+        debugAdd('ScanAction', 'same photo within 10 min → stored answer, no model call, no scan used')
+        recordActionMetadata({ 'scan.cacheHit': true })
+        return withOwnBottlings(hit)
+      }
+    }
+    /** Keep the answer as the catalogue resolved it, then add the visitor's bottlings. */
+    const finish = async (resolved: ScanActionState) => {
+      if (cached) await cached.cache.set(cached.key, resolved)
+      return withOwnBottlings(resolved)
+    }
+
     // Rate-limit gate. Post-#161 middleware refactor: reads the
     // `yawaragi_session` cookie the proxy stamped before render and
     // consults the vision-scan bucket. Never mutates the cookie —
@@ -306,7 +328,7 @@ async function runScanAction(
         'scan.tier2Used': true,
         'scan.tier2Provider': TIER_2_VISION_PROVIDER_KEY,
       })
-      return withOwnBottlings(
+      return finish(
         await withEarlierRead(
           await withNearestCandidates(
             await extractAndLookupWithProvider(getVisionProvider(TIER_2_VISION_PROVIDER_KEY), image, localeRaw),
@@ -354,7 +376,7 @@ async function runScanAction(
         'scan.tier2Used': true,
         'scan.tier2Provider': TIER_2_VISION_PROVIDER_KEY,
       })
-      return withOwnBottlings(
+      return finish(
         await withEarlierRead(
           await withNearestCandidates(
             await extractAndLookupWithProvider(getVisionProvider(TIER_2_VISION_PROVIDER_KEY), image, localeRaw),
@@ -371,9 +393,7 @@ async function runScanAction(
       'scan.tier1Status': tier1Result.status,
       'scan.tier2Used': false,
     })
-    return withOwnBottlings(
-      await withEarlierRead(await withNearestCandidates(tier1Result, localeRaw), earlierRead, localeRaw),
-    )
+    return finish(await withEarlierRead(await withNearestCandidates(tier1Result, localeRaw), earlierRead, localeRaw))
   })
 
   // Attach the accumulated trace to the response. Stripped when debug
@@ -692,3 +712,22 @@ async function mapResolvedToState(
   }
 }
 
+/**
+ * The read cache for this request, or null when it cannot be used: no
+ * Upstash or session secret (CI, a fresh checkout), or no session cookie.
+ */
+async function openReadCache(
+  cookieJar: Awaited<ReturnType<typeof cookies>>,
+  image: Blob,
+  locale: string,
+  earlierRead: unknown,
+): Promise<{ cache: ReadCache; key: string } | null> {
+  const restUrl = env.UPSTASH_REDIS_REST_URL
+  const restToken = env.UPSTASH_REDIS_REST_TOKEN
+  const secret = env.SESSION_COOKIE_SECRET
+  if (!restUrl || !restToken || !secret) return null
+  const session = readAnonymousSessionCookie(cookieJar, secret)
+  if (!session) return null
+  const key = await readCacheKey({ sid: session.sid, locale, earlierRead, image })
+  return { cache: upstashReadCache({ restUrl, restToken }), key }
+}
