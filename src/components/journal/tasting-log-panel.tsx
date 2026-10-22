@@ -19,7 +19,7 @@ import { isAxisQuickTag, quickTagAxis, quickTagsFor } from '@/lib/taste/quick-ta
 import { europeanDay, tastingDayOf } from '@/lib/taste/tasting-day'
 import { ratingBand } from '@/lib/taste/rating-band'
 import * as saves from '@/lib/taste/tasting-actions'
-import { reachable } from '@/lib/network/settle-request'
+import { browserIsOnline, reachable } from '@/lib/network/settle-request'
 import { cn } from '@/lib/utils'
 
 // Saves that the network loses answer "unavailable" (Couldn't save) instead
@@ -137,6 +137,12 @@ export function TastingLogPanel({
   const [popKey, setPopKey] = useState<number | undefined>(undefined)
   const [noticeOpen, setNoticeOpen] = useState(false)
   const [failed, setFailed] = useState(false)
+  /**
+   * Design v1.9 S6 (116): stars tapped with no connection stay where they
+   * were tapped, in neutral (accent means saved), with "Not saved" and Try
+   * again. `tries` counts the sends that found no connection.
+   */
+  const [unsaved, setUnsaved] = useState<{ value: number; tries: number } | null>(null)
   const [detail, setDetail] = useState<DetailedNotes | undefined>(existing?.detail)
   const [sheetOpen, setSheetOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
@@ -165,6 +171,13 @@ export function TastingLogPanel({
     else router.refresh()
   }
 
+  /** A save the network lost: keep the stars, say so, offer Try again. */
+  function heldOffline(value: number): boolean {
+    if (browserIsOnline()) return false
+    setUnsaved((was) => ({ value, tries: (was?.tries ?? 0) + 1 }))
+    return true
+  }
+
   function rate(value: number) {
     setFailed(false)
     const previous = rating
@@ -175,25 +188,30 @@ export function TastingLogPanel({
       if (logged) {
         const result = await updateTasting(logged.entryId, { rating: value })
         if (result.status !== 'ok') {
+          if (heldOffline(value)) return
           setRating(previous)
           setFailed(true)
           return
         }
+        setUnsaved(null)
         changed()
         return
       }
       const target = resolveExpressionId ? await resolveExpressionId() : expressionId
       if (target === null) {
+        if (heldOffline(value)) return
         setRating(previous)
         setFailed(true)
         return
       }
       const result = await rateNewTasting({ brandId, rating: value, expressionId: target })
       if (result.status !== 'ok') {
+        if (heldOffline(value)) return
         setRating(previous)
         setFailed(true)
         return
       }
+      setUnsaved(null)
       setLogged({
         entryId: result.entryId,
         tastingNumber: result.tastingNumber,
@@ -313,7 +331,9 @@ export function TastingLogPanel({
     : ''
 
   const ratingText =
-    rating > 0
+    unsaved && rating > 0
+      ? t('notSavedValue', { rating: format.number(rating, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) })
+      : rating > 0
       ? t('ratingValue', {
           rating: format.number(rating, { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
           band: tBand(ratingBand(rating)),
@@ -402,13 +422,15 @@ export function TastingLogPanel({
       {/* §5: "German: the label drops below the stars." `flex-wrap` does that
           wherever the words do not fit beside them, in any language. */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <StarRating
-          value={rating}
-          onRate={rate}
-          rateLabel={(v) => t('rateStar', { rating: v })}
-          popKey={popKey}
-          disabled={isPending && !logged}
-        />
+        <span className={cn('contents', unsaved && '[&_.text-ginshu-600]:text-ash-600')} data-unsaved={unsaved ? 'true' : undefined}>
+          <StarRating
+            value={rating}
+            onRate={rate}
+            rateLabel={(v) => t('rateStar', { rating: v })}
+            popKey={popKey}
+            disabled={isPending && !logged}
+          />
+        </span>
         <span
           className={cn('whitespace-nowrap text-body', rating > 0 ? 'text-ink' : 'text-ash-600')}
           aria-live="polite"
@@ -536,6 +558,20 @@ export function TastingLogPanel({
         <p className="text-meta text-ash-600">{t('hint')}</p>
       )}
 
+      {unsaved && (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1" role="alert" data-testid="tasting-log-not-saved">
+          <p className="text-meta text-ash-700">{unsaved.tries > 1 ? t('stillNoConnection') : t('noConnectionRating')}</p>
+          <button
+            type="button"
+            disabled={isPending}
+            onClick={() => rate(unsaved.value)}
+            className="flex min-h-9 items-center rounded-md border border-ash-300 px-3 text-meta font-medium text-ink transition-colors hover:bg-ash-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600 disabled:opacity-60"
+            data-testid="tasting-log-try-again"
+          >
+            {t('tryAgain')}
+          </button>
+        </div>
+      )}
       {failed && (
         <p role="alert" className="text-meta text-ginshu-700" data-testid="tasting-log-error">
           {t('error')}

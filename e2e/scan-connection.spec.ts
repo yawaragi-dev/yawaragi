@@ -46,9 +46,12 @@ test('a rating tapped with no connection says it was not saved, and the page sta
   await context.setOffline(true)
   await page.getByTestId('star-rating-4').click()
 
-  // The panel's own "couldn't save", not the error page that used to take
-  // the whole sake page down (design question S6).
-  await expect(page.getByTestId('tasting-log-error')).toBeVisible()
+  // Design v1.9 S6 (116): the stars stay where tapped, "Not saved", and Try
+  // again, not the error page that used to take the whole sake page down.
+  await expect(page.getByTestId('tasting-log-rating')).toHaveText('4.0 · Not saved')
+  await expect(page.getByTestId('tasting-log-not-saved')).toContainText('No connection, so this isn’t in your journal yet.')
+  await page.getByTestId('tasting-log-try-again').click()
+  await expect(page.getByTestId('tasting-log-not-saved')).toContainText('Still no connection.')
   await expect(page.getByTestId('app-error')).toHaveCount(0)
   await expect(page.getByTestId('sake-brand-page')).toBeVisible()
   await context.close()

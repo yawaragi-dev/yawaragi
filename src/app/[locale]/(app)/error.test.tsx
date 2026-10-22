@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { NextIntlClientProvider } from 'next-intl'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import en from '~/messages/en.json'
@@ -39,5 +39,15 @@ describe('the error screen', () => {
   it('does not report a server error again — the server logged it with its digest', () => {
     show(Object.assign(new Error('An error occurred in the Server Components render.'), { digest: '4088566476' }))
     expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('says there is no connection, not that the catalogue is out of reach, when the phone is offline', () => {
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false)
+    show(Object.assign(new Error('fetch failed'), { digest: '1' }))
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('No connection')
+    expect(screen.getByText('This page needs the internet. Anything you saved before is safe.')).toBeTruthy()
+    expect(screen.getByTestId('app-error-retry')).toBeTruthy()
+    expect(screen.getByTestId('app-error-home')).toBeTruthy()
+    vi.restoreAllMocks()
   })
 })

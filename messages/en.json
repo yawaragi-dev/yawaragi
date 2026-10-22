@@ -735,7 +735,11 @@
     "deleteNo": "Keep",
     "deleted": "Tasting deleted",
     "yourTastingOn": "Your tasting · {date}",
-    "savesAsYouGo": "Changes save as you go"
+    "savesAsYouGo": "Changes save as you go",
+    "notSavedValue": "{rating} · Not saved",
+    "noConnectionRating": "No connection, so this isn’t in your journal yet.",
+    "stillNoConnection": "Still no connection. Your stars stay here until it’s back.",
+    "tryAgain": "Try again"
   },
   "cellar": {
     "add": "Add to cellar",
@@ -770,7 +774,10 @@
     "unopenedNama": "Unopened · nama, keep cold",
     "openNama": "{days, plural, =0 {Opened today} one {Open # day} other {Open # days}} · nama, keep cold",
     "edit": "Edit",
-    "addedMany": "{added, plural, one {Bottle added} other {# bottles added}} · {count} in cellar"
+    "addedMany": "{added, plural, one {Bottle added} other {# bottles added}} · {count} in cellar",
+    "notAddedOffline": "Not added · no connection. Nothing here is lost.",
+    "notSavedOffline": "Not saved · no connection. Nothing here is lost.",
+    "tryAgain": "Try again"
   },
   "detailedNotes": {
     "title": "Detailed notes",
@@ -2275,7 +2282,9 @@
     "title": "We couldn’t load this page",
     "body": "The sake catalogue may be out of reach for a moment. Try again in a few seconds, or go back home.",
     "retry": "Try again",
-    "home": "Back to Home"
+    "home": "Back to Home",
+    "offlineTitle": "No connection",
+    "offlineBody": "This page needs the internet. Anything you saved before is safe."
   },
   "sampleCollection": {
     "bannerTitle": "A sample collection",
