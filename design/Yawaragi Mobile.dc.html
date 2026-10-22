@@ -38,6 +38,7 @@ a:hover{color:var(--color-accent-600)}
 @keyframes yw-sheet{0%{transform:translateY(100%)}100%{transform:translateY(0)}}
 @keyframes yw-pulse{0%,100%{opacity:.45}50%{opacity:1}}
 @keyframes yw-fade{0%{opacity:0}100%{opacity:1}}
+@keyframes yw-load{0%{transform:translateX(-100%)}100%{transform:translateX(370%)}}
 @keyframes yw-pop{0%{transform:scale(.6)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
 textarea::placeholder,input::placeholder{font-style:italic}
 </style></helmet>
@@ -62,6 +63,13 @@ textarea::placeholder,input::placeholder{font-style:italic}
       <span style="display:flex;gap:5px"><i class="ph ph-wifi-high"></i><i class="ph-fill ph-battery-high"></i></span>
     </div>
 
+    <sc-if value="{{ navBarOn }}"><div aria-hidden="true" style="position:absolute;left:0;right:0;top:0;height:2px;overflow:hidden;z-index:9">{{ navBarEl }}</div></sc-if>
+    <sc-if value="{{ offLineOn }}">
+      <div role="status" aria-live="polite" style="flex:none;display:flex;align-items:center;gap:10px;min-height:36px;padding:7px 16px;background:var(--color-neutral-200);box-shadow:0 1px 0 var(--color-divider);z-index:2;animation:yw-fade .2s ease-out">
+        <i class="ph {{ offLineIcon }}" style="font-size:16px;color:var(--color-neutral-700);flex:none"></i>
+        <div style="flex:1;min-width:0;font-size:12px;line-height:1.4;color:var(--color-text);text-wrap:pretty">{{ offLineText }}<sc-if value="{{ offLineHasSub }}"><span style="color:var(--color-neutral-700)"> · {{ offLineSub }}</span></sc-if></div>
+      </div>
+    </sc-if>
     <sc-if value="{{ sampleOn }}">
       <div role="status" style="flex:none;display:flex;align-items:center;gap:10px;padding:8px 10px 8px 16px;background:var(--color-neutral-200);box-shadow:0 1px 0 var(--color-divider);z-index:2">
         <i class="ph ph-books" style="font-size:16px;color:var(--color-accent-700);flex:none"></i>
@@ -210,6 +218,16 @@ textarea::placeholder,input::placeholder{font-style:italic}
                 </span>
                 <span style="font-size:12px;color:rgba(246,242,234,.85);text-decoration:underline;text-decoration-color:rgba(246,242,234,.35);text-underline-offset:3px;min-height:28px;display:flex;align-items:center">Which side to photograph</span>
               </button>
+            </sc-if>
+            <sc-if value="{{ camUnsent }}">
+              <div style="display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:14px">
+                <button class="btn btn-primary" style="height:44px;font-size:14px;gap:7px;padding-inline:20px;border-width:1.5px;color:#f6f2ea" onClick="{{ sendAgain }}"><i class="ph ph-paper-plane-tilt" style="font-size:16px"></i>{{ sendLabel }}</button>
+                <sc-if value="{{ sendHasNote }}"><div role="status" style="font-size:12px;color:rgba(246,242,234,.78)">{{ sendNote }}</div></sc-if>
+                <div style="font-size:11px;color:rgba(246,242,234,.6)">Or take a new photo</div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ camSlow }}">
+              <button class="btn btn-secondary" style="margin-top:14px;height:40px;font-size:13px;padding-inline:18px;color:#f6f2ea;border-color:rgba(246,242,234,.3)" onClick="{{ slowCancel }}">Cancel</button>
             </sc-if>
             <sc-if value="{{ camLabelLink }}"><button onClick="{{ openLabelGuide }}" style="margin-top:2px;min-height:32px;padding:0 6px;border:0;background:transparent;cursor:pointer;font-family:var(--font-body);font-size:12px;color:rgba(246,242,234,.85);text-decoration:underline;text-decoration-color:rgba(246,242,234,.35);text-underline-offset:3px">How to read a label</button></sc-if>
           </div>
@@ -458,12 +476,28 @@ textarea::placeholder,input::placeholder{font-style:italic}
           <button class="btn" style="padding-inline:4px" onClick="{{ back }}" aria-label="Back"><i class="ph ph-arrow-left" style="font-size:19px"></i></button>
           <div style="flex:1;min-width:0;display:flex;align-items:center;gap:8px;padding:0 12px;height:44px;border-radius:var(--radius-md);border:1px solid var(--color-accent-500);background:var(--color-surface)">
             <i class="ph ph-magnifying-glass" style="font-size:17px;color:var(--color-neutral-600)"></i>
-            <input class="input" autofocus="{{ true }}" placeholder="Name, brewery, kanji or a flavour" value="{{ query }}" onChange="{{ setQuery }}" style="flex:1;min-width:0;border:0;background:transparent;padding:0;min-height:0;font-size:15px" />
+            <input class="input" autofocus="{{ true }}" placeholder="Name, brewery, kanji or a flavour" value="{{ query }}" onChange="{{ setQuery }}" onKeyDown="{{ queryKey }}" aria-autocomplete="list" aria-expanded="{{ taOn }}" style="flex:1;min-width:0;border:0;background:transparent;padding:0;min-height:0;font-size:15px" />
             <sc-if value="{{ hasQuery }}">
               <button class="btn" style="padding-inline:2px" onClick="{{ clearQuery }}" aria-label="Clear"><i class="ph ph-x-circle" style="font-size:17px;color:var(--color-neutral-600)"></i></button>
             </sc-if>
           </div>
         </div>
+        <sc-if value="{{ taOn }}">
+          <div style="position:relative;height:0;z-index:4">
+            <div role="listbox" aria-label="Matches" style="position:absolute;left:14px;right:14px;top:2px;border-radius:var(--radius-md);background:var(--color-raised);box-shadow:var(--shadow-float);padding:4px 0 2px;animation:yw-fade .15s ease-out">
+              <sc-for list="{{ taRows }}" as="ta" hint-placeholder-count="4">
+                <button role="option" onClick="{{ ta.open }}" style="display:flex;align-items:center;gap:10px;width:100%;min-height:52px;padding:7px 14px;border:0;background:transparent;text-align:left;cursor:pointer;font-family:var(--font-body);color:var(--color-text)" style-hover="background:var(--color-neutral-300)" style-active="background:var(--color-neutral-400)">
+                  <div style="flex:1;min-width:0">
+                    <div style="display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;min-width:0"><span style="font-size:14px">{{ ta.latin }}</span><sc-if value="{{ ta.hasKanji }}"><span lang="ja" style="font-size:12px;color:var(--color-neutral-600)">{{ ta.kanji }}</span></sc-if></div>
+                    <div style="font-size:12px;color:var(--color-neutral-600);margin-top:1px">{{ ta.meta }}</div>
+                  </div>
+                  <sc-if value="{{ ta.yours }}"><span class="tag tag-accent">Yours</span></sc-if>
+                </button>
+              </sc-for>
+              <sc-if value="{{ taHasCat }}"><div style="padding:6px 14px 8px;font-size:11px;line-height:1.5;color:var(--color-neutral-700);border-top:1px solid var(--color-divider);margin-top:2px">Latin spellings are machine transliterations. · <a href="https://sakenowa.com" target="_blank" rel="noopener">Powered by Sakenowa ↗</a></div></sc-if>
+            </div>
+          </div>
+        </sc-if>
         <div style="flex:1;min-height:0;overflow-y:auto;padding:16px 22px 20px;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 18px);mask-image:linear-gradient(to bottom,transparent 0,#000 18px)">
           <sc-if value="{{ brShow }}">
             <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
@@ -638,6 +672,13 @@ textarea::placeholder,input::placeholder{font-style:italic}
                   </sc-if>
                 </div>
               </sc-if>
+              <sc-if value="{{ rNotSaved }}">
+                <div role="alert" style="display:flex;align-items:center;gap:10px;animation:yw-fade .2s ease-out">
+                  <i class="ph ph-wifi-slash" style="font-size:16px;color:var(--color-neutral-700);flex:none"></i>
+                  <div style="flex:1;min-width:0;font-size:12px;line-height:1.45;color:var(--color-neutral-800);text-wrap:pretty">{{ rNotSavedText }}</div>
+                  <button class="btn btn-secondary" style="height:36px;font-size:12px;gap:5px;padding-inline:11px;flex:none" onClick="{{ rRetry }}"><i class="ph ph-arrow-clockwise" style="font-size:14px"></i>Try again</button>
+                </div>
+              </sc-if>
               <sc-if value="{{ rUnsaved }}">
                 <div style="font-size:12px;color:var(--color-neutral-600);text-wrap:pretty">Tap a star and it’s logged — notes can wait.</div>
               </sc-if>
@@ -707,7 +748,26 @@ textarea::placeholder,input::placeholder{font-style:italic}
                     <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600)">Grade</span><input class="input" value="{{ addBtGrade }}" onChange="{{ setAddBtGrade }}" placeholder="Junmai Ginjō" style="height:44px;font-size:14px;background:var(--color-bg)" /></label>
                     <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600)">Polishing</span><input class="input" value="{{ addBtPol }}" onChange="{{ setAddBtPol }}" placeholder="50%" inputMode="numeric" style="height:44px;font-size:14px;background:var(--color-bg)" /></label>
                   </div>
-                  <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600)">Style</span><input class="input" value="{{ addBtStyles }}" onChange="{{ setAddBtStyles }}" placeholder="Nama, Genshu" style="height:44px;font-size:14px;background:var(--color-bg)" /></label>
+                  <div style="display:flex;flex-direction:column;gap:5px">
+                    <div style="display:flex;align-items:center;gap:2px"><span id="yw-ab-past" style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600)">Pasteurisation</span><button onClick="{{ abOpenNama }}" aria-label="About nama and pasteurisation" style="width:28px;height:28px;border:0;background:transparent;cursor:pointer;display:grid;place-items:center;color:var(--color-neutral-600);margin:-8px 0"><i class="ph ph-info" style="font-size:13px"></i></button></div>
+                    <select class="input" aria-labelledby="yw-ab-past" value="{{ abPast }}" onChange="{{ abSetPast }}" style="height:44px;font-size:14px;background:var(--color-bg);color:var(--color-text)"><sc-for list="{{ abPastOpts }}" as="op" hint-placeholder-count="4"><option value="{{ op.value }}">{{ op.label }}</option></sc-for></select>
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:6px">
+                    <span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600)">Style · tick any</span>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap">
+                      <sc-for list="{{ abPills }}" as="pl" hint-placeholder-count="8"><button role="checkbox" aria-checked="{{ pl.on }}" onClick="{{ pl.pick }}" style="min-height:36px;padding:6px 12px;border-radius:999px;border:1px solid {{ pl.border }};background:{{ pl.bg }};color:{{ pl.fg }};font-size:12px;font-family:var(--font-body);cursor:pointer" style-active="background:var(--color-accent-200)">{{ pl.label }}</button></sc-for>
+                    </div>
+                  </div>
+                  <sc-if value="{{ abMoreClosed }}">
+                    <button onClick="{{ abToggleMore }}" style="display:flex;align-items:center;gap:6px;min-height:40px;padding:0;border:0;background:transparent;cursor:pointer;font-family:var(--font-body);font-size:13px;color:var(--color-accent-700);text-align:left"><i class="ph ph-plus" style="font-size:14px"></i>{{ abMoreLabel }}</button>
+                  </sc-if>
+                  <sc-if value="{{ abMoreOpen }}">
+                    <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;animation:yw-fade .2s ease-out">
+                      <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600)">Starter</span><select class="input" value="{{ abStarter }}" onChange="{{ abSetStarter }}" style="height:44px;font-size:14px;background:var(--color-bg);color:var(--color-text)"><sc-for list="{{ abStarterOpts }}" as="op" hint-placeholder-count="3"><option value="{{ op.value }}">{{ op.label }}</option></sc-for></select></label>
+                      <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600)">Koji</span><select class="input" value="{{ abKoji }}" onChange="{{ abSetKoji }}" style="height:44px;font-size:14px;background:var(--color-bg);color:var(--color-text)"><sc-for list="{{ abKojiOpts }}" as="op" hint-placeholder-count="4"><option value="{{ op.value }}">{{ op.label }}</option></sc-for></select></label>
+                    </div>
+                    <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600)">Other style words</span><input class="input" value="{{ abOther }}" onChange="{{ abSetOther }}" placeholder="As printed, e.g. Shizuku" style="height:44px;font-size:14px;background:var(--color-bg)" /></label>
+                  </sc-if>
                   <div style="font-size:12px;color:var(--color-neutral-600);line-height:1.5;text-wrap:pretty">{{ addBtHint }}</div>
                   <div style="display:flex;gap:8px"><button class="btn btn-primary" style="height:42px;font-size:13px;padding-inline:18px;border-width:1.5px" onClick="{{ saveAddBt }}">Add bottling</button><button class="btn btn-ghost" style="height:42px;font-size:13px" onClick="{{ cancelAddBt }}">Cancel</button></div>
                 </div>
@@ -1031,6 +1091,13 @@ textarea::placeholder,input::placeholder{font-style:italic}
                   </sc-if>
                 </div>
               </sc-if>
+              <sc-if value="{{ rNotSaved }}">
+                <div role="alert" style="display:flex;align-items:center;gap:10px;animation:yw-fade .2s ease-out">
+                  <i class="ph ph-wifi-slash" style="font-size:16px;color:var(--color-neutral-700);flex:none"></i>
+                  <div style="flex:1;min-width:0;font-size:12px;line-height:1.45;color:var(--color-neutral-800);text-wrap:pretty">{{ rNotSavedText }}</div>
+                  <button class="btn btn-secondary" style="height:36px;font-size:12px;gap:5px;padding-inline:11px;flex:none" onClick="{{ rRetry }}"><i class="ph ph-arrow-clockwise" style="font-size:14px"></i>Try again</button>
+                </div>
+              </sc-if>
               <sc-if value="{{ rUnsaved }}">
                 <div style="font-size:12px;color:var(--color-neutral-600);text-wrap:pretty">Tap a star and it’s logged — notes can wait.</div>
               </sc-if>
@@ -1091,7 +1158,26 @@ textarea::placeholder,input::placeholder{font-style:italic}
                     <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600)">Grade</span><input class="input" value="{{ addBtGrade }}" onChange="{{ setAddBtGrade }}" placeholder="Junmai Ginjō" style="height:44px;font-size:14px;background:var(--color-bg)" /></label>
                     <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600)">Polishing</span><input class="input" value="{{ addBtPol }}" onChange="{{ setAddBtPol }}" placeholder="50%" inputMode="numeric" style="height:44px;font-size:14px;background:var(--color-bg)" /></label>
                   </div>
-                  <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600)">Style</span><input class="input" value="{{ addBtStyles }}" onChange="{{ setAddBtStyles }}" placeholder="Nama, Genshu" style="height:44px;font-size:14px;background:var(--color-bg)" /></label>
+                  <div style="display:flex;flex-direction:column;gap:5px">
+                    <div style="display:flex;align-items:center;gap:2px"><span id="yw-ab-past" style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600)">Pasteurisation</span><button onClick="{{ abOpenNama }}" aria-label="About nama and pasteurisation" style="width:28px;height:28px;border:0;background:transparent;cursor:pointer;display:grid;place-items:center;color:var(--color-neutral-600);margin:-8px 0"><i class="ph ph-info" style="font-size:13px"></i></button></div>
+                    <select class="input" aria-labelledby="yw-ab-past" value="{{ abPast }}" onChange="{{ abSetPast }}" style="height:44px;font-size:14px;background:var(--color-bg);color:var(--color-text)"><sc-for list="{{ abPastOpts }}" as="op" hint-placeholder-count="4"><option value="{{ op.value }}">{{ op.label }}</option></sc-for></select>
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:6px">
+                    <span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600)">Style · tick any</span>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap">
+                      <sc-for list="{{ abPills }}" as="pl" hint-placeholder-count="8"><button role="checkbox" aria-checked="{{ pl.on }}" onClick="{{ pl.pick }}" style="min-height:36px;padding:6px 12px;border-radius:999px;border:1px solid {{ pl.border }};background:{{ pl.bg }};color:{{ pl.fg }};font-size:12px;font-family:var(--font-body);cursor:pointer" style-active="background:var(--color-accent-200)">{{ pl.label }}</button></sc-for>
+                    </div>
+                  </div>
+                  <sc-if value="{{ abMoreClosed }}">
+                    <button onClick="{{ abToggleMore }}" style="display:flex;align-items:center;gap:6px;min-height:40px;padding:0;border:0;background:transparent;cursor:pointer;font-family:var(--font-body);font-size:13px;color:var(--color-accent-700);text-align:left"><i class="ph ph-plus" style="font-size:14px"></i>{{ abMoreLabel }}</button>
+                  </sc-if>
+                  <sc-if value="{{ abMoreOpen }}">
+                    <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;animation:yw-fade .2s ease-out">
+                      <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600)">Starter</span><select class="input" value="{{ abStarter }}" onChange="{{ abSetStarter }}" style="height:44px;font-size:14px;background:var(--color-bg);color:var(--color-text)"><sc-for list="{{ abStarterOpts }}" as="op" hint-placeholder-count="3"><option value="{{ op.value }}">{{ op.label }}</option></sc-for></select></label>
+                      <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600)">Koji</span><select class="input" value="{{ abKoji }}" onChange="{{ abSetKoji }}" style="height:44px;font-size:14px;background:var(--color-bg);color:var(--color-text)"><sc-for list="{{ abKojiOpts }}" as="op" hint-placeholder-count="4"><option value="{{ op.value }}">{{ op.label }}</option></sc-for></select></label>
+                    </div>
+                    <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600)">Other style words</span><input class="input" value="{{ abOther }}" onChange="{{ abSetOther }}" placeholder="As printed, e.g. Shizuku" style="height:44px;font-size:14px;background:var(--color-bg)" /></label>
+                  </sc-if>
                   <div style="font-size:12px;color:var(--color-neutral-600);line-height:1.5;text-wrap:pretty">{{ addBtHint }}</div>
                   <div style="display:flex;gap:8px"><button class="btn btn-primary" style="height:42px;font-size:13px;padding-inline:18px;border-width:1.5px" onClick="{{ saveAddBt }}">Add bottling</button><button class="btn btn-ghost" style="height:42px;font-size:13px" onClick="{{ cancelAddBt }}">Cancel</button></div>
                 </div>
@@ -1328,6 +1414,13 @@ textarea::placeholder,input::placeholder{font-style:italic}
                       </div>
                     </div>
                   </sc-if>
+                </div>
+              </sc-if>
+              <sc-if value="{{ rNotSaved }}">
+                <div role="alert" style="display:flex;align-items:center;gap:10px;animation:yw-fade .2s ease-out">
+                  <i class="ph ph-wifi-slash" style="font-size:16px;color:var(--color-neutral-700);flex:none"></i>
+                  <div style="flex:1;min-width:0;font-size:12px;line-height:1.45;color:var(--color-neutral-800);text-wrap:pretty">{{ rNotSavedText }}</div>
+                  <button class="btn btn-secondary" style="height:36px;font-size:12px;gap:5px;padding-inline:11px;flex:none" onClick="{{ rRetry }}"><i class="ph ph-arrow-clockwise" style="font-size:14px"></i>Try again</button>
                 </div>
               </sc-if>
               <sc-if value="{{ rUnsaved }}">
@@ -1657,7 +1750,7 @@ textarea::placeholder,input::placeholder{font-style:italic}
         <div style="padding:14px 22px 10px;flex:none;display:flex;align-items:center;justify-content:space-between">
           <div style="font-family:var(--font-heading);font-weight:500;font-size:26px;letter-spacing:-.02em">Collection</div>
           <div style="display:flex;align-items:center;gap:8px">
-            <button class="btn btn-icon btn-secondary" aria-label="Search"><i class="ph ph-magnifying-glass" style="font-size:17px"></i></button>
+            <button class="btn btn-icon btn-secondary" aria-label="Search your journal" aria-pressed="{{ jSearchOn }}" onClick="{{ toggleJSearch }}"><i class="ph ph-magnifying-glass" style="font-size:17px"></i></button>
             <button onClick="{{ openAccount }}" aria-label="Account" style="width:36px;height:36px;border-radius:50%;border:0;padding:0;cursor:pointer;background:{{ avatarBg }};color:{{ avatarFg }};display:grid;place-items:center;font-family:var(--font-heading);font-weight:500;font-size:13px"><sc-if value="{{ signedIn }}">K</sc-if><sc-if value="{{ signedOut }}"><i class="ph ph-user" style="font-size:17px"></i></sc-if></button>
           </div>
         </div>
@@ -1669,9 +1762,48 @@ textarea::placeholder,input::placeholder{font-style:italic}
           </div>
         </div>
 
+        <sc-if value="{{ showJournal }}">
+          <div style="padding:0 22px;flex:none;display:flex;flex-direction:column;gap:8px">
+            <sc-if value="{{ jSearchOn }}">
+              <div style="display:flex;align-items:center;gap:8px;padding:0 12px;height:42px;border-radius:var(--radius-md);border:1px solid var(--color-accent-500);background:var(--color-surface);animation:yw-fade .2s ease-out">
+                <i class="ph ph-magnifying-glass" style="font-size:16px;color:var(--color-neutral-600)"></i>
+                <input class="input" autofocus="{{ true }}" placeholder="A name, a brewery or a word in a note" value="{{ jq }}" onChange="{{ setJq }}" style="flex:1;min-width:0;border:0;background:transparent;padding:0;min-height:0;font-size:14px" />
+              </div>
+            </sc-if>
+            <sc-if value="{{ jfShow }}">
+              <div style="display:flex;gap:7px;overflow-x:auto;margin-right:-22px;padding-right:48px;-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 32px),transparent);mask-image:linear-gradient(to right,#000 calc(100% - 32px),transparent)">
+                <sc-for list="{{ jfChips }}" as="jc" hint-placeholder-count="4">
+                  <button onClick="{{ jc.pick }}" aria-expanded="{{ jc.open }}" style="flex:none;display:inline-flex;align-items:center;gap:5px;min-height:34px;padding:6px 12px;border-radius:999px;border:1px solid {{ jc.border }};background:{{ jc.bg }};color:{{ jc.fg }};font-size:12px;font-family:var(--font-body);cursor:pointer;white-space:nowrap" style-active="background:var(--color-accent-200)"><i class="ph {{ jc.icon }}" style="font-size:14px"></i>{{ jc.label }}<i class="ph {{ jc.caret }}" style="font-size:11px"></i></button>
+                </sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ jfPanelOn }}">
+              <div style="display:flex;flex-direction:column;gap:10px;padding:2px 0 4px;animation:yw-fade .2s ease-out">
+                <sc-for list="{{ jfSections }}" as="sec" hint-placeholder-count="1">
+                  <div style="display:flex;flex-direction:column;gap:6px">
+                    <sc-if value="{{ sec.hasTitle }}"><div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600)">{{ sec.title }}</div></sc-if>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap">
+                      <sc-for list="{{ sec.vals }}" as="jv" hint-placeholder-count="5">
+                        <button onClick="{{ jv.pick }}" style="display:inline-flex;gap:5px;min-height:34px;align-items:center;padding:6px 11px;border-radius:var(--radius-md);border:1px solid {{ jv.border }};background:{{ jv.bg }};color:{{ jv.fg }};font-size:12px;font-family:var(--font-body);cursor:pointer">{{ jv.label }}<span style="color:{{ jv.nfg }}">{{ jv.n }}</span></button>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-for>
+                <sc-if value="{{ jfFootOn }}"><div style="font-size:12px;line-height:1.5;color:var(--color-neutral-700);text-wrap:pretty">{{ jfFoot }}</div></sc-if>
+              </div>
+            </sc-if>
+            <sc-if value="{{ jfSumOn }}">
+              <div style="display:flex;align-items:baseline;gap:10px;font-size:12px;line-height:1.45;color:var(--color-neutral-700)"><span style="flex:1;min-width:0;text-wrap:pretty">{{ jfSum }}</span><button class="btn btn-ghost" style="height:32px;font-size:12px;padding-inline:6px;flex:none;margin:-8px 0" onClick="{{ jfClear }}">Clear</button></div>
+            </sc-if>
+          </div>
+        </sc-if>
+
         <div style="flex:1;min-height:0;overflow-y:auto;padding:16px 22px 18px;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 18px);mask-image:linear-gradient(to bottom,transparent 0,#000 18px)">
           <sc-if value="{{ showJournal }}">
             <div style="display:flex;flex-direction:column">
+              <sc-if value="{{ jfNone }}">
+                <div style="padding:28px 0;font-size:13px;color:var(--color-neutral-700)">No tastings match all of these. Take one away, or clear them.</div>
+              </sc-if>
               <sc-if value="{{ noEntries }}">
                 <div style="padding:56px 10px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px">
                   <i class="ph ph-notebook" style="font-size:32px;color:var(--color-neutral-500)"></i>
@@ -1739,8 +1871,8 @@ textarea::placeholder,input::placeholder{font-style:italic}
                       <i class="ph {{ c.stateIcon }}" style="font-size:14px"></i>{{ c.state }}
                     </div>
                     <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
-                      <button class="btn btn-secondary" style="height:34px;font-size:12px;gap:5px" onClick="{{ c.primary }}"><i class="ph {{ c.primaryIcon }}" style="font-size:14px"></i>{{ c.primaryLabel }}</button>
-                      <button class="btn btn-ghost" style="height:34px;font-size:12px" onClick="{{ c.secondary }}">{{ c.secondaryLabel }}</button>
+                      <button class="btn btn-secondary" disabled="{{ c.off }}" style="height:34px;font-size:12px;gap:5px" onClick="{{ c.primary }}"><i class="ph {{ c.primaryIcon }}" style="font-size:14px"></i>{{ c.primaryLabel }}</button>
+                      <button class="btn btn-ghost" disabled="{{ c.off }}" style="height:34px;font-size:12px" onClick="{{ c.secondary }}">{{ c.secondaryLabel }}</button>
                     </div>
                   </div>
                 </div>
@@ -1938,7 +2070,99 @@ textarea::placeholder,input::placeholder{font-style:italic}
           </div>
         </div>
           </sc-if>
+          <button onClick="{{ openNumbers }}" disabled="{{ numbersEarly }}" style="display:flex;align-items:center;gap:11px;width:100%;padding:12px 13px;border-radius:var(--radius-md);border:1px solid var(--color-divider);background:transparent;cursor:pointer;text-align:left;font-family:var(--font-body);color:var(--color-text);opacity:1" style-hover="background:var(--color-neutral-100)" style-active="background:var(--color-neutral-200)">
+            <i class="ph ph-chart-bar-horizontal" style="font-size:20px;color:var(--color-accent-600)"></i>
+            <div style="flex:1;min-width:0">
+              <div style="font-family:var(--font-heading);font-weight:500;font-size:14px">Your journal in numbers</div>
+              <div style="font-size:12px;color:var(--color-neutral-600);margin-top:1px">{{ numbersTeaser }}</div>
+            </div>
+            <sc-if value="{{ numbersReady }}"><i class="ph ph-caret-right" style="font-size:15px;color:var(--color-neutral-500)"></i></sc-if>
+          </button>
           <div style="padding-top:28px;display:flex;flex-direction:column;gap:2px;font-size:12px;line-height:1.5;color:var(--color-neutral-600)">
+            <div>Catalogue and flavour data · <a href="https://sakenowa.com" target="_blank" rel="noopener">Powered by Sakenowa ↗</a></div>
+            <div style="display:flex;flex-wrap:wrap;column-gap:14px"><a href="#impressum" style="padding:6px 0">Impressum</a><a href="#privacy" style="padding:6px 0">Privacy notice</a><a href="#cookies" onClick="{{ reopenCookies }}" style="padding:6px 0">Cookie settings</a><a href="#drink" style="padding:6px 0">Drink responsibly</a></div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isNumbers }}">
+      <div style="flex:1;min-height:0;display:flex;flex-direction:column;animation:yw-fade .2s ease-out">
+        <div style="display:flex;align-items:center;gap:8px;padding:10px 14px 4px;flex:none">
+          <button class="btn" style="padding-inline:4px" onClick="{{ back }}" aria-label="Back"><i class="ph ph-arrow-left" style="font-size:19px"></i></button>
+          <div style="flex:1;min-width:0;font-family:var(--font-heading);font-weight:500;font-size:17px;letter-spacing:-.01em;white-space:nowrap">Your journal in numbers</div>
+        </div>
+        <div style="flex:1;min-height:0;overflow-y:auto;padding:16px 22px 18px;display:flex;flex-direction:column;gap:24px;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 18px);mask-image:linear-gradient(to bottom,transparent 0,#000 18px)">
+          <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
+            <sc-for list="{{ nmCounts }}" as="nc" hint-placeholder-count="3">
+              <div style="padding:11px 12px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm)">
+                <div style="font-family:var(--font-heading);font-weight:500;font-size:24px;letter-spacing:-.02em;line-height:1">{{ nc.v }}</div>
+                <div style="font-size:12px;color:var(--color-neutral-700);margin-top:5px">{{ nc.l }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
+              <div style="display:flex;align-items:center;gap:8px"><span style="width:2px;height:14px;background:var(--color-accent-500);display:block"></span><span style="font-family:var(--font-heading);font-weight:500;font-size:17px;letter-spacing:-.01em">{{ nmPrefLine }}</span></div>
+              <a href="https://sakenowa.com" target="_blank" rel="noopener" style="font-size:11px;color:var(--color-neutral-700);text-decoration:underline;text-decoration-color:var(--color-neutral-500);text-underline-offset:2px;white-space:nowrap">Powered by Sakenowa ↗</a>
+            </div>
+            <div role="img" aria-label="Prefectures you have tasted from, as a tile map of Japan" style="display:grid;grid-template-columns:repeat(13,minmax(0,1fr));gap:3px;max-width:290px;width:100%;align-self:center">
+              <sc-for list="{{ nmTiles }}" as="tl" hint-placeholder-count="47">
+                <span title="{{ tl.label }}" style="grid-column:{{ tl.col }};grid-row:{{ tl.row }};aspect-ratio:1;border-radius:3px;background:{{ tl.bg }}"></span>
+              </sc-for>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:11px;color:var(--color-neutral-700)">
+              <span style="display:flex;align-items:center;gap:5px;white-space:nowrap"><span style="width:10px;height:10px;border-radius:2px;background:#5c3b2f"></span>1</span>
+              <span style="display:flex;align-items:center;gap:5px;white-space:nowrap"><span style="width:10px;height:10px;border-radius:2px;background:#8a5642"></span>2–3</span>
+              <span style="display:flex;align-items:center;gap:5px;white-space:nowrap"><span style="width:10px;height:10px;border-radius:2px;background:#cf8a6e"></span>4 or more</span>
+              <span style="display:flex;align-items:center;gap:5px;white-space:nowrap"><span style="width:10px;height:10px;border-radius:2px;background:#2d2b29;box-shadow:inset 0 0 0 1px #4a4744"></span>none yet</span>
+            </div>
+            <div style="display:flex;flex-direction:column">
+              <sc-for list="{{ nmPrefs }}" as="np" hint-placeholder-count="5">
+                <button onClick="{{ np.go }}" style="display:flex;align-items:center;gap:10px;min-height:44px;padding:0;border:0;border-bottom:1px solid var(--color-divider);background:transparent;cursor:pointer;text-align:left;font-family:var(--font-body);color:var(--color-text)" style-active="background:var(--color-neutral-100)">
+                  <span style="flex:1;font-size:14px">{{ np.name }}</span><span style="font-size:12px;color:var(--color-neutral-700)">{{ np.n }}</span><i class="ph ph-caret-right" style="font-size:13px;color:var(--color-neutral-500)"></i>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;align-items:baseline;justify-content:space-between"><h6 style="margin:0;font-size:11px;letter-spacing:.1em;color:var(--color-neutral-600)">Your stars</h6><span style="font-size:12px;color:var(--color-neutral-700)">{{ nmAvg }}</span></div>
+            <sc-for list="{{ nmStars }}" as="ns" hint-placeholder-count="5">
+              <div style="display:flex;align-items:center;gap:10px">
+                <div style="width:52px;flex:none;font-size:12px;color:var(--color-neutral-800);display:flex;align-items:center;gap:4px">{{ ns.label }}<i class="ph-fill ph-star" style="font-size:11px;color:var(--color-accent-600)"></i></div>
+                <div style="flex:1;height:6px;border-radius:3px;background:var(--color-neutral-300);overflow:hidden"><div style="height:100%;background:var(--color-accent-500);width:{{ ns.w }}"></div></div>
+                <div style="width:24px;flex:none;text-align:right;font-size:12px;color:var(--color-neutral-700)">{{ ns.n }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:2px">
+            <h6 style="margin:0 0 4px;font-size:11px;letter-spacing:.1em;color:var(--color-neutral-600)">Breweries you rate highest</h6>
+            <sc-for list="{{ nmBrew }}" as="nb" hint-placeholder-count="3">
+              <div style="display:flex;align-items:baseline;gap:10px;padding:11px 0;border-bottom:1px solid var(--color-divider)"><span style="flex:1;min-width:0;font-size:14px">{{ nb.name }}</span><span style="font-size:12px;color:var(--color-neutral-700)">{{ nb.meta }}</span></div>
+            </sc-for>
+            <div style="font-size:11px;color:var(--color-neutral-600);margin-top:6px">Only breweries you have tasted twice or more.</div>
+          </div>
+          <sc-if value="{{ nmHasGrades }}">
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <h6 style="margin:0;font-size:11px;letter-spacing:.1em;color:var(--color-neutral-600)">Grades</h6>
+              <sc-for list="{{ nmGrades }}" as="ng" hint-placeholder-count="4">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div style="width:128px;flex:none;font-size:12px;color:var(--color-neutral-800)">{{ ng.label }}</div>
+                  <div style="flex:1;height:6px;border-radius:3px;background:var(--color-neutral-300);overflow:hidden"><div style="height:100%;background:var(--color-neutral-600);width:{{ ng.w }}"></div></div>
+                  <div style="width:24px;flex:none;text-align:right;font-size:12px;color:var(--color-neutral-700)">{{ ng.n }}</div>
+                </div>
+              </sc-for>
+              <div style="font-size:11px;color:var(--color-neutral-600)">{{ nmGradeMeta }}</div>
+            </div>
+          </sc-if>
+          <div style="display:flex;flex-direction:column;gap:8px;padding:14px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm)">
+            <h6 style="margin:0;font-size:11px;letter-spacing:.1em;color:var(--color-neutral-600)">The surprise</h6>
+            <div style="display:flex;align-items:baseline;gap:7px;flex-wrap:wrap"><span style="font-family:var(--font-heading);font-weight:500;font-size:16px">Kidoizumi AFS</span><span style="font-size:12px;color:var(--color-neutral-600)" lang="ja">木戸泉 AFS</span></div>
+            <div style="font-size:13px;line-height:1.5;color:var(--color-neutral-800);text-wrap:pretty">You gave it 4.5, the furthest of your high ratings from your usual shape: light and dry where you lean rich.</div>
+            <div style="font-size:11px;line-height:1.5;color:var(--color-neutral-700)"><span id="yw-nm-terms">From the flavour chart (Sakenowa). Brewers’ terms, translated loosely.</span> <button onClick="{{ openTerms }}" aria-label="About these flavour words" aria-describedby="yw-nm-terms" style="display:inline-grid;place-items:center;width:20px;height:20px;margin:-4px 0 -4px 1px;padding:0;border:0;background:transparent;cursor:pointer;color:var(--color-neutral-600);vertical-align:middle"><i class="ph ph-info" style="font-size:13px"></i></button></div>
+          </div>
+          <div style="font-size:12px;line-height:1.5;color:var(--color-neutral-600);text-wrap:pretty">Worked out from your own journal. Only you see it.</div>
+          <div style="display:flex;flex-direction:column;gap:2px;font-size:12px;line-height:1.5;color:var(--color-neutral-600)">
             <div>Catalogue and flavour data · <a href="https://sakenowa.com" target="_blank" rel="noopener">Powered by Sakenowa ↗</a></div>
             <div style="display:flex;flex-wrap:wrap;column-gap:14px"><a href="#impressum" style="padding:6px 0">Impressum</a><a href="#privacy" style="padding:6px 0">Privacy notice</a><a href="#cookies" onClick="{{ reopenCookies }}" style="padding:6px 0">Cookie settings</a><a href="#drink" style="padding:6px 0">Drink responsibly</a></div>
           </div>
@@ -2050,7 +2274,7 @@ textarea::placeholder,input::placeholder{font-style:italic}
     <sc-if value="{{ showTabs }}">
       <nav style="flex:none;display:grid;grid-template-columns:repeat(4,1fr);padding:9px 6px 24px;border-top:1px solid var(--color-divider);background:var(--color-surface)">
         <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4">
-          <button onClick="{{ t.go }}" aria-current="{{ t.current }}" style="display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;border:0;background:transparent;cursor:pointer;padding:6px 0;min-height:44px;font-family:var(--font-body);color:{{ t.color }}">
+          <button onClick="{{ t.go }}" aria-current="{{ t.current }}" style="display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;border:0;background:transparent;cursor:pointer;padding:6px 0;min-height:44px;border-radius:var(--radius-md);font-family:var(--font-body);color:{{ t.color }};background:{{ t.press }}">
             <i class="ph {{ t.icon }}" style="font-size:22px"></i>{{ t.label }}
           </button>
         </sc-for>
@@ -2085,7 +2309,10 @@ textarea::placeholder,input::placeholder{font-style:italic}
           <span style="flex:1;min-width:0"><span style="display:block;font-size:14px">Nama (unpasteurised)</span><span style="display:block;font-size:12px;color:var(--color-neutral-600);margin-top:2px">Keep it cold. We’ll nudge you sooner once it’s open.</span></span>
           <span style="position:relative;width:42px;height:26px;border-radius:13px;background:{{ csNamaBg }};flex:none;transition:background .2s"><span style="position:absolute;top:3px;left:{{ csNamaX }};width:20px;height:20px;border-radius:50%;background:{{ csNamaKnob }};transition:left .15s"></span></span>
         </button>
-        <button class="btn btn-primary btn-block" style="height:46px;font-size:14px;gap:7px" onClick="{{ csConfirm }}"><i class="ph ph-stack-plus" style="font-size:17px"></i>Add to cellar</button>
+        <sc-if value="{{ csUnsavedOn }}">
+          <div role="alert" style="display:flex;align-items:flex-start;gap:8px;font-size:13px;line-height:1.45;color:var(--color-text);margin-bottom:-6px;animation:yw-fade .2s ease-out"><i class="ph ph-wifi-slash" style="font-size:16px;color:var(--color-neutral-700);flex:none;margin-top:1px"></i>{{ csUnsavedText }}</div>
+        </sc-if>
+        <button class="btn btn-primary btn-block" style="height:46px;font-size:14px;gap:7px" onClick="{{ csConfirm }}"><i class="ph {{ csBtnIcon }}" style="font-size:17px"></i>{{ csBtnLabel }}</button>
       </div>
     </div>
   </sc-if>
@@ -2276,6 +2503,32 @@ textarea::placeholder,input::placeholder{font-style:italic}
     </div>
   </sc-if>
 
+  <sc-if value="{{ navSlowOn }}">
+    <div role="status" style="position:absolute;left:18px;right:18px;bottom:96px;padding:10px 10px 10px 14px;border-radius:var(--radius-md);background:var(--color-raised);box-shadow:var(--shadow-float);display:flex;align-items:center;gap:10px;z-index:5;animation:yw-rise .3s ease-out">
+      <i class="ph ph-hourglass-medium" style="font-size:18px;color:var(--color-neutral-700);flex:none"></i>
+      <div style="flex:1;min-width:0"><div style="font-size:13px">Taking longer than usual</div><div style="font-size:12px;color:var(--color-neutral-700);margin-top:1px">The connection is slow.</div></div>
+      <button class="btn btn-ghost" style="height:36px;font-size:12px;flex:none" onClick="{{ navCancel }}">Cancel</button>
+    </div>
+  </sc-if>
+  <sc-if value="{{ offRowOpen }}">
+    <div style="position:absolute;inset:0;background:rgba(0,0,0,.55);display:flex;flex-direction:column;justify-content:flex-end;z-index:6;animation:yw-fade .2s ease-out">
+      <button onClick="{{ closeOffRow }}" aria-label="Dismiss" style="flex:1;min-height:40px;border:0;background:transparent;cursor:pointer"></button>
+      <div role="dialog" aria-label="{{ offRow.name }}" style="background:var(--color-surface);border-radius:20px 20px 0 0;box-shadow:var(--shadow-lg);animation:yw-sheet .26s ease-out;padding:0 20px 28px;display:flex;flex-direction:column;gap:12px">
+        <div style="padding:10px 0 0;display:flex;justify-content:center"><span style="width:36px;height:4px;border-radius:2px;background:var(--color-neutral-400)"></span></div>
+        <div>
+          <div style="font-family:var(--font-heading);font-weight:500;font-size:21px;letter-spacing:-.015em">{{ offRow.name }}</div>
+          <sc-if value="{{ offRow.hasKana }}"><div style="font-size:13px;color:var(--color-neutral-600);margin-top:2px" lang="ja">{{ offRow.kana }}</div></sc-if>
+          <div style="font-size:12px;color:var(--color-neutral-600);margin-top:2px">{{ offRow.place }}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="display:flex;gap:2px;color:var(--color-accent-600);font-size:17px"><sc-for list="{{ offRow.stars }}" as="s" hint-placeholder-count="5"><i class="ph {{ s.cls }}"></i></sc-for></div>
+          <span style="font-size:13px;color:var(--color-neutral-700)">{{ offRow.rating }} · {{ offRow.date }}</span>
+        </div>
+        <div style="font-size:14px;line-height:1.5;font-style:italic;color:var(--color-neutral-800);text-wrap:pretty">{{ offRow.note }}</div>
+        <div style="display:flex;align-items:flex-start;gap:8px;padding-top:12px;border-top:1px solid var(--color-divider);font-size:12px;line-height:1.5;color:var(--color-neutral-700);text-wrap:pretty"><i class="ph ph-wifi-slash" style="font-size:15px;flex:none;margin-top:1px"></i>From the copy on this phone, as of 14:02. The sake’s page and editing need a connection.</div>
+      </div>
+    </div>
+  </sc-if>
   <sc-if value="{{ shelfMsg }}">
     <div style="position:absolute;left:18px;right:18px;bottom:96px;padding:12px 14px;border-radius:var(--radius-md);background:var(--color-raised);color:var(--color-text);display:flex;align-items:center;gap:10px;box-shadow:var(--shadow-float);animation:yw-rise .24s ease-out;z-index:5">
       <i class="ph-fill ph-check-circle" style="font-size:19px;color:var(--color-accent-600)"></i>
@@ -2580,7 +2833,7 @@ textarea::placeholder,input::placeholder{font-style:italic}
 </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;firstRun&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;market&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;EU (Germany)&quot;,&quot;Japan&quot;],&quot;default&quot;:&quot;EU (Germany)&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;askEnabled&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;menuScan&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Scan&quot;},&quot;camera&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Allowed&quot;,&quot;Permission denied&quot;,&quot;Desktop / none&quot;],&quot;default&quot;:&quot;Allowed&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;iosWebview&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;twoToneBars&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;scanOutcome&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Matched&quot;,&quot;Matched, best guess&quot;,&quot;Matched, line only&quot;,&quot;Matched, your bottling fits&quot;,&quot;Matched, brewery not on label&quot;,&quot;Brand only&quot;,&quot;Brewery only&quot;,&quot;Several fit&quot;,&quot;Not in catalogue&quot;,&quot;Not sake&quot;,&quot;Menu in photo&quot;,&quot;Shelf in photo&quot;,&quot;Two bottles&quot;,&quot;No name on this side&quot;,&quot;No bottle&quot;,&quot;Unclear, recent scans agree&quot;,&quot;Unclear, nothing read&quot;,&quot;Rate limited&quot;,&quot;Something went wrong&quot;,&quot;Photo unusable&quot;],&quot;default&quot;:&quot;Matched&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Scan&quot;},&quot;guidePublic&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Sake guide&quot;},&quot;ratingLive&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;notSakeDrink&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Shochu&quot;,&quot;Awamori&quot;,&quot;Umeshu&quot;,&quot;Liqueur&quot;,&quot;Other drink&quot;],&quot;default&quot;:&quot;Shochu&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Scan&quot;},&quot;listPalate&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;From journal&quot;,&quot;Under three tastings&quot;],&quot;default&quot;:&quot;From journal&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Scan&quot;},&quot;freeScans&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Plenty&quot;,&quot;One left&quot;,&quot;None left&quot;],&quot;default&quot;:&quot;Plenty&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Scan&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;firstRun&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;market&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;EU (Germany)&quot;,&quot;Japan&quot;],&quot;default&quot;:&quot;EU (Germany)&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;askEnabled&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;menuScan&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Scan&quot;},&quot;camera&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Allowed&quot;,&quot;Permission denied&quot;,&quot;Desktop / none&quot;],&quot;default&quot;:&quot;Allowed&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;iosWebview&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;twoToneBars&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;scanOutcome&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Matched&quot;,&quot;Matched, best guess&quot;,&quot;Matched, line only&quot;,&quot;Matched, your bottling fits&quot;,&quot;Matched, brewery not on label&quot;,&quot;Brand only&quot;,&quot;Brewery only&quot;,&quot;Several fit&quot;,&quot;Not in catalogue&quot;,&quot;Not sake&quot;,&quot;Menu in photo&quot;,&quot;Shelf in photo&quot;,&quot;Two bottles&quot;,&quot;No name on this side&quot;,&quot;No bottle&quot;,&quot;Unclear, recent scans agree&quot;,&quot;Unclear, nothing read&quot;,&quot;Rate limited&quot;,&quot;Something went wrong&quot;,&quot;Photo unusable&quot;],&quot;default&quot;:&quot;Matched&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Scan&quot;},&quot;guidePublic&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Sake guide&quot;},&quot;ratingLive&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;notSakeDrink&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Shochu&quot;,&quot;Awamori&quot;,&quot;Umeshu&quot;,&quot;Liqueur&quot;,&quot;Other drink&quot;],&quot;default&quot;:&quot;Shochu&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Scan&quot;},&quot;listPalate&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;From journal&quot;,&quot;Under three tastings&quot;],&quot;default&quot;:&quot;From journal&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Scan&quot;},&quot;freeScans&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Plenty&quot;,&quot;One left&quot;,&quot;None left&quot;],&quot;default&quot;:&quot;Plenty&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Scan&quot;},&quot;connection&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Online&quot;,&quot;Slow&quot;,&quot;Offline&quot;],&quot;default&quot;:&quot;Online&quot;,&quot;tsType&quot;:&quot;'Online' | 'Slow' | 'Offline'&quot;,&quot;section&quot;:&quot;1.9&quot;},&quot;journalSize&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Short (4)&quot;,&quot;Long (25)&quot;],&quot;default&quot;:&quot;Short (4)&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;1.9&quot;}}">
 const SEED = [
   { id: 4, day: '20', mon: 'Sep', ago: '1d', name: 'Rihaku Wandering Poet', brewery: 'Rihaku Shuzō · Shimane', note: '“Melon and steamed rice, then a dry snap. Easy to like.”', rating: 4, hasDetail: false },
   { id: 3, day: '19', mon: 'Sep', ago: '2d', name: 'Kidoizumi AFS', brewery: 'Kidoizumi Shuzō · Chiba', note: '“Sour apple, almost cider — nothing like the others.”', rating: 4.5, hasDetail: true },
@@ -2975,6 +3228,39 @@ const THREADS = [
   { id: 't1', icon: 'ph-gift', title: 'A bottle for my father-in-law', preview: 'Kamoshibito Kuheiji travels well and the bottle explains…', ago: '3w', seedIdx: 2 },
 ]
 
+// 1.9 (W, X): a longer sample journal for the filter and numbers drawings. grade/styles only where a bottling says.
+const JOURNAL_MORE = [
+  ['31', 'Aug', 'Kubota Senju', 'Asahi Shuzō · Niigata', 3.5, 'Tokubetsu Honjōzō', []],
+  ['29', 'Aug', 'Hakkaisan Junmai Ginjō', 'Hakkaisan Brewery · Niigata', 4, 'Junmai Ginjō', []],
+  ['27', 'Aug', 'Masumi Okuden', 'Miyasaka Jōzō · Nagano', 4, 'Junmai', ['Kimoto']],
+  ['24', 'Aug', 'Kakurei', 'Aoki Shuzō · Niigata', 3.5, '', []],
+  ['22', 'Aug', 'Aramasa No.6 S-type', 'Aramasa Shuzō · Akita', 5, 'Junmai', ['Kimoto', 'Nama']],
+  ['20', 'Aug', 'Dewazakura Ōka', 'Dewazakura Shuzō · Yamagata', 4, 'Ginjō', []],
+  ['17', 'Aug', 'Koshi no Kanbai Bessen', 'Ishimoto Shuzō · Niigata', 3, '', []],
+  ['15', 'Aug', 'Sharaku', 'Miyaizumi Meijō · Fukushima', 4.5, 'Junmai Ginjō', ['Nama']],
+  ['12', 'Aug', 'Yuki no Bōsha', 'Saiya Shuzōten · Akita', 4, '', []],
+  ['09', 'Aug', 'Tedorigawa Yamahai', 'Yoshida Shuzōten · Ishikawa', 4.5, 'Junmai', ['Yamahai']],
+  ['06', 'Aug', 'Hiroki', 'Hiroki Shuzō · Fukushima', 5, '', []],
+  ['02', 'Aug', 'Kamoizumi Shusen', 'Kamoizumi Shuzō · Hiroshima', 3.5, 'Junmai', ['Koshu']],
+  ['29', 'Jul', 'Gokyō', 'Sakai Shuzō · Yamaguchi', 3, '', []],
+  ['26', 'Jul', 'Tatenokawa Seiryū', 'Tatenokawa · Yamagata', 4, 'Junmai Daiginjō', []],
+  ['22', 'Jul', 'Shichida', 'Tenzan Shuzō · Saga', 4, 'Junmai', ['Muroka', 'Genshu']],
+  ['18', 'Jul', 'Senkin Kabutomushi', 'Senkin · Tochigi', 2.5, '', []],
+  ['14', 'Jul', 'Kokuryū Ryū', 'Kokuryū Shuzō · Fukui', 4.5, 'Daiginjō', []],
+  ['10', 'Jul', 'Hakkaisan Tokubetsu Honjōzō', 'Hakkaisan Brewery · Niigata', 3, 'Tokubetsu Honjōzō', []],
+  ['05', 'Jul', 'Akishika Okuharuka', 'Akishika Shuzō · Ōsaka', 4.5, '', []],
+  ['01', 'Jul', 'Aramasa Viridian', 'Aramasa Shuzō · Akita', 4.5, 'Junmai', ['Kimoto']],
+  ['28', 'Jun', 'Sharaku Omachi', 'Miyaizumi Meijō · Fukushima', 4, 'Junmai Ginjō', []],
+].map((r, i) => ({ id: 100 + i, day: r[0], mon: r[1], ago: r[1] === 'Aug' ? '3w' : '2mo', name: r[2], brewery: r[3], rating: r[4], grade: r[5], styles: r[6], note: '“No note.”', hasDetail: false }))
+// X: a tile map of the 47 prefectures, [name, col, row] on a 13 × 13 grid, roughly where each sits.
+const PREF_TILES = [['Hokkaidō', 12, 0], ['Aomori', 12, 1], ['Akita', 11, 2], ['Iwate', 12, 2], ['Yamagata', 11, 3], ['Miyagi', 12, 3], ['Ishikawa', 8, 4], ['Toyama', 9, 4], ['Niigata', 10, 4], ['Fukushima', 11, 4], ['Fukui', 7, 5], ['Gifu', 8, 5], ['Nagano', 9, 5], ['Gunma', 10, 5], ['Tochigi', 11, 5], ['Ibaraki', 12, 5], ['Kyōto', 6, 6], ['Shiga', 7, 6], ['Aichi', 8, 6], ['Yamanashi', 9, 6], ['Saitama', 10, 6], ['Tōkyō', 11, 6], ['Chiba', 12, 6], ['Shimane', 3, 7], ['Tottori', 4, 7], ['Hyōgo', 5, 7], ['Ōsaka', 6, 7], ['Nara', 7, 7], ['Mie', 8, 7], ['Shizuoka', 9, 7], ['Kanagawa', 10, 7], ['Yamaguchi', 2, 8], ['Hiroshima', 3, 8], ['Okayama', 4, 8], ['Wakayama', 6, 8], ['Saga', 0, 9], ['Fukuoka', 1, 9], ['Ōita', 2, 9], ['Ehime', 3, 9], ['Kagawa', 4, 9], ['Nagasaki', 0, 10], ['Kumamoto', 1, 10], ['Miyazaki', 2, 10], ['Kōchi', 3, 10], ['Tokushima', 4, 10], ['Kagoshima', 1, 11], ['Okinawa', 0, 12]]
+const plain = (x) => (x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+const prefOfE = (e) => (e.brewery || '').split(' · ')[1] || ''
+const PAST = ['Nama', 'Namachozō', 'Namazume']
+const STARTER = ['Kimoto', 'Yamahai']
+const STYLE_PILLS = ['Genshu', 'Muroka', 'Nigori', 'Sparkling', 'Koshu', 'Taruzake', 'Kijōshu', 'Hiyaoroshi']
+const KOJI = ['Yellow koji 黄麹', 'White koji 白麹', 'Black koji 黒麹']
+
 const MUTED = '#a8a49c'
 const ACTIVE = '#cf8a6e'
 
@@ -2993,6 +3279,7 @@ class Component extends DCLogic {
     if (typeof window !== 'undefined') window.__yw = this
     const fresh = this.pp.firstRun || (typeof location !== 'undefined' && /[?&]new(=1)?(&|$)/.test(location.search))
     if (fresh) this.setState({ entries: [], cellar: [], wish: [], fresh: true })
+    this._conn = this.pp.connection ?? 'Online'
     this._rs = () => this.forceUpdate()
     if (typeof window !== 'undefined') window.addEventListener('resize', this._rs)
   }
@@ -3267,6 +3554,8 @@ class Component extends DCLogic {
 
   rateResult(v) {
     const r = this.state.r || {}
+    if ((this.pp.connection ?? 'Online') === 'Offline' && !this.state.sample) { this.setR({ unsaved: v, pop: Date.now(), retried: 0 }); return }
+    if (r.unsaved) this.setR({ unsaved: 0 })
     if (r.id) {
       this.setState((st) => ({ entries: st.entries.map((e) => e.id === r.id ? { ...e, rating: v } : e) }))
       this.setR({ rating: v, pop: Date.now() })
@@ -3322,10 +3611,13 @@ class Component extends DCLogic {
       this._t = setTimeout(() => this.setState((st) => ({ shutter: false, photoFor: null, photos: { ...(st.photos || {}), [pf]: { date: '18.10.2026' } }, tab: st.photoBack.tab, view: st.photoBack.view, sakeName: pf })), 380)
       return
     }
-    this.setState({ shutter: true })
+    const conn = this.pp.connection ?? 'Online'
+    this.setState({ shutter: true, scanSlow: false })
     clearTimeout(this._t)
+    if (conn === 'Offline') { this._t = setTimeout(() => this.setState({ scan: 'unsent', shutter: false, sendTry: 0 }), 220); return }
     this._t = setTimeout(() => this.setState({ scan: 'working', shutter: false }), 220)
-    clearTimeout(this._u)
+    clearTimeout(this._u); clearTimeout(this._sl)
+    if (conn === 'Slow') this._sl = setTimeout(() => this.setState({ scanSlow: true }), 10000)
     const out = this.pp.scanOutcome ?? 'Matched'
     const oc = OUTCOMES[out]
     const rihaku = CATALOGUE.find((c) => c.name === 'Rihaku')
@@ -3338,9 +3630,213 @@ class Component extends DCLogic {
       lineOnly = { ...findSake(nm, own), photo: true, manual: true, bottling: true, own: true, labelRead: LABEL_READ, fits: true }
     }
     const read = oc && oc.notSake ? { ...(NOT_SAKE[this.pp.notSakeDrink ?? 'Shochu'] || NOT_SAKE.Shochu).read } : oc && oc.read ? { ...oc.read } : null
-    this._u = setTimeout(() => this.setState({ own, view: oc ? 'outcome' : 'result', outcome: oc ? out : null, ocRead: withReading(read), bestGuess: out === 'Matched, best guess', candsOpen: false, scanCount: (this.state.scanCount || 0) + 1, paired: false, keep: false, tb: 'label', menuSort: 'you', menuFilter: [], scan: 'idle', addBt: null, pick: lineOnly, dn: {}, r: { rating: 0, note: '', tags: [], id: null, toast: false, pop: 0 } }), 2000)
+    this._u = setTimeout(() => this.setState({ own, view: oc ? 'outcome' : 'result', outcome: oc ? out : null, ocRead: withReading(read), bestGuess: out === 'Matched, best guess', candsOpen: false, scanCount: (this.state.scanCount || 0) + 1, paired: false, keep: false, tb: 'label', menuSort: 'you', menuFilter: [], scan: 'idle', scanSlow: false, addBt: null, pick: lineOnly, dn: {}, r: { rating: 0, note: '', tags: [], id: null, toast: false, pop: 0 } }), conn === 'Slow' ? 14000 : 2000)
   }
 
+
+  componentDidUpdate() {
+    const c = this.pp.connection ?? 'Online'
+    if (c !== this._conn) { const was = this._conn; this._conn = c; if (was === 'Offline') { this.setState({ backOnline: true }); clearTimeout(this._bo); this._bo = setTimeout(() => this.setState({ backOnline: false }), 2400) } }
+  }
+
+  slowNav(key, go) {
+    [this._n1, this._n2, this._n3].forEach(clearTimeout)
+    this.setState({ navPend: key, navBar: false, navSlow: false })
+    this._n1 = setTimeout(() => this.setState({ navBar: true }), 300)
+    this._n2 = setTimeout(() => this.setState({ navSlow: true }), 5000)
+    this._n3 = setTimeout(() => { go(); this.setState({ navPend: null, navBar: false, navSlow: false }) }, 6500)
+  }
+
+  // 1.9 — S (connection) and Z (offline copy)
+  v19(s, view, o) {
+    const conn = this.pp.connection ?? 'Online'
+    const off = conn === 'Offline', slow = conn === 'Slow'
+    const r = s.r || {}
+    const out = { ...o }
+    if (slow) out.tabs = o.tabs.map((t, i) => { const key = ['home', 'scan', 'collection', 'palate'][i]; const pend = s.navPend === key; return { ...t, color: pend ? ACTIVE : s.navPend ? MUTED : t.color, icon: pend ? t.icon.replace('ph ph-', 'ph-fill ph-') : s.navPend ? t.icon.replace('ph-fill ph-', 'ph ph-') : t.icon, press: pend ? 'var(--color-neutral-200)' : 'transparent', go: () => this.slowNav(key, t.go) } })
+    else out.tabs = o.tabs.map((t) => ({ ...t, press: 'transparent' }))
+    out.navBarOn = !!s.navBar
+    out.navBarEl = s.navBar ? React.createElement('div', { style: { position: 'absolute', left: 0, top: 0, height: '2px', width: '38%', background: 'var(--color-accent-500)', animation: 'yw-load 1.1s ease-in-out infinite' } }) : null
+    out.navSlowOn = !!s.navSlow
+    out.navCancel = () => { [this._n1, this._n2, this._n3].forEach(clearTimeout); this.setState({ navPend: null, navBar: false, navSlow: false }) }
+    const seg = s.collection || 'journal'
+    const zText = !view && s.tab === 'collection' && seg !== 'wishlist' ? 'Offline · Your ' + seg + ' as of 14:02' : !view && s.tab === 'home' ? 'Offline · Recent tastings as of 14:02' : 'Offline · Saving and scanning need a connection'
+    out.offLineOn = (off || !!s.backOnline) && !s.gate
+    out.offLineText = off ? zText : 'Back online'
+    out.offLineIcon = off ? 'ph-wifi-slash' : 'ph-wifi-high'
+    out.offLineSub = off && !view && s.tab === 'collection' && seg !== 'wishlist' ? 'Changes wait for a connection.' : ''
+    out.offLineHasSub = !!out.offLineSub
+    // S4 / S5 on the camera
+    out.camUnsent = false; out.camSlow = false
+    if (!view && s.tab === 'scan' && s.scan === 'unsent') {
+      const stopped = s.unsentWhy === 'cancel'
+      Object.assign(out, {
+        camUnsent: true, camParts: false, camLabelLink: false, camHintOn: true,
+        scanTitle: off ? (stopped ? 'Photo kept' : 'No connection') : 'Connection is back',
+        scanHint: stopped && !off ? 'Send it again. A photo we already read doesn’t count twice.' : 'Your photo is kept. It wasn’t sent, so it doesn’t use a scan.',
+        frameFill: 'rgba(246,242,234,.13)',
+        sendLabel: off ? 'Send again' : 'Send now',
+        sendNote: off && s.sendTry ? 'Still no connection.' : '', sendHasNote: off && !!s.sendTry,
+        sendAgain: () => { if (off) { this.setState({ sendTry: (s.sendTry || 0) + 1 }); return } this.setState({ scan: 'idle', unsentWhy: null }); this.capture() },
+      })
+    }
+    if (!view && s.tab === 'scan' && s.scan === 'working' && s.scanSlow) {
+      Object.assign(out, {
+        camSlow: true, scanTitle: 'Taking longer than usual', scanHint: 'The connection is slow. Your photo is kept.', camHintOn: true, camLabelLink: false, camParts: false,
+        slowCancel: () => { clearTimeout(this._u); clearTimeout(this._sl); this.setState({ scan: 'unsent', scanSlow: false, unsentWhy: 'cancel', sendTry: 0 }) },
+      })
+    }
+    // S6a on the rating panel
+    if (r.unsaved) {
+      const u = r.unsaved
+      out.rStars = o.rStars.map((st, i) => ({ ...st, cls: u >= i + 1 ? 'ph-fill ph-star' : u >= i + 0.5 ? 'ph-fill ph-star-half' : 'ph ph-star', color: u >= i + 0.5 ? '#a8a49c' : '#4a4744', anim: 'none' }))
+      out.rRatingLabel = u.toFixed(1) + ' · Not saved'
+      out.rRatingColor = '#bdb9b1'
+      out.rUnsaved = false
+    }
+    out.rNotSaved = !!r.unsaved
+    out.rNotSavedText = r.retried ? 'Still no connection. Your stars stay here until it’s back.' : 'No connection, so this isn’t in your journal yet.'
+    out.rRetry = () => { if ((this.pp.connection ?? 'Online') === 'Offline') { this.setR({ retried: (r.retried || 0) + 1 }); return } this.rateResult(r.unsaved) }
+    // S6a on the cellar sheet
+    out.csUnsavedOn = !!s.csUnsaved
+    out.csUnsavedText = s.csUnsaved > 1 ? 'Still no connection. Nothing here is lost.' : 'Not added · no connection. Nothing here is lost.'
+    out.csBtnLabel = s.csUnsaved ? 'Try again' : 'Add to cellar'
+    out.csBtnIcon = s.csUnsaved ? 'ph-arrow-clockwise' : 'ph-stack-plus'
+    out.csConfirm = () => { if (off) { this.setState({ csUnsaved: (s.csUnsaved || 0) + 1 }); return } this.setState({ csUnsaved: 0 }); o.csConfirm() }
+    out.closeCellarSheet = () => { this.setState({ csUnsaved: 0 }); o.closeCellarSheet() }
+    // Z: offline copy — cellar actions unavailable, rows open a small sheet
+    if (off) out.cellarRows = (o.cellarRows || []).map((c) => ({ ...c, off: true }))
+    else out.cellarRows = (o.cellarRows || []).map((c) => ({ ...c, off: undefined }))
+    const or = s.offRow
+    out.offRowOpen = !!or
+    out.offRow = or ? { name: or.name, kana: or.kana || '', hasKana: !!or.kana, date: or.day + ' ' + or.mon, stars: this.starsFor(or.rating), rating: or.rating.toFixed(1), note: or.note, place: or.brewery || '' } : {}
+    out.closeOffRow = () => this.setState({ offRow: null })
+    return this.v19b(s, view, out, off)
+  }
+
+  // 1.9 — W (journal filters), X (numbers), U (matches as you type), V (bottling form)
+  v19b(s, view, o, off) {
+    const out = o
+    const long = (this.pp.journalSize ?? 'Short (4)') !== 'Short (4)' && !s.fresh && !s.sample
+    const all = long ? [...s.entries, ...JOURNAL_MORE] : s.entries
+    const own = s.own || {}
+    const gradeOf = (e) => e.grade !== undefined ? e.grade : ((BOTTLINGS[e.name] || {}).grade || (own[e.name] || {}).grade || '')
+    const stylesOf = (e) => e.styles || (BOTTLINGS[e.name] || {}).flags || (own[e.name] || {}).styles || []
+    const F = {
+      pref: { label: 'Prefecture', icon: 'ph-map-pin', of: (e) => [prefOfE(e)].filter(Boolean) },
+      rating: { label: 'Rating', icon: 'ph-star', of: (e) => { const k = Math.floor(e.rating); return [k === 5 ? '5 stars' : k + '–' + k + '.5 stars'] } },
+      grade: { label: 'Grade', icon: 'ph-seal', of: (e) => [gradeOf(e)].filter(Boolean) },
+      style: { label: 'Style', of: stylesOf },
+      brewery: { label: 'Brewery', of: (e) => [(e.brewery || '').split(' · ')[0]].filter(Boolean) },
+      month: { label: 'Month', of: (e) => [{ Jun: 'June', Jul: 'July', Aug: 'August', Sep: 'September', Oct: 'October' }[e.mon] + ' 2026'] },
+    }
+    const jf = s.jf || {}
+    const jq = plain(s.jq || '')
+    const pass = (e, skip) => Object.keys(F).every((k) => k === skip || !(jf[k] || []).length || F[k].of(e).some((v) => jf[k].indexOf(v) >= 0)) && (!jq || plain(e.name + ' ' + e.brewery + ' ' + e.note).indexOf(jq) >= 0)
+    const shown = all.filter((e) => pass(e))
+    const setJf = (k, v) => { const cur = jf[k] || []; this.setState({ jf: { ...jf, [k]: cur.indexOf(v) >= 0 ? cur.filter((x) => x !== v) : [...cur, v] } }) }
+    const valsOf = (k) => {
+      const m = {}
+      all.filter((e) => pass(e, k)).forEach((e) => F[k].of(e).forEach((v) => { m[v] = (m[v] || 0) + 1 }))
+      const keys = Object.keys(m).sort((a, b) => k === 'rating' ? b.localeCompare(a) : k === 'month' ? 0 : (m[b] - m[a]) || a.localeCompare(b))
+      return keys.map((v) => { const on = (jf[k] || []).indexOf(v) >= 0; return { label: v, n: m[v], pick: () => setJf(k, v), border: on ? '#cf8a6e' : 'var(--color-divider)', bg: on ? '#cf8a6e' : 'transparent', fg: on ? '#1b1a19' : '#d6d2ca', nfg: on ? '#3a2a23' : '#a8a49c' } })
+    }
+    const openK = s.jfOpen
+    const chip = (k, label, icon) => { const sel = k === 'more' ? ['style', 'brewery', 'month'].reduce((n, x) => n + (jf[x] || []).length, 0) : (jf[k] || []).length; const on = sel > 0, op = openK === k; return { label: on && k !== 'more' ? (jf[k].length === 1 ? jf[k][0] : label + ' · ' + sel) : on ? 'More · ' + sel : label, icon, open: op ? 'true' : 'false', caret: op ? 'ph-caret-up' : 'ph-caret-down', border: on || op ? '#cf8a6e' : 'var(--color-divider)', bg: on ? '#3a2a23' : 'transparent', fg: on ? '#eec2ae' : '#d6d2ca', pick: () => this.setState({ jfOpen: op ? null : k }) } }
+    const noGrade = all.filter((e) => pass(e, 'grade') && !gradeOf(e)).length
+    const parts = [].concat(...Object.keys(F).map((k) => jf[k] || []))
+    const anyF = parts.length > 0 || !!jq
+    const openEntry = (e) => { if (off) { this.setState({ offRow: { ...e, kana: kanaOf(e.name, own) } }); return } const f = findSake(e.name, own); this.setState({ view: f && f.bottling ? 'bottling' : 'sake', sakeName: e.name, skPanel: false }) }
+    Object.assign(out, {
+      jfShow: all.length >= 8, jSearchOn: !!s.jSearch, jq: s.jq || '',
+      backedUpLabel: 'Backed up · ' + all.length + ' tastings',
+      toggleJSearch: () => this.setState({ jSearch: !s.jSearch, jq: '' }),
+      setJq: (ev) => this.setState({ jq: ev.target.value }),
+      jfChips: [chip('pref', 'Prefecture', 'ph-map-pin'), chip('rating', 'Rating', 'ph-star'), chip('grade', 'Grade', 'ph-seal'), chip('more', 'More', 'ph-sliders-horizontal')],
+      jfPanelOn: !!openK,
+      jfSections: !openK ? [] : openK === 'more' ? ['style', 'brewery', 'month'].map((k) => ({ title: F[k].label, hasTitle: true, vals: valsOf(k) })).filter((x) => x.vals.length) : [{ title: '', hasTitle: false, vals: valsOf(openK) }],
+      jfFootOn: openK === 'grade' && noGrade > 0,
+      jfFoot: noGrade + (noGrade === 1 ? ' tasting names' : ' tastings name') + ' no grade, so a grade filter leaves ' + (noGrade === 1 ? 'it' : 'them') + ' out. A grade comes from a bottling you added.',
+      jfSumOn: anyF,
+      jfSum: shown.length + ' of ' + all.length + ' tastings' + (parts.length ? ' · ' + parts.join(', ') : '') + (jq ? ' · “' + s.jq + '”' : ''),
+      jfClear: () => this.setState({ jf: {}, jq: '', jfOpen: null }),
+      jfNone: anyF && shown.length === 0,
+      entries: shown.map((e) => ({ ...e, hasPhoto: !!(s.photos || {})[e.name], kana: kanaOf(e.name, own), hasKana: !!kanaOf(e.name, own), stars: this.starsFor(e.rating), open: () => openEntry(e), openNotes: () => this.setState({ sheet: 'detail', dnEntry: e.id, dn: { open: 'App' } }) })),
+    })
+    if (off) out.recent = all.slice(0, 3).map((e) => ({ ...e, kana: kanaOf(e.name, own), hasKana: !!kanaOf(e.name, own), stars: this.starsFor(e.rating), open: () => openEntry(e) }))
+    // X
+    const n = all.length
+    const prefCount = {}
+    all.forEach((e) => { const p = plain(prefOfE(e)); if (p) prefCount[p] = (prefCount[p] || 0) + 1 })
+    const prefs = PREF_TILES.map(([nm]) => ({ nm, c: prefCount[plain(nm)] || 0 })).filter((x) => x.c)
+    const brew = {}
+    all.forEach((e) => { const b = (e.brewery || '').split(' · ')[0]; if (b) (brew[b] = brew[b] || []).push(e.rating) })
+    const withG = all.filter((e) => gradeOf(e))
+    const gc = {}; withG.forEach((e) => { gc[gradeOf(e)] = (gc[gradeOf(e)] || 0) + 1 })
+    const maxG = Math.max(1, ...Object.values(gc))
+    const sc = [5, 4, 3, 2, 1].map((k) => ({ k, c: all.filter((e) => Math.floor(e.rating) === k).length }))
+    const maxS = Math.max(1, ...sc.map((x) => x.c))
+    const goPref = (p) => this.setState({ view: null, tab: 'collection', collection: 'journal', jf: { pref: [p] }, jfOpen: null })
+    Object.assign(out, {
+      isNumbers: view === 'numbers',
+      numbersReady: n >= 5, numbersEarly: n < 5,
+      numbersTeaser: n >= 5 ? n + ' tastings · ' + prefs.length + ' of 47 prefectures' : (5 - n) + ' more ' + (5 - n === 1 ? 'tasting' : 'tastings') + ' and your map appears',
+      openNumbers: () => { if (n >= 5) this.setState({ view: 'numbers' }) },
+      nmCounts: [{ v: n, l: n === 1 ? 'tasting' : 'tastings' }, { v: new Set(all.map((e) => e.name)).size, l: 'sakes' }, { v: Object.keys(brew).length, l: 'breweries' }],
+      nmPrefLine: prefs.length + ' of 47 prefectures',
+      nmTiles: PREF_TILES.map(([nm, c, r]) => { const k = prefCount[plain(nm)] || 0; return { name: nm, col: String(c + 1), row: String(r + 1), bg: k >= 4 ? '#cf8a6e' : k >= 2 ? '#8a5642' : k === 1 ? '#5c3b2f' : '#2d2b29', label: nm + (k ? ', ' + k + (k === 1 ? ' tasting' : ' tastings') : ', none yet') } }),
+      nmPrefs: prefs.sort((a, b) => b.c - a.c).map((x) => ({ name: x.nm, n: x.c + (x.c === 1 ? ' tasting' : ' tastings'), go: () => goPref(all.map(prefOfE).find((p) => plain(p) === plain(x.nm)) || x.nm) })),
+      nmStars: sc.map((x) => ({ label: x.k === 5 ? '5' : x.k + '–' + x.k + '.5', n: String(x.c), w: Math.round(x.c / maxS * 100) + '%' })),
+      nmAvg: n ? 'Average ' + (all.reduce((t, e) => t + e.rating, 0) / n).toFixed(1) : '',
+      nmBrew: Object.keys(brew).filter((b) => brew[b].length >= 2).map((b) => ({ name: b, avg: brew[b].reduce((t, x) => t + x, 0) / brew[b].length, c: brew[b].length })).sort((a, b) => b.avg - a.avg).slice(0, 3).map((b) => ({ name: b.name, meta: b.avg.toFixed(1) + ' average · ' + b.c + ' tastings' })),
+      nmGrades: Object.keys(gc).sort((a, b) => gc[b] - gc[a]).map((g) => ({ label: g, n: String(gc[g]), w: Math.round(gc[g] / maxG * 100) + '%' })),
+      nmGradeMeta: 'From the ' + withG.length + ' of ' + n + ' tastings that name a grade',
+      nmHasGrades: withG.length > 0,
+    })
+    return this.v19c(s, view, out)
+  }
+
+  v19c(s, view, out) {
+    // U: matches as you type
+    const q = (s.query || '').trim()
+    const ql = plain(q)
+    const long = /[\u3040-\u30ff\u4e00-\u9fff]/.test(q) ? q.length >= 1 : q.length >= 2
+    const hit = (c) => plain(c.name + ' ' + c.kana + ' ' + (ALT[c.name] || []).join(' ')).indexOf(ql) >= 0
+    const mine = Object.keys(s.own || {}).filter((nm) => plain(nm).indexOf(ql) >= 0).slice(0, 2)
+    const cats = CATALOGUE.filter(hit).slice(0, 6 - mine.length)
+    out.taOn = view === 'search' && !!s.taOpen && long && (mine.length + cats.length) > 0
+    out.taRows = [
+      ...mine.map((nm) => ({ kanji: '', hasKanji: false, latin: nm, meta: 'Your bottling', yours: true, open: () => this.setState({ view: 'bottling', sakeName: nm, taOpen: false, skPanel: false }) })),
+      ...cats.map((c) => ({ kanji: c.kana, hasKanji: !!c.kana, latin: c.name, meta: c.brewery, yours: false, open: () => this.setState({ view: 'sake', sakeName: c.name, taOpen: false, skPanel: false }) })),
+    ]
+    out.taHasCat = cats.length > 0
+    out.setQuery = (ev) => this.setState({ query: ev.target.value, taOpen: true })
+    out.queryKey = (ev) => { if (ev.key === 'Enter' || ev.key === 'Escape') this.setState({ taOpen: false }) }
+    // V: the bottling form
+    const ab = s.addBt || {}
+    const words = (ab.styles || '').split(',').map((x) => x.trim()).filter(Boolean)
+    const past = ab.past !== undefined ? ab.past : (words.find((w) => PAST.indexOf(w) >= 0) || '')
+    const starter = ab.starter !== undefined ? ab.starter : (words.find((w) => STARTER.indexOf(w) >= 0) || '')
+    const pills = ab.pills || words.filter((w) => STYLE_PILLS.indexOf(w) >= 0)
+    const other = ab.other !== undefined ? ab.other : words.filter((w) => PAST.indexOf(w) < 0 && STARTER.indexOf(w) < 0 && STYLE_PILLS.indexOf(w) < 0).join(', ')
+    const koji = ab.koji || ''
+    const put = (p) => { const nx = { past, starter, pills, other, koji, ...p }; this.setState({ addBt: { ...ab, ...nx, styles: [nx.past, nx.starter, ...nx.pills, ...nx.other.split(',').map((x) => x.trim())].filter(Boolean).join(', ') } }) }
+    const opts = (list, cur, none) => [{ label: none, value: '' }, ...list.map((x) => ({ label: x, value: x }))].map((x) => ({ ...x, selected: x.value === cur }))
+    const moreOpen = !!ab.more || !!(starter || koji || other)
+    Object.assign(out, {
+      abPastOpts: opts(['Nama (unpasteurised)', 'Namachozō (once, at bottling)', 'Namazume (once, before storage)'].map((x, i) => x), '', '').map((x, i) => i === 0 ? { label: 'Pasteurised twice (usual)', value: '', selected: !past } : { label: x.label, value: PAST[i - 1], selected: past === PAST[i - 1] }),
+      abPast: past, abSetPast: (ev) => put({ past: ev.target.value }),
+      abStarterOpts: opts(STARTER, starter, 'Not stated'), abStarter: starter, abSetStarter: (ev) => put({ starter: ev.target.value }),
+      abKojiOpts: opts(KOJI, koji, 'Not stated'), abKoji: koji, abSetKoji: (ev) => put({ koji: ev.target.value }),
+      abPills: STYLE_PILLS.map((p) => { const on = pills.indexOf(p) >= 0; return { label: p, on: on ? 'true' : 'false', border: on ? '#cf8a6e' : 'var(--color-divider)', bg: on ? '#cf8a6e' : 'transparent', fg: on ? '#1b1a19' : '#d6d2ca', pick: () => put({ pills: on ? pills.filter((x) => x !== p) : [...pills, p] }) } }),
+      abOther: other, abSetOther: (ev) => put({ other: ev.target.value }),
+      abMoreOpen: moreOpen, abMoreClosed: !moreOpen,
+      abMoreLabel: 'Starter, koji, other style words',
+      abToggleMore: () => this.setState({ addBt: { ...ab, more: true } }),
+      abOpenNama: () => this.setState({ view: 'guideEntry', guideKey: 'nama' }),
+    })
+    return out
+  }
 
   renderVals() {
     const s = this.state
@@ -3393,7 +3889,7 @@ class Component extends DCLogic {
     const working = s.scan === 'working'
     const menuMode = false
 
-    return {
+    return this.v19(s, view, {
       gate: s.gate,
       acceptGate: () => this.setState({ gate: false }),
       restart: () => this.setState({ cellar: s.fresh ? [] : CELLAR_SEED, wish: s.fresh ? [] : WISH_SEED, sakeName: null, pick: null, dn: {}, shelfMsg: null,  acct: {}, gateDeclined: false, regionsOpen: false,  auth: { step: null, email: '', code: '', signedIn: false, dismissed: false },  gate: true, tab: 'home', view: null, sheet: null, scan: 'idle', entries: s.fresh ? [] : SEED, rating: 0, note: '', toast: false, msgs: [], draft: '', thinking: false, threadTitle: 'New conversation' }),
@@ -4252,7 +4748,7 @@ class Component extends DCLogic {
       toast: s.toast,
       dismissToast: () => this.setState({ toast: false }),
       ...this.v18Vals(s, view),
-    }
+    })
   }
 }
 </script>
