@@ -24,6 +24,16 @@
  * Everything else (Sakenowa mirror, telemetry, ingestion bookkeeping) is
  * `PublicTable`.
  *
+ * A `UserTable` is reached through the Data API (PostgREST), and since
+ * 2026-10-30 Supabase no longer grants the API roles access to a new table
+ * in `public` by default. Its migration must therefore say so itself —
+ * `GRANT SELECT, INSERT, UPDATE, DELETE ON <table> TO authenticated;` next to
+ * the RLS policies — or every `userQuery` on it fails with "permission
+ * denied". A `PublicTable` needs no grant: pg-direct connects as `postgres`.
+ * Older migrations here that `REVOKE` from `anon` / `authenticated` were
+ * undoing the old default grant; keep doing it for an API-hidden table, so
+ * the intent holds on a project created before the change.
+ *
  * See:
  *   - docs/adr/0010-pg-direct-vs-supabase-js-for-user-data.md
  *   - docs/adr/0011-per-env-data-isolation.md
