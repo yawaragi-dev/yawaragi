@@ -8,6 +8,7 @@ import { ClerkProvider } from '@clerk/nextjs'
 import { auth } from '@clerk/nextjs/server'
 import { routing } from '@/i18n/routing'
 import { ClientHistoryTracker } from '@/components/layout/client-history-tracker'
+import { RegisterServiceWorker } from '@/components/pwa/register-service-worker'
 import { RefreshOnAuthChange } from '@/components/auth/refresh-on-auth-change'
 import { isSignInPending } from '@/lib/auth/sign-in-pending'
 import { DebugPanelMount } from '@/components/debug/debug-panel-mount'
@@ -136,6 +137,7 @@ export default async function LocaleLayout({
                 because the move it most needs to notice is `(app)` → `(site)`,
                 which is how the legal documents are reached. */}
             <ClientHistoryTracker />
+            <RegisterServiceWorker />
             {/* Signing in or out changes what every server-rendered `<Show>`
                 and maintainer gate should say; this re-renders them. */}
             <RefreshOnAuthChange
