@@ -593,21 +593,52 @@
     }
   },
   "privacy": {
-    "title": "Privacy",
-    "lastUpdated": "Last updated: 2026-06-01.",
-    "intro": "Yawaragi is operated by the maintainer named in the Impressum, who acts as the data controller under GDPR Art. 4(7). This page lists the categories of personal data we process and the third-party processors we rely on. It is updated alongside every release that introduces or changes a processing operation, per ADR-0009.",
-    "anonymousSessionHeading": "Anonymous session cookie (yawaragi_session)",
-    "anonymousSessionBody": "When you use a feature that calls a paid AI service (today: the label scan), we set a signed, opaque cookie named `yawaragi_session` with a 24-hour sliding lifetime. The cookie holds a random identifier — never your name, email, or IP. We use it together with a short-lived hash of your IP address (kept only as a query key, never stored as plaintext and never written to a database or log) to cap how many scans a single visitor can run per day, so the AI bill stays bounded. Lawful basis: legitimate interest in cost protection of paid AI surfaces (GDPR Art. 6(1)(f)). Retention: 24 hours, sliding. Data residency: EU (rate-limit storage hosted in an EU region of Upstash Redis).",
-    "processorsHeading": "Data processors",
-    "processorVercel": "Vercel, Inc. (USA) — hosting, build, and edge logs. Transfer mechanism: EU-US Data Privacy Framework plus EU SCCs as a fallback. Vercel processes service-generated data (request logs, build metadata) as an independent controller.",
-    "processorSupabase": "Supabase, Inc. — Postgres database for the Sakenowa reference mirror and (from Phase 2.5) user-scoped tables. Project region: eu-central-1 (Frankfurt). Transfer mechanism: EU SCCs (Modules 2 and 3) governed by Irish law. Service usage telemetry is processed by Supabase as an independent controller under Art. 6(1)(f) (billing, security, service improvement). Breach notification SLA: 48 hours.",
-    "processorUpstash": "Upstash, Inc. — Redis key-value store hosted in an EU region (e.g. eu-central-1 Frankfurt) used as the rate-limit budget store for the anonymous-session cookie described above. Stored data: the salted SHA-256 hash of the visitor IP and the opaque session id, each with a 24-hour TTL. No plaintext IPs, no account identifiers. Transfer mechanism: EU SCCs (data does not leave the EU region). Data Processing Agreement: pending signature before Production deployment.",
-    "processorClerk": "Clerk, Inc. (USA) — user authentication (sign-in, session, JWT issuance) starting Phase 2.5. Data categories: email address, given name, family name, and short-lived email-verification codes used to confirm sign-in. Lawful basis: Art. 6(1)(b) (performance of contract — Clerk holds the credentials required to operate an account). Transfer mechanism: EU-US Data Privacy Framework plus EU SCCs as a fallback. Retention: until account deletion or 24 months of account inactivity (per ADR-0009). Clerk does not publish a fixed breach-notification SLA; per the breach runbook, we treat an unconfirmed Clerk incident as starting an internal 24-hour clock toward BayLDA Art. 33 notification.",
-    "sakenowaNote": "Sake brand and brewery reference data is mirrored from the public Sakenowa Data API (muro.sakenowa.com). The mirror itself contains no personal data.",
-    "retentionHeading": "Retention",
-    "retention": "Cookies expire after one year. Phase 2 reference data is retained for the lifetime of the service. Future per-user data (Phase 2.5+) follows the retention rules in ADR-0009.",
-    "contactHeading": "Contact",
-    "contact": "For data-subject requests (access, rectification, erasure, portability), use the email address in the Impressum."
+    "title": "Privacy notice",
+    "lastUpdated": "Last updated: [TODO: date of publication].",
+    "intro": "This notice says what personal data Yawaragi handles, why, for how long, who helps us with it, and what you can ask of us. Yawaragi is a sake information app; it shows no advertising and sells nothing.",
+    "draftNote": "[TODO: draft for legal review — remove this line once reviewed.]",
+    "sections": {
+      "controller": {
+        "heading": "Who is responsible",
+        "body": "The controller under the GDPR (Art. 4(7)) is the person named in the Impressum: [TODO: name and postal address, as in the Impressum].\n\nFor anything about your data, write to [TODO: contact email]. We have not appointed a data protection officer; the law does not require one for a service of this size."
+      },
+      "short": {
+        "heading": "In short",
+        "body": "- Browsing the catalogue, searching and reading Learn need no account and keep nothing about you beyond a few small cookies.\n- A label photo is sent to our AI provider to be read and is not kept by us.\n- If you sign in, our sign-in provider holds your email address and name. Your tasting journal, cellar and own bottlings are kept for you until you delete them.\n- We run no analytics or advertising tools. We count anonymous daily totals, such as how many scans there were, which say nothing about you."
+      },
+      "visiting": {
+        "heading": "When you visit",
+        "body": "Our host records each request, including your IP address, as every web server does, to deliver the page and keep the service secure (legitimate interest, Art. 6(1)(f)). See Vercel below for how long.\n\nWe set these cookies. All are needed for the app to work or remember a choice you made, so they need no consent:\n\n- yawaragi_age_gate: that you confirmed you are 18 or over. One year.\n- NEXT_LOCALE: the language you chose. One year.\n- yawaragi_consent: your cookie choices, so we can respect and prove them. One year.\n- yawaragi_session: a random identifier, never your name, email or IP address. It limits how many free label scans and suggestions one visitor can use per day, so the AI costs stay bounded (legitimate interest, Art. 6(1)(f)). 24 hours.\n- yawaragi_collection_tab: whether you last opened Journal or Cellar. Until you close the browser.\n- yawaragi_sign_in_pending: set for a moment while you sign in. Two minutes at most.\n\nTo apply the daily limit we also use a salted hash of your IP address as a lookup key for 24 hours. The IP address itself is never stored by us.\n\nWhen you look at sake data, we keep a short list of the sakes and flavor words you chose in this session to tailor suggestions; it is tied only to the random session identifier and is deleted after 24 hours. [TODO: lawful basis — ADR-0009 records consent, but the list is written without asking; decide between legitimate interest and asking first.]"
+      },
+      "scan": {
+        "heading": "When you scan a label or ask for suggestions",
+        "body": "The photo you take, or the words you type for suggestions, is sent to Anthropic, whose AI model reads it and returns the result. We do not store the photo: it is discarded as soon as the answer is back. Please photograph bottles, labels and menus only, not people.\n\nAnthropic keeps what we send for [TODO: 7 or 30 days — confirm in writing with Anthropic] to detect misuse, and does not use it to train its models. Lawful basis: performing the service you asked for (Art. 6(1)(b)).\n\nTo find faults, we record that a scan happened and how long it took with Langfuse, without the photo, the text you typed or the answer. Kept 30 days."
+      },
+      "account": {
+        "heading": "When you sign in",
+        "body": "Sign-in is run by Clerk. It holds your email address, your name and, if you sign in with Google, what Google passes on for that: your Google account's email, name and profile picture. Lawful basis: providing the account you asked for (Art. 6(1)(b)).\n\nWith an account you can keep a tasting journal, a cellar and the bottlings you added yourself. They contain what you enter — ratings, notes, the bottles you hold — and are linked to your account. We keep them because you asked us to (consent, Art. 6(1)(a)); you can export or delete them at any time, see Your rights. A copy is backed up once a day; the newest 30 copies are kept, older ones are deleted.\n\n[TODO: the journal is open to the maintainer only during the private beta; say so here, or drop this line when it opens.]"
+      },
+      "counts": {
+        "heading": "What we count",
+        "body": "We keep one number per kind of event per day, such as how many scans, searches or visits there were. These totals contain no identifier, address, query or sake and cannot be linked to you. They are kept for about 13 months.\n\nWhen something breaks, we log a short description of the error and the page it happened on, without any information about you. These lines are kept for as long as our host keeps its logs."
+      },
+      "processors": {
+        "heading": "Who helps us",
+        "body": "These companies process data on our behalf under a data processing agreement. Where they are outside the EU, the transfer rests on the EU–US Data Privacy Framework, the EU Standard Contractual Clauses, or both.\n\n- Vercel Inc., USA: hosting; our code runs in Frankfurt. Request logs [TODO: 1 hour on the current plan, about 1 day on Pro].\n- Supabase Inc., USA: the database of sakes and breweries, which holds no personal data, and the daily backup of journals. Stored in Frankfurt.\n- Upstash Inc., USA: the daily-limit store, the session list above, the counters and the journals, cellars and bottlings. Stored in [TODO: EU region, as provisioned].\n- Clerk Inc., USA: sign-in. Stored in the USA.\n- Anthropic PBC, USA: the AI model that reads labels and writes suggestions. Processed in the USA.\n- Langfuse GmbH, Germany: fault-finding records described above. Stored in the EU.\n\nThe sake data itself comes from Sakenowa (muro.sakenowa.com) and contains no personal data."
+      },
+      "rights": {
+        "heading": "Your rights",
+        "body": "You can ask us for a copy of your data (Art. 15), to correct it (Art. 16), to delete it (Art. 17), to limit its use (Art. 18), to receive it in a machine-readable format (Art. 20), and you can object to processing based on legitimate interest (Art. 21). Where we rely on your consent, you can withdraw it at any time, with effect for the future.\n\nIn the app: Account → Export journal downloads your journal, cellar and bottlings as a file. Account → Delete account deletes them, their backups and your account. Cookie settings, at the foot of every page, change your cookie choices.\n\nFor anything else, write to the address under Who is responsible. You can also complain to a data protection authority, for example [TODO: the authority for the controller's address, e.g. BayLDA for Bavaria]."
+      },
+      "retention": {
+        "heading": "How long we keep it",
+        "body": "- Label photos: not kept by us; at Anthropic as stated above.\n- Session identifier, IP hash and session list: 24 hours.\n- Journal, cellar and own bottlings: until you delete them or your account, [TODO: or after 24 months without sign-in, once that deletion runs].\n- Backups: the newest 30 daily copies.\n- Your account at Clerk: until you delete it.\n- Daily totals: about 13 months."
+      },
+      "changes": {
+        "heading": "Changes",
+        "body": "We update this notice whenever we start handling data in a new way, and change the date at the top."
+      }
+    }
   },
   "imprint": {
     "title": "Imprint",

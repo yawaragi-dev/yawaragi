@@ -593,21 +593,52 @@
     }
   },
   "privacy": {
-    "title": "Datenschutz",
-    "lastUpdated": "Zuletzt aktualisiert: 01.06.2026.",
-    "intro": "Yawaragi wird von der im Impressum genannten Person betrieben, die als Verantwortlicher im Sinne von Art. 4(7) DSGVO handelt. Diese Seite listet die Kategorien personenbezogener Daten auf, die wir verarbeiten, sowie die Auftragsverarbeiter, auf die wir uns stützen. Sie wird gemäß ADR-0009 mit jedem Release aktualisiert, das eine Verarbeitung einführt oder ändert.",
-    "anonymousSessionHeading": "Anonymes Sitzungs-Cookie (yawaragi_session)",
-    "anonymousSessionBody": "Sobald du eine Funktion nutzt, die einen kostenpflichtigen KI-Dienst aufruft (heute: den Etikett-Scan), setzen wir ein signiertes, undurchsichtiges Cookie namens `yawaragi_session` mit einer gleitenden Lebensdauer von 24 Stunden. Das Cookie enthält eine zufällige Kennung — weder Name, E-Mail noch IP. Wir nutzen sie gemeinsam mit einem kurzlebigen Hash deiner IP-Adresse (nur als Abfrageschlüssel verwendet, niemals im Klartext gespeichert, niemals in eine Datenbank oder ein Log geschrieben), um die Anzahl der Scans pro Besucher:in und Tag zu begrenzen, damit die KI-Kosten beherrschbar bleiben. Rechtsgrundlage: berechtigtes Interesse am Kostenschutz kostenpflichtiger KI-Schnittstellen (Art. 6 Abs. 1 lit. f DSGVO). Aufbewahrung: 24 Stunden, gleitend. Datenresidenz: EU (Rate-Limit-Speicher in einer EU-Region von Upstash Redis).",
-    "processorsHeading": "Auftragsverarbeiter",
-    "processorVercel": "Vercel, Inc. (USA) — Hosting, Build und Edge-Logs. Übermittlungsmechanismus: EU-US Data Privacy Framework sowie EU-Standardvertragsklauseln als Rückfallebene. Service-Generated Data (Request-Logs, Build-Metadaten) verarbeitet Vercel als eigener Verantwortlicher.",
-    "processorSupabase": "Supabase, Inc. — Postgres-Datenbank für den Sakenowa-Referenzspiegel und (ab Phase 2.5) für nutzerbezogene Tabellen. Projekt-Region: eu-central-1 (Frankfurt). Übermittlungsmechanismus: EU-SCCs (Module 2 und 3) nach irischem Recht. Service-Nutzungsdaten verarbeitet Supabase als eigener Verantwortlicher gemäß Art. 6(1)(f) (Abrechnung, Sicherheit, Service-Verbesserung). Meldefrist bei Datenschutzverletzungen: 48 Stunden.",
-    "processorUpstash": "Upstash, Inc. — Redis-Key-Value-Speicher in einer EU-Region (z. B. eu-central-1 Frankfurt) als Rate-Limit-Speicher für das oben beschriebene anonyme Sitzungs-Cookie. Gespeicherte Daten: der gesalzene SHA-256-Hash der Besucher-IP sowie die undurchsichtige Sitzungs-ID, jeweils mit einer TTL von 24 Stunden. Keine Klartext-IPs, keine Kontodaten. Übermittlungsmechanismus: EU-Standardvertragsklauseln (Daten verlassen die EU-Region nicht). Auftragsverarbeitungsvertrag: Unterzeichnung steht noch aus und ist Voraussetzung für die Produktions-Bereitstellung.",
-    "processorClerk": "Clerk, Inc. (USA) — Nutzerauthentifizierung (Anmeldung, Session, JWT-Ausstellung) ab Phase 2.5. Datenkategorien: E-Mail-Adresse, Vorname, Nachname sowie kurzlebige E-Mail-Bestätigungscodes zur Verifikation der Anmeldung. Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO (Vertragserfüllung — Clerk hält die zur Kontoführung erforderlichen Anmeldedaten). Übermittlungsmechanismus: EU-US Data Privacy Framework sowie EU-Standardvertragsklauseln als Rückfallebene. Aufbewahrung: bis zur Kontolöschung bzw. nach 24 Monaten Konto-Inaktivität (gemäß ADR-0009). Clerk veröffentlicht keine feste Meldefrist bei Datenschutzverletzungen; gemäß dem Breach-Runbook starten wir bei einem unbestätigten Clerk-Vorfall eine interne 24-Stunden-Uhr in Richtung der BayLDA-Meldung nach Art. 33 DSGVO.",
-    "sakenowaNote": "Marken- und Brauerei-Referenzdaten werden aus der öffentlichen Sakenowa Data API (muro.sakenowa.com) gespiegelt. Der Spiegel selbst enthält keine personenbezogenen Daten.",
-    "retentionHeading": "Aufbewahrung",
-    "retention": "Cookies laufen nach einem Jahr ab. Referenzdaten der Phase 2 bleiben für die Lebensdauer des Dienstes erhalten. Künftige nutzerbezogene Daten (ab Phase 2.5) folgen den Aufbewahrungsregeln in ADR-0009.",
-    "contactHeading": "Kontakt",
-    "contact": "Für Betroffenenanfragen (Auskunft, Berichtigung, Löschung, Datenübertragbarkeit) nutze die im Impressum genannte E-Mail-Adresse."
+    "title": "Datenschutzhinweise",
+    "lastUpdated": "Stand: [TODO: Datum der Veröffentlichung].",
+    "intro": "Hier steht, welche personenbezogenen Daten Yawaragi verarbeitet, wozu, wie lange, wer uns dabei hilft und welche Rechte du hast. Yawaragi ist eine App mit Informationen über Sake; sie zeigt keine Werbung und verkauft nichts.",
+    "draftNote": "[TODO: Entwurf zur rechtlichen Prüfung — diese Zeile nach der Prüfung entfernen.]",
+    "sections": {
+      "controller": {
+        "heading": "Verantwortlicher",
+        "body": "Verantwortlich im Sinne der DSGVO (Art. 4 Nr. 7) ist die im Impressum genannte Person: [TODO: Name und Anschrift wie im Impressum].\n\nFür alle Fragen zu deinen Daten schreib an [TODO: Kontakt-E-Mail]. Einen Datenschutzbeauftragten haben wir nicht benannt; für einen Dienst dieser Größe ist er nicht vorgeschrieben."
+      },
+      "short": {
+        "heading": "Kurz gesagt",
+        "body": "- Den Katalog ansehen, suchen und Wissen lesen geht ohne Konto; außer ein paar kleinen Cookies bleibt dabei nichts über dich gespeichert.\n- Ein Etikettfoto wird zum Lesen an unseren KI-Anbieter geschickt und von uns nicht aufbewahrt.\n- Wenn du dich anmeldest, speichert unser Anmeldedienst deine E-Mail-Adresse und deinen Namen. Dein Verkostungsjournal, dein Keller und deine eigenen Abfüllungen bleiben für dich gespeichert, bis du sie löschst.\n- Wir setzen keine Analyse- oder Werbewerkzeuge ein. Wir zählen anonyme Tagessummen, etwa wie viele Scans es gab; sie sagen nichts über dich."
+      },
+      "visiting": {
+        "heading": "Beim Besuch",
+        "body": "Unser Hoster protokolliert jede Anfrage einschließlich deiner IP-Adresse, wie jeder Webserver, um die Seite auszuliefern und den Dienst zu schützen (berechtigtes Interesse, Art. 6 Abs. 1 lit. f). Wie lange, steht unten bei Vercel.\n\nWir setzen diese Cookies. Alle sind für den Betrieb nötig oder merken sich eine Wahl, die du getroffen hast; eine Einwilligung brauchen sie daher nicht:\n\n- yawaragi_age_gate: dass du bestätigt hast, mindestens 18 zu sein. Ein Jahr.\n- NEXT_LOCALE: die gewählte Sprache. Ein Jahr.\n- yawaragi_consent: deine Cookie-Auswahl, damit wir sie beachten und nachweisen können. Ein Jahr.\n- yawaragi_session: eine Zufallskennung, nie dein Name, deine E-Mail oder IP-Adresse. Sie begrenzt, wie viele kostenlose Etikettscans und Vorschläge ein Besucher pro Tag nutzen kann, damit die KI-Kosten im Rahmen bleiben (berechtigtes Interesse, Art. 6 Abs. 1 lit. f). 24 Stunden.\n- yawaragi_collection_tab: ob du zuletzt Journal oder Keller geöffnet hast. Bis du den Browser schließt.\n- yawaragi_sign_in_pending: kurz gesetzt, während du dich anmeldest. Höchstens zwei Minuten.\n\nFür das Tageslimit nutzen wir außerdem 24 Stunden lang einen gesalzenen Hash deiner IP-Adresse als Suchschlüssel. Die IP-Adresse selbst speichern wir nicht.\n\nWenn du dir Sake ansiehst, merken wir uns für diese Sitzung eine kurze Liste der Sake und Geschmackswörter, die du gewählt hast, um Vorschläge anzupassen. Sie hängt nur an der Zufallskennung und wird nach 24 Stunden gelöscht. [TODO: Rechtsgrundlage — ADR-0009 nennt Einwilligung, die Liste wird aber ohne Nachfrage geschrieben; zwischen berechtigtem Interesse und vorheriger Nachfrage entscheiden.]"
+      },
+      "scan": {
+        "heading": "Beim Etikettscan und bei Vorschlägen",
+        "body": "Das Foto, das du aufnimmst, oder die Wörter, die du für Vorschläge eingibst, werden an Anthropic geschickt; dessen KI-Modell liest sie und gibt das Ergebnis zurück. Wir speichern das Foto nicht: Es wird verworfen, sobald die Antwort da ist. Bitte fotografiere nur Flaschen, Etiketten und Karten, keine Menschen.\n\nAnthropic bewahrt das Gesendete [TODO: 7 oder 30 Tage — schriftlich bei Anthropic bestätigen lassen] auf, um Missbrauch zu erkennen, und trainiert damit keine Modelle. Rechtsgrundlage: Erbringung des Dienstes, um den du gebeten hast (Art. 6 Abs. 1 lit. b).\n\nUm Fehler zu finden, halten wir mit Langfuse fest, dass ein Scan stattfand und wie lange er dauerte — ohne Foto, ohne deinen Text und ohne die Antwort. Aufbewahrt 30 Tage."
+      },
+      "account": {
+        "heading": "Bei der Anmeldung",
+        "body": "Die Anmeldung betreibt Clerk. Clerk speichert deine E-Mail-Adresse, deinen Namen und, wenn du dich mit Google anmeldest, was Google dafür übermittelt: E-Mail, Name und Profilbild deines Google-Kontos. Rechtsgrundlage: Bereitstellung des Kontos, um das du gebeten hast (Art. 6 Abs. 1 lit. b).\n\nMit einem Konto kannst du ein Verkostungsjournal, einen Keller und selbst angelegte Abfüllungen führen. Sie enthalten, was du eingibst — Bewertungen, Notizen, die Flaschen, die du hast — und sind mit deinem Konto verknüpft. Wir speichern sie, weil du uns darum bittest (Einwilligung, Art. 6 Abs. 1 lit. a); du kannst sie jederzeit exportieren oder löschen, siehe Deine Rechte. Einmal täglich wird eine Sicherungskopie angelegt; die neuesten 30 bleiben erhalten, ältere werden gelöscht.\n\n[TODO: Während der privaten Beta ist das Journal nur für den Betreiber freigeschaltet; das hier sagen oder die Zeile streichen, wenn es öffnet.]"
+      },
+      "counts": {
+        "heading": "Was wir zählen",
+        "body": "Wir speichern pro Tag eine Zahl je Ereignisart, etwa wie viele Scans, Suchen oder Besuche es gab. Diese Summen enthalten keine Kennung, Adresse, Suchanfrage und keinen Sake und lassen sich dir nicht zuordnen. Sie werden etwa 13 Monate aufbewahrt.\n\nWenn etwas kaputtgeht, protokollieren wir eine kurze Fehlerbeschreibung und die Seite, auf der er auftrat, ohne Angaben über dich. Diese Zeilen bleiben so lange, wie unser Hoster seine Protokolle aufbewahrt."
+      },
+      "processors": {
+        "heading": "Wer uns hilft",
+        "body": "Diese Unternehmen verarbeiten Daten in unserem Auftrag auf Grundlage eines Auftragsverarbeitungsvertrags. Sitzen sie außerhalb der EU, stützt sich die Übermittlung auf das EU-US Data Privacy Framework, die EU-Standardvertragsklauseln oder beides.\n\n- Vercel Inc., USA: Hosting; unser Code läuft in Frankfurt. Anfrageprotokolle [TODO: 1 Stunde im aktuellen Tarif, etwa 1 Tag mit Pro].\n- Supabase Inc., USA: die Datenbank der Sake und Brauereien, die keine personenbezogenen Daten enthält, und die tägliche Sicherung der Journale. Gespeichert in Frankfurt.\n- Upstash Inc., USA: der Speicher für das Tageslimit, die Sitzungsliste oben, die Zähler sowie die Journale, Keller und Abfüllungen. Gespeichert in [TODO: EU-Region wie eingerichtet].\n- Clerk Inc., USA: Anmeldung. Gespeichert in den USA.\n- Anthropic PBC, USA: das KI-Modell, das Etiketten liest und Vorschläge schreibt. Verarbeitet in den USA.\n- Langfuse GmbH, Deutschland: die oben beschriebenen Aufzeichnungen zur Fehlersuche. Gespeichert in der EU.\n\nDie Sake-Daten selbst stammen von Sakenowa (muro.sakenowa.com) und enthalten keine personenbezogenen Daten."
+      },
+      "rights": {
+        "heading": "Deine Rechte",
+        "body": "Du kannst Auskunft über deine Daten verlangen (Art. 15), ihre Berichtigung (Art. 16), Löschung (Art. 17), Einschränkung der Verarbeitung (Art. 18) und ihre Herausgabe in einem maschinenlesbaren Format (Art. 20), und du kannst einer Verarbeitung auf Grundlage berechtigten Interesses widersprechen (Art. 21). Wo wir uns auf deine Einwilligung stützen, kannst du sie jederzeit mit Wirkung für die Zukunft widerrufen.\n\nIn der App: Konto → Journal exportieren lädt dein Journal, deinen Keller und deine Abfüllungen als Datei herunter. Konto → Konto löschen löscht sie, ihre Sicherungen und dein Konto. Über „Cookies“ am Fuß jeder Seite änderst du deine Cookie-Auswahl.\n\nFür alles andere schreib an die Adresse unter Verantwortlicher. Du kannst dich außerdem bei einer Datenschutzaufsichtsbehörde beschweren, zum Beispiel [TODO: die für die Anschrift des Verantwortlichen zuständige Behörde, z. B. BayLDA für Bayern]."
+      },
+      "retention": {
+        "heading": "Wie lange wir speichern",
+        "body": "- Etikettfotos: bei uns gar nicht; bei Anthropic wie oben angegeben.\n- Sitzungskennung, IP-Hash und Sitzungsliste: 24 Stunden.\n- Journal, Keller und eigene Abfüllungen: bis du sie oder dein Konto löschst, [TODO: oder nach 24 Monaten ohne Anmeldung, sobald diese Löschung läuft].\n- Sicherungen: die neuesten 30 Tageskopien.\n- Dein Konto bei Clerk: bis du es löschst.\n- Tagessummen: etwa 13 Monate."
+      },
+      "changes": {
+        "heading": "Änderungen",
+        "body": "Wir passen diese Hinweise an, sobald wir Daten auf eine neue Art verarbeiten, und ändern das Datum oben."
+      }
+    }
   },
   "imprint": {
     "title": "Impressum",
