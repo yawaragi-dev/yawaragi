@@ -350,8 +350,7 @@
       },
       "slowTitle": "Taking longer than usual",
       "slowHint": "The connection is slow. Your photo is kept.",
-      "cancel": "Cancel",
-      "countLine": "If it arrived, it counts as one scan."
+      "cancel": "Cancel"
     },
     "form": {
       "pending": "Reading the label…",
