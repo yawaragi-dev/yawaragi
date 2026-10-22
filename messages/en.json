@@ -242,7 +242,8 @@
       "otherSakesIntro": "Also from this brewery",
       "shopsLabel": "Where to find it",
       "shopsEmpty": "Not tracked in any shop yet.",
-      "alsoSoldAs": "Also sold as {names}"
+      "alsoSoldAs": "Also sold as {names}",
+      "aboutRegion": "About {prefecture} ›"
     },
     "similar": {
       "title": "Like {name}",
@@ -1288,6 +1289,7 @@
       "styles": "Styles and processes",
       "rice": "Rice",
       "tasting": "Serving and tasting",
+      "regions": "Regions",
       "around": "Around sake"
     },
     "groupKicker": {
@@ -1296,6 +1298,7 @@
       "styles": "Style",
       "rice": "Rice",
       "tasting": "Tasting",
+      "regions": "Region",
       "around": "Around sake"
     },
     "entries": {
@@ -1889,6 +1892,381 @@
         "detail": {
           "p1": "Japanese law sorts every drink into a category, and the bottle must print it in Japanese on the side with the brand: 清酒 for sake, 焼酎 for shochu, リキュール for a liqueur. That word settles what is in the bottle, whoever made it.",
           "p2": "Yawaragi's catalogue holds sake. A scan reads craft sake as sake; shochu, awamori, umeshu and other liqueurs have no page here."
+        }
+      },
+      "region-niigata": {
+        "title": "Niigata",
+        "answer": "Niigata's sake is tanrei, light and clean, with few off-flavours. Soft water comes from rivers fed by heavy snow, and the winter cold holds steady day and night.",
+        "factsTitle": "At a glance",
+        "facts": {
+          "character": {
+            "term": "Character",
+            "value": "Light and clean",
+            "note": "A gentle aroma, smooth in the mouth, a light sweetness from the rice that fades into a long finish."
+          },
+          "water": {
+            "term": "Water",
+            "value": "Soft",
+            "note": "From the many rivers the mountains feed, the Shinano and the Agano among them."
+          },
+          "winter": {
+            "term": "Winter",
+            "value": "Snowy, steadily cold",
+            "note": "Little difference between day and night, which suits koji and yeast."
+          },
+          "brewers": {
+            "term": "Brewers",
+            "value": "Echigo tōji",
+            "note": "Farmers who learned brewing in western Japan in the mid-Edo period, then brewed across the country."
+          },
+          "gi": {
+            "term": "Geographical indication",
+            "value": "“Niigata”, since 2022",
+            "note": "Japanese rice, Niigata water; made, stored and bottled in the prefecture."
+          }
+        },
+        "detail": {
+          "p1": "In 1930 Niigata opened a prefectural brewing institute, the only one in Japan run as an independent body. It turned the Echigo brewers' know-how into theory, so good sake could be made from rice of any quality.",
+          "p2": "As master brewers grew fewer, the prefecture's brewers' association founded Japan's first school for sake brewers, the Niigata Seishu Gakkō."
+        }
+      },
+      "region-hyogo": {
+        "title": "Hyōgo",
+        "answer": "Hyōgo has three sake geographical indications: Nada Gogō on the coast below Mount Rokkō, Harima to the west, and Itami. Yamada Nishiki, the best-known sake rice, was bred here.",
+        "factsTitle": "At a glance",
+        "facts": {
+          "nada": {
+            "term": "Nada Gogō",
+            "value": "Balanced, with a clean finish",
+            "note": "Five brewing districts between Kōbe and Nishinomiya. Sake stored over the summer rounds out, which brewers call aki-agari."
+          },
+          "miyamizu": {
+            "term": "Miyamizu",
+            "value": "Hard water",
+            "note": "Well water with the minerals yeast needs and almost no iron, which would colour the sake."
+          },
+          "winter": {
+            "term": "Winter",
+            "value": "Rokkō oroshi",
+            "note": "A cold wind down off the mountains that suits brewing in winter."
+          },
+          "harima": {
+            "term": "Harima",
+            "value": "Soft and round, light finish",
+            "note": "Ginjo here has a sweet, apple-like aroma, according to its geographical indication."
+          },
+          "yamadanishiki": {
+            "term": "Yamada Nishiki",
+            "value": "Bred in Hyōgo, 1936",
+            "note": "At the prefecture's sake rice test station, opened in 1928."
+          },
+          "brewers": {
+            "term": "Brewers",
+            "value": "Tanba tōji",
+            "note": "One of Japan's three great brewers' guilds, with the Nanbu and Echigo tōji."
+          }
+        },
+        "detail": {
+          "p1": "The oldest record of sake made with rice koji is from Harima, in the Harima no Kuni Fudoki, compiled in the Nara period.",
+          "p2": "In Nada Gogō, sake brewed in winter is pasteurised by April and matures through the summer. What is released from September without a second heating is hiyaoroshi."
+        }
+      },
+      "region-kyoto": {
+        "title": "Kyoto",
+        "answer": "Kyoto's sake is round and soft, with moderate umami and sweetness and a refined aroma. It is made to sit beside Kyoto's dashi-based cooking, not over it.",
+        "factsTitle": "At a glance",
+        "facts": {
+          "character": {
+            "term": "Character",
+            "value": "Round and soft",
+            "note": "A fuller middle from umami and sweetness, with a refined aroma."
+          },
+          "water": {
+            "term": "Water",
+            "value": "Soft to medium-hard",
+            "note": "Water that has passed through granite, from the Yura and Yodo river systems."
+          },
+          "winter": {
+            "term": "Winter",
+            "value": "Sokobie",
+            "note": "The deep cold of the Kyoto basin, and heavy snow in the north. Fermentation runs slowly."
+          },
+          "food": {
+            "term": "Food",
+            "value": "Kyō-ryōri",
+            "note": "Delicate, dashi-based cooking: the sake is meant to bring out the dish."
+          },
+          "gi": {
+            "term": "Geographical indication",
+            "value": "“Kyoto”, since 2025",
+            "note": "Designated by the National Tax Agency on 1 October 2025."
+          }
+        },
+        "detail": {
+          "p1": "In the Heian period the court had its own office for brewing, the Miki no Tsukasa. The Engishiki records thirteen kinds of sake brewed for the court.",
+          "p2": "In the Meiji era Kyoto brewers replaced salicylic acid with heat-sterilised, sealed glass bottles, the first sake in Japan sold without a preservative. After the war they were the first to adopt year-round brewing."
+        }
+      },
+      "region-yamagata": {
+        "title": "Yamagata",
+        "answer": "Yamagata's sake is soft and clear, “transparent” in the words of its geographical indication. The groundwater from mountain snow is soft and low in iron, and the winters are cold enough for long, slow ginjo fermentation.",
+        "factsTitle": "At a glance",
+        "facts": {
+          "character": {
+            "term": "Character",
+            "value": "Soft and clear",
+            "note": "Junmai and honjozo: acidity and umami in balance. Ginjo: a fruity aroma with a soft feel."
+          },
+          "water": {
+            "term": "Water",
+            "value": "Soft, low in iron",
+            "note": "Groundwater from the snow on the mountain ranges."
+          },
+          "winter": {
+            "term": "Winter",
+            "value": "Hard cold",
+            "note": "Keeps unwanted microbes down and suits long, cool fermentation."
+          },
+          "aroma": {
+            "term": "Aroma",
+            "value": "Local fruit",
+            "note": "Besides banana, the fruit Yamagata grows: Fuji apple, melon, La France pear."
+          },
+          "gi": {
+            "term": "Geographical indication",
+            "value": "“Yamagata”, since 2016",
+            "note": "Designated on 16 December 2016."
+          }
+        },
+        "detail": {
+          "p1": "Since 1978 the prefecture's technology centre and brewers' association have run short brewing courses. In 1987 brewers and the centre's staff formed a study group for ginjo brewing.",
+          "p2": "Brewers here learned to keep the freshness of just-pressed sake through filtering, pasteurising and storage, and the technique spread across the prefecture."
+        }
+      },
+      "region-nagano": {
+        "title": "Nagano",
+        "answer": "Nagano's sake is rich yet clean, with a calm aroma. The rice grows in high valleys with hot days and cold nights, and the water comes down from some of Japan's highest mountains. Its miso-and-pickle cooking asked for a fuller sake.",
+        "factsTitle": "At a glance",
+        "facts": {
+          "character": {
+            "term": "Character",
+            "value": "Rich, clean, calm aroma",
+            "note": "Sweetness and acidity layered over a concentrated rice flavour, with few off-flavours."
+          },
+          "rice": {
+            "term": "Rice",
+            "value": "From high valleys",
+            "note": "Hot summer days and cold nights fill the grain with starch. A very high share is graded first class."
+          },
+          "water": {
+            "term": "Water",
+            "value": "Mountain water",
+            "note": "Rain and snow from ranges of 2,000–3,000 m, carried by the Chikuma, Sai and Tenryū rivers."
+          },
+          "food": {
+            "term": "Food",
+            "value": "Miso and pickles",
+            "note": "Long winters made preserved, strongly seasoned food the norm, and brewers aimed for a sake to match."
+          },
+          "gi": {
+            "term": "Geographical indication",
+            "value": "“Nagano”, since 2021",
+            "note": "Designated on 30 June 2021."
+          }
+        },
+        "detail": {
+          "p1": "From 1917 the prefecture employed its own brewing engineer, and from 1919 it trained local tōji. In 1941 it opened a prefectural brewing institute, which developed new yeasts.",
+          "p2": "Since 2003 the Nagano Appellation Control has certified sake, as well as other produce, by its ingredients, method and taste."
+        }
+      },
+      "region-shizuoka": {
+        "title": "Shizuoka",
+        "answer": "Shizuoka's sake is low in acidity, light and gently savoury, with a calm, banana-like aroma from its own yeast. It is made to go with the bonito, tuna and shirasu of its coast.",
+        "factsTitle": "At a glance",
+        "facts": {
+          "character": {
+            "term": "Character",
+            "value": "Light and round, low acidity",
+            "note": "Soft in the mouth, with a quick, clean finish."
+          },
+          "aroma": {
+            "term": "Aroma",
+            "value": "Banana; melon in ginjo",
+            "note": "Calm rather than loud."
+          },
+          "water": {
+            "term": "Water",
+            "value": "Soft",
+            "note": "Groundwater from the Fuji, Ōi, Abe and Tenryū rivers, and spring water from Mount Fuji."
+          },
+          "yeast": {
+            "term": "Yeast",
+            "value": "Shizuoka yeast",
+            "note": "Developed at the prefecture's test station in the late 1970s or early 1980s, with breweries working alongside."
+          },
+          "brewers": {
+            "term": "Brewers",
+            "value": "Shida tōji",
+            "note": "Farmers and fishermen from the Shida plain, who brewed in the winter months."
+          },
+          "gi": {
+            "term": "Geographical indication",
+            "value": "“Shizuoka”, since 2023",
+            "note": "Designated on 30 November 2023."
+          }
+        },
+        "detail": {
+          "p1": "At the national new sake competition of 1986, ten Shizuoka breweries won gold, and its ginjo came to be called “Shizuoka ginjo”.",
+          "p2": "Most breweries stand along the old Tōkaidō near the coast, where the post towns brewed for travellers to drink with the local catch."
+        }
+      },
+      "region-iwate": {
+        "title": "Iwate",
+        "answer": "Iwate's sake is soft in the mouth, with a full umami from the rice and a fresh aroma like young bamboo. It is the work of the Nanbu tōji, Japan's largest brewers' guild, and of mineral-rich spring water.",
+        "factsTitle": "At a glance",
+        "facts": {
+          "character": {
+            "term": "Character",
+            "value": "Soft, full umami",
+            "note": "Ginjo adds green apple and pear."
+          },
+          "water": {
+            "term": "Water",
+            "value": "Rich in calcium and magnesium",
+            "note": "Old and young rock layers mixed. The minerals help yeast grow and koji release its enzymes."
+          },
+          "winter": {
+            "term": "Winter",
+            "value": "Down to −20 °C",
+            "note": "In parts of the interior. The cold suits long, cool ginjo fermentation."
+          },
+          "brewers": {
+            "term": "Brewers",
+            "value": "Nanbu tōji",
+            "note": "Japan's largest brewers' guild. It began in 1678, when a merchant from Ōmi brought Kansai brewers to Shiwa."
+          },
+          "rice": {
+            "term": "Rice",
+            "value": "Gin Ginga, Yui no Kaori",
+            "note": "Sake rice bred to grow in Iwate's cold."
+          },
+          "gi": {
+            "term": "Geographical indication",
+            "value": "“Iwate”, since 2023",
+            "note": "Designated on 25 September 2023."
+          }
+        },
+        "detail": {
+          "p1": "Local farmers learned the craft by brewing on commission under visiting masters. They then worked other regions' breweries in winter, where they were prized as the Nanbu tōji.",
+          "p2": "After the 2011 earthquake and tsunami, the brewers' association and the prefecture's technology centre began “All-Iwate” sake, made only from Iwate ingredients."
+        }
+      },
+      "region-saga": {
+        "title": "Saga",
+        "answer": "Saga's sake is full and rounded and keeps much of the rice's umami and sweetness, brewed for Kyushu's sweet, soy-seasoned cooking. Its geographical indication even requires ordinary sake to measure on the sweet side.",
+        "factsTitle": "At a glance",
+        "facts": {
+          "character": {
+            "term": "Character",
+            "value": "Full, sweet and savoury",
+            "note": "Mellow in the mouth, with sweetness spreading before a firm umami."
+          },
+          "land": {
+            "term": "Land",
+            "value": "The Saga Plain",
+            "note": "Warm, flat and irrigated, long one of Kyushu's main rice areas."
+          },
+          "water": {
+            "term": "Water",
+            "value": "Groundwater",
+            "note": "From the Sefuri mountains and Mount Tara."
+          },
+          "history": {
+            "term": "History",
+            "value": "From the 1850s",
+            "note": "The domain's lord, Nabeshima Naomasa, encouraged brewing to restore its finances."
+          },
+          "gi": {
+            "term": "Geographical indication",
+            "value": "“Saga”, since 2021",
+            "note": "Designated on 14 June 2021."
+          }
+        },
+        "detail": {
+          "p1": "For sake outside the special grades the indication sets a test: a sweetness index worked out from the sake meter value and the acidity must come out above zero, on the sweet side.",
+          "p2": "A prefectural committee certifies “The SAGA” sake, made with only Saga rice and water and passed by a tasting panel."
+        }
+      },
+      "region-mie": {
+        "title": "Mie",
+        "answer": "Mie's sake is warm and full: smooth umami from the first sip, gentle sweetness and dryness, and a fresh acidity. It is made to drink with shellfish and the catch of Ise Bay.",
+        "factsTitle": "At a glance",
+        "facts": {
+          "character": {
+            "term": "Character",
+            "value": "Warm and full",
+            "note": "Gentle sweetness and dryness, a fresh acidity, a clear finish."
+          },
+          "winter": {
+            "term": "Winter",
+            "value": "Suzuka oroshi",
+            "note": "A dry, cold wind over the mountains. The inland Iga basin has wide temperature swings."
+          },
+          "water": {
+            "term": "Water",
+            "value": "Snow and rain",
+            "note": "Snow on the Suzuka range, and rain from the Kii mountains, one of Japan's wettest areas."
+          },
+          "food": {
+            "term": "Food",
+            "value": "Shellfish and crustaceans",
+            "note": "The acidity masks any fishiness, and the umami of each lifts the other."
+          },
+          "gi": {
+            "term": "Geographical indication",
+            "value": "“Mie”, since 2020",
+            "note": "Designated on 19 June 2020."
+          }
+        },
+        "detail": {
+          "p1": "Brewing grew in the Edo period with the pilgrims to the Ise Grand Shrine, as sake to welcome them.",
+          "p2": "Brewers work with the prefecture's research institute on their own yeasts, and young brewers share what they learn in a Mie sake study group."
+        }
+      },
+      "region-shiga": {
+        "title": "Shiga",
+        "answer": "Shiga's sake has a full sweetness and umami from the rice and a firm acidity, good chilled or warmed. It comes from the rice fields around Lake Biwa and the groundwater of the mountains that ring the lake.",
+        "factsTitle": "At a glance",
+        "facts": {
+          "character": {
+            "term": "Character",
+            "value": "Full, sweet, firm acidity",
+            "note": "Good across a wide range of temperatures, chilled to warmed."
+          },
+          "water": {
+            "term": "Water",
+            "value": "Groundwater",
+            "note": "From the mountains around Lake Biwa. Some 460 rivers flow into the lake."
+          },
+          "rice": {
+            "term": "Rice",
+            "value": "Ōmi rice",
+            "note": "Sake rice too: Gin Fubuki, Tamasakae, Yamada Nishiki, and Shiga Watabune No. 6, revived in 2004."
+          },
+          "winter": {
+            "term": "Winter",
+            "value": "Sokobie",
+            "note": "The basin's deep winter cold makes for a gentler fermentation."
+          },
+          "gi": {
+            "term": "Geographical indication",
+            "value": "“Shiga”, since 2022",
+            "note": "Designated on 13 April 2022."
+          }
+        },
+        "detail": {
+          "p1": "Ōmi merchants brewed sake across Japan, and many breweries elsewhere trace their roots to them.",
+          "p2": "In the Meiji era an agency in Ōtsu placed Noto tōji in Shiga's breweries. By the Taishō era more than 200 breweries were working in the prefecture."
         }
       }
     }
