@@ -2008,5 +2008,10 @@
         "note": "Nigori runs from sweet and creamy to dry; these suit the sweeter, creamier ones."
       }
     }
+  },
+  "offline": {
+    "title": "You’re offline",
+    "body": "Yawaragi needs a connection to look up sakes and keep your journal. Check your connection and try again.",
+    "retry": "Try again"
   }
 }
