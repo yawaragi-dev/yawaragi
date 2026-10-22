@@ -48,3 +48,22 @@ test('the offline line says so while the phone is offline, then "Back online"', 
   await expect(page.getByTestId('offline-line')).toContainText('Back online')
   await expect(page.getByTestId('offline-line')).toHaveCount(0, { timeout: 5_000 })
 })
+
+test('with no connection a tap stays on the screen, shell and all, and says why', async ({ page, context }) => {
+  await page.goto('/en/home')
+  await expect(page.locator('html[data-nav-feedback="ready"]')).toHaveCount(1)
+
+  await context.setOffline(true)
+  await page.getByTestId('tab-collection').click()
+
+  // Not the service worker's static page in place of the app (the bug: the
+  // router fell back to a full page load, which lost the tab bar).
+  await expect(page.getByTestId('nav-offline')).toContainText('No connection')
+  await expect(page).toHaveURL(/\/en\/home$/)
+  await expect(page.getByTestId('tab-bar')).toBeVisible()
+
+  await context.setOffline(false)
+  await page.getByTestId('tab-collection').click()
+  await expect(page).toHaveURL(/\/en\/collection/)
+  await expect(page.getByTestId('tab-bar')).toBeVisible()
+})

@@ -2480,6 +2480,8 @@
     "journalAsOf": "Offline · Dein Journal von {time}",
     "cellarAsOf": "Offline · Dein Keller von {time}",
     "homeAsOf": "Offline · Letzte Verkostungen von {time}",
-    "changesWait": "Änderungen warten auf eine Verbindung."
+    "changesWait": "Änderungen warten auf eine Verbindung.",
+    "offlineTapTitle": "Keine Verbindung",
+    "offlineTapBody": "Dafür braucht es das Internet. Du bleibst hier, bis es zurück ist."
   }
 }

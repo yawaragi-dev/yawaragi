@@ -91,7 +91,13 @@ export default async function AppShellLayout({ children }: { children: React.Rea
             changesWait: tConnection('changesWait'),
           }}
         />
-        <NavigationFeedback slowTitle={tConnection('slowTitle')} slowBody={tConnection('slowBody')} cancel={tConnection('cancel')} />
+        <NavigationFeedback
+          slowTitle={tConnection('slowTitle')}
+          slowBody={tConnection('slowBody')}
+          cancel={tConnection('cancel')}
+          offlineTitle={tConnection('offlineTapTitle')}
+          offlineBody={tConnection('offlineTapBody')}
+        />
       </Suspense>
       {viewingSample && <SampleCollectionBanner />}
       <main
