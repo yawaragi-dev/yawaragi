@@ -26,4 +26,12 @@ describe('GET /api/search-suggest', () => {
     expect(body.query).toBe('dass')
     expect(body.rows).toEqual([{ ...DASSAI, href: '/de/sake/1' }])
   })
+
+  it('names the prefecture on each row, as the search results do', async () => {
+    const res = await handleSuggestRequest(new Request('http://x/api/search-suggest?q=dass&locale=en'), {
+      gateAccepted: async () => true,
+      suggest: async () => [{ ...DASSAI, areaId: 35 }],
+    })
+    expect((await res.json()).rows[0].prefecture).toBe('Yamaguchi')
+  })
 })

@@ -275,6 +275,8 @@ export interface CatalogueSearchResult {
   readonly nameRomaji: string | null
   readonly breweryKanji: string | null
   readonly breweryRomaji: string | null
+  /** The brewery's prefecture (Sakenowa areaId), for the suggestion row's meta line (v1.9 U1). */
+  readonly areaId?: number | null
   /**
    * Set when the row was found only through another name the sake is sold
    * under (#413). The row says so ("Also sold as …"); the displayed names stay
@@ -289,6 +291,7 @@ interface CatalogueSearchRow {
   name_romaji: string | null
   brewery_kanji: string | null
   brewery_romaji: string | null
+  area_id: number | null
 }
 
 /**
@@ -392,7 +395,8 @@ const SEARCH_CATALOGUE_BY_IDS = `
     b.name_kanji,
     b.name_romaji,
     br.name_kanji  AS brewery_kanji,
-    br.name_romaji AS brewery_romaji
+    br.name_romaji AS brewery_romaji,
+    br.area_id     AS area_id
   FROM brands b
   LEFT JOIN breweries br
     ON br.brewery_id = b.brewery_id
@@ -409,7 +413,8 @@ const SEARCH_CATALOGUE = `
     b.name_kanji,
     b.name_romaji,
     br.name_kanji  AS brewery_kanji,
-    br.name_romaji AS brewery_romaji
+    br.name_romaji AS brewery_romaji,
+    br.area_id     AS area_id
   FROM brands b
   LEFT JOIN breweries br
     ON br.brewery_id = b.brewery_id
@@ -597,5 +602,7 @@ function toCatalogueResult(row: CatalogueSearchRow): CatalogueSearchResult {
     nameRomaji: row.name_romaji,
     breweryKanji: row.brewery_kanji,
     breweryRomaji: row.brewery_romaji,
+    // 0 is Sakenowa's "Other", a brewery outside the 47 prefectures.
+    areaId: row.area_id && row.area_id > 0 ? row.area_id : null,
   }
 }

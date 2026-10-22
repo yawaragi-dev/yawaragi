@@ -184,6 +184,8 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
               locale={locale}
               listLabel={t('suggestions.label')}
               alsoSoldAs={t.raw('alsoSoldAs') as string}
+              yours={t('suggestions.yours')}
+              yourBottling={t('suggestions.yourBottling')}
               footer={
                 <>
                   {tRomaji('caveat')} ·{' '}

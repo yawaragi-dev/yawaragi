@@ -4,6 +4,7 @@ import { useEffect, useId, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { isCatalogueQuerySpecific } from '@/lib/sakenowa/catalogue-query'
 import { cn } from '@/lib/utils'
+import { ownBottlingSuggestions } from '@/lib/search/own-bottling-suggestions'
 
 export interface Suggestion {
   brandId: number
@@ -13,10 +14,22 @@ export interface Suggestion {
   breweryRomaji: string | null
   /** Found only under another name it is sold by (#413). */
   matchedAlias?: string
+  /** The brewery's prefecture, for the meta line (v1.9 U1). */
+  prefecture?: string
   href: string
 }
 
-type Fetched = { query: string; rows: readonly Suggestion[] }
+/** One of the visitor's own bottlings (v1.9 U4), listed above the catalogue. */
+export interface OwnSuggestion {
+  id: string
+  name: string
+  href: string
+}
+
+type Fetched = { query: string; rows: readonly Suggestion[]; own?: readonly OwnSuggestion[] }
+
+/** A row of the list, whichever kind: what the keyboard moves through. */
+type Row = { key: string; href: string; own?: OwnSuggestion; sake?: Suggestion }
 
 /** Long enough to skip the keystrokes of a word being typed, short enough to feel live. */
 const DEBOUNCE_MS = 150
@@ -45,6 +58,8 @@ export function SearchField({
   locale,
   listLabel,
   alsoSoldAs,
+  yours,
+  yourBottling,
   footer,
   fetchSuggestions = defaultFetch,
 }: {
@@ -56,6 +71,10 @@ export function SearchField({
   listLabel: string
   /** "Also sold as {name}", with `{name}` left in for the row's other name. */
   alsoSoldAs: string
+  /** The tag on the visitor's own bottlings: "Yours". */
+  yours: string
+  /** Their meta line: "Your bottling". */
+  yourBottling: string
   /** Under the rows: the romaji caveat and the Sakenowa credit. */
   footer: React.ReactNode
   fetchSuggestions?: (query: string, locale: string, signal: AbortSignal) => Promise<Fetched>
@@ -86,11 +105,17 @@ export function SearchField({
     }
   }, [wanted, query, locale, fetchSuggestions])
 
-  const rows = wanted && fetched.query === query ? fetched.rows : []
+  const answered = wanted && fetched.query === query
+  const rows: Row[] = answered
+    ? [
+        ...(fetched.own ?? []).map((own) => ({ key: `own-${own.id}`, href: own.href, own })),
+        ...fetched.rows.map((sake) => ({ key: `sake-${sake.brandId}`, href: sake.href, sake })),
+      ]
+    : []
   const open = !dismissed && rows.length > 0
   const current = open && active >= 0 && active < rows.length ? active : -1
 
-  const choose = (row: Suggestion) => {
+  const choose = (row: Row) => {
     setDismissed(true)
     router.push(row.href)
   }
@@ -152,7 +177,7 @@ export function SearchField({
           <ul role="listbox" id={listId} aria-label={listLabel}>
             {rows.map((row, index) => (
               <li
-                key={row.brandId}
+                key={row.key}
                 id={`${listId}-${index}`}
                 role="option"
                 aria-selected={index === current}
@@ -163,22 +188,42 @@ export function SearchField({
                   'flex min-h-12 cursor-pointer flex-col justify-center gap-0.5 border-b border-divider px-3 py-2',
                   index === current ? 'bg-ash-200' : 'hover:bg-ash-100',
                 )}
-                data-testid="search-suggestion"
+                data-testid={row.own ? 'search-suggestion-own' : 'search-suggestion'}
               >
-                <span className="flex flex-wrap items-baseline gap-x-2">
-                  <span className="text-body font-medium text-ink" lang="ja">
-                    {row.nameKanji}
-                  </span>
-                  {row.nameRomaji && <span className="text-subtle text-ash-600">{row.nameRomaji}</span>}
-                </span>
-                {row.breweryKanji && (
-                  <span className="text-meta text-ash-600">
-                    <span lang="ja">{row.breweryKanji}</span>
-                    {row.breweryRomaji && ` (${row.breweryRomaji})`}
-                  </span>
-                )}
-                {row.matchedAlias && (
-                  <span className="text-meta text-ash-700">{alsoSoldAs.replace('{name}', row.matchedAlias)}</span>
+                {row.own ? (
+                  // v1.9 U4: the visitor's own bottling, above the catalogue.
+                  <>
+                    <span className="flex flex-wrap items-baseline gap-x-2">
+                      <span className="text-subtle font-medium text-ink">{row.own.name}</span>
+                      <span className="rounded-full border border-ash-400 px-1.5 text-micro text-ash-700">{yours}</span>
+                    </span>
+                    <span className="text-meta text-ash-600">{yourBottling}</span>
+                  </>
+                ) : (
+                  row.sake && (
+                    // v1.9 U1: Latin name first at 14px, the kanji after it at
+                    // 12px, as §8's rows do; rows wrap, nothing is cut.
+                    <>
+                      <span className="flex flex-wrap items-baseline gap-x-2">
+                        <span className="text-subtle font-medium text-ink" lang={row.sake.nameRomaji ? undefined : 'ja'}>
+                          {row.sake.nameRomaji ?? row.sake.nameKanji}
+                        </span>
+                        {row.sake.nameRomaji && (
+                          <span className="text-meta text-ash-600" lang="ja">
+                            {row.sake.nameKanji}
+                          </span>
+                        )}
+                      </span>
+                      {(row.sake.breweryRomaji || row.sake.breweryKanji || row.sake.prefecture) && (
+                        <span className="text-meta text-ash-600">
+                          {[row.sake.breweryRomaji ?? row.sake.breweryKanji, row.sake.prefecture].filter(Boolean).join(' · ')}
+                        </span>
+                      )}
+                      {row.sake.matchedAlias && (
+                        <span className="text-meta text-ash-700">{alsoSoldAs.replace('{name}', row.sake.matchedAlias)}</span>
+                      )}
+                    </>
+                  )
                 )}
               </li>
             ))}
@@ -192,8 +237,14 @@ export function SearchField({
 
 async function defaultFetch(query: string, locale: string, signal: AbortSignal): Promise<Fetched> {
   const params = new URLSearchParams({ q: query, locale })
-  const response = await fetch(`/api/search-suggest?${params}`, { signal, credentials: 'same-origin' })
+  // The catalogue from the public API; the visitor's own bottlings from a
+  // Server Action, which has their session (v1.9 U4). Either failing alone
+  // leaves the other's rows.
+  const [response, own] = await Promise.all([
+    fetch(`/api/search-suggest?${params}`, { signal, credentials: 'same-origin' }),
+    ownBottlingSuggestions(query, locale).catch(() => []),
+  ])
   if (!response.ok) throw new Error(`suggest ${response.status}`)
   const body = (await response.json()) as { query: string; rows: Suggestion[] }
-  return { query: body.query.trim(), rows: body.rows }
+  return { query: body.query.trim(), rows: body.rows, own }
 }

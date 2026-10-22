@@ -6,6 +6,7 @@ import { routing, type Locale } from '@/i18n/routing'
 import { hasAcceptedAgeGate } from '@/lib/legal/age-gate-cookie'
 import type { CatalogueSearchResult } from '@/lib/sakenowa/search-brands'
 import { suggestCatalogue } from '@/lib/sakenowa/suggest-catalogue'
+import { getPrefectureNames } from '@/lib/sakenowa/prefecture'
 
 /**
  * `GET /api/search-suggest?q=…&locale=en` — the rows for §8's list as you
@@ -21,6 +22,8 @@ export const dynamic = 'force-dynamic'
 
 export interface SuggestionRow extends CatalogueSearchResult {
   href: string
+  /** The brewery's prefecture in English, for the row's meta line (v1.9 U1). */
+  prefecture?: string
 }
 
 const HEADERS = { 'Cache-Control': 'private, no-store' } as const
@@ -38,10 +41,14 @@ export async function handleSuggestRequest(
   const requested = url.searchParams.get('locale')
   const locale: Locale = hasLocale(routing.locales, requested) ? requested : routing.defaultLocale
   const matches = await deps.suggest(query)
-  const rows: SuggestionRow[] = matches.map((match) => ({
-    ...match,
-    href: getPathname({ locale, href: { pathname: '/sake/[brandId]', params: { brandId: String(match.brandId) } } }),
-  }))
+  const rows: SuggestionRow[] = matches.map((match) => {
+    const prefecture = match.areaId ? getPrefectureNames(match.areaId)?.nameEn : undefined
+    return {
+      ...match,
+      ...(prefecture ? { prefecture } : {}),
+      href: getPathname({ locale, href: { pathname: '/sake/[brandId]', params: { brandId: String(match.brandId) } } }),
+    }
+  })
   return Response.json({ query, rows }, { headers: HEADERS })
 }
 
@@ -51,3 +58,4 @@ export async function GET(request: Request): Promise<Response> {
     suggest: suggestCatalogue,
   })
 }
+
