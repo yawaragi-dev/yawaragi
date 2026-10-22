@@ -415,6 +415,8 @@ A reference for what a label and a bottle mean. **Working name "Sake guide"** (O
 14. **No image, no slot.** Thumbs and bottle slots render only when there is an image. Today that is only §5's photo, for the session that took it. Rows without one are text-only; no permanent striped placeholders.
 15. **End-of-screen block.** Last in every scrolling app screen (not the camera, sheets or Ask): 28px above, left-aligned on the content column, 12px neutral-600. Line 1: "Catalogue and flavour data · Powered by Sakenowa ↗" — **shown only when the screen displays catalogue or chart data**; dropped on an own bottling with no line (§5, §9a), the Sake guide index and any entry without "Sakes of this style" (§18), so Sakenowa is never credited for hand-written or user-typed content (link). Line 2: Impressum · Privacy notice · Cookie settings · Drink responsibly — accent-700 links, 14px apart, 6px vertical padding, wrapping. No divider. Account shows line 2 only.
 
+16. **A tap is answered at once (1.9, S).** The tapped thing takes its press state within 100 ms and holds it until the next screen is there. After 300 ms a 2px accent-500 bar runs along the top edge. After 5 s (a screen) or 10 s (a scan) the wait is said in words, with Cancel. Nothing ends on the error page because of the network, and nothing tapped or photographed is lost to it. **Press tokens:** row and tile → neutral-200 on the ground, neutral-300 on surface · button → as today (accent-400 tint for outline) · chip → accent-200 fill · tab → neutral-200 pill behind icon and label (111).
+
 ## State (per user)
 - `entries[]` {id, sakeId|name, date, rating (0.5 steps), note, tags[], detail{appearance, nose, palate scales 1–5, serve, verdict, specs if manual}}
 - `cellar[]` {sakeId, count, openedAt|null, nama}
@@ -490,13 +492,15 @@ Phosphor, regular and fill weights (`@phosphor-icons/web` 2.1.1). Sizes: 22 tab 
 14. **Kept photos (1.8, I).** Where they are stored, how long, and that deleting the account deletes them. Location stripping on the device is assumed; confirm it also strips the other EXIF fields.
 15. **Learn entries for kijoshu and taruzake (1.8, P4).** Until written, "Less usual" names them without a link.
 16. **Demo bottle on the landing (1.8, K3) — CHECKED 19 Oct 2026.** No "Mihon (見本)" in the catalogue (~3,300 lines) or on the web. Still open: a J-PlatPat class 33 trademark search, to close it formally before the loop ships.
+17. **Region texts (1.9, Y).** Hand-written with named sources (ADR-0026), 8–10 prefectures at launch. Needs an author and a reviewer before any ship.
+18. **Photo cap per account (1.9, T).** If one is set, the number and what happens at it (T, "Size and limits").
 
 ## Files in this bundle
-- `Yawaragi Mobile.dc.html`: **the main prototype.** All screens, all behaviour. Logic is in the `class Component` block at the bottom. Tweaks: market, Ask, Menu scan, camera permission, iOS webview, two-tone bars, first run, **Scan outcome** (which §5a branch the next capture lands on; 1.6 adds *Matched, line only*; 1.7 adds *Matched, your bottling fits*, *Matched, brewery not on label*, *Not sake*, *Menu in photo*, *Shelf in photo*, *Two bottles*, *No name on this side*; 1.7.1 adds *No bottle*), **freeScans** (1.8: *Plenty* · *One left* · *None left*, for the nudge note), **notSakeDrink** (which drink `not_sake` names), **menuScan** (list ranking on/off, default on in 1.7), **listPalate** (§7's fewer-than-three state), **Rating live** (§12's rating slot) and **Sake guide public** (§18's pre-gate mode).
+- `Yawaragi Mobile.dc.html`: **the main prototype.** All screens, all behaviour. Logic is in the `class Component` block at the bottom. Tweaks: market, Ask, Menu scan, camera permission, iOS webview, two-tone bars, first run, **Scan outcome** (which §5a branch the next capture lands on; 1.6 adds *Matched, line only*; 1.7 adds *Matched, your bottling fits*, *Matched, brewery not on label*, *Not sake*, *Menu in photo*, *Shelf in photo*, *Two bottles*, *No name on this side*; 1.7.1 adds *No bottle*), **freeScans** (1.8: *Plenty* · *One left* · *None left*, for the nudge note), **notSakeDrink** (which drink `not_sake` names), **menuScan** (list ranking on/off, default on in 1.7), **listPalate** (§7's fewer-than-three state), **Rating live** (§12's rating slot) and **Sake guide public** (§18's pre-gate mode), **connection** (1.9: *Online* · *Slow* · *Offline*, for S and Z; switching Offline → Online shows "Back online") and **journalSize** (1.9: *Long (25)* fills the journal for W and X).
 - `Yawaragi Mobile (phone).html`: a self-contained single-file build of the same prototype. It opens directly on a phone.
 - `Yawaragi Tokens.dc.html`: the token and component reference (colour ramps, type scale, every component specimen, behaviour rules). "Added in 1.5" holds the provenance badge, AI-written note, floating surface, caveat line, horizontal row edge, tile vs button, end-of-screen block, tab placeholder and cellar control.
 - `Yawaragi Core Loop v2.dc.html`: decision record. It shows the result-card options (1a chosen), the thin-data states, and the colour exploration that led to Ginshu (turns 2–6).
-- `screenshots/`: 110 reference PNGs at 390×844 (index under Decision log → Screenshots; each Screens section lists its own).
+- `screenshots/`: 128 reference PNGs at 390×844 (index under Decision log → Screenshots; each Screens section lists its own).
 - `Yawaragi Landing.dc.html`: the public landing page, outside the app shell.
 - `Yawaragi App Icon.dc.html` (1.8, O): the home-screen icon (1a chosen), sizes, safe zone and manifest values.
 - `Yawaragi Account.dc.html`: decision record. It shows the sign-in timing options (1a chosen) and the account screen spec (1c).
@@ -650,6 +654,24 @@ Phosphor, regular and fill weights (`@phosphor-icons/web` 2.1.1). Sizes: 22 tab 
 | 108 | §14 sign-in sheet over the menu outcome |
 | 109 | §5a not in catalogue: "Scan the sticker" |
 | 110 | §5 best guess: "Scan the side" |
+| 111 | S1 slow tap: accent bar after 300 ms, tapped tab held |
+| 112 | S4 "Taking longer than usual" notice, after 5 s |
+| 113 | S3 offline line (Home uses the saved copy, Z4) |
+| 114 | S5 scan not sent: photo kept · Send again |
+| 115 | S4 scan taking longer: Cancel |
+| 116 | S6 rating not saved: grey stars · Try again |
+| 117 | S6 cellar sheet: not added · Try again |
+| 118 | W journal filters: Prefecture open, with counts |
+| 119 | W Niigata · Grade open, "no grade" note |
+| 120 | W2 journal search + rating filter |
+| 121 | Z cellar from the saved copy, actions unavailable |
+| 122 | Z3 journal row tapped offline: the copy's sheet |
+| 123 | X Your journal in numbers: counts, tile map |
+| 124 | X stars, breweries, grades, the surprise |
+| 125 | X entry row at the end of Palate |
+| 126 | U matches as you type |
+| 127 | V bottling form: pasteurisation, style pills |
+| 128 | V "More" open: starter, koji, other words |
 
 Screenshots that sit in sheets or overlays show the full screen behind them with the scrim.
 
@@ -770,6 +792,18 @@ Folded into the Screens sections and the prototype; this is the index.
 6. **Fixed, as you read it:** a bottling's row opens §9a, a sake's row opens §9.
 
 ## Changelog
+### 1.9 · 22 Oct 2026
+Answers to #417 rounds three and four, blocks S–Z (appendix "v1.9"). 18 screenshots added (111–128).
+- **Rules** — rule 16 (a tap is answered at once; connection states) and the press tokens.
+- **§4** — scan not sent; scan taking longer.
+- **§5, §9, §9a** — rating panel "not saved".
+- **§8** — matches as you type (U).
+- **§9a / bottling form** — pasteurisation, style pills, "More" (V).
+- **§11** — journal filters and search (W); offline copy (Z).
+- **§12** — "Your journal in numbers" row; new screen (X).
+- **Cellar sheet** — "not added".
+- **Open decisions** — 17, 18 added.
+
 ### 1.8.1 · 19 Oct 2026
 Engineering follow-up on v1.8 (appendix "v1.8.1"). 92, 102, 103 retaken.
 - **§8** — More / Less against the catalogue average; no figure on rows.
@@ -1044,3 +1078,74 @@ Drawn in the prototype unless marked "written". Screenshots 92–110.
 4. **Fixed:** Files now says 110.
 
 Noted: kept photos ship last, after open decision 14 and the privacy-policy update.
+
+---
+
+## v1.9 · Answers to rounds three and four (#417, S–Z)
+Drawn in the prototype unless marked "written". Screenshots 111–128. Order follows the priority list.
+
+### S. A slow or missing connection (111–117)
+1. **(a) + (b), not (c).** The press state (b) holds from the tap; the bar (a) joins after 300 ms, so a fast connection sees only the press. No skeleton screens in v1: one drawing per screen, and a grey outline that fills in reads as "loaded" before it is. The scan keeps its own sweep.
+2. **Yes,** rule 16's tokens. Held, not flashed: the pressed row stays pressed until its screen opens or the wait is cancelled. The tab that was lit dims while the new one waits (111).
+3. **Yes, one line under the status bar,** above the sample strip when both show, never at the bottom (that edge is the cookie banner's and the tab bar's). Neutral-200, wifi-slash icon: "Offline · Saving and scanning need a connection." It stays until the phone says it is back, then "Back online" for 2.4 s and goes. Collection and Home say what they show instead (Z1).
+4. **10 s for a scan, 5 s for a screen: agreed.** A screen: a floating notice, "Taking longer than usual · The connection is slow." + **Cancel**, which leaves the visitor where they were (112). A scan: the title becomes "Taking longer than usual", "The connection is slow. Your photo is kept." + **Cancel** (115). At 30 s the scan stops by itself into 5's state. **Try again sends the same photo,** no new shot. **The count:** keep each read for 10 minutes keyed by the photo's hash, so a resend of a photo that did reach us returns the stored answer and costs nothing. Then nothing about counts needs saying except the line in 5. If that cache is not built, add "If it arrived, it counts as one scan." under Cancel.
+5. **Drawn (114).** The frame keeps the photo, title "No connection", "Your photo is kept. It wasn't sent, so it doesn't use a scan." + **Send again**; a second tap with no signal adds "Still no connection." The shutter takes a new photo in its place. **It waits for the tap.** When the phone says it is back, the title becomes "Connection is back" and the button "Send now". Sending by itself would use a scan the visitor may no longer want.
+6. **(a), agreed.** Rating panel (116): the stars stay where tapped in neutral-600 (not accent, because accent means saved), the label reads "4.0 · Not saved", then a line "No connection, so this isn't in your journal yet." + **Try again**; again with no signal: "Still no connection. Your stars stay here until it's back." No Undo notice, since nothing was saved. **Cellar sheet (117):** the sheet stays open with its values; above the button "Not added · no connection. Nothing here is lost." and the button becomes **Try again**. **Notes sheet** (written): the same line under the sheet title, the fields keep what was typed, Done becomes Try again; closing the sheet asks "Leave without saving your notes?" Quick tags, delete and Undo use the rating panel's line.
+7. **Yes,** when the phone says it is offline: wifi-slash, "No connection", "This page needs the internet. Anything you saved before is safe." with **Try again** and **Back to Home**. The catalogue copy stays for real server errors. (Written; it is #324's layout.)
+8. **Not before O ships.** After: cache Learn entries once read (fixed text, useful in a bar). The landing stays online only.
+
+### W. Filtering the journal (118–120)
+1. **Chips under the segmented control, as built**, shown from 8 tastings. They follow §8's chip and value styles; values carry counts and only those that occur (counts are faceted: each chip counts with the other filters on). Several values in one chip mean "any of"; chips together mean "all of". The summary line is as built; **Clear** on the right.
+2. **Separate, but they combine.** §11's search icon opens a field above the chips: "A name, a brewery or a word in a note" (120). The summary line names both.
+3. **Yes, in the open Grade panel only:** "{n} tastings name no grade, so a grade filter leaves them out. A grade comes from a bottling you added." (119). Not on the summary line.
+4. **Journal only in v1.** A cellar is a handful of rows.
+**More** holds Style, Brewery and Month. Rating values are "5 stars", "4–4.5 stars" and so on. An empty result: "No tastings match all of these. Take one away, or clear them."
+
+### X. Your journal in numbers (123–125)
+1. **Its own screen,** reached from a row at the end of Palate: "Your journal in numbers · 25 tastings · 15 of 47 prefectures" (125). Not Home, which stays a glance.
+2. **A tile grid of 47 squares,** placed roughly where each prefecture is. It needs no licensed outlines, stays legible at 390 px, and every tile is the same size, so small prefectures count as much as Hokkaidō. Shading: 1 · 2–3 · 4 or more (accent-300, 400, 600), none yet neutral-200. Under it, one row per prefecture tasted; tapping one opens the journal filtered to it (W). Sakenowa credit beside the heading.
+3. **In this order:** counts (tastings, sakes, breweries) → the map → your stars (spread and average) → breweries you rate highest (by average, from two tastings) → grades ("From the {m} of {n} tastings that name a grade") → the surprise, with the §17 caveat and ⓘ. **Left out:** streaks, litres, bottles per month; see 5. Palate over time waits until a journal spans six months; it is not drawn.
+4. **A teaser only:** the Palate row reads "{n} more tastings and your map appears" and does not open.
+5. **Avoid any count of drinking over time:** no streaks, no "this month", no litres, no "most in one night". Breweries are ranked by rating, never by how many were tasted. "Worked out from your own journal. Only you see it." closes the screen.
+
+### V. The bottling form (127, 128)
+1. **Split by use.** Shown: name; grade + polishing; Pasteurisation as one select ("Pasteurised twice (usual)" · Nama · Namachozō · Namazume, each with its gloss); "Style · tick any" with the eight pills. Behind **"+ Starter, koji, other style words"**: Starter and Koji selects side by side, then Other style words. The section opens by itself when a read filled any of them.
+2. **The word alone on §9a's tag** ("Namazume"). The gloss lives in the select and in Learn, which the tag opens.
+3. **Yes.** The Nama entry gets a paragraph on the three kinds, and a new Koji entry covers yellow, white and black. ⓘ beside Pasteurisation (drawn) and Koji, opening those entries.
+4. **Yes,** as another field under "What we read", once the eval passes.
+
+### U. Matches as you type (126)
+1. **The lighter row is right,** with one change: Latin name first at 14px with the kanji after it at 12px, as §8's rows do, so the two lists read the same. The rows wrap; nothing is cut with an ellipsis.
+2. **No.** Opening the sake is what the visitor chose. Enter still runs the full search.
+3. **Over, as built,** on the floating surface (raised + shadow-float). Pushing would move the chips on every keystroke.
+4. **Yes, at most two, above the catalogue,** with a "Yours" tag and "Your bottling" as the meta line.
+
+### Z. The journal and cellar without a connection (121, 122)
+1. **One line, the S3 line, worded for the screen:** "Offline · Your journal as of 14:02 · Changes wait for a connection." (and "cellar" on Cellar). Not two lines.
+2. **Greyed, as the system's disabled state (45%), with the reason said once in that line.** Hiding them would make rows jump when the signal comes back; tappable buttons that fail waste a tap.
+3. **A small sheet with what the copy holds:** name, kanji, brewery, stars, rating and date, the note, and "From the copy on this phone, as of 14:02. The sake's page and editing need a connection." (122).
+4. **Yes,** Home's recent tastings use the copy, and its line says so.
+
+### Y. About the region · written
+1. **One sentence and "About {prefecture} ›", as built,** only where text exists. The sentence is the entry's first line, so it must stand alone.
+   **Entry format:** title (Niigata), kanji (新潟県), the one-sentence answer, then up to four short paragraphs headed **Water · Climate · Rice · Style**, no sake or brewery names, sources at the foot as in other entries. The maintainer's line is the model: "Soft water and cold winters; light, dry, clean sake; Gohyakumangoku rice." Open decision 17.
+2. **A "Regions" group in Learn,** listed by name. No second map: X's tiles are about the visitor's tastings, and a region index sorted on a map would hide the eight that have text among 47 that don't.
+3. **Yes:** with one prefecture picked in §8, a line under the chips: "About Niigata ›".
+
+### T. Photos with tastings · written
+Supersedes I2–I4 where they differ; ships after open decision 14.
+1. **Borrow down only, from the bottling,** as engineering proposes. A borrowed photo carries a 14px bottle glyph in its corner, and its full-screen view says "Photo of the bottling". A bottling never borrows from a tasting.
+2. **One switch:** "Keep this photo" keeps it with whatever the visitor saves next from that card: rating → the tasting; Add to cellar → the row; Add your bottling → the bottling. When "This bottle" (L1) names a bottling with no photo yet, the bottling gets it as well (one upload, two references). **Unticked every time:** this is personal data, so each photo is its own decision.
+3. **Tasting:** in §10 as its own part, "Photo", before "Where and what it cost". Not on §5's panel, so one tap stays one tap. **Cellar row:** last row of the Add to cellar sheet, and in the row's edit. **Bottling:** its page (I5). Each offers **Camera** (photo-only mode) and **Library**.
+4. **Yes:** Replace · Delete in the same place on all three; Delete confirms inline and is final (I5).
+5. **One per slot.**
+6. **Journal row:** the tasting's photo, else the bottling's (marked). **Cellar row:** the row's, else the bottling's (marked). **Bottle page:** the bottling's, with each tasting's photo as a thumb in "You and this bottling". **Home** stays text-only.
+7. **Yes:** full screen on the camera ground; top: back; under the photo: what it belongs to, the date and, for a tasting, "Where"; then Replace · Delete.
+8. **Once, where a photo is first added:** I1's line "Only you see it." Nothing more until #476.
+**Pour & rate** carries the row's photo to the new tasting by default (same visitor, same file); it can be removed in §10. **Rows are not split** by photo: a cellar photo belongs to the row. **Uploading:** the record saves first; the thumb shows a thin accent ring while the photo uploads; a failed upload marks the thumb "Not uploaded · Try again" (S6). **At a cap** (open decision 18): "You've kept {n} photos, the most we hold. Delete some in Account → Your photos." Account gets a "Your photos" list for deleting and export.
+
+### I. Your own photo of a bottle
+Answered in v1.8; T above widens it. Ships with T.
+
+### K. The landing in motion
+Answered in v1.8 (written storyboard). No change.
