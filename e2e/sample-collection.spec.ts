@@ -79,12 +79,16 @@ test.describe('the sample collection', () => {
     await page.goto(`${BASE_URL}/en/collection`)
     await expect(page.getByTestId('tab-placeholder')).toBeVisible()
   })
-  test('counts the journal on Palate, and a star bar opens the journal at those stars', async ({ page }) => {
+  test('opens "Your journal in numbers" from Palate, and a star bar opens the journal at those stars', async ({ page }) => {
     await page.goto(`${BASE_URL}/api/sample-collection?locale=en`)
     await page.goto(`${BASE_URL}/en/profile`)
+    // v1.9 X1: a row at the end of Palate, to a screen of its own.
+    await page.getByTestId('journal-numbers-row').click()
+    await expect(page).toHaveURL(/\/en\/profile\/numbers$/)
     const numbers = page.getByTestId('journal-numbers')
-    await expect(numbers).toBeVisible()
     await expect(numbers.getByTestId('journal-numbers-tastings')).toContainText('tastings')
+    await expect(page.getByTestId('prefecture-tile-map').locator('span')).toHaveCount(47)
+    await expect(numbers).toContainText('Worked out from your own journal. Only you see it.')
 
     await numbers.getByRole('link', { name: /^5 stars: \d+$/ }).click()
     await expect(page).toHaveURL(/\/en\/collection\?.*stars=5/)
