@@ -12,7 +12,20 @@
     "emptyTypeIt": "Namen eintippen",
     "sectionsLabel": "Bereiche der Sammlung",
     "segmentJournal": "Journal",
-    "segmentCellar": "Keller"
+    "segmentCellar": "Keller",
+    "filters": {
+      "label": "Journal filtern",
+      "prefecture": "Präfektur",
+      "stars": "Sterne",
+      "starsValue": "{n, plural, one {# Stern} other {# Sterne}}",
+      "grade": "Klasse",
+      "style": "Stil",
+      "koji": "Koji",
+      "clear": "Zurücksetzen",
+      "shown": "{shown} von {total} Verkostungen",
+      "none": "Keine Verkostung passt. Setz einen Filter zurück, um mehr zu sehen.",
+      "bottlingOnly": "Klasse, Stil und Koji stammen aus Abfüllungen, die du angelegt hast; Verkostungen eines Sake allein haben keine."
+    }
   },
   "home": {
     "title": "Start",
