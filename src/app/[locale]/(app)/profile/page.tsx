@@ -1,5 +1,4 @@
 import { cookies } from 'next/headers'
-import { auth } from '@clerk/nextjs/server'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import type { Metadata } from 'next'
 import { Link } from '@/i18n/navigation'
@@ -9,8 +8,8 @@ import { ColdStartChips, type ColdStartChipView } from '@/components/palate/cold
 import { PalateAxisRows, type PalateAxisStrings } from '@/components/palate/palate-axis-rows'
 import { PalateConfidence } from '@/components/palate/palate-confidence'
 import { PalateProgress } from '@/components/palate/palate-progress'
-import { JournalNumbersSection } from '@/components/palate/journal-numbers'
-import { getExpressionStore } from '@/lib/collection/get-expression-store'
+import { JournalNumbersRow } from '@/components/palate/journal-numbers'
+import { resolveViewerJournal } from '@/lib/taste/resolve-viewer-journal'
 import { lookupJournalFacts } from '@/lib/collection/journal-facts'
 import { JOURNAL_NUMBERS_FROM, journalNumbers } from '@/lib/collection/journal-stats'
 import type { Expression } from '@/lib/schemas/expression'
@@ -21,7 +20,6 @@ import { FlavorRadarView } from '@/components/sake/flavor-radar-view'
 import { SakenowaAttributionView } from '@/components/sake/sakenowa-attribution'
 import { coldStartChips } from '@/lib/cross-beverage/cold-start-chips'
 import { resolveCrossBeverageTarget } from '@/lib/cross-beverage/forward-lookup'
-import { currentUserIsMaintainer } from '@/lib/auth/maintainer'
 import { isDebugEnabledFromCookies } from '@/lib/debug/debug-mode'
 import { hasAcceptedAgeGate } from '@/lib/legal/age-gate-cookie'
 import { readAnonymousSessionCookie } from '@/lib/legal/anonymous-session-cookie'
@@ -31,10 +29,6 @@ import type { TasteEvent } from '@/lib/schemas/taste-event'
 import { lookupBrand } from '@/lib/sakenowa/lookup'
 import { journalEntriesToTasteEvents } from '@/lib/schemas/journal-entry'
 import { catalogueMeanProfile } from '@/lib/taste/catalogue-mean'
-import { getJournalStore } from '@/lib/taste/get-journal-store'
-import { resolveJournalStub } from '@/lib/taste/journal-stub'
-import { readSampleJournal, wantsSampleCollection } from '@/lib/demo/sample-mode'
-import { type MaintainerJournalState, resolveMaintainerJournal } from '@/lib/taste/resolve-maintainer-journal'
 import { getFlavorCandidatePool } from '@/lib/taste/flavor-candidate-pool'
 import { timeStep } from '@/lib/observability/time-step'
 import { getTasteEventStore } from '@/lib/taste/get-taste-event-store'
@@ -134,34 +128,14 @@ const tp = (
 async function resolveJournalTasteProfile(
   cookieJar: CookieJar,
 ): Promise<JournalTasteProfile | null> {
-  const journalStub =
-    process.env.NODE_ENV !== 'production'
-      ? cookieJar.get('yawaragi_journal_stub')?.value
-      : undefined
-  let expressions: readonly Expression[] = []
-  let journal: MaintainerJournalState | null = null
-  if (journalStub != null) {
-    journal = resolveJournalStub(journalStub)
-  } else if (await currentUserIsMaintainer()) {
-    const userId = (await auth()).userId
-    const expressionStore = getExpressionStore()
-    ;[journal, expressions] = await Promise.all([
-      resolveMaintainerJournal({ store: getJournalStore(), userId, now: Date.now() }),
-      // Only for "in numbers"; a failed read leaves it without grades.
-      userId && expressionStore ? expressionStore.read(userId).catch(() => []) : Promise.resolve([]),
-    ])
-  } else if (wantsSampleCollection(cookieJar)) {
-    const sample = await readSampleJournal(Date.now())
-    journal = sample.journal
-    expressions = sample.expressions
-  }
-  if (journal === null || journal.kind !== 'journal') return null
+  const journal = await resolveViewerJournal(cookieJar)
+  if (!journal) return null
   return {
     kind: 'profile',
     profile: journal.profile,
     events: journalEntriesToTasteEvents(journal.entries),
     entries: journal.entries,
-    expressions,
+    expressions: journal.expressions,
   }
 }
 
@@ -581,7 +555,8 @@ export default async function PalatePage({
       )}
       {/* Design question X, built ahead of the spec: after the read and the
           sakes to try, the journal counted. */}
-      {numbers && <JournalNumbersSection numbers={numbers} locale={locale} />}
+      {/* Design v1.9 X1/X4 (125): a row to its own screen, a teaser under five tastings. */}
+      {journalSession && <JournalNumbersRow numbers={numbers} tastings={journalSession.entries.length} />}
     </main>
   )
 }
