@@ -7,7 +7,7 @@ import { notFound } from 'next/navigation'
 import { Camera, Keyboard } from '@phosphor-icons/react/dist/ssr'
 import { Link } from '@/i18n/navigation'
 import { CellarList } from '@/components/collection/cellar-list'
-import { JournalFilters } from '@/components/collection/journal-filters'
+import { type JournalChip, JournalFilters, JournalSearchToggle } from '@/components/collection/journal-filters'
 import { JournalList } from '@/components/collection/journal-list'
 import { TabPlaceholder } from '@/components/layout/tab-placeholder'
 import { readSampleJournal, wantsSampleCollection } from '@/lib/demo/sample-mode'
@@ -21,7 +21,7 @@ import { toOfflineCopy } from '@/lib/offline/collection-copy'
 import { getCellarStore } from '@/lib/collection/get-cellar-store'
 import { getExpressionStore } from '@/lib/collection/get-expression-store'
 import { lookupJournalFacts } from '@/lib/collection/journal-facts'
-import { filterJournal, journalFacetsUnder, parseJournalFilter } from '@/lib/collection/journal-filter'
+import { JOURNAL_FILTERS_FROM, filterJournal, journalFacetsUnder, parseJournalFilter } from '@/lib/collection/journal-filter'
 import type { Expression } from '@/lib/schemas/expression'
 import {
   COLLECTION_SEGMENT_COOKIE,
@@ -228,31 +228,39 @@ export default async function CollectionTabPage({ params, searchParams }: PagePr
           option leading nowhere is the dead affordance #162 forbids). Plain
           links with a `?tab=`, so the segment is a URL: "View" on the cellar
           notice can land on it, and it works before hydration. */}
-      <nav
-        aria-label={t('sectionsLabel')}
-        // §11 / screenshot 20: a compact group on the left, not a full-width
-        // pill; the current segment in the accent outline.
-        className="flex self-start rounded-lg border border-divider"
-        data-testid="collection-segments"
-      >
-        {(['journal', 'cellar'] as const).map((key) => (
-          <Link
-            key={key}
-            // Every segment link names its segment, so a tap on Journal wins
-            // over a remembered Cellar.
-            href={{ pathname: '/collection', query: { tab: key } }}
-            aria-current={segment === key ? 'page' : undefined}
-            className={
-              segment === key
-                ? '-m-px flex min-h-9 items-center rounded-lg border border-ginshu-500 bg-ginshu-100 px-3.5 text-subtle font-medium text-ginshu-700'
-                : 'flex min-h-9 items-center px-3.5 text-subtle text-ink transition-colors hover:text-ginshu-700'
-            }
-            data-testid={`collection-segment-${key}`}
-          >
-            {t(key === 'journal' ? 'segmentJournal' : 'segmentCellar')}
-          </Link>
-        ))}
-      </nav>
+      <div className="flex items-center justify-between gap-3">
+        <nav
+          aria-label={t('sectionsLabel')}
+          // §11 / screenshot 20: a compact group on the left, not a full-width
+          // pill; the current segment in the accent outline.
+          className="flex self-start rounded-lg border border-divider"
+          data-testid="collection-segments"
+        >
+          {(['journal', 'cellar'] as const).map((key) => (
+            <Link
+              key={key}
+              // Every segment link names its segment, so a tap on Journal wins
+              // over a remembered Cellar.
+              href={{ pathname: '/collection', query: { tab: key } }}
+              aria-current={segment === key ? 'page' : undefined}
+              className={
+                segment === key
+                  ? '-m-px flex min-h-9 items-center rounded-lg border border-ginshu-500 bg-ginshu-100 px-3.5 text-subtle font-medium text-ginshu-700'
+                  : 'flex min-h-9 items-center px-3.5 text-subtle text-ink transition-colors hover:text-ginshu-700'
+              }
+              data-testid={`collection-segment-${key}`}
+            >
+              {t(key === 'journal' ? 'segmentJournal' : 'segmentCellar')}
+            </Link>
+          ))}
+        </nav>
+        {/* v1.9 W2 draws §11's search icon beside the avatar. While the header
+            still carries the interim EN/DE switch (ADR-0007) there is no room
+            for it there, so it sits at the end of this row until `de` launches. */}
+        {segment === 'journal' && journal.kind === 'journal' && journal.entries.length >= JOURNAL_FILTERS_FROM && (
+          <JournalSearchToggle filter={parseJournalFilter(query)} open={openChip(query)} search={query.find === '1'} />
+        )}
+      </div>
       {/* Remember a segment the visitor chose, not one we fell back to. */}
       {parseCollectionSegment(tabParam) && <RememberCollectionSegment segment={segment} />}
       {offlineCopy && <SaveOfflineCopy copy={offlineCopy} />}
@@ -319,6 +327,8 @@ async function FilteredJournal({
   query: Record<string, string | string[] | undefined>
   locale: string
 }) {
+  // v1.9 W1: the chips show from eight tastings; a shorter journal is read whole.
+  if (entries.length < JOURNAL_FILTERS_FROM) return <JournalList entries={entries} locale={locale} />
   const filter = parseJournalFilter(query)
   const factsOf = await lookupJournalFacts(entries, expressions)
   const shown = filterJournal(entries, factsOf, filter)
@@ -330,6 +340,8 @@ async function FilteredJournal({
         facets={journalFacetsUnder(entries, factsOf, filter)}
         shown={shown.length}
         total={entries.length}
+        open={openChip(query)}
+        search={query.find === '1'}
       />
       {shown.length > 0 ? (
         <JournalList entries={shown} locale={locale} />
@@ -340,4 +352,10 @@ async function FilteredJournal({
       )}
     </>
   )
+}
+
+/** Which journal chip's values are open (`?open=`), if any. */
+function openChip(query: Record<string, string | string[] | undefined>): JournalChip | null {
+  const open = query.open
+  return open === 'prefecture' || open === 'rating' || open === 'grade' || open === 'more' ? open : null
 }

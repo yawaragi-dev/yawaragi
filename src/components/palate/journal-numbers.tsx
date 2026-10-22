@@ -118,7 +118,7 @@ function Bar({
   share,
   aria,
 }: {
-  href: { pathname: '/collection'; query: Record<string, string> } | null
+  href: { pathname: '/collection'; query: Record<string, string | string[]> } | null
   label: string
   count: number
   share: number
