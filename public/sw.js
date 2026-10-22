@@ -1,25 +1,29 @@
 /*
  * Yawaragi's service worker (#480, slice 3). It does one thing: when a page
- * load fails because there is no network, it answers with a cached "You're
- * offline" page instead of the browser's own. Everything else — every other
- * request, and every page load that reaches the server — goes to the network
- * untouched, and nothing but the two offline pages is ever cached, so no
- * journal, cellar or other personal data can land in Cache Storage.
+ * load fails because there is no network, it answers with a cached page of
+ * our own instead of the browser's — the read-only Collection for
+ * `/{locale}/collection` (design question Z), "You're offline" for anything
+ * else. Everything else — every other request, and every page load that
+ * reaches the server — goes to the network untouched. Only those four static
+ * pages are ever cached, so no journal, cellar or other personal data lands
+ * in Cache Storage; the Collection page reads the copy the app keeps in
+ * IndexedDB on the device itself.
  *
  * Bump VERSION when the offline page changes, so installs fetch the new one.
  * To retire the worker, replace this file with one that calls
  * `self.registration.unregister()` on activate.
  */
-const VERSION = 'v1'
+const VERSION = 'v2'
 const CACHE = `yawaragi-offline-${VERSION}`
 const LOCALES = ['en', 'de']
 const pageFor = (locale) => `/api/offline/${locale}`
+const collectionFor = (locale) => `/api/offline/${locale}/collection`
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches
       .open(CACHE)
-      .then((cache) => cache.addAll(LOCALES.map(pageFor)))
+      .then((cache) => cache.addAll([...LOCALES.map(pageFor), ...LOCALES.map(collectionFor)]))
       .then(() => self.skipWaiting()),
   )
 })
@@ -45,9 +49,10 @@ self.addEventListener('fetch', (event) => {
         const preloaded = await event.preloadResponse
         return preloaded || (await fetch(event.request))
       } catch {
-        const segment = new URL(event.request.url).pathname.split('/')[1]
+        const [, segment, screen] = new URL(event.request.url).pathname.split('/')
         const locale = LOCALES.includes(segment) ? segment : 'en'
-        const cached = await caches.match(pageFor(locale), { cacheName: CACHE })
+        const page = screen === 'collection' ? collectionFor(locale) : pageFor(locale)
+        const cached = await caches.match(page, { cacheName: CACHE })
         return cached || Response.error()
       }
     })(),
