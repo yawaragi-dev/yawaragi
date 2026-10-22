@@ -1,6 +1,6 @@
-// A scan sent with no connection (design question S, #464): the scan stays
-// on its own screen with the photo and "Send again", instead of ending on the
-// app's error page with the photo gone. Needs no catalogue: the photo never
+// A scan sent with no connection (design v1.9 S4, S5): the camera keeps the
+// photo with "Send again", instead of ending on the app's error page with the
+// photo gone; a slow one says so after 10 s with Cancel. Needs no catalogue: the photo never
 // reaches the server while the browser is offline, and the retry is only
 // checked for leaving the no-connection screen, whatever it then finds.
 import { expect, test } from '@playwright/test'
@@ -12,7 +12,7 @@ const AGE_GATE_COOKIE = {
   url: BASE_URL,
 }
 
-test('a scan with no connection keeps the photo and can be sent again', async ({ browser }) => {
+test('a scan with no connection keeps the photo on the camera, says so again, and offers it once the connection is back', async ({ browser }) => {
   const context = await browser.newContext({ locale: 'en-US' })
   await context.addCookies([AGE_GATE_COOKIE])
   const page = await context.newPage()
@@ -22,16 +22,46 @@ test('a scan with no connection keeps the photo and can be sent again', async ({
   await context.setOffline(true)
   await page.locator('input[type=file]').first().setInputFiles('e2e/fixtures/dassai-label.jpg')
 
+  // Design v1.9 S5 (114): on the camera, with the photo in the frame.
   const failed = page.getByTestId('scan-error-offline')
-  await expect(failed).toBeVisible()
-  await expect(failed).toContainText('No connection')
-  await expect(page.getByTestId('scan-outcome-photo')).toBeVisible()
+  await expect(failed).toHaveText('No connection')
+  await expect(page.getByText('It wasn’t sent, so it doesn’t use a scan.')).toBeVisible()
+  await expect(page.getByTestId('scan-camera-still')).toBeVisible()
   await expect(page.getByTestId('app-error')).toHaveCount(0)
 
+  await page.getByTestId('scan-send-again').click()
+  await expect(page.getByText('Still no connection.')).toBeVisible()
+
   await context.setOffline(false)
+  await expect(failed).toHaveText('Connection is back')
+  await expect(page.getByTestId('scan-send-again')).toHaveText('Send now')
   await page.getByTestId('scan-send-again').click()
   await expect(failed).toHaveCount(0)
   await expect(page.getByTestId('app-error')).toHaveCount(0)
+  await context.close()
+})
+
+test('a scan that is slow says so after 10 s, and Cancel keeps the photo to send again', async ({ browser }) => {
+  const context = await browser.newContext({ locale: 'en-US' })
+  await context.addCookies([AGE_GATE_COOKIE])
+  const page = await context.newPage()
+  await page.goto(`${BASE_URL}/en/scan`)
+  await expect(page.locator('input[type=file]').first()).toBeAttached()
+  // Hold the scan's Server Action call past the 10 s mark.
+  await page.route(`${BASE_URL}/en/scan`, async (route) => {
+    if (route.request().method() !== 'POST') return route.continue()
+    await new Promise((resolve) => setTimeout(resolve, 14_000))
+    await route.continue().catch(() => {})
+  })
+  await page.locator('input[type=file]').first().setInputFiles('e2e/fixtures/dassai-label.jpg')
+
+  await expect(page.getByTestId('scan-camera-slow')).toHaveText('Taking longer than usual', { timeout: 13_000 })
+  await expect(page.getByText('If it arrived, it counts as one scan.')).toBeVisible()
+  await page.getByTestId('scan-camera-cancel').click()
+
+  await expect(page.getByTestId('scan-error-timed-out')).toBeVisible()
+  await expect(page.getByTestId('scan-camera-still')).toBeVisible()
+  await expect(page.getByTestId('scan-send-again')).toBeVisible()
   await context.close()
 })
 

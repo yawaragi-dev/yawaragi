@@ -27,7 +27,16 @@ export type Settled<T> = { ok: true; value: T } | { ok: false; failure: Connecti
  */
 export async function settleRequest<T>(
   request: Promise<T>,
-  { timeoutMs, isOnline }: { timeoutMs: number | null; isOnline: () => boolean },
+  {
+    timeoutMs,
+    isOnline,
+    cancelled,
+  }: {
+    timeoutMs: number | null
+    isOnline: () => boolean
+    /** Settles when the visitor gave up waiting (design v1.9 S4's Cancel): treated like a timeout. */
+    cancelled?: Promise<void>
+  },
 ): Promise<Settled<T>> {
   let timer: ReturnType<typeof setTimeout> | undefined
   const timedOut = new Promise<Settled<T>>((resolve) => {
@@ -41,7 +50,8 @@ export async function settleRequest<T>(
     },
   )
   try {
-    return await Promise.race([answered, timedOut])
+    const gaveUp = cancelled?.then((): Settled<T> => ({ ok: false, failure: 'timed_out' }))
+    return await Promise.race(gaveUp ? [answered, timedOut, gaveUp] : [answered, timedOut])
   } finally {
     clearTimeout(timer)
   }

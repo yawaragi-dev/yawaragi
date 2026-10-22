@@ -96,6 +96,24 @@ interface CameraCaptureProps {
    * "Which side to photograph" take the place of "How to read a label".
    */
   firstScans?: boolean
+  /**
+   * What the camera says about the photo in it when the network is in the
+   * way (design v1.9, S4 and S5): a read running past 10 s ("Taking longer
+   * than usual" + Cancel, 115), or a photo that could not be sent ("No
+   * connection" + Send again, 114). It takes the title and hint lines, with
+   * one button and up to two short lines after it. `held` keeps the photo in
+   * the frame while nothing is being read, and the shutter stays live: a new
+   * photo replaces the kept one.
+   */
+  status?: {
+    testId: string
+    title: string
+    hint: string
+    held?: boolean
+    action?: { label: string; testId: string; onClick: () => void; icon?: React.ReactNode; accent?: boolean }
+    after?: string | null
+    foot?: string | null
+  } | null
 }
 
 type CameraState = 'starting' | 'live' | 'denied' | 'unavailable'
@@ -109,6 +127,7 @@ export function CameraCapture({
   notice = null,
   askedFor = null,
   firstScans = false,
+  status = null,
 }: CameraCaptureProps) {
   const t = useTranslations('scan.camera')
   const videoRef = useRef<HTMLVideoElement | null>(null)
@@ -220,7 +239,7 @@ export function CameraCapture({
   // is read with the same still, sweep and "Reading the label…" as a capture.
   // Without this the panel just sat there for the whole read, with no sign
   // that the tap had done anything.
-  const showFrame = isWorking || state === 'starting' || isLive
+  const showFrame = isWorking || Boolean(status?.held) || state === 'starting' || isLive
   // The shutter row only where there is (or is about to be) a stream to shoot.
   const showControls = state === 'starting' || isLive
 
@@ -321,7 +340,7 @@ export function CameraCapture({
                 aria-hidden="true"
                 className={cn('h-full w-full object-cover', isLive ? 'opacity-100' : 'opacity-0')}
               />
-              {isWorking && stillUrl && (
+              {(isWorking || status?.held) && stillUrl && (
                 // The captured frame, frozen while it is read. A blob: URL from
                 // the scan form, which next/image cannot take.
                 // eslint-disable-next-line @next/next/no-img-element
@@ -354,10 +373,30 @@ export function CameraCapture({
             // Announced, because this is where "reading the label" is said.
             aria-live="polite"
           >
-            <p className="text-md-alt font-medium">
-              {isWorking ? t('workingTitle') : (askedFor?.title ?? t('frameTitle'))}
+            <p className="text-md-alt font-medium" data-testid={status?.testId}>
+              {status ? status.title : isWorking ? t('workingTitle') : (askedFor?.title ?? t('frameTitle'))}
             </p>
-            {isWorking || askedFor ? (
+            {status ? (
+              <>
+                <p className="max-w-[17rem] text-meta leading-relaxed text-camera-ink/70">{status.hint}</p>
+                {status.action && (
+                  <button
+                    type="button"
+                    onClick={status.action.onClick}
+                    className={cn(
+                      'mt-2 flex min-h-10 items-center gap-2 rounded-lg px-4 text-subtle font-medium text-camera-ink transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600',
+                      status.action.accent ? 'border-[1.5px] border-ginshu-500 hover:bg-ginshu-500/10' : 'border border-camera-ink/30 hover:bg-camera-ink/10',
+                    )}
+                    data-testid={status.action.testId}
+                  >
+                    {status.action.icon}
+                    {status.action.label}
+                  </button>
+                )}
+                {status.after && <p className="mt-1 text-meta text-camera-ink/80">{status.after}</p>}
+                {status.foot && <p className="text-micro text-camera-ink/60">{status.foot}</p>}
+              </>
+            ) : isWorking || askedFor ? (
               <p className="text-meta leading-relaxed text-camera-ink/70" data-testid={askedFor && !isWorking ? 'scan-camera-asked-hint' : undefined}>
                 {isWorking ? t('workingHint') : askedFor?.hint}
               </p>
