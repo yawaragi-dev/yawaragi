@@ -3,17 +3,20 @@
  * starts from a blank slate. Useful for testing migration order, ingest
  * performance, or working around half-applied state.
  *
- * Read DATABASE_URL from env (the package.json script loads .env.local).
+ * Reads MIGRATE_DATABASE_URL, like `pnpm migrate` it prepares for (the
+ * package.json script loads .env.local).
  * Refuses to run unless `--yes` is passed — destructive.
  */
 import { Pool } from 'pg'
+import { migrationConnectionString } from './migrate'
 
 async function main(): Promise<number> {
-  const connectionString = process.env.DATABASE_URL
-  if (!connectionString) {
-    console.error('DATABASE_URL is not set. Add it to .env.local first.')
+  const resolved = migrationConnectionString(process.env)
+  if (!resolved.ok) {
+    console.error(resolved.message)
     return 1
   }
+  const { connectionString } = resolved
 
   if (!process.argv.includes('--yes')) {
     console.error(

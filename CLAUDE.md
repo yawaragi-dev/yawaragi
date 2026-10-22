@@ -37,7 +37,7 @@ Naming history: previously "Kanpai"; renamed to avoid collision with KANPAI Lond
 - `pnpm test:e2e` — Playwright
 - `pnpm lint` — ESLint
 - `pnpm typecheck` — tsc --noEmit
-- `pnpm migrate` — apply pending SQL files in `supabase/migrations/` to `DATABASE_URL`
+- `pnpm migrate` — apply pending SQL files in `supabase/migrations/` to `MIGRATE_DATABASE_URL` (the Supabase Session pooler string, in `.env.local`; deliberately not `DATABASE_URL`, which is the Transaction pooler on Vercel — no fallback)
 - `pnpm ingest` — refresh Sakenowa data into Supabase
 - `pnpm romaji:regenerate` — re-read the catalogue's Latin names with the current transliteration prompt and model. Without flags it only says what a run would cost; `-- --yes` reads the names (paid) and writes a report; `-- --apply <report>` writes the changed names to `DATABASE_URL`. Curated readings in `name_romaji_overrides` always win.
 - `pnpm eval` — run eval golden sets (`suggest-jp`, `label-scan-jp`, `label-scan-pairs`: what a second photo of a bottle adds, on saved reads, no model calls, and `list-read-jp`: how many sakes a whole menu or shelf read finds, on the label corpus's menu and shelf photos)
