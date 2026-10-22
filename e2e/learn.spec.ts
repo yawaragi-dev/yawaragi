@@ -32,7 +32,7 @@ test.describe('Learn', () => {
     )
     // "Start here", then the groups.
     await expect(page.getByTestId('learn-start-here')).toContainText('How to read a label')
-    for (const group of ['Grades', 'Styles and processes', 'Rice', 'Serving and tasting']) {
+    for (const group of ['Grades', 'Styles and processes', 'Rice', 'Serving and tasting', 'Regions']) {
       await expect(page.getByRole('heading', { level: 2, name: group })).toBeVisible()
     }
     // Hand-written pages credit no catalogue (rule 15), and are not the app:
@@ -171,6 +171,21 @@ test.describe('Learn', () => {
     await page.goto('/en')
     await page.getByTestId('footer-learn-link').click()
     await expect(page).toHaveURL(/\/en\/learn$/)
+    await context.close()
+  })
+
+  test('a region says what its sake is like, from its geographical indication', async ({ browser }) => {
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([CONSENT_COOKIE])
+    const page = await context.newPage()
+
+    expect((await page.goto('/en/learn/region-niigata'))!.status()).toBe(200)
+    await expect(page.getByRole('heading', { level: 1, name: 'Niigata' })).toBeVisible()
+    await expect(page.getByText('新潟県')).toBeVisible()
+    await expect(page.getByRole('link', { name: /geographical indication “新潟” for sake/ })).toHaveAttribute(
+      'href',
+      'https://www.nta.go.jp/taxes/sake/hyoji/chiri/220207_niigata_besshi01.htm',
+    )
     await context.close()
   })
 })
