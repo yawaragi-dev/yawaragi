@@ -1291,7 +1291,7 @@
     "polishingLabel": "Poliergrad",
     "styleLabel": "Stil",
     "formHintFromLabel": "Vom Etikett gelesen. Korrigiere, was falsch gelesen ist; Größe und den Rest kannst du später in den ausführlichen Notizen ergänzen. Nur du kannst es sehen.",
-    "formHintDetails": "Alles hier ist optional; Größe und den Rest kannst du später in den ausführlichen Notizen ergänzen. Nur du kannst es sehen.",
+    "formHintDetails": "Klasse, Stil und Poliergrad sind freiwillig; Größe und der Rest können bis zu den ausführlichen Notizen warten. Nur du siehst das.",
     "polishedTo": "auf {n} % poliert",
     "kojiLabel": "Koji",
     "koji": {
@@ -1307,7 +1307,13 @@
       "nama": "Nama (unpasteurisiert)",
       "namachozo": "Namachozō (einmal, beim Abfüllen)",
       "namazume": "Namazume (einmal, vor Lagerung)"
-    }
+    },
+    "pasteurisationUsual": "Zweimal pasteurisiert (üblich)",
+    "pasteurisationInfo": "Über Pasteurisierung und Nama",
+    "styleTickAny": "Stil · alles Zutreffende",
+    "moreDetails": "Starter, Koji, weitere Stilwörter",
+    "styleOtherLabel": "Weitere Stilwörter",
+    "styleOtherPlaceholder": "Wie aufgedruckt, z. B. Shizuku"
   },
   "learn": {
     "title": "Wissen",

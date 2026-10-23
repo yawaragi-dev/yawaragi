@@ -2,10 +2,15 @@
 
 import { type FormEvent, useId, useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { Info, Plus } from '@phosphor-icons/react/dist/ssr'
+import { Link } from '@/i18n/navigation'
 import { type BottlingDetails, type Koji, KojiSchema, MAX_EXPRESSION_TEXT, MAX_STYLES } from '@/lib/schemas/expression'
 import { ScanGradeSchema, ScanStyleSchema, type ScanGrade, type ScanStyle } from '@/lib/schemas/label-scan-extraction'
 import { gradeLabel, styleLabel } from '@/lib/scan/read-bottling'
 import { cn } from '@/lib/utils'
+
+/** The koji's own name, after its English one in the select (design v1.9, 128). */
+const KOJI_KANJI: Record<Koji, string> = { yellow: '黄麹', white: '白麹', black: '黒麹' }
 
 /** One of these at most: how the bottle was pasteurised (or not). */
 export const PASTEURISATION = ['nama', 'namachozo', 'namazume'] as const satisfies readonly ScanStyle[]
@@ -127,6 +132,9 @@ export function BottlingNameForm({
   const [checked, setChecked] = useState<ScanStyle[]>(initialStyles.free)
   const [otherStyles, setOtherStyles] = useState(initialStyles.other.join(', '))
   const [koji, setKoji] = useState<Koji | ''>(initialDetails?.koji ?? '')
+  const [more, setMore] = useState(
+    Boolean(initialStyles.starter || initialDetails?.koji || initialStyles.other.length > 0),
+  )
   const trimmed = name.trim()
   const field =
     'min-h-11 rounded-lg border border-ash-300 bg-ground px-3 text-card-heading text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600'
@@ -237,50 +245,23 @@ export function BottlingNameForm({
               </div>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex min-w-0 flex-col gap-1.5">
-              <label htmlFor={kojiId} className="text-section-label uppercase text-ash-600">
-                {t('kojiLabel')}
-              </label>
-              <select
-                id={kojiId}
-                value={koji}
-                onChange={(event) => setKoji(event.target.value as Koji | '')}
-                className={field}
-                data-testid={`${testId}-koji`}
-              >
-                <option value="">{t('notGiven')}</option>
-                {KojiSchema.options.map((k) => (
-                  <option key={k} value={k}>
-                    {t(`koji.${k}`)}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="flex min-w-0 flex-col gap-1.5">
-              <label htmlFor={starterId} className="text-section-label uppercase text-ash-600">
-                {t('starterLabel')}
-              </label>
-              <select
-                id={starterId}
-                value={starter}
-                onChange={(event) => setStarter(event.target.value as Starter | '')}
-                className={field}
-                data-testid={`${testId}-starter`}
-              >
-                <option value="">{t('notGiven')}</option>
-                {STARTER.map((s) => (
-                  <option key={s} value={s}>
-                    {styleLabel(s)}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
           <div className="flex min-w-0 flex-col gap-1.5">
-            <label htmlFor={pasteurisationId} className="text-section-label uppercase text-ash-600">
-              {t('pasteurisationLabel')}
-            </label>
+            <span className="flex items-center gap-1.5">
+              <label htmlFor={pasteurisationId} className="text-section-label uppercase text-ash-600">
+                {t('pasteurisationLabel')}
+              </label>
+              {/* V3: ⓘ opens Learn's nama entry, in a new tab so the form keeps what was typed. */}
+              <Link
+                href={{ pathname: '/learn/[slug]', params: { slug: 'nama' } }}
+                target="_blank"
+                rel="noopener"
+                aria-label={t('pasteurisationInfo')}
+                className="inline-flex size-5 items-center justify-center rounded-full text-ash-600 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+                data-testid={`${testId}-pasteurisation-info`}
+              >
+                <Info size={15} aria-hidden="true" />
+              </Link>
+            </span>
             <select
               id={pasteurisationId}
               value={pasteurisation}
@@ -288,7 +269,7 @@ export function BottlingNameForm({
               className={field}
               data-testid={`${testId}-pasteurisation`}
             >
-              <option value="">{t('notGiven')}</option>
+              <option value="">{t('pasteurisationUsual')}</option>
               {PASTEURISATION.map((s) => (
                 <option key={s} value={s}>
                   {t(`pasteurisation.${s}`)}
@@ -297,7 +278,7 @@ export function BottlingNameForm({
             </select>
           </div>
           <fieldset className="flex flex-col gap-2">
-            <legend className="mb-1.5 text-section-label uppercase text-ash-600">{t('styleLabel')}</legend>
+            <legend className="mb-1.5 text-section-label uppercase text-ash-600">{t('styleTickAny')}</legend>
             <div className="flex flex-wrap gap-2" data-testid={`${testId}-style-options`}>
               {FREE_STYLES.map((style) => {
                 const on = checked.includes(style)
@@ -322,19 +303,78 @@ export function BottlingNameForm({
                 )
               })}
             </div>
-            <label htmlFor={styleId} className="sr-only">
-              {t('styleOther')}
-            </label>
-            <input
-              id={styleId}
-              value={otherStyles}
-              onChange={(event) => setOtherStyles(event.target.value)}
-              placeholder={t('styleOther')}
-              autoComplete="off"
-              className={field}
-              data-testid={`${testId}-styles`}
-            />
           </fieldset>
+          {/* V1: starter, koji and other style words behind one link, open
+              by itself when a read (or the bottling being renamed) has any. */}
+          {!more ? (
+            <button
+              type="button"
+              onClick={() => setMore(true)}
+              aria-expanded={false}
+              className="flex min-h-10 w-fit items-center gap-1.5 text-subtle font-medium text-ginshu-700 hover:text-ginshu-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+              data-testid={`${testId}-more`}
+            >
+              <Plus size={15} aria-hidden="true" />
+              {t('moreDetails')}
+            </button>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex min-w-0 flex-col gap-1.5">
+                  <label htmlFor={starterId} className="text-section-label uppercase text-ash-600">
+                    {t('starterLabel')}
+                  </label>
+                  <select
+                    id={starterId}
+                    value={starter}
+                    onChange={(event) => setStarter(event.target.value as Starter | '')}
+                    className={field}
+                    data-testid={`${testId}-starter`}
+                  >
+                    <option value="">{t('notGiven')}</option>
+                    {STARTER.map((s) => (
+                      <option key={s} value={s}>
+                        {styleLabel(s)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex min-w-0 flex-col gap-1.5">
+                  <label htmlFor={kojiId} className="text-section-label uppercase text-ash-600">
+                    {t('kojiLabel')}
+                  </label>
+                  <select
+                    id={kojiId}
+                    value={koji}
+                    onChange={(event) => setKoji(event.target.value as Koji | '')}
+                    className={field}
+                    data-testid={`${testId}-koji`}
+                  >
+                    <option value="">{t('notGiven')}</option>
+                    {KojiSchema.options.map((k) => (
+                      <option key={k} value={k}>
+                        {t(`koji.${k}`)} {KOJI_KANJI[k]}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="flex min-w-0 flex-col gap-1.5">
+                <label htmlFor={styleId} className="text-section-label uppercase text-ash-600">
+                  {t('styleOtherLabel')}
+                </label>
+                <input
+                  id={styleId}
+                  value={otherStyles}
+                  onChange={(event) => setOtherStyles(event.target.value)}
+                  placeholder={t('styleOtherPlaceholder')}
+                  autoComplete="off"
+                  className={field}
+                  data-testid={`${testId}-styles`}
+                />
+              </div>
+            </>
+          )}
         </>
       )}
       {mode === 'add' && (
