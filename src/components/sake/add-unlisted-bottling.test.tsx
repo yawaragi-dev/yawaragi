@@ -10,7 +10,12 @@ vi.mock('@/lib/collection/expression-actions', () => ({
 const push = vi.fn()
 // Mocked to see where the visitor is sent; the shared next/navigation stub in
 // vitest.setup.ts hands out a fresh spy per call.
-vi.mock('@/i18n/navigation', () => ({ useRouter: () => ({ push }) }))
+vi.mock('@/i18n/navigation', async (importActual) => ({
+  // The real module, so components that render a Link keep it (a partial
+  // factory leaves every unlisted export undefined).
+  ...(await importActual<typeof import('@/i18n/navigation')>()),
+  useRouter: () => ({ push }),
+}))
 
 const { AddItYourselfRow } = await import('./add-unlisted-bottling')
 
@@ -74,6 +79,9 @@ describe('"Add it yourself" in search', () => {
 
     fireEvent.change(screen.getByLabelText('Grade'), { target: { value: 'junmai_daiginjo' } })
     fireEvent.change(screen.getByLabelText('Pasteurisation'), { target: { value: 'nama' } })
+    // v1.9 V1: starter, koji and other words wait behind one link.
+    expect(screen.queryByLabelText('Starter')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Starter, koji, other style words' }))
     fireEvent.change(screen.getByLabelText('Starter'), { target: { value: 'kimoto' } })
     fireEvent.click(screen.getByRole('checkbox', { name: 'Muroka' }))
     fireEvent.change(screen.getByLabelText('Polishing'), { target: { value: '40' } })

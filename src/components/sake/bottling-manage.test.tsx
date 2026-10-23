@@ -16,7 +16,12 @@ const push = vi.fn()
 const refresh = vi.fn()
 // Mocked to see where the visitor is sent; the shared next/navigation stub in
 // vitest.setup.ts hands out a fresh spy per call.
-vi.mock('@/i18n/navigation', () => ({ useRouter: () => ({ push, refresh }) }))
+vi.mock('@/i18n/navigation', async (importActual) => ({
+  // The real module, so components that render a Link keep it (a partial
+  // factory leaves every unlisted export undefined).
+  ...(await importActual<typeof import('@/i18n/navigation')>()),
+  useRouter: () => ({ push, refresh }),
+}))
 
 const { BottlingManage } = await import('./bottling-manage')
 const { DeletedBottlingNotice } = await import('./deleted-bottling-notice')
