@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { HourglassMedium, WifiSlash } from '@phosphor-icons/react/dist/ssr'
 import { inAppDestination } from '@/lib/navigation/in-app-destination'
+import { hasOfflineCopyMarker } from '@/lib/offline/collection-copy'
+import { OPEN_OFFLINE_COLLECTION, OPEN_OFFLINE_ENTRY } from '@/components/offline/offline-collection'
 
 /** Rule 16's timings (design v1.9, S1 and S4). */
 const BAR_AFTER_MS = 300
@@ -96,7 +98,18 @@ export function NavigationFeedback({
       if (!navigator.onLine) {
         event.preventDefault()
         event.stopImmediatePropagation()
-        showOffline()
+        // Design v1.9 Z: what the saved copy can answer, it answers in place —
+        // a journal row its sheet, Collection itself the copy. Anything else
+        // says there is no connection.
+        const row = anchor.closest('[data-offline-entry]')?.getAttribute('data-offline-entry')
+        const to = new URL(destination, window.location.origin)
+        if (hasOfflineCopyMarker() && row) {
+          window.dispatchEvent(new CustomEvent(OPEN_OFFLINE_ENTRY, { detail: { id: row } }))
+        } else if (hasOfflineCopyMarker() && /^\/[a-z]{2}\/collection$/.test(to.pathname)) {
+          window.dispatchEvent(new CustomEvent(OPEN_OFFLINE_COLLECTION, { detail: { tab: to.searchParams.get('tab') } }))
+        } else {
+          showOffline()
+        }
         return
       }
       clearPress()

@@ -21,7 +21,7 @@ import { toOfflineCopy } from '@/lib/offline/collection-copy'
 import { getCellarStore } from '@/lib/collection/get-cellar-store'
 import { getExpressionStore } from '@/lib/collection/get-expression-store'
 import { lookupJournalFacts } from '@/lib/collection/journal-facts'
-import { JOURNAL_FILTERS_FROM, filterJournal, journalFacetsUnder, parseJournalFilter } from '@/lib/collection/journal-filter'
+import { type EntryFacts, JOURNAL_FILTERS_FROM, filterJournal, journalFacetsUnder, parseJournalFilter } from '@/lib/collection/journal-filter'
 import type { Expression } from '@/lib/schemas/expression'
 import {
   COLLECTION_SEGMENT_COOKIE,
@@ -208,9 +208,20 @@ export default async function CollectionTabPage({ params, searchParams }: PagePr
   const t = await getTranslations('collection')
   const journal = view.journal
   // Design question Z: the read-only copy for when Collection cannot load.
+  // One catalogue lookup for the journal, shared by its filters and the copy.
+  const factsOf = journal.kind === 'journal' ? await lookupJournalFacts(journal.entries, view.expressions) : null
   const offlineCopy =
     view.copyOwner !== undefined && journal.kind !== 'unavailable'
-      ? toOfflineCopy(journal.kind === 'journal' ? journal.entries : [], view.cellar, view.copyOwner, view.now)
+      ? toOfflineCopy(
+          journal.kind === 'journal' ? journal.entries : [],
+          view.cellar,
+          view.copyOwner,
+          view.now,
+          (entry) => {
+            const brewery = factsOf?.(entry).brewery
+            return brewery ? (brewery.nameRomaji ?? brewery.nameKanji) : null
+          },
+        )
       : null
 
   return (
@@ -302,7 +313,7 @@ export default async function CollectionTabPage({ params, searchParams }: PagePr
         </section>
       ) : (
         <>
-          <FilteredJournal entries={journal.entries} expressions={view.expressions} query={query} locale={locale} />
+          <FilteredJournal entries={journal.entries} factsOf={factsOf!} query={query} locale={locale} />
           {/* ADR-0014: the Sakenowa credit is line 1 of the end-of-screen
               block, rendered by the app shell directly under this list. */}
         </>
@@ -318,19 +329,18 @@ export default async function CollectionTabPage({ params, searchParams }: PagePr
  */
 async function FilteredJournal({
   entries,
-  expressions,
+  factsOf,
   query,
   locale,
 }: {
   entries: readonly JournalEntry[]
-  expressions: readonly Expression[]
+  factsOf: (entry: JournalEntry) => EntryFacts
   query: Record<string, string | string[] | undefined>
   locale: string
 }) {
   // v1.9 W1: the chips show from eight tastings; a shorter journal is read whole.
   if (entries.length < JOURNAL_FILTERS_FROM) return <JournalList entries={entries} locale={locale} />
   const filter = parseJournalFilter(query)
-  const factsOf = await lookupJournalFacts(entries, expressions)
   const shown = filterJournal(entries, factsOf, filter)
   const t = await getTranslations('collection.filters')
   return (

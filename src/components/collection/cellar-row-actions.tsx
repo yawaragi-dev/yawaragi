@@ -85,7 +85,7 @@ export function CellarRowActions({
     'flex min-h-9 items-center gap-1.5 rounded-md border border-ash-300 px-3 text-meta font-medium text-ink transition-colors hover:bg-ash-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600 disabled:opacity-50'
 
   return (
-    <div className="mt-1.5 flex flex-col gap-1">
+    <div className="mt-1.5 flex flex-col gap-1" data-needs-network="">
       <div className="flex flex-wrap gap-1.5" aria-busy={isPending || undefined}>
         {isOpen ? (
           <>

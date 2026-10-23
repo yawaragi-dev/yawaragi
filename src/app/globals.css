@@ -387,3 +387,13 @@ body {
     opacity: 0.6;
   }
 }
+
+/*
+ * Design v1.9 Z2: with the phone offline, the actions that save something are
+ * greyed (the system's 45% disabled state) rather than hidden, so rows do not
+ * jump when the signal returns; the offline line says why, once.
+ */
+html[data-offline] [data-needs-network] {
+  opacity: 0.45;
+  pointer-events: none;
+}

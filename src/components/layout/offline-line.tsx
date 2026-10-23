@@ -60,6 +60,13 @@ export function OfflineLine({
     if (navigator.onLine) loadedAt.current = Date.now()
   }, [pathname, tab])
 
+  // Z2: actions that need the network grey out while the phone is offline
+  // (`[data-needs-network]` in globals.css).
+  useEffect(() => {
+    if (online) delete document.documentElement.dataset.offline
+    else document.documentElement.dataset.offline = 'true'
+  }, [online])
+
   useEffect(() => {
     if (!online) {
       setShown({ kind: 'offline', asOf: loadedAt.current || Date.now() })

@@ -13,15 +13,26 @@ import type { JournalEntry } from '@/lib/schemas/journal-entry'
  * few lines of script, so the stored shape is a contract: bump `v` and teach
  * that page the new shape together.
  */
-export const OFFLINE_COPY_VERSION = 1 as const
+/** v2 adds each tasting's id and brewery (design v1.9 Z3's row sheet); v1 copies still read. */
+export const OFFLINE_COPY_VERSION = 2 as const
 
 export interface OfflineCollectionCopy {
-  v: typeof OFFLINE_COPY_VERSION
+  v: 1 | typeof OFFLINE_COPY_VERSION
   /** Whose copy it is: the Clerk user id the server rendered for, or null. */
   owner: string | null
   /** Epoch ms of the online visit that wrote it. */
   savedAt: number
-  journal: { name: string; kanji: string | null; rating: number | null; note: string | null; triedAt: number }[]
+  journal: {
+    /** v2: the tasting's id, so a row tapped offline finds its own entry. */
+    id?: string
+    name: string
+    kanji: string | null
+    /** v2: the brewery's name as shown, for the row's sheet (Z3). */
+    brewery?: string | null
+    rating: number | null
+    note: string | null
+    triedAt: number
+  }[]
   cellar: { name: string; kanji: string | null; count: number; sizeMl: number | null; open: boolean; nama: boolean }[]
 }
 
@@ -35,13 +46,16 @@ export function toOfflineCopy(
   cellar: readonly CellarBottle[],
   owner: string | null,
   savedAt: number,
+  breweryOf: (entry: JournalEntry) => string | null = () => null,
 ): OfflineCollectionCopy {
   return {
     v: OFFLINE_COPY_VERSION,
     owner,
     savedAt,
     journal: entries.map((entry) => ({
+      id: entry.id,
       ...names(entry.sake, entry.expression),
+      brewery: breweryOf(entry),
       rating: entry.event.kind === 'rating' ? entry.event.rating : null,
       note: entry.notes ?? null,
       triedAt: entry.triedAt,
