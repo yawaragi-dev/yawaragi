@@ -21,6 +21,13 @@ minimumReleaseAge: 20160
 minimumReleaseAgeExclude:
   # first-party package; Shai-Hulud anti-quarantine doesn't apply
   - '@yawaragi/sakenowa-mcp'
+  # CVE-forced (2026-10-23): next <=16.4.0 has two critical unauthenticated
+  # RCEs, GHSA-2464-fhr4-w9xw and GHSA-673q-mjm6-r5xr, fixed in 16.4.1
+  # (published 2026-10-14, inside the 14-day window). Excluded by name so the
+  # fix ships now; remove these lines once 16.4.1 is older than 14 days.
+  - 'next'
+  - '@next/*'
+  - 'eslint-config-next'
 
 # Install-script approval. Each entry must be explicitly true or false; pnpm
 # refuses to run install scripts for unapproved packages. Another piece of the
