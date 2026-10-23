@@ -2,7 +2,7 @@
 
 Open questions the build has run into and settled provisionally, so they can be handed to the designers in one go. Each says what is built today, so nobody has to guess. Opened 2026-10-13; filed as #417.
 
-Round two (blocks I–R), round three (blocks S, T, U and V), round four (blocks W–Z, with a priority order across everything still open) and round five (block AA) are at the end of the file.
+Round two (blocks I–R), round three (blocks S, T, U and V), round four (blocks W–Z, with a priority order across everything still open) and round five (blocks AA and AB) are at the end of the file.
 
 The design snapshot these refer to is `design/README.md`, v1.6.2.
 
@@ -470,3 +470,30 @@ Engineering proposes **(b) with (c) feeding it**, and (a) as the fallback for a 
 
    Is it a page of its own (Account → Help → About), or does it fold into the landing?
 6. **Version string:** shown on About only, or also as a line at the foot of Account (useful when a visitor reports a bug)?
+
+## AB. What you bought, and what your journal says about you
+
+The maintainer wants two things: to keep track of the bottles a visitor has owned, not only the ones in the cellar now, and to turn everything we hold into **insights**. Examples: "90% of what you bought was ginjo", "You've tasted nothing from Niigata", "You buy ginjo but rate kimoto highest".
+
+**What we have today:**
+- the **journal**: every tasting, with its sake, stars, date and notes; with a bottling, also its grade, styles and koji. Through the catalogue it has the brewery and prefecture;
+- the **cellar** as it is *now*. A bottle that is finished or removed leaves no trace. "What you bought" therefore cannot be answered yet;
+- "Your journal in numbers" (X): counts, the prefecture map, stars, breweries rated highest, grades, the surprise.
+
+**What engineering would add:**
+- **A bottle history.** Each bottle added, opened, finished or removed is kept as a dated line, on the account like the journal: exported, backed up, deleted with the account. The cellar on screen is unchanged. Existing cellar rows start the history. This is new personal data, so the maintainer decides before it is built.
+- **Insights as plain rules, not AI.** Each insight is a sentence with a number behind it, computed from the journal, the bottle history and the catalogue. It shows only when it rests on enough tastings or bottles, about 8–10 or more. Each says where its number comes from, the way the surprise does. Kinds we can compute:
+  - **share:** "Most of what you buy is ginjo (9 of 10 bottles)";
+  - **gap:** "Nothing yet from Niigata, where the catalogue has 140 sakes";
+  - **contrast:** "You buy ginjo but rate kimoto highest";
+  - **match:** "Your highest-rated breweries are all in Tōhoku";
+  - **drift:** only once a journal spans six months (X3).
+- **Limits (X5, JMStV):** nothing that counts drinking over time. No "bottles this month", no litres, no "you finished 3 bottles this week". A share of what was bought is about taste; a rate of buying or finishing is not, and stays out.
+
+**Questions:**
+1. **Where do insights live?** As a section of "Your journal in numbers" (renamed, say, "Your sake in numbers")? As a screen of their own? As one card at a time on Home or Palate?
+2. **How many at once, and how are they ordered?** Do they change as the journal grows, and can one be dismissed?
+3. **"What you bought":** a section of its own (shares by grade, style, prefecture, size) or only feeding insights? Is "bought" the right word, given that some bottles were gifts? "Owned" or "In your cellar over time"?
+4. **The gap insight** ("nothing from Niigata"): is pointing at what someone has not tried welcome, or does it read as a nudge to buy? If welcome, should it link to Search filtered to that prefecture, or to the region's Learn entry?
+5. **Wording** for an insight on thin ground ("so far", "in your first 12 tastings")?
+6. **The bottle history in the cellar:** should finished bottles be visible anywhere ("Finished · 14 bottles" under the cellar), or only counted?
