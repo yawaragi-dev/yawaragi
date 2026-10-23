@@ -1,4 +1,6 @@
 import type { Metadata } from 'next'
+import { hasAcceptedAgeGate } from '@/lib/legal/age-gate-cookie'
+import { cookies } from 'next/headers'
 import { hasLocale } from 'next-intl'
 import { getFormatter, getTranslations, setRequestLocale } from 'next-intl/server'
 import { notFound } from 'next/navigation'
@@ -6,7 +8,7 @@ import { ArrowSquareOut, ListBullets } from '@phosphor-icons/react/dist/ssr'
 import { OpenTheApp } from '@/components/learn/open-the-app'
 import { Link } from '@/i18n/navigation'
 import { routing } from '@/i18n/routing'
-import { GUIDE_SLUGS, type GuideSlug, guideEntry, isGuideSlug } from '@/lib/guide/entries'
+import { type GuideSlug, guideEntry, isGuideSlug } from '@/lib/guide/entries'
 
 /**
  * One "Learn" entry (design v1.6 §18, screenshots 59–61; ADR-0026).
@@ -36,9 +38,11 @@ interface PageProps {
   params: Promise<{ locale: string; slug: string }>
 }
 
-export function generateStaticParams() {
-  return GUIDE_SLUGS.map((slug) => ({ slug }))
-}
+// No generateStaticParams: the locale layout reads cookies and the session
+// (the age gate, Clerk), so this page cannot be static. Declaring slugs made
+// Next render it as a static route at request time, where the layout's
+// cookies() threw DYNAMIC_SERVER_USAGE and every entry answered 500 in
+// production. An unknown slug is still a 404 below.
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { locale, slug } = await params
@@ -73,7 +77,7 @@ export default async function LearnEntryPage({ params }: PageProps) {
           <ListBullets size={16} aria-hidden="true" />
           {t('allTopics')}
         </Link>
-        <OpenTheApp label={t('openApp')} />
+        <OpenTheApp label={hasAcceptedAgeGate(await cookies()) ? t('backToApp') : t('openApp')} />
       </div>
 
       <header className="flex flex-col gap-1.5">
