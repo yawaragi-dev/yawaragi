@@ -397,14 +397,9 @@ const ENTRIES = [
     group: 'regions',
     kanji: '新潟県',
     romaji: 'Niigata',
-    facts: [
-      { id: 'character', kanji: '淡麗', romaji: 'tanrei' },
-      { id: 'water', kanji: '軟水', romaji: 'nansui' },
-      { id: 'winter' },
-      { id: 'brewers', kanji: '越後杜氏', romaji: 'Echigo tōji' },
-      { id: 'gi', kanji: '地理的表示「新潟」' },
-    ],
-    paragraphs: 2,
+    facts: [],
+    sections: ['water', 'climate', 'rice', 'style'],
+    paragraphs: 0,
     related: ['sake-rice', 'serving-temperatures'],
     sources: [
       {
@@ -413,22 +408,16 @@ const ENTRIES = [
       },
       NTA_GI_LIST,
     ],
-    verifiedOn: '2026-10-22',
+    verifiedOn: '2026-10-23',
   },
   {
     slug: 'region-hyogo',
     group: 'regions',
     kanji: '兵庫県',
     romaji: 'Hyōgo',
-    facts: [
-      { id: 'nada', kanji: '灘五郷', romaji: 'Nada Gogō' },
-      { id: 'miyamizu', kanji: '宮水', romaji: 'miyamizu' },
-      { id: 'winter', kanji: '六甲おろし', romaji: 'Rokkō oroshi' },
-      { id: 'harima', kanji: 'はりま', romaji: 'Harima' },
-      { id: 'yamadanishiki', kanji: '山田錦', romaji: 'Yamada Nishiki' },
-      { id: 'brewers', kanji: '丹波杜氏', romaji: 'Tanba tōji' },
-    ],
-    paragraphs: 2,
+    facts: [],
+    sections: ['water', 'climate', 'rice', 'style'],
+    paragraphs: 0,
     related: ['sake-rice', 'serving-temperatures'],
     sources: [
       {
@@ -441,21 +430,16 @@ const ENTRIES = [
       },
       NTA_GI_LIST,
     ],
-    verifiedOn: '2026-10-22',
+    verifiedOn: '2026-10-23',
   },
   {
     slug: 'region-kyoto',
     group: 'regions',
     kanji: '京都府',
     romaji: 'Kyōto',
-    facts: [
-      { id: 'character' },
-      { id: 'water', kanji: '軟水 · 中硬水' },
-      { id: 'winter', kanji: '底冷え', romaji: 'sokobie' },
-      { id: 'food', kanji: '京料理', romaji: 'kyō-ryōri' },
-      { id: 'gi', kanji: '地理的表示「京都」' },
-    ],
-    paragraphs: 2,
+    facts: [],
+    sections: ['water', 'climate', 'style'],
+    paragraphs: 0,
     related: ['sake-rice', 'serving-temperatures'],
     sources: [
       {
@@ -464,21 +448,16 @@ const ENTRIES = [
       },
       NTA_GI_LIST,
     ],
-    verifiedOn: '2026-10-22',
+    verifiedOn: '2026-10-23',
   },
   {
     slug: 'region-yamagata',
     group: 'regions',
     kanji: '山形県',
     romaji: 'Yamagata',
-    facts: [
-      { id: 'character' },
-      { id: 'water', kanji: '軟水', romaji: 'nansui' },
-      { id: 'winter' },
-      { id: 'aroma' },
-      { id: 'gi', kanji: '地理的表示「山形」' },
-    ],
-    paragraphs: 2,
+    facts: [],
+    sections: ['water', 'climate', 'style'],
+    paragraphs: 0,
     related: ['sake-rice', 'serving-temperatures'],
     sources: [
       {
@@ -487,21 +466,16 @@ const ENTRIES = [
       },
       NTA_GI_LIST,
     ],
-    verifiedOn: '2026-10-22',
+    verifiedOn: '2026-10-23',
   },
   {
     slug: 'region-nagano',
     group: 'regions',
     kanji: '長野県',
     romaji: 'Nagano',
-    facts: [
-      { id: 'character' },
-      { id: 'rice' },
-      { id: 'water' },
-      { id: 'food', kanji: '味噌 · 漬物', romaji: 'miso · tsukemono' },
-      { id: 'gi', kanji: '地理的表示「長野」' },
-    ],
-    paragraphs: 2,
+    facts: [],
+    sections: ['water', 'climate', 'rice', 'style'],
+    paragraphs: 0,
     related: ['sake-rice', 'serving-temperatures'],
     sources: [
       {
@@ -510,22 +484,16 @@ const ENTRIES = [
       },
       NTA_GI_LIST,
     ],
-    verifiedOn: '2026-10-22',
+    verifiedOn: '2026-10-23',
   },
   {
     slug: 'region-shizuoka',
     group: 'regions',
     kanji: '静岡県',
     romaji: 'Shizuoka',
-    facts: [
-      { id: 'character' },
-      { id: 'aroma' },
-      { id: 'water', kanji: '軟水', romaji: 'nansui' },
-      { id: 'yeast', kanji: '静岡酵母', romaji: 'Shizuoka kōbo' },
-      { id: 'brewers', kanji: '志太杜氏', romaji: 'Shida tōji' },
-      { id: 'gi', kanji: '地理的表示「静岡」' },
-    ],
-    paragraphs: 2,
+    facts: [],
+    sections: ['water', 'style'],
+    paragraphs: 0,
     related: ['sake-rice', 'serving-temperatures'],
     sources: [
       {
@@ -534,22 +502,16 @@ const ENTRIES = [
       },
       NTA_GI_LIST,
     ],
-    verifiedOn: '2026-10-22',
+    verifiedOn: '2026-10-23',
   },
   {
     slug: 'region-iwate',
     group: 'regions',
     kanji: '岩手県',
     romaji: 'Iwate',
-    facts: [
-      { id: 'character' },
-      { id: 'water' },
-      { id: 'winter' },
-      { id: 'brewers', kanji: '南部杜氏', romaji: 'Nanbu tōji' },
-      { id: 'rice', kanji: '吟ぎんが · 結の香', romaji: 'Gin Ginga · Yui no Kaori' },
-      { id: 'gi', kanji: '地理的表示「岩手」' },
-    ],
-    paragraphs: 2,
+    facts: [],
+    sections: ['water', 'climate', 'rice', 'style'],
+    paragraphs: 0,
     related: ['sake-rice', 'serving-temperatures'],
     sources: [
       {
@@ -558,21 +520,16 @@ const ENTRIES = [
       },
       NTA_GI_LIST,
     ],
-    verifiedOn: '2026-10-22',
+    verifiedOn: '2026-10-23',
   },
   {
     slug: 'region-saga',
     group: 'regions',
     kanji: '佐賀県',
     romaji: 'Saga',
-    facts: [
-      { id: 'character', kanji: '芳醇旨口', romaji: 'hōjun umakuchi' },
-      { id: 'land', kanji: '佐賀平野', romaji: 'Saga heiya' },
-      { id: 'water' },
-      { id: 'history' },
-      { id: 'gi', kanji: '地理的表示「佐賀」' },
-    ],
-    paragraphs: 2,
+    facts: [],
+    sections: ['water', 'climate', 'rice', 'style'],
+    paragraphs: 0,
     related: ['sake-rice', 'serving-temperatures'],
     sources: [
       {
@@ -581,21 +538,16 @@ const ENTRIES = [
       },
       NTA_GI_LIST,
     ],
-    verifiedOn: '2026-10-22',
+    verifiedOn: '2026-10-23',
   },
   {
     slug: 'region-mie',
     group: 'regions',
     kanji: '三重県',
     romaji: 'Mie',
-    facts: [
-      { id: 'character' },
-      { id: 'winter', kanji: '鈴鹿おろし', romaji: 'Suzuka oroshi' },
-      { id: 'water' },
-      { id: 'food' },
-      { id: 'gi', kanji: '地理的表示「三重」' },
-    ],
-    paragraphs: 2,
+    facts: [],
+    sections: ['water', 'climate', 'style'],
+    paragraphs: 0,
     related: ['sake-rice', 'serving-temperatures'],
     sources: [
       {
@@ -604,21 +556,16 @@ const ENTRIES = [
       },
       NTA_GI_LIST,
     ],
-    verifiedOn: '2026-10-22',
+    verifiedOn: '2026-10-23',
   },
   {
     slug: 'region-shiga',
     group: 'regions',
     kanji: '滋賀県',
     romaji: 'Shiga',
-    facts: [
-      { id: 'character' },
-      { id: 'water' },
-      { id: 'rice', kanji: '近江米', romaji: 'Ōmi-mai' },
-      { id: 'winter', kanji: '底冷え', romaji: 'sokobie' },
-      { id: 'gi', kanji: '地理的表示「滋賀」' },
-    ],
-    paragraphs: 2,
+    facts: [],
+    sections: ['water', 'climate', 'rice', 'style'],
+    paragraphs: 0,
     related: ['sake-rice', 'serving-temperatures'],
     sources: [
       {
@@ -627,12 +574,13 @@ const ENTRIES = [
       },
       NTA_GI_LIST,
     ],
-    verifiedOn: '2026-10-22',
+    verifiedOn: '2026-10-23',
   },
 ] as const satisfies ReadonlyArray<
   Omit<GuideEntry, 'source' | 'verifiedOn' | 'facts'> & {
     verifiedOn?: string
     facts: ReadonlyArray<{ id: string; kanji?: string; romaji?: string; note?: boolean }>
+    sections?: ReadonlyArray<'water' | 'climate' | 'rice' | 'style'>
   }
 >
 

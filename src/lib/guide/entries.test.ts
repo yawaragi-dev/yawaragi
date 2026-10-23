@@ -9,13 +9,14 @@ import { GUIDE_GROUPS } from '@/lib/schemas/guide-entry'
 type EntryMessages = {
   title: string
   answer: string
-  factsTitle: string
-  facts: Record<string, { term: string; value: string; note?: string }>
+  factsTitle?: string
+  facts?: Record<string, { term: string; value: string; note?: string }>
+  sections?: Record<string, string>
   detail?: Record<string, string>
 }
 const catalogues = {
-  en: en.learn.entries as Record<string, EntryMessages>,
-  de: de.learn.entries as Record<string, EntryMessages>,
+  en: en.learn.entries as unknown as Record<string, EntryMessages>,
+  de: de.learn.entries as unknown as Record<string, EntryMessages>,
 }
 
 describe('the Learn entries', () => {
@@ -36,6 +37,14 @@ describe('the Learn entries', () => {
     }
   })
 
+  it('give a region one sentence of answer, which §9 quotes on its own (design v1.9, Y1)', () => {
+    for (const entry of guideEntriesIn('regions')) {
+      for (const words of [catalogues.en, catalogues.de]) {
+        expect(words[entry.slug]!.answer.match(/[.!?](\s|$)/g), entry.slug).toHaveLength(1)
+      }
+    }
+  })
+
   it('open with exactly one "start here" entry, and leave no group empty', () => {
     expect(guideEntriesIn('start').map((e) => e.slug)).toEqual(['how-to-read-a-label'])
     for (const group of GUIDE_GROUPS) expect(guideEntriesIn(group).length).toBeGreaterThan(0)
@@ -48,10 +57,13 @@ describe('the Learn entries', () => {
 
     for (const entry of GUIDE_ENTRIES) {
       const w = words[entry.slug]!
-      expect(w.title && w.answer && w.factsTitle, entry.slug).toBeTruthy()
-      expect(Object.keys(w.facts), entry.slug).toEqual(entry.facts.map((f) => f.id))
+      expect(w.title && w.answer, entry.slug).toBeTruthy()
+      // A region has headed paragraphs instead of facts (design v1.9, Y1).
+      expect(Object.keys(w.sections ?? {}), entry.slug).toEqual([...(entry.sections ?? [])])
+      if (entry.facts.length > 0) expect(w.factsTitle, entry.slug).toBeTruthy()
+      expect(Object.keys(w.facts ?? {}), entry.slug).toEqual(entry.facts.map((f) => f.id))
       for (const fact of entry.facts) {
-        const f = w.facts[fact.id]!
+        const f = w.facts![fact.id]!
         expect(f.term && f.value, `${entry.slug}.${fact.id}`).toBeTruthy()
         // A note is there exactly when the entry says it is, so the page
         // never asks for a string that does not exist.
@@ -85,8 +97,8 @@ describe('the Learn entries', () => {
       expect(fact.romaji).toBe(FLAVOR_AXIS_ROMAJI[axis])
       expect(fact.kanji).toBe(en.flavorAxis[axis].kanji)
       // The word on the page is the word on the chart, in both languages.
-      expect(catalogues.en['flavor-words']!.facts[axis]!.term).toBe(en.flavorAxis[axis].label)
-      expect(catalogues.de['flavor-words']!.facts[axis]!.term).toBe(de.flavorAxis[axis].label)
+      expect(catalogues.en['flavor-words']!.facts![axis]!.term).toBe(en.flavorAxis[axis].label)
+      expect(catalogues.de['flavor-words']!.facts![axis]!.term).toBe(de.flavorAxis[axis].label)
     }
   })
 
@@ -98,7 +110,7 @@ describe('the Learn entries', () => {
       expect(fact!.romaji!.replace('-', ''), term.kanji).toBe(term.romaji)
       // Room temperature is a range on the page; every other step is a number.
       if (term.kanji !== '常温') {
-        expect(catalogues.en['serving-temperatures']!.facts[fact!.id]!.term).toBe(`${term.degrees}°C`)
+        expect(catalogues.en['serving-temperatures']!.facts![fact!.id]!.term).toBe(`${term.degrees}°C`)
       }
     }
   })

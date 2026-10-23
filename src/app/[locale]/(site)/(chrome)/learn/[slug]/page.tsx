@@ -95,34 +95,48 @@ export default async function LearnEntryPage({ params }: PageProps) {
         {text('answer')}
       </p>
 
-      <section className="flex flex-col" aria-labelledby="learn-facts-title">
-        <h2 id="learn-facts-title" className="pb-1 text-section-label uppercase text-ash-600">
-          {text('factsTitle')}
-        </h2>
-        <dl className="flex flex-col" data-testid="learn-entry-facts">
-          {entry.facts.map((fact) => (
-            <div key={fact.id} className="flex gap-3 border-b border-divider py-3">
-              <dt className="w-[104px] shrink-0 text-body font-medium text-ink">
-                {text(`facts.${fact.id}.term`)}
-              </dt>
-              <dd className="flex min-w-0 flex-1 flex-col gap-1">
-                <span className="text-body text-ink">{text(`facts.${fact.id}.value`)}</span>
-                {fact.kanji && (
-                  <span className="flex flex-wrap items-baseline gap-x-2 text-subtle text-ash-700">
-                    <span lang="ja">{fact.kanji}</span>
-                    {fact.romaji && <span className="text-meta italic text-ash-600">{fact.romaji}</span>}
-                  </span>
-                )}
-                {fact.note && (
-                  <span className="text-meta leading-normal text-ash-700">
-                    {text(`facts.${fact.id}.note`)}
-                  </span>
-                )}
-              </dd>
-            </div>
+      {/* Design v1.9 Y1: a region is short headed paragraphs, not a list of facts. */}
+      {entry.sections && entry.sections.length > 0 && (
+        <div className="flex flex-col gap-4" data-testid="learn-entry-sections">
+          {entry.sections.map((section) => (
+            <section key={section} className="flex flex-col gap-1">
+              <h2 className="text-section-label uppercase text-ash-600">{t(`regionSections.${section}`)}</h2>
+              <p className="text-body leading-relaxed text-ash-800">{text(`sections.${section}`)}</p>
+            </section>
           ))}
-        </dl>
-      </section>
+        </div>
+      )}
+
+      {entry.facts.length > 0 && (
+        <section className="flex flex-col" aria-labelledby="learn-facts-title">
+          <h2 id="learn-facts-title" className="pb-1 text-section-label uppercase text-ash-600">
+            {text('factsTitle')}
+          </h2>
+          <dl className="flex flex-col" data-testid="learn-entry-facts">
+            {entry.facts.map((fact) => (
+              <div key={fact.id} className="flex gap-3 border-b border-divider py-3">
+                <dt className="w-[104px] shrink-0 text-body font-medium text-ink">
+                  {text(`facts.${fact.id}.term`)}
+                </dt>
+                <dd className="flex min-w-0 flex-1 flex-col gap-1">
+                  <span className="text-body text-ink">{text(`facts.${fact.id}.value`)}</span>
+                  {fact.kanji && (
+                    <span className="flex flex-wrap items-baseline gap-x-2 text-subtle text-ash-700">
+                      <span lang="ja">{fact.kanji}</span>
+                      {fact.romaji && <span className="text-meta italic text-ash-600">{fact.romaji}</span>}
+                    </span>
+                  )}
+                  {fact.note && (
+                    <span className="text-meta leading-normal text-ash-700">
+                      {text(`facts.${fact.id}.note`)}
+                    </span>
+                  )}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      )}
 
       {entry.paragraphs > 0 && (
         <div className="flex flex-col gap-3" data-testid="learn-entry-detail">
