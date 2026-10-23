@@ -190,4 +190,16 @@ test.describe('Learn', () => {
     )
     await context.close()
   })
+
+  test('says "Back to the app" to a visitor who has been in it, "Open the app" to one who has not', async ({ browser }) => {
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([CONSENT_COOKIE])
+    const page = await context.newPage()
+    await page.goto('/en/learn/nama')
+    await expect(page.getByTestId('learn-open-app')).toHaveText('Open the app')
+    await context.addCookies([AGE_GATE_COOKIE])
+    await page.goto('/en/learn/nama')
+    await expect(page.getByTestId('learn-open-app')).toHaveText('Back to the app')
+    await context.close()
+  })
 })

@@ -1,4 +1,6 @@
 import type { Metadata } from 'next'
+import { hasAcceptedAgeGate } from '@/lib/legal/age-gate-cookie'
+import { cookies } from 'next/headers'
 import { hasLocale } from 'next-intl'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { notFound } from 'next/navigation'
@@ -48,7 +50,7 @@ export default async function LearnIndexPage({ params }: PageProps) {
       <div className="flex flex-col gap-2">
         <div className="flex items-start justify-between gap-4">
           <h1 className="text-[26px] font-medium leading-tight text-ink">{t('title')}</h1>
-          <OpenTheApp label={t('openApp')} />
+          <OpenTheApp label={hasAcceptedAgeGate(await cookies()) ? t('backToApp') : t('openApp')} />
         </div>
         <p className="text-body text-ash-700">{t('lead')}</p>
       </div>

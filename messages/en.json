@@ -2041,7 +2041,8 @@
       "climate": "Climate",
       "rice": "Rice",
       "style": "Style"
-    }
+    },
+    "backToApp": "Back to the app"
   },
   "appError": {
     "title": "We couldn’t load this page",

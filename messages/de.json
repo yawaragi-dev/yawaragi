@@ -2041,7 +2041,8 @@
       "climate": "Klima",
       "rice": "Reis",
       "style": "Stil"
-    }
+    },
+    "backToApp": "Zurück zur App"
   },
   "appError": {
     "title": "Diese Seite ließ sich nicht laden",
