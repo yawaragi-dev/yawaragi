@@ -2475,6 +2475,18 @@
       "stars": "{n} of 5 stars",
       "open": "open",
       "nama": "nama"
+    },
+    "inApp": {
+      "title": "Collection",
+      "journal": "Journal",
+      "cellar": "Cellar",
+      "journalAsOf": "Offline · Your journal as of {time}",
+      "cellarAsOf": "Offline · Your cellar as of {time}",
+      "changesWait": "Changes wait for a connection.",
+      "sheetFoot": "From the copy on this phone, as of {time}. The sake’s page and editing need a connection.",
+      "stars": "{n} of 5 stars",
+      "summary": "{bottles} bottles · {open} open",
+      "empty": "No tastings in the copy on this phone."
     }
   },
   "connection": {

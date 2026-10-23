@@ -98,7 +98,7 @@ a{align-self:flex-start;padding:10px 18px;border:1px solid #cf8a6e;border-radius
   }
   function none() { lists.appendChild(el('p', null, w.none)); }
   function draw(copy) {
-    if (!copy || copy.v !== c.version) return none();
+    if (!copy || !(copy.v >= 1 && copy.v <= c.version)) return none();
     var day = new Intl.DateTimeFormat(c.locale, { day: '2-digit' });
     var month = new Intl.DateTimeFormat(c.locale, { month: 'short' });
     var when = new Intl.DateTimeFormat(c.locale, { dateStyle: 'medium', timeStyle: 'short' });

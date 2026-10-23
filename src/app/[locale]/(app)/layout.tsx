@@ -5,6 +5,7 @@ import { getComplianceState } from '@/lib/legal/compliance-state'
 import { getLocale, getTranslations } from 'next-intl/server'
 import { NavigationFeedback } from '@/components/layout/navigation-feedback'
 import { OfflineLine } from '@/components/layout/offline-line'
+import { OfflineCollection } from '@/components/offline/offline-collection'
 import { LegalFooter } from '@/components/layout/legal-footer'
 import { NoticeHost } from '@/components/journal/undo-notice'
 import { DeletedBottlingNotice } from '@/components/sake/deleted-bottling-notice'
@@ -49,6 +50,8 @@ import { currentUserIsMaintainer } from '@/lib/auth/maintainer'
 export default async function AppShellLayout({ children }: { children: React.ReactNode }) {
   const t = await getTranslations('tabs')
   const tConnection = await getTranslations('connection')
+  const tInApp = await getTranslations('offline.inApp')
+  const tCellar = await getTranslations('cellar')
   const locale = await getLocale()
   const cookieJar = await cookies()
   const { consent } = getComplianceState(cookieJar)
@@ -100,6 +103,26 @@ export default async function AppShellLayout({ children }: { children: React.Rea
         />
       </Suspense>
       {viewingSample && <SampleCollectionBanner />}
+      {/* Design v1.9 Z: the saved copy of the journal and cellar, inside the shell, when offline. */}
+      <OfflineCollection
+        locale={locale}
+        messages={{
+          title: tInApp('title'),
+          journal: tInApp('journal'),
+          cellar: tInApp('cellar'),
+          journalAsOf: tInApp.raw('journalAsOf') as string,
+          cellarAsOf: tInApp.raw('cellarAsOf') as string,
+          changesWait: tInApp('changesWait'),
+          sheetFoot: tInApp.raw('sheetFoot') as string,
+          stars: tInApp.raw('stars') as string,
+          pourAndRate: tCellar('pourAndRate'),
+          finished: tCellar('finished'),
+          openBottle: tCellar('openBottle'),
+          removeOne: tCellar('removeOne'),
+          summary: tInApp.raw('summary') as string,
+          empty: tInApp('empty'),
+        }}
+      />
       <main
         className="min-h-0 flex-1 overflow-y-auto overflow-x-clip overscroll-contain [container-type:size]"
         data-app-pane=""

@@ -69,3 +69,42 @@ test.describe('offline page', () => {
     await expect(page.getByTestId('offline-collection-saved')).toContainText('Saved copy from')
   })
 })
+
+test.describe('the saved copy inside the app (design v1.9, Z)', () => {
+  test.beforeEach(async ({ context }) => {
+    await context.addCookies(
+      [
+        ['yawaragi_age_gate', JSON.stringify({ v: 1, ts: Date.now() })],
+        ['yawaragi_consent', JSON.stringify({ version: 1, analytics: false, marketing: false })],
+        ['yawaragi_journal_stub', 'populated'],
+      ].map(([name, value]) => ({ name: name!, value: value!, url: BASE_URL })),
+    )
+  })
+
+  test('Collection tapped offline shows the copy in the shell; a row opens its sheet; back online the real screen returns', async ({ page, context }) => {
+    await page.goto('/en/collection?tab=journal')
+    await expect(page.getByTestId('journal-list')).toBeVisible()
+    await expect.poll(() => page.evaluate(() => localStorage.getItem('yawaragi-offline-copy'))).toBe('1')
+    await page.getByTestId('tab-home').click()
+    await expect(page).toHaveURL(/\/en\/home$/)
+    await expect(page.locator('html[data-nav-feedback="ready"]')).toHaveCount(1)
+
+    await context.setOffline(true)
+    await page.getByTestId('tab-collection').click()
+    const copy = page.getByTestId('offline-collection-in-app')
+    await expect(copy).toContainText('Offline · Your journal as of')
+    await expect(copy).toContainText('Changes wait for a connection.')
+    await expect(page.getByTestId('tab-bar')).toBeVisible()
+
+    await page.getByTestId('offline-in-app-journal').getByRole('button').first().click()
+    await expect(page.getByTestId('offline-entry-sheet')).toContainText('The sake’s page and editing need a connection.')
+    await page.keyboard.press('Escape')
+
+    await page.getByTestId('offline-in-app-cellar').click()
+    await expect(copy).toContainText('Offline · Your cellar as of')
+
+    await context.setOffline(false)
+    await expect(page).toHaveURL(/\/en\/collection\?tab=cellar/)
+    await expect(copy).toHaveCount(0)
+  })
+})

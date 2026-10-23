@@ -31,10 +31,10 @@ const bottle = {
 describe('the copy of the collection kept on the phone', () => {
   it('holds what the offline page shows: names, stars, the note and the date; bottles, sizes and whether one is open', () => {
     expect(toOfflineCopy([tasting], [bottle], 'user_1', 100)).toEqual({
-      v: 1,
+      v: 2,
       owner: 'user_1',
       savedAt: 100,
-      journal: [{ name: 'Dassai', kanji: '獺祭', rating: 4, note: 'Melon, a clean finish.', triedAt: 5 }],
+      journal: [{ id: 't1', name: 'Dassai', kanji: '獺祭', brewery: null, rating: 4, note: 'Melon, a clean finish.', triedAt: 5 }],
       cellar: [{ name: 'Rihaku Wandering Poet', kanji: '李白', count: 2, sizeMl: 720, open: true, nama: false }],
     })
   })

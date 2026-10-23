@@ -31,6 +31,7 @@ export function FullNotesChip({
     <>
       <button
         type="button"
+        data-needs-network=""
         onClick={() => setOpen(true)}
         className="inline-flex min-h-8 items-center gap-1.5 self-start rounded-md bg-ash-200 px-2.5 text-meta text-ink transition-colors hover:bg-ash-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
         data-testid={`journal-full-notes-${entryId}`}

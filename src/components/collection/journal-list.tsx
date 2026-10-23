@@ -104,6 +104,9 @@ export async function JournalList({
             key={entry.id}
             className="border-b border-divider"
             data-testid="journal-entry"
+            // Design v1.9 Z3: tapped with no connection, the row opens its
+            // sheet from the copy saved on the phone (<NavigationFeedback />).
+            data-offline-entry={entry.id}
           >
             {entry.expression ? (
               // v1.6.1 §11: a row opens the page of what the tasting was
