@@ -5,6 +5,7 @@ import { Link } from '@/i18n/navigation'
 import type { Locale } from '@/i18n/routing'
 import { withFilter, type BrowseFilter, type FlavorFilter } from '@/lib/sakenowa/browse-filter'
 import { getPrefectureNames, JAPAN_PREFECTURES } from '@/lib/sakenowa/prefecture'
+import { regionEntryFor } from '@/lib/guide/regions'
 import { FLAVOR_AXES, type FlavorAxis } from '@/lib/schemas/flavor-chart'
 import { cn } from '@/lib/utils'
 
@@ -21,6 +22,7 @@ export async function SearchBrowse({ filter, counts, locale }: {
 }) {
   const t = await getTranslations('search.browse')
   const prefecture = filter.areaId !== null ? getPrefectureNames(filter.areaId) : null
+  const regionSlug = filter.areaId !== null ? regionEntryFor(filter.areaId) : null
   const flavorLabel = filter.flavor ? await flavorWords(filter.flavor, locale) : null
 
   return (
@@ -65,6 +67,16 @@ export async function SearchBrowse({ filter, counts, locale }: {
           </Link>
         )}
       </div>
+      {/* Design v1.9 Y3: one prefecture picked, and Learn has its region. */}
+      {prefecture && regionSlug && (
+        <Link
+          href={{ pathname: '/learn/[slug]', params: { slug: regionSlug } }}
+          className="w-fit text-subtle font-medium text-ginshu-700 hover:text-ginshu-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+          data-testid="search-browse-region"
+        >
+          {t('aboutRegion', { prefecture: prefecture.nameEn })}
+        </Link>
+      )}
     </section>
   )
 }

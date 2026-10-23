@@ -182,6 +182,8 @@ test.describe('Learn', () => {
     expect((await page.goto('/en/learn/region-niigata'))!.status()).toBe(200)
     await expect(page.getByRole('heading', { level: 1, name: 'Niigata' })).toBeVisible()
     await expect(page.getByText('新潟県')).toBeVisible()
+    // Design v1.9 Y1: one sentence, then Water · Climate · Rice · Style.
+    await expect(page.getByTestId('learn-entry-sections').getByRole('heading', { level: 2 })).toHaveText(['Water', 'Climate', 'Rice', 'Style'])
     await expect(page.getByRole('link', { name: /geographical indication “新潟” for sake/ })).toHaveAttribute(
       'href',
       'https://www.nta.go.jp/taxes/sake/hyoji/chiri/220207_niigata_besshi01.htm',

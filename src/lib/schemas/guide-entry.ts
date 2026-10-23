@@ -42,6 +42,10 @@ export const GuideFactSchema = z.object({
 })
 export type GuideFact = z.infer<typeof GuideFactSchema>
 
+/** The headed paragraphs a region entry has instead of facts (design v1.9, Y1). */
+export const REGION_SECTIONS = ['water', 'climate', 'rice', 'style'] as const
+export type RegionSection = (typeof REGION_SECTIONS)[number]
+
 export const GuideEntrySchema = z.object({
   slug: Slug,
   group: z.enum(GUIDE_GROUPS),
@@ -50,7 +54,9 @@ export const GuideEntrySchema = z.object({
   kanji: z.string().min(1).nullable(),
   romaji: z.string().min(1).nullable(),
   /** The titled list. Order is the order on the page. */
-  facts: z.array(GuideFactSchema).min(1),
+  facts: z.array(GuideFactSchema),
+  /** A region's short headed paragraphs (`sections.<id>`), in this order. */
+  sections: z.array(z.enum(REGION_SECTIONS)).max(4).optional(),
   /** How many paragraphs of detail the messages carry (`detail.p1` …). */
   paragraphs: z.number().int().min(0).max(6),
   /** Other entries to read next, by slug. */
@@ -61,5 +67,7 @@ export const GuideEntrySchema = z.object({
   source: z.literal('manual_curation'),
   /** `YYYY-MM-DD`. */
   verifiedOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+}).refine((entry) => entry.facts.length > 0 || (entry.sections?.length ?? 0) > 0, {
+  message: 'an entry lists facts or, for a region, its headed paragraphs',
 })
 export type GuideEntry = z.infer<typeof GuideEntrySchema>
