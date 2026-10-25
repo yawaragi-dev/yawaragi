@@ -31,6 +31,8 @@ const isAgainstDeployment = Boolean(DEPLOYED_URL)
 
 export default defineConfig({
   testDir: './e2e',
+  // The production smoke has its own config and server (playwright.smoke.config.ts).
+  testIgnore: 'smoke-prod.spec.ts',
   use: {
     baseURL: DEPLOYED_URL || 'http://localhost:3000',
     channel: 'chrome',
