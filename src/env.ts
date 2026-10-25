@@ -103,6 +103,10 @@ const Env = z.object({
   // their daily tallies under it, so preview builds — which share the
   // Upstash database today — never count as the live site. Unset locally.
   VERCEL_ENV: empty(z.enum(['production', 'preview', 'development']).optional()),
+  // Set by Vercel on every deployment (build and runtime): the full SHA of
+  // the commit it was built from. About and Account show its first seven
+  // characters as the build (design v1.10, AA6). Unset locally → "dev".
+  VERCEL_GIT_COMMIT_SHA: empty(z.string().optional()),
   // -------- Phase 3 / S3 — vision provider seam (#108) ----------------
   // Named key into the vision-provider registry. Default is
   // `anthropic-haiku-5-5`. The eventual second vendor (Phase 4-ish

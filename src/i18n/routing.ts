@@ -32,6 +32,8 @@ export const routing = defineRouting({
     // through next-intl (see `sign-in-card.tsx`), not through the URL.
     '/sign-in': '/sign-in',
     '/account': '/account',
+    // "About Yawaragi" (design v1.10, AA5): Account → Help → About.
+    '/account/about': '/account/about',
     '/sake/[brandId]': '/sake/[brandId]',
     '/sake/[brandId]/similar': '/sake/[brandId]/similar',
     // §9a: one bottling a visitor added themselves (ADR-0025). The id is the

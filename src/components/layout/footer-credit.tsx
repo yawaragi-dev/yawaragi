@@ -24,7 +24,10 @@ import { usePathname } from '@/i18n/navigation'
 export function FooterCredit() {
   const t = useTranslations('sakenowaAttribution')
   const pathname = usePathname()
-  if (pathname === '/account' || pathname.startsWith('/account/')) return null
+  // Account itself only. Its "About Yawaragi" page (design v1.10, AA5) keeps
+  // the line: the prototype draws it there, under the page's own account of
+  // where the catalogue comes from.
+  if (pathname === '/account') return null
   return (
     <div data-footer-credit="">
       <SakenowaAttributionView

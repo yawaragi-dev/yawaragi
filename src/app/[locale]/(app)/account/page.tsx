@@ -1,4 +1,4 @@
-import { BookOpen, Globe } from '@phosphor-icons/react/dist/ssr'
+import { BookOpen, Globe, Info } from '@phosphor-icons/react/dist/ssr'
 import { Show } from '@clerk/nextjs'
 import { auth } from '@clerk/nextjs/server'
 import { hasLocale } from 'next-intl'
@@ -141,6 +141,10 @@ export default async function AccountPage({ params }: PageProps) {
           steps={{ ios: { name: t('homeScreenIos.name'), how: t('homeScreenIos.how') }, android: { name: t('homeScreenAndroid.name'), how: t('homeScreenAndroid.how') } }}
           otherPhones={t('homeScreenOther')}
         />
+        {/* Design v1.10 AA1 puts "Send feedback" between these two rows.
+            TODO(open decision 20): add it once it is decided where feedback
+            messages are stored. */}
+        <SettingsLinkRow icon={Info} label={t('aboutLabel')} href="/account/about" testId="account-about" />
       </SettingsGroup>
 
       <SettingsGroup title={t('groupPrivacy')} testId="account-group-privacy">
