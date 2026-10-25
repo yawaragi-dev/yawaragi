@@ -2,6 +2,8 @@ import { getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
 import { CookieSettingsLink } from '@/components/legal/cookie-settings-link'
 import { FooterCredit } from '@/components/layout/footer-credit'
+import { FooterVersion } from '@/components/layout/footer-version'
+import { appVersion } from '@/lib/app/app-version'
 
 /**
  * Impressum · Privacy notice · Cookie settings.
@@ -50,6 +52,7 @@ const LINK_CLASS_NAME =
 
 export async function LegalFooter({ credit = false }: { credit?: boolean } = {}) {
   const t = await getTranslations('footer')
+  const { version, build } = appVersion()
 
   return (
     // v1.5 rule 15, the end-of-screen block: last in every scrolling app
@@ -58,6 +61,8 @@ export async function LegalFooter({ credit = false }: { credit?: boolean } = {})
     <footer className="flex flex-col gap-1 px-5 pt-1 pb-5 text-meta leading-normal text-ash-600" data-testid="site-footer">
       {credit && <FooterCredit />}
       <nav className="flex flex-wrap items-center gap-x-3.5" aria-label={t('label')}>
+        {/* Design v1.10 AA6: Account's line starts with the version. */}
+        <FooterVersion text={t('version', { version, build })} />
         <Link href="/imprint" data-testid="footer-imprint-link" className={LINK_CLASS_NAME}>
           {t('imprintLink')}
         </Link>

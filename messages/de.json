@@ -74,7 +74,8 @@
     "learnLink": "Wissen",
     "privacyLink": "Datenschutz",
     "drinkResponsibly": "Trinke verantwortungsvoll",
-    "label": "Rechtliches"
+    "label": "Rechtliches",
+    "version": "Yawaragi {version} · Build {build}"
   },
   "header": {
     "wordmarkLabel": "Yawaragi Startseite",
@@ -683,6 +684,26 @@
       "linkLabel": "Journal öffnen"
     }
   },
+  "about": {
+    "title": "Über Yawaragi",
+    "intro": "Ein Begleiter für Sake. Scanne ein Etikett, bewerte mit einem Tipp, was du probierst, und finde heraus, was dir gefällt. Dein Journal gehört dir: Es wird niemandem gezeigt, und du kannst es jederzeit exportieren oder löschen.",
+    "dataHeading": "Woher die Daten kommen",
+    "sakenowaName": "Sakenowa",
+    "sakenowaBody": "Namen der Sakes, Brauereien, Präfekturen und Geschmacksprofile.",
+    "sakenowaLink": "sakenowa.com",
+    "ntaName": "Nationale Steuerbehörde Japans",
+    "ntaBody": "Qualitätsstufen, Regeln für das Etikett und was über jede Region bekannt ist.",
+    "learnName": "Wissen",
+    "learnBody": "Von Hand geschrieben. Jeder Eintrag nennt am Ende seine Quellen.",
+    "readingHeading": "Etiketten lesen",
+    "readingBody": "Ein KI-Modell liest die Wörter auf deinem Foto. Was es gelesen hat, ist mit „Von KI gelesen“ markiert, damit du es mit dem Etikett vergleichen kannst. Das Foto wird nicht aufbewahrt: Es wird verworfen, sobald es gelesen ist.",
+    "openSourceHeading": "Open Source",
+    "openSourceBody": "Der Sakenowa-MCP-Server, mit dem ein KI-Assistent den Sakenowa-Katalog durchsuchen kann, ist Open Source.",
+    "openSourceLink": "Quellcode",
+    "newTab": "(öffnet in einem neuen Tab)",
+    "versionLabel": "Version",
+    "versionValue": "{version} · Build {build}"
+  },
   "account": {
     "title": "Konto",
     "notSignedInTitle": "Nicht angemeldet",
@@ -711,6 +732,7 @@
       "name": "Android (Chrome, Firefox und andere)",
       "how": "Öffne das ⋮-Menü des Browsers, dann „Zum Startbildschirm hinzufügen“ oder „App installieren“."
     },
+    "aboutLabel": "Über Yawaragi",
     "groupYourJournal": "Dein Journal",
     "yourData": {
       "exportLabel": "Journal exportieren",

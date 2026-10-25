@@ -74,7 +74,8 @@
     "learnLink": "Learn",
     "privacyLink": "Privacy notice",
     "drinkResponsibly": "Drink responsibly",
-    "label": "Legal"
+    "label": "Legal",
+    "version": "Yawaragi {version} · build {build}"
   },
   "header": {
     "wordmarkLabel": "Yawaragi home",
@@ -683,6 +684,26 @@
       "linkLabel": "Open your journal"
     }
   },
+  "about": {
+    "title": "About Yawaragi",
+    "intro": "A sake companion. Scan a label, rate what you taste with one tap, and learn what you like. Your journal is yours: it is never shown to anyone, and you can export or delete it at any time.",
+    "dataHeading": "Where the data comes from",
+    "sakenowaName": "Sakenowa",
+    "sakenowaBody": "Sake names, breweries, prefectures and flavor charts.",
+    "sakenowaLink": "sakenowa.com",
+    "ntaName": "National Tax Agency of Japan",
+    "ntaBody": "Grades, label rules and what is known about each region.",
+    "learnName": "Learn",
+    "learnBody": "Written by hand. Each entry names its sources at the foot.",
+    "readingHeading": "Reading labels",
+    "readingBody": "An AI model reads the words on your photo. Whatever it read is marked “Read by AI”, so you can check it against the label. The photo is not kept: it is discarded once read.",
+    "openSourceHeading": "Open source",
+    "openSourceBody": "The Sakenowa MCP server, which lets an AI assistant search the Sakenowa catalogue, is open source.",
+    "openSourceLink": "Source code",
+    "newTab": "(opens in a new tab)",
+    "versionLabel": "Version",
+    "versionValue": "{version} · build {build}"
+  },
   "account": {
     "title": "Account",
     "notSignedInTitle": "Not signed in",
@@ -711,6 +732,7 @@
       "name": "Android (Chrome, Firefox and others)",
       "how": "Open the browser’s ⋮ menu, then “Add to Home screen” or “Install app”."
     },
+    "aboutLabel": "About Yawaragi",
     "groupYourJournal": "Your journal",
     "yourData": {
       "exportLabel": "Export journal",
