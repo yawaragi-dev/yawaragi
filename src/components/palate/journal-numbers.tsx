@@ -342,7 +342,7 @@ async function WhatStandsOut({ standsOut }: { standsOut: StandsOut }) {
               className="flex flex-col gap-1.5 rounded-md bg-surface px-3.5 py-3 shadow-yw-sm"
               data-testid={`stands-out-${insight.kind}`}
             >
-              <p className="text-subtle font-medium leading-snug text-ink">{text}</p>
+              <p className="text-card-heading font-medium leading-snug text-ink">{text}</p>
               <p className="text-meta leading-normal text-ash-700">{basis}</p>
               {link && (
                 <Link

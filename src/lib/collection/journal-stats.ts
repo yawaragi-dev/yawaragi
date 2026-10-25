@@ -5,7 +5,7 @@ import type { ScanGrade } from '@/lib/schemas/label-scan-extraction'
 import { type BreweryFacet, type EntryFacts, type Facet, journalFacets, ratingOfEntry, starBand } from './journal-filter'
 
 /**
- * "Your journal in numbers" (design v1.9, X): plain counts over the visitor's
+ * "Your sake in numbers" (design v1.9, X; renamed in v1.10): plain counts over the visitor's
  * own tastings, worked out on request and shown only to them. Pure, over the
  * same facts the journal's filters use. Nothing here counts drinking over
  * time — no streaks, no "this month", no litres (X5): it counts tastings,
