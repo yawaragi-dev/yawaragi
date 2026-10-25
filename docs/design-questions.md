@@ -243,6 +243,8 @@ Proposed — how a non-reader recognises each part, by look rather than by langu
 
 # Round three (opened 2026-10-19, against design v1.8.1)
 
+**Blocks S–V were answered in v1.9 (22 Oct 2026)**; the answers are the appendix "v1.9" of `design/README.md`. The blocks below are kept as asked.
+
 ## S. A slow or missing connection
 
 Nothing in the app says that a tap was received when the network is slow or gone. The maintainer tapped "Scan" with no connection and saw no change at all. The spec draws the happy path and one error page (#324). It has no "waiting" or "offline" state for any screen.
@@ -342,6 +344,8 @@ Asked for by the maintainer and built:
 ---
 
 # Round four (2026-10-22)
+
+**Blocks W–Z were answered in v1.9 (22 Oct 2026)**; the answers are the appendix "v1.9" of `design/README.md`. The blocks and the priority order below are kept as asked.
 
 Four new blocks, W–Z, from features the maintainer wants next. Engineering starts on W and X straight away, ahead of the spec, as with U and V. Y needs words before it needs drawings. Z waits on S.
 
@@ -444,6 +448,8 @@ The maintainer wants the journal and the cellar to open without a network. The f
 ---
 
 # Round five (2026-10-22)
+
+**Blocks AA and AB were answered in v1.10 (25 Oct 2026)**; the answers are the appendix "v1.10" of `design/README.md`, which also adds open decisions 19 (the bottle history) and 20 (feedback messages). The blocks below are kept as asked.
 
 ## AA. Feedback, and an "About" page
 

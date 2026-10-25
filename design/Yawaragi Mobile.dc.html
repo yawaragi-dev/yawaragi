@@ -970,7 +970,7 @@ textarea::placeholder,input::placeholder{font-style:italic}
               </sc-for>
             </div>
           </sc-for>
-          <div style="font-size:11px;color:var(--color-neutral-600);line-height:1.5">Yawaragi · design 1.6.2 · <a href="#impressum">Impressum</a> · <a href="#terms">Terms</a> · <a href="#privacy">Privacy notice</a> · <a href="#">Drink responsibly</a></div>
+          <div style="font-size:11px;color:var(--color-neutral-600);line-height:1.5">Yawaragi 1.10.0 · build b3af89d · <a href="#impressum">Impressum</a> · <a href="#terms">Terms</a> · <a href="#privacy">Privacy notice</a> · <a href="#">Drink responsibly</a></div>
         </div>
         <sc-if value="{{ acctDialog }}">
           <div style="position:absolute;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:24px;animation:yw-fade .2s ease-out;z-index:4">
@@ -1884,6 +1884,13 @@ textarea::placeholder,input::placeholder{font-style:italic}
                   <div style="font-size:13px;color:var(--color-neutral-600);max-width:240px;text-wrap:pretty">Bottles you own. Tap “Add to cellar” on any sake and we’ll tell you when an open one should be finished.</div>
                 </div>
               </sc-if>
+              <sc-if value="{{ histOn }}">
+                <button onClick="{{ openHistory2 }}" style="display:flex;align-items:center;gap:11px;width:100%;margin-top:14px;min-height:50px;padding:10px 0;border:0;background:transparent;cursor:pointer;text-align:left;font-family:var(--font-body);color:var(--color-text)" style-active="background:var(--color-neutral-100)">
+                  <i class="ph ph-clock-counter-clockwise" style="font-size:19px;color:var(--color-neutral-600)"></i>
+                  <div style="flex:1;min-width:0"><div style="font-size:14px">Bottles you’ve had</div><div style="font-size:12px;color:var(--color-neutral-600);margin-top:2px">Finished or taken out of the cellar</div></div>
+                  <i class="ph ph-caret-right" style="font-size:15px;color:var(--color-neutral-500)"></i>
+                </button>
+              </sc-if>
             </div>
           </sc-if>
           <sc-if value="{{ showWishlist }}">
@@ -2073,7 +2080,7 @@ textarea::placeholder,input::placeholder{font-style:italic}
           <button onClick="{{ openNumbers }}" disabled="{{ numbersEarly }}" style="display:flex;align-items:center;gap:11px;width:100%;padding:12px 13px;border-radius:var(--radius-md);border:1px solid var(--color-divider);background:transparent;cursor:pointer;text-align:left;font-family:var(--font-body);color:var(--color-text);opacity:1" style-hover="background:var(--color-neutral-100)" style-active="background:var(--color-neutral-200)">
             <i class="ph ph-chart-bar-horizontal" style="font-size:20px;color:var(--color-accent-600)"></i>
             <div style="flex:1;min-width:0">
-              <div style="font-family:var(--font-heading);font-weight:500;font-size:14px">Your journal in numbers</div>
+              <div style="font-family:var(--font-heading);font-weight:500;font-size:14px">Your sake in numbers</div>
               <div style="font-size:12px;color:var(--color-neutral-600);margin-top:1px">{{ numbersTeaser }}</div>
             </div>
             <sc-if value="{{ numbersReady }}"><i class="ph ph-caret-right" style="font-size:15px;color:var(--color-neutral-500)"></i></sc-if>
@@ -2090,7 +2097,7 @@ textarea::placeholder,input::placeholder{font-style:italic}
       <div style="flex:1;min-height:0;display:flex;flex-direction:column;animation:yw-fade .2s ease-out">
         <div style="display:flex;align-items:center;gap:8px;padding:10px 14px 4px;flex:none">
           <button class="btn" style="padding-inline:4px" onClick="{{ back }}" aria-label="Back"><i class="ph ph-arrow-left" style="font-size:19px"></i></button>
-          <div style="flex:1;min-width:0;font-family:var(--font-heading);font-weight:500;font-size:17px;letter-spacing:-.01em;white-space:nowrap">Your journal in numbers</div>
+          <div style="flex:1;min-width:0;font-family:var(--font-heading);font-weight:500;font-size:17px;letter-spacing:-.01em;white-space:nowrap">Your sake in numbers</div>
         </div>
         <div style="flex:1;min-height:0;overflow-y:auto;padding:16px 22px 18px;display:flex;flex-direction:column;gap:24px;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 18px);mask-image:linear-gradient(to bottom,transparent 0,#000 18px)">
           <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
@@ -2101,6 +2108,21 @@ textarea::placeholder,input::placeholder{font-style:italic}
               </div>
             </sc-for>
           </div>
+          <sc-if value="{{ insOn }}">
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;flex-direction:column;gap:3px"><div style="display:flex;align-items:center;gap:8px"><span style="width:2px;height:14px;background:var(--color-accent-500);display:block"></span><span style="font-family:var(--font-heading);font-weight:500;font-size:17px;letter-spacing:-.01em;white-space:nowrap">What stands out</span></div><span style="font-size:12px;color:var(--color-neutral-700)">{{ insMeta }}</span></div>
+              <sc-for list="{{ insights }}" as="it" hint-placeholder-count="3">
+                <div style="padding:13px 14px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm);display:flex;flex-direction:column;gap:6px">
+                  <div style="font-family:var(--font-heading);font-weight:500;font-size:15px;line-height:1.35;text-wrap:pretty">{{ it.text }}</div>
+                  <div style="font-size:12px;line-height:1.5;color:var(--color-neutral-700);text-wrap:pretty">{{ it.basis }}</div>
+                  <sc-if value="{{ it.hasLink }}"><button onClick="{{ it.go }}" style="align-self:flex-start;display:inline-flex;align-items:center;gap:4px;min-height:36px;padding:0;margin-bottom:-6px;border:0;background:transparent;cursor:pointer;font-family:var(--font-body);font-size:13px;color:var(--color-accent-700);white-space:nowrap">{{ it.link }}<i class="ph ph-caret-right" style="font-size:13px"></i></button></sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{ insEarly }}">
+            <div style="font-size:12px;color:var(--color-neutral-600)">{{ insEarlyText }}</div>
+          </sc-if>
           <div style="display:flex;flex-direction:column;gap:10px">
             <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
               <div style="display:flex;align-items:center;gap:8px"><span style="width:2px;height:14px;background:var(--color-accent-500);display:block"></span><span style="font-family:var(--font-heading);font-weight:500;font-size:17px;letter-spacing:-.01em">{{ nmPrefLine }}</span></div>
@@ -2155,6 +2177,27 @@ textarea::placeholder,input::placeholder{font-style:italic}
               <div style="font-size:11px;color:var(--color-neutral-600)">{{ nmGradeMeta }}</div>
             </div>
           </sc-if>
+          <sc-if value="{{ keptOn }}">
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;flex-direction:column;gap:3px"><h6 style="margin:0;font-size:11px;letter-spacing:.1em;color:var(--color-neutral-600)">Bottles you’ve kept</h6><span style="font-size:12px;color:var(--color-neutral-700)">{{ keptMeta }}</span></div>
+              <sc-for list="{{ keptGrades }}" as="kg" hint-placeholder-count="4">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div style="width:128px;flex:none;font-size:12px;color:var(--color-neutral-800)">{{ kg.label }}</div>
+                  <div style="flex:1;height:6px;border-radius:3px;background:var(--color-neutral-300);overflow:hidden"><div style="height:100%;background:var(--color-neutral-600);width:{{ kg.w }}"></div></div>
+                  <div style="width:24px;flex:none;text-align:right;font-size:12px;color:var(--color-neutral-700)">{{ kg.n }}</div>
+                </div>
+              </sc-for>
+              <div style="height:4px"></div>
+              <sc-for list="{{ keptPrefs }}" as="kp" hint-placeholder-count="4">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div style="width:128px;flex:none;font-size:12px;color:var(--color-neutral-800)">{{ kp.label }}</div>
+                  <div style="flex:1;height:6px;border-radius:3px;background:var(--color-neutral-300);overflow:hidden"><div style="height:100%;background:var(--color-neutral-600);width:{{ kp.w }}"></div></div>
+                  <div style="width:24px;flex:none;text-align:right;font-size:12px;color:var(--color-neutral-700)">{{ kp.n }}</div>
+                </div>
+              </sc-for>
+              <div style="font-size:11px;color:var(--color-neutral-600);text-wrap:pretty">Each bottle counts once, whether you bought it or were given it.</div>
+            </div>
+          </sc-if>
           <div style="display:flex;flex-direction:column;gap:8px;padding:14px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm)">
             <h6 style="margin:0;font-size:11px;letter-spacing:.1em;color:var(--color-neutral-600)">The surprise</h6>
             <div style="display:flex;align-items:baseline;gap:7px;flex-wrap:wrap"><span style="font-family:var(--font-heading);font-weight:500;font-size:16px">Kidoizumi AFS</span><span style="font-size:12px;color:var(--color-neutral-600)" lang="ja">木戸泉 AFS</span></div>
@@ -2165,6 +2208,71 @@ textarea::placeholder,input::placeholder{font-style:italic}
           <div style="display:flex;flex-direction:column;gap:2px;font-size:12px;line-height:1.5;color:var(--color-neutral-600)">
             <div>Catalogue and flavour data · <a href="https://sakenowa.com" target="_blank" rel="noopener">Powered by Sakenowa ↗</a></div>
             <div style="display:flex;flex-wrap:wrap;column-gap:14px"><a href="#impressum" style="padding:6px 0">Impressum</a><a href="#privacy" style="padding:6px 0">Privacy notice</a><a href="#cookies" onClick="{{ reopenCookies }}" style="padding:6px 0">Cookie settings</a><a href="#drink" style="padding:6px 0">Drink responsibly</a></div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isAbout }}">
+      <div style="flex:1;min-height:0;display:flex;flex-direction:column;animation:yw-fade .2s ease-out">
+        <div style="display:flex;align-items:center;gap:8px;padding:10px 14px 4px;flex:none">
+          <button class="btn" style="padding-inline:4px" onClick="{{ back }}" aria-label="Back"><i class="ph ph-arrow-left" style="font-size:19px"></i></button>
+          <div style="flex:1;min-width:0;font-family:var(--font-heading);font-weight:500;font-size:17px;letter-spacing:-.01em">About Yawaragi</div>
+        </div>
+        <div style="flex:1;min-height:0;overflow-y:auto;padding:16px 22px 18px;display:flex;flex-direction:column;gap:24px;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 18px);mask-image:linear-gradient(to bottom,transparent 0,#000 18px)">
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;align-items:baseline;gap:9px"><span lang="ja" style="font-size:26px;color:var(--color-accent-600);line-height:1">和</span><span style="font-family:var(--font-heading);font-weight:500;font-size:25px;letter-spacing:-.02em">Yawaragi</span></div>
+            <div style="font-size:14px;line-height:1.55;color:var(--color-neutral-800);text-wrap:pretty">A sake companion. Scan a label, rate what you drink with one tap, and learn what you like. Your journal is yours: it is never shown to anyone, and you can export or delete it at any time.</div>
+          </div>
+          <div style="display:flex;flex-direction:column">
+            <h6 style="margin:0 0 4px;font-size:11px;letter-spacing:.1em;color:var(--color-neutral-600)">Where the data comes from</h6>
+            <div style="padding:11px 0;border-bottom:1px solid var(--color-divider);display:flex;flex-direction:column;gap:2px"><div style="font-size:14px">Sakenowa</div><div style="font-size:12px;line-height:1.5;color:var(--color-neutral-700);text-wrap:pretty">Sake names, breweries, prefectures and flavour charts. <a href="https://sakenowa.com" target="_blank" rel="noopener">sakenowa.com ↗</a></div></div>
+            <div style="padding:11px 0;border-bottom:1px solid var(--color-divider);display:flex;flex-direction:column;gap:2px"><div style="font-size:14px">National Tax Agency of Japan</div><div style="font-size:12px;line-height:1.5;color:var(--color-neutral-700);text-wrap:pretty">Grades, label rules and what is known about each region.</div></div>
+            <div style="padding:11px 0;border-bottom:1px solid var(--color-divider);display:flex;flex-direction:column;gap:2px"><div style="font-size:14px">The Sake guide</div><div style="font-size:12px;line-height:1.5;color:var(--color-neutral-700);text-wrap:pretty">Written by hand. Each entry names its sources at the foot.</div></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <h6 style="margin:0;font-size:11px;letter-spacing:.1em;color:var(--color-neutral-600)">Reading labels</h6>
+            <div style="font-size:13px;line-height:1.55;color:var(--color-neutral-800);text-wrap:pretty">An AI model reads the words on your photo. Whatever it read is marked “Read by AI”, so you can check it against the label. The photo is discarded once read, unless you keep it. Which service reads it is named in the privacy notice.</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <h6 style="margin:0;font-size:11px;letter-spacing:.1em;color:var(--color-neutral-600)">Open source</h6>
+            <div style="font-size:13px;line-height:1.55;color:var(--color-neutral-800);text-wrap:pretty">The Sakenowa MCP server Yawaragi uses to search the catalogue is open source. <a href="#mcp">Source code ↗</a></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px"><span style="font-size:14px">Version</span><span style="font-size:13px;color:var(--color-neutral-700);font-variant-numeric:tabular-nums;white-space:nowrap">1.10.0 · build b3af89d</span></div>
+            <button class="btn btn-secondary btn-block" style="height:44px;font-size:13px;gap:7px" onClick="{{ openFeedback }}"><i class="ph ph-chat-text" style="font-size:16px"></i>Send feedback</button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:2px;font-size:12px;line-height:1.5;color:var(--color-neutral-600)">
+            <div>Catalogue and flavour data · <a href="https://sakenowa.com" target="_blank" rel="noopener">Powered by Sakenowa ↗</a></div>
+            <div style="display:flex;flex-wrap:wrap;column-gap:14px"><a href="#impressum" style="padding:6px 0">Impressum</a><a href="#terms" style="padding:6px 0">Terms</a><a href="#privacy" style="padding:6px 0">Privacy notice</a><a href="#drink" style="padding:6px 0">Drink responsibly</a></div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isHistory }}">
+      <div style="flex:1;min-height:0;display:flex;flex-direction:column;animation:yw-fade .2s ease-out">
+        <div style="display:flex;align-items:center;gap:8px;padding:10px 14px 4px;flex:none">
+          <button class="btn" style="padding-inline:4px" onClick="{{ back }}" aria-label="Back"><i class="ph ph-arrow-left" style="font-size:19px"></i></button>
+          <div style="flex:1;min-width:0;font-family:var(--font-heading);font-weight:500;font-size:17px;letter-spacing:-.01em">Bottles you’ve had</div>
+        </div>
+        <div style="flex:1;min-height:0;overflow-y:auto;padding:12px 22px 18px;display:flex;flex-direction:column;gap:18px;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 18px);mask-image:linear-gradient(to bottom,transparent 0,#000 18px)">
+          <div style="font-size:13px;line-height:1.5;color:var(--color-neutral-700);text-wrap:pretty">Bottles that are no longer in your cellar, newest first. Only you see this.</div>
+          <div style="display:flex;flex-direction:column">
+            <sc-for list="{{ histRows }}" as="hr" hint-placeholder-count="5">
+              <button onClick="{{ hr.open }}" style="display:flex;align-items:center;gap:10px;padding:12px 0;border:0;border-bottom:1px solid var(--color-divider);background:transparent;cursor:pointer;text-align:left;font-family:var(--font-body);color:var(--color-text)" style-active="background:var(--color-neutral-100)">
+                <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+                  <div style="font-family:var(--font-heading);font-weight:500;font-size:15px;line-height:1.3">{{ hr.name }}</div>
+                  <sc-if value="{{ hr.hasKana }}"><div lang="ja" style="font-size:12px;color:var(--color-neutral-600)">{{ hr.kana }}</div></sc-if>
+                  <div style="font-size:12px;color:var(--color-neutral-700)">{{ hr.line }}</div>
+                </div>
+                <i class="ph ph-caret-right" style="font-size:13px;color:var(--color-neutral-500)"></i>
+              </button>
+            </sc-for>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:2px;font-size:12px;line-height:1.5;color:var(--color-neutral-600)">
+            <div>Catalogue data · <a href="https://sakenowa.com" target="_blank" rel="noopener">Powered by Sakenowa ↗</a></div>
+            <div style="display:flex;flex-wrap:wrap;column-gap:14px"><a href="#impressum" style="padding:6px 0">Impressum</a><a href="#privacy" style="padding:6px 0">Privacy notice</a><a href="#drink" style="padding:6px 0">Drink responsibly</a></div>
           </div>
         </div>
       </div>
@@ -2702,7 +2810,61 @@ textarea::placeholder,input::placeholder{font-style:italic}
         <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.55;text-wrap:pretty">An AI model read these words off your photo. It can misread a character or run two names together, so check them against the label.</div>
         <sc-if value="{{ provBrewery }}"><div style="font-size:13px;color:var(--color-neutral-700);line-height:1.55;text-wrap:pretty"><span style="color:var(--color-text)">Brewery not on this label.</span> The label printed the name alone. The brewery shown is the one the catalogue lists for that name, not one we read, and two breweries can use the same name. If the back label names another brewery, tap “Not this one”.</div></sc-if>
         <div style="font-size:13px;color:var(--color-neutral-700);line-height:1.55;text-wrap:pretty">How sure it was: <span style="color:var(--color-text)">{{ ocConfidence }}</span>. Your photo is discarded once it has been read, unless you tick “Keep this photo”.</div>
+        <button class="btn btn-secondary btn-block" style="height:44px;font-size:13px;gap:7px;margin-top:4px" onClick="{{ reportRead }}"><i class="ph ph-flag" style="font-size:16px"></i>Report this read</button>
       </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ fbOpen }}">
+    <div style="position:absolute;inset:0;background:rgba(0,0,0,.55);display:flex;flex-direction:column;justify-content:flex-end;z-index:8;animation:yw-fade .2s ease-out">
+      <button onClick="{{ fbClose }}" aria-label="Dismiss" style="flex:1;min-height:40px;border:0;background:transparent;cursor:pointer"></button>
+      <div role="dialog" aria-labelledby="yw-fb-title" style="max-height:90%;overflow-y:auto;background:var(--color-surface);border-radius:20px 20px 0 0;padding:10px 20px 26px;box-shadow:var(--shadow-lg);animation:yw-sheet .26s ease-out;display:flex;flex-direction:column;gap:14px">
+        <span style="width:36px;height:4px;border-radius:2px;background:var(--color-neutral-400);align-self:center"></span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div id="yw-fb-title" style="font-family:var(--font-heading);font-weight:500;font-size:19px;flex:1">{{ fbTitle }}</div>
+          <button class="btn" style="padding-inline:2px" onClick="{{ fbClose }}" aria-label="Close"><i class="ph ph-x" style="font-size:18px"></i></button>
+        </div>
+        <sc-if value="{{ fbReport }}">
+          <div style="padding:11px 12px;border-radius:var(--radius-md);background:var(--color-neutral-200);display:flex;flex-direction:column;gap:3px">
+            <span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600)">What we read</span>
+            <span style="font-family:var(--font-heading);font-weight:500;font-size:15px">{{ fbReadName }}</span>
+            <span style="font-size:12px;color:var(--color-neutral-700)">{{ fbReadMeta }}</span>
+          </div>
+        </sc-if>
+        <sc-if value="{{ fbPlain }}">
+          <div role="radiogroup" aria-label="What is it about?" style="display:flex;flex-direction:column;gap:7px">
+            <span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600)">What is it about?</span>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <sc-for list="{{ fbKinds }}" as="fk" hint-placeholder-count="4">
+                <button role="radio" aria-checked="{{ fk.pressed }}" onClick="{{ fk.pick }}" style="min-height:38px;padding:7px 13px;border-radius:999px;border:1px solid {{ fk.border }};background:{{ fk.bg }};color:{{ fk.fg }};font-size:13px;font-family:var(--font-body);cursor:pointer">{{ fk.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+        <label style="display:flex;flex-direction:column;gap:5px">
+          <span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600)">Your message</span>
+          <textarea class="input" rows="4" maxlength="1000" value="{{ fbText }}" onInput="{{ fbSetText }}" placeholder="{{ fbPlaceholder }}" style="resize:none;min-height:96px;font-size:14px;line-height:1.5;font-family:var(--font-body)"></textarea>
+          <sc-if value="{{ fbCountOn }}"><span style="font-size:11px;color:var(--color-neutral-700);align-self:flex-end">{{ fbCount }}</span></sc-if>
+        </label>
+        <label style="display:flex;flex-direction:column;gap:5px">
+          <span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-600)">Email for an answer · optional</span>
+          <input class="input" type="email" value="{{ fbEmail }}" onInput="{{ fbSetEmail }}" placeholder="you@example.com" style="height:44px;font-size:14px">
+          <span style="font-size:12px;line-height:1.5;color:var(--color-neutral-700);text-wrap:pretty">Only used to answer you. Deleted with your message, at the latest after 12 months.</span>
+        </label>
+        <div style="font-size:12px;line-height:1.5;color:var(--color-neutral-600);text-wrap:pretty">{{ fbWith }}</div>
+        <sc-if value="{{ fbReport }}"><div style="font-size:12px;line-height:1.5;color:var(--color-neutral-600);text-wrap:pretty">Your photo isn’t sent. It was discarded after the read.</div></sc-if>
+        <button class="btn btn-primary btn-block" disabled="{{ fbCantSend }}" style="height:46px;font-size:14px;gap:7px" onClick="{{ fbSend }}"><i class="ph ph-paper-plane-tilt" style="font-size:16px"></i>Send</button>
+        <div style="display:flex;flex-direction:column;gap:2px;font-size:12px;line-height:1.5;color:var(--color-neutral-600)">
+          <sc-if value="{{ fbSignedOut }}"><div>Without an account you can send three a day.</div></sc-if>
+          <div>Or <a href="mailto:hello@yawaragi.app?subject=Yawaragi%20feedback">write to us by email</a>.</div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+  <sc-if value="{{ fbToast }}">
+    <div role="status" style="position:absolute;left:18px;right:18px;bottom:96px;padding:12px 14px;border-radius:var(--radius-md);background:var(--color-raised);color:var(--color-text);display:flex;align-items:center;gap:10px;box-shadow:var(--shadow-float);animation:yw-rise .24s ease-out;z-index:9">
+      <i class="ph-fill ph-check-circle" style="font-size:19px;color:var(--color-accent-600)"></i>
+      <div style="flex:1;font-size:13px">{{ fbToastText }}</div>
     </div>
   </sc-if>
 
@@ -3260,6 +3422,23 @@ const PAST = ['Nama', 'Namachozō', 'Namazume']
 const STARTER = ['Kimoto', 'Yamahai']
 const STYLE_PILLS = ['Genshu', 'Muroka', 'Nigori', 'Sparkling', 'Koshu', 'Taruzake', 'Kijōshu', 'Hiyaoroshi']
 const KOJI = ['Yellow koji 黄麹', 'White koji 白麹', 'Black koji 黒麹']
+// 1.10 (AB): bottle history — every bottle kept, now or before. ended = finished or removed.
+const BOTTLE_HIST = [
+  ['Kamoshibito Kuheiji', '醸し人九平次', 'Junmai Daiginjō', 'Aichi', 1, '2 Sep', null, null],
+  ['Tamagawa Time Machine', '玉川', 'Junmai', 'Kyōto', 2, '19 Aug', null, null],
+  ['Katori 90', '香取', 'Junmai', 'Chiba', 2, '10 Sep', null, null],
+  ['Rihaku Wandering Poet', '李白', 'Junmai Ginjō', 'Shimane', 2, '28 Jul', null, null],
+  ['Sharaku', '寫樂', 'Junmai Ginjō', 'Fukushima', 1, '8 Aug', 'Finished', '30 Aug'],
+  ['Hakkaisan Junmai Ginjō', '八海山', 'Junmai Ginjō', 'Niigata', 1, '20 Aug', 'Finished', '12 Sep'],
+  ['Sharaku Omachi', '寫樂', 'Junmai Ginjō', 'Fukushima', 1, '20 Jun', 'Finished', '18 Jul'],
+  ['Kudoki Jōzu', 'くどき上手', 'Junmai Ginjō', 'Yamagata', 1, '2 Jul', 'Finished', '6 Aug'],
+  ['Dewazakura Ōka', '出羽桜', 'Ginjō', 'Yamagata', 1, '14 Aug', 'Finished', '3 Sep'],
+  ['Aramasa No.6 S-type', '新政', 'Junmai', 'Akita', 1, '18 Aug', 'Finished', '29 Aug'],
+  ['Tatenokawa Seiryū', '楯野川', 'Junmai Daiginjō', 'Yamagata', 1, '22 Jul', 'Removed', '15 Sep'],
+  ['Kubota Senju', '久保田', 'Tokubetsu Honjōzō', 'Niigata', 1, '25 Aug', 'Finished', '20 Sep'],
+].map((r) => ({ name: r[0], kana: r[1], grade: r[2], pref: r[3], count: r[4], added: r[5], how: r[6], ended: r[7] }))
+const AREA_OF = { Aomori: 'Tōhoku', Iwate: 'Tōhoku', Miyagi: 'Tōhoku', Akita: 'Tōhoku', Yamagata: 'Tōhoku', Fukushima: 'Tōhoku', Niigata: 'Chūbu', Nagano: 'Chūbu', Ishikawa: 'Chūbu', Fukui: 'Chūbu', Aichi: 'Chūbu', Shizuoka: 'Chūbu', Tochigi: 'Kantō', Chiba: 'Kantō', Saitama: 'Kantō', 'Kyōto': 'Kansai', 'Ōsaka': 'Kansai', 'Hyōgo': 'Kansai', Hiroshima: 'Chūgoku', Yamaguchi: 'Chūgoku', Shimane: 'Chūgoku', Saga: 'Kyūshū' }
+const REGION_TEXT = ['Niigata', 'Hyōgo', 'Kyōto', 'Yamagata', 'Akita', 'Hiroshima', 'Fukushima', 'Yamaguchi', 'Shizuoka', 'Nagano']
 
 const MUTED = '#a8a49c'
 const ACTIVE = '#cf8a6e'
@@ -3793,7 +3972,78 @@ class Component extends DCLogic {
       nmGradeMeta: 'From the ' + withG.length + ' of ' + n + ' tastings that name a grade',
       nmHasGrades: withG.length > 0,
     })
+    this.v110(s, view, out, all, gradeOf, stylesOf)
     return this.v19c(s, view, out)
+  }
+
+  // 1.10 — AA (feedback, About), AB (bottles you've kept, what stands out)
+  v110(s, view, out, all, gradeOf, stylesOf) {
+    const signed = !!(s.auth || {}).signedIn
+    const fb = s.fb
+    const KINDS = ['Something’s wrong', 'A sake is missing', 'An idea', 'Other']
+    const PH = { 'Something’s wrong': 'What happened, and where?', 'A sake is missing': 'Its name, and the brewery if you know it', 'An idea': 'What would help you?', 'Other': 'Tell us' }
+    const f = fb || {}
+    const len = (f.text || '').length
+    const rp = (s.pick || CATALOGUE[0])
+    const setFb = (p) => this.setState({ fb: { ...f, ...p } })
+    const screenOf = { result: 'Result card', outcome: 'Scan outcome', menu: 'Menu results', account: 'Account', about: 'About' }
+    Object.assign(out, {
+      fbOpen: !!fb, fbReport: !!f.report, fbPlain: !f.report,
+      fbTitle: f.report ? 'Report this read' : 'Send feedback',
+      fbKinds: KINDS.map((k) => { const on = f.kind === k; return { label: k, pick: () => setFb({ kind: k }), border: on ? '#cf8a6e' : 'var(--color-divider)', bg: on ? '#cf8a6e' : 'transparent', fg: on ? '#1b1a19' : '#d6d2ca', pressed: on ? 'true' : 'false' } }),
+      fbText: f.text || '', fbEmail: f.email || '',
+      fbPlaceholder: f.report ? 'What’s wrong with it? The name, the brewery, the match…' : (PH[f.kind] || 'Pick what it’s about, then tell us'),
+      fbCountOn: len >= 900, fbCount: len + ' / 1,000',
+      fbSetText: (ev) => setFb({ text: ev.target.value.slice(0, 1000) }),
+      fbSetEmail: (ev) => setFb({ email: ev.target.value }),
+      fbReadName: rp.name, fbReadMeta: (rp.brewery || '') + ' · ' + (s.bestGuess ? 'Best guess' : 'Sure match') + ' · ' + (rp.breweryInferred ? '85%' : '91%'),
+      fbWith: 'Sent with it: Yawaragi 1.10.0 · ' + (f.report ? 'what was read, not the photo' : 'this screen (' + (screenOf[f.from] || 'Home') + ')'),
+      fbSignedOut: !signed,
+      fbCanSend: !!f.kind && len > 0, fbCantSend: !(f.kind && len > 0),
+      fbClose: () => this.setState({ fb: null }),
+      fbSend: () => { if (!(f.kind && len)) return; this.setState({ fb: null, fbToast: true, fbLastEmail: !!(f.email || '').trim() }); clearTimeout(this._fb); this._fb = setTimeout(() => this.setState({ fbToast: false }), 4000) },
+      fbToast: !!s.fbToast,
+      fbToastText: s.fbLastEmail ? 'Thanks — sent. We’ll answer by email.' : 'Thanks — sent. We read every message.',
+      reportRead: () => this.setState({ provOpen: false, fb: { report: true, kind: 'Something’s wrong', from: view } }),
+      openFeedback: () => this.setState({ fb: { from: view || s.tab } }),
+      isAbout: view === 'about', openAbout: () => this.setState({ view: 'about' }),
+      isHistory: view === 'history', openHistory2: () => this.setState({ view: 'history' }),
+      histRows: BOTTLE_HIST.filter((b) => b.ended).map((b) => ({ name: b.name, kana: b.kana, hasKana: !!b.kana, line: 'Added ' + b.added + ' · ' + b.how + ' ' + b.ended, open: () => { const fs = findSake(b.name, s.own); this.setState({ view: fs && fs.bottling ? 'bottling' : 'sake', sakeName: b.name, skPanel: false }) } })),
+    })
+    // AB
+    const n = all.length
+    const nb = BOTTLE_HIST.reduce((t, b) => t + b.count, 0)
+    const tally = (key) => { const m = {}; BOTTLE_HIST.forEach((b) => { m[b[key]] = (m[b[key]] || 0) + b.count }); return Object.keys(m).sort((a, b) => m[b] - m[a]).map((k) => ({ k, c: m[k] })) }
+    const bars = (rows) => { const mx = Math.max(1, ...rows.map((r) => r.c)); return rows.slice(0, 4).map((r) => ({ label: r.k, n: String(r.c), w: Math.round(r.c / mx * 100) + '%' })) }
+    const gT = tally('grade'), pT = tally('pref')
+    const thin = n < 20
+    const ins = []
+    const avgBy = {}
+    all.forEach((e) => { [gradeOf(e), ...stylesOf(e).filter((x) => STARTER.indexOf(x) >= 0)].filter(Boolean).forEach((k) => { (avgBy[k] = avgBy[k] || []).push(e.rating) }) })
+    const best = Object.keys(avgBy).filter((k) => avgBy[k].length >= 3).map((k) => ({ k, c: avgBy[k].length, a: avgBy[k].reduce((t, x) => t + x, 0) / avgBy[k].length })).sort((a, b) => b.a - a.a)[0]
+    const top = gT[0]
+    if (top && nb >= 8) {
+      const ta = avgBy[top.k] ? (avgBy[top.k].reduce((t, x) => t + x, 0) / avgBy[top.k].length).toFixed(1) : null
+      if (best && best.k !== top.k) ins.push({ text: 'You keep mostly ' + top.k + ', but rate ' + (STARTER.indexOf(best.k) >= 0 ? best.k.toLowerCase() : best.k) + ' highest.', basis: top.k + ': ' + top.c + ' of ' + nb + ' bottles you’ve kept. ' + best.k + ': ' + best.a.toFixed(1) + ' average from ' + best.c + ' tastings' + (ta ? ', against ' + ta + '.' : '.'), hasLink: false })
+      else ins.push({ text: 'Most of what you keep is ' + top.k + '.', basis: top.c + ' of ' + nb + ' bottles you’ve kept.', hasLink: false })
+    }
+    const hi = all.filter((e) => e.rating >= 4.5)
+    const rc = {}; hi.forEach((e) => { const r = AREA_OF[prefOfE(e)]; if (r) rc[r] = (rc[r] || 0) + 1 })
+    const rTop = Object.keys(rc).sort((a, b) => rc[b] - rc[a])[0]
+    if (hi.length >= 4 && rTop && rc[rTop] >= 3) ins.push({ text: rc[rTop] + ' of your ' + hi.length + ' highest-rated tastings are from ' + rTop + '.', basis: 'Tastings you rated 4.5 or more' + (thin ? ', so far' : '') + '. Where a sake is from comes from the catalogue.', hasLink: false })
+    const tasted = new Set(all.map((e) => plain(prefOfE(e))))
+    const gap = REGION_TEXT.find((p) => !tasted.has(plain(p)))
+    if (gap && n >= 8) ins.push({ text: 'Nothing from ' + gap + ' yet.', basis: 'One of the regions the Sake guide describes.', hasLink: true, link: 'About ' + gap, go: () => this.setState({ view: 'guide' }) })
+    Object.assign(out, {
+      insOn: n >= 8 && ins.length > 0, insEarly: n < 8,
+      insEarlyText: (8 - n) + ' more ' + (8 - n === 1 ? 'tasting' : 'tastings') + ' and what stands out appears here.',
+      insights: ins.slice(0, 3),
+      insMeta: thin ? 'From your first ' + n + ' tastings and ' + nb + ' bottles' : 'From ' + n + ' tastings and ' + nb + ' bottles',
+      keptOn: nb >= 5,
+      keptMeta: nb + ' bottles, in your cellar now or before',
+      keptGrades: bars(gT), keptPrefs: bars(pT),
+      histOn: BOTTLE_HIST.some((b) => b.ended) && (s.collection === 'cellar'),
+    })
   }
 
   v19c(s, view, out) {
@@ -4448,6 +4698,11 @@ class Component extends DCLogic {
             ] },
             { title: 'Learn', rows: [
               nav('What the words on a label mean', '', 'ph-book-open-text', () => this.setState({ view: 'guide' })),
+            ] },
+            { title: 'Help', rows: [
+              nav('Add Yawaragi to your home screen', '', 'ph-device-mobile'),
+              nav('Send feedback', '', 'ph-chat-text', () => this.setState({ fb: { from: 'account' } }), 'Something wrong, a missing sake, an idea'),
+              nav('About Yawaragi', '', 'ph-info', () => this.setState({ view: 'about' })),
             ] },
             { title: 'Privacy', rows: [
               tog('Use my palate for Ask', 'Suggestions lean on what you’ve rated', 'ph-magic-wand', palate, () => this.setAcct({ palate: !palate })),

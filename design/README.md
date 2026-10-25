@@ -1,6 +1,6 @@
 # Handoff: Yawaragi mobile app (webview)
 
-**Design version 1.8.1 · 19 Oct 2026.** Source of truth is the Claude Design project; this folder is a snapshot. When a new version arrives, read the Changelog at the bottom first and implement only what changed. **If this README and the prototype disagree, the prototype wins** — and please report the mismatch.
+**Design version 1.10 · 25 Oct 2026.** Source of truth is the Claude Design project; this folder is a snapshot. When a new version arrives, read the Changelog at the bottom first and implement only what changed. **If this README and the prototype disagree, the prototype wins** — and please report the mismatch.
 
 ## Overview
 Yawaragi (和らぎ) is a sake companion app. You scan a bottle label (or a menu or a shop shelf, to rank what's on it), rate the sake with one tap, and build a journal. That journal also feeds a taste profile ("Palate") and a chat assistant ("Ask"). The main job is **identifying and assessing a sake at the table**. Logging is a side effect of rating.
@@ -283,6 +283,7 @@ One template, §9's order, sections dropping out by what is known (rule 4: hidde
 - No Save button; everything persists as you go.
 
 ### 11. Collection · 19, 20, 21 — retaken 1.6
+**1.10 (AB6; 131–132):** last under the cellar rows, "Bottles you’ve had" › opens the list of bottles no longer in the cellar (appendix "v1.10").
 **1.8 (I3, L3; 99, 106):** a row whose bottle has a kept photo shows it — journal 36×48 between the date and the name, cellar 40×54 at the left; rows without one stay as they are (no placeholder; rule 14). Empty journal, signed out: ghost "Look through a sample collection" under "Scan a label".
 - Header "Collection" 26px · search icon · avatar. Segmented: Journal · Cellar · Wishlist. **Wishlist is hidden until it ships**; never show an empty segment for an unbuilt feature.
 - **Which segment opens:** the last one used (stored on the device). A first visit opens Journal. Links that name a segment (Home's "All →", a notice's "View", the bottle page's "In cellar · n ›") keep naming it.
@@ -295,6 +296,7 @@ One template, §9's order, sections dropping out by what is known (rule 4: hidde
 - Ends with the end-of-screen block.
 
 ### 12. Palate · 22, 23 (early), 24 (axis detail), 30 (JP + Ask on), 39 (early, drink picked), 50 (early, rating not live) — retaken / new 1.5
+**1.10 (AB; 129–130):** the numbers row and screen are renamed "Your sake in numbers"; the screen gains "What stands out" (after the counts) and "Bottles you’ve kept" (after Grades).
 - **Header — the tab pattern** (also §3, §11): one 26px title, one 13px neutral-600 meta line, avatar at the right. No kicker, no third line.
   - ≥3 tastings: title = the strongest axis ("Rich, umami-forward"), meta "Derived from {n} tastings · updates as you log".
   - 1–2: title "Your palate", meta "Taking shape · so far {sake} {rating}" (this replaces the separate "So far" line).
@@ -331,6 +333,7 @@ Unchanged from v1.0; build only when the flag is on.
   - **Japan:** "No password. Nothing is posted publicly. Your ratings help build flavour charts anonymously — you can turn this off in Account."
 
 ### 15. Account · 26 (EU), 31 (JP) — retaken 1.6
+**1.10 (AA; 133, 137):** a **Help** group after Learn: Add Yawaragi to your home screen · Send feedback · About Yawaragi. The footer starts "Yawaragi {version} · build {sha}".
 - Signed in: avatar 52px · name 19px · "email · via Apple". Signed out: "Not signed in" card with "Your {n} tastings live only on this phone…" + "Sign in".
 - Groups (rows **min 50px, may grow**; icon neutral-600; value right-aligned neutral-700):
   - **Your journal:** Backup ("Synced just now" / "Off" → sign-in) · Export journal (CSV · JSON).
@@ -348,6 +351,7 @@ Unchanged from v1.0; build only when the flag is on.
 - **Sign out lives only here** (its row under Account), never in a header.
 
 ### 16. Info sheets (shared pattern) · 12, 13, 38, 48 — retaken / new 1.5
+**1.10 (AA c; 135–136):** the Read by AI sheet ends with a secondary block button "Report this read", which opens the feedback sheet prefilled.
 The canonical pattern for **every inferred or approximate claim**: a short caveat line in 11px neutral-700, an info button whose `aria-describedby` points at the caveat, and a bottom sheet with the full explanation. Scrim `rgba(0,0,0,.55)`, 19px title, close button.
 - **The ⓘ sits inline after the last word** and wraps with the text: a 20px box, `vertical-align: middle`, −4px vertical margin, its tap area padded to 44px. Never pinned to the far edge, never centred on a multi-line block. One rule for every caveat in the app.
 - **Contrast:** 11px neutral-700 measures **8.1:1 on `surface`** (#bdb9b1 on #232221) and 8.9:1 on the ground — well past AA. A reading of ~4.2:1 means something else is applied (≈65% opacity on the text or an ancestor, or the text resolving to neutral-500, which is 4.4:1 on surface). Caveat text never takes opacity. No token change.
@@ -494,13 +498,15 @@ Phosphor, regular and fill weights (`@phosphor-icons/web` 2.1.1). Sizes: 22 tab 
 16. **Demo bottle on the landing (1.8, K3) — CHECKED 19 Oct 2026.** No "Mihon (見本)" in the catalogue (~3,300 lines) or on the web. Still open: a J-PlatPat class 33 trademark search, to close it formally before the loop ships.
 17. **Region texts (1.9, Y).** Hand-written with named sources (ADR-0026), 8–10 prefectures at launch. Needs an author and a reviewer before any ship.
 18. **Photo cap per account (1.9, T).** If one is set, the number and what happens at it (T, "Size and limits").
+19. **Bottle history (1.10, AB).** New personal data on the account (dated add / open / finish / remove lines). Maintainer decides before it is built; privacy-notice line, export and deletion as the journal.
+20. **Feedback messages (1.10, AA).** Retention 12 months or until handled, erasure path, privacy-notice line. The contact address for the mail fallback is the Impressum's.
 
 ## Files in this bundle
 - `Yawaragi Mobile.dc.html`: **the main prototype.** All screens, all behaviour. Logic is in the `class Component` block at the bottom. Tweaks: market, Ask, Menu scan, camera permission, iOS webview, two-tone bars, first run, **Scan outcome** (which §5a branch the next capture lands on; 1.6 adds *Matched, line only*; 1.7 adds *Matched, your bottling fits*, *Matched, brewery not on label*, *Not sake*, *Menu in photo*, *Shelf in photo*, *Two bottles*, *No name on this side*; 1.7.1 adds *No bottle*), **freeScans** (1.8: *Plenty* · *One left* · *None left*, for the nudge note), **notSakeDrink** (which drink `not_sake` names), **menuScan** (list ranking on/off, default on in 1.7), **listPalate** (§7's fewer-than-three state), **Rating live** (§12's rating slot) and **Sake guide public** (§18's pre-gate mode), **connection** (1.9: *Online* · *Slow* · *Offline*, for S and Z; switching Offline → Online shows "Back online") and **journalSize** (1.9: *Long (25)* fills the journal for W and X).
 - `Yawaragi Mobile (phone).html`: a self-contained single-file build of the same prototype. It opens directly on a phone.
 - `Yawaragi Tokens.dc.html`: the token and component reference (colour ramps, type scale, every component specimen, behaviour rules). "Added in 1.5" holds the provenance badge, AI-written note, floating surface, caveat line, horizontal row edge, tile vs button, end-of-screen block, tab placeholder and cellar control.
 - `Yawaragi Core Loop v2.dc.html`: decision record. It shows the result-card options (1a chosen), the thin-data states, and the colour exploration that led to Ginshu (turns 2–6).
-- `screenshots/`: 128 reference PNGs at 390×844 (index under Decision log → Screenshots; each Screens section lists its own).
+- `screenshots/`: 138 reference PNGs at 390×844 (index under Decision log → Screenshots; each Screens section lists its own).
 - `Yawaragi Landing.dc.html`: the public landing page, outside the app shell.
 - `Yawaragi App Icon.dc.html` (1.8, O): the home-screen icon (1a chosen), sizes, safe zone and manifest values.
 - `Yawaragi Account.dc.html`: decision record. It shows the sign-in timing options (1a chosen) and the account screen spec (1c).
@@ -536,11 +542,11 @@ Phosphor, regular and fill weights (`@phosphor-icons/web` 2.1.1). Sizes: 22 tab 
 - **Legal wording:** Austria/Switzerland gate lines and the cookie category descriptions.
 
 ### Screenshots
-`screenshots/` holds 110 PNGs at 390×844 (1×), captured from the prototype.
+`screenshots/` holds 138 PNGs at 390×844 (1×), captured from the prototype.
 - **01–26 are the base: EU (Germany), Ask off, Label only.**
 - **27–32 are the variants where Japan or Ask-on differ.**
 - **33 is the v1.0 menu screen, superseded by 76–82** (kept for the record).
-- **34–50 are new in 1.5; 51–62 new in 1.6; 63–65 new in 1.6.1** (1.6.1 also retook 09, 16, 57, 61, 62); **66–70 new in 1.6.2** (1.6.2 also retook 06, 58); **71–89 new in 1.7**; **90–91 new in 1.7.1** (1.7.1 also retook 44); **92–110 new in 1.8** (06 unchanged: the Menu toggle was never on in it). Retaken in 1.6: 04, 06, 09, 16, 18, 19, 20, 26, 44 (marked ●). Others differ only by the guide-linked tag icon and the extra journal row; the prototype wins.
+- **34–50 are new in 1.5; 51–62 new in 1.6; 63–65 new in 1.6.1** (1.6.1 also retook 09, 16, 57, 61, 62); **66–70 new in 1.6.2** (1.6.2 also retook 06, 58); **71–89 new in 1.7**; **90–91 new in 1.7.1** (1.7.1 also retook 44); **92–110 new in 1.8; 111–128 new in 1.9; 129–138 new in 1.10** (06 unchanged: the Menu toggle was never on in it). Retaken in 1.6: 04, 06, 09, 16, 18, 19, 20, 26, 44 (marked ●). Others differ only by the guide-linked tag icon and the extra journal row; the prototype wins.
 
 | # | Screen |
 |---|---|
@@ -672,6 +678,16 @@ Phosphor, regular and fill weights (`@phosphor-icons/web` 2.1.1). Sizes: 22 tab 
 | 126 | U matches as you type |
 | 127 | V bottling form: pasteurisation, style pills |
 | 128 | V "More" open: starter, koji, other words |
+| 129 | AB Your sake in numbers: What stands out |
+| 130 | AB grades, Bottles you’ve kept |
+| 131 | AB6 Cellar foot: Bottles you’ve had |
+| 132 | AB6 Bottles you’ve had |
+| 133 | AA1 Account → Help |
+| 134 | AA2 Send feedback sheet |
+| 135 | AA1 Read by AI sheet with Report this read |
+| 136 | AA (c) Report this read |
+| 137 | AA5 About Yawaragi |
+| 138 | AA3 Sent notice |
 
 Screenshots that sit in sheets or overlays show the full screen behind them with the scrim.
 
@@ -792,6 +808,15 @@ Folded into the Screens sections and the prototype; this is the index.
 6. **Fixed, as you read it:** a bottling's row opens §9a, a sake's row opens §9.
 
 ## Changelog
+### 1.10 · 25 Oct 2026
+Answers to #417 round five, blocks AA and AB (appendix "v1.10"). 10 screenshots added (129–138).
+- **§11 Cellar** — "Bottles you’ve had" row and screen (AB6).
+- **§12 / numbers screen** — renamed "Your sake in numbers"; "What stands out" and "Bottles you’ve kept" (AB).
+- **§15 Account** — Help group (home screen · Send feedback · About Yawaragi); version line in the footer (AA).
+- **§16 Read by AI sheet** — "Report this read" (AA c).
+- **New** — feedback sheet, About Yawaragi screen.
+- **Open decisions** — 19, 20 added.
+
 ### 1.9 · 22 Oct 2026
 Answers to #417 rounds three and four, blocks S–Z (appendix "v1.9"). 18 screenshots added (111–128).
 - **Rules** — rule 16 (a tap is answered at once; connection states) and the press tokens.
@@ -1149,3 +1174,30 @@ Answered in v1.8; T above widens it. Ships with T.
 
 ### K. The landing in motion
 Answered in v1.8 (written storyboard). No change.
+
+---
+
+## v1.10 · Answers to round five (#417, AA–AB)
+Drawn in the prototype unless marked "written". Screenshots 129–138.
+
+### AA. Feedback, and an "About" page (133–138)
+**(b) with (c) feeding it, and (a) as the fallback: agreed.**
+1. **Account → Help, under the home-screen row:** "Send feedback" (sub "Something wrong, a missing sake, an idea") and "About Yawaragi" (133). **(c) lives in the Read by AI sheet,** as a secondary block button "Report this read" under the sheet's text (135). Every model-written value already opens that sheet (result card, §5a "What we read", §7's list badge, the "Reading by AI" line on §9a), so one placement covers all of them and the card stays as it is. **Not** on Home, the camera, "Don't" or the end-of-screen block: those are for using the app, and the end block is fixed legal text (rule 15).
+2. **A sheet,** up to 90% height, same as §10 (134). In order: title · "What is it about?" four pills (Something’s wrong · A sake is missing · An idea · Other), **required**, nothing preselected · "Your message", up to 1,000 characters; the counter "{n} / 1,000" appears from 900 · "Email for an answer · optional", with "Only used to answer you. Deleted with your message, at the latest after 12 months." · "Sent with it: Yawaragi {version} · this screen ({name})" · primary **Send**, disabled until a kind and a message · "Or write to us by email" (the mailto fallback, (a)). The placeholder follows the kind ("Its name, and the brewery if you know it" for a missing sake).
+   **Report this read (136):** title "Report this read"; the kind is set to Something’s wrong and the pills are hidden; a block "What we read" shows the name, brewery, outcome and confidence that will be sent; the message placeholder "What’s wrong with it? The name, the brewery, the match…"; under it "Your photo isn’t sent. It was discarded after the read." When the visitor kept the photo (T), it is still not attached in v1.
+3. **A notice, and back where they were** (138): "Thanks — sent. We read every message." or, with an email, "Thanks — sent. We’ll answer by email." 4 s, no action. **No copy in the app** of what was sent: that would be a message history to store and show. With an email given, the reply quotes it.
+4. **Yes, signed out too,** with its own daily limit (3), not the scan's count. The sheet says so once: "Without an account you can send three a day." At the limit Send is replaced by "You’ve sent three today. Write to us by email instead." with the mailto link. Offline or with storage off: the same line, mailto only.
+5. **Its own page, Account → Help → About Yawaragi** (137), not the landing (which is before the age gate and for people deciding; About is for people using it). In order: the 和 mark and name · one paragraph on what the app is and that the journal is the visitor's · "Where the data comes from": Sakenowa (names, breweries, prefectures, flavour charts, link) · National Tax Agency (grades, label rules, regions) · the Sake guide (hand-written, sources at the foot of each entry) · "Reading labels": what is read, the "Read by AI" mark, the photo discarded unless kept, the service named in the privacy notice (not here, so the page doesn't go stale when it changes) · "Open source": the Sakenowa MCP server, link · "Version" with the build · **Send feedback** · the end-of-screen block (Impressum · Terms · Privacy notice · Drink responsibly).
+6. **Both.** About shows "1.10.0 · build {short sha}"; the Account footer starts with the same string ("Yawaragi 1.10.0 · build b3af89d · Impressum · …"). The feedback sheet attaches it, so nobody has to copy it.
+
+### AB. What you bought, and what your journal says about you (129–132)
+1. **A section of the numbers screen, which is renamed "Your sake in numbers"** (Palate's row too). "What stands out" sits second, right after the counts, because it is the part worth reading (129). Not its own screen (three sentences don't need one), not Home (stays a glance).
+2. **At most three, one of each kind,** so they never repeat each other. Order: contrast → match → gap → share → drift; a kind shows only when its number holds up (below). They are recomputed on every visit, so they change as the journal grows. **No dismiss in v1:** dismissing needs a stored list of hidden insights, and three plain sentences are not loud enough to need it.
+   **Thresholds:** the section appears from 8 tastings (5–7: "{n} more tastings and what stands out appears here."). Contrast and share need 8 bottles; contrast needs the higher category from 3 tastings; match needs 4 tastings rated 4.5+ with 3 in one area; drift waits for six months (X3).
+   **Card:** surface, 15px/500 sentence, then a 12px basis line saying exactly where the number comes from. Under the heading: "From {n} tastings and {m} bottles".
+3. **Both, under one honest name: "Bottles you’ve kept"** (130). Not "bought" (gifts), not "owned" (sounds like now). Two bar groups, grade then prefecture, top four each, in the grades section's style; meta "{m} bottles, in your cellar now or before"; foot "Each bottle counts once, whether you bought it or were given it." **No size breakdown:** sizes summed are litres (X5). It shows from 5 bottles.
+4. **Welcome, worded as a place, not a shortfall, and only for regions the Sake guide covers (Y):** "Nothing from Hyōgo yet." · "One of the regions the Sake guide describes." · **"About Hyōgo ›" opens the region's Learn entry,** never Search: a filtered search is a shopping list. Drop "where the catalogue has 140 sakes", which reads as a push. At most one gap at a time, the first region with text the visitor hasn't tasted. (In the prototype the link opens the guide index; the region entries don't exist yet.)
+5. **Under 20 tastings the basis says so:** "From your first 12 tastings and 9 bottles", and match adds ", so far". Shares are always counts ("6 of 15 bottles"), never percentages: a percentage of ten bottles overstates itself.
+6. **Visible, as a list, never counted per period** (131, 132). Last row under the cellar: "Bottles you’ve had" · "Finished or taken out of the cellar" ›. The screen: "Bottles that are no longer in your cellar, newest first. Only you see this." then one row per bottle: name, kanji, "Added {date} · Finished {date}" (or "Removed"); tapping opens its page. **No total on the row or the screen,** no grouping by month: the list is a memory aid, not a tally. Rows are removed one by one (swipe or the row's ⋯, written) and go with the account.
+
+**Limits, as asked:** none of these sentences counts drinking over time. Kept bottles feed the share and contrast insights only as counts of kinds.
