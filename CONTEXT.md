@@ -78,7 +78,7 @@ One of §5's chips on a **JournalEntry**, tapped right after the star: the bottl
 _Avoid_: Tag (collides with FlavorTag), Chip (that is the widget), Label
 
 **SchemaVersion** (stored records):
-The integer every stored record (JournalEntry, CellarBottle, Expression) carries. Reads upcast older versions to the current one, writes always produce the current one, and a record with no version is version 1 (ADR-0024). Distinct from the export file's `formatVersion`, which versions only the envelope around the records.
+The integer every stored record (JournalEntry, CellarBottle, Expression, BottleEvent) carries. Reads upcast older versions to the current one, writes always produce the current one, and a record with no version is version 1 (ADR-0024). Distinct from the export file's `formatVersion`, which versions only the envelope around the records.
 _Avoid_: Revision (implies edit history), Migration version (that is the SQL migrations' numbering)
 
 **Collection**:
@@ -88,6 +88,10 @@ _Avoid_: Library, My sakes, Shelf (that reads as the Cellar), Inventory (commerc
 **Cellar**:
 The Sakes a *User* physically **owns**, with a count per Sake and an optional `openedAt`. Distinct from the **TastingJournal**, which records what they *drank* — you can own a bottle you have never tasted, and you will have tasted many you never owned. A Cellar row tracks freshness: unopened keeps indefinitely, open is dated, and a bottle past the threshold (10 days, or 5 for *nama*) is surfaced as "drink soon". "Bought it" moves a **Wishlist** row here; "Pour & rate" creates a **JournalEntry**; "Finished" decrements or removes. Thresholds are an open decision in the design handoff.
 _Avoid_: Inventory, Stock, Shelf, Storage, TastingJournal (that's tastings, not bottles)
+
+**Bottle history**:
+The append-only record of what happened to a *User*'s **Cellar** bottles: each bottle added, opened, finished or removed, as a dated line (a `BottleEvent`). The Cellar is what they own *now*; the bottle history is what they *have owned*, so a finished bottle still counts. Used for shares of what was owned (by grade, style, prefecture, size), never for counts over time. Started from the Cellar rows already there (ADR-0024, "Bottle history"). Not shown in the UI yet.
+_Avoid_: Purchases, Orders (no purchase data is kept; some bottles were gifts), Log (that reads as the TastingJournal)
 
 **Wishlist**:
 The Sakes a *User* wants to try but has not. Each row records **where the want came from** (`scan`, `page`, or `ask`) plus a short context string, so the UI can say "Scanned at …" or "Saved from its bottle page". A row **leaves the Wishlist automatically** once that Sake is logged to the **TastingJournal** — the want is satisfied by the tasting, not by a separate dismissal. "Bought it" moves it to the **Cellar**.

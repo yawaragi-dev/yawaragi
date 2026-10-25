@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import type { BottleEvent } from '@/lib/schemas/bottle-event'
 import type { CellarBottle } from '@/lib/schemas/cellar-bottle'
 import type { Expression } from '@/lib/schemas/expression'
 import { parseCollectionExport } from '@/lib/schemas/journal-export'
@@ -39,6 +40,18 @@ const bottling: Expression = {
   updatedAt: 4,
 }
 
+const event: BottleEvent = {
+  schemaVersion: 1,
+  id: 'ev1',
+  at: 6,
+  kind: 'added',
+  count: 2,
+  thing: { brandId: 7 },
+  sake: { nameKanji: '而今', nameRomaji: 'Jikon' },
+  sizeMl: 720,
+  nama: false,
+}
+
 const EXPORTED_AT = Date.UTC(2026, 7, 17, 12, 30, 0)
 const none = { records: [], rejected: [] }
 
@@ -49,27 +62,30 @@ describe('buildCollectionExport', () => {
       journal: { records: [entry('a', 1000)], rejected: [] },
       cellar: none,
       expressions: none,
+      bottleHistory: none,
       exportedAt: EXPORTED_AT,
     })
 
-    expect(doc.formatVersion).toBe(3)
+    expect(doc.formatVersion).toBe(4)
     expect(doc.userId).toBe('user_admin')
     expect(doc.exportedAt).toBe('2026-08-17T12:30:00.000Z')
   })
 
-  it('carries journal, cellar and own-bottling records verbatim so the file restores what it came from', () => {
+  it('carries journal, cellar, own-bottling and bottle-history records verbatim so the file restores what it came from', () => {
     const entries = [entry('a', 1000), entry('b', 2000)]
     const doc = buildCollectionExport({
       userId: 'u',
       journal: { records: entries, rejected: [] },
       cellar: { records: [bottle], rejected: [] },
       expressions: { records: [bottling], rejected: [] },
+      bottleHistory: { records: [event], rejected: [] },
       exportedAt: EXPORTED_AT,
     })
 
     expect(doc.journal).toEqual(entries)
     expect(doc.cellar).toEqual([bottle])
     expect(doc.expressions).toEqual([bottling])
+    expect(doc.bottleHistory).toEqual([event])
   })
 
   it('keeps records the store held but could not read, raw, instead of dropping them', () => {
@@ -78,6 +94,7 @@ describe('buildCollectionExport', () => {
       journal: { records: [], rejected: [{ store: 'journal', id: 'x', raw: '{bad', reason: 'json' }] },
       cellar: { records: [], rejected: [{ store: 'cellar', id: '9', raw: '{"schemaVersion":7}', reason: 'newer' }] },
       expressions: { records: [], rejected: [{ store: 'expressions', id: 'q', raw: '[]', reason: 'shape' }] },
+      bottleHistory: { records: [], rejected: [{ store: 'bottle-history', id: 'h', raw: '{"kind":1}', reason: 'invalid' }] },
       exportedAt: EXPORTED_AT,
     })
 
@@ -85,6 +102,7 @@ describe('buildCollectionExport', () => {
       ['journal', 'x', '{bad'],
       ['cellar', '9', '{"schemaVersion":7}'],
       ['expressions', 'q', '[]'],
+      ['bottle-history', 'h', '{"kind":1}'],
     ])
   })
 
@@ -94,6 +112,7 @@ describe('buildCollectionExport', () => {
       journal: { records: [entry('a', 1000)], rejected: [] },
       cellar: { records: [bottle], rejected: [] },
       expressions: { records: [bottling], rejected: [] },
+      bottleHistory: { records: [event], rejected: [] },
       exportedAt: EXPORTED_AT,
     })
     const parsed = parseCollectionExport(JSON.parse(JSON.stringify(doc)))
@@ -119,6 +138,7 @@ describe('parseCollectionExport', () => {
     expect(parsed.doc.journal).toEqual([entry('a', 1000)])
     expect(parsed.doc.cellar).toEqual([])
     expect(parsed.doc.expressions).toEqual([])
+    expect(parsed.doc.bottleHistory).toEqual([])
   })
 
   it('reads a format-2 file written before own bottlings existed', () => {
@@ -133,13 +153,32 @@ describe('parseCollectionExport', () => {
 
     expect(parsed.ok).toBe(true)
     if (!parsed.ok) return
-    expect(parsed.doc.formatVersion).toBe(3)
+    expect(parsed.doc.formatVersion).toBe(4)
     expect(parsed.doc.cellar).toEqual([bottle])
     expect(parsed.doc.expressions).toEqual([])
+    expect(parsed.doc.bottleHistory).toEqual([])
+  })
+
+  it('reads a format-3 file written before the bottle history existed, with an empty history', () => {
+    const parsed = parseCollectionExport({
+      formatVersion: 3,
+      exportedAt: '2026-10-20T03:30:00.000Z',
+      userId: 'u',
+      journal: [],
+      cellar: [bottle],
+      expressions: [bottling],
+      rejected: [],
+    })
+
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) return
+    expect(parsed.doc.formatVersion).toBe(4)
+    expect(parsed.doc.expressions).toEqual([bottling])
+    expect(parsed.doc.bottleHistory).toEqual([])
   })
 
   it('refuses a format it does not know rather than guessing', () => {
-    const parsed = parseCollectionExport({ formatVersion: 4, journal: [] })
+    const parsed = parseCollectionExport({ formatVersion: 5, journal: [] })
     expect(parsed).toMatchObject({ ok: false, reason: 'unknown_format' })
   })
 
@@ -166,5 +205,19 @@ describe('parseCollectionExport', () => {
       rejected: [],
     })
     expect(parsed).toMatchObject({ ok: false, reason: 'invalid_record', detail: 'expressions[0]: invalid' })
+  })
+
+  it('refuses the file when a bottle event in it cannot be read', () => {
+    const parsed = parseCollectionExport({
+      formatVersion: 4,
+      exportedAt: '2026-10-25T03:30:00.000Z',
+      userId: 'u',
+      journal: [],
+      cellar: [],
+      expressions: [],
+      bottleHistory: [event, { ...event, id: 'ev2', count: 0 }],
+      rejected: [],
+    })
+    expect(parsed).toMatchObject({ ok: false, reason: 'invalid_record', detail: 'bottleHistory[1]: invalid' })
   })
 })

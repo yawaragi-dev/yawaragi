@@ -1,9 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const h = vi.hoisted(() => ({
   journal: null as unknown,
   cellar: null as unknown,
   expressions: null as unknown,
+  history: null as unknown,
 }))
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn(async () => ({ userId: 'user_admin' })) }))
@@ -14,6 +15,9 @@ vi.mock('@/lib/collection/get-cellar-store', () => ({ getCellarStore: vi.fn(() =
 vi.mock('@/lib/collection/get-expression-store', () => ({
   getExpressionStore: vi.fn(() => h.expressions),
 }))
+vi.mock('@/lib/collection/get-bottle-history-store', () => ({
+  getBottleHistoryStore: vi.fn(() => h.history),
+}))
 
 import { currentUserIsMaintainer } from '@/lib/auth/maintainer'
 import {
@@ -23,6 +27,7 @@ import {
   openCellarBottle,
   removeFromCellar,
 } from '@/lib/collection/cellar-actions'
+import { InMemoryBottleHistoryStore } from '@/lib/collection/in-memory-bottle-history-store'
 import { InMemoryCellarStore } from '@/lib/collection/in-memory-cellar-store'
 import { InMemoryExpressionStore } from '@/lib/collection/in-memory-expression-store'
 import { cellarRowKey } from '@/lib/schemas/cellar-bottle'
@@ -32,6 +37,10 @@ import { InMemoryJournalStore } from '@/lib/taste/in-memory-journal-store'
 const USER = 'user_admin'
 const cellar = () => h.cellar as InMemoryCellarStore
 const expressions = () => h.expressions as InMemoryExpressionStore
+const history = () => h.history as InMemoryBottleHistoryStore
+/** The history as [kind, count, size] lines, oldest first. */
+const ledger = async () =>
+  (await history().read(USER)).map((e) => [e.kind, e.count, e.sizeMl, e.seeded ?? false])
 const ONE = { count: 1, sizeMl: 720, nama: false } as const
 /** The cellar as [key, count] pairs. */
 const shelf = async () =>
@@ -53,6 +62,7 @@ beforeEach(() => {
   h.journal = new InMemoryJournalStore()
   h.cellar = new InMemoryCellarStore()
   h.expressions = new InMemoryExpressionStore()
+  h.history = new InMemoryBottleHistoryStore()
   vi.mocked(currentUserIsMaintainer).mockResolvedValue(true)
   vi.mocked(lookupBrand).mockResolvedValue({
     brandId: 7,
@@ -189,6 +199,91 @@ describe('the cellar, from the sheet and the row buttons', () => {
     it('cannot be added for a bottling that is not yours', async () => {
       expect(await addToCellar({ expressionId: 'nope' }, ONE)).toEqual({ status: 'not_found' })
       expect(await cellar().read(USER)).toEqual([])
+    })
+  })
+
+  describe('the bottle history it keeps', () => {
+    // A clock that moves on with every read, so each action has its own time.
+    beforeEach(() => {
+      let t = 1000
+      vi.spyOn(Date, 'now').mockImplementation(() => t++)
+    })
+    afterEach(() => vi.restoreAllMocks())
+
+    it('records every bottle added, opened, finished and removed, dated', async () => {
+      await addToCellar({ brandId: 7 }, { ...ONE, count: 3 })
+      await openCellarBottle('7|720|s')
+      await finishCellarBottle('7|720|s|open')
+      await removeFromCellar('7|720|s')
+
+      expect(await ledger()).toEqual([
+        ['added', 3, 720, false],
+        ['opened', 1, 720, false],
+        ['finished', 1, 720, false],
+        ['removed', 1, 720, false],
+      ])
+      const events = await history().read(USER)
+      expect(events.every((e) => e.at >= 1000 && e.sake.nameKanji === '而今')).toBe(true)
+    })
+
+    it('keeps the bottles that left the cellar', async () => {
+      await addToCellar({ brandId: 7 }, ONE)
+      await removeFromCellar('7|720|s')
+      expect(await cellar().read(USER)).toEqual([])
+      expect(await ledger()).toEqual([
+        ['added', 1, 720, false],
+        ['removed', 1, 720, false],
+      ])
+    })
+
+    it('records an edited count as bottles added or removed, and a new size alone as nothing', async () => {
+      await addToCellar({ brandId: 7 }, ONE)
+      await editCellarRow('7|720|s', { count: 4, sizeMl: 720, nama: false })
+      await editCellarRow('7|720|s', { count: 4, sizeMl: 1800, nama: true })
+      await editCellarRow('7|1800|n', { count: 2, sizeMl: 1800, nama: true })
+      expect(await ledger()).toEqual([
+        ['added', 1, 720, false],
+        ['added', 3, 720, false],
+        ['removed', 2, 1800, false],
+      ])
+    })
+
+    it('starts from the bottles already in the cellar the first time', async () => {
+      // A cellar from before the history: two bottles, added at t=5.
+      await cellar().put(USER, {
+        schemaVersion: 3,
+        brandId: 7,
+        sake: { nameKanji: '而今', nameRomaji: 'Jikon' },
+        sizeMl: 720,
+        nama: false,
+        count: 2,
+        openedAt: null,
+        addedAt: 5,
+        updatedAt: 5,
+      })
+      await removeFromCellar('7|720|s')
+      await removeFromCellar('7|720|s')
+      expect(await ledger()).toEqual([
+        ['added', 2, 720, true],
+        ['removed', 1, 720, false],
+        ['removed', 1, 720, false],
+      ])
+      expect((await history().read(USER))[0]!.at).toBe(5)
+    })
+
+    it('still saves the bottle when the history cannot be written', async () => {
+      history().failWrites = true
+      vi.spyOn(console, 'error').mockImplementation(() => {})
+      expect(await addToCellar({ brandId: 7 }, ONE)).toEqual({ status: 'ok', count: 1 })
+      expect(await shelf()).toEqual({ '7|720|s': 1 })
+      expect(await history().size(USER)).toBe(0)
+    })
+
+    it('records nothing for a tap that changed nothing', async () => {
+      await addToCellar({ brandId: 7 }, ONE)
+      // "Finished" on a sealed row is a no-op.
+      await finishCellarBottle('7|720|s')
+      expect(await ledger()).toEqual([['added', 1, 720, false]])
     })
   })
 })
