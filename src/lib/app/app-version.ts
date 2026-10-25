@@ -8,8 +8,8 @@ import { env } from '@/env'
  * "{version} · build {build}", and Account's footer starts with
  * "Yawaragi {version} · build {build}".
  *
- * The version is package.json's — the app's own release number, not the
- * design snapshot's (the prototype prints 1.10.0, which is the design's).
+ * The version is package.json's, which follows the design snapshot the app
+ * is ported to (design v1.10 → 1.10.0; bumped in each snapshot PR).
  * The build is the deployment's commit (Vercel's `VERCEL_GIT_COMMIT_SHA`),
  * cut to seven characters like a short git sha; a local run has no
  * deployment and says "dev".
