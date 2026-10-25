@@ -1311,6 +1311,7 @@
     },
     "pasteurisationUsual": "Pasteurised twice (usual)",
     "pasteurisationInfo": "About pasteurisation and nama",
+    "kojiInfo": "About koji",
     "styleTickAny": "Style · tick any",
     "moreDetails": "Starter, koji, other style words",
     "styleOtherLabel": "Other style words",
@@ -1319,7 +1320,7 @@
   "learn": {
     "title": "Learn",
     "metaTitle": "Learn about sake | Yawaragi",
-    "metaDescription": "What the words on a sake label mean: grades, polishing, yeast starters, unpasteurised, aged and sparkling sake, and sake rice. Written by hand, with sources.",
+    "metaDescription": "What the words on a sake label mean: grades, polishing, yeast starters, koji, unpasteurised, aged and sparkling sake, and sake rice. Written by hand, with sources.",
     "lead": "What the words on a label mean. Written by hand, with sources.",
     "startHere": "Start here",
     "allTopics": "All topics",
@@ -1602,6 +1603,37 @@
           "p3": "The slower methods tend to give a fuller body and a more complex flavor; sokujō tends to be lighter and more delicate. The starter is separate from the grade: a junmai ginjō can be a kimoto."
         }
       },
+      "koji": {
+        "title": "Koji: the mould behind sake",
+        "answer": "Koji is steamed rice grown over with a mould whose enzymes turn the rice's starch into sugar. Sake is made with yellow koji; white and black koji, the koji of shochu and awamori, make much more citric acid.",
+        "factsTitle": "Koji, and its three kinds",
+        "facts": {
+          "kojiRice": {
+            "term": "Koji rice",
+            "value": "Steamed rice and koji mould",
+            "note": "Spores are sprinkled on steamed rice; in about two days the mould covers it, and its enzymes build up in the grains."
+          },
+          "yellow": {
+            "term": "Yellow koji",
+            "value": "Aspergillus oryzae",
+            "note": "The koji of sake, and of miso and soy sauce. It makes little citric acid."
+          },
+          "white": {
+            "term": "White koji",
+            "value": "A. luchuensis mut. kawachii",
+            "note": "A white mutant of black koji, isolated in Kagoshima in 1918. The main koji of shochu, and rich in citric acid."
+          },
+          "black": {
+            "term": "Black koji",
+            "value": "Aspergillus luchuensis",
+            "note": "The koji of awamori. It makes more citric acid than other koji, which helps the mash ferment cleanly in a hot, humid climate."
+          }
+        },
+        "detail": {
+          "p1": "Koji is one of sake's basic ingredients, with rice and water. In the mash its enzymes dissolve the steamed rice while the yeast ferments the sugar, both at once in one tank.",
+          "p2": "Sake usually holds little citric acid. Brewing partly with black koji is one way to raise it, and white koji is used in sake too, for a fresh, citrus-like sourness."
+        }
+      },
       "nama": {
         "title": "Nama: unpasteurised sake",
         "answer": "Sake is normally pasteurised twice, before storage and at bottling. Nama sake skips one or both, which keeps it fresh-tasting and means it has to stay cold.",
@@ -1630,7 +1662,8 @@
         },
         "detail": {
           "p1": "Pasteurising heats sake to about 60–65°C. It kills microbes and stops the enzymes that would otherwise keep changing the sake in the bottle.",
-          "p2": "With its enzymes still active, namazake tastes fresh and lively, and keeps only in the fridge."
+          "p2": "With its enzymes still active, namazake tastes fresh and lively, and keeps only in the fridge.",
+          "p3": "Nama-chozō and nama-zume are each heated once, so they sit between namazake and the usual sake. Nama-chozō is kept cold and unheated at the brewery and pasteurised only at bottling; nama-zume is pasteurised before storage and bottled without heating again. Only namazake is never heated."
         }
       },
       "muroka": {

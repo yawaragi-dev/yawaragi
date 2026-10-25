@@ -175,6 +175,47 @@ const ENTRIES = [
     sources: [GUIDE, JSS_BREWING, JSS_GLOSSARY],
   },
   {
+    // Design v1.9 V3: opened from the ⓘ beside the bottling form's Koji
+    // select. Yellow, white and black, in the select's order.
+    slug: 'koji',
+    group: 'styles',
+    kanji: '麹',
+    romaji: 'kōji',
+    facts: [
+      { id: 'kojiRice', kanji: '米こうじ', romaji: 'kome-kōji' },
+      { id: 'yellow', kanji: '黄麹', romaji: 'ki-kōji' },
+      { id: 'white', kanji: '白麹', romaji: 'shiro-kōji' },
+      { id: 'black', kanji: '黒麹', romaji: 'kuro-kōji' },
+    ],
+    paragraphs: 2,
+    related: ['sake-rice', 'yeast-starters', 'other-japanese-drinks'],
+    sources: [
+      GUIDE,
+      JSS_GLOSSARY,
+      {
+        label: 'National Tax Agency, geographical indication “琉球”, production standard',
+        url: 'https://www.nta.go.jp/taxes/sake/hyoji/chiri/pdf/0020008-114_2.pdf',
+      },
+      {
+        label: 'Iwano K., Mikami S., “焼酎白麹の諸酵素の特徴について”, Journal of the Brewing Society of Japan 83 (12), 791 (1988)',
+        url: 'https://www.jstage.jst.go.jp/article/jbrewsocjapan1988/83/12/83_12_791/_pdf',
+      },
+      {
+        label: 'Hayashi K. et al., “Making Traditional Japanese Distilled Liquor, Shochu and Awamori, and the Contribution of White and Black Koji Fungi”, Journal of Fungi 7 (7), 517 (2021)',
+        url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC8306306/',
+      },
+      {
+        label: 'Shimazu Y. et al., “清酒に含まれる有機酸の酸味と飲用温度の関係”, Journal of the Brewing Society of Japan 106 (11), 747 (2011)',
+        url: 'https://www.jstage.jst.go.jp/article/jbrewsocjapan/106/11/106_747/_pdf',
+      },
+      {
+        label: 'Sake Street, “Citric Acid Brought Revolution to Sake Brewing: Learn about White Koji and Black Koji” (7 February 2024)',
+        url: 'https://sakestreet.com/en/media/learn-shiro-koji-and-kuro-koji',
+      },
+    ],
+    verifiedOn: '2026-10-25',
+  },
+  {
     slug: 'nama',
     group: 'styles',
     kanji: '生酒',
@@ -185,9 +226,10 @@ const ENTRIES = [
       { id: 'namazume', kanji: '生詰', romaji: 'nama-zume' },
       { id: 'hiyaoroshi', kanji: 'ひやおろし', romaji: 'hiyaoroshi' },
     ],
-    paragraphs: 2,
+    paragraphs: 3,
     related: ['muroka', 'genshu', 'sparkling'],
-    sources: [GUIDE, JSS_BREWING],
+    sources: [GUIDE, JSS_BREWING, JSS_GLOSSARY],
+    verifiedOn: '2026-10-25',
   },
   {
     slug: 'muroka',
