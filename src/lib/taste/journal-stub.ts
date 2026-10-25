@@ -1,3 +1,5 @@
+import { bottleEvent, seedEvents } from '@/lib/collection/bottle-history'
+import type { BottleEvent } from '@/lib/schemas/bottle-event'
 import type { FlavorProfile } from '@/lib/schemas/flavor-profile'
 import type { CellarBottle } from '@/lib/schemas/cellar-bottle'
 import type { Expression } from '@/lib/schemas/expression'
@@ -195,6 +197,28 @@ export const STUB_EXPRESSIONS: readonly Expression[] = [
     updatedAt: Date.UTC(2026, 6, 12),
   },
 ]
+
+/**
+ * The bottle history under the same `populated` stub (design v1.10, AB6): the
+ * cellar's rows as the history started from them, plus two bottles no longer
+ * there — a 田酒 opened and finished, and a 鍋島 taken out sealed — so
+ * "Bottles you've had" has rows to list.
+ */
+const DENSHU = { brandId: 3, sake: { nameKanji: '田酒', nameRomaji: 'Denshu' }, sizeMl: 720, nama: false } as const
+const NABESHIMA = { brandId: 2, sake: { nameKanji: '鍋島', nameRomaji: 'Nabeshima' }, sizeMl: 720, nama: false } as const
+export const STUB_BOTTLE_HISTORY: readonly BottleEvent[] = [
+  bottleEvent('added', DENSHU, 1, STUB_JOURNAL_NOW - 60 * DAY, 'stub-h1'),
+  bottleEvent('opened', DENSHU, 1, STUB_JOURNAL_NOW - 50 * DAY, 'stub-h2'),
+  bottleEvent('finished', DENSHU, 1, STUB_JOURNAL_NOW - 40 * DAY, 'stub-h3'),
+  bottleEvent('added', NABESHIMA, 1, STUB_JOURNAL_NOW - 45 * DAY, 'stub-h4'),
+  bottleEvent('removed', NABESHIMA, 1, STUB_JOURNAL_NOW - 35 * DAY, 'stub-h5'),
+  ...seedEvents(STUB_CELLAR),
+]
+
+/** The bottle history for a stub value: the fixture when populated, otherwise none. */
+export function resolveBottleHistoryStub(stub: string): readonly BottleEvent[] {
+  return stub === 'populated' ? STUB_BOTTLE_HISTORY : []
+}
 
 /** The own bottlings for a stub value: the fixture when populated, otherwise none. */
 export function resolveExpressionsStub(stub: string): readonly Expression[] {
