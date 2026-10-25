@@ -4,8 +4,10 @@ import { auth } from '@clerk/nextjs/server'
 import { unstable_rethrow } from 'next/navigation'
 import { describeError, logFailure } from '@/lib/observability/log-failure'
 import { currentUserIsMaintainer } from '@/lib/auth/maintainer'
+import type { BottleHistoryStore } from '@/lib/collection/bottle-history-store'
 import type { CellarStore } from '@/lib/collection/cellar-store'
 import type { ExpressionStore } from '@/lib/collection/expression-store'
+import { getBottleHistoryStore } from '@/lib/collection/get-bottle-history-store'
 import { getCellarStore } from '@/lib/collection/get-cellar-store'
 import { getExpressionStore } from '@/lib/collection/get-expression-store'
 import { getJournalStore } from '@/lib/taste/get-journal-store'
@@ -27,6 +29,12 @@ export interface MaintainerCollection {
   journal: JournalStore
   cellar: CellarStore
   expressions: ExpressionStore
+  /**
+   * The bottle history (ADR-0024 "Bottle history"). Nullable, unlike the
+   * others: it is a record kept beside the cellar, not something an action
+   * needs to work, so its absence never makes a collection `unavailable`.
+   */
+  history: BottleHistoryStore | null
 }
 
 export async function withMaintainerCollection<T>(
@@ -41,7 +49,7 @@ export async function withMaintainerCollection<T>(
   const expressions = getExpressionStore()
   if (!journal || !cellar || !expressions) return { status: 'unavailable' }
   try {
-    return await run({ userId, journal, cellar, expressions })
+    return await run({ userId, journal, cellar, expressions, history: getBottleHistoryStore() })
   } catch (error) {
     // A store that cannot be reached (an Upstash 5xx or 429, a dropped
     // connection, the catalogue's pg pool full) used to escape as a thrown

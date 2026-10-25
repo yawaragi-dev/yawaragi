@@ -1,6 +1,7 @@
 /**
- * Maintainer utility — export one user's collection (TastingJournal and
- * Cellar) to a JSON file (P5.5-D, #244, ADR-0020; export v2 per ADR-0024).
+ * Maintainer utility — export one user's collection (TastingJournal, Cellar,
+ * own bottlings and bottle history) to a JSON file (P5.5-D, #244, ADR-0020;
+ * export v4 per ADR-0024).
  *
  * Usage:
  *   pnpm journal:export                     # the sole configured maintainer
@@ -28,6 +29,7 @@
 import { writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { parseMaintainerAllowlist } from '@/lib/auth/maintainer-allowlist'
+import { UpstashBottleHistoryStore } from '@/lib/collection/upstash-bottle-history-store'
 import { UpstashCellarStore } from '@/lib/collection/upstash-cellar-store'
 import { UpstashExpressionStore } from '@/lib/collection/upstash-expression-store'
 import { buildCollectionExport } from '@/lib/taste/journal-export'
@@ -113,12 +115,13 @@ async function main(): Promise<number> {
   const { userId } = resolved
 
   const exportedAt = Date.now()
-  const [journal, cellar, expressions] = await Promise.all([
+  const [journal, cellar, expressions, bottleHistory] = await Promise.all([
     new UpstashJournalStore(url, token).dump(userId),
     new UpstashCellarStore(url, token).dump(userId),
     new UpstashExpressionStore(url, token).dump(userId),
+    new UpstashBottleHistoryStore(url, token).dump(userId),
   ])
-  const doc = buildCollectionExport({ userId, journal, cellar, expressions, exportedAt })
+  const doc = buildCollectionExport({ userId, journal, cellar, expressions, bottleHistory, exportedAt })
 
   const outPath = resolve(flag(argv, 'out') ?? defaultExportFilename(userId, exportedAt))
   await writeFile(outPath, `${JSON.stringify(doc, null, 2)}\n`, 'utf8')
@@ -127,11 +130,11 @@ async function main(): Promise<number> {
   // personal data and must not be echoed into a terminal or CI log.
   const n = doc.journal.length
   console.log(
-    `Exported ${n} journal entr${n === 1 ? 'y' : 'ies'}, ${doc.cellar.length} cellar row(s) and ` +
-      `${doc.expressions.length} own bottling(s) for ${userId}`,
+    `Exported ${n} journal entr${n === 1 ? 'y' : 'ies'}, ${doc.cellar.length} cellar row(s), ` +
+      `${doc.expressions.length} own bottling(s) and ${doc.bottleHistory.length} bottle event(s) for ${userId}`,
   )
   console.log(`  → ${outPath}`)
-  if (n === 0 && doc.cellar.length === 0 && doc.expressions.length === 0) {
+  if (n === 0 && doc.cellar.length === 0 && doc.expressions.length === 0 && doc.bottleHistory.length === 0) {
     console.log('  (empty collection — a valid export, nothing was stored for this user)')
   }
   if (doc.rejected.length > 0) {

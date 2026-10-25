@@ -1,4 +1,5 @@
 import type { StoreDump } from '@/lib/collection/versioned-record'
+import type { BottleEvent } from '@/lib/schemas/bottle-event'
 import type { CellarBottle } from '@/lib/schemas/cellar-bottle'
 import type { Expression } from '@/lib/schemas/expression'
 import {
@@ -8,8 +9,9 @@ import {
 import type { JournalEntry } from '@/lib/schemas/journal-entry'
 
 /**
- * Build the export document for one user's collection — journal, cellar and
- * the bottlings they added themselves (ADR-0020, ADR-0024 §3, ADR-0025).
+ * Build the export document for one user's collection — journal, cellar,
+ * the bottlings they added themselves and the bottle history (ADR-0020,
+ * ADR-0024 §3, ADR-0025).
  *
  * Pure over injected arguments — no store, no clock, no filesystem — so the
  * shape is unit-testable, and the three callers (the `journal:export` CLI, the
@@ -27,6 +29,7 @@ export function buildCollectionExport(args: {
   journal: StoreDump<JournalEntry>
   cellar: StoreDump<CellarBottle>
   expressions: StoreDump<Expression>
+  bottleHistory: StoreDump<BottleEvent>
   exportedAt: number
 }): CollectionExport {
   return {
@@ -39,6 +42,12 @@ export function buildCollectionExport(args: {
     journal: [...args.journal.records],
     cellar: [...args.cellar.records],
     expressions: [...args.expressions.records],
-    rejected: [...args.journal.rejected, ...args.cellar.rejected, ...args.expressions.rejected],
+    bottleHistory: [...args.bottleHistory.records],
+    rejected: [
+      ...args.journal.rejected,
+      ...args.cellar.rejected,
+      ...args.expressions.rejected,
+      ...args.bottleHistory.rejected,
+    ],
   }
 }

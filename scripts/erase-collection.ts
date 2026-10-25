@@ -1,7 +1,7 @@
 /**
  * Maintainer utility — the GDPR erasure path for one user's collection
  * (ADR-0009, ADR-0024, ADR-0025): their journal, their cellar, the bottlings
- * they added themselves, AND their daily backups.
+ * they added themselves, their bottle history, AND their daily backups.
  *
  * Usage:
  *   pnpm journal:erase -- --user user_abc          # say what would be erased
@@ -16,10 +16,12 @@
  * a mistake worth making convenient.
  */
 import { BACKUP_BUCKET, backupPrefix } from '@/lib/collection/backup-storage'
+import { bottleHistoryKey } from '@/lib/collection/bottle-history-store'
 import { cellarKey } from '@/lib/collection/cellar-store'
 import { eraseCollection } from '@/lib/collection/erase-collection'
 import { expressionsKey } from '@/lib/collection/expression-store'
 import { SupabaseBackupStorage } from '@/lib/collection/supabase-backup-storage'
+import { UpstashBottleHistoryStore } from '@/lib/collection/upstash-bottle-history-store'
 import { UpstashCellarStore } from '@/lib/collection/upstash-cellar-store'
 import { UpstashExpressionStore } from '@/lib/collection/upstash-expression-store'
 import { journalKey } from '@/lib/taste/journal-store'
@@ -49,12 +51,14 @@ async function main(): Promise<number> {
   const journal = new UpstashJournalStore(url, token)
   const cellar = new UpstashCellarStore(url, token)
   const expressions = new UpstashExpressionStore(url, token)
+  const bottleHistory = new UpstashBottleHistoryStore(url, token)
   const storage = new SupabaseBackupStorage(sbUrl, sbKey, BACKUP_BUCKET)
   const prefix = backupPrefix(userId)
-  const [j, c, x, backups] = await Promise.all([
+  const [j, c, x, h, backups] = await Promise.all([
     journal.dump(userId),
     cellar.dump(userId),
     expressions.dump(userId),
+    bottleHistory.dump(userId),
     storage.list(prefix),
   ])
 
@@ -62,6 +66,7 @@ async function main(): Promise<number> {
   console.log(`  ${journalKey(userId)}: ${j.records.length + j.rejected.length} record(s)`)
   console.log(`  ${cellarKey(userId)}: ${c.records.length + c.rejected.length} record(s)`)
   console.log(`  ${expressionsKey(userId)}: ${x.records.length + x.rejected.length} record(s)`)
+  console.log(`  ${bottleHistoryKey(userId)}: ${h.records.length + h.rejected.length} record(s)`)
   console.log(`  ${BACKUP_BUCKET}/${prefix}/: ${backups.length} backup(s)`)
 
   if (!argv.includes('--yes')) {
@@ -69,7 +74,7 @@ async function main(): Promise<number> {
     return 0
   }
 
-  await eraseCollection({ userId, journal, cellar, expressions, backups: storage })
+  await eraseCollection({ userId, journal, cellar, expressions, bottleHistory, backups: storage })
   console.log('Erased.')
   return 0
 }

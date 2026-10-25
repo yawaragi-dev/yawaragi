@@ -1,15 +1,15 @@
 import 'server-only'
 
 /**
- * The four Redis hash commands the collection stores need, over Upstash's REST
+ * The Redis hash commands the collection stores need, over Upstash's REST
  * API — one per-user hash per record type (`journal:user:<id>`,
- * `cellar:user:<id>`), field = record id, value = the record's JSON.
+ * `cellar:user:<id>`, `bottle-history:user:<id>`), field = record id, value = the record's JSON.
  *
  * REST over `fetch` rather than `@upstash/redis` for the reason the rate-limit
  * client gives: the SDK would need the pnpm `minimumReleaseAge` quarantine
- * weakened, and four commands do not justify that.
+ * weakened, and six commands do not justify that.
  *
- * Deliberately no `EXPIRE` anywhere: the journal and the cellar are permanent
+ * Deliberately no `EXPIRE` anywhere: the journal, the cellar and the bottle history are permanent
  * records (ADR-0020, ADR-0024), erased only on request.
  */
 export class UpstashHash {
@@ -35,6 +35,18 @@ export class UpstashHash {
 
   async set(key: string, field: string, value: string): Promise<void> {
     await this.exec(['HSET', key, field, value])
+  }
+
+  /** Several fields in one `HSET` — one round trip, and all or none. */
+  async setMany(key: string, pairs: ReadonlyArray<readonly [field: string, value: string]>): Promise<void> {
+    if (pairs.length === 0) return
+    await this.exec(['HSET', key, ...pairs.flat()])
+  }
+
+  /** How many fields the hash holds; 0 when the key is absent. */
+  async size(key: string): Promise<number> {
+    const result = await this.exec(['HLEN', key])
+    return typeof result === 'number' ? result : 0
   }
 
   async delete(key: string, field: string): Promise<void> {

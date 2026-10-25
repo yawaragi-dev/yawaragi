@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { type RejectedRecord, upcastRecord } from '@/lib/collection/versioned-record'
+import { BOTTLE_EVENT_CODEC, type BottleEvent } from '@/lib/schemas/bottle-event'
 import { CELLAR_BOTTLE_CODEC, type CellarBottle } from '@/lib/schemas/cellar-bottle'
 import { EXPRESSION_CODEC, type Expression } from '@/lib/schemas/expression'
 import { JOURNAL_ENTRY_CODEC, type JournalEntry } from '@/lib/schemas/journal-entry'
@@ -9,7 +10,7 @@ import { JOURNAL_ENTRY_CODEC, type JournalEntry } from '@/lib/schemas/journal-en
 //
 // The document does double duty, and both jobs pull in the same direction:
 //
-// 1. GDPR Art. 20 PORTABILITY. Journal entries and cellar rows are
+// 1. GDPR Art. 20 PORTABILITY. Journal entries, cellar rows and bottle events are
 //    account-linked personal data (ADR-0009 RoPA), so the data subject must be
 //    able to receive them in a "structured, commonly used and machine-readable
 //    format" — JSON.
@@ -28,13 +29,16 @@ import { JOURNAL_ENTRY_CODEC, type JournalEntry } from '@/lib/schemas/journal-en
 // TWO VERSION NUMBERS, two jobs (ADR-0024):
 // - `formatVersion` versions this ENVELOPE. v1 was `{ entries }`; v2 is
 //   `{ journal, cellar, rejected }`; v3 adds `expressions`, the bottlings a
-//   User added themselves (ADR-0025).
+//   User added themselves (ADR-0025); v4 adds `bottleHistory`, the dated
+//   lines of what happened to their bottles (ADR-0024, "Bottle history").
+//   Older files read with an empty history: nothing was recorded then, and
+//   the first cellar action after a restore seeds it from the cellar rows.
 // - Each record carries its own `schemaVersion`. A new journal field bumps
 //   that, not this. The reader below therefore upcasts records one by one
 //   rather than validating them against today's schema, so a file written
 //   today still restores after the record shapes have moved on.
 
-export const COLLECTION_EXPORT_FORMAT_VERSION = 3 as const
+export const COLLECTION_EXPORT_FORMAT_VERSION = 4 as const
 
 const RejectedRecordSchema = z.object({
   store: z.string(),
@@ -56,6 +60,8 @@ export interface CollectionExport {
   cellar: CellarBottle[]
   /** The bottlings the User added themselves, oldest first (ADR-0025). */
   expressions: Expression[]
+  /** The bottle history, oldest first (ADR-0024, "Bottle history"). */
+  bottleHistory: BottleEvent[]
   /**
    * Records the store held but the exporting code could not read (ADR-0024
    * §2), byte for byte. Empty in the normal case; present so a backup taken
@@ -85,6 +91,11 @@ const EnvelopeV3 = EnvelopeV2.extend({
   expressions: z.array(z.unknown()),
 })
 
+const EnvelopeV4 = EnvelopeV3.extend({
+  formatVersion: z.literal(4),
+  bottleHistory: z.array(z.unknown()),
+})
+
 export type ParsedCollectionExport =
   | { ok: true; doc: CollectionExport }
   | { ok: false; reason: 'unknown_format' | 'invalid_envelope' | 'invalid_record'; detail: string }
@@ -107,20 +118,32 @@ export function parseCollectionExport(input: unknown): ParsedCollectionExport {
     journal: unknown[]
     cellar: unknown[]
     expressions: unknown[]
+    bottleHistory: unknown[]
     rejected: RejectedRecord[]
   }
   if (version === 1) {
     const v1 = EnvelopeV1.safeParse(input)
     if (!v1.success) return { ok: false, reason: 'invalid_envelope', detail: v1.error.message }
-    envelope = { ...v1.data, journal: v1.data.entries, cellar: [], expressions: [], rejected: [] }
+    envelope = {
+      ...v1.data,
+      journal: v1.data.entries,
+      cellar: [],
+      expressions: [],
+      bottleHistory: [],
+      rejected: [],
+    }
   } else if (version === 2) {
     const v2 = EnvelopeV2.safeParse(input)
     if (!v2.success) return { ok: false, reason: 'invalid_envelope', detail: v2.error.message }
-    envelope = { ...v2.data, expressions: [] }
+    envelope = { ...v2.data, expressions: [], bottleHistory: [] }
   } else if (version === 3) {
     const v3 = EnvelopeV3.safeParse(input)
     if (!v3.success) return { ok: false, reason: 'invalid_envelope', detail: v3.error.message }
-    envelope = v3.data
+    envelope = { ...v3.data, bottleHistory: [] }
+  } else if (version === 4) {
+    const v4 = EnvelopeV4.safeParse(input)
+    if (!v4.success) return { ok: false, reason: 'invalid_envelope', detail: v4.error.message }
+    envelope = v4.data
   } else {
     return { ok: false, reason: 'unknown_format', detail: `formatVersion ${String(version)}` }
   }
@@ -143,6 +166,12 @@ export function parseCollectionExport(input: unknown): ParsedCollectionExport {
     if (!result.ok) return { ok: false, reason: 'invalid_record', detail: `expressions[${i}]: ${result.reason}` }
     expressions.push(result.value)
   }
+  const bottleHistory: BottleEvent[] = []
+  for (const [i, record] of envelope.bottleHistory.entries()) {
+    const result = upcastRecord(record, BOTTLE_EVENT_CODEC)
+    if (!result.ok) return { ok: false, reason: 'invalid_record', detail: `bottleHistory[${i}]: ${result.reason}` }
+    bottleHistory.push(result.value)
+  }
 
   return {
     ok: true,
@@ -153,6 +182,7 @@ export function parseCollectionExport(input: unknown): ParsedCollectionExport {
       journal,
       cellar,
       expressions,
+      bottleHistory,
       rejected: envelope.rejected,
     },
   }

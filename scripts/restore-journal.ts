@@ -1,5 +1,6 @@
 /**
- * Maintainer utility — restore a user's collection (journal + cellar) from an
+ * Maintainer utility — restore a user's collection (journal, cellar, own
+ * bottlings, bottle history) from an
  * export or a daily backup (ADR-0024 §4).
  *
  * Usage:
@@ -28,6 +29,7 @@ import { parseMaintainerAllowlist } from '@/lib/auth/maintainer-allowlist'
 import { BACKUP_BUCKET, backupPrefix } from '@/lib/collection/backup-storage'
 import { restoreCollection } from '@/lib/collection/restore-collection'
 import { SupabaseBackupStorage } from '@/lib/collection/supabase-backup-storage'
+import { UpstashBottleHistoryStore } from '@/lib/collection/upstash-bottle-history-store'
 import { UpstashCellarStore } from '@/lib/collection/upstash-cellar-store'
 import { UpstashExpressionStore } from '@/lib/collection/upstash-expression-store'
 import { parseCollectionExport } from '@/lib/schemas/journal-export'
@@ -75,7 +77,7 @@ async function main(): Promise<number> {
 
   console.log(
     `File: ${doc.journal.length} journal entries, ${doc.cellar.length} cellar rows, ` +
-      `${doc.expressions.length} own bottlings, ` +
+      `${doc.expressions.length} own bottlings, ${doc.bottleHistory.length} bottle events, ` +
       `${doc.rejected.length} unreadable record(s), exported ${doc.exportedAt} for ${doc.userId}`,
   )
   if (argv.includes('--dry-run')) {
@@ -95,10 +97,11 @@ async function main(): Promise<number> {
     journal: new UpstashJournalStore(url, token),
     cellar: new UpstashCellarStore(url, token),
     expressions: new UpstashExpressionStore(url, token),
+    bottleHistory: new UpstashBottleHistoryStore(url, token),
   })
   console.log(
-    `Restored ${counts.journal} journal entries, ${counts.cellar} cellar rows and ` +
-      `${counts.expressions} own bottlings into ${userId}.`,
+    `Restored ${counts.journal} journal entries, ${counts.cellar} cellar rows, ` +
+      `${counts.expressions} own bottlings and ${counts.bottleHistory} bottle events into ${userId}.`,
   )
   if (counts.skippedRejected > 0) {
     console.warn(`  ! ${counts.skippedRejected} unreadable record(s) left in the file, not restored.`)

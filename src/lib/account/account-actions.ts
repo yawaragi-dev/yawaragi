@@ -4,6 +4,7 @@ import { auth, clerkClient } from '@clerk/nextjs/server'
 import { env } from '@/env'
 import { BACKUP_BUCKET } from '@/lib/collection/backup-storage'
 import { eraseCollection } from '@/lib/collection/erase-collection'
+import { getBottleHistoryStore } from '@/lib/collection/get-bottle-history-store'
 import { getCellarStore } from '@/lib/collection/get-cellar-store'
 import { getExpressionStore } from '@/lib/collection/get-expression-store'
 import { SupabaseBackupStorage } from '@/lib/collection/supabase-backup-storage'
@@ -26,18 +27,31 @@ export type ExportResult =
   | { status: 'forbidden' }
   | { status: 'unavailable' }
 
-/** The visitor's collection in the export format `pnpm journal:restore` reads (v3). */
+/** The visitor's collection in the export format `pnpm journal:restore` reads (v4). */
 export async function exportMyCollection(): Promise<ExportResult> {
   const { userId } = await auth()
   if (!userId) return { status: 'forbidden' }
   const journal = getJournalStore()
   const cellar = getCellarStore()
   const expressions = getExpressionStore()
-  if (!journal || !cellar || !expressions) return { status: 'unavailable' }
+  const bottleHistory = getBottleHistoryStore()
+  if (!journal || !cellar || !expressions || !bottleHistory) return { status: 'unavailable' }
   try {
     const exportedAt = Date.now()
-    const [j, c, x] = await Promise.all([journal.dump(userId), cellar.dump(userId), expressions.dump(userId)])
-    const doc = buildCollectionExport({ userId, journal: j, cellar: c, expressions: x, exportedAt })
+    const [j, c, x, h] = await Promise.all([
+      journal.dump(userId),
+      cellar.dump(userId),
+      expressions.dump(userId),
+      bottleHistory.dump(userId),
+    ])
+    const doc = buildCollectionExport({
+      userId,
+      journal: j,
+      cellar: c,
+      expressions: x,
+      bottleHistory: h,
+      exportedAt,
+    })
     return {
       status: 'ok',
       fileName: `yawaragi-journal-${new Date(exportedAt).toISOString().slice(0, 10)}.json`,
@@ -65,12 +79,15 @@ export async function deleteMyAccount(confirm: 'delete-permanently'): Promise<De
   const journal = getJournalStore()
   const cellar = getCellarStore()
   const expressions = getExpressionStore()
+  const bottleHistory = getBottleHistoryStore()
   const url = env.NEXT_PUBLIC_SUPABASE_URL
   const key = env.SUPABASE_SERVICE_ROLE_KEY
-  if (!journal || !cellar || !expressions || !url || !key) return { status: 'unavailable' }
+  if (!journal || !cellar || !expressions || !bottleHistory || !url || !key) {
+    return { status: 'unavailable' }
+  }
   try {
     const backups = new SupabaseBackupStorage(url, key, BACKUP_BUCKET)
-    await eraseCollection({ userId, journal, cellar, expressions, backups })
+    await eraseCollection({ userId, journal, cellar, expressions, bottleHistory, backups })
     const clerk = await clerkClient()
     await clerk.users.deleteUser(userId)
     return { status: 'ok' }

@@ -1,6 +1,12 @@
 'use server'
 
 import {
+  type BottleEventSubject,
+  type CellarActionKind,
+  eventsForCellarAction,
+  recordBottleEvents,
+} from '@/lib/collection/bottle-history'
+import {
   type CellarChange,
   type CellarSubject,
   addBottles,
@@ -8,6 +14,7 @@ import {
   bottlesOf,
   editRow,
   finishOne,
+  newCellarRow,
   openOne,
   removeOne,
 } from '@/lib/collection/cellar'
@@ -36,6 +43,10 @@ import { countUsage } from '@/lib/stats/count-usage'
  *
  * `count` in a result is how many bottles of that thing are in the cellar
  * afterwards, across sizes and open or not: what "In cellar · n" shows.
+ *
+ * After the cellar write, each action records what it did to the bottle count
+ * in the bottle history (`bottle-history.ts`). That write is best-effort: it
+ * never fails the action.
  */
 export type CellarActionResult =
   | { status: 'ok'; count: number }
@@ -84,26 +95,30 @@ export async function addToCellar(
     const rows = await readSettledCellar(collection)
     const subject = await subjectOf(parsedTarget.data, collection, rows)
     if (!subject) return { status: 'not_found' }
-    const change = addBottles(rows, subject, { sizeMl, nama }, count, Date.now())
+    const now = Date.now()
+    const change = addBottles(rows, subject, { sizeMl, nama }, count, now)
     await writeCellarChange(collection, change)
     countUsage('cellar_added')
-    return { status: 'ok', count: bottlesOf(applyCellarChange(rows, change), parsedTarget.data) }
+    const after = applyCellarChange(rows, change)
+    const added = newCellarRow(subject, { sizeMl, nama }, count, now)
+    await record(collection, 'add', rows, after, added, now)
+    return { status: 'ok', count: bottlesOf(after, parsedTarget.data) }
   })
 }
 
 /** "Open a bottle". */
 export async function openCellarBottle(rowKey: string): Promise<CellarActionResult> {
-  return onRow(rowKey, openOne)
+  return onRow(rowKey, 'open', openOne)
 }
 
 /** "Finished": the open bottle is gone. */
 export async function finishCellarBottle(rowKey: string): Promise<CellarActionResult> {
-  return onRow(rowKey, finishOne)
+  return onRow(rowKey, 'finish', finishOne)
 }
 
 /** "Remove": one sealed bottle fewer; the last one takes the row. */
 export async function removeFromCellar(rowKey: string): Promise<CellarActionResult> {
-  return onRow(rowKey, removeOne)
+  return onRow(rowKey, 'remove', removeOne)
 }
 
 /** The sheet, editing a row: a new count, size or nama. */
@@ -113,12 +128,18 @@ export async function editCellarRow(
 ): Promise<CellarActionResult> {
   const parsed = CellarSheetValuesSchema.safeParse(values)
   if (!parsed.success) return { status: 'invalid_input' }
-  return onRow(rowKey, (rows, key, now) => editRow(rows, key, parsed.data, now))
+  return onRow(rowKey, 'edit', (rows, key, now) => editRow(rows, key, parsed.data, now), {
+    sizeMl: parsed.data.sizeMl,
+    nama: parsed.data.nama,
+  })
 }
 
 async function onRow(
   rowKey: string,
+  action: Exclude<CellarActionKind, 'add'>,
   rule: (rows: readonly CellarBottle[], rowKey: string, now: number) => CellarChange,
+  /** For an edit: the size and kind the row has afterwards. */
+  edited?: Pick<CellarBottle, 'sizeMl' | 'nama'>,
 ): Promise<CellarActionResult> {
   const key = CellarRowKeySchema.safeParse(rowKey)
   if (!key.success) return { status: 'invalid_input' }
@@ -126,10 +147,25 @@ async function onRow(
     const rows = await readSettledCellar(collection)
     const row = rows.find((r) => cellarRowKey(r) === key.data)
     if (!row) return { status: 'not_found' }
-    const change = rule(rows, key.data, Date.now())
+    const now = Date.now()
+    const change = rule(rows, key.data, now)
     await writeCellarChange(collection, change)
     const after = applyCellarChange(rows, change)
+    await record(collection, action, rows, after, { ...row, ...edited }, now)
     const thing = row.expression ? { expressionId: row.expression.id } : { brandId: row.brandId! }
     return { status: 'ok', count: bottlesOf(after, thing) }
   })
+}
+
+/** The action's events into the bottle history, after the cellar write. Never throws. */
+async function record(
+  collection: MaintainerCollection,
+  action: CellarActionKind,
+  before: readonly CellarBottle[],
+  after: readonly CellarBottle[],
+  subject: BottleEventSubject,
+  now: number,
+): Promise<void> {
+  const events = eventsForCellarAction(action, before, after, subject, now, () => crypto.randomUUID())
+  await recordBottleEvents(collection, before, events)
 }

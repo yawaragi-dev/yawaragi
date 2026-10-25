@@ -5,14 +5,15 @@ import {
   backupPrefix,
   backupsToPrune,
 } from '@/lib/collection/backup-storage'
+import type { BottleHistoryStore } from '@/lib/collection/bottle-history-store'
 import type { CellarStore } from '@/lib/collection/cellar-store'
 import type { ExpressionStore } from '@/lib/collection/expression-store'
 import type { JournalStore } from '@/lib/taste/journal-store'
 import { buildCollectionExport } from '@/lib/taste/journal-export'
 
 /**
- * The daily backup (ADR-0024 §4): for each user, dump the journal, the cellar
- * and their own bottlings, write them as one export file, then prune that user's backups to
+ * The daily backup (ADR-0024 §4): for each user, dump the journal, the cellar,
+ * their own bottlings and the bottle history, write them as one export file, then prune that user's backups to
  * the newest {@link BACKUPS_KEPT}.
  *
  * Pure over injected stores, storage and clock, so the job's contract —
@@ -32,6 +33,7 @@ export interface BackupUserResult {
   journal?: number
   cellar?: number
   expressions?: number
+  bottleHistory?: number
   /** Records exported raw because the running code could not read them. */
   rejected?: number
   /** Older backups deleted by retention. */
@@ -45,22 +47,25 @@ export async function runCollectionBackup(args: {
   journal: JournalStore
   cellar: CellarStore
   expressions: ExpressionStore
+  bottleHistory: BottleHistoryStore
   storage: BackupStorage
   now: number
 }): Promise<BackupUserResult[]> {
   const results: BackupUserResult[] = []
   for (const userId of args.userIds) {
     try {
-      const [journal, cellar, expressions] = await Promise.all([
+      const [journal, cellar, expressions, bottleHistory] = await Promise.all([
         args.journal.dump(userId),
         args.cellar.dump(userId),
         args.expressions.dump(userId),
+        args.bottleHistory.dump(userId),
       ])
       const doc = buildCollectionExport({
         userId,
         journal,
         cellar,
         expressions,
+        bottleHistory,
         exportedAt: args.now,
       })
       const path = backupPath(userId, backupFileName(args.now))
@@ -77,6 +82,7 @@ export async function runCollectionBackup(args: {
         journal: doc.journal.length,
         cellar: doc.cellar.length,
         expressions: doc.expressions.length,
+        bottleHistory: doc.bottleHistory.length,
         rejected: doc.rejected.length,
         pruned: stale.length,
       })

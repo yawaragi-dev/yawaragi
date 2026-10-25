@@ -1,3 +1,4 @@
+import type { BottleHistoryStore } from '@/lib/collection/bottle-history-store'
 import type { CellarStore } from '@/lib/collection/cellar-store'
 import type { ExpressionStore } from '@/lib/collection/expression-store'
 import type { CollectionExport } from '@/lib/schemas/journal-export'
@@ -28,16 +29,27 @@ export async function restoreCollection(args: {
   journal: JournalStore
   cellar: CellarStore
   expressions: ExpressionStore
-}): Promise<{ journal: number; cellar: number; expressions: number; skippedRejected: number }> {
+  bottleHistory: BottleHistoryStore
+}): Promise<{
+  journal: number
+  cellar: number
+  expressions: number
+  bottleHistory: number
+  skippedRejected: number
+}> {
   // Bottlings first: a tasting or a cellar row may point at one, and a restore
   // that dies halfway should not leave a pointer to a bottling not yet written.
   for (const expression of args.doc.expressions) await args.expressions.put(args.userId, expression)
   for (const entry of args.doc.journal) await args.journal.put(args.userId, entry)
   for (const bottle of args.doc.cellar) await args.cellar.put(args.userId, bottle)
+  // Events are keyed by id, so writing them again is a no-op; a history the
+  // store gained since the backup keeps its newer events beside these.
+  await args.bottleHistory.append(args.userId, args.doc.bottleHistory)
   return {
     journal: args.doc.journal.length,
     cellar: args.doc.cellar.length,
     expressions: args.doc.expressions.length,
+    bottleHistory: args.doc.bottleHistory.length,
     skippedRejected: args.doc.rejected.length,
   }
 }
