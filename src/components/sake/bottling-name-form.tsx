@@ -340,9 +340,22 @@ export function BottlingNameForm({
                   </select>
                 </div>
                 <div className="flex min-w-0 flex-col gap-1.5">
-                  <label htmlFor={kojiId} className="text-section-label uppercase text-ash-600">
-                    {t('kojiLabel')}
-                  </label>
+                  <span className="flex items-center gap-1.5">
+                    <label htmlFor={kojiId} className="text-section-label uppercase text-ash-600">
+                      {t('kojiLabel')}
+                    </label>
+                    {/* V3: ⓘ opens Learn's koji entry, in a new tab like Pasteurisation's. */}
+                    <Link
+                      href={{ pathname: '/learn/[slug]', params: { slug: 'koji' } }}
+                      target="_blank"
+                      rel="noopener"
+                      aria-label={t('kojiInfo')}
+                      className="inline-flex size-5 items-center justify-center rounded-full text-ash-600 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+                      data-testid={`${testId}-koji-info`}
+                    >
+                      <Info size={15} aria-hidden="true" />
+                    </Link>
+                  </span>
                   <select
                     id={kojiId}
                     value={koji}

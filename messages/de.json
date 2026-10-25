@@ -1311,6 +1311,7 @@
     },
     "pasteurisationUsual": "Zweimal pasteurisiert (üblich)",
     "pasteurisationInfo": "Über Pasteurisierung und Nama",
+    "kojiInfo": "Über Koji",
     "styleTickAny": "Stil · alles Zutreffende",
     "moreDetails": "Starter, Koji, weitere Stilwörter",
     "styleOtherLabel": "Weitere Stilwörter",
@@ -1602,6 +1603,37 @@
           "p3": "Die langsameren Verfahren ergeben meist einen volleren Körper und einen vielschichtigeren Geschmack; Sokujō ist meist leichter und feiner. Der Starter hat mit der Qualitätsstufe nichts zu tun: Ein Junmai Ginjō kann ein Kimoto sein."
         }
       },
+      "koji": {
+        "title": "Koji: der Schimmelpilz hinter dem Sake",
+        "answer": "Koji ist gedämpfter Reis, auf dem ein Schimmelpilz gewachsen ist; seine Enzyme verwandeln die Stärke des Reises in Zucker. Sake wird mit gelbem Koji gemacht; weißer und schwarzer Koji, die Koji von Shochu und Awamori, bilden viel mehr Zitronensäure.",
+        "factsTitle": "Koji und seine drei Arten",
+        "facts": {
+          "kojiRice": {
+            "term": "Reis-Koji",
+            "value": "Gedämpfter Reis und Koji-Pilz",
+            "note": "Sporen werden auf gedämpften Reis gestreut; nach etwa zwei Tagen hat der Pilz ihn überwachsen, und seine Enzyme reichern sich in den Körnern an."
+          },
+          "yellow": {
+            "term": "Gelber Koji",
+            "value": "Aspergillus oryzae",
+            "note": "Der Koji des Sake, auch von Miso und Sojasauce. Er bildet wenig Zitronensäure."
+          },
+          "white": {
+            "term": "Weißer Koji",
+            "value": "A. luchuensis mut. kawachii",
+            "note": "Eine weiße Mutante des schwarzen Koji, 1918 in Kagoshima isoliert. Der wichtigste Koji für Shochu, reich an Zitronensäure."
+          },
+          "black": {
+            "term": "Schwarzer Koji",
+            "value": "Aspergillus luchuensis",
+            "note": "Der Koji des Awamori. Er bildet mehr Zitronensäure als andere Koji, was der Maische hilft, im heißen, feuchten Klima sauber zu gären."
+          }
+        },
+        "detail": {
+          "p1": "Koji ist neben Reis und Wasser eine der Grundzutaten von Sake. In der Maische lösen seine Enzyme den gedämpften Reis, während die Hefe den Zucker vergärt, beides zugleich in einem Tank.",
+          "p2": "Sake enthält meist wenig Zitronensäure. Teilweise mit schwarzem Koji zu brauen ist ein Weg, sie zu erhöhen, und auch weißer Koji wird für Sake verwendet, für eine frische, zitrusartige Säure."
+        }
+      },
       "nama": {
         "title": "Nama: unpasteurisierter Sake",
         "answer": "Sake wird üblicherweise zweimal pasteurisiert, vor der Lagerung und bei der Abfüllung. Nama-Sake lässt einen oder beide Schritte aus. Das hält ihn frisch im Geschmack, und er muss kalt bleiben.",
@@ -1630,7 +1662,8 @@
         },
         "detail": {
           "p1": "Beim Pasteurisieren wird Sake auf etwa 60–65 °C erhitzt. Das tötet Mikroben ab und stoppt die Enzyme, die den Sake sonst in der Flasche weiter verändern würden.",
-          "p2": "Weil seine Enzyme noch aktiv sind, schmeckt Namazake frisch und lebendig und hält sich nur im Kühlschrank."
+          "p2": "Weil seine Enzyme noch aktiv sind, schmeckt Namazake frisch und lebendig und hält sich nur im Kühlschrank.",
+          "p3": "Nama-chozō und Nama-zume werden je einmal erhitzt und liegen damit zwischen Namazake und gewöhnlichem Sake. Nama-chozō lagert kalt und unerhitzt in der Brauerei und wird erst bei der Abfüllung pasteurisiert; Nama-zume wird vor der Lagerung pasteurisiert und ohne zweite Erhitzung abgefüllt. Nur Namazake wird nie erhitzt."
         }
       },
       "muroka": {
