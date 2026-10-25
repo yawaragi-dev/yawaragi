@@ -29,6 +29,12 @@ export class InMemoryBottleHistoryStore implements BottleHistoryStore {
     for (const event of events) this.putRaw(userId, event.id, JSON.stringify(event))
   }
 
+  async rewrite(userId: string, change: { put: readonly BottleEvent[]; drop: readonly string[] }): Promise<void> {
+    if (this.failWrites) throw new Error('history unreachable')
+    await this.append(userId, change.put)
+    for (const id of change.drop) this.hashes.get(userId)?.delete(id)
+  }
+
   async clear(userId: string): Promise<void> {
     this.hashes.delete(userId)
   }
