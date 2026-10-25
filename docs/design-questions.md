@@ -503,3 +503,19 @@ The maintainer wants two things: to keep track of the bottles a visitor has owne
 4. **The gap insight** ("nothing from Niigata"): is pointing at what someone has not tried welcome, or does it read as a nudge to buy? If welcome, should it link to Search filtered to that prefecture, or to the region's Learn entry?
 5. **Wording** for an insight on thin ground ("so far", "in your first 12 tastings")?
 6. **The bottle history in the cellar:** should finished bottles be visible anywhere ("Finished · 14 bottles" under the cellar), or only counted?
+
+---
+
+# Round six (2026-10-25)
+
+## AC. The privacy notice, and what About says about it
+
+v1.10's About (AA5, 137) says under "Reading labels" that the service that reads the photo is "named in the privacy notice, not here". The built page leaves that sentence out, because the privacy notice live today does not name it: it lists Vercel, Supabase and Upstash, and nothing for the label reading, sign-in or tracing. A fuller notice, which names every processor including the AI service, is drafted (#494) and waits on a legal review and the Impressum details. Until it is published, About cannot point at it truthfully.
+
+The notice and the Impressum are also the two screens the design has never drawn: today they are plain pre-Ginshu text pages reached from the end-of-screen block.
+
+**Questions:**
+1. **Until the full notice is out:** should About name the service itself ("Labels are read by Claude, an AI model by Anthropic"), or keep the pointer and show nothing until the notice names it? Naming it on About means the page has to change when the service does, which AA5 wanted to avoid.
+2. **Once it is out:** does About's line link to the notice's section on processors, or to the notice's top?
+3. **The notice and the Impressum as screens:** can they be drawn in Ginshu? They are long legal text with a list of processors (name, what they do, where the data is, link), the retention per kind of data, the visitor's rights with how to use each one in the app (export, delete account), and the contact. Headings, a table or a list for the processors, and how a section is linked to from elsewhere (About, the cookie banner, the feedback sheet's email line).
+4. **"Last updated":** at the top, and does a change to the notice tell a signed-in visitor anything (a line on Home or Account), or is the date enough?
