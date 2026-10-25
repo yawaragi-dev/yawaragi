@@ -3,8 +3,10 @@ import { env } from '@/env'
 import { parseMaintainerAllowlist } from '@/lib/auth/maintainer-allowlist'
 import { authorizeCronRequest } from '@/lib/cron/authorize'
 import { BACKUP_BUCKET, type BackupStorage } from '@/lib/collection/backup-storage'
+import type { BottleHistoryStore } from '@/lib/collection/bottle-history-store'
 import type { CellarStore } from '@/lib/collection/cellar-store'
 import type { ExpressionStore } from '@/lib/collection/expression-store'
+import { getBottleHistoryStore } from '@/lib/collection/get-bottle-history-store'
 import { getCellarStore } from '@/lib/collection/get-cellar-store'
 import { getExpressionStore } from '@/lib/collection/get-expression-store'
 import { type BackupUserResult, runCollectionBackup } from '@/lib/collection/run-collection-backup'
@@ -14,7 +16,7 @@ import type { JournalStore } from '@/lib/taste/journal-store'
 
 /**
  * `/api/cron/backup-collection` — the daily backup of every maintainer's
- * journal and cellar to a private Supabase Storage bucket (ADR-0024 §4).
+ * collection (journal, cellar, own bottlings, bottle history) to a private Supabase Storage bucket (ADR-0024 §4).
  *
  * Same shape as `/api/cron/ingest`: Vercel Cron calls `GET`, manual runs use
  * `POST`, both the same handler; `Authorization: Bearer <CRON_SECRET>` checked
@@ -40,6 +42,7 @@ export interface BackupRouteDeps {
     journal: JournalStore
     cellar: CellarStore
     expressions: ExpressionStore
+    bottleHistory: BottleHistoryStore
     storage: BackupStorage
   } | null
   now: () => number
@@ -85,10 +88,17 @@ export function createProductionDeps(): BackupRouteDeps {
       const journal = getJournalStore()
       const cellar = getCellarStore()
       const expressions = getExpressionStore()
+      const bottleHistory = getBottleHistoryStore()
       const url = env.NEXT_PUBLIC_SUPABASE_URL
       const key = env.SUPABASE_SERVICE_ROLE_KEY
-      if (!journal || !cellar || !expressions || !url || !key) return null
-      return { journal, cellar, expressions, storage: new SupabaseBackupStorage(url, key, BACKUP_BUCKET) }
+      if (!journal || !cellar || !expressions || !bottleHistory || !url || !key) return null
+      return {
+        journal,
+        cellar,
+        expressions,
+        bottleHistory,
+        storage: new SupabaseBackupStorage(url, key, BACKUP_BUCKET),
+      }
     },
     now: () => Date.now(),
   }

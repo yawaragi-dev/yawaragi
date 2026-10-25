@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { newCellarRow } from '@/lib/collection/cellar'
 import type { BackupStorage } from '@/lib/collection/backup-storage'
+import { InMemoryBottleHistoryStore } from '@/lib/collection/in-memory-bottle-history-store'
 import { InMemoryCellarStore } from '@/lib/collection/in-memory-cellar-store'
 import { InMemoryExpressionStore } from '@/lib/collection/in-memory-expression-store'
 import { runCollectionBackup } from '@/lib/collection/run-collection-backup'
@@ -45,6 +46,20 @@ async function stores() {
   const journal = new InMemoryJournalStore()
   const cellar = new InMemoryCellarStore()
   const expressions = new InMemoryExpressionStore()
+  const bottleHistory = new InMemoryBottleHistoryStore()
+  await bottleHistory.append('user_a', [
+    {
+      schemaVersion: 1,
+      id: 'ev1',
+      at: 1,
+      kind: 'added',
+      count: 1,
+      thing: { brandId: 7 },
+      sake: { nameKanji: '而今', nameRomaji: null },
+      sizeMl: 720,
+      nama: false,
+    },
+  ])
   await expressions.put('user_a', {
     schemaVersion: 1,
     id: 'x1',
@@ -58,7 +73,7 @@ async function stores() {
   await journal.put('user_a', entry('e1'))
   journal.putRaw('user_a', 'broken', '{nope')
   await cellar.put('user_a', newCellarRow({ brandId: 7, nameKanji: '而今', nameRomaji: null }, { sizeMl: 720, nama: false }, 1, 1))
-  return { journal, cellar, expressions }
+  return { journal, cellar, expressions, bottleHistory }
 }
 
 describe('the daily backup', () => {
@@ -79,6 +94,7 @@ describe('the daily backup', () => {
         journal: 1,
         cellar: 1,
         expressions: 1,
+        bottleHistory: 1,
         rejected: 1,
         pruned: 0,
       },
@@ -86,6 +102,7 @@ describe('the daily backup', () => {
     const parsed = parseCollectionExport(JSON.parse(storage.files.get('user_a/2026-10-05T03-30-00Z.json')!))
     expect(parsed.ok && parsed.doc.journal.map((e) => e.id)).toEqual(['e1'])
     expect(parsed.ok && parsed.doc.expressions.map((e) => e.name)).toEqual(['富久千代'])
+    expect(parsed.ok && parsed.doc.bottleHistory.map((e) => e.id)).toEqual(['ev1'])
     expect(parsed.ok && parsed.doc.rejected.map((r) => r.raw)).toEqual(['{nope'])
   })
 

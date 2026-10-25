@@ -14,6 +14,7 @@
  */
 import { BACKUP_BUCKET, backupPrefix } from '@/lib/collection/backup-storage'
 import { SupabaseBackupStorage } from '@/lib/collection/supabase-backup-storage'
+import { UpstashBottleHistoryStore } from '@/lib/collection/upstash-bottle-history-store'
 import { UpstashCellarStore } from '@/lib/collection/upstash-cellar-store'
 import { UpstashExpressionStore } from '@/lib/collection/upstash-expression-store'
 import { UpstashJournalStore } from '@/lib/taste/upstash-journal-store'
@@ -102,17 +103,19 @@ async function main(): Promise<number> {
   const journal = new UpstashJournalStore(url, token)
   const cellar = new UpstashCellarStore(url, token)
   const expressions = new UpstashExpressionStore(url, token)
+  const bottleHistory = new UpstashBottleHistoryStore(url, token)
   const storage = new SupabaseBackupStorage(sbUrl, sbKey, BACKUP_BUCKET)
   for (const user of inactive) {
-    const [j, c, x, backups] = await Promise.all([
+    const [j, c, x, h, backups] = await Promise.all([
       journal.dump(user.id),
       cellar.dump(user.id),
       expressions.dump(user.id),
+      bottleHistory.size(user.id),
       storage.list(backupPrefix(user.id)),
     ])
     const since = new Date(lastActivity(user)).toISOString().slice(0, 10)
     console.log(
-      `  ${user.id}  last seen ${since}  journal ${j.records.length}, cellar ${c.records.length}, bottlings ${x.records.length}, backups ${backups.length}`,
+      `  ${user.id}  last seen ${since}  journal ${j.records.length}, cellar ${c.records.length}, bottlings ${x.records.length}, bottle events ${h}, backups ${backups.length}`,
     )
   }
   console.log('Nothing erased. Per account: pnpm journal:erase -- --user <id> --yes, then delete the user in Clerk.')
