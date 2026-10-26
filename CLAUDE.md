@@ -35,6 +35,7 @@ Naming history: previously "Kanpai"; renamed to avoid collision with KANPAI Lond
 - `pnpm test:watch` — Vitest watch
 - `pnpm test:integration` — Vitest integration suite via testcontainers + Postgres. **Requires Docker** on the local machine. CI runs it automatically; locals without Docker rely on CI.
 - `pnpm test:e2e` — Playwright
+- `pnpm test:smoke` — Playwright smoke against a production build (`pnpm build` first; serves it with `next start` on :3014): key routes answer under 500 with a real heading. Catches what the dev server hides (#518's static-route 500). CI runs it in the verify job.
 - `pnpm lint` — ESLint
 - `pnpm typecheck` — tsc --noEmit
 - `pnpm migrate` — apply pending SQL files in `supabase/migrations/` to `MIGRATE_DATABASE_URL` (the Supabase Session pooler string, in `.env.local`; deliberately not `DATABASE_URL`, which is the Transaction pooler on Vercel — no fallback)

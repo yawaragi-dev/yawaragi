@@ -137,4 +137,14 @@ jobs:
       - name: Register system Chrome with Playwright
         run: pnpm exec playwright install chrome
 
+      # Production smoke (#518): `next start` on the build above, then a few
+      # key routes (e2e/smoke-prod.spec.ts). The dev-server suite below renders
+      # everything dynamically, so a route that only breaks once Next treats
+      # it as static (every /learn/<slug> answered 500 in production) passes
+      # it. Reuses this job's build; playwright.smoke.config.ts supplies dummy
+      # rate-limit values for the production boot gate and never sets
+      # RATE_LIMIT_BYPASS.
+      - name: Production smoke (next start)
+        run: pnpm test:smoke
+
       - run: pnpm exec playwright test --grep-invert shibuya
