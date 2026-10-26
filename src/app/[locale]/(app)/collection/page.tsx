@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
-import { auth } from '@clerk/nextjs/server'
+import { resolveViewer } from '@/lib/collection/viewer'
 import { hasLocale } from 'next-intl'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { notFound } from 'next/navigation'
@@ -10,37 +10,23 @@ import { CellarList } from '@/components/collection/cellar-list'
 import { type JournalChip, JournalFilters, JournalSearchToggle } from '@/components/collection/journal-filters'
 import { JournalList } from '@/components/collection/journal-list'
 import { TabPlaceholder } from '@/components/layout/tab-placeholder'
-import { readSampleJournal, wantsSampleCollection } from '@/lib/demo/sample-mode'
 import { TabHeader } from '@/components/layout/screen-header'
-import { currentUserIsMaintainer } from '@/lib/auth/maintainer'
 import { isLaunched } from '@/i18n/launch-state'
 import { routing } from '@/i18n/routing'
 import { RememberCollectionSegment } from '@/components/collection/remember-collection-segment'
 import { SaveOfflineCopy } from '@/components/offline/save-offline-copy'
 import { toOfflineCopy } from '@/lib/offline/collection-copy'
-import { getCellarStore } from '@/lib/collection/get-cellar-store'
-import { getExpressionStore } from '@/lib/collection/get-expression-store'
-import { getBottleHistoryStore } from '@/lib/collection/get-bottle-history-store'
 import { bottlesHad } from '@/lib/collection/bottles-had'
-import type { BottleEvent } from '@/lib/schemas/bottle-event'
 import { BottlesHadRow } from '@/components/collection/bottles-had'
 import { lookupJournalFacts } from '@/lib/collection/journal-facts'
 import { type EntryFacts, JOURNAL_FILTERS_FROM, filterJournal, journalFacetsUnder, parseJournalFilter } from '@/lib/collection/journal-filter'
-import type { Expression } from '@/lib/schemas/expression'
 import {
   COLLECTION_SEGMENT_COOKIE,
   type CollectionSegment,
   parseCollectionSegment,
   pickCollectionSegment,
 } from '@/lib/collection/segment'
-import type { CellarBottle } from '@/lib/schemas/cellar-bottle'
 import type { JournalEntry } from '@/lib/schemas/journal-entry'
-import { getJournalStore } from '@/lib/taste/get-journal-store'
-import { STUB_JOURNAL_NOW, resolveBottleHistoryStub, resolveCellarStub, resolveJournalStub } from '@/lib/taste/journal-stub'
-import {
-  type MaintainerJournalState,
-  resolveMaintainerJournal,
-} from '@/lib/taste/resolve-maintainer-journal'
 
 /**
  * §11 Collection — the Journal and Cellar segments. Reference screenshots 19, 20.
@@ -76,77 +62,6 @@ interface PageProps {
 
 /** §11's segments that have something behind them. Wishlist is not built. */
 type Segment = CollectionSegment
-
-type CookieJar = Awaited<ReturnType<typeof cookies>>
-
-/**
- * Decide the maintainer branch. Kept out of the component body so the impure
- * `Date.now()` read isn't in the render path — the non-prod
- * `yawaragi_journal_stub` seam also stands in for the maintainer check + store
- * so the E2E needs no Clerk session and no Upstash.
- */
-async function resolveJournalView(cookieJar: CookieJar): Promise<{
-  isMaintainer: boolean
-  /** The sample collection, which nothing on this screen may change. */
-  readOnly: boolean
-  journal: MaintainerJournalState | null
-  cellar: readonly CellarBottle[]
-  /** The bottlings the visitor added, for the journal's grade, style and koji filters. */
-  expressions: readonly Expression[]
-  /** The bottle history, for "Bottles you've had" under the cellar (AB6). */
-  history: readonly BottleEvent[]
-  /** The instant the cellar's "open N days" is measured against. */
-  now: number
-  /** Who the offline copy is saved for; absent when nothing may be saved (the sample). */
-  copyOwner?: string | null
-}> {
-  const journalStub =
-    process.env.NODE_ENV !== 'production'
-      ? cookieJar.get('yawaragi_journal_stub')?.value
-      : undefined
-  if (journalStub != null) {
-    return {
-      isMaintainer: true,
-      readOnly: false,
-      journal: resolveJournalStub(journalStub),
-      cellar: resolveCellarStub(journalStub),
-      expressions: [],
-      history: resolveBottleHistoryStub(journalStub),
-      now: STUB_JOURNAL_NOW,
-      copyOwner: null,
-    }
-  }
-  const now = Date.now()
-  if (!(await currentUserIsMaintainer())) {
-    if (wantsSampleCollection(cookieJar)) {
-      const sample = await readSampleJournal(now)
-      return {
-        isMaintainer: true,
-        readOnly: true,
-        journal: sample.journal,
-        cellar: sample.cellar,
-        expressions: sample.expressions,
-        history: sample.history,
-        now,
-      }
-    }
-    return { isMaintainer: false, readOnly: false, journal: null, cellar: [], expressions: [], history: [], now }
-  }
-  const { userId } = await auth()
-  const cellarStore = getCellarStore()
-  const expressionStore = getExpressionStore()
-  const historyStore = getBottleHistoryStore()
-  const [journal, cellar, expressions, history] = await Promise.all([
-    resolveMaintainerJournal({ store: getJournalStore(), userId, now }),
-    userId && cellarStore ? cellarStore.read(userId) : Promise.resolve([]),
-    // Only for the filters: a store that fails leaves them without grades,
-    // never the journal without its list.
-    userId && expressionStore ? expressionStore.read(userId).catch(() => []) : Promise.resolve([]),
-    // Only for "Bottles you've had": a store that fails hides the row, never the cellar.
-    userId && historyStore ? historyStore.read(userId).catch(() => []) : Promise.resolve([]),
-  ])
-  return { isMaintainer: true, readOnly: false, journal, cellar, expressions, history, now, copyOwner: userId }
-}
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { locale } = await params
@@ -189,9 +104,9 @@ export default async function CollectionTabPage({ params, searchParams }: PagePr
   // The segment a link names, else the one this visitor was last on, else
   // Journal (design v1.5, #369).
   const segment: Segment = pickCollectionSegment(tabParam, cookieJar.get(COLLECTION_SEGMENT_COOKIE)?.value)
-  const view = await resolveJournalView(cookieJar)
+  const viewer = await resolveViewer(cookieJar)
 
-  if (!view.isMaintainer || !view.journal) {
+  if (viewer.kind === 'none') {
     // Still scaffolding, still honest: ADR-0020 keeps the journal
     // maintainer-only, so there is nothing of the visitor's to list yet.
     const tPlaceholder = await getTranslations({ locale, namespace: 'tabPlaceholder.collection' })
@@ -217,17 +132,17 @@ export default async function CollectionTabPage({ params, searchParams }: PagePr
   }
 
   const t = await getTranslations('collection')
-  const journal = view.journal
+  const { journal, cellar, expressions, history } = await viewer.read('journal', 'cellar', 'expressions', 'history')
   // Design question Z: the read-only copy for when Collection cannot load.
   // One catalogue lookup for the journal, shared by its filters and the copy.
-  const factsOf = journal.kind === 'journal' ? await lookupJournalFacts(journal.entries, view.expressions) : null
+  const factsOf = journal.kind === 'journal' ? await lookupJournalFacts(journal.entries, expressions) : null
   const offlineCopy =
-    view.copyOwner !== undefined && journal.kind !== 'unavailable'
+    viewer.copyOwner !== undefined && journal.kind !== 'unavailable'
       ? toOfflineCopy(
           journal.kind === 'journal' ? journal.entries : [],
-          view.cellar,
-          view.copyOwner,
-          view.now,
+          cellar,
+          viewer.copyOwner,
+          viewer.now,
           (entry) => {
             const brewery = factsOf?.(entry).brewery
             return brewery ? (brewery.nameRomaji ?? brewery.nameKanji) : null
@@ -293,9 +208,9 @@ export default async function CollectionTabPage({ params, searchParams }: PagePr
         </section>
       ) : segment === 'cellar' ? (
         <>
-          <CellarList rows={view.cellar} now={view.now} readOnly={view.readOnly} />
+          <CellarList rows={cellar} now={viewer.now} readOnly={viewer.readOnly} />
           {/* v1.10 AB6: last under the cellar rows, once a bottle has left it. */}
-          {bottlesHad(view.history).length > 0 && <BottlesHadRow />}
+          {bottlesHad(history ?? []).length > 0 && <BottlesHadRow />}
           {/* ADR-0014: the Sakenowa credit is line 1 of the end-of-screen
               block, rendered by the app shell directly under this list. */}
         </>

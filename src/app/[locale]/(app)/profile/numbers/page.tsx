@@ -11,7 +11,7 @@ import { routing } from '@/i18n/routing'
 import { lookupBottleFacts, lookupJournalFacts } from '@/lib/collection/journal-facts'
 import { journalNumbers } from '@/lib/collection/journal-stats'
 import { bottlesKept, whatStandsOut } from '@/lib/collection/what-stands-out'
-import { resolveViewerJournal } from '@/lib/taste/resolve-viewer-journal'
+import { resolveViewer } from '@/lib/collection/viewer'
 
 /**
  * "Your sake in numbers" (design v1.9, X; 123, 124 — renamed in v1.10, AB1;
@@ -38,8 +38,11 @@ export default async function JournalNumbersPage({ params }: { params: Promise<{
   const palate = getPathname({ locale, href: '/profile' })
   if (!isLaunched(locale)) redirect(palate)
 
-  const journal = await resolveViewerJournal(await cookies())
-  if (!journal) redirect(palate)
+  const viewer = await resolveViewer(await cookies())
+  const { journal: read, expressions, history: events } = await viewer.read('journal', 'expressions', 'history')
+  if (read.kind !== 'journal') redirect(palate)
+  // A history that could not be read leaves the numbers without the kept bottles.
+  const journal = { ...read, expressions, history: events ?? [] }
   const [factsOf, bottleFactsOf] = await Promise.all([
     lookupJournalFacts(journal.entries, journal.expressions),
     lookupBottleFacts(journal.history, journal.expressions),

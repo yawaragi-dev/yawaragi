@@ -10,7 +10,7 @@ import { hasLocale } from 'next-intl'
 import { routing } from '@/i18n/routing'
 import { notFound } from 'next/navigation'
 import { auth } from '@clerk/nextjs/server'
-import { resolveViewerJournal } from '@/lib/taste/viewer-journal'
+import { resolveViewer } from '@/lib/collection/viewer'
 
 /**
  * Scan entry route — `/[locale]/scan`.
@@ -67,7 +67,7 @@ export default async function ScanEntryPage({ params }: PageProps) {
   // form skips the panel + per-step accumulation when it's false.
   const debugMode = await isDebugEnabled(cookieJar)
   // ADR-0020: only a visitor who can keep a journal gets §5's log panel.
-  const { canLog } = await resolveViewerJournal(cookieJar)
+  const { canLog } = await resolveViewer(cookieJar)
   const signedIn = canLog || (await auth()).userId != null
 
   // §4 gives the Scan tab a viewfinder, so the screen has no heading and no

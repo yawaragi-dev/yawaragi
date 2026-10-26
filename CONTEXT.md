@@ -85,6 +85,10 @@ _Avoid_: Revision (implies edit history), Migration version (that is the SQL mig
 The user-facing container for everything a *User* has accumulated, and the third tab. Three segments: **TastingJournal** (what you drank), **Cellar** (what you own), **Wishlist** (what you want). A grouping in the UI only — there is no Collection record; each segment is its own store. Introduced by design v1.4 §11.
 _Avoid_: Library, My sakes, Shelf (that reads as the Cellar), Inventory (commercial)
 
+**Viewer**:
+Whoever a Collection screen is drawn for, decided once per request by `resolveViewer()` (`src/lib/collection/viewer.ts`): **own** (an allowlisted maintainer, ADR-0020), **sample** (a visitor without an account looking through the sample collection, read-only), **stub** (the non-production E2E cookie standing in for the maintainer) or **none**. Every screen that lists or writes the Collection asks it, rather than deciding the four cases itself.
+_Avoid_: User (a Viewer may have no account), Visitor (that is anyone at all)
+
 **Cellar**:
 The Sakes a *User* physically **owns**, with a count per Sake and an optional `openedAt`. Distinct from the **TastingJournal**, which records what they *drank* — you can own a bottle you have never tasted, and you will have tasted many you never owned. A Cellar row tracks freshness: unopened keeps indefinitely, open is dated, and a bottle past the threshold (10 days, or 5 for *nama*) is surfaced as "drink soon". "Bought it" moves a **Wishlist** row here; "Pour & rate" creates a **JournalEntry**; "Finished" decrements or removes. Thresholds are an open decision in the design handoff.
 _Avoid_: Inventory, Stock, Shelf, Storage, TastingJournal (that's tastings, not bottles)

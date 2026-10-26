@@ -9,7 +9,7 @@ import { PalateAxisRows, type PalateAxisStrings } from '@/components/palate/pala
 import { PalateConfidence } from '@/components/palate/palate-confidence'
 import { PalateProgress } from '@/components/palate/palate-progress'
 import { JournalNumbersRow } from '@/components/palate/journal-numbers'
-import { resolveViewerJournal } from '@/lib/taste/resolve-viewer-journal'
+import { resolveViewer } from '@/lib/collection/viewer'
 import { lookupJournalFacts } from '@/lib/collection/journal-facts'
 import { JOURNAL_NUMBERS_FROM, journalNumbers } from '@/lib/collection/journal-stats'
 import type { Expression } from '@/lib/schemas/expression'
@@ -128,14 +128,15 @@ const tp = (
 async function resolveJournalTasteProfile(
   cookieJar: CookieJar,
 ): Promise<JournalTasteProfile | null> {
-  const journal = await resolveViewerJournal(cookieJar)
-  if (!journal) return null
+  const viewer = await resolveViewer(cookieJar)
+  const { journal, expressions } = await viewer.read('journal', 'expressions')
+  if (journal.kind !== 'journal') return null
   return {
     kind: 'profile',
     profile: journal.profile,
     events: journalEntriesToTasteEvents(journal.entries),
     entries: journal.entries,
-    expressions: journal.expressions,
+    expressions,
   }
 }
 
