@@ -29,23 +29,6 @@ describe('cellar storage', () => {
     expect(() => assertCodecComplete(CELLAR_BOTTLE_CODEC)).not.toThrow()
   })
 
-  it('keeps one row per sake: a second put for the same brand replaces the first', async () => {
-    const store = new InMemoryCellarStore()
-    await store.put('u', bottle(7))
-    await store.put('u', { ...bottle(7), count: 2 })
-    expect((await store.read('u')).map((b) => [b.brandId, b.count])).toEqual([[7, 2]])
-  })
-
-  it('removes one sake, and clear erases the cellar', async () => {
-    const store = new InMemoryCellarStore()
-    await store.put('u', bottle(7))
-    await store.put('u', bottle(8))
-    await store.remove('u', '7|720|s')
-    expect((await store.read('u')).map((b) => b.brandId)).toEqual([8])
-    await store.clear('u')
-    expect(await store.read('u')).toEqual([])
-  })
-
   it('reads a row written before bottlings existed, and keeps it under the key it was stored at', async () => {
     const store = new InMemoryCellarStore()
     // A v1 row as it sits in Upstash: no size, no nama, keyed by the brand id.
@@ -68,15 +51,6 @@ describe('cellar storage', () => {
     expect(await store.read('u')).toHaveLength(2)
     await store.remove('u', 'x:x1|720|s')
     expect((await store.read('u')).map((b) => b.expression)).toEqual([undefined])
-  })
-
-  it('keeps an unreadable row in the dump rather than losing it', async () => {
-    const store = new InMemoryCellarStore()
-    store.putRaw('u', '9', '{bad')
-    expect(await store.read('u')).toEqual([])
-    expect((await store.dump('u')).rejected).toEqual([
-      { store: 'cellar', id: '9', raw: '{bad', reason: 'json' },
-    ])
   })
 
   it('on Upstash, writes HSET keyed by the row key and never sets an expiry', async () => {

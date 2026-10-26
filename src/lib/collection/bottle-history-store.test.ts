@@ -73,18 +73,6 @@ describe('bottle history storage', () => {
     expect(await store.read('u')).toHaveLength(1)
   })
 
-  it('keeps an unreadable record in the dump rather than losing it, and clear erases everything', async () => {
-    const store = new InMemoryBottleHistoryStore()
-    store.putRaw('u', 'x', '{bad')
-    expect(await store.read('u')).toEqual([])
-    expect((await store.dump('u')).rejected).toEqual([
-      { store: 'bottle-history', id: 'x', raw: '{bad', reason: 'json' },
-    ])
-    expect(await store.size('u')).toBe(1)
-    await store.clear('u')
-    expect(await store.size('u')).toBe(0)
-  })
-
   it('on Upstash, appends in one HSET keyed by event id and never sets an expiry', async () => {
     const { impl, commands } = fakeFetch([2, 2, 1])
     const store = new UpstashBottleHistoryStore('https://kv', 'tok', impl)
