@@ -21,6 +21,12 @@ import {
 // brewery, its flavor chart, the brewery's other sakes, a ranking. The
 // label-matching cascade, which finds a sake from what a label says, is
 // in `label-match.ts`.
+//
+// Every function takes the pool last and defaults it to the app's
+// (`getServerDbPool()`); integration tests pass their testcontainer pool.
+// The default is evaluated when the function is called, inside the async
+// function, so a missing `DATABASE_URL` is a rejected promise the caller
+// can catch, never a synchronous throw.
 
 // All read queries filter `superseded_at IS NULL` so manual_curation
 // rows superseded by a later Sakenowa publish disappear from the
@@ -31,19 +37,10 @@ const SELECT_BRAND_BY_ID = `
   WHERE brand_id = $1 AND superseded_at IS NULL
 `
 
-export async function lookupBrandFromPool(brandId: number, pool: Pool): Promise<Brand | null> {
+export async function lookupBrand(brandId: number, pool: Pool = getServerDbPool()): Promise<Brand | null> {
   const { rows } = await publicQuery<BrandRow>('brands', SELECT_BRAND_BY_ID, [brandId], pool)
   if (rows.length === 0) return null
   return rowToBrand(rows[0])
-}
-
-/**
- * Read-side helper. Server-only. Server components and route handlers call
- * this; tests should use `lookupBrandFromPool(brandId, testcontainerPool)`
- * instead so they don't depend on a `DATABASE_URL` env var.
- */
-export async function lookupBrand(brandId: number): Promise<Brand | null> {
-  return lookupBrandFromPool(brandId, getServerDbPool())
 }
 
 // JOIN-via-brand so the public contract stays brand-keyed (the page has a
@@ -57,9 +54,9 @@ const SELECT_BREWERY_BY_BRAND_ID = `
     AND br.superseded_at IS NULL
 `
 
-export async function lookupBreweryByBrandFromPool(
+export async function lookupBreweryByBrand(
   brandId: number,
-  pool: Pool,
+  pool: Pool = getServerDbPool(),
 ): Promise<Brewery | null> {
   const { rows } = await publicQuery<BreweryRow>(
     'breweries',
@@ -71,19 +68,15 @@ export async function lookupBreweryByBrandFromPool(
   return rowToBrewery(rows[0])
 }
 
-export async function lookupBreweryByBrand(brandId: number): Promise<Brewery | null> {
-  return lookupBreweryByBrandFromPool(brandId, getServerDbPool())
-}
-
 const SELECT_FLAVOR_CHART_BY_BRAND_ID = `
   SELECT brand_id, f1, f2, f3, f4, f5, f6, source, confidence
   FROM flavor_charts
   WHERE brand_id = $1
 `
 
-export async function lookupFlavorChartFromPool(
+export async function lookupFlavorChart(
   brandId: number,
-  pool: Pool,
+  pool: Pool = getServerDbPool(),
 ): Promise<FlavorChart | null> {
   const { rows } = await publicQuery<FlavorChartRow>(
     'flavor_charts',
@@ -93,10 +86,6 @@ export async function lookupFlavorChartFromPool(
   )
   if (rows.length === 0) return null
   return rowToFlavorChart(rows[0])
-}
-
-export async function lookupFlavorChart(brandId: number): Promise<FlavorChart | null> {
-  return lookupFlavorChartFromPool(brandId, getServerDbPool())
 }
 
 /**
@@ -130,10 +119,10 @@ const SELECT_SIBLING_BRANDS = `
   LIMIT $2
 `
 
-export async function listSiblingBrandsFromPool(
+export async function listSiblingBrands(
   brandId: number,
-  pool: Pool,
   limit = 8,
+  pool: Pool = getServerDbPool(),
 ): Promise<readonly Brand[]> {
   const { rows } = await publicQuery<BrandRow>(
     'brands',
@@ -142,13 +131,6 @@ export async function listSiblingBrandsFromPool(
     pool,
   )
   return rows.map(rowToBrand)
-}
-
-export async function listSiblingBrands(
-  brandId: number,
-  limit?: number,
-): Promise<readonly Brand[]> {
-  return listSiblingBrandsFromPool(brandId, getServerDbPool(), limit)
 }
 
 // listRanking returns the top-N rows for a single ranking scope. For
@@ -176,9 +158,9 @@ const LIST_RANKING_AREA = `
   LIMIT $2
 `
 
-export async function listRankingFromPool(
+export async function listRanking(
   args: ListRankingArgs,
-  pool: Pool,
+  pool: Pool = getServerDbPool(),
 ): Promise<Ranking[]> {
   if (args.limit <= 0) return []
   if (args.kind === 'overall') {
@@ -200,8 +182,4 @@ export async function listRankingFromPool(
     pool,
   )
   return rows.map(rowToRanking)
-}
-
-export async function listRanking(args: ListRankingArgs): Promise<Ranking[]> {
-  return listRankingFromPool(args, getServerDbPool())
 }

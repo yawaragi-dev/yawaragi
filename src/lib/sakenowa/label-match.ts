@@ -34,6 +34,11 @@ import { looseRomajiKey, romajiKey } from './romaji-key'
 
 // ---------- findSakeByExtraction ----------
 //
+// Each pass takes the pool last and defaults it to the app's
+// (`getServerDbPool()`, evaluated at call time, so a missing
+// `DATABASE_URL` rejects rather than throws); the cascade hands its pool
+// on to every pass it calls, and integration tests pass theirs.
+//
 // Given a `LabelScanExtraction` (kanji name + kanji brewery), resolve it
 // to a Sakenowa-mirrored Sake brand. PRD #105 §"Sakenowa lookup for
 // extraction" — match strategy is exact on `brands.name_kanji` joined to
@@ -347,9 +352,9 @@ function breweryFromJoinedRow(row: BrandWithBreweryRow): Brewery {
   })
 }
 
-export async function findSakeByExtractionFromPool(
+export async function findSakeByExtraction(
   query: SakeLookupQuery,
-  pool: Pool,
+  pool: Pool = getServerDbPool(),
 ): Promise<FindSakeByExtractionResult> {
   // Brand and brewery variant expansion. Both passes compose:
   //   - kana-cross siblings (hiragana ↔ katakana — ~10 % of
@@ -424,7 +429,7 @@ export async function findSakeByExtractionFromPool(
   // rule on the Latin name: a row whose name matches in Latin AND whose
   // brewery is the one read is both fields agreeing.
   if (asLatinName(query.nameJa) !== null) {
-    const byLatin = await findSakeByLatinBrandFromPool(query, pool)
+    const byLatin = await findSakeByLatinBrand(query, pool)
     const candidates =
       byLatin.kind === 'matched_brand_only'
         ? [{ sake: byLatin.sake, brewery: byLatin.brewery }]
@@ -446,14 +451,14 @@ export async function findSakeByExtractionFromPool(
   // First pass returned 0. Delegate to the brand-only second pass
   // (also reachable from scan-action.ts when a field-swap is
   // suspected).
-  const brandOnly = await findSakeByBrandOnlyFromPool(query, pool)
+  const brandOnly = await findSakeByBrandOnly(query, pool)
   if (brandOnly.kind !== 'no_match') return brandOnly
 
   // Brand-only fallback returned 0. Delegate to the brewery-only
   // third pass — also reachable on its own from scan-action.ts when
   // the single-character-hallucination guard fires (brand suspect,
   // brewery still worth a shot).
-  const breweryOnly = await findSakeByBreweryOnlyFromPool(query, pool)
+  const breweryOnly = await findSakeByBreweryOnly(query, pool)
   if (breweryOnly.kind === 'matched_brewery_only') return breweryOnly
 
   // brewery-only returned ambiguous OR no_match. If ambiguous AND
@@ -479,7 +484,7 @@ export async function findSakeByExtractionFromPool(
         'Sakenowa',
         `brewery-only returned ambiguous; name_ja is Latin-shaped → trying Latin pass before falling back`,
       )
-      const latinFromAmbig = await findSakeByLatinBrandFromPool(query, pool)
+      const latinFromAmbig = await findSakeByLatinBrand(query, pool)
       if (latinFromAmbig.kind === 'matched_brand_only') {
         debugAdd(
           'Sakenowa',
@@ -520,7 +525,7 @@ export async function findSakeByExtractionFromPool(
       'Sakenowa',
       `brewery-only missed; trying field-swap (brand-only on brewery_ja "${query.breweryJa}")`,
     )
-    const fieldSwap = await findSakeByBrandOnlyFromPool(
+    const fieldSwap = await findSakeByBrandOnly(
       { nameJa: query.breweryJa, breweryJa: query.breweryJa },
       pool,
     )
@@ -542,7 +547,7 @@ export async function findSakeByExtractionFromPool(
   // `brands.name`.
   if (asLatinName(query.nameJa) !== null) {
     debugAdd('Sakenowa', `kanji + kana passes missed; trying Latin-name lookup on "${query.nameJa}"`)
-    const latinMatch = await findSakeByLatinBrandFromPool(query, pool)
+    const latinMatch = await findSakeByLatinBrand(query, pool)
     if (latinMatch.kind === 'matched_brand_only' || latinMatch.kind === 'ambiguous') {
       return latinMatch
     }
@@ -574,9 +579,9 @@ export type BrandOnlyLookupResult = Extract<
   { kind: 'matched_brand_only' } | { kind: 'ambiguous' } | { kind: 'no_match' }
 >
 
-export async function findSakeByBrandOnlyFromPool(
+export async function findSakeByBrandOnly(
   query: SakeLookupQuery,
-  pool: Pool,
+  pool: Pool = getServerDbPool(),
 ): Promise<BrandOnlyLookupResult> {
   // `expandPossibleBrandVariants` adds the stem if the input ends
   // with an operational suffix — so `高清水酒造` also tries
@@ -624,12 +629,6 @@ export async function findSakeByBrandOnlyFromPool(
   }
 }
 
-export async function findSakeByBrandOnly(
-  query: SakeLookupQuery,
-): Promise<BrandOnlyLookupResult> {
-  return findSakeByBrandOnlyFromPool(query, getServerDbPool())
-}
-
 
 /**
  * Latin-name brand lookup. Matches against BOTH the Sakenowa
@@ -650,9 +649,9 @@ export async function findSakeByBrandOnly(
  * model put in the brewery field even when the brand was matched
  * via the Latin column.
  */
-export async function findSakeByLatinBrandFromPool(
+export async function findSakeByLatinBrand(
   query: SakeLookupQuery,
-  pool: Pool,
+  pool: Pool = getServerDbPool(),
 ): Promise<BrandOnlyLookupResult> {
   const candidates = expandLatinBrandVariants(asLatinName(query.nameJa) ?? '')
   if (candidates.length === 0) return { kind: 'no_match', query }
@@ -740,12 +739,6 @@ async function listBrandsByLooseLatinName(
   return rows.map((r) => ({ sake: brandFromJoinedRow(r), brewery: breweryFromJoinedRow(r) }))
 }
 
-export async function findSakeByLatinBrand(
-  query: SakeLookupQuery,
-): Promise<BrandOnlyLookupResult> {
-  return findSakeByLatinBrandFromPool(query, getServerDbPool())
-}
-
 // Brewery by its Latin name — for a label that names the maker in Latin
 // only, which is every importer's back label in the EU. Compared with the
 // LLM-derived `breweries.name_romaji` (97 % of rows have one). Same
@@ -789,18 +782,18 @@ const SELECT_BRANDS_AND_BREWERIES_BY_BREWERY_ROMAJI = `
  * Where the brand finds nothing, the brewery's romaji alone may still name a
  * one-line brewery.
  */
-export async function findSakeByLatinBreweryFromPool(
+export async function findSakeByLatinBrewery(
   query: SakeLookupQuery,
-  pool: Pool,
+  pool: Pool = getServerDbPool(),
 ): Promise<FindSakeByExtractionResult> {
   // Kanji and kana names are looked up as written first; a kana name that
   // is no row's name is then sounded out and compared with the romaji.
   const nameIsLatin = containsLatinAlpha(query.nameJa) && !containsJapaneseScript(query.nameJa)
   let byBrand = nameIsLatin
-    ? await findSakeByLatinBrandFromPool(query, pool)
-    : await findSakeByBrandOnlyFromPool(query, pool)
+    ? await findSakeByLatinBrand(query, pool)
+    : await findSakeByBrandOnly(query, pool)
   if (byBrand.kind === 'no_match' && !nameIsLatin && asLatinName(query.nameJa) !== null) {
-    byBrand = await findSakeByLatinBrandFromPool(query, pool)
+    byBrand = await findSakeByLatinBrand(query, pool)
   }
 
   if (byBrand.kind === 'matched_brand_only') {
@@ -858,7 +851,7 @@ export async function findSakeByLatinBreweryFromPool(
 
 /**
  * Brewery-only fallback as a standalone seam. Used as the third pass
- * of `findSakeByExtractionFromPool` AND as a direct call from
+ * of `findSakeByExtraction` AND as a direct call from
  * scan-action.ts when the single-character-hallucination guard fires
  * — the brand is likely junk, but if the brewery is real and
  * mono-brand, we can still resolve to the right sake.
@@ -872,9 +865,9 @@ export type BreweryOnlyLookupResult = Extract<
   { kind: 'matched_brewery_only' } | { kind: 'ambiguous' } | { kind: 'no_match' }
 >
 
-export async function findSakeByBreweryOnlyFromPool(
+export async function findSakeByBreweryOnly(
   query: SakeLookupQuery,
-  pool: Pool,
+  pool: Pool = getServerDbPool(),
 ): Promise<BreweryOnlyLookupResult> {
   // Same composed expansion as the first-pass — kanji-variant +
   // operational-suffix — so a model that returned `高清水` (no
@@ -994,16 +987,4 @@ export async function findSakeByBreweryOnlyFromPool(
     })),
     query,
   }
-}
-
-export async function findSakeByBreweryOnly(
-  query: SakeLookupQuery,
-): Promise<BreweryOnlyLookupResult> {
-  return findSakeByBreweryOnlyFromPool(query, getServerDbPool())
-}
-
-export async function findSakeByExtraction(
-  query: SakeLookupQuery,
-): Promise<FindSakeByExtractionResult> {
-  return findSakeByExtractionFromPool(query, getServerDbPool())
 }

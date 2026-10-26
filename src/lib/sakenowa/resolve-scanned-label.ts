@@ -8,12 +8,12 @@ import {
   type BreweryOnlyLookupResult,
   type FindSakeByExtractionResult,
   type SakeLookupQuery,
-  findSakeByBrandOnlyFromPool,
-  findSakeByBreweryOnlyFromPool,
-  findSakeByExtractionFromPool,
-  findSakeByLatinBreweryFromPool,
+  findSakeByBrandOnly,
+  findSakeByBreweryOnly,
+  findSakeByExtraction,
+  findSakeByLatinBrewery,
 } from './label-match'
-import { listSiblingBrandsFromPool } from './catalogue-reads'
+import { listSiblingBrands } from './catalogue-reads'
 import { expandLatinBrandVariants, namesOverlapping } from './label-match-rules'
 import type { Brand } from '@/lib/schemas/brand'
 import { expandBrandVariants } from './brewery-variants'
@@ -80,11 +80,11 @@ export interface ScannedLabelLookupExecutor {
 
 export function poolExecutor(pool: Pool): ScannedLabelLookupExecutor {
   return {
-    findByExtraction: (query) => findSakeByExtractionFromPool(query, pool),
-    findByBreweryOnly: (query) => findSakeByBreweryOnlyFromPool(query, pool),
-    findByBrandOnly: (query) => findSakeByBrandOnlyFromPool(query, pool),
-    findByLatinBrewery: (query) => findSakeByLatinBreweryFromPool(query, pool),
-    listSiblings: (brandId) => listSiblingBrandsFromPool(brandId, pool, SIBLING_LIMIT),
+    findByExtraction: (query) => findSakeByExtraction(query, pool),
+    findByBreweryOnly: (query) => findSakeByBreweryOnly(query, pool),
+    findByBrandOnly: (query) => findSakeByBrandOnly(query, pool),
+    findByLatinBrewery: (query) => findSakeByLatinBrewery(query, pool),
+    listSiblings: (brandId) => listSiblingBrands(brandId, SIBLING_LIMIT, pool),
   }
 }
 

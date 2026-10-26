@@ -182,7 +182,7 @@ type ScanActionStateBase =
    * a row (kanji + romaji + locale-aware href) plus its brewery's
    * kanji + romaji so a "We matched the brewery: X" header can be
    * shown when all candidates share a brewery (the common shape
-   * coming from `findSakeByBreweryOnlyFromPool`'s ambiguous arm).
+   * coming from `findSakeByBreweryOnly`'s ambiguous arm).
    *
    * Previous shape was `brandIds: readonly number[]` — replaced by
    * the richer per-candidate data so the UI doesn't need extra
