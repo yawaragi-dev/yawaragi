@@ -2,7 +2,7 @@
 
 Open questions the build has run into and settled provisionally, so they can be handed to the designers in one go. Each says what is built today, so nobody has to guess. Opened 2026-10-13; filed as #417.
 
-Round two (blocks I–R), round three (blocks S, T, U and V), round four (blocks W–Z, with a priority order across everything still open) and round five (blocks AA and AB) are at the end of the file.
+Round two (blocks I–R), round three (blocks S, T, U and V), round four (blocks W–Z, with a priority order across everything still open) round five (blocks AA and AB) and round six (blocks AC, AD and AE) are at the end of the file.
 
 The design snapshot these refer to is `design/README.md`, v1.6.2.
 
@@ -536,3 +536,28 @@ K's loop is in (scan → result → rate → palate, the demo bottle "Mihon (見
 3. **Where:** each as its own section under the hero, alternating phone left and right on wide screens, or replacing the three feature cards?
 4. **Reduced motion and pause:** K shows a still frame and has a pause control (WCAG 2.2.2). Does each showcase need its own pause, or one control for the page?
 5. **German:** captions run about 30% longer; K's caption sits outside the phone. Same for the others?
+
+## AE. Putting a bottle back in the cellar, from "Bottles you've had"
+
+"Bottles you've had" (AB6; 131, 132) is in: one row per bottle that left the cellar, newest first, "Added {date} · Finished {date}" (or "Removed"), the row opening the sake's or bottling's page, and the row's ⋯ asking "Take {name} off this list?" inline. Swipe to remove is next. The maintainer wants a second action on the row: **put the bottle back in the cellar**. We would like it drawn before we build it, because the one action covers two different moments.
+
+**What is built today:**
+- The cellar's "Finished" and "Remove one" act at once, with no Undo. A bottle finished by mistake can only be added again as a new bottle, which starts its "Open {n} days" over and leaves the mistaken line in "Bottles you've had".
+- The bottle history is four kinds of dated line: added, opened, finished, removed. "Bottles you've had" pairs them up into bottles; it stores nothing of its own.
+- The row's ⋯ opens the remove question directly. There is no menu yet.
+
+**The two moments, as engineering sees them:**
+- **(a) "I have this one again."** A new bottle of the same sake or bottling. The past bottle stays on the list, because it did happen. Engineering would open the "Add to cellar" sheet (66) from the row, prefilled with that bottle's size and nama and a count of 1, and land on "Added to your cellar · View". This writes a new "added" line, like any other add.
+- **(b) "I didn't finish it."** A finish or remove tapped by mistake. The bottle goes back exactly as it was (still open, the same "Open {n} days"), and its row leaves the list, because it never left the cellar. Engineering would take the finish or remove line back out of the history rather than write a new one, so the history doesn't show a bottle finished and then un-finished.
+
+(b) is really an Undo. It could also, or instead, be a short "Finished · Undo" line in the cellar right after the tap, as the journal has after deleting a tasting. That line would catch most mistakes where they happen.
+
+**Limits:** nothing on the row or in the confirmation counts bottles over time (X5). No "your 3rd bottle of …", no "bought again" tally. Neither action shows in the sample collection, and both grey out with no connection (Z2). When the bottle's thing is gone (an own bottling deleted since), (a) has nothing to add, so the action is hidden.
+
+**Questions:**
+1. **One action or two?** Only (a), only (b), or both? If both, what are they called? Engineering's working names: "Add to cellar again" for (a) and "Put back in the cellar" for (b). Does "again" read as a nudge to buy, given JMStV? If so, would something like "Add another to the cellar" work?
+2. **Where does it sit?** The ⋯ becoming a small menu (add back, remove from this list), or a visible button on the row? If swipe is in: swipe left removes, as AB6 says. Does swipe right add back, or is that too easy to trigger by accident?
+3. **(b) in the cellar:** should "Finished" and "Remove one" get an Undo line in the cellar itself (how long, where on screen), and does that make (b) on this list unnecessary? Or is the list still the place for a mistake noticed days later?
+4. **How long does (b) stay offered?** A bottle finished last week and put back is believable. One finished eight months ago reads as a new bottle. Is there a cut-off after which only (a) is shown, or is (b) always there?
+5. **After (a):** does the past row show anything ("Back in your cellar" for a moment), or stay as it was, with only the confirmation saying something happened?
+6. **German:** "Bottles you've had" is "Flaschen, die du hattest". The action label sits on a 390px row next to a long sake name, so a short German verb matters. "Wieder in den Keller"?
