@@ -13,7 +13,7 @@ import { readAnonymousSessionCookie } from '@/lib/legal/anonymous-session-cookie
 import { enforceRateLimit } from '@/lib/rate-limit/enforce-rate-limit'
 import type { FlavorProfile } from '@/lib/schemas/flavor-profile'
 import type { TasteEvent } from '@/lib/schemas/taste-event'
-import { lookupFlavorChart } from '@/lib/sakenowa/lookup'
+import { lookupFlavorChart } from '@/lib/sakenowa/catalogue-reads'
 import { deriveTasteProfile } from '@/lib/taste/derive-taste-profile'
 import { getTasteEventStore } from '@/lib/taste/get-taste-event-store'
 import {

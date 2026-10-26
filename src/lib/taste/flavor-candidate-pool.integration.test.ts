@@ -5,7 +5,7 @@
  * `superseded_at IS NULL` filter (ADR-0014), and that chartless brands are
  * excluded — none of which the pure `poolRowToCandidate` unit test can cover.
  *
- * Seed shapes copied from lookup.integration.test.ts. Cleanup deletes children
+ * Seed shapes copied from catalogue.integration.test.ts. Cleanup deletes children
  * first (flavor_charts → brands → breweries).
  */
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'

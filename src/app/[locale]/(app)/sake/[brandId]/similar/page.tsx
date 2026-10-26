@@ -12,7 +12,7 @@ import {
 import { Link } from '@/i18n/navigation'
 import { routing } from '@/i18n/routing'
 import { describeSimilarity } from '@/lib/flavor/similarity-reason'
-import { lookupBrand } from '@/lib/sakenowa/lookup'
+import { lookupBrand } from '@/lib/sakenowa/catalogue-reads'
 import { findSimilarBrands } from '@/lib/sakenowa/similar-brands'
 import type { FlavorAxis } from '@/lib/schemas/flavor-chart'
 

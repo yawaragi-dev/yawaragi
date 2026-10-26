@@ -12,7 +12,7 @@ import { romajiKey } from './romaji-key'
 /**
  * Pure-function unit tests for the Latin variant expansion used by the
  * fifth-pass Sakenowa lookup. The lookup chain as a whole is exercised
- * end-to-end against testcontainers in `lookup.integration.test.ts`;
+ * end-to-end against testcontainers in `catalogue.integration.test.ts`;
  * these tests pin the per-input transform contract so a regression in
  * the variant set is caught fast without spinning Postgres.
  */
@@ -83,7 +83,7 @@ describe('expandLatinBrandVariants', () => {
   // (`"JUNMAI TARU SAKE"`) as the brand and the bare descriptor
   // first-word-strip matching an unrelated Sakenowa brand whose Latin
   // name happens to start with that descriptor (Kiku-Masamune,
-  // 2026-06-14). See SAKE_GRADE_TOKENS in lookup.ts for the full list.
+  // 2026-06-14). See SAKE_GRADE_TOKENS in label-match-rules.ts for the full list.
 
   it('suppresses the first-word-strip when the first word is a sake grade token (junmai)', () => {
     const out = expandLatinBrandVariants('JUNMAI TARU SAKE')

@@ -27,7 +27,7 @@ import {
   type CellarTarget,
   CellarTargetSchema,
 } from '@/lib/schemas/cellar-input'
-import { lookupBrand } from '@/lib/sakenowa/lookup'
+import { lookupBrand } from '@/lib/sakenowa/catalogue-reads'
 import { type MaintainerCollection, withMaintainerCollection } from '@/lib/taste/maintainer-collection'
 import { countUsage } from '@/lib/stats/count-usage'
 

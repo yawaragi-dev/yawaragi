@@ -8,7 +8,7 @@ import {
   lookupBrand,
   lookupBreweryByBrand,
   lookupFlavorChart,
-} from '@/lib/sakenowa/lookup'
+} from '@/lib/sakenowa/catalogue-reads'
 import { otherNamesOf } from '@/lib/sakenowa/name-aliases'
 import { BottleHistory } from '@/components/sake/bottle-history'
 import { OwnBottlings } from '@/components/sake/own-bottlings'

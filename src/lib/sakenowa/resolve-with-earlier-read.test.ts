@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { Brand } from '@/lib/schemas/brand'
 import type { Brewery } from '@/lib/schemas/brewery'
-import type { FindSakeByExtractionResult, SakeLookupQuery } from './lookup'
+import type { FindSakeByExtractionResult, SakeLookupQuery } from './label-match'
 import {
   resolveScannedLabel,
   type ScannedLabel,

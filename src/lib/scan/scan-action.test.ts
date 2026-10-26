@@ -86,7 +86,7 @@ vi.mock('@/lib/ai/vision/registry', async () => {
 // exercises the action's branching on the resolver's tagged-union
 // result. The guard × cascade COMPOSITION is unit-tested directly (no
 // vision, no rate-limit) in `resolve-scanned-label.test.ts`; the passes
-// themselves against Postgres in `lookup.integration.test.ts`.
+// themselves against Postgres in `catalogue.integration.test.ts`.
 vi.mock('@/lib/sakenowa/resolve-scanned-label', () => ({
   resolveScannedLabel: vi.fn(),
 }))
@@ -97,7 +97,7 @@ vi.mock('@/lib/sakenowa/resolve-scanned-label', () => ({
 // Bare `vi.fn()` returns undefined; `Promise.all` treats non-thenables
 // as immediately fulfilled so matched tests pass without asserting on
 // the (null) chart value.
-vi.mock('@/lib/sakenowa/lookup', () => ({
+vi.mock('@/lib/sakenowa/catalogue-reads', () => ({
   lookupBreweryByBrand: vi.fn(),
   lookupFlavorChart: vi.fn(),
 }))
@@ -125,7 +125,7 @@ import { cookies, headers } from 'next/headers'
 import { getVisionProvider } from '@/lib/ai/vision/registry'
 import { createAnthropicHaikuProvider } from '@/lib/ai/vision/anthropic-haiku-provider'
 import { resolveScannedLabel } from '@/lib/sakenowa/resolve-scanned-label'
-import { lookupBreweryByBrand } from '@/lib/sakenowa/lookup'
+import { lookupBreweryByBrand } from '@/lib/sakenowa/catalogue-reads'
 import { findNearestBrands } from '@/lib/sakenowa/nearest-brands'
 import { resolveWithEarlierRead } from '@/lib/sakenowa/resolve-with-earlier-read'
 import { assertRateLimitConfig } from '@/lib/rate-limit/config-gate'

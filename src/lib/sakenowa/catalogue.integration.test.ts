@@ -15,16 +15,18 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { Pool } from 'pg'
 import {
-  findSakeByBrandOnlyFromPool,
-  findSakeByBreweryOnlyFromPool,
-  findSakeByExtractionFromPool,
-  findSakeByLatinBreweryFromPool,
   listRankingFromPool,
   listSiblingBrandsFromPool,
   lookupBrandFromPool,
   lookupBreweryByBrandFromPool,
   lookupFlavorChartFromPool,
-} from './lookup'
+} from './catalogue-reads'
+import {
+  findSakeByBrandOnlyFromPool,
+  findSakeByBreweryOnlyFromPool,
+  findSakeByExtractionFromPool,
+  findSakeByLatinBreweryFromPool,
+} from './label-match'
 import { forgetRomajiIndex } from './romaji-index'
 import { searchCatalogueFromPool } from './search-brands'
 

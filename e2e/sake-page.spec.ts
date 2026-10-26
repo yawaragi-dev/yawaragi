@@ -14,7 +14,7 @@
 //    placeholders, missing flavor_charts rows) won't silently turn
 //    coverage into skips. CI skips this scenario; the
 //    Vitest+testcontainers integration test in
-//    src/lib/sakenowa/lookup.integration.test.ts covers the read-side
+//    src/lib/sakenowa/catalogue.integration.test.ts covers the read-side
 //    contract.
 import { expect, test } from '@playwright/test'
 import { BASE_URL } from './_base-url'

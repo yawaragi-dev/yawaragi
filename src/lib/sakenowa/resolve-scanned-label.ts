@@ -12,8 +12,8 @@ import {
   findSakeByBreweryOnlyFromPool,
   findSakeByExtractionFromPool,
   findSakeByLatinBreweryFromPool,
-  listSiblingBrandsFromPool,
-} from './lookup'
+} from './label-match'
+import { listSiblingBrandsFromPool } from './catalogue-reads'
 import { expandLatinBrandVariants, namesOverlapping } from './label-match-rules'
 import type { Brand } from '@/lib/schemas/brand'
 import { expandBrandVariants } from './brewery-variants'
@@ -29,7 +29,7 @@ import { getServerDbPool } from '../supabase/server-client'
 // hallucination rescue) AND the 5-pass Sakenowa cascade. Before #198
 // the guards lived in `scan-action.ts` and re-implemented their own
 // parallel cascade (brewery-only → field-swap brand-only) next to the
-// nicely-tested pass chain in `lookup.ts`, so the composition — the
+// nicely-tested pass chain in `label-match.ts`, so the composition — the
 // part most likely to harbour a bug — was scattered across two modules
 // and only reachable through the vision model + rate-limit gate.
 //

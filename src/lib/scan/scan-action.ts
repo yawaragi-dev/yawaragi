@@ -22,7 +22,7 @@ import { DebugLog, debugAdd, runWithDebugLog } from '@/lib/debug/debug-log'
 import { isDebugEnabled } from '@/lib/debug/debug-access'
 import { enforceRateLimit } from '@/lib/rate-limit/enforce-rate-limit'
 import { isKanjiVariant } from '@/lib/sakenowa/kanji-variants'
-import { lookupBreweryByBrand, lookupFlavorChart } from '@/lib/sakenowa/lookup'
+import { lookupBreweryByBrand, lookupFlavorChart } from '@/lib/sakenowa/catalogue-reads'
 import {
   resolveScannedLabel,
   type ResolveScannedLabelResult,
