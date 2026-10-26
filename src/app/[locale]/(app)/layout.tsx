@@ -11,8 +11,7 @@ import { NoticeHost } from '@/components/journal/undo-notice'
 import { DeletedBottlingNotice } from '@/components/sake/deleted-bottling-notice'
 import { TabBar, type TabBarMessages } from '@/components/layout/tab-bar'
 import { SampleCollectionBanner } from '@/components/demo/sample-collection-banner'
-import { isViewingSample } from '@/lib/demo/sample-mode'
-import { currentUserIsMaintainer } from '@/lib/auth/maintainer'
+import { resolveViewer } from '@/lib/collection/viewer'
 
 /**
  * The app shell — design v1.4 § "App structure" and rule 11.
@@ -55,7 +54,8 @@ export default async function AppShellLayout({ children }: { children: React.Rea
   const locale = await getLocale()
   const cookieJar = await cookies()
   const { consent } = getComplianceState(cookieJar)
-  const viewingSample = await isViewingSample(cookieJar)
+  const viewer = await resolveViewer(cookieJar)
+  const viewingSample = viewer.kind === 'sample'
 
   const messages: TabBarMessages = {
     navLabel: t('navLabel'),
@@ -84,7 +84,9 @@ export default async function AppShellLayout({ children }: { children: React.Rea
       <Suspense fallback={null}>
         <OfflineLine
           locale={locale}
-          hasCollection={viewingSample || (await currentUserIsMaintainer())}
+          // The maintainer's own collection or the sample; not the E2E stub,
+          // whose offline copy the offline specs set up themselves.
+          hasCollection={viewer.kind === 'own' || viewingSample}
           messages={{
             offline: tConnection('offline'),
             backOnline: tConnection('backOnline'),

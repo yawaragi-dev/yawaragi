@@ -1,11 +1,10 @@
 'use server'
 
-import { auth } from '@clerk/nextjs/server'
+import { cookies } from 'next/headers'
 import { hasLocale } from 'next-intl'
 import { getPathname } from '@/i18n/navigation'
 import { routing, type Locale } from '@/i18n/routing'
-import { currentUserIsMaintainer } from '@/lib/auth/maintainer'
-import { getExpressionStore } from '@/lib/collection/get-expression-store'
+import { resolveViewer } from '@/lib/collection/viewer'
 
 /** At most this many of the visitor's own bottlings head the list (v1.9 U4). */
 const MAX_OWN = 2
@@ -25,12 +24,12 @@ export async function ownBottlingSuggestions(
   const needle = query.trim().toLocaleLowerCase().slice(0, 80)
   if (needle.length < 2) return []
   try {
-    if (!(await currentUserIsMaintainer())) return []
-    const { userId } = await auth()
-    const store = getExpressionStore()
-    if (!userId || !store) return []
+    // The maintainer's own bottlings only: not the sample's, not the E2E stub's.
+    const viewer = await resolveViewer(await cookies())
+    if (viewer.kind !== 'own' || !viewer.canLog) return []
+    const { expressions } = await viewer.read('expressions')
     const where: Locale = hasLocale(routing.locales, locale) ? locale : routing.defaultLocale
-    return (await store.read(userId))
+    return expressions
       .filter((bottling) => bottling.name.toLocaleLowerCase().includes(needle))
       .slice(0, MAX_OWN)
       .map((bottling) => ({
