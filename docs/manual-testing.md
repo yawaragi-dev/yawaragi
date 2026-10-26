@@ -152,6 +152,8 @@ Append `?debug=1` to any URL (e.g. `/en/scan?debug=1`). This stamps the HttpOnly
 - The `<DebugPanel />` overlay on every page.
 - Per-step server-side tracing through the scan / suggest flows — the `+Xs ScanAction / Vision / Sakenowa …` lines (extraction, tier decisions, lookup counts, chosen branch).
 
+On Production the cookie is honoured only for a signed-in maintainer (`MAINTAINER_USER_IDS`); anyone else who sets it sees nothing change. Local dev and Preview honour it for everyone (`src/lib/debug/debug-access.ts`).
+
 Turn it off with `?debug=0`. This is the trace you read when a scan resolves to an unexpected branch — it shows exactly which lookup returned how many rows.
 
 ---

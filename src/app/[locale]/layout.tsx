@@ -14,7 +14,7 @@ import { RefreshOnAuthChange } from '@/components/auth/refresh-on-auth-change'
 import { isSignInPending } from '@/lib/auth/sign-in-pending'
 import { DebugPanelMount } from '@/components/debug/debug-panel-mount'
 import { buildClerkLocalization } from '@/lib/auth/clerk-localization'
-import { isDebugEnabledFromCookies } from '@/lib/debug/debug-mode'
+import { isDebugEnabled } from '@/lib/debug/debug-access'
 import '../globals.css'
 
 // Inter, per the design's type section. `--font-inter` is what `--font-sans`
@@ -61,7 +61,7 @@ export default async function LocaleLayout({
   // level so the panel persists across page navigations and reloads —
   // events accumulate in sessionStorage and survive the matched-scan
   // redirect from /scan to /sake/[brandId].
-  const debugMode = isDebugEnabledFromCookies(cookieJar)
+  const debugMode = await isDebugEnabled(cookieJar)
   const tSignIn = await getTranslations({ locale, namespace: 'signIn' })
 
   // ClerkProvider wraps NextIntlClientProvider so Clerk's auth context is

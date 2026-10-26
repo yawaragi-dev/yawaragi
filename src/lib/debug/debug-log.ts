@@ -4,7 +4,7 @@ import { AsyncLocalStorage } from 'node:async_hooks'
 /**
  * Per-request server-side trace accumulator for debug mode. A
  * `DebugLog` is created at the entry of a request handler (Server
- * Action, route handler, etc.) when `isDebugEnabledFromCookies(...)`
+ * Action, route handler, etc.) when `isDebugEnabled(...)` (debug-access.ts)
  * is true, then attached to the response so the client `<DebugPanel
  * />` can render it.
  *

@@ -19,7 +19,7 @@ import {
 import type { VisionProvider } from '@/lib/ai/vision/vision-provider'
 import { recordActionMetadata, withActionSpan } from '@/lib/ai/observability/action-span'
 import { DebugLog, debugAdd, runWithDebugLog } from '@/lib/debug/debug-log'
-import { isDebugEnabledFromCookies } from '@/lib/debug/debug-mode'
+import { isDebugEnabled } from '@/lib/debug/debug-access'
 import { enforceRateLimit } from '@/lib/rate-limit/enforce-rate-limit'
 import { isKanjiVariant } from '@/lib/sakenowa/kanji-variants'
 import { lookupBreweryByBrand, lookupFlavorChart } from '@/lib/sakenowa/lookup'
@@ -204,7 +204,7 @@ async function runScanAction(
   // response under `debugLog` so the client `<DebugPanel />` can render
   // them next to its own client-side events.
   const cookieJar = await cookies()
-  const log = isDebugEnabledFromCookies(cookieJar) ? new DebugLog() : undefined
+  const log = (await isDebugEnabled(cookieJar)) ? new DebugLog() : undefined
 
   let scansLeft: number | undefined
   const result = await runWithDebugLog(log, async (): Promise<ScanActionState> => {

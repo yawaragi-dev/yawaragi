@@ -18,7 +18,7 @@ import type { Suggestion } from '@/lib/schemas/suggestion'
 /**
  * Debug event trail from the action's execution. Populated only when
  * the visitor has debug mode on (`yawaragi_debug=1` cookie, per
- * `isDebugEnabledFromCookies`); absent otherwise so the client-side
+ * `isDebugEnabled`: a maintainer only, on Production); absent otherwise so the client-side
  * `<DebugLogPusher />` island short-circuits without a store push. The
  * client bridge lives at `src/components/debug/debug-log-pusher.tsx`
  * — pattern mirrors `scan-form.tsx`'s `useEffect(() => appendDebugEvents(...))`.

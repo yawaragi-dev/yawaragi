@@ -32,11 +32,10 @@ import { type ReadonlyRequestCookies } from 'next/dist/server/web/spec-extension
  *     development / support purposes); the value is set only after an
  *     explicit URL-param activation by the operator. Documented in
  *     ADR-0009's RoPA when debug surfaces ship publicly.
- *   - Pre-launch / single-maintainer scope: the panel can leak
- *     server-side detail (raw extractions, query parameters). A
- *     production gating layer (e.g. cookie + bearer-token check)
- *     belongs to a future hardening slice — see the open follow-up
- *     issue.
+ *   - The panel can show server-side detail (raw extractions, query
+ *     parameters), so on Production the cookie counts only for a
+ *     signed-in maintainer: request handlers ask `isDebugEnabled()` in
+ *     `debug-access.ts`, not the cookie read below.
  */
 
 export const DEBUG_COOKIE_NAME = 'yawaragi_debug'
