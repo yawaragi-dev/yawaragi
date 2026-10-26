@@ -1,5 +1,4 @@
 import 'server-only'
-import type { Pool } from 'pg'
 import { debugAdd } from '@/lib/debug/debug-log'
 import type { Brand } from '@/lib/schemas/brand'
 import { expandBrandVariants, expandBreweryVariants } from './brewery-variants'
@@ -11,7 +10,6 @@ import {
   type ScannedLabel,
   type ScannedLabelLookupExecutor,
   containsNoJapaneseScript,
-  isExecutor,
   isPlaceholderExtraction,
   latinKeys,
   namesBrand,
@@ -19,7 +17,7 @@ import {
   poolExecutor,
   resolveScannedLabel,
 } from './resolve-scanned-label'
-import { getServerDbPool } from '../supabase/server-client'
+import { getServerDbPool } from '@/lib/supabase/server-client'
 
 // ---------- resolveWithEarlierRead (#408) ----------
 //
@@ -146,17 +144,16 @@ function isHouseName(name: string, brewery: Brewery): boolean {
  * A name from the earlier read is never looked up as the name. That is what
  * would put the last bottle's sake on a new bottle.
  *
- * `secondOwn` is what the second read resolved to by itself. `poolOrExecutor`
- * is a `Pool` in production or a fake executor in unit tests.
+ * `secondOwn` is what the second read resolved to by itself. `executor`
+ * defaults to the catalogue on the app's pool; unit tests pass a fake one.
  */
 export async function resolveWithEarlierRead(
   second: ScannedLabel,
   secondOwn: ResolveScannedLabelResult,
   first: ScannedLabel,
-  poolOrExecutor: Pool | ScannedLabelLookupExecutor = getServerDbPool(),
+  executor: ScannedLabelLookupExecutor = poolExecutor(getServerDbPool()),
 ): Promise<{ sake: Brand } | null> {
   if (isOneSake(secondOwn)) return null
-  const executor = isExecutor(poolOrExecutor) ? poolOrExecutor : poolExecutor(poolOrExecutor)
   const found = (sake: Brand, how: string) => {
     debugAdd('ScanAction', `both photos together point at "${sake.nameKanji}" (${how})`, { brandId: sake.brandId })
     return { sake }
