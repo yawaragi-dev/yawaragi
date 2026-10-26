@@ -4,16 +4,12 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
-import { isPlaceholderBrewery } from '@/lib/schemas/brewery'
 import {
   lookupBrand,
   lookupBreweryByBrand,
   lookupFlavorChart,
 } from '@/lib/sakenowa/lookup'
-import { formerBreweryNameOf } from '@/lib/sakenowa/former-brewery-names'
 import { otherNamesOf } from '@/lib/sakenowa/name-aliases'
-import { getPrefectureNames } from '@/lib/sakenowa/prefecture'
-import { regionEntryFor } from '@/lib/guide/regions'
 import { BottleHistory } from '@/components/sake/bottle-history'
 import { OwnBottlings } from '@/components/sake/own-bottlings'
 import { ScreenBar } from '@/components/layout/screen-header'
@@ -26,16 +22,14 @@ import { BreweryOtherSakes, listSiblingBrandsSafe } from '@/components/sake/brew
 import { FlavorChartView } from '@/components/sake/flavor-chart'
 import { RomajiDisclosure } from '@/components/sake/romaji-disclosure'
 import { ScanReturnHint } from '@/components/scan/scan-return-hint'
-import {
-  SakenowaAttribution,
-  requiresSakenowaAttribution,
-} from '@/components/sake/sakenowa-attribution'
+import { SakenowaAttribution } from '@/components/sake/sakenowa-attribution'
 import { FEATURES } from '@/lib/features'
 import { GoesWith } from '@/components/sake/goes-with'
 import { resolvePairing } from '@/lib/pairing/resolve-pairing'
 import { catalogueAxisStats } from '@/lib/taste/catalogue-mean'
 import { hasArrivedViaScan } from '@/lib/scan/arrived-via-scan'
 import { entriesForBrand, resolveViewerJournal } from '@/lib/taste/viewer-journal'
+import { sakePageModel } from '@/lib/sake-page/sake-page-model'
 
 /**
  * §9 Bottle page — one screen per sake. Reference screenshots 16 and 17.
@@ -143,8 +137,11 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
     notFound()
   }
 
-  const t = await getTranslations('sake.brand')
-  const tScan = await getTranslations('scan.form')
+  const [t, tScan, tLearn] = await Promise.all([
+    getTranslations('sake.brand'),
+    getTranslations('scan.form'),
+    getTranslations('learn.entries'),
+  ])
 
   // §9.3: this sake's tastings, newest first — and the meta §5's panel shows
   // before the first tap ("Last logged 19 Sep · 4.5" / "First time for you").
@@ -152,6 +149,17 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
   const lastTasting = tastings[0]
   const ownBottlings = viewer.expressions.filter((e) => e.brandId === brandId)
 
+  // Every decision about what this page shows — the brewery line, the region
+  // line, "Little published", the transliteration caveat, the Sakenowa credit
+  // — is made in `sakePageModel`, where it is unit-tested; this component
+  // only renders it.
+  const model = sakePageModel({
+    brand,
+    brewery,
+    flavorChart,
+    siblings,
+    regionAnswer: (slug) => tLearn(`${slug}.answer`),
+  })
   // §9.1 draws the Latin name large with the Japanese beneath it — "Kidoizumi
   // AFS" over "木戸泉 AFS". That is §15's default name display (Romaji + kanji)
   // for an EN visitor, and the setting that would flip it is not built. Where
@@ -159,40 +167,9 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
   // the only name there is, so it takes the heading instead of leaving one
   // blank.
   const romaji = brand.nameRomaji
-  // Hide the brewery entirely for Sakenowa placeholder rows (~48 in the
-  // dataset). "Brewery:" with no name reads worse than no section.
-  const showBrewery = brewery !== null && !isPlaceholderBrewery(brewery)
-  // Prefecture is editorially mapped (manual_curation per ADR-0005) because
-  // Sakenowa's /areas endpoint publishes Japanese names only.
-  const prefecture = showBrewery ? getPrefectureNames(brewery.areaId) : null
-  // Design question Y: a hand-written note on the prefecture's sake, from its
-  // geographical indication, where Learn has one.
-  const regionSlug = showBrewery ? regionEntryFor(brewery.areaId) : null
-  const regionLead = regionSlug ? firstSentence((await getTranslations('learn.entries'))(`${regionSlug}.answer`)) : null
-  const breweryRomaji = showBrewery ? brewery.nameRomaji : null
-  // v1.6 §9: the name older bottles carry, when a rename is on record — so
-  // the brewery on the bottle in hand appears somewhere on its page.
-  const formerBrewery = showBrewery ? formerBreweryNameOf(brewery) : null
-  const showBrewerySection = showBrewery && siblings.length > 0
-  const showRomajiDisclosure =
-    romaji !== null ||
-    breweryRomaji !== null ||
-    (showBrewerySection && siblings.some((sibling) => sibling.nameRomaji !== null))
-
-  // §9.1's "Little published" outline tag. The design attaches it to a bottle
-  // whose data is thin; the flavour chart is the bulk of what the mirror
-  // carries, so its absence is the honest proxy — and ADR-0016 records that
-  // roughly half the catalogue has none. The tag is a statement about our
-  // knowledge, not about the sake.
+  const { brewery: breweryLine, brewerySection, region } = model
+  const formerBrewery = breweryLine?.former ?? null
   const pairing = resolvePairing({ chart: flavorChart, stats: axisStats })
-  const littlePublished = flavorChart === null
-
-  // ADR-0014: render Sakenowa attribution only when at least one rendered
-  // record on the page is Sakenowa-sourced.
-  const renderedSources = new Set<string>([brand.source])
-  if (showBrewery) renderedSources.add(brewery.source)
-  if (flavorChart) renderedSources.add(flavorChart.source)
-  const showSakenowaAttribution = requiresSakenowaAttribution(renderedSources)
 
   return (
     <main
@@ -200,7 +177,7 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
       data-testid="sake-brand-page"
     >
       {/* v1.5 §9: the top bar is back · name, nothing else. */}
-      <ScreenBar title={brand.nameRomaji ?? brand.nameKanji} />
+      <ScreenBar title={model.displayName} />
       {/*
         "Not the bottle you scanned? Scan again" — only when the link that
         brought the visitor was a scan result's (#109). Decided here, on the
@@ -269,22 +246,22 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
                 {t('alsoSoldAs', { names: otherNames.join(', ') })}
               </p>
             )}
-            {showBrewery && (
+            {breweryLine && (
               <p className="text-body text-ash-600" data-testid="bottle-brewery-line">
-                {breweryRomaji !== null ? (
+                {breweryLine.nameRomaji !== null ? (
                   <span lang="en" data-testid="brewery-name-romaji" data-romaji-field="">
-                    {breweryRomaji}
+                    {breweryLine.nameRomaji}
                   </span>
                 ) : (
-                  <span lang="ja">{brewery.nameKanji}</span>
+                  <span lang="ja">{breweryLine.nameKanji}</span>
                 )}
-                {prefecture && (
+                {breweryLine.prefecture && (
                   <>
                     <span className="mx-1.5 text-ash-500" aria-hidden="true">
                       ·
                     </span>
                     <span lang="en" data-testid="prefecture-name-en">
-                      {prefecture.nameEn}
+                      {breweryLine.prefecture.nameEn}
                     </span>
                   </>
                 )}
@@ -304,10 +281,10 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
               chips in §9.9 — so it shows when any of them does. Two copies of
               the same sentence on one screen read as noise (maintainer review).
             */}
-            {showRomajiDisclosure && (
+            {model.showRomajiDisclosure && (
               <RomajiDisclosure id={`brand-${brandId}-identity-romaji`} />
             )}
-            {littlePublished && (
+            {model.littlePublished && (
               <p className="mt-1">
                 {/*
                   v1.5 §9: a neutral outline. The accent is kept for the app's
@@ -327,15 +304,15 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
         {/* Below the romaji caveat, whose ⓘ has a wide tap area, and above
             the Sakenowa credit, which stays the block's last line: this
             text is ours (manual_curation), not Sakenowa's. */}
-        {regionSlug && regionLead && prefecture && (
+        {region && (
           <p className="max-w-prose text-meta text-ash-700" data-testid="bottle-region">
-            {regionLead}{' '}
+            {region.lead}{' '}
             <Link
-              href={{ pathname: '/learn/[slug]', params: { slug: regionSlug } }}
+              href={{ pathname: '/learn/[slug]', params: { slug: region.slug } }}
               className="whitespace-nowrap font-medium text-ginshu-700 hover:text-ginshu-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
               data-testid="bottle-region-link"
             >
-              {t('aboutRegion', { prefecture: prefecture.nameEn })}
+              {t('aboutRegion', { prefecture: region.prefectureEn })}
             </Link>
           </p>
         )}
@@ -345,7 +322,7 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
           390×844 — on the content column. Only when a rendered record is
           Sakenowa's (ADR-0014): a curated entry of our own carries none.
         */}
-        {showSakenowaAttribution && <SakenowaAttribution placement="identity" />}
+        {model.showSakenowaAttribution && <SakenowaAttribution placement="identity" />}
       </section>
 
       {/* -- §9.2 Action row ---------------------------------------------- */}
@@ -363,7 +340,7 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
       {viewer.canLog ? (
         <BottleRateRow
           brandId={brandId}
-          sakeName={brand.nameRomaji ?? brand.nameKanji}
+          sakeName={model.displayName}
           chart={flavorChart}
           initiallyOpen={rateNow}
           cellar={
@@ -372,7 +349,7 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
               // v1.6.1 §9: a sake's page counts its bottlings' bottles too
               // (2 of Rihaku + 1 Wandering Poet → "In cellar · 3"); "+" adds
               // to the sake's own row.
-              name={brand.nameRomaji ?? brand.nameKanji}
+              name={model.displayName}
               // The sake's own bottles, across sizes; its bottlings' come on top.
               initialCount={bottlesOf(viewer.cellar, { brandId })}
               alsoCounted={viewer.cellar
@@ -386,7 +363,7 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
               : { kind: 'first' }
           }
           similar={
-            flavorChart && (
+            model.offerSimilar ? (
               <Link
                 href={{ pathname: '/sake/[brandId]/similar', params: { brandId: String(brandId) } }}
                 className="flex min-h-11 items-center justify-center rounded-xl border border-ash-300 px-4 text-body font-medium text-ink transition-colors hover:bg-ash-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
@@ -394,11 +371,11 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
               >
                 {t('similarAction')}
               </Link>
-            )
+            ) : null
           }
         />
       ) : (
-        flavorChart && (
+        model.offerSimilar && (
           <div className="flex gap-2" data-testid="bottle-actions">
             <Link
               href={{ pathname: '/sake/[brandId]/similar', params: { brandId: String(brandId) } }}
@@ -431,7 +408,7 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
       {viewer.canView && (
         <OwnBottlings
           brandId={brandId}
-          lineName={brand.nameRomaji ?? brand.nameKanji}
+          lineName={model.displayName}
           bottlings={ownBottlings}
           tastedIds={new Set(tastings.flatMap((e) => (e.expression ? [e.expression.id] : [])))}
           readOnly={!viewer.canLog}
@@ -462,6 +439,7 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
       )}
 
       {/* -- §9.6 Flavour chart (§17) ------------------------------------- */}
+      {/* `model.littlePublished` is this same absence. */}
       {flavorChart ? (
         <FlavorChartView chart={flavorChart} />
       ) : (
@@ -509,11 +487,11 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
         reading down the page does not meet two conventions. The romaji here
         is covered by the page's one transliteration caveat, in §9.1.
       */}
-      {showBrewerySection && (
+      {brewerySection && (
         <BottleSection label={t('theBreweryLabel')} testId="brand-brewery">
           <div className="flex flex-col gap-3">
             <div className="flex flex-col gap-0.5">
-              {breweryRomaji !== null ? (
+              {brewerySection.nameRomaji !== null ? (
                 <>
                   <p
                     className="text-card-heading font-medium text-ink"
@@ -521,19 +499,19 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
                     data-testid="brewery-section-name-romaji"
                     data-romaji-field=""
                   >
-                    {breweryRomaji}
+                    {brewerySection.nameRomaji}
                   </p>
                   <p className="text-meta text-ash-600">
                     <span lang="ja" data-testid="brewery-name-kanji">
-                      {brewery.nameKanji}
+                      {brewerySection.nameKanji}
                     </span>
-                    {prefecture && (
+                    {brewerySection.prefecture && (
                       <>
                         <span className="mx-1.5 text-ash-500" aria-hidden="true">
                           ·
                         </span>
                         <span lang="ja" data-testid="prefecture-name-ja">
-                          {prefecture.nameJa}
+                          {brewerySection.prefecture.nameJa}
                         </span>
                       </>
                     )}
@@ -546,11 +524,11 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
                     lang="ja"
                     data-testid="brewery-name-kanji"
                   >
-                    {brewery.nameKanji}
+                    {brewerySection.nameKanji}
                   </p>
-                  {prefecture && (
+                  {brewerySection.prefecture && (
                     <p className="text-meta text-ash-600" lang="ja" data-testid="prefecture-name-ja">
-                      {prefecture.nameJa}
+                      {brewerySection.prefecture.nameJa}
                     </p>
                   )}
                 </>
@@ -571,8 +549,3 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
   )
 }
 
-/** A Learn entry's answer up to its first full stop, for a one-line lead. */
-function firstSentence(text: string): string {
-  const end = text.search(/[.!?](\s|$)/)
-  return end === -1 ? text : text.slice(0, end + 1)
-}
