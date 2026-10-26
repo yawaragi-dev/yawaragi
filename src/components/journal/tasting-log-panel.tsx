@@ -62,6 +62,21 @@ export interface ExistingTasting {
   tastingNumber: number
 }
 
+/** A change other than the stars that the network can lose. */
+type LostKind = 'tags' | 'note' | 'undo' | 'delete'
+
+/** The not-saved line: the stars' own wording first, then the change's. */
+function notSavedLine(
+  unsaved: { tries: number } | null,
+  lost: { kind: LostKind; tries: number } | null,
+  t: (key: string) => string,
+): string {
+  if (unsaved) return unsaved.tries > 1 ? t('stillNoConnection') : t('noConnectionRating')
+  if (lost?.kind === 'undo' || lost?.kind === 'delete')
+    return lost.tries > 1 ? t('stillNoConnectionDelete') : t('noConnectionDelete')
+  return lost && lost.tries > 1 ? t('stillNoConnectionChange') : t('noConnectionRating')
+}
+
 interface Logged {
   entryId: string
   tastingNumber: number
@@ -143,6 +158,12 @@ export function TastingLogPanel({
    * again. `tries` counts the sends that found no connection.
    */
   const [unsaved, setUnsaved] = useState<{ value: number; tries: number } | null>(null)
+  /**
+   * The same for a quick tag, the note, Undo or Delete tasting (S6: they "use
+   * the rating panel's line"): what was tapped or typed stays, the line says
+   * so, and Try again sends it again.
+   */
+  const [lostChange, setLostChange] = useState<{ kind: LostKind; tries: number } | null>(null)
   const [detail, setDetail] = useState<DetailedNotes | undefined>(existing?.detail)
   const [sheetOpen, setSheetOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
@@ -176,6 +197,18 @@ export function TastingLogPanel({
     if (browserIsOnline()) return false
     setUnsaved((was) => ({ value, tries: (was?.tries ?? 0) + 1 }))
     return true
+  }
+
+  /** A change the network lost: keep it, say so, offer Try again. */
+  function changeHeldOffline(kind: LostKind): boolean {
+    if (browserIsOnline()) return false
+    setLostChange((was) => ({ kind, tries: was?.kind === kind ? was.tries + 1 : 1 }))
+    return true
+  }
+
+  /** That kind of change got through: its line goes. */
+  function changeArrived(kind: LostKind) {
+    setLostChange((was) => (was?.kind === kind ? null : was))
   }
 
   function rate(value: number) {
@@ -227,11 +260,20 @@ export function TastingLogPanel({
   function saveNote(value: string) {
     clearTimeout(noteTimer.current)
     if (!logged || value.trim() === savedNote.current.trim()) return
+    const before = savedNote.current
     savedNote.current = value
     startTransition(async () => {
       const result = await updateTasting(logged.entryId, { notes: value })
-      setFailed(result.status !== 'ok')
-      if (result.status === 'ok') changed()
+      if (result.status !== 'ok') {
+        // Not saved, so the next blur or Try again sends it again.
+        savedNote.current = before
+        if (changeHeldOffline('note')) return
+        setFailed(true)
+        return
+      }
+      setFailed(false)
+      changeArrived('note')
+      changed()
     })
   }
 
@@ -245,11 +287,30 @@ export function TastingLogPanel({
     if (!logged) return
     const next = tags.includes(tag) ? tags.filter((x) => x !== tag) : [...tags, tag]
     setTags(next)
+    sendTags(next)
+  }
+
+  function sendTags(next: readonly QuickTag[]) {
+    if (!logged) return
     startTransition(async () => {
       const result = await updateTasting(logged.entryId, { tags: [...next] })
-      setFailed(result.status !== 'ok')
-      if (result.status === 'ok') changed()
+      if (result.status !== 'ok') {
+        if (changeHeldOffline('tags')) return
+        setFailed(true)
+        return
+      }
+      setFailed(false)
+      changeArrived('tags')
+      changed()
     })
+  }
+
+  /** Try again on the not-saved line for a change other than the stars. */
+  function retryChange() {
+    if (lostChange?.kind === 'tags') sendTags(tags)
+    else if (lostChange?.kind === 'note') saveNote(note)
+    else if (lostChange?.kind === 'undo') undo()
+    else if (lostChange?.kind === 'delete') deleteTasting()
   }
 
   function undo() {
@@ -261,9 +322,11 @@ export function TastingLogPanel({
     startUndo(async () => {
       const result = await undoTasting(entryId)
       if (result.status !== 'ok') {
+        if (changeHeldOffline('undo')) return
         setFailed(true)
         return
       }
+      changeArrived('undo')
       // State set after an `await` is no longer part of the transition, so
       // without this inner one the panel resets at once and the page's
       // "You and this sake" catches up a beat later, when the refresh lands.
@@ -298,9 +361,11 @@ export function TastingLogPanel({
     startUndo(async () => {
       const result = await undoTasting(entryId)
       if (result.status !== 'ok') {
+        if (changeHeldOffline('delete')) return
         setFailed(true)
         return
       }
+      changeArrived('delete')
       // One transition with the refresh, as in `undo`.
       startUndo(() => {
         if (onDeleted) onDeleted()
@@ -558,13 +623,13 @@ export function TastingLogPanel({
         <p className="text-meta text-ash-600">{t('hint')}</p>
       )}
 
-      {unsaved && (
+      {(unsaved || lostChange) && (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1" role="alert" data-testid="tasting-log-not-saved">
-          <p className="text-meta text-ash-700">{unsaved.tries > 1 ? t('stillNoConnection') : t('noConnectionRating')}</p>
+          <p className="text-meta text-ash-700">{notSavedLine(unsaved, lostChange, t)}</p>
           <button
             type="button"
-            disabled={isPending}
-            onClick={() => rate(unsaved.value)}
+            disabled={isPending || isUndoing}
+            onClick={() => (unsaved ? rate(unsaved.value) : retryChange())}
             className="flex min-h-9 items-center rounded-md border border-ash-300 px-3 text-meta font-medium text-ink transition-colors hover:bg-ash-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600 disabled:opacity-60"
             data-testid="tasting-log-try-again"
           >
