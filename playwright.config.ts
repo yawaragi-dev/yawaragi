@@ -33,6 +33,9 @@ export default defineConfig({
   testDir: './e2e',
   // The production smoke has its own config and server (playwright.smoke.config.ts).
   testIgnore: 'smoke-prod.spec.ts',
+  // Renders the generateStaticParams routes one at a time before the suite,
+  // so two workers cannot corrupt the dev server's prerender manifest (#528).
+  globalSetup: './e2e/global-setup.ts',
   use: {
     baseURL: DEPLOYED_URL || 'http://localhost:3000',
     channel: 'chrome',
