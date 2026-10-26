@@ -790,6 +790,9 @@
     "notSavedValue": "{rating} · Nicht gespeichert",
     "noConnectionRating": "Keine Verbindung, deshalb steht das noch nicht in deinem Journal.",
     "stillNoConnection": "Immer noch keine Verbindung. Deine Sterne bleiben hier, bis sie zurück ist.",
+    "stillNoConnectionChange": "Immer noch keine Verbindung. Deine Änderung bleibt hier, bis sie zurück ist.",
+    "noConnectionDelete": "Keine Verbindung, deshalb steht diese Verkostung noch in deinem Journal.",
+    "stillNoConnectionDelete": "Immer noch keine Verbindung. Die Verkostung bleibt in deinem Journal, bis sie zurück ist.",
     "tryAgain": "Noch einmal versuchen"
   },
   "cellar": {
@@ -840,6 +843,12 @@
     "open": "Ausführliche Notizen hinzufügen",
     "edit": "Ausführliche Notizen",
     "error": "Das ließ sich gerade nicht speichern — versuch es noch einmal.",
+    "noConnection": "Keine Verbindung, deshalb steht das noch nicht in deinem Journal.",
+    "stillNoConnection": "Immer noch keine Verbindung. Deine Notizen bleiben hier, bis sie zurück ist.",
+    "tryAgain": "Noch einmal versuchen",
+    "leaveConfirm": "Gehen, ohne deine Notizen zu speichern?",
+    "leave": "Gehen",
+    "stay": "Bleiben",
     "notSet": "—",
     "stepLabel": "{scale}: {step}",
     "parts": {

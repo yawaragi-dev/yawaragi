@@ -92,6 +92,43 @@ test.describe('/en/collection — §11 Journal (ADR-0020, maintainer-only)', () 
     await context.close()
   })
 
+  test('detailed notes changed with no connection keep what was picked and ask before closing', async ({
+    browser,
+  }) => {
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([AGE_GATE_COOKIE, CONSENT_COOKIE, journalStub('populated')])
+    const page = await context.newPage()
+
+    await page.goto('/en/collection')
+    await page.getByTestId('journal-full-notes-s1').click()
+    await expect(page.getByTestId('detailed-notes-sheet')).toBeVisible()
+
+    // Design v1.9 S6 (written): the pick stays, the rating panel's line sits
+    // under the title, Done becomes Try again.
+    await context.setOffline(true)
+    await page.getByTestId('detailed-notes-toggle-palate').click()
+    await page.getByTestId('detailed-notes-scale-body-3').click()
+    await expect(page.getByTestId('detailed-notes-not-saved')).toHaveText(
+      'No connection, so this isn’t in your journal yet.',
+    )
+    await expect(page.getByTestId('detailed-notes-scale-body-3')).toHaveAttribute('aria-pressed', 'true')
+    await expect(page.getByTestId('detailed-notes-done')).toHaveCount(0)
+    await page.getByTestId('detailed-notes-try-again').click()
+    await expect(page.getByTestId('detailed-notes-not-saved')).toContainText('Still no connection.')
+
+    // Closing asks first, inside the sheet; Stay keeps it open.
+    await page.keyboard.press('Escape')
+    await expect(page.getByTestId('detailed-notes-leave-confirm')).toContainText('Leave without saving your notes?')
+    await page.getByTestId('detailed-notes-stay').click()
+    await expect(page.getByTestId('detailed-notes-sheet')).toBeVisible()
+    await page.keyboard.press('Escape')
+    await page.getByTestId('detailed-notes-leave').click()
+    await expect(page.getByTestId('detailed-notes-sheet')).toHaveCount(0)
+    await expect(page.getByTestId('app-error')).toHaveCount(0)
+
+    await context.close()
+  })
+
   test('empty: says the journal starts with one star, and where to find one', async ({ browser }) => {
     const context = await browser.newContext({ locale: 'en-US' })
     await context.addCookies([AGE_GATE_COOKIE, CONSENT_COOKIE, journalStub('empty')])

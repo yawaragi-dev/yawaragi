@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { NextIntlClientProvider } from 'next-intl'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import en from '~/messages/en.json'
 
 const rateNewTasting = vi.fn()
@@ -243,5 +243,64 @@ describe('§5 log panel', () => {
     fireEvent.click(screen.getByTestId('star-rating-4'))
     await waitFor(() => expect(screen.getByTestId('tasting-log-error')).toBeTruthy())
     expect(screen.getByTestId('tasting-log-rating').textContent).toBe('Tap to rate')
+  })
+})
+
+describe('§5 log panel with no connection (design v1.9 S6)', () => {
+  const EXISTING = { entryId: 'old', rating: 4, triedAt: Date.UTC(2026, 6, 18, 12), tastingNumber: 1 }
+  afterEach(() => vi.restoreAllMocks())
+
+  function goOffline() {
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false)
+    const lost = () => Promise.reject(new TypeError('Failed to fetch'))
+    updateTasting.mockImplementation(lost)
+    undoTasting.mockImplementation(lost)
+  }
+
+  async function tryAgain() {
+    const button = screen.getByTestId('tasting-log-try-again') as HTMLButtonElement
+    await waitFor(() => expect(button.disabled).toBe(false))
+    fireEvent.click(button)
+  }
+
+  it('keeps a quick tag tapped offline, says it is not in the journal yet, and sends it on Try again', async () => {
+    renderPanel({ existing: EXISTING })
+    goOffline()
+    fireEvent.click(screen.getByTestId('tasting-tag-warm'))
+
+    const line = await screen.findByTestId('tasting-log-not-saved')
+    expect(line.textContent).toContain('No connection, so this isn’t in your journal yet.')
+    expect(screen.queryByTestId('tasting-log-error')).toBeNull()
+    expect(screen.getByTestId('tasting-tag-warm').getAttribute('aria-pressed')).toBe('true')
+
+    await tryAgain()
+    await waitFor(() =>
+      expect(screen.getByTestId('tasting-log-not-saved').textContent).toContain(
+        'Still no connection. What you changed stays here until it’s back.',
+      ),
+    )
+
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true)
+    updateTasting.mockReset().mockResolvedValue({ status: 'ok' })
+    await tryAgain()
+    await waitFor(() => expect(updateTasting).toHaveBeenLastCalledWith('old', { tags: ['warm'] }))
+    await waitFor(() => expect(screen.queryByTestId('tasting-log-not-saved')).toBeNull())
+  })
+
+  it('says a delete with no connection left the tasting in the journal, and tries it again', async () => {
+    const onDeleted = vi.fn()
+    renderPanel({ existing: EXISTING, onDeleted })
+    goOffline()
+    fireEvent.click(screen.getByTestId('tasting-log-delete'))
+    fireEvent.click(screen.getByTestId('tasting-log-delete-confirm'))
+
+    const line = await screen.findByTestId('tasting-log-not-saved')
+    expect(line.textContent).toContain('No connection, so this tasting is still in your journal.')
+    expect(onDeleted).not.toHaveBeenCalled()
+
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true)
+    undoTasting.mockReset().mockResolvedValue({ status: 'ok' })
+    await tryAgain()
+    await waitFor(() => expect(onDeleted).toHaveBeenCalled())
   })
 })
