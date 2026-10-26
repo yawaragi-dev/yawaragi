@@ -3,6 +3,7 @@
 import { type ReactNode, useEffect, useRef, useState, useTransition } from 'react'
 import { useTranslations } from 'next-intl'
 import {
+  ArrowsClockwise,
   CalendarBlank,
   CaretDown,
   CaretUp,
@@ -10,6 +11,7 @@ import {
   Drop,
   Eye,
   ThermometerSimple,
+  WifiSlash,
   Wind,
 } from '@phosphor-icons/react/dist/ssr'
 import { InfoSheet } from '@/components/ui/info-sheet'
@@ -277,9 +279,10 @@ export function DetailedNotesSheet({
               type="button"
               onClick={retry}
               disabled={isPending}
-              className="min-h-10 rounded-xl border border-ash-300 px-[18px] text-body font-medium text-ink transition-colors hover:bg-ash-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600 disabled:opacity-60"
+              className="flex min-h-10 items-center gap-1.5 rounded-xl border border-ash-300 px-4 text-body font-medium text-ink transition-colors hover:bg-ash-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600 disabled:opacity-60"
               data-testid="detailed-notes-try-again"
             >
+              <ArrowsClockwise size={15} aria-hidden="true" />
               {t('tryAgain')}
             </button>
           ) : (
@@ -299,8 +302,9 @@ export function DetailedNotesSheet({
 
         {/* Design v1.9 S6: the rating panel's line, under the sheet title. */}
         {lost && !confirmingLeave && (
-          <p role="alert" className="px-5 pb-2.5 text-meta text-ash-700" data-testid="detailed-notes-not-saved">
-            {lost.tries > 1 ? t('stillNoConnection') : t('noConnection')}
+          <p role="alert" className="flex items-center gap-2.5 px-5 pb-2.5 text-meta text-ash-700" data-testid="detailed-notes-not-saved">
+            <WifiSlash size={16} aria-hidden="true" className="shrink-0 text-ash-600" />
+            <span>{lost.tries > 1 ? t('stillNoConnection') : t('noConnection')}</span>
           </p>
         )}
         {confirmingLeave && (

@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState, useTransition } from 'react'
 import { useFormatter, useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
-import { CheckCircle, SlidersHorizontal, Trash } from '@phosphor-icons/react/dist/ssr'
+import { ArrowsClockwise, CheckCircle, SlidersHorizontal, Trash, WifiSlash } from '@phosphor-icons/react/dist/ssr'
 import { Link } from '@/i18n/navigation'
 import { DetailedNotesSheet } from '@/components/journal/detailed-notes-sheet'
 import { StarRating } from '@/components/journal/star-rating'
@@ -624,15 +624,18 @@ export function TastingLogPanel({
       )}
 
       {(unsaved || lostChange) && (
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1" role="alert" data-testid="tasting-log-not-saved">
-          <p className="text-meta text-ash-700">{notSavedLine(unsaved, lostChange, t)}</p>
+        <div className="flex items-center gap-x-3" role="alert" data-testid="tasting-log-not-saved">
+          {/* 116: wifi-slash, the line, and Try again on the right. */}
+          <WifiSlash size={16} aria-hidden="true" className="shrink-0 text-ash-600" />
+          <p className="min-w-0 flex-1 text-meta text-ash-700">{notSavedLine(unsaved, lostChange, t)}</p>
           <button
             type="button"
             disabled={isPending || isUndoing}
             onClick={() => (unsaved ? rate(unsaved.value) : retryChange())}
-            className="flex min-h-9 items-center rounded-md border border-ash-300 px-3 text-meta font-medium text-ink transition-colors hover:bg-ash-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600 disabled:opacity-60"
+            className="flex min-h-9 shrink-0 items-center gap-1.5 rounded-md border border-ash-300 px-3 text-meta font-medium text-ink transition-colors hover:bg-ash-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600 disabled:opacity-60"
             data-testid="tasting-log-try-again"
           >
+            <ArrowsClockwise size={14} aria-hidden="true" />
             {t('tryAgain')}
           </button>
         </div>
