@@ -68,7 +68,7 @@ export async function LandingLoop() {
 
   const phone = (
     <div
-      className="relative h-[633px] w-[300px] shrink-0 rounded-[34px] bg-ground shadow-yw-md"
+      className="relative h-[524px] w-[300px] shrink-0 rounded-[34px] bg-ground shadow-yw-md"
       aria-hidden="true"
       data-testid="landing-loop-phone"
     >
