@@ -54,7 +54,9 @@ test.describe('production build', () => {
     await expect(page.getByTestId('age-gate')).toBeVisible()
     await page.getByTestId('age-gate-accept').click()
     await expect(page.getByTestId('age-gate')).toBeHidden()
-    // The hero's example card needs the catalogue; the way into the app does not.
+    // The hero's loop is drawn with a made-up bottle, so it needs no catalogue.
+    await expect(page.getByTestId('landing-hero')).toBeVisible()
+    await expect(page.getByTestId('landing-proof-repo')).toBeVisible()
     await page.getByTestId('landing-open-app').click()
     await expect(page).toHaveURL(/\/en\/home$/)
     await expect(page.getByTestId('home-page')).toBeVisible()
