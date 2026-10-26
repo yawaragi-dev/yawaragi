@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { NextIntlClientProvider } from 'next-intl'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import en from '~/messages/en.json'
 
 const updateTasting = vi.fn()
@@ -131,3 +131,87 @@ describe('§10 detailed notes', () => {
     await waitFor(() => expect(screen.getByTestId('detailed-notes-error')).toBeTruthy())
   })
 })
+
+describe('§10 detailed notes with no connection (design v1.9 S6)', () => {
+  function goOffline() {
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false)
+    updateTasting.mockRejectedValue(new TypeError('Failed to fetch'))
+  }
+  afterEach(() => vi.restoreAllMocks())
+
+  it('keeps the pick, says it is not in the journal yet, and turns Done into Try again', async () => {
+    goOffline()
+    const { onSaved } = renderSheet()
+    fireEvent.click(screen.getByTestId('detailed-notes-toggle-palate'))
+    fireEvent.click(screen.getByTestId('detailed-notes-scale-body-3'))
+
+    const line = await screen.findByTestId('detailed-notes-not-saved')
+    expect(line.textContent).toContain('No connection, so this isn’t in your journal yet.')
+    expect(screen.queryByTestId('detailed-notes-error')).toBeNull()
+    expect(screen.getByTestId('detailed-notes-scale-body-3').getAttribute('aria-pressed')).toBe('true')
+    expect(screen.queryByTestId('detailed-notes-done')).toBeNull()
+    expect(onSaved).not.toHaveBeenCalled()
+
+    await tryAgain()
+    await waitFor(() =>
+      expect(screen.getByTestId('detailed-notes-not-saved').textContent).toContain('Still no connection.'),
+    )
+  })
+
+  it('sends everything that was kept when Try again finds the connection back', async () => {
+    goOffline()
+    const { onSaved } = renderSheet()
+    fireEvent.click(screen.getByTestId('detailed-notes-toggle-palate'))
+    fireEvent.click(screen.getByTestId('detailed-notes-scale-body-3'))
+    await screen.findByTestId('detailed-notes-not-saved')
+    fireEvent.change(screen.getByLabelText('Tasted on'), { target: { value: '2026-10-01' } })
+    await waitFor(() => expect(updateTasting).toHaveBeenCalledTimes(2))
+
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true)
+    updateTasting.mockResolvedValue({ status: 'ok' })
+    await tryAgain()
+    await waitFor(() =>
+      expect(updateTasting).toHaveBeenLastCalledWith('e1', {
+        detail: { palate: { body: 3 } },
+        triedOn: '2026-10-01',
+      }),
+    )
+    await waitFor(() => expect(screen.queryByTestId('detailed-notes-not-saved')).toBeNull())
+    expect(screen.getByTestId('detailed-notes-done')).toBeTruthy()
+    expect(onSaved).toHaveBeenCalledWith({ palate: { body: 3 } })
+  })
+
+  it('asks before closing on notes that were not saved, and leaving drops them', async () => {
+    goOffline()
+    const onOpenChange = vi.fn()
+    render(
+      <NextIntlClientProvider locale="en" messages={en} timeZone="UTC">
+        <DetailedNotesSheet entryId="e1" initial={undefined} initialDay="2026-10-08" open onOpenChange={onOpenChange} />
+      </NextIntlClientProvider>,
+    )
+    fireEvent.click(screen.getByTestId('detailed-notes-toggle-palate'))
+    fireEvent.click(screen.getByTestId('detailed-notes-scale-body-3'))
+    await screen.findByTestId('detailed-notes-not-saved')
+
+    fireEvent.keyDown(screen.getByTestId('detailed-notes-sheet'), { key: 'Escape' })
+    const ask = await screen.findByTestId('detailed-notes-leave-confirm')
+    expect(ask.textContent).toContain('Leave without saving your notes?')
+    expect(onOpenChange).not.toHaveBeenCalled()
+
+    fireEvent.click(screen.getByTestId('detailed-notes-stay'))
+    expect(screen.queryByTestId('detailed-notes-leave-confirm')).toBeNull()
+    expect(screen.getByTestId('detailed-notes-progress').textContent).toBe('1 of 5 parts filled')
+
+    fireEvent.keyDown(screen.getByTestId('detailed-notes-sheet'), { key: 'Escape' })
+    fireEvent.click(await screen.findByTestId('detailed-notes-leave'))
+    expect(onOpenChange).toHaveBeenCalledWith(false)
+    expect(screen.getByTestId('detailed-notes-progress').textContent).toBe('All optional')
+  })
+})
+
+/** Try again, once the lost send has settled. */
+async function tryAgain() {
+  const button = screen.getByTestId('detailed-notes-try-again') as HTMLButtonElement
+  await waitFor(() => expect(button.disabled).toBe(false))
+  fireEvent.click(button)
+}

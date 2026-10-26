@@ -31,15 +31,18 @@ import {
   VESSELS,
   isPartFilled,
 } from '@/lib/schemas/detailed-notes'
-import { EARLIEST_TASTING_DAY } from '@/lib/schemas/tasting-input'
+import { EARLIEST_TASTING_DAY, type TastingPatch } from '@/lib/schemas/tasting-input'
 import * as saves from '@/lib/taste/tasting-actions'
-import { reachable } from '@/lib/network/settle-request'
+import { browserIsOnline, reachable } from '@/lib/network/settle-request'
 import { europeanDay } from '@/lib/taste/tasting-day'
 import { cn } from '@/lib/utils'
 
 // Saves that the network loses answer "unavailable" (Couldn't save) instead
 // of throwing to the error page (design question S6).
 const updateTasting = reachable(saves.updateTasting)
+
+/** What the sheet saves: the whole sheet, and the day. */
+type SheetPatch = Pick<TastingPatch, 'detail' | 'triedOn'>
 
 /**
  * §10 Detailed notes — the bottom sheet. Reference screenshot 11.
@@ -93,8 +96,20 @@ export function DetailedNotesSheet({
   // decide" order. §10 opens Palate; the maintainer preferred the first.
   const [openPart, setOpenPart] = useState<DetailedNotesPart | null>(DETAILED_NOTES_PARTS[0])
   const [failed, setFailed] = useState(false)
-  const [, startTransition] = useTransition()
+  /**
+   * Design v1.9 S6 (written): saves the network lost. The fields keep what
+   * was picked or typed, a line under the title says it is not in the journal
+   * yet, Done becomes Try again, and closing asks first. `tries` counts the
+   * sends that found no connection ("Still no connection" from the second).
+   */
+  const [lost, setLost] = useState<{ tries: number } | null>(null)
+  const [confirmingLeave, setConfirmingLeave] = useState(false)
+  const [isPending, startTransition] = useTransition()
   const textTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  /** What the network lost so far, sent again with the next save. */
+  const unsent = useRef<SheetPatch | null>(null)
+  /** The sheet as the server last kept it — what "Leave" goes back to. */
+  const saved = useRef({ notes: initial ?? {}, day: initialDay })
   const [day, setDay] = useState(initialDay)
   // The visitor's own calendar: a tasting can be today, never tomorrow. Read
   // once, when the sheet first renders (only ever in the browser, after a tap).
@@ -102,12 +117,36 @@ export function DetailedNotesSheet({
 
   useEffect(() => () => clearTimeout(textTimer.current), [])
 
-  function save(next: DetailedNotes) {
+  /** Send a change, together with anything still waiting from a lost save. */
+  function send(patch: SheetPatch) {
+    const full: SheetPatch = { ...unsent.current, ...patch }
+    if (full.detail === undefined && full.triedOn === undefined) return
     startTransition(async () => {
-      const result = await updateTasting(entryId, { detail: next })
-      setFailed(result.status !== 'ok')
-      if (result.status === 'ok') onSaved?.(next)
+      const result = await updateTasting(entryId, full)
+      if (result.status === 'ok') {
+        saved.current = { notes: full.detail ?? saved.current.notes, day: full.triedOn ?? saved.current.day }
+        // Drop only what this send carried: a later lost save stays waiting.
+        const left = { ...unsent.current }
+        if (left.detail === full.detail) delete left.detail
+        if (left.triedOn === full.triedOn) delete left.triedOn
+        unsent.current = left.detail === undefined && left.triedOn === undefined ? null : left
+        setFailed(false)
+        if (!unsent.current) setLost(null)
+        onSaved?.(saved.current.notes)
+        return
+      }
+      if (result.status === 'unavailable' && !browserIsOnline()) {
+        unsent.current = { ...unsent.current, ...full }
+        setFailed(false)
+        setLost((was) => ({ tries: (was?.tries ?? 0) + 1 }))
+        return
+      }
+      setFailed(true)
     })
+  }
+
+  function save(next: DetailedNotes) {
+    send({ detail: next })
   }
 
   /** Move the tasting to another day. A cleared or half-typed field is
@@ -115,11 +154,36 @@ export function DetailedNotesSheet({
   function changeDay(value: string) {
     setDay(value)
     if (!/^\d{4}-\d{2}-\d{2}$/.test(value) || value > today || value < EARLIEST_TASTING_DAY) return
-    startTransition(async () => {
-      const result = await updateTasting(entryId, { triedOn: value })
-      setFailed(result.status !== 'ok')
-      if (result.status === 'ok') onSaved?.(notes)
-    })
+    send({ triedOn: value })
+  }
+
+  /** Try again: send what is waiting, including text still in its pause. */
+  function retry() {
+    const typing = textTimer.current !== undefined
+    clearTimeout(textTimer.current)
+    textTimer.current = undefined
+    send(typing ? { detail: notes } : {})
+  }
+
+  /** Closing with unsaved notes asks first; anything else closes as before. */
+  function requestOpenChange(next: boolean) {
+    if (!next && lost) {
+      setConfirmingLeave(true)
+      return
+    }
+    onOpenChange(next)
+  }
+
+  /** "Leave": what was not saved is dropped, and the sheet reopens as kept. */
+  function leave() {
+    clearTimeout(textTimer.current)
+    textTimer.current = undefined
+    unsent.current = null
+    setLost(null)
+    setConfirmingLeave(false)
+    setNotes(saved.current.notes)
+    setDay(saved.current.day)
+    onOpenChange(false)
   }
 
   /** Apply a change to one part and save straight away. */
@@ -134,7 +198,10 @@ export function DetailedNotesSheet({
     const next = { ...notes, serve: { ...notes.serve, with: text } }
     setNotes(next)
     clearTimeout(textTimer.current)
-    textTimer.current = setTimeout(() => save(next), SAVE_TEXT_DEBOUNCE_MS)
+    textTimer.current = setTimeout(() => {
+      textTimer.current = undefined
+      save(next)
+    }, SAVE_TEXT_DEBOUNCE_MS)
   }
 
   /** One-of: tapping the current choice clears it. */
@@ -187,7 +254,7 @@ export function DetailedNotesSheet({
   }
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet open={open} onOpenChange={requestOpenChange}>
       <SheetContent
         side="bottom"
         showCloseButton={false}
@@ -205,18 +272,66 @@ export function DetailedNotesSheet({
               {filled > 0 ? t('partsFilled', { n: filled, total }) : t('allOptional')}
             </p>
           </div>
-          <SheetClose
-            render={
+          {lost ? (
+            <button
+              type="button"
+              onClick={retry}
+              disabled={isPending}
+              className="min-h-10 rounded-xl border border-ash-300 px-[18px] text-body font-medium text-ink transition-colors hover:bg-ash-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600 disabled:opacity-60"
+              data-testid="detailed-notes-try-again"
+            >
+              {t('tryAgain')}
+            </button>
+          ) : (
+            <SheetClose
+              render={
+                <button
+                  type="button"
+                  className="min-h-10 rounded-xl border border-ginshu-400 px-[18px] text-body font-medium text-ginshu-700 transition-colors hover:bg-ginshu-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+                  data-testid="detailed-notes-done"
+                />
+              }
+            >
+              {t('done')}
+            </SheetClose>
+          )}
+        </div>
+
+        {/* Design v1.9 S6: the rating panel's line, under the sheet title. */}
+        {lost && !confirmingLeave && (
+          <p role="alert" className="px-5 pb-2.5 text-meta text-ash-700" data-testid="detailed-notes-not-saved">
+            {lost.tries > 1 ? t('stillNoConnection') : t('noConnection')}
+          </p>
+        )}
+        {confirmingLeave && (
+          // Asked in the sheet, in the delete question's ground-coloured box.
+          <div
+            className="mx-5 mb-2.5 flex flex-col gap-2 rounded-md bg-ground p-3"
+            role="alertdialog"
+            aria-label={t('leaveConfirm')}
+            data-testid="detailed-notes-leave-confirm"
+          >
+            <span className="text-meta text-ink">{t('leaveConfirm')}</span>
+            <div className="flex justify-end gap-2">
               <button
                 type="button"
-                className="min-h-10 rounded-xl border border-ginshu-400 px-[18px] text-body font-medium text-ginshu-700 transition-colors hover:bg-ginshu-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
-                data-testid="detailed-notes-done"
-              />
-            }
-          >
-            {t('done')}
-          </SheetClose>
-        </div>
+                onClick={() => setConfirmingLeave(false)}
+                className="min-h-9 rounded-md px-3 text-meta text-ash-700 transition-colors hover:bg-ash-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+                data-testid="detailed-notes-stay"
+              >
+                {t('stay')}
+              </button>
+              <button
+                type="button"
+                onClick={leave}
+                className="min-h-9 rounded-md border border-ginshu-700 bg-ginshu-100 px-3 text-meta font-medium text-ginshu-700 transition-colors hover:bg-ginshu-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+                data-testid="detailed-notes-leave"
+              >
+                {t('leave')}
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Rule 7: the list fades under the fixed header instead of a hard
             border, with 16px of padding so nothing fades at rest. */}

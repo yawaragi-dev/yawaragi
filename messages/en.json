@@ -790,6 +790,9 @@
     "notSavedValue": "{rating} · Not saved",
     "noConnectionRating": "No connection, so this isn’t in your journal yet.",
     "stillNoConnection": "Still no connection. Your stars stay here until it’s back.",
+    "stillNoConnectionChange": "Still no connection. What you changed stays here until it’s back.",
+    "noConnectionDelete": "No connection, so this tasting is still in your journal.",
+    "stillNoConnectionDelete": "Still no connection. The tasting stays in your journal until it’s back.",
     "tryAgain": "Try again"
   },
   "cellar": {
@@ -840,6 +843,12 @@
     "open": "Add detailed notes",
     "edit": "Detailed notes",
     "error": "Couldn’t save that just now — try again.",
+    "noConnection": "No connection, so this isn’t in your journal yet.",
+    "stillNoConnection": "Still no connection. Your notes stay here until it’s back.",
+    "tryAgain": "Try again",
+    "leaveConfirm": "Leave without saving your notes?",
+    "leave": "Leave",
+    "stay": "Stay",
     "notSet": "—",
     "stepLabel": "{scale}: {step}",
     "parts": {
