@@ -7,7 +7,7 @@ import { type ReadCache, readCacheKey, upstashReadCache } from './read-cache'
 import { getPathname } from '@/i18n/navigation'
 import { ARRIVED_VIA_SCAN_QUERY } from '@/lib/scan/arrived-via-scan'
 import { ownBottlingForRead } from '@/lib/scan/read-bottling'
-import { notOneBottleOfSake } from '@/lib/scan/read-kind'
+import { firstReadStands, landLabel } from '@/lib/scan/read-kind'
 import { resolveViewerJournal } from '@/lib/taste/viewer-journal'
 import type { Locale } from '@/i18n/routing'
 import { routing } from '@/i18n/routing'
@@ -331,7 +331,7 @@ async function runScanAction(
       return finish(
         await withEarlierRead(
           await withNearestCandidates(
-            await extractAndLookupWithProvider(getVisionProvider(TIER_2_VISION_PROVIDER_KEY), image, localeRaw),
+            (await extractAndLookupWithProvider(getVisionProvider(TIER_2_VISION_PROVIDER_KEY), image, localeRaw)).state,
             localeRaw,
           ),
           earlierRead,
@@ -339,28 +339,18 @@ async function runScanAction(
         ),
       )
     }
-    const tier1Result = await extractAndLookupWithProvider(
+    const tier1 = await extractAndLookupWithProvider(
       getVisionProvider(DEFAULT_VISION_PROVIDER_KEY),
       image,
       localeRaw,
     )
-    const tier1BreweryNotPrinted =
-      tier1Result.status === 'matched' && tier1Result.extraction.brewery_printed === false
-    if (
-      tier1BreweryNotPrinted ||
-      // "Not sake" and "not one bottle" end the scan without a lookup, so
-      // they are tier 2's to say. On the 118-photo eval tier 1 called two
-      // single bottles "several bottles" (one of them a sake); tier 2 made
-      // no such mistake, and neither model called a sake anything else.
-      tier1Result.status === 'not_sake' ||
-      tier1Result.status === 'not_one_bottle' ||
-      tier1Result.status === 'no_match' ||
-      tier1Result.status === 'low_confidence' ||
-      tier1Result.status === 'extraction_failed' ||
-      tier1Result.status === 'matched_brand_only' ||
-      tier1Result.status === 'matched_brewery_only' ||
-      tier1Result.status === 'ambiguous'
-    ) {
+    const tier1Result = tier1.state
+    const tier1BreweryNotPrinted = tier1.kind === 'exact' && tier1.breweryPrinted === false
+    // The rule lives in `read-kind.ts`, where the eval replays it too. On the
+    // 118-photo eval tier 1 called two single bottles "several bottles" (one
+    // of them a sake); tier 2 made no such mistake, which is why "not sake"
+    // and "not one bottle" are read again.
+    if (!firstReadStands(tier1.kind, tier1.breweryPrinted)) {
       debugAdd(
         'ScanAction',
         `tier-1 (Haiku) returned ${tier1Result.status} — retrying with tier-2 (${TIER_2_VISION_PROVIDER_KEY})`,
@@ -379,7 +369,7 @@ async function runScanAction(
       return finish(
         await withEarlierRead(
           await withNearestCandidates(
-            await extractAndLookupWithProvider(getVisionProvider(TIER_2_VISION_PROVIDER_KEY), image, localeRaw),
+            (await extractAndLookupWithProvider(getVisionProvider(TIER_2_VISION_PROVIDER_KEY), image, localeRaw)).state,
             localeRaw,
           ),
           earlierRead,
@@ -526,11 +516,19 @@ async function withOwnBottlings(state: ScanActionState): Promise<ScanActionState
  * + Next.js error digest. The server-side debug trace would otherwise
  * be lost because the response never lands on the client to carry it.
  */
+/** One model's read of the photo: the state it renders, and where it landed for the two-tier rule. */
+interface OneRead {
+  state: ScanActionState
+  /** The landing's kind (`read-kind.ts`), or `failed` when the read threw. */
+  kind: string
+  breweryPrinted: boolean | undefined
+}
+
 async function extractAndLookupWithProvider(
   provider: VisionProvider,
   image: Blob,
   localeRaw: Locale,
-): Promise<ScanActionState> {
+): Promise<OneRead> {
     try {
       // The downscaled JPEG goes inline as base64 on /v1/messages;
       // the Anthropic Files API is forbidden (`pnpm
@@ -538,15 +536,21 @@ async function extractAndLookupWithProvider(
       // through `LabelScanExtractionSchema`, pinning `source` to
       // `'llm_extracted'`.
       const extraction = await provider.extractLabel(image)
-      const other = notOneBottleOfSake(extraction)
-      if (other?.kind === 'not_one_bottle') return { status: 'not_one_bottle', extraction, subject: other.subject }
-      if (other?.kind === 'not_sake') return { status: 'not_sake', extraction, drink: other.drink }
-      // Nothing written on this side (design v1.7 G): there is no name to
-      // look up, so the catalogue is not asked — the answer does not depend
-      // on it being reachable.
-      if (extraction.legibility === 'no_text') return { status: 'low_confidence', extraction }
-      const resolved = await resolveScannedLabel(extraction)
-      return mapResolvedToState(resolved, extraction, localeRaw)
+      const landing = await landLabel(extraction, () => resolveScannedLabel(extraction))
+      const breweryPrinted = extraction.brewery_printed
+      switch (landing.kind) {
+        case 'not_one_bottle':
+          return { kind: landing.kind, breweryPrinted, state: { status: 'not_one_bottle', extraction, subject: landing.subject } }
+        case 'not_sake':
+          return { kind: landing.kind, breweryPrinted, state: { status: 'not_sake', extraction, drink: landing.drink } }
+        // Nothing written on this side (design v1.7 G): there is no name to
+        // look up, so the catalogue is not asked — the answer does not depend
+        // on it being reachable.
+        case 'no_text':
+          return { kind: landing.kind, breweryPrinted, state: { status: 'low_confidence', extraction } }
+        default:
+          return { kind: landing.kind, breweryPrinted, state: await mapResolvedToState(landing, extraction, localeRaw) }
+      }
     } catch (err) {
       const name = err instanceof Error ? err.name : 'UnknownError'
       const message = err instanceof Error ? err.message : String(err)
@@ -570,7 +574,7 @@ async function extractAndLookupWithProvider(
         { message: message.slice(0, 500) },
         isExpectedNoObject ? 'warn' : 'error',
       )
-      return { status: 'extraction_failed', reason: name }
+      return { kind: 'failed', breweryPrinted: undefined, state: { status: 'extraction_failed', reason: name } }
     }
 }
 

@@ -117,7 +117,7 @@ import {
 } from '@/lib/sakenowa/resolve-scanned-label'
 import { LABEL_SCAN_PROMPTS } from '@/lib/ai/vision/anthropic-haiku-provider'
 import type { LabelScanExtraction } from '@/lib/schemas/label-scan-extraction'
-import { notOneBottleOfSake, type NotOneBottleOfSake } from '@/lib/scan/read-kind'
+import { firstReadStands, landLabel, type NotOneBottleOfSake } from '@/lib/scan/read-kind'
 import { canJudge, judgeLanding, type Landing, type Verdict } from '~/evals/label-scan-jp/judge'
 import { charAccuracy } from '~/evals/label-scan-jp/levenshtein'
 import { photosInTheWrongFolder } from '~/evals/label-scan-jp/photo-folders'
@@ -155,7 +155,7 @@ const MIME_BY_EXT: Record<string, string> = {
 
 interface Resolution {
   /** `resolveScannedLabel`'s kind, or `error` when the lookup threw. */
-  kind: ResolveScannedLabelResult['kind'] | NotOneBottleOfSake['kind'] | 'error'
+  kind: ResolveScannedLabelResult['kind'] | NotOneBottleOfSake['kind'] | 'no_text' | 'error'
   /** What the scan landed on, for the detail table. */
   landedOn: string
   verdict: Verdict
@@ -334,17 +334,12 @@ async function judge(
   extraction: LabelScanExtraction,
   entry: GroundTruthEntry,
 ): Promise<Omit<Resolution, 'ungatedVerdict'>> {
-  // As the scan action does: a menu, several bottles or a bottle the label
-  // says is not sake is answered without asking the catalogue.
-  const other = notOneBottleOfSake(extraction)
-  if (other) {
-    const what = other.kind === 'not_sake' ? other.drink : other.subject
-    return { kind: other.kind, landedOn: `— (${what})`, verdict: judgeLanding(entry, { kind: 'none' }) }
-  }
-
-  let resolved: ResolveScannedLabelResult
+  // Landed exactly as the scan action lands it (`landLabel`): a menu, several
+  // bottles, a bottle the label says is not sake or a side with no writing is
+  // answered without asking the catalogue.
+  let resolved: Awaited<ReturnType<typeof landLabel<ResolveScannedLabelResult>>>
   try {
-    resolved = await resolveScannedLabel(extraction)
+    resolved = await landLabel(extraction, () => resolveScannedLabel(extraction))
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
     return { kind: 'error', landedOn: `lookup threw: ${message}`, verdict: 'none' }
@@ -352,6 +347,10 @@ async function judge(
 
   let landing: Landing
   let landedOn: string
+  if (resolved.kind === 'not_sake' || resolved.kind === 'not_one_bottle' || resolved.kind === 'no_text') {
+    const what = resolved.kind === 'not_sake' ? resolved.drink : resolved.kind === 'not_one_bottle' ? resolved.subject : 'no writing'
+    return { kind: resolved.kind, landedOn: `— (${what})`, verdict: judgeLanding(entry, { kind: 'none' }) }
+  }
   if (resolved.kind === 'no_match' || resolved.kind === 'low_confidence') {
     landing = { kind: 'none' }
     landedOn = '—'
@@ -374,7 +373,7 @@ async function judge(
 function replayTwoTier(label: string, tier1: ProviderResult, tier2: ProviderResult): ProviderResult {
   const tier2ByFile = new Map(tier2.photos.map((p) => [p.file, p]))
   const photos = tier1.photos.map((first) => {
-    if (first.resolution?.kind === 'exact' && first.breweryPrinted !== false) return first
+    if (firstReadStands(first.resolution?.kind ?? 'failed', first.breweryPrinted)) return first
     const second = tier2ByFile.get(first.file)
     return second ? { ...second, latencyMs: first.latencyMs + second.latencyMs } : first
   })
