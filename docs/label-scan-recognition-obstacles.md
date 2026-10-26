@@ -511,7 +511,7 @@ Verified on the Tanigawa-dake bottle: Haiku returned `天向 / 天向酒造` →
 
 **Status.** Two complementary fixes:
 
-1. **Sake grade / style token blocklist** (`SAKE_GRADE_TOKENS` in `src/lib/sakenowa/lookup.ts`). When the first word of a Latin extraction is a known sake descriptor (`junmai`, `ginjo`, `daiginjo`, `honjozo`, `tokubetsu`, `kimoto`, `yamahai`, `nigori`, `taru`, `kijoshu`, `koshu`, …), the first-word-strip variant is suppressed. The verbatim and space-stripped forms still run — if a real brand IS literally called `"Junmai Taru Sake"` it'll still match, but the bare `"junmai"` no longer matches an unrelated brand.
+1. **Sake grade / style token blocklist** (`SAKE_GRADE_TOKENS` in `src/lib/sakenowa/label-match-rules.ts`). When the first word of a Latin extraction is a known sake descriptor (`junmai`, `ginjo`, `daiginjo`, `honjozo`, `tokubetsu`, `kimoto`, `yamahai`, `nigori`, `taru`, `kijoshu`, `koshu`, …), the first-word-strip variant is suppressed. The verbatim and space-stripped forms still run — if a real brand IS literally called `"Junmai Taru Sake"` it'll still match, but the bare `"junmai"` no longer matches an unrelated brand.
 2. **§24 tier-2 retry** also catches this case independently: the misleading `matched_brand_only` routing triggers a Sonnet retry, which on this image returns `菊正宗` cleanly with no divergence.
 
 The two fixes layer: the blocklist prevents the wrong-brand divergence card on Haiku alone (when Sonnet retry is disabled or unavailable), and tier-2 covers the residual cases where Haiku's extraction is so wrong the descriptor lookup wouldn't have helped anyway.
