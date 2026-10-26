@@ -158,7 +158,7 @@ Turn it off with `?debug=0`. This is the trace you read when a scan resolves to 
 
 ## Landing hero (UX-E)
 
-The landing hero renders a real catalogued sake (木戸泉 / Kidoizumi, `brand_id 310`) straight from the Postgres mirror — **no paid calls**. It only renders once the age gate is accepted, and degrades to the text intro if the mirror is unreachable (so it also survives a DB-less environment).
+The landing hero is a looping phone (design v1.8 K: scan → result → rate → palate, about 11 s) drawn with the made-up demo bottle "Mihon (見本)" — **no catalogue lookup and no database**, so it renders the same in a DB-less environment, before and after the age gate. To see the still frame, turn on reduced motion (DevTools → Rendering → `prefers-reduced-motion: reduce`); the pause control sits under the phone. Code: `src/components/landing/landing-loop.tsx`, `src/lib/landing/demo-bottle.ts`.
 
 ---
 
