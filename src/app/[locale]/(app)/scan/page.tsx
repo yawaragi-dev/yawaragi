@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { ScanForm } from '@/components/scan/scan-form'
-import { isDebugEnabledFromCookies } from '@/lib/debug/debug-mode'
+import { isDebugEnabled } from '@/lib/debug/debug-access'
 // `DebugPanelMount` lives at the layout level (renders persistently
 // across navigations). This page only sources the boolean prop the
 // form uses to gate its per-step pushes into the app-level store.
@@ -65,7 +65,7 @@ export default async function ScanEntryPage({ params }: PageProps) {
   // Server-rendered: the debug cookie is HttpOnly, so the form can't
   // read it from client JS. We pass the boolean down as a prop and the
   // form skips the panel + per-step accumulation when it's false.
-  const debugMode = isDebugEnabledFromCookies(cookieJar)
+  const debugMode = await isDebugEnabled(cookieJar)
   // ADR-0020: only a visitor who can keep a journal gets §5's log panel.
   const { canLog } = await resolveViewerJournal(cookieJar)
   const signedIn = canLog || (await auth()).userId != null

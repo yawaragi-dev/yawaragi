@@ -7,7 +7,7 @@ import {
   resolveCrossBeverageTarget,
 } from '@/lib/cross-beverage/forward-lookup'
 import { DebugLog, debugAdd, runWithDebugLog } from '@/lib/debug/debug-log'
-import { isDebugEnabledFromCookies } from '@/lib/debug/debug-mode'
+import { isDebugEnabled } from '@/lib/debug/debug-access'
 import type { FlavorAxes } from '@/lib/flavor/flavor-similarity'
 import { readAnonymousSessionCookie } from '@/lib/legal/anonymous-session-cookie'
 import { enforceRateLimit } from '@/lib/rate-limit/enforce-rate-limit'
@@ -68,7 +68,7 @@ async function recordTasteEvent(
   resolveTarget: () => Promise<ResolvedTarget>,
 ): Promise<TasteActionState> {
   const cookieJar = await cookies()
-  const log = isDebugEnabledFromCookies(cookieJar) ? new DebugLog() : undefined
+  const log = (await isDebugEnabled(cookieJar)) ? new DebugLog() : undefined
 
   const result = await runWithDebugLog(log, async (): Promise<TasteActionState> => {
     debugAdd('TasteAction', `entered: ${label}`)

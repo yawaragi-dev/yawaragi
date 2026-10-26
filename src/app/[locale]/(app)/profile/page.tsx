@@ -20,7 +20,7 @@ import { FlavorRadarView } from '@/components/sake/flavor-radar-view'
 import { SakenowaAttributionView } from '@/components/sake/sakenowa-attribution'
 import { coldStartChips } from '@/lib/cross-beverage/cold-start-chips'
 import { resolveCrossBeverageTarget } from '@/lib/cross-beverage/forward-lookup'
-import { isDebugEnabledFromCookies } from '@/lib/debug/debug-mode'
+import { isDebugEnabled } from '@/lib/debug/debug-access'
 import { hasAcceptedAgeGate } from '@/lib/legal/age-gate-cookie'
 import { readAnonymousSessionCookie } from '@/lib/legal/anonymous-session-cookie'
 import { FLAVOR_AXES, type FlavorAxis } from '@/lib/schemas/flavor-chart'
@@ -325,7 +325,7 @@ export default async function PalatePage({
   const t = await getTranslations('palate')
   const tAxis = await getTranslations('flavorAxis')
   const tAttribution = await getTranslations('sakenowaAttribution')
-  const debugMode = isDebugEnabledFromCookies(cookieJar)
+  const debugMode = await isDebugEnabled(cookieJar)
   // The journal first, the anonymous session second. A maintainer's tastings
   // are the real thing; the session store is what an anonymous visitor builds
   // from scans and cross-beverage seeds.

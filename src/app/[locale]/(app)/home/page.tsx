@@ -16,7 +16,7 @@ import { HomeRecentTastings } from '@/components/home/recent-tastings'
 import { currentUserIsMaintainer } from '@/lib/auth/maintainer'
 import { coldStartChips } from '@/lib/cross-beverage/cold-start-chips'
 import { resolveCrossBeverageTarget } from '@/lib/cross-beverage/forward-lookup'
-import { isDebugEnabledFromCookies } from '@/lib/debug/debug-mode'
+import { isDebugEnabled } from '@/lib/debug/debug-access'
 import { isLaunched } from '@/i18n/launch-state'
 import { routing } from '@/i18n/routing'
 import { getJournalStore } from '@/lib/taste/get-journal-store'
@@ -156,7 +156,7 @@ export default async function HomeTabPage({ params }: PageProps) {
   // has not accepted the 18+ gate never reaches this component. It matters
   // now that the screen names sakes and shows ratings.
   const cookieJar = await cookies()
-  const debugMode = isDebugEnabledFromCookies(cookieJar)
+  const debugMode = await isDebugEnabled(cookieJar)
   const { journal, now } = await resolveJournalView(cookieJar)
   const entries = journal?.kind === 'journal' ? journal.entries : []
   const profile = journal?.kind === 'journal' ? journal.profile : null

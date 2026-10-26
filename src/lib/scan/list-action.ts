@@ -6,7 +6,7 @@ import { routing, type Locale } from '@/i18n/routing'
 import { getListReader } from '@/lib/ai/vision/list-reader'
 import { withActionSpan } from '@/lib/ai/observability/action-span'
 import { DebugLog, debugAdd, runWithDebugLog } from '@/lib/debug/debug-log'
-import { isDebugEnabledFromCookies } from '@/lib/debug/debug-mode'
+import { isDebugEnabled } from '@/lib/debug/debug-access'
 import { enforceRateLimit } from '@/lib/rate-limit/enforce-rate-limit'
 import { lookupFlavorChart } from '@/lib/sakenowa/lookup'
 import { resolveScannedLabel } from '@/lib/sakenowa/resolve-scanned-label'
@@ -40,7 +40,7 @@ export async function readListAction(_prev: ListActionState, formData: FormData)
 
 async function run(formData: FormData): Promise<ListActionState> {
   const cookieJar = await cookies()
-  const log = isDebugEnabledFromCookies(cookieJar) ? new DebugLog() : undefined
+  const log = (await isDebugEnabled(cookieJar)) ? new DebugLog() : undefined
   const result = await runWithDebugLog(log, async (): Promise<ListActionState> => {
     const image = formData.get('image')
     const kind = formData.get('kind')

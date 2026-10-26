@@ -9,7 +9,7 @@ import { getDefaultMcpClient } from '@/lib/ai/mcp/registry'
 import { recordActionMetadata, withActionSpan } from '@/lib/ai/observability/action-span'
 import { tracedGenerateText } from '@/lib/ai/observability/langfuse-trace'
 import { DebugLog, debugAdd, runWithDebugLog } from '@/lib/debug/debug-log'
-import { isDebugEnabledFromCookies } from '@/lib/debug/debug-mode'
+import { isDebugEnabled } from '@/lib/debug/debug-access'
 import { enforceRateLimit } from '@/lib/rate-limit/enforce-rate-limit'
 import { hydrateFlavorProfiles } from './hydrate-flavor-profiles'
 import { parseSuggestionsFromText } from './parse-suggestions'
@@ -112,7 +112,7 @@ async function runSuggestAction(seed: SuggestSeed): Promise<SuggestActionState> 
   // `debugAdd(...)` is a cheap no-op — no per-request accumulator
   // overhead.
   const cookieJar = await cookies()
-  const log = isDebugEnabledFromCookies(cookieJar) ? new DebugLog() : undefined
+  const log = (await isDebugEnabled(cookieJar)) ? new DebugLog() : undefined
 
   const result = await runWithDebugLog(log, async (): Promise<SuggestActionState> => {
     debugAdd('SuggestAction', 'entered', {
