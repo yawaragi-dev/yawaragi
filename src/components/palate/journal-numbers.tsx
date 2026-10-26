@@ -4,6 +4,7 @@ import { FlavorTermsDisclosure } from '@/components/sake/flavor-terms-disclosure
 import { Link } from '@/i18n/navigation'
 import { journalFilterQuery, parseJournalFilter } from '@/lib/collection/journal-filter'
 import type { JournalNumbers } from '@/lib/collection/journal-stats'
+import { type BottlesKept, type Insight, STANDS_OUT_FROM, type StandsOut } from '@/lib/collection/what-stands-out'
 import { getPrefectureNames } from '@/lib/sakenowa/prefecture'
 import type { FlavorAxis } from '@/lib/schemas/flavor-chart'
 import { gradeLabel } from '@/lib/scan/read-bottling'
@@ -53,8 +54,22 @@ const journalAt = (query: Record<string, string>) => ({
   query: journalFilterQuery(parseJournalFilter(query)),
 })
 
-/** The screen itself (design v1.9, X; 123, 124), in X3's order. */
-export async function JournalNumbersScreen({ numbers }: { numbers: JournalNumbers }) {
+/**
+ * The screen itself (design v1.9, X; 123, 124), in X3's order, with v1.10's
+ * "What stands out" second, after the counts, and "Bottles you've kept" after
+ * the grades (AB1, AB3; 129, 130).
+ */
+export async function JournalNumbersScreen({
+  numbers,
+  standsOut,
+  kept,
+}: {
+  numbers: JournalNumbers
+  /** `null` under eight tastings: the teaser line stands in (AB2). */
+  standsOut: StandsOut | null
+  /** `null` under five bottles (AB3). */
+  kept: BottlesKept | null
+}) {
   const t = await getTranslations('palate.numbers')
   const tAxis = await getTranslations('flavorAxis')
   const format = await getFormatter()
@@ -81,6 +96,14 @@ export async function JournalNumbersScreen({ numbers }: { numbers: JournalNumber
           </div>
         ))}
       </dl>
+
+      {standsOut ? (
+        standsOut.insights.length > 0 && <WhatStandsOut standsOut={standsOut} />
+      ) : (
+        <p className="text-meta text-ash-600" data-testid="stands-out-teaser">
+          {t('standsOutTeaser', { n: Math.max(1, STANDS_OUT_FROM - numbers.tastings) })}
+        </p>
+      )}
 
       <section className="flex flex-col gap-2.5" aria-labelledby="numbers-places">
         <div className="flex items-baseline justify-between gap-2.5">
@@ -194,6 +217,8 @@ export async function JournalNumbersScreen({ numbers }: { numbers: JournalNumber
         </section>
       )}
 
+      {kept && <BottlesKeptSection kept={kept} />}
+
       {surprise && (
         <section className="flex flex-col gap-2 rounded-md bg-surface p-3.5 shadow-yw-sm" data-testid="journal-numbers-surprise">
           <h2 className={SECTION}>{t('surpriseHeading')}</h2>
@@ -224,5 +249,154 @@ export async function JournalNumbersScreen({ numbers }: { numbers: JournalNumber
 
       <p className="text-meta text-ash-600">{t('closing')}</p>
     </div>
+  )
+}
+
+/** One bar of a count list, in the grades section's style. */
+function CountBar({ label, count, max }: { label: string; count: number; max: number }) {
+  return (
+    <li className="flex min-h-7 items-center gap-2.5">
+      <span className="w-32 shrink-0 text-meta text-ash-800">{label}</span>
+      <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-ash-300" aria-hidden="true">
+        <span className="block h-full bg-ash-600" style={{ width: `${Math.round((count / max) * 100)}%` }} />
+      </span>
+      <span className="w-6 shrink-0 text-right text-meta text-ash-700">{count}</span>
+    </li>
+  )
+}
+
+/**
+ * "What stands out" (design v1.10, AB2; 129): at most three cards, each a
+ * sentence and the line saying where its number comes from. Under twenty
+ * tastings the heading's line says it is early (AB5).
+ */
+async function WhatStandsOut({ standsOut }: { standsOut: StandsOut }) {
+  const t = await getTranslations('palate.numbers')
+  const format = await getFormatter()
+  const decimal = (n: number) => format.number(n, { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+
+  const card = (insight: Insight): { text: string; basis: string; link?: { slug: string; label: string } } => {
+    switch (insight.kind) {
+      case 'contrast': {
+        const kept = gradeLabel(insight.kept.grade)
+        const category = insight.rated.category
+        const ratedLabel = category.kind === 'grade' ? gradeLabel(category.grade) : t(`starterLabel.${category.starter}`)
+        const ratedWord = category.kind === 'grade' ? ratedLabel : t(`starterInSentence.${category.starter}`)
+        const basis = {
+          kept,
+          bottles: insight.kept.bottles,
+          of: insight.kept.of,
+          rated: ratedLabel,
+          average: decimal(insight.rated.average),
+          tastings: insight.rated.tastings,
+        }
+        return {
+          text: t('contrast', { kept, rated: ratedWord }),
+          basis:
+            insight.keptAverage === null
+              ? t('contrastBasisAlone', basis)
+              : t('contrastBasis', { ...basis, keptAverage: decimal(insight.keptAverage) }),
+        }
+      }
+      case 'share':
+        return {
+          text: t('share', { grade: gradeLabel(insight.grade) }),
+          basis: t('shareBasis', { bottles: insight.bottles, of: insight.of }),
+        }
+      case 'match':
+        return {
+          text: t('match', { tastings: insight.tastings, of: insight.of, region: t(`regions.${insight.region}`) }),
+          basis: t('matchBasis', { soFar: standsOut.thin ? 'yes' : 'no' }),
+        }
+      case 'gap': {
+        const prefecture = getPrefectureNames(insight.areaId)?.nameEn ?? String(insight.areaId)
+        return {
+          text: t('gap', { prefecture }),
+          basis: t('gapBasis'),
+          link: { slug: insight.slug, label: t('gapLink', { prefecture }) },
+        }
+      }
+    }
+  }
+
+  return (
+    <section className="flex flex-col gap-2" aria-labelledby="numbers-stands-out" data-testid="stands-out">
+      <div className="flex flex-col gap-0.5">
+        <h2 id="numbers-stands-out" className="flex items-center gap-2 text-card-heading font-medium text-ink">
+          <span aria-hidden="true" className="block h-3.5 w-0.5 bg-ginshu-500" />
+          {t('standsOutHeading')}
+        </h2>
+        <p className="text-meta text-ash-700" data-testid="stands-out-meta">
+          {t(standsOut.thin ? 'standsOutMetaThin' : 'standsOutMeta', {
+            tastings: standsOut.tastings,
+            bottles: standsOut.bottles,
+          })}
+        </p>
+      </div>
+      <ul className="flex flex-col gap-2" role="list">
+        {standsOut.insights.map((insight) => {
+          const { text, basis, link } = card(insight)
+          return (
+            <li
+              key={insight.kind}
+              className="flex flex-col gap-1.5 rounded-md bg-surface px-3.5 py-3 shadow-yw-sm"
+              data-testid={`stands-out-${insight.kind}`}
+            >
+              <p className="text-card-heading font-medium leading-snug text-ink">{text}</p>
+              <p className="text-meta leading-normal text-ash-700">{basis}</p>
+              {link && (
+                <Link
+                  href={{ pathname: '/learn/[slug]', params: { slug: link.slug } }}
+                  className="-mb-1.5 inline-flex min-h-9 w-fit items-center gap-1 text-subtle text-ginshu-700 hover:text-ginshu-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+                  data-testid="stands-out-gap-link"
+                >
+                  {link.label}
+                  <CaretRight size={13} aria-hidden="true" />
+                </Link>
+              )}
+            </li>
+          )
+        })}
+      </ul>
+    </section>
+  )
+}
+
+/**
+ * "Bottles you've kept" (design v1.10, AB3; 130): the bottles in the cellar now
+ * or before, by grade then by prefecture, four of each at most, each bottle
+ * once. No sizes: summed, they are litres (X5).
+ */
+async function BottlesKeptSection({ kept }: { kept: BottlesKept }) {
+  const t = await getTranslations('palate.numbers')
+  const maxGrade = Math.max(1, ...kept.grades.map((g) => g.bottles))
+  const maxPref = Math.max(1, ...kept.prefectures.map((p) => p.bottles))
+  return (
+    <section className="flex flex-col gap-2" data-testid="bottles-kept">
+      <div className="flex flex-col gap-0.5">
+        <h2 className={SECTION}>{t('keptHeading')}</h2>
+        <p className="text-meta text-ash-700">{t('keptMeta', { bottles: kept.bottles })}</p>
+      </div>
+      {kept.grades.length > 0 && (
+        <ul className="flex flex-col gap-1" role="list" aria-label={t('keptGradesLabel')} data-testid="bottles-kept-grades">
+          {kept.grades.map(({ key, bottles }) => (
+            <CountBar key={key} label={gradeLabel(key)} count={bottles} max={maxGrade} />
+          ))}
+        </ul>
+      )}
+      {kept.prefectures.length > 0 && (
+        <ul
+          className={kept.grades.length > 0 ? 'mt-1 flex flex-col gap-1' : 'flex flex-col gap-1'}
+          role="list"
+          aria-label={t('keptPrefecturesLabel')}
+          data-testid="bottles-kept-prefectures"
+        >
+          {kept.prefectures.map(({ key, bottles }) => (
+            <CountBar key={key} label={getPrefectureNames(key)?.nameEn ?? String(key)} count={bottles} max={maxPref} />
+          ))}
+        </ul>
+      )}
+      <p className="text-micro text-ash-600">{t('keptNote')}</p>
+    </section>
   )
 }

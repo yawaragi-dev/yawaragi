@@ -13,8 +13,10 @@ import { BOTTLE_EVENT_CODEC, type BottleEvent } from '@/lib/schemas/bottle-event
  * event written twice by two racing actions is still one event. Order comes
  * from each event's `at`.
  *
- * Append-only: there is no `remove`. Only {@link clear} — the GDPR erasure —
- * takes events away.
+ * Append-only, with two exceptions that both start with the User: {@link clear}
+ * (the GDPR erasure) and {@link rewrite}, which takes one bottle off "Bottles
+ * you've had" at their request (design v1.10, AB6) — rectification and
+ * erasure of a single bottle. No code path rewrites history on its own.
  *
  * Not `server-only`: holds the interface and pure helpers the in-memory double
  * reuses. The Upstash adapter carries the marker.
@@ -28,6 +30,11 @@ export interface BottleHistoryStore {
   size(userId: string): Promise<number>
   /** Write events under their ids. An id already there is overwritten with the same event. */
   append(userId: string, events: readonly BottleEvent[]): Promise<void>
+  /**
+   * Take one bottle out (`forgetHadBottle` in `bottles-had.ts`): store `put`
+   * again under their ids, then delete `drop`.
+   */
+  rewrite(userId: string, change: { put: readonly BottleEvent[]; drop: readonly string[] }): Promise<void>
   /** Erase the whole history (GDPR erasure). */
   clear(userId: string): Promise<void>
 }

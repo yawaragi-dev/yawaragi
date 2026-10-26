@@ -271,7 +271,49 @@ test.describe('/en/collection?tab=cellar — §11 Cellar (ADR-0024)', () => {
     await page.goto('/en/collection?tab=cellar')
     await expect(page.getByTestId('cellar-empty')).toContainText('Nothing in the cellar')
     await expect(page.getByTestId('cellar-empty')).toContainText('Add to cellar')
+    // No bottle has left the cellar, so there is no "Bottles you've had" yet.
+    await expect(page.getByTestId('bottles-had-row')).toHaveCount(0)
 
+    await context.close()
+  })
+
+  test('"Bottles you\'ve had" lists the bottles that left the cellar, newest first, each one removable', async ({
+    browser,
+  }) => {
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([AGE_GATE_COOKIE, CONSENT_COOKIE, journalStub('populated')])
+    const page = await context.newPage()
+
+    // v1.10 AB6 (131): the last row under the cellar.
+    await page.goto('/en/collection?tab=cellar')
+    await page.getByTestId('bottles-had-row').click()
+    await expect(page).toHaveURL(/\/en\/collection\/had$/)
+
+    // (132): name, kanji, "Added · Finished/Removed"; no total anywhere.
+    const rows = page.getByTestId('bottles-had-bottle')
+    await expect(rows).toHaveCount(2)
+    await expect(rows.nth(0).getByTestId('bottles-had-name')).toHaveText('Nabeshima')
+    await expect(rows.nth(0).getByTestId('bottles-had-dates')).toHaveText('Added Jun 5 · Removed Jun 15')
+    await expect(rows.nth(1).getByTestId('bottles-had-name')).toHaveText('Denshu')
+    await expect(rows.nth(1).getByTestId('bottles-had-dates')).toHaveText('Added May 21 · Finished Jun 10')
+    await expect(rows.nth(1).getByRole('link')).toHaveAttribute('href', '/en/sake/3')
+
+    // The row's ⋯ asks before it takes the bottle off for good; "Keep it" closes.
+    await rows.nth(0).getByTestId('bottles-had-more').click()
+    await expect(page.getByTestId('bottles-had-confirm')).toContainText('Take Nabeshima off this list?')
+    await page.getByTestId('bottles-had-keep').click()
+    await expect(page.getByTestId('bottles-had-confirm')).toHaveCount(0)
+
+    // The stub draws the screen, it does not fake a store: the real action
+    // refuses, and the row says so instead of vanishing.
+    await rows.nth(0).getByTestId('bottles-had-more').click()
+    await page.getByTestId('bottles-had-remove').click()
+    await expect(page.getByTestId('bottles-had-confirm').getByRole('alert')).toHaveText(
+      'Couldn’t remove that just now — try again.',
+    )
+    await expect(rows).toHaveCount(2)
+
+    await expect(page.getByText('Powered by Sakenowa')).toBeVisible()
     await context.close()
   })
 })

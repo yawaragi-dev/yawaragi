@@ -20,6 +20,10 @@ import { SaveOfflineCopy } from '@/components/offline/save-offline-copy'
 import { toOfflineCopy } from '@/lib/offline/collection-copy'
 import { getCellarStore } from '@/lib/collection/get-cellar-store'
 import { getExpressionStore } from '@/lib/collection/get-expression-store'
+import { getBottleHistoryStore } from '@/lib/collection/get-bottle-history-store'
+import { bottlesHad } from '@/lib/collection/bottles-had'
+import type { BottleEvent } from '@/lib/schemas/bottle-event'
+import { BottlesHadRow } from '@/components/collection/bottles-had'
 import { lookupJournalFacts } from '@/lib/collection/journal-facts'
 import { type EntryFacts, JOURNAL_FILTERS_FROM, filterJournal, journalFacetsUnder, parseJournalFilter } from '@/lib/collection/journal-filter'
 import type { Expression } from '@/lib/schemas/expression'
@@ -32,7 +36,7 @@ import {
 import type { CellarBottle } from '@/lib/schemas/cellar-bottle'
 import type { JournalEntry } from '@/lib/schemas/journal-entry'
 import { getJournalStore } from '@/lib/taste/get-journal-store'
-import { STUB_JOURNAL_NOW, resolveCellarStub, resolveJournalStub } from '@/lib/taste/journal-stub'
+import { STUB_JOURNAL_NOW, resolveBottleHistoryStub, resolveCellarStub, resolveJournalStub } from '@/lib/taste/journal-stub'
 import {
   type MaintainerJournalState,
   resolveMaintainerJournal,
@@ -89,6 +93,8 @@ async function resolveJournalView(cookieJar: CookieJar): Promise<{
   cellar: readonly CellarBottle[]
   /** The bottlings the visitor added, for the journal's grade, style and koji filters. */
   expressions: readonly Expression[]
+  /** The bottle history, for "Bottles you've had" under the cellar (AB6). */
+  history: readonly BottleEvent[]
   /** The instant the cellar's "open N days" is measured against. */
   now: number
   /** Who the offline copy is saved for; absent when nothing may be saved (the sample). */
@@ -105,6 +111,7 @@ async function resolveJournalView(cookieJar: CookieJar): Promise<{
       journal: resolveJournalStub(journalStub),
       cellar: resolveCellarStub(journalStub),
       expressions: [],
+      history: resolveBottleHistoryStub(journalStub),
       now: STUB_JOURNAL_NOW,
       copyOwner: null,
     }
@@ -119,22 +126,26 @@ async function resolveJournalView(cookieJar: CookieJar): Promise<{
         journal: sample.journal,
         cellar: sample.cellar,
         expressions: sample.expressions,
+        history: sample.history,
         now,
       }
     }
-    return { isMaintainer: false, readOnly: false, journal: null, cellar: [], expressions: [], now }
+    return { isMaintainer: false, readOnly: false, journal: null, cellar: [], expressions: [], history: [], now }
   }
   const { userId } = await auth()
   const cellarStore = getCellarStore()
   const expressionStore = getExpressionStore()
-  const [journal, cellar, expressions] = await Promise.all([
+  const historyStore = getBottleHistoryStore()
+  const [journal, cellar, expressions, history] = await Promise.all([
     resolveMaintainerJournal({ store: getJournalStore(), userId, now }),
     userId && cellarStore ? cellarStore.read(userId) : Promise.resolve([]),
     // Only for the filters: a store that fails leaves them without grades,
     // never the journal without its list.
     userId && expressionStore ? expressionStore.read(userId).catch(() => []) : Promise.resolve([]),
+    // Only for "Bottles you've had": a store that fails hides the row, never the cellar.
+    userId && historyStore ? historyStore.read(userId).catch(() => []) : Promise.resolve([]),
   ])
-  return { isMaintainer: true, readOnly: false, journal, cellar, expressions, now, copyOwner: userId }
+  return { isMaintainer: true, readOnly: false, journal, cellar, expressions, history, now, copyOwner: userId }
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -283,6 +294,8 @@ export default async function CollectionTabPage({ params, searchParams }: PagePr
       ) : segment === 'cellar' ? (
         <>
           <CellarList rows={view.cellar} now={view.now} readOnly={view.readOnly} />
+          {/* v1.10 AB6: last under the cellar rows, once a bottle has left it. */}
+          {bottlesHad(view.history).length > 0 && <BottlesHadRow />}
           {/* ADR-0014: the Sakenowa credit is line 1 of the end-of-screen
               block, rendered by the app shell directly under this list. */}
         </>

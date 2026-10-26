@@ -41,6 +41,13 @@ export class UpstashBottleHistoryStore implements BottleHistoryStore {
     )
   }
 
+  async rewrite(userId: string, change: { put: readonly BottleEvent[]; drop: readonly string[] }): Promise<void> {
+    // Smaller lines first, deletions second: if the second call fails, the
+    // bottle is half-forgotten (an end with no "Added"), never more than asked.
+    await this.append(userId, change.put)
+    await this.hash.deleteMany(bottleHistoryKey(userId), change.drop)
+  }
+
   async clear(userId: string): Promise<void> {
     await this.hash.drop(bottleHistoryKey(userId))
   }

@@ -135,7 +135,7 @@
     "leadShapes": "Drei klare, ganz verschiedene Formen für den Anfang. Wähle oben ein Getränk, dann richten sie sich danach.",
     "reasonShape": "Eine klare Form: {first} und {second}.",
     "numbers": {
-      "heading": "Dein Journal in Zahlen",
+      "heading": "Dein Sake in Zahlen",
       "rowMeta": "{tastings, plural, one {# Verkostung} other {# Verkostungen}} · {prefectures} von 47 Präfekturen",
       "teaser": "Noch {n, plural, one {# Verkostung} other {# Verkostungen}}, dann erscheint deine Karte",
       "tastings": "{n, plural, one {Verkostung} other {Verkostungen}}",
@@ -163,8 +163,45 @@
       "surpriseBody": "Du hast ihm {rating} gegeben – von deinen hohen Bewertungen die am weitesten von deinem gewohnten Profil: {its}, wo du zu {yours} neigst.",
       "and": "{a} und {b}",
       "caveat": "Aus dem Geschmacksprofil (Sakenowa).",
-      "closing": "Aus deinem eigenen Journal berechnet. Nur du siehst es.",
-      "back": "Geschmack"
+      "closing": "Aus deinem eigenen Journal und Keller berechnet. Nur du siehst es.",
+      "back": "Geschmack",
+      "standsOutHeading": "Was auffällt",
+      "standsOutMeta": "Aus {tastings} Verkostungen{bottles, plural, =0 {} one { und # Flasche} other { und # Flaschen}}",
+      "standsOutMetaThin": "Aus deinen ersten {tastings} Verkostungen{bottles, plural, =0 {} one { und # Flasche} other { und # Flaschen}}",
+      "standsOutTeaser": "Noch {n, plural, one {# Verkostung} other {# Verkostungen}}, dann erscheint hier, was auffällt.",
+      "contrast": "In deinem Keller liegt vor allem {kept}, am höchsten bewertest du aber {rated}.",
+      "contrastBasis": "{kept}: {bottles} von {of} Flaschen aus deinem Keller. {rated}: Durchschnitt {average} aus {tastings} Verkostungen, gegenüber {keptAverage}.",
+      "contrastBasisAlone": "{kept}: {bottles} von {of} Flaschen aus deinem Keller. {rated}: Durchschnitt {average} aus {tastings} Verkostungen.",
+      "share": "Das meiste in deinem Keller ist {grade}.",
+      "shareBasis": "{bottles} von {of} Flaschen aus deinem Keller.",
+      "match": "{tastings} deiner {of} am höchsten bewerteten Verkostungen stammen aus {region}.",
+      "matchBasis": "Verkostungen, die du mit 4,5 oder mehr bewertet hast{soFar, select, yes {, bisher} other {}}. Woher ein Sake stammt, steht im Katalog.",
+      "gap": "Noch nichts aus {prefecture}.",
+      "gapBasis": "Eine der Regionen, die „Wissen“ beschreibt.",
+      "gapLink": "Über {prefecture}",
+      "starterInSentence": {
+        "kimoto": "Kimoto",
+        "yamahai": "Yamahai"
+      },
+      "starterLabel": {
+        "kimoto": "Kimoto",
+        "yamahai": "Yamahai"
+      },
+      "regions": {
+        "hokkaido": "Hokkaidō",
+        "tohoku": "Tōhoku",
+        "kanto": "Kantō",
+        "chubu": "Chūbu",
+        "kansai": "Kansai",
+        "chugoku": "Chūgoku",
+        "shikoku": "Shikoku",
+        "kyushu": "Kyūshū"
+      },
+      "keptHeading": "Flaschen aus deinem Keller",
+      "keptMeta": "{bottles} Flaschen, jetzt oder früher in deinem Keller",
+      "keptGradesLabel": "Nach Klasse",
+      "keptPrefecturesLabel": "Nach Präfektur",
+      "keptNote": "Jede Flasche zählt einmal, ob gekauft oder geschenkt."
     }
   },
   "landing": {
@@ -2293,5 +2330,23 @@
     "changesWait": "Änderungen warten auf eine Verbindung.",
     "offlineTapTitle": "Keine Verbindung",
     "offlineTapBody": "Dafür braucht es das Internet. Du bleibst hier, bis es zurück ist."
+  },
+  "bottlesHad": {
+    "title": "Flaschen, die du hattest",
+    "rowSub": "Aufgebraucht oder aus dem Keller genommen",
+    "intro": "Flaschen, die nicht mehr in deinem Keller sind, die neuesten zuerst. Nur du siehst das.",
+    "addedFinished": "Hinzugefügt {added} · Aufgebraucht {ended}",
+    "addedRemoved": "Hinzugefügt {added} · Entfernt {ended}",
+    "finished": "Aufgebraucht {ended}",
+    "removed": "Entfernt {ended}",
+    "more": "Mehr zu {name}",
+    "question": "{name} von dieser Liste nehmen? Die Flasche verschwindet endgültig aus deinem Verlauf.",
+    "keep": "Behalten",
+    "remove": "Entfernen",
+    "removing": "Wird entfernt…",
+    "error": "Das ließ sich gerade nicht entfernen — versuch es noch einmal.",
+    "empty": "Hier ist gerade nichts. Eine Flasche, die du aufbrauchst oder aus dem Keller nimmst, erscheint hier.",
+    "toCellar": "Zurück zum Keller",
+    "unavailable": "Diese Liste ließ sich gerade nicht laden. Deine Flaschen sind sicher — versuch es gleich noch einmal."
   }
 }

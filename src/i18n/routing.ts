@@ -46,7 +46,7 @@ export const routing = defineRouting({
     '/search': '/search',
     '/suggest': '/suggest',
     '/profile': '/profile',
-    // §12's "Your journal in numbers" (design v1.9, X).
+    // §12's "Your sake in numbers" (design v1.9, X; renamed in v1.10, AB1).
     '/profile/numbers': '/profile/numbers',
     // The four tab destinations. `/` stays the landing page (§0, outside the
     // app shell), so the Home *tab* needs its own segment. String shorthand
@@ -59,6 +59,8 @@ export const routing = defineRouting({
     '/learn': '/learn',
     '/learn/[slug]': '/learn/[slug]',
     '/collection': '/collection',
+    // §11's "Bottles you've had" (design v1.10, AB6).
+    '/collection/had': '/collection/had',
   },
 })
 

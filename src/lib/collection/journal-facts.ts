@@ -2,6 +2,8 @@ import 'server-only'
 
 import { publicQuery } from '@/lib/supabase/public-query'
 import { getServerDbPool } from '@/lib/supabase/server-client'
+import type { BottleFactsLookup } from '@/lib/collection/bottle-history-stats'
+import type { BottleEvent } from '@/lib/schemas/bottle-event'
 import type { Expression } from '@/lib/schemas/expression'
 import type { JournalEntry } from '@/lib/schemas/journal-entry'
 import type { EntryFacts } from './journal-filter'
@@ -76,6 +78,27 @@ export async function lookupJournalFacts(
       grade: bottling?.grade ?? null,
       styles: bottling?.styles ?? [],
       koji: bottling?.koji ?? null,
+    }
+  }
+}
+
+/**
+ * The bottle history's facts lookup (design v1.10, AB): a bottle's prefecture
+ * from its sake's brewery, its grade and styles from the visitor's own
+ * bottling. One catalogue query for every sake in the history.
+ */
+export async function lookupBottleFacts(
+  events: readonly BottleEvent[],
+  expressions: readonly Expression[],
+): Promise<BottleFactsLookup> {
+  const places = await brandPlaces(events.flatMap((e) => (e.thing.brandId !== null ? [e.thing.brandId] : [])))
+  const byId = new Map(expressions.map((expression) => [expression.id, expression]))
+  return (thing) => {
+    const bottling = thing.expression ? byId.get(thing.expression.id) : undefined
+    return {
+      areaId: thing.brandId !== null ? (places.get(thing.brandId)?.areaId ?? null) : null,
+      grade: bottling?.grade ?? null,
+      styles: bottling?.styles ?? [],
     }
   }
 }

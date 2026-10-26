@@ -99,6 +99,24 @@ describe('bottle history storage', () => {
     ])
   })
 
+  it('takes one bottle out at the visitor\'s request: a smaller line stored again, a line of one deleted', async () => {
+    const store = new InMemoryBottleHistoryStore()
+    await store.append('u', [event('a', 1, { count: 2 }), event('b', 2, { kind: 'removed' })])
+    await store.rewrite('u', { put: [event('a', 1, { count: 1 })], drop: ['b'] })
+    expect(await store.read('u')).toEqual([event('a', 1, { count: 1 })])
+  })
+
+  it('on Upstash, rewrites with one HSET then one HDEL, smaller lines first', async () => {
+    const { impl, commands } = fakeFetch([])
+    const store = new UpstashBottleHistoryStore('https://kv', 'tok', impl)
+    await store.rewrite('u', { put: [event('a')], drop: ['b', 'c'] })
+    await store.rewrite('u', { put: [], drop: [] })
+    expect(commands).toEqual([
+      ['HSET', 'bottle-history:user:u', 'a', JSON.stringify(event('a'))],
+      ['HDEL', 'bottle-history:user:u', 'b', 'c'],
+    ])
+  })
+
   it('on Upstash, reads the hash back through the codec, oldest first', async () => {
     const { impl } = fakeFetch([['b', JSON.stringify(event('b', 2)), 'a', JSON.stringify(event('a', 1))]])
     const store = new UpstashBottleHistoryStore('https://kv', 'tok', impl)

@@ -53,6 +53,12 @@ export class UpstashHash {
     await this.exec(['HDEL', key, field])
   }
 
+  /** Several fields in one `HDEL`. */
+  async deleteMany(key: string, fields: readonly string[]): Promise<void> {
+    if (fields.length === 0) return
+    await this.exec(['HDEL', key, ...fields])
+  }
+
   async drop(key: string): Promise<void> {
     await this.exec(['DEL', key])
   }

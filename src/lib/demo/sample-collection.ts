@@ -1,3 +1,5 @@
+import { bottleEvent, seedEvents } from '@/lib/collection/bottle-history'
+import type { BottleEvent } from '@/lib/schemas/bottle-event'
 import type { FlavorProfile } from '@/lib/schemas/flavor-profile'
 import type { CellarBottle } from '@/lib/schemas/cellar-bottle'
 import type { Expression } from '@/lib/schemas/expression'
@@ -93,6 +95,8 @@ export interface SampleCollection {
   entries: readonly JournalEntry[]
   cellar: readonly CellarBottle[]
   expressions: readonly Expression[]
+  /** The bottle history: the cellar as it started, and bottles since finished or taken out (AB6). */
+  history: readonly BottleEvent[]
 }
 
 export function buildSampleCollection({
@@ -163,5 +167,24 @@ export function buildSampleCollection({
     },
   ]
 
-  return { entries, cellar, expressions }
+  // Four bottles no longer in the cellar, for "Bottles you've had" and the
+  // kept-bottle counts — three finished, one taken out sealed.
+  const gone = (sake: SampleSake, how: 'finished' | 'removed', addedDaysAgo: number, endedDaysAgo: number) => {
+    const subject = { brandId: sake.brandId, sake: sakeName(sake), sizeMl: 720 as const, nama: false }
+    const id = `sample-h-${sake.brandId}`
+    return [
+      bottleEvent('added', subject, 1, now - addedDaysAgo * DAY, `${id}-a`),
+      ...(how === 'finished' ? [bottleEvent('opened', subject, 1, now - (endedDaysAgo + 4) * DAY, `${id}-o`)] : []),
+      bottleEvent(how, subject, 1, now - endedDaysAgo * DAY, `${id}-e`),
+    ]
+  }
+  const history: BottleEvent[] = [
+    ...gone(ARAMASA, 'finished', 70, 58),
+    ...gone(DASSAI, 'finished', 90, 72),
+    ...gone(KOKURYU, 'removed', 80, 50),
+    ...gone(ZAKU, 'finished', 50, 39),
+    ...seedEvents(cellar),
+  ]
+
+  return { entries, cellar, expressions, history }
 }

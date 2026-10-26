@@ -59,6 +59,13 @@ test.describe('the sample collection', () => {
 
     await expect(page.getByTestId('cellar-state').first()).toBeVisible()
     await expect(page.getByTestId('cellar-list').locator('button')).toHaveCount(0)
+
+    // v1.10 AB6: the bottles no longer in the cellar, listed with no way to remove one.
+    await page.getByTestId('bottles-had-row').click()
+    await expect(page).toHaveURL(/\/en\/collection\/had$/)
+    await expect(page.getByTestId('bottles-had-bottle')).toHaveCount(4)
+    await expect(page.getByTestId('bottles-had-bottle').first()).toContainText('Zaku')
+    await expect(page.getByTestId('bottles-had-more')).toHaveCount(0)
   })
 
   test('draws a Palate from the sample tastings', async ({ page }) => {
@@ -79,16 +86,32 @@ test.describe('the sample collection', () => {
     await page.goto(`${BASE_URL}/en/collection`)
     await expect(page.getByTestId('tab-placeholder')).toBeVisible()
   })
-  test('opens "Your journal in numbers" from Palate, and a star bar opens the journal at those stars', async ({ page }) => {
+  test('opens "Your sake in numbers" from Palate, and a star bar opens the journal at those stars', async ({ page }) => {
     await page.goto(`${BASE_URL}/api/sample-collection?locale=en`)
     await page.goto(`${BASE_URL}/en/profile`)
-    // v1.9 X1: a row at the end of Palate, to a screen of its own.
+    // v1.9 X1: a row at the end of Palate, to a screen of its own (renamed in v1.10, AB1).
+    await expect(page.getByTestId('journal-numbers-row')).toContainText('Your sake in numbers')
     await page.getByTestId('journal-numbers-row').click()
     await expect(page).toHaveURL(/\/en\/profile\/numbers$/)
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Your sake in numbers')
     const numbers = page.getByTestId('journal-numbers')
     await expect(numbers.getByTestId('journal-numbers-tastings')).toContainText('tastings')
     await expect(page.getByTestId('prefecture-tile-map').locator('span')).toHaveCount(47)
-    await expect(numbers).toContainText('Worked out from your own journal. Only you see it.')
+    await expect(numbers).toContainText('Worked out from your own journal and cellar. Only you see it.')
+
+    // v1.10 AB2: ten tastings is past the teaser. What stands out depends on
+    // the catalogue's prefectures, which CI has no database for; where it
+    // shows, it says how much it rests on, and its gap opens Learn.
+    await expect(numbers.getByTestId('stands-out-teaser')).toHaveCount(0)
+    if ((await numbers.getByTestId('stands-out').count()) > 0) {
+      await expect(numbers.getByTestId('stands-out-meta')).toHaveText('From your first 10 tastings and 10 bottles')
+      await expect(numbers.getByTestId('stands-out-gap-link')).toHaveAttribute('href', /\/en\/learn\/region-/)
+    }
+    // AB3: the sample's ten bottles, its own bottling's grade among them.
+    const kept = numbers.getByTestId('bottles-kept')
+    await expect(kept).toContainText('10 bottles, in your cellar now or before')
+    await expect(kept.getByTestId('bottles-kept-grades')).toContainText('Junmai Ginjō')
+    await expect(kept).toContainText('Each bottle counts once, whether you bought it or were given it.')
 
     await numbers.getByRole('link', { name: /^5 stars: \d+$/ }).click()
     await expect(page).toHaveURL(/\/en\/collection\?.*stars=5/)

@@ -90,7 +90,7 @@ The Sakes a *User* physically **owns**, with a count per Sake and an optional `o
 _Avoid_: Inventory, Stock, Shelf, Storage, TastingJournal (that's tastings, not bottles)
 
 **Bottle history**:
-The append-only record of what happened to a *User*'s **Cellar** bottles: each bottle added, opened, finished or removed, as a dated line (a `BottleEvent`). The Cellar is what they own *now*; the bottle history is what they *have owned*, so a finished bottle still counts. Used for shares of what was owned (by grade, style, prefecture, size), never for counts over time. Started from the Cellar rows already there (ADR-0024, "Bottle history"). Not shown in the UI yet.
+The append-only record of what happened to a *User*'s **Cellar** bottles: each bottle added, opened, finished or removed, as a dated line (a `BottleEvent`). The Cellar is what they own *now*; the bottle history is what they *have owned*, so a finished bottle still counts. Used for shares of what was owned (by grade, style, prefecture, size), never for counts over time. Started from the Cellar rows already there (ADR-0024, "Bottle history"). Shown as **Bottles you've had** (the bottles no longer in the Cellar, one row per bottle, newest first, each removable by the User) and counted, each bottle once, in **Bottles you've kept** on "Your sake in numbers" (design v1.10, AB).
 _Avoid_: Purchases, Orders (no purchase data is kept; some bottles were gifts), Log (that reads as the TastingJournal)
 
 **Wishlist**:

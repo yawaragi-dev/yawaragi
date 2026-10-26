@@ -135,7 +135,7 @@
     "leadShapes": "Three clear, different shapes to start with. Pick a drink above and these follow it.",
     "reasonShape": "A clear shape: {first} and {second}.",
     "numbers": {
-      "heading": "Your journal in numbers",
+      "heading": "Your sake in numbers",
       "rowMeta": "{tastings, plural, one {# tasting} other {# tastings}} · {prefectures} of 47 prefectures",
       "teaser": "{n, plural, one {# more tasting} other {# more tastings}} and your map appears",
       "tastings": "{n, plural, one {tasting} other {tastings}}",
@@ -163,8 +163,45 @@
       "surpriseBody": "You gave it {rating}, the furthest of your high ratings from your usual shape: {its} where you lean {yours}.",
       "and": "{a} and {b}",
       "caveat": "From the flavor chart (Sakenowa).",
-      "closing": "Worked out from your own journal. Only you see it.",
-      "back": "Palate"
+      "closing": "Worked out from your own journal and cellar. Only you see it.",
+      "back": "Palate",
+      "standsOutHeading": "What stands out",
+      "standsOutMeta": "From {tastings} tastings{bottles, plural, =0 {} one { and # bottle} other { and # bottles}}",
+      "standsOutMetaThin": "From your first {tastings} tastings{bottles, plural, =0 {} one { and # bottle} other { and # bottles}}",
+      "standsOutTeaser": "{n, plural, one {# more tasting} other {# more tastings}} and what stands out appears here.",
+      "contrast": "You keep mostly {kept}, but rate {rated} highest.",
+      "contrastBasis": "{kept}: {bottles} of {of} bottles you’ve kept. {rated}: {average} average from {tastings} tastings, against {keptAverage}.",
+      "contrastBasisAlone": "{kept}: {bottles} of {of} bottles you’ve kept. {rated}: {average} average from {tastings} tastings.",
+      "share": "Most of what you keep is {grade}.",
+      "shareBasis": "{bottles} of {of} bottles you’ve kept.",
+      "match": "{tastings} of your {of} highest-rated tastings are from {region}.",
+      "matchBasis": "Tastings you rated 4.5 or more{soFar, select, yes {, so far} other {}}. Where a sake is from comes from the catalogue.",
+      "gap": "Nothing from {prefecture} yet.",
+      "gapBasis": "One of the regions Learn describes.",
+      "gapLink": "About {prefecture}",
+      "starterInSentence": {
+        "kimoto": "kimoto",
+        "yamahai": "yamahai"
+      },
+      "starterLabel": {
+        "kimoto": "Kimoto",
+        "yamahai": "Yamahai"
+      },
+      "regions": {
+        "hokkaido": "Hokkaidō",
+        "tohoku": "Tōhoku",
+        "kanto": "Kantō",
+        "chubu": "Chūbu",
+        "kansai": "Kansai",
+        "chugoku": "Chūgoku",
+        "shikoku": "Shikoku",
+        "kyushu": "Kyūshū"
+      },
+      "keptHeading": "Bottles you’ve kept",
+      "keptMeta": "{bottles} bottles, in your cellar now or before",
+      "keptGradesLabel": "By grade",
+      "keptPrefecturesLabel": "By prefecture",
+      "keptNote": "Each bottle counts once, whether you bought it or were given it."
     }
   },
   "landing": {
@@ -2293,5 +2330,23 @@
     "changesWait": "Changes wait for a connection.",
     "offlineTapTitle": "No connection",
     "offlineTapBody": "This needs the internet. You stay where you are until it’s back."
+  },
+  "bottlesHad": {
+    "title": "Bottles you’ve had",
+    "rowSub": "Finished or taken out of the cellar",
+    "intro": "Bottles that are no longer in your cellar, newest first. Only you see this.",
+    "addedFinished": "Added {added} · Finished {ended}",
+    "addedRemoved": "Added {added} · Removed {ended}",
+    "finished": "Finished {ended}",
+    "removed": "Removed {ended}",
+    "more": "More for {name}",
+    "question": "Take {name} off this list? It goes from your history for good.",
+    "keep": "Keep it",
+    "remove": "Remove",
+    "removing": "Removing…",
+    "error": "Couldn’t remove that just now — try again.",
+    "empty": "Nothing here now. A bottle you finish or take out of the cellar appears here.",
+    "toCellar": "Back to the cellar",
+    "unavailable": "This list couldn’t be loaded just now. Your bottles are safe — try again in a moment."
   }
 }
