@@ -519,3 +519,20 @@ The notice and the Impressum are also the two screens the design has never drawn
 2. **Once it is out:** does About's line link to the notice's section on processors, or to the notice's top?
 3. **The notice and the Impressum as screens:** can they be drawn in Ginshu? They are long legal text with a list of processors (name, what they do, where the data is, link), the retention per kind of data, the visitor's rights with how to use each one in the app (export, delete account), and the contact. Headings, a table or a list for the processors, and how a section is linked to from elsewhere (About, the cookie banner, the feedback sheet's email line).
 4. **"Last updated":** at the top, and does a change to the notice tell a signed-in visitor anything (a line on Home or Account), or is the date enough?
+
+## AD. More showcases on the landing
+
+K's loop is in (scan → result → rate → palate, the demo bottle "Mihon (見本)"), and the maintainer likes it. The landing now shows one thing the app does; the maintainer would like two or three more, in the same spirit, for the next round of features. Everything below would use the demo bottle and made-up data, like K: nothing from the catalogue, nothing from a visitor.
+
+**Candidates, as engineering sees them:**
+- **(a) Your sake in numbers.** The 47-tile map filling in prefecture by prefecture, then one "What stands out" card appearing ("You keep mostly junmai, but rate kimoto highest"). Shows that the journal turns into something, without counting drinking over time (X5).
+- **(b) Reading a label, with Learn.** The demo label with its parts lighting up one at a time (name, grade, polishing, the 酒 / 精米歩合 shapes from R1) and a line from the matching Learn entry under each. Learn is public, so this one could link to the real entries.
+- **(c) A menu, ranked for you.** A drawn menu (§7) turning into the ranked list, "For you" with the fit in words. The most distinctive thing the app does, but it needs a journal to mean anything, which the landing has to explain in one line.
+- **(d) Logging in detail.** The notes sheet: quick tags tapped, a temperature picked, a note typed. Shows depth, but is the least surprising of the four.
+
+**Questions:**
+1. **Which two or three,** and in what order down the page? Engineering would pick (b), (a), (c).
+2. **Format:** the same looping phone as K, or still frames (one phone, a caption, a short line of text)? Several loops on one page may be too much motion; one loop plus still frames might be enough.
+3. **Where:** each as its own section under the hero, alternating phone left and right on wide screens, or replacing the three feature cards?
+4. **Reduced motion and pause:** K shows a still frame and has a pause control (WCAG 2.2.2). Does each showcase need its own pause, or one control for the page?
+5. **German:** captions run about 30% longer; K's caption sits outside the phone. Same for the others?
