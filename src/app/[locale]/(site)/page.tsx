@@ -126,12 +126,12 @@ export default async function LandingPage({
 
         {/* K4: one row of three plain lines, no numbers, ending with the
             repository. The detail stays in the README. */}
-        <section aria-label={t('proof.label')} className="pb-14" data-testid="landing-proof">
-          <ul className="flex flex-wrap items-center gap-x-3 gap-y-2 text-subtle text-ash-600">
+        <section aria-label={t('proof.label')} className="-mt-4 pb-14" data-testid="landing-proof">
+          <ul className="flex flex-col gap-1.5 text-subtle text-ash-600 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-3">
             {(['provenance', 'tested', 'private'] as const).map((key) => (
               <li key={key} className="flex items-center gap-3">
                 {t(`proof.${key}`)}
-                <span className="text-ash-400" aria-hidden="true">
+                <span className="hidden text-ash-400 sm:inline" aria-hidden="true">
                   ·
                 </span>
               </li>

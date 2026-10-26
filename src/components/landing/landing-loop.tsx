@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react'
-import { ArrowLeft, Camera, CheckCircle, Hexagon, House, Notebook, Star } from '@phosphor-icons/react/dist/ssr'
+import { ArrowLeft, ArrowsSplit, BookOpenText, Camera, CheckCircle, Hexagon, House, Notebook, Star } from '@phosphor-icons/react/dist/ssr'
 import { getTranslations } from 'next-intl/server'
 import { flavorRadarPolygonPoints } from '@/components/sake/flavor-radar-view'
 import { DEMO_BOTTLE, DEMO_PALATE } from '@/lib/landing/demo-bottle'
@@ -45,6 +45,7 @@ export async function LandingLoop() {
   const t = await getTranslations('landing.loop')
   const tCamera = await getTranslations('scan.camera')
   const tOutcome = await getTranslations('scanOutcome')
+  const tCard = await getTranslations('scan.resultCard')
   const tTasting = await getTranslations('tasting')
   const tBand = await getTranslations('rating.band')
   const tPalate = await getTranslations('palate')
@@ -67,10 +68,15 @@ export async function LandingLoop() {
 
   const phone = (
     <div
-      className="yw-loop-phone relative h-[633px] w-[300px] overflow-hidden rounded-[34px] bg-ground shadow-yw-md"
+      className="relative h-[633px] w-[300px] shrink-0 rounded-[34px] bg-ground shadow-yw-md"
       aria-hidden="true"
       data-testid="landing-loop-phone"
     >
+      {/* The screen. The no-op mask is load-bearing: with `overflow-hidden`
+          alone Chrome painted the animated frames' layers square, past the
+          rounded corners (seen at 1280px; `clip-path` did not help). On an
+          inner box, so the phone's shadow is not masked away. */}
+      <div className="absolute inset-0 overflow-hidden rounded-[34px] [mask-image:linear-gradient(#000,#000)]">
       {/* -- 1. Scan (0–2.5 s): §4's viewfinder over the demo label ------- */}
       <div className="yw-loop-scan absolute inset-0 flex flex-col bg-camera" data-loop-frame="scan">
         <div className="flex h-12 items-center justify-center text-card-heading text-camera-ink">
@@ -167,7 +173,7 @@ export async function LandingLoop() {
           </div>
 
           {/* The six bars, f1..f6 in two columns as on §5, filling in turn. */}
-          <div className="grid grid-cols-2 gap-x-4 gap-y-3 px-1.5">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-3.5 px-1.5 pt-1">
             {FLAVOR_AXES.map((axis, i) => (
               <span key={axis} className="h-1 overflow-hidden rounded-full bg-ash-300">
                 <span
@@ -176,6 +182,18 @@ export async function LandingLoop() {
                 />
               </span>
             ))}
+          </div>
+
+          {/* §5's two rows under the chart, as they sit on the real card. */}
+          <div className="flex flex-col gap-2.5">
+            <span className="flex h-11 items-center gap-2.5 rounded-md border border-divider px-3 text-subtle font-medium text-ink">
+              <ArrowsSplit size={16} className="text-ginshu-600" />
+              {tCard('similarCta')}
+            </span>
+            <span className="flex h-11 items-center gap-2.5 rounded-md border border-divider px-3 text-subtle font-medium text-ink">
+              <BookOpenText size={16} className="text-ginshu-600" />
+              {tCard('openDetail')}
+            </span>
           </div>
         </div>
 
@@ -189,9 +207,12 @@ export async function LandingLoop() {
 
       {/* -- 4. Palate (7–11 s): §12's hexagon grows, then its title ------ */}
       <div className="yw-loop-palate absolute inset-0 flex flex-col" data-loop-frame="palate">
-        <div className="flex flex-1 flex-col gap-6 px-5 pt-12">
-          <p className="yw-loop-title text-title font-medium text-ink">{palateTitle}</p>
-          <svg viewBox="0 0 320 320" className="mx-auto w-[240px]">
+        <div className="flex flex-1 flex-col gap-8 px-5 pt-12">
+          <div className="yw-loop-title flex flex-col gap-1">
+            <p className="text-title font-medium text-ink">{palateTitle}</p>
+            <p className="text-meta text-ash-600">{tPalate('derivedFrom', { count: 3 })}</p>
+          </div>
+          <svg viewBox="0 0 320 320" className="mx-auto w-[260px]">
             {[0.25, 0.5, 0.75, 1].map((m) => (
               <polygon
                 key={m}
@@ -210,11 +231,12 @@ export async function LandingLoop() {
         </div>
         <TabBar tabs={tabs} current={3} />
       </div>
+      </div>
     </div>
   )
 
   const captions = (
-    <ol className="grid text-center text-card-heading text-ink" data-testid="landing-loop-captions">
+    <ol className="grid text-card-heading text-ink" data-testid="landing-loop-captions">
       <li className="yw-loop-cap-scan col-start-1 row-start-1">{t('captionScan')}</li>
       <li className="yw-loop-cap-result col-start-1 row-start-1" data-testid="landing-loop-caption-result">
         {t('captionResult')}

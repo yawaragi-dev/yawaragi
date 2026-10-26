@@ -51,9 +51,7 @@ export function LandingLoopPlayer({
     >
       {phone}
       <figcaption className="flex w-full items-center gap-2">
-        {/* A spacer the button's width, so the caption stays centred under the phone. */}
-        <span className="w-11 shrink-0 motion-reduce:hidden" aria-hidden="true" />
-        <div className="min-w-0 flex-1">{captions}</div>
+        <div className="min-w-0 flex-1 pl-2">{captions}</div>
         <button
           type="button"
           onClick={() => setPaused((p) => !p)}
