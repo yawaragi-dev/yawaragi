@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { bottleHistoryKey } from '@/lib/collection/bottle-history-store'
-import { InMemoryBottleHistoryStore } from '@/lib/collection/in-memory-bottle-history-store'
-import { UpstashBottleHistoryStore } from '@/lib/collection/upstash-bottle-history-store'
+import { InMemoryBottleHistoryStore } from '@/lib/collection/in-memory-record-store'
+import { UpstashBottleHistoryStore } from '@/lib/collection/upstash-record-store'
 import { assertCodecComplete, decodeVersionedRecord } from '@/lib/collection/versioned-record'
 import {
   BOTTLE_EVENT_CODEC,

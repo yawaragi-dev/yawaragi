@@ -1,13 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { newCellarRow } from '@/lib/collection/cellar'
-import { InMemoryBottleHistoryStore } from '@/lib/collection/in-memory-bottle-history-store'
-import { InMemoryCellarStore } from '@/lib/collection/in-memory-cellar-store'
-import { InMemoryExpressionStore } from '@/lib/collection/in-memory-expression-store'
+import { InMemoryBottleHistoryStore, InMemoryCellarStore, InMemoryExpressionStore, InMemoryJournalStore } from '@/lib/collection/in-memory-record-store'
 import { restoreCollection } from '@/lib/collection/restore-collection'
 import type { BottleEvent } from '@/lib/schemas/bottle-event'
 import type { Expression } from '@/lib/schemas/expression'
 import type { JournalEntry } from '@/lib/schemas/journal-entry'
-import { InMemoryJournalStore } from '@/lib/taste/in-memory-journal-store'
 import { buildCollectionExport } from '@/lib/taste/journal-export'
 
 const TARGET = { f1: 0.2, f2: 0.6, f3: 0.6, f4: 0.4, f5: 0.1, f6: 0.3 }

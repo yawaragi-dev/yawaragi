@@ -27,12 +27,9 @@ import {
   openCellarBottle,
   removeFromCellar,
 } from '@/lib/collection/cellar-actions'
-import { InMemoryBottleHistoryStore } from '@/lib/collection/in-memory-bottle-history-store'
-import { InMemoryCellarStore } from '@/lib/collection/in-memory-cellar-store'
-import { InMemoryExpressionStore } from '@/lib/collection/in-memory-expression-store'
+import { InMemoryBottleHistoryStore, InMemoryCellarStore, InMemoryExpressionStore, InMemoryJournalStore } from '@/lib/collection/in-memory-record-store'
 import { cellarRowKey } from '@/lib/schemas/cellar-bottle'
 import { lookupBrand } from '@/lib/sakenowa/catalogue-reads'
-import { InMemoryJournalStore } from '@/lib/taste/in-memory-journal-store'
 
 const USER = 'user_admin'
 const cellar = () => h.cellar as InMemoryCellarStore

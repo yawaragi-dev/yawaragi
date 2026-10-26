@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { expressionsKey } from '@/lib/collection/expression-store'
-import { InMemoryExpressionStore } from '@/lib/collection/in-memory-expression-store'
-import { UpstashExpressionStore } from '@/lib/collection/upstash-expression-store'
+import { InMemoryExpressionStore } from '@/lib/collection/in-memory-record-store'
+import { UpstashExpressionStore } from '@/lib/collection/upstash-record-store'
 import { assertCodecComplete } from '@/lib/collection/versioned-record'
 import {
   EXPRESSION_CODEC,

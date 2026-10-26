@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { JournalEntry } from '@/lib/schemas/journal-entry'
-import { InMemoryJournalStore } from '@/lib/taste/in-memory-journal-store'
+import { InMemoryJournalStore } from '@/lib/collection/in-memory-record-store'
 import { journalKey, parseStoredEntries } from '@/lib/taste/journal-store'
 
 const TARGET = { f1: 0.2, f2: 0.6, f3: 0.6, f4: 0.4, f5: 0.1, f6: 0.3 }

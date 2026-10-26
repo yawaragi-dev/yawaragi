@@ -13,7 +13,7 @@ import {
   openOne,
   removeOne,
 } from '@/lib/collection/cellar'
-import { InMemoryBottleHistoryStore } from '@/lib/collection/in-memory-bottle-history-store'
+import { InMemoryBottleHistoryStore } from '@/lib/collection/in-memory-record-store'
 import type { CellarBottle } from '@/lib/schemas/cellar-bottle'
 
 const JIKON = { brandId: 7, nameKanji: '而今', nameRomaji: 'Jikon' }

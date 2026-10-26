@@ -2,7 +2,7 @@ import 'server-only'
 
 import { env } from '@/env'
 import type { ExpressionStore } from '@/lib/collection/expression-store'
-import { UpstashExpressionStore } from '@/lib/collection/upstash-expression-store'
+import { UpstashExpressionStore } from '@/lib/collection/upstash-record-store'
 
 /**
  * The production {@link ExpressionStore}, or `null` when the Upstash env pair

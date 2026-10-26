@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest'
 import { newCellarRow } from '@/lib/collection/cellar'
 import { cellarKey } from '@/lib/collection/cellar-store'
-import { InMemoryCellarStore } from '@/lib/collection/in-memory-cellar-store'
-import { UpstashCellarStore } from '@/lib/collection/upstash-cellar-store'
+import { InMemoryCellarStore } from '@/lib/collection/in-memory-record-store'
+import { UpstashCellarStore } from '@/lib/collection/upstash-record-store'
 import { CELLAR_BOTTLE_CODEC } from '@/lib/schemas/cellar-bottle'
 import { assertCodecComplete } from '@/lib/collection/versioned-record'
 

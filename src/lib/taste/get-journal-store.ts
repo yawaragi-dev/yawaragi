@@ -2,7 +2,7 @@ import 'server-only'
 
 import { env } from '@/env'
 import type { JournalStore } from '@/lib/taste/journal-store'
-import { UpstashJournalStore } from '@/lib/taste/upstash-journal-store'
+import { UpstashJournalStore } from '@/lib/collection/upstash-record-store'
 
 /**
  * Construct the production {@link JournalStore} from env, or `null` when the

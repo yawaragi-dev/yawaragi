@@ -29,11 +29,8 @@
 import { writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { parseMaintainerAllowlist } from '@/lib/auth/maintainer-allowlist'
-import { UpstashBottleHistoryStore } from '@/lib/collection/upstash-bottle-history-store'
-import { UpstashCellarStore } from '@/lib/collection/upstash-cellar-store'
-import { UpstashExpressionStore } from '@/lib/collection/upstash-expression-store'
+import { UpstashBottleHistoryStore, UpstashCellarStore, UpstashExpressionStore, UpstashJournalStore } from '@/lib/collection/upstash-record-store'
 import { buildCollectionExport } from '@/lib/taste/journal-export'
-import { UpstashJournalStore } from '@/lib/taste/upstash-journal-store'
 
 export type ResolvedUserId = { ok: true; userId: string } | { ok: false; reason: string }
 

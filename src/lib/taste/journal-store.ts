@@ -1,7 +1,10 @@
 import {
-  type StoreDump,
-  decodeStoredFields,
-} from '@/lib/collection/versioned-record'
+  type KeyedRecordStore,
+  type RecordStoreSpec,
+  byNumberThenId,
+  decodeRecordHash,
+  recordStoreKey,
+} from '@/lib/collection/record-store'
 import { JOURNAL_ENTRY_CODEC, type JournalEntry } from '@/lib/schemas/journal-entry'
 
 /**
@@ -13,73 +16,45 @@ import { JOURNAL_ENTRY_CODEC, type JournalEntry } from '@/lib/schemas/journal-en
  * DERIVED from the entries' embedded TasteEvents on read (`deriveTasteProfile`),
  * never stored as a snapshot.
  *
- * Same port+adapters pattern as {@link TasteEventStore} — a narrow interface
- * with a production Upstash adapter (`upstash-journal-store.ts`) and an
- * in-memory double (`in-memory-journal-store.ts`) for tests — so the actions and
- * derivation stay testable without a live Upstash, and the eventual Postgres
- * adapter (the public-launch migration slice, ADR-0020) is a THIRD
- * implementation behind this same interface, not a refactor.
+ * One of the four collection record kinds stored the same way
+ * (`record-store.ts`): a Redis HASH per user (field = entry id, value = JSON),
+ * with the Upstash adapter in `upstash-record-store.ts` and the in-memory
+ * double in `in-memory-record-store.ts`. The eventual Postgres adapter
+ * (ADR-0020) is a third implementation behind the same interface.
  *
  * Deliberate divergence from `TasteEventStore`: that store is an append-only,
  * TTL'd, size-capped Redis LIST (an ephemeral rolling window). A journal is
- * permanent, unbounded, and needs edit + per-entry delete — so this store is a
- * Redis HASH (field = entry id, value = JSON), which the interface below
- * reflects (`put` upserts by id; `remove` deletes one entry).
- *
- * Not `server-only`: holds only the interface, the key helper, and pure
- * parse/sort helpers so the in-memory double reuses them at runtime. The Upstash
- * adapter is the one module that touches env + network and carries the marker.
+ * permanent, unbounded, and needs edit + per-entry delete: `put` upserts by id,
+ * `remove` deletes one entry, `clear` erases the journal (the GDPR erasure path).
+ * `read` returns entries oldest→newest by the embedded `event.occurredAt` (the
+ * field `deriveTasteProfile` replays on — equal to `triedAt` by the creating
+ * action's convention).
  */
-export interface JournalStore {
-  /** All entries for a user, oldest→newest by the embedded `event.occurredAt`
-   *  (the field `deriveTasteProfile` replays on — equal to `triedAt` by the
-   *  creating action's convention). `[]` if none. */
-  read(userId: string): Promise<JournalEntry[]>
-  /**
-   * Everything stored for the user: the readable entries (ordered as `read`
-   * orders them) AND the raw records that could not be decoded (ADR-0024 §2).
-   * Exports and backups use this, so an unreadable record is carried along
-   * rather than silently left out of the only copy that leaves the store.
-   */
-  dump(userId: string): Promise<StoreDump<JournalEntry>>
-  /** Upsert one entry by its `id` (create, or edit an existing entry). */
-  put(userId: string, entry: JournalEntry): Promise<void>
-  /** Delete one entry by id (granular erasure). No-op if absent. */
-  remove(userId: string, entryId: string): Promise<void>
-  /** Erase the user's entire journal (the GDPR erasure path — ADR-0020). */
-  clear(userId: string): Promise<void>
-}
+export type JournalStore = KeyedRecordStore<JournalEntry>
 
 /**
- * The Redis key for a user's journal hash. Keyed by the Clerk user id (ADR-0020)
- * — NOT the anonymous `yawaragi_session.sid` the TasteEventStore uses. There is
- * deliberately no TTL: a journal is a permanent record.
+ * How a journal is stored. Keyed by the Clerk user id (ADR-0020) — NOT the
+ * anonymous `yawaragi_session.sid` the TasteEventStore uses — with no TTL.
+ * Ordered oldest→newest by the embedded event's `occurredAt`, `id` breaking ties.
  */
+export const JOURNAL_RECORDS: RecordStoreSpec<JournalEntry> = {
+  keyPrefix: 'journal',
+  codec: JOURNAL_ENTRY_CODEC,
+  rowKey: (entry) => entry.id,
+  compare: byNumberThenId((entry) => entry.event.occurredAt),
+}
+
+/** The Redis key for a user's journal hash: `journal:user:<clerkUserId>`. */
 export function journalKey(userId: string): string {
-  return `journal:user:${userId}`
+  return recordStoreKey(JOURNAL_RECORDS, userId)
 }
 
 /**
- * Decode a user's stored hash — `[entry id, JSON]` pairs — into current-version
- * entries plus the records that could not be read. Each value goes through
- * {@link JOURNAL_ENTRY_CODEC}: v1 entries (no `schemaVersion`) are upcast, a
- * corrupt or newer-than-this-code record is set aside in `rejected` instead of
- * throwing, so one bad entry never takes the journal down with it. Readable
- * entries come back oldest→newest by the embedded event's `occurredAt` (the
- * field `deriveTasteProfile` replays on), `id` breaking ties — a hash is
- * unordered, so ordering happens here.
+ * Decode bare stored values into current-version entries, oldest→newest. Each
+ * goes through {@link JOURNAL_ENTRY_CODEC}: v1 entries (no `schemaVersion`) are
+ * upcast, and a corrupt or newer-than-this-code record is dropped instead of
+ * throwing, so one bad entry never takes the journal down with it.
  */
-export function decodeJournalHash(
-  fields: ReadonlyArray<readonly [id: string, raw: string]>,
-): StoreDump<JournalEntry> {
-  const dump = decodeStoredFields(fields, JOURNAL_ENTRY_CODEC)
-  dump.records.sort(
-    (a, b) => a.event.occurredAt - b.event.occurredAt || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0),
-  )
-  return dump
-}
-
-/** The readable half of {@link decodeJournalHash}, for callers with bare values. */
 export function parseStoredEntries(raw: readonly string[]): JournalEntry[] {
-  return decodeJournalHash(raw.map((value, i) => [String(i), value] as const)).records
+  return decodeRecordHash(JOURNAL_RECORDS, raw.map((value, i) => [String(i), value] as const)).records
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { JournalEntry } from '@/lib/schemas/journal-entry'
-import { InMemoryJournalStore } from '@/lib/taste/in-memory-journal-store'
+import { InMemoryJournalStore } from '@/lib/collection/in-memory-record-store'
 import { NEUTRAL_AXIS } from '@/lib/taste/derive-taste-profile'
 import { resolveMaintainerJournal } from '@/lib/taste/resolve-maintainer-journal'
 

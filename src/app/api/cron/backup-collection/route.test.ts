@@ -1,9 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { type BackupRouteDeps, handleBackupRequest } from './route'
-import { InMemoryBottleHistoryStore } from '@/lib/collection/in-memory-bottle-history-store'
-import { InMemoryCellarStore } from '@/lib/collection/in-memory-cellar-store'
-import { InMemoryExpressionStore } from '@/lib/collection/in-memory-expression-store'
-import { InMemoryJournalStore } from '@/lib/taste/in-memory-journal-store'
+import { InMemoryBottleHistoryStore, InMemoryCellarStore, InMemoryExpressionStore, InMemoryJournalStore } from '@/lib/collection/in-memory-record-store'
 import type { BackupStorage } from '@/lib/collection/backup-storage'
 
 const SECRET = 'aaaaaaaaaaaaaaaa'

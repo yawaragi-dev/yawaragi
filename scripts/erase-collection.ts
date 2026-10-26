@@ -21,11 +21,8 @@ import { cellarKey } from '@/lib/collection/cellar-store'
 import { eraseCollection } from '@/lib/collection/erase-collection'
 import { expressionsKey } from '@/lib/collection/expression-store'
 import { SupabaseBackupStorage } from '@/lib/collection/supabase-backup-storage'
-import { UpstashBottleHistoryStore } from '@/lib/collection/upstash-bottle-history-store'
-import { UpstashCellarStore } from '@/lib/collection/upstash-cellar-store'
-import { UpstashExpressionStore } from '@/lib/collection/upstash-expression-store'
+import { UpstashBottleHistoryStore, UpstashCellarStore, UpstashExpressionStore, UpstashJournalStore } from '@/lib/collection/upstash-record-store'
 import { journalKey } from '@/lib/taste/journal-store'
-import { UpstashJournalStore } from '@/lib/taste/upstash-journal-store'
 
 function flag(argv: readonly string[], name: string): string | undefined {
   const i = argv.indexOf(`--${name}`)
