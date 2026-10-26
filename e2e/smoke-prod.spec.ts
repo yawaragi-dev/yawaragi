@@ -7,8 +7,9 @@
 // production only). So each route is checked for what a broken render loses:
 // a status under 500 and a real heading, not the error page.
 //
-// No DATABASE_URL here, as on CI: a page that needs the catalogue is checked
-// only for "no 5xx", and skips its heading when the catalogue is not there.
+// No DATABASE_URL on CI: the sake page, which needs the catalogue, is
+// skipped there, and nothing else here depends on it.
+import { existsSync } from 'node:fs'
 import { expect, test, type Page } from '@playwright/test'
 
 const CONSENT_COOKIE_VALUE = JSON.stringify({ version: 1, analytics: false, marketing: false })
@@ -53,9 +54,9 @@ test.describe('production build', () => {
     await expect(page.getByTestId('age-gate')).toBeVisible()
     await page.getByTestId('age-gate-accept').click()
     await expect(page.getByTestId('age-gate')).toBeHidden()
-    await expect(page.getByTestId('landing-hero')).toBeVisible()
-
-    await load(page, '/en/home')
+    // The hero's example card needs the catalogue; the way into the app does not.
+    await page.getByTestId('landing-open-app').click()
+    await expect(page).toHaveURL(/\/en\/home$/)
     await expect(page.getByTestId('home-page')).toBeVisible()
     await expect(page.getByTestId('tab-bar')).toBeVisible()
 
@@ -71,6 +72,10 @@ test.describe('production build', () => {
   })
 
   test('a sake page answers without a server error', async ({ context, page, baseURL }) => {
+    // Without a database the page throws by design ("DATABASE_URL is not
+    // set"), dev or production alike; CI has none. `next start` reads
+    // .env.local itself, so locally it usually has one.
+    test.skip(!process.env.DATABASE_URL && !existsSync('.env.local'), 'needs the catalogue (DATABASE_URL)')
     await context.addCookies([{ name: 'yawaragi_age_gate', value: AGE_GATE_COOKIE_VALUE, url: baseURL! }])
     await load(page, '/en/sake/1')
     test.skip((await page.getByTestId('sake-brand-page').count()) === 0, 'needs the catalogue (DATABASE_URL)')
