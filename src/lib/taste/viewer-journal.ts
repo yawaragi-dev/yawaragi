@@ -1,20 +1,10 @@
 import 'server-only'
 
-import { auth } from '@clerk/nextjs/server'
 import type { cookies } from 'next/headers'
-import { currentUserIsMaintainer } from '@/lib/auth/maintainer'
-import { getCellarStore } from '@/lib/collection/get-cellar-store'
-import { getExpressionStore } from '@/lib/collection/get-expression-store'
+import { resolveViewer } from '@/lib/collection/viewer'
 import type { CellarBottle } from '@/lib/schemas/cellar-bottle'
 import type { Expression } from '@/lib/schemas/expression'
 import type { JournalEntry } from '@/lib/schemas/journal-entry'
-import { readSampleCollection, wantsSampleCollection } from '@/lib/demo/sample-mode'
-import { getJournalStore } from '@/lib/taste/get-journal-store'
-import {
-  resolveCellarStub,
-  resolveExpressionsStub,
-  resolveJournalStub,
-} from '@/lib/taste/journal-stub'
 
 type CookieJar = Awaited<ReturnType<typeof cookies>>
 
@@ -27,11 +17,8 @@ type CookieJar = Awaited<ReturnType<typeof cookies>>
  * - `canLog` is ADR-0020's gate: an allowlisted maintainer with a configured
  *   store. Everyone else sees no log affordance at all, because a star that
  *   saves nothing is the dead affordance #162 forbids.
- * - In non-production the `yawaragi_journal_stub` cookie stands in for the
- *   maintainer check, exactly as on Collection and Home, so the E2E can see
- *   the panel without a Clerk session. A stubbed visitor's taps still reach
- *   the real actions, which refuse them — the stub draws the screen, it does
- *   not fake a store.
+ * - Who the viewer is — the E2E stub, the maintainer, the sample — is decided
+ *   by {@link resolveViewer}, as on every collection screen.
  */
 export async function resolveViewerJournal(
   cookieJar: CookieJar,
@@ -44,37 +31,16 @@ export async function resolveViewerJournal(
   cellar: readonly CellarBottle[]
   expressions: readonly Expression[]
 }> {
-  const none = { canLog: false, canView: false, entries: [], cellar: [], expressions: [] } as const
-  const stub =
-    process.env.NODE_ENV !== 'production' ? cookieJar.get('yawaragi_journal_stub')?.value : undefined
-  if (stub != null) {
-    const state = resolveJournalStub(stub)
-    if (state.kind === 'unavailable') return none
-    return {
-      canLog: true,
-      canView: true,
-      entries: state.kind === 'journal' ? state.entries : [],
-      cellar: resolveCellarStub(stub),
-      expressions: resolveExpressionsStub(stub),
-    }
+  const viewer = await resolveViewer(cookieJar)
+  if (!viewer.canView) return { canLog: false, canView: false, entries: [], cellar: [], expressions: [] }
+  const { journal, cellar, expressions } = await viewer.read('journal', 'cellar', 'expressions')
+  return {
+    canLog: viewer.canLog,
+    canView: true,
+    entries: journal.kind === 'journal' ? journal.entries : [],
+    cellar,
+    expressions,
   }
-
-  if (!(await currentUserIsMaintainer())) {
-    // Read-only: every write affordance keys off `canLog`.
-    if (!wantsSampleCollection(cookieJar)) return none
-    return { canLog: false, canView: true, ...(await readSampleCollection(Date.now())) }
-  }
-  const { userId } = await auth()
-  const journal = getJournalStore()
-  const cellar = getCellarStore()
-  const expressions = getExpressionStore()
-  if (!userId || !journal || !cellar || !expressions) return none
-  const [entries, rows, bottlings] = await Promise.all([
-    journal.read(userId),
-    cellar.read(userId),
-    expressions.read(userId),
-  ])
-  return { canLog: true, canView: true, entries, cellar: rows, expressions: bottlings }
 }
 
 /** One bottling's tastings, newest first. */

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
-import { auth } from '@clerk/nextjs/server'
+import { resolveViewer } from '@/lib/collection/viewer'
 import { hasLocale } from 'next-intl'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { notFound } from 'next/navigation'
@@ -9,22 +9,14 @@ import { ColdStartChips, type ColdStartChipView } from '@/components/palate/cold
 import { HomeActionTiles } from '@/components/home/action-tiles'
 import { TabHeader } from '@/components/layout/screen-header'
 import { HomeFirstRunCard } from '@/components/home/first-run-card'
-import { readSampleJournal, wantsSampleCollection } from '@/lib/demo/sample-mode'
 import { HomeGreeting } from '@/components/home/greeting'
 import { HomePalateStrip } from '@/components/home/palate-strip'
 import { HomeRecentTastings } from '@/components/home/recent-tastings'
-import { currentUserIsMaintainer } from '@/lib/auth/maintainer'
 import { coldStartChips } from '@/lib/cross-beverage/cold-start-chips'
 import { resolveCrossBeverageTarget } from '@/lib/cross-beverage/forward-lookup'
 import { isDebugEnabled } from '@/lib/debug/debug-access'
 import { isLaunched } from '@/i18n/launch-state'
 import { routing } from '@/i18n/routing'
-import { getJournalStore } from '@/lib/taste/get-journal-store'
-import { STUB_JOURNAL_NOW, resolveJournalStub } from '@/lib/taste/journal-stub'
-import {
-  type MaintainerJournalState,
-  resolveMaintainerJournal,
-} from '@/lib/taste/resolve-maintainer-journal'
 import { PALATE_READ_THRESHOLD, palateLean } from '@/lib/taste/palate-read'
 
 /**
@@ -67,51 +59,8 @@ interface PageProps {
   params: Promise<{ locale: string }>
 }
 
-type CookieJar = Awaited<ReturnType<typeof cookies>>
-
 /** §3 shows three. "All {n} →" carries the real total. */
 const RECENT_LIMIT = 3
-
-/**
- * Decide the maintainer branch. Kept out of the component body so the impure
- * `Date.now()` read isn't in the render path — the non-prod
- * `yawaragi_journal_stub` seam also stands in for the maintainer check + store
- * so the E2E needs no Clerk session and no Upstash.
- */
-async function resolveJournalView(cookieJar: CookieJar): Promise<{
-  journal: MaintainerJournalState | null
-  /**
-   * The instant the recent-tasting ages are measured against.
-   *
-   * Read here and passed down rather than called in the component body:
-   * `Date.now()` during render is an impure call, which the React compiler
-   * rejects outright (`react-hooks/purity`) because a re-render would silently
-   * produce different output. One read, one value, every age consistent with
-   * every other.
-   */
-  now: number
-}> {
-  const now = Date.now()
-  const journalStub =
-    process.env.NODE_ENV !== 'production'
-      ? cookieJar.get('yawaragi_journal_stub')?.value
-      : undefined
-  if (journalStub != null) {
-    // The stub's entries are pinned to a fixed instant so a relative age is
-    // not a test that rewrites its own expectations overnight.
-    return { journal: resolveJournalStub(journalStub), now: STUB_JOURNAL_NOW }
-  }
-  if (!(await currentUserIsMaintainer())) {
-    // A visitor without an account who asked for the sample collection.
-    if (wantsSampleCollection(cookieJar)) return { journal: (await readSampleJournal(now)).journal, now }
-    return { journal: null, now }
-  }
-  const { userId } = await auth()
-  return {
-    journal: await resolveMaintainerJournal({ store: getJournalStore(), userId, now }),
-    now,
-  }
-}
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { locale } = await params
@@ -157,7 +106,9 @@ export default async function HomeTabPage({ params }: PageProps) {
   // now that the screen names sakes and shows ratings.
   const cookieJar = await cookies()
   const debugMode = await isDebugEnabled(cookieJar)
-  const { journal, now } = await resolveJournalView(cookieJar)
+  const viewer = await resolveViewer(cookieJar)
+  const { now } = viewer
+  const journal = viewer.kind === 'none' ? null : (await viewer.read('journal')).journal
   const entries = journal?.kind === 'journal' ? journal.entries : []
   const profile = journal?.kind === 'journal' ? journal.profile : null
 

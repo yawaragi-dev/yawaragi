@@ -9,7 +9,7 @@ import { Link, getPathname } from '@/i18n/navigation'
 import { isLaunched } from '@/i18n/launch-state'
 import { routing } from '@/i18n/routing'
 import { bottlesHad } from '@/lib/collection/bottles-had'
-import { resolveViewerHistory } from '@/lib/collection/resolve-viewer-history'
+import { resolveViewer } from '@/lib/collection/viewer'
 
 /**
  * "Bottles you've had" (design v1.10, AB6; 132): the bottles no longer in the
@@ -36,15 +36,18 @@ export default async function BottlesHadPage({ params }: { params: Promise<{ loc
   const cellar = getPathname({ locale, href: { pathname: '/collection', query: { tab: 'cellar' } } })
   if (!isLaunched(locale)) redirect(cellar)
 
-  const view = await resolveViewerHistory(await cookies())
-  if (!view) redirect(cellar)
+  const viewer = await resolveViewer(await cookies())
+  if (viewer.kind === 'none') redirect(cellar)
+  const { history, expressions } = await viewer.read('history', 'expressions')
+  // A row of a bottling deleted since opens its sake's page.
+  const bottlingIds = new Set(expressions.map((e) => e.id))
 
   const t = await getTranslations('bottlesHad')
-  const bottles = bottlesHad(view.history)
+  const bottles = bottlesHad(history ?? [])
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-5 py-4" data-testid="bottles-had-page">
       <ScreenBar title={t('title')} titleAs="h1" backFallbackHref={cellar} />
-      {view.unavailable ? (
+      {history === null ? (
         <p className="max-w-prose text-body text-ash-600" data-testid="bottles-had-unavailable">
           {t('unavailable')}
         </p>
@@ -61,7 +64,7 @@ export default async function BottlesHadPage({ params }: { params: Promise<{ loc
       ) : (
         <>
           <p className="max-w-prose text-subtle leading-normal text-ash-700">{t('intro')}</p>
-          <BottlesHadList bottles={bottles} bottlingIds={view.bottlingIds} readOnly={view.readOnly} now={view.now} />
+          <BottlesHadList bottles={bottles} bottlingIds={bottlingIds} readOnly={viewer.readOnly} now={viewer.now} />
         </>
       )}
       {/* The Sakenowa credit is line 1 of the end-of-screen block the app
