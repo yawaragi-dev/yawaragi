@@ -4,7 +4,8 @@ import { debugAdd } from '@/lib/debug/debug-log'
 import type { Brand } from '@/lib/schemas/brand'
 import { expandBrandVariants, expandBreweryVariants } from './brewery-variants'
 import type { Brewery } from '@/lib/schemas/brewery'
-import { latinBreweryAgrees, namesOverlapping, romajiKey } from './lookup'
+import { latinBreweryAgrees, namesOverlapping } from './label-match-rules'
+import { romajiKey } from './romaji-key'
 import {
   type ResolveScannedLabelResult,
   type ScannedLabel,

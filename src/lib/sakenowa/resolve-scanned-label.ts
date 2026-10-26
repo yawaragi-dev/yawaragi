@@ -11,16 +11,14 @@ import {
   findSakeByBrandOnlyFromPool,
   findSakeByBreweryOnlyFromPool,
   findSakeByExtractionFromPool,
-  expandLatinBrandVariants,
   findSakeByLatinBreweryFromPool,
   listSiblingBrandsFromPool,
-  namesOverlapping,
-  romajiKey,
 } from './lookup'
+import { expandLatinBrandVariants, namesOverlapping } from './label-match-rules'
 import type { Brand } from '@/lib/schemas/brand'
 import { expandBrandVariants } from './brewery-variants'
 import { kanaToRomaji } from './kana-romaji'
-import { looseRomajiKey } from './romaji-key'
+import { looseRomajiKey, romajiKey } from './romaji-key'
 import { getServerDbPool } from '../supabase/server-client'
 
 // ---------- resolveScannedLabel ----------

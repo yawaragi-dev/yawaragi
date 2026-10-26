@@ -6,8 +6,8 @@ import {
   expandLatinBrandVariants,
   latinBreweryAgrees,
   namesOverlapping,
-  romajiKey,
-} from './lookup'
+} from './label-match-rules'
+import { romajiKey } from './romaji-key'
 
 /**
  * Pure-function unit tests for the Latin variant expansion used by the
