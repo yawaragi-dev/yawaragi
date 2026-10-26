@@ -26,7 +26,7 @@ import { readAnonymousSessionCookie } from '@/lib/legal/anonymous-session-cookie
 import { FLAVOR_AXES, type FlavorAxis } from '@/lib/schemas/flavor-chart'
 import type { FlavorProfile } from '@/lib/schemas/flavor-profile'
 import type { TasteEvent } from '@/lib/schemas/taste-event'
-import { lookupBrand } from '@/lib/sakenowa/lookup'
+import { lookupBrand } from '@/lib/sakenowa/catalogue-reads'
 import { journalEntriesToTasteEvents } from '@/lib/schemas/journal-entry'
 import { catalogueMeanProfile } from '@/lib/taste/catalogue-mean'
 import { getFlavorCandidatePool } from '@/lib/taste/flavor-candidate-pool'

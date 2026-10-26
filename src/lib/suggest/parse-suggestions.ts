@@ -24,7 +24,7 @@ import {
  * occasionally emits a fifth suggestion where one field is missing; the
  * user still benefits from the first four. This is the same "process the
  * good rows, log the bad ones" posture Sakenowa's ingest uses on the
- * mirror table (`src/lib/sakenowa/lookup.ts`).
+ * mirror table (`src/lib/sakenowa/catalogue-reads.ts`).
  */
 export function parseSuggestionsFromText(text: string): Suggestion[] {
   const rows = extractCandidateRows(text)

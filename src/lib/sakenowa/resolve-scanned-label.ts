@@ -8,20 +8,18 @@ import {
   type BreweryOnlyLookupResult,
   type FindSakeByExtractionResult,
   type SakeLookupQuery,
-  findSakeByBrandOnlyFromPool,
-  findSakeByBreweryOnlyFromPool,
-  findSakeByExtractionFromPool,
-  expandLatinBrandVariants,
-  findSakeByLatinBreweryFromPool,
-  listSiblingBrandsFromPool,
-  namesOverlapping,
-  romajiKey,
-} from './lookup'
+  findSakeByBrandOnly,
+  findSakeByBreweryOnly,
+  findSakeByExtraction,
+  findSakeByLatinBrewery,
+} from './label-match'
+import { listSiblingBrands } from './catalogue-reads'
+import { expandLatinBrandVariants, namesOverlapping } from './label-match-rules'
 import type { Brand } from '@/lib/schemas/brand'
 import { expandBrandVariants } from './brewery-variants'
 import { kanaToRomaji } from './kana-romaji'
-import { looseRomajiKey } from './romaji-key'
-import { getServerDbPool } from '../supabase/server-client'
+import { looseRomajiKey, romajiKey } from './romaji-key'
+import { getServerDbPool } from '@/lib/supabase/server-client'
 
 // ---------- resolveScannedLabel ----------
 //
@@ -31,7 +29,7 @@ import { getServerDbPool } from '../supabase/server-client'
 // hallucination rescue) AND the 5-pass Sakenowa cascade. Before #198
 // the guards lived in `scan-action.ts` and re-implemented their own
 // parallel cascade (brewery-only → field-swap brand-only) next to the
-// nicely-tested pass chain in `lookup.ts`, so the composition — the
+// nicely-tested pass chain in `label-match.ts`, so the composition — the
 // part most likely to harbour a bug — was scattered across two modules
 // and only reachable through the vision model + rate-limit gate.
 //
@@ -62,13 +60,13 @@ export type ScannedLabel = Pick<LabelScanExtraction, 'name_ja' | 'brewery_ja' | 
 export type ResolveScannedLabelResult = FindSakeByExtractionResult | { kind: 'low_confidence' }
 
 /**
- * The three lookup operations `resolveScannedLabel` composes. Extracted
- * as an injectable seam so the guard / cascade interactions
- * (single-char rescue, field-swap, placeholder routing) can be
- * exercised as table-driven unit tests with canned lookup results — no
- * Postgres, no vision model, no rate-limit gate. In production the
- * executor is bound to a `Pool` via `poolExecutor`; the shapes mirror
- * the standalone `findSakeBy*` seams exactly.
+ * The catalogue lookups `resolveScannedLabel` composes, and the one type
+ * its seam takes. Extracted so the guard / cascade interactions
+ * (single-char rescue, field-swap, placeholder routing) can be exercised
+ * as table-driven unit tests with canned lookup results — no Postgres, no
+ * vision model, no rate-limit gate. In production the executor is
+ * `poolExecutor(pool)`, which binds the `findSakeBy*` passes of
+ * `label-match.ts` to a pool; the shapes mirror them exactly.
  */
 export interface ScannedLabelLookupExecutor {
   findByExtraction(query: SakeLookupQuery): Promise<FindSakeByExtractionResult>
@@ -82,20 +80,16 @@ export interface ScannedLabelLookupExecutor {
 
 export function poolExecutor(pool: Pool): ScannedLabelLookupExecutor {
   return {
-    findByExtraction: (query) => findSakeByExtractionFromPool(query, pool),
-    findByBreweryOnly: (query) => findSakeByBreweryOnlyFromPool(query, pool),
-    findByBrandOnly: (query) => findSakeByBrandOnlyFromPool(query, pool),
-    findByLatinBrewery: (query) => findSakeByLatinBreweryFromPool(query, pool),
-    listSiblings: (brandId) => listSiblingBrandsFromPool(brandId, pool, SIBLING_LIMIT),
+    findByExtraction: (query) => findSakeByExtraction(query, pool),
+    findByBreweryOnly: (query) => findSakeByBreweryOnly(query, pool),
+    findByBrandOnly: (query) => findSakeByBrandOnly(query, pool),
+    findByLatinBrewery: (query) => findSakeByLatinBrewery(query, pool),
+    listSiblings: (brandId) => listSiblingBrands(brandId, SIBLING_LIMIT, pool),
   }
 }
 
 /** Enough to hold every line of the largest brewery in the catalogue. */
 const SIBLING_LIMIT = 60
-
-export function isExecutor(x: Pool | ScannedLabelLookupExecutor): x is ScannedLabelLookupExecutor {
-  return 'findByExtraction' in x
-}
 
 /**
  * Hiragana (U+3040–309F) + Katakana (U+30A0–30FF) + CJK Unified
@@ -202,14 +196,13 @@ function looksLikeSingleCharHallucination(name_ja: string): boolean {
  * Anything short of that — brand only, brewery only, a list — still needs
  * the model's own confidence behind it.
  *
- * `poolOrExecutor` is a `Pool` in production (bound to the `findSakeBy*FromPool`
- * passes) or a fake `ScannedLabelLookupExecutor` in unit tests.
+ * `executor` defaults to the catalogue on the app's pool; unit tests pass a
+ * fake one.
  */
 export async function resolveScannedLabel(
   label: ScannedLabel,
-  poolOrExecutor: Pool | ScannedLabelLookupExecutor = getServerDbPool(),
+  executor: ScannedLabelLookupExecutor = poolExecutor(getServerDbPool()),
 ): Promise<ResolveScannedLabelResult> {
-  const executor = isExecutor(poolOrExecutor) ? poolOrExecutor : poolExecutor(poolOrExecutor)
   const { confidence } = label
 
   const tier = resolveConfidenceTier(confidence)

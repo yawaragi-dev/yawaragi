@@ -25,7 +25,7 @@ vi.mock('@/lib/rate-limit/enforce-rate-limit', () => ({
 vi.mock('@/lib/legal/anonymous-session-cookie', () => ({
   readAnonymousSessionCookie: vi.fn(() => ({ sid: 'test-sid' })),
 }))
-vi.mock('@/lib/sakenowa/lookup', () => ({
+vi.mock('@/lib/sakenowa/catalogue-reads', () => ({
   lookupFlavorChart: vi.fn(),
 }))
 vi.mock('@/lib/taste/get-taste-event-store', () => ({
@@ -35,7 +35,7 @@ vi.mock('@/lib/taste/get-taste-event-store', () => ({
 import { InMemoryTasteEventStore } from '@/lib/taste/in-memory-taste-event-store'
 import { enforceRateLimit } from '@/lib/rate-limit/enforce-rate-limit'
 import { readAnonymousSessionCookie } from '@/lib/legal/anonymous-session-cookie'
-import { lookupFlavorChart } from '@/lib/sakenowa/lookup'
+import { lookupFlavorChart } from '@/lib/sakenowa/catalogue-reads'
 import { applyCrossBeverage, applyScanResult, rateSake } from '@/lib/taste/taste-actions'
 
 const CHART: FlavorChart = {

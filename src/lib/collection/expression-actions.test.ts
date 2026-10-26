@@ -9,7 +9,7 @@ const h = vi.hoisted(() => ({
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn(async () => ({ userId: 'user_admin' })) }))
 vi.mock('@/lib/auth/maintainer', () => ({ currentUserIsMaintainer: vi.fn(async () => true) }))
-vi.mock('@/lib/sakenowa/lookup', () => ({ lookupBrand: vi.fn() }))
+vi.mock('@/lib/sakenowa/catalogue-reads', () => ({ lookupBrand: vi.fn() }))
 vi.mock('@/lib/taste/get-journal-store', () => ({ getJournalStore: vi.fn(() => h.journal) }))
 vi.mock('@/lib/collection/get-cellar-store', () => ({ getCellarStore: vi.fn(() => h.cellar) }))
 vi.mock('@/lib/collection/get-expression-store', () => ({
@@ -25,7 +25,7 @@ import {
 } from '@/lib/collection/expression-actions'
 import { InMemoryCellarStore } from '@/lib/collection/in-memory-cellar-store'
 import { InMemoryExpressionStore } from '@/lib/collection/in-memory-expression-store'
-import { lookupBrand } from '@/lib/sakenowa/lookup'
+import { lookupBrand } from '@/lib/sakenowa/catalogue-reads'
 import { InMemoryJournalStore } from '@/lib/taste/in-memory-journal-store'
 
 const RIHAKU: Brand = {

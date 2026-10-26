@@ -15,16 +15,18 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { Pool } from 'pg'
 import {
-  findSakeByBrandOnlyFromPool,
-  findSakeByBreweryOnlyFromPool,
-  findSakeByExtractionFromPool,
-  findSakeByLatinBreweryFromPool,
-  listRankingFromPool,
-  listSiblingBrandsFromPool,
-  lookupBrandFromPool,
-  lookupBreweryByBrandFromPool,
-  lookupFlavorChartFromPool,
-} from './lookup'
+  listRanking,
+  listSiblingBrands,
+  lookupBrand,
+  lookupBreweryByBrand,
+  lookupFlavorChart,
+} from './catalogue-reads'
+import {
+  findSakeByBrandOnly,
+  findSakeByBreweryOnly,
+  findSakeByExtraction,
+  findSakeByLatinBrewery,
+} from './label-match'
 import { forgetRomajiIndex } from './romaji-index'
 import { searchCatalogueFromPool } from './search-brands'
 
@@ -101,9 +103,9 @@ async function seedBrewery(opts: {
   )
 }
 
-describe('lookupBrandFromPool', () => {
+describe('lookupBrand', () => {
   it('returns null when the brandId does not exist', async () => {
-    const result = await lookupBrandFromPool(9999, pool)
+    const result = await lookupBrand(9999, pool)
     expect(result).toBeNull()
   })
 
@@ -116,7 +118,7 @@ describe('lookupBrandFromPool', () => {
       [9001, 'Reijin', '麗人', 9501, 'sakenowa', null, 'hash-fixture-9001'],
     )
 
-    const brand = await lookupBrandFromPool(9001, pool)
+    const brand = await lookupBrand(9001, pool)
 
     expect(brand).toEqual({
       brandId: 9001,
@@ -137,16 +139,16 @@ describe('lookupBrandFromPool', () => {
       [9002, 'Test', 'テスト', 9502, 'llm_extracted', 0.75, 'hash-fixture-9002'],
     )
 
-    const brand = await lookupBrandFromPool(9002, pool)
+    const brand = await lookupBrand(9002, pool)
 
     expect(brand?.confidence).toBe(0.75)
     expect(brand?.source).toBe('llm_extracted')
   })
 })
 
-describe('lookupBreweryByBrandFromPool', () => {
+describe('lookupBreweryByBrand', () => {
   it('returns null when the brandId does not exist', async () => {
-    const result = await lookupBreweryByBrandFromPool(9999, pool)
+    const result = await lookupBreweryByBrand(9999, pool)
     expect(result).toBeNull()
   })
 
@@ -164,7 +166,7 @@ describe('lookupBreweryByBrandFromPool', () => {
       [9001, 'Reijin', '麗人', 9501, 'sakenowa', null, 'hash-fixture-9001'],
     )
 
-    const brewery = await lookupBreweryByBrandFromPool(9001, pool)
+    const brewery = await lookupBreweryByBrand(9001, pool)
 
     expect(brewery).toEqual({
       breweryId: 9501,
@@ -185,7 +187,7 @@ describe('lookupBreweryByBrandFromPool', () => {
       [9002, 'Test', 'テスト', 9502, 'sakenowa', null, 'hash-fixture-9002'],
     )
 
-    const brewery = await lookupBreweryByBrandFromPool(9002, pool)
+    const brewery = await lookupBreweryByBrand(9002, pool)
 
     expect(brewery?.confidence).toBe(0.6)
     expect(brewery?.source).toBe('llm_extracted')
@@ -202,10 +204,10 @@ async function seedBrandWithBrewery(brandId: number, breweryId: number): Promise
   )
 }
 
-describe('lookupFlavorChartFromPool', () => {
+describe('lookupFlavorChart', () => {
   it('returns null when no chart exists for the brandId', async () => {
     await seedBrandWithBrewery(9001, 9501)
-    const result = await lookupFlavorChartFromPool(9001, pool)
+    const result = await lookupFlavorChart(9001, pool)
     expect(result).toBeNull()
   })
 
@@ -218,7 +220,7 @@ describe('lookupFlavorChartFromPool', () => {
       [9001, 0.27, 0.51, 0.31, 0.42, 0.46, 0.42, 'sakenowa', null, 'hash-chart-9001'],
     )
 
-    const chart = await lookupFlavorChartFromPool(9001, pool)
+    const chart = await lookupFlavorChart(9001, pool)
 
     expect(chart).toEqual({
       brandId: 9001,
@@ -241,7 +243,7 @@ describe('lookupFlavorChartFromPool', () => {
       [9002, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 'llm_inferred', 0.85, 'hash-chart-9002'],
     )
 
-    const chart = await lookupFlavorChartFromPool(9002, pool)
+    const chart = await lookupFlavorChart(9002, pool)
 
     expect(chart?.confidence).toBe(0.85)
     expect(chart?.source).toBe('llm_inferred')
@@ -257,15 +259,15 @@ describe('lookupFlavorChartFromPool', () => {
        VALUES ($1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 'sakenowa', 'hash-chart-cascade')`,
       [9001],
     )
-    expect(await lookupFlavorChartFromPool(9001, pool)).not.toBeNull()
+    expect(await lookupFlavorChart(9001, pool)).not.toBeNull()
 
     await pool.query('DELETE FROM brands WHERE brand_id = $1', [9001])
 
-    expect(await lookupFlavorChartFromPool(9001, pool)).toBeNull()
+    expect(await lookupFlavorChart(9001, pool)).toBeNull()
   })
 })
 
-describe('listRankingFromPool', () => {
+describe('listRanking', () => {
   async function seedRankingFixture(): Promise<void> {
     await seedBrewery({ breweryId: 9501 })
     await seedBrewery({ breweryId: 9502 })
@@ -288,7 +290,7 @@ describe('listRankingFromPool', () => {
 
   it('returns the top-N overall rows in rank order', async () => {
     await seedRankingFixture()
-    const rows = await listRankingFromPool({ kind: 'overall', limit: 10 }, pool)
+    const rows = await listRanking({ kind: 'overall', limit: 10 }, pool)
     expect(rows.map((r) => r.rank)).toEqual([1, 2])
     expect(rows[0]).toMatchObject({
       kind: 'overall',
@@ -301,37 +303,37 @@ describe('listRankingFromPool', () => {
 
   it('honours limit', async () => {
     await seedRankingFixture()
-    const rows = await listRankingFromPool({ kind: 'overall', limit: 1 }, pool)
+    const rows = await listRanking({ kind: 'overall', limit: 1 }, pool)
     expect(rows).toHaveLength(1)
     expect(rows[0].rank).toBe(1)
   })
 
   it("returns the area-scoped rows when kind='area' and areaId set", async () => {
     await seedRankingFixture()
-    const rows = await listRankingFromPool({ kind: 'area', limit: 10, areaId: 20 }, pool)
+    const rows = await listRanking({ kind: 'area', limit: 10, areaId: 20 }, pool)
     expect(rows).toHaveLength(2)
     expect(rows.every((r) => r.kind === 'area' && r.areaId === 20)).toBe(true)
   })
 
   it("throws when kind='area' is requested without an areaId", async () => {
     await expect(
-      listRankingFromPool({ kind: 'area', limit: 10 }, pool),
+      listRanking({ kind: 'area', limit: 10 }, pool),
     ).rejects.toThrow(/requires an areaId/)
   })
 
   it('returns [] when limit is 0 (avoids a needless query)', async () => {
-    const rows = await listRankingFromPool({ kind: 'overall', limit: 0 }, pool)
+    const rows = await listRanking({ kind: 'overall', limit: 0 }, pool)
     expect(rows).toEqual([])
   })
 
   it('returns [] for an areaId with no rankings rather than throwing', async () => {
     await seedRankingFixture()
-    const rows = await listRankingFromPool({ kind: 'area', limit: 10, areaId: 99 }, pool)
+    const rows = await listRanking({ kind: 'area', limit: 10, areaId: 99 }, pool)
     expect(rows).toEqual([])
   })
 })
 
-describe('findSakeByExtractionFromPool', () => {
+describe('findSakeByExtraction', () => {
   // Per the slice spec (#106): exact-match (happy path) and no-match are
   // covered here. Ambiguous-match seeding is deferred to S4 — the union
   // arm exists in the implementation today so the result UI compiles
@@ -354,7 +356,7 @@ describe('findSakeByExtractionFromPool', () => {
       [9001, 'Dassai', '獺祭', 9501, 'sakenowa', null, 'hash-dassai-9001'],
     )
 
-    const result = await findSakeByExtractionFromPool(
+    const result = await findSakeByExtraction(
       { nameJa: '獺祭', breweryJa: '旭酒造' },
       pool,
     )
@@ -382,7 +384,7 @@ describe('findSakeByExtractionFromPool', () => {
       [9002, 'Dassai', '獺祭', 9502, 'sakenowa', null, 'hash-dassai-9002'],
     )
 
-    const result = await findSakeByExtractionFromPool({ nameJa: '獺祭', breweryJa: '旭酒造' }, pool)
+    const result = await findSakeByExtraction({ nameJa: '獺祭', breweryJa: '旭酒造' }, pool)
 
     expect(result.kind).toBe('exact')
     if (result.kind !== 'exact') throw new Error('unreachable; for narrowing only')
@@ -401,7 +403,7 @@ describe('findSakeByExtractionFromPool', () => {
     )
 
     for (const breweryJa of ['勝山酒造', '仙台伊澤家勝山酒造', '仙台伊澤家 勝山酒造']) {
-      const result = await findSakeByExtractionFromPool({ nameJa: '勝山', breweryJa }, pool)
+      const result = await findSakeByExtraction({ nameJa: '勝山', breweryJa }, pool)
       expect(result.kind, breweryJa).toBe('exact')
     }
   })
@@ -412,7 +414,7 @@ describe('findSakeByExtractionFromPool', () => {
     await seedBrandWithBrewery(9001, 9501)
 
     const query = { nameJa: '存在しない酒', breweryJa: '架空酒造' }
-    const result = await findSakeByExtractionFromPool(query, pool)
+    const result = await findSakeByExtraction(query, pool)
 
     expect(result.kind).toBe('no_match')
     if (result.kind !== 'no_match') throw new Error('unreachable; for narrowing only')
@@ -440,7 +442,7 @@ describe('findSakeByExtractionFromPool', () => {
       [9001, 'Zao', '蔵王', 9501, 'sakenowa', null, 'hash-zao-9001'],
     )
 
-    const result = await findSakeByExtractionFromPool(
+    const result = await findSakeByExtraction(
       { nameJa: '蔵王', breweryJa: '宮鉄酒造' },
       pool,
     )
@@ -473,7 +475,7 @@ describe('findSakeByExtractionFromPool', () => {
       ],
     )
 
-    const result = await findSakeByExtractionFromPool(
+    const result = await findSakeByExtraction(
       { nameJa: '菊姫', breweryJa: '存在しない酒造' },
       pool,
     )
@@ -519,7 +521,7 @@ describe('findSakeByExtractionFromPool', () => {
       [9001, '黄桜', '黄桜', 'Kizakura', 9501, 'sakenowa', null, 'hash-kizakura-name-romaji'],
     )
 
-    const result = await findSakeByExtractionFromPool(
+    const result = await findSakeByExtraction(
       // Brewery_ja doesn't match the seed — forces fall-through to
       // the Latin pass.
       { nameJa: 'Kizakura', breweryJa: '存在しない酒造' },
@@ -543,7 +545,7 @@ describe('findSakeByExtractionFromPool', () => {
       [9001, '黄桜', '黄桜', 'Kizakura', 9501, 'sakenowa', null, 'hash-kizakura-perle-strip'],
     )
 
-    const result = await findSakeByExtractionFromPool(
+    const result = await findSakeByExtraction(
       { nameJa: 'Kizakura Perle', breweryJa: '存在しない酒造' },
       pool,
     )
@@ -578,7 +580,7 @@ describe('findSakeByExtractionFromPool', () => {
       ],
     )
 
-    const result = await findSakeByExtractionFromPool(
+    const result = await findSakeByExtraction(
       { nameJa: 'Kizakura Perle', breweryJa: '木下酒造' },
       pool,
     )
@@ -609,7 +611,7 @@ describe('findSakeByExtractionFromPool', () => {
       [9001, 'Shangri-la', 'Shangri-la', 9501, 'sakenowa', null, 'hash-latin-brand-9001'],
     )
 
-    const result = await findSakeByExtractionFromPool(
+    const result = await findSakeByExtraction(
       // Brewery_ja deliberately does NOT match the seeded brewery,
       // so passes 1–4 (which all join through brewery) all miss and
       // the chain falls through to the 5th-pass Latin lookup. That
@@ -643,7 +645,7 @@ describe('findSakeByExtractionFromPool', () => {
       [9001, 'Umami', 'うまみ', 9501, 'sakenowa', null, 'hash-kana-cross-9001'],
     )
 
-    const result = await findSakeByExtractionFromPool(
+    const result = await findSakeByExtraction(
       // Model returned the katakana form.
       { nameJa: 'ウマミ', breweryJa: 'テスト酒造' },
       pool,
@@ -674,7 +676,7 @@ describe('findSakeByExtractionFromPool', () => {
       [9001, 'Takashimizu', '高清水', 9501, 'sakenowa', null, 'hash-takashimizu-9001'],
     )
 
-    const result = await findSakeByExtractionFromPool(
+    const result = await findSakeByExtraction(
       { nameJa: '寺田', breweryJa: '高清水酒造' },
       pool,
     )
@@ -706,7 +708,7 @@ describe('findSakeByExtractionFromPool', () => {
       ],
     )
 
-    const result = await findSakeByExtractionFromPool(
+    const result = await findSakeByExtraction(
       { nameJa: '架空の銘柄', breweryJa: '旭酒造' },
       pool,
     )
@@ -736,7 +738,7 @@ describe('findSakeByExtractionFromPool', () => {
       [9001, 'Sugitama', '杉玉', 9501, 'sakenowa', null, 'hash-sugitama-fieldswap-9001'],
     )
 
-    const result = await findSakeByExtractionFromPool(
+    const result = await findSakeByExtraction(
       // Real model output for the 2026-06-12 22175.jpg trace:
       // brand `崇麗` (junk) + brewery `杉玉酒造` (brand+酒造).
       { nameJa: '崇麗', breweryJa: '杉玉酒造' },
@@ -772,7 +774,7 @@ describe('findSakeByExtractionFromPool', () => {
       ],
     )
 
-    const result = await findSakeByExtractionFromPool(
+    const result = await findSakeByExtraction(
       { nameJa: '山田錦', breweryJa: '白鹿' },
       pool,
     )
@@ -784,16 +786,16 @@ describe('findSakeByExtractionFromPool', () => {
   })
 })
 
-describe('findSakeByBreweryOnlyFromPool', () => {
+describe('findSakeByBreweryOnly', () => {
   // Standalone brewery-only seam. Called directly by scan-action.ts
   // when the single-character-hallucination guard fires — the brand
   // is junk but the brewery may still resolve. Mirrors the third-pass
-  // arm of `findSakeByExtractionFromPool` but addressable on its
+  // arm of `findSakeByExtraction` but addressable on its
   // own.
 
   it('returns {kind: "matched_brewery_only"} for a mono-brand brewery', async () => {
     // Same Takashimizu fixture as the brewery-only branch of
-    // `findSakeByExtractionFromPool` — exercised here through the
+    // `findSakeByExtraction` — exercised here through the
     // standalone seam to lock in the contract scan-action depends on.
     await seedBrewery({
       breweryId: 9501,
@@ -808,7 +810,7 @@ describe('findSakeByBreweryOnlyFromPool', () => {
       [9001, 'Takashimizu', '高清水', 9501, 'sakenowa', null, 'hash-takashimizu-9001'],
     )
 
-    const result = await findSakeByBreweryOnlyFromPool(
+    const result = await findSakeByBreweryOnly(
       // Single-char garbage name_ja, real brewery kanji — the exact
       // shape the single-char guard in scan-action surfaces.
       { nameJa: '紀', breweryJa: '高清水酒造' },
@@ -837,7 +839,7 @@ describe('findSakeByBreweryOnlyFromPool', () => {
       ],
     )
 
-    const result = await findSakeByBreweryOnlyFromPool(
+    const result = await findSakeByBreweryOnly(
       { nameJa: '幻', breweryJa: '旭酒造' },
       pool,
     )
@@ -882,7 +884,7 @@ describe('findSakeByBreweryOnlyFromPool', () => {
       ],
     )
 
-    const result = await findSakeByBreweryOnlyFromPool(
+    const result = await findSakeByBreweryOnly(
       // Real model output: junk brand, correct brewery.
       { nameJa: '八仙', breweryJa: '沢の鶴' },
       pool,
@@ -916,7 +918,7 @@ describe('findSakeByBreweryOnlyFromPool', () => {
       ],
     )
 
-    const result = await findSakeByBreweryOnlyFromPool(
+    const result = await findSakeByBreweryOnly(
       { nameJa: '幻', breweryJa: '白鹿' },
       pool,
     )
@@ -929,7 +931,7 @@ describe('findSakeByBreweryOnlyFromPool', () => {
   it('returns {kind: "no_match"} when the brewery kanji is not in Sakenowa', async () => {
     // Don't seed anything — query against the brewery kanji of a
     // brewery that doesn't exist.
-    const result = await findSakeByBreweryOnlyFromPool(
+    const result = await findSakeByBreweryOnly(
       { nameJa: '幻', breweryJa: '架空酒造' },
       pool,
     )
@@ -955,7 +957,7 @@ describe('findSakeByBreweryOnlyFromPool', () => {
       [9001, 'Takashimizu', '高清水', 9501, 'sakenowa', null, 'hash-takashimizu-suffix-9001'],
     )
 
-    const result = await findSakeByBrandOnlyFromPool(
+    const result = await findSakeByBrandOnly(
       // Query with the 酒造 suffix the model added — stem expansion
       // strips it and the lookup finds 高清水.
       { nameJa: '高清水酒造', breweryJa: '高清水酒造' },
@@ -990,7 +992,7 @@ describe('findSakeByBreweryOnlyFromPool', () => {
       [9001, 'Takashimizu', '高清水', 9501, 'sakenowa', null, 'hash-takashimizu-fieldswap-9001'],
     )
 
-    const result = await findSakeByBrandOnlyFromPool(
+    const result = await findSakeByBrandOnly(
       // Field-swap shape: action calls with nameJa = extraction.brewery_ja
       { nameJa: '高清水', breweryJa: '高清水' },
       pool,
@@ -1023,7 +1025,7 @@ describe('findSakeByBreweryOnlyFromPool', () => {
       [9001, 'Takashimizu', '高清水', 9501, 'sakenowa', null, 'hash-takashimizu-no-suffix-9001'],
     )
 
-    const result = await findSakeByBreweryOnlyFromPool(
+    const result = await findSakeByBreweryOnly(
       { nameJa: '斗', breweryJa: '高清水' },
       pool,
     )
@@ -1049,7 +1051,7 @@ describe('findSakeByBreweryOnlyFromPool', () => {
  * the ordering has run (which is the defect that made §8's ranking decorative
  * — see `search-brands.ts`).
  */
-describe('listSiblingBrandsFromPool', () => {
+describe('listSiblingBrands', () => {
   async function seedBrand(
     brandId: number,
     breweryId: number,
@@ -1067,7 +1069,7 @@ describe('listSiblingBrandsFromPool', () => {
     await seedBrewery({ breweryId: 9501 })
     await seedBrand(9001, 9501, '麗人')
 
-    expect(await listSiblingBrandsFromPool(9001, pool)).toEqual([])
+    expect(await listSiblingBrands(9001, undefined, pool)).toEqual([])
   })
 
   it('returns the brewery\'s other sakes and never the one being read', async () => {
@@ -1075,7 +1077,7 @@ describe('listSiblingBrandsFromPool', () => {
     await seedBrand(9001, 9501, '麗人')
     await seedBrand(9002, 9501, '諏訪美人')
 
-    const siblings = await listSiblingBrandsFromPool(9001, pool)
+    const siblings = await listSiblingBrands(9001, undefined, pool)
 
     expect(siblings.map((b) => b.brandId)).toEqual([9002])
   })
@@ -1086,7 +1088,7 @@ describe('listSiblingBrandsFromPool', () => {
     await seedBrand(9001, 9501, '麗人')
     await seedBrand(9002, 9502, '別の蔵')
 
-    expect(await listSiblingBrandsFromPool(9001, pool)).toEqual([])
+    expect(await listSiblingBrands(9001, undefined, pool)).toEqual([])
   })
 
   it('leaves out a row a later Sakenowa publish superseded', async () => {
@@ -1095,7 +1097,7 @@ describe('listSiblingBrandsFromPool', () => {
     await seedBrand(9002, 9501, '諏訪美人')
     await pool.query('UPDATE brands SET superseded_at = NOW() WHERE brand_id = $1', [9002])
 
-    expect(await listSiblingBrandsFromPool(9001, pool)).toEqual([])
+    expect(await listSiblingBrands(9001, undefined, pool)).toEqual([])
   })
 
   it('puts the shortest name first, so a limit keeps the plainest ones', async () => {
@@ -1104,10 +1106,10 @@ describe('listSiblingBrandsFromPool', () => {
     await seedBrand(9002, 9501, '麗人 純米大吟醸 山田錦')
     await seedBrand(9003, 9501, '諏訪美人')
 
-    const all = await listSiblingBrandsFromPool(9001, pool)
+    const all = await listSiblingBrands(9001, undefined, pool)
     expect(all.map((b) => b.nameKanji)).toEqual(['諏訪美人', '麗人 純米大吟醸 山田錦'])
 
-    const limited = await listSiblingBrandsFromPool(9001, pool, 1)
+    const limited = await listSiblingBrands(9001, 1, pool)
     expect(limited.map((b) => b.nameKanji)).toEqual(['諏訪美人'])
   })
 })
@@ -1122,7 +1124,7 @@ describe('matches the real-bottle eval surfaced (#110)', () => {
     await pool.query('UPDATE breweries SET name_romaji = $1 WHERE brewery_id = $2', ['Dewazakura Shuzo', 9501])
     await pool.query(INSERT_BRAND, [9001, 'Dewazakura', '出羽桜', 9501, 'sakenowa', null, 'hash-dewazakura-9001'])
 
-    const result = await findSakeByLatinBreweryFromPool(
+    const result = await findSakeByLatinBrewery(
       { nameJa: 'DEWAZAKURA', breweryJa: 'Dewazakura Sake Brewery' },
       pool,
     )
@@ -1137,7 +1139,7 @@ describe('matches the real-bottle eval surfaced (#110)', () => {
     await pool.query('UPDATE breweries SET name_romaji = $1 WHERE brewery_id = $2', ['Dewazakura Shuzo', 9501])
     await pool.query(INSERT_BRAND, [9001, 'Dewazakura', '出羽桜', 9501, 'sakenowa', null, 'hash-dewazakura-9001'])
 
-    const result = await findSakeByLatinBreweryFromPool(
+    const result = await findSakeByLatinBrewery(
       { nameJa: 'Yukimegami', breweryJa: 'Dewazakura Sake Brewery' },
       pool,
     )
@@ -1153,7 +1155,7 @@ describe('matches the real-bottle eval surfaced (#110)', () => {
     await pool.query(INSERT_BRAND, [9001, 'Katsuyama', '勝山', 9501, 'sakenowa', null, 'hash-katsuyama-9001'])
     await pool.query(INSERT_BRAND, [9002, 'Senshomasamune', '戦勝政宗', 9501, 'sakenowa', null, 'hash-sensho-9002'])
 
-    const result = await findSakeByExtractionFromPool({ nameJa: '勝山 縁', breweryJa: '勝山酒造' }, pool)
+    const result = await findSakeByExtraction({ nameJa: '勝山 縁', breweryJa: '勝山酒造' }, pool)
 
     expect(result.kind).toBe('exact')
     if (result.kind !== 'exact') throw new Error('unreachable; for narrowing only')
@@ -1166,7 +1168,7 @@ describe('matches the real-bottle eval surfaced (#110)', () => {
     await pool.query(INSERT_BRAND, [9001, '不動', '不動', 9501, 'sakenowa', null, 'hash-fudo-9001'])
     await pool.query('UPDATE brands SET name_romaji = $1 WHERE brand_id = $2', ['Fudō', 9001])
 
-    const result = await findSakeByLatinBreweryFromPool({ nameJa: 'Fudoh', breweryJa: 'Nabedana' }, pool)
+    const result = await findSakeByLatinBrewery({ nameJa: 'Fudoh', breweryJa: 'Nabedana' }, pool)
 
     expect(result.kind).toBe('exact')
     if (result.kind !== 'exact') throw new Error('unreachable; for narrowing only')
@@ -1181,7 +1183,7 @@ describe('matches the real-bottle eval surfaced (#110)', () => {
     await pool.query('UPDATE brands SET name_romaji = $1 WHERE brand_id = $2', ['Sekinoichi', 9001])
     await pool.query('UPDATE brands SET name_romaji = $1 WHERE brand_id = $2', ['Sparkling Seishu', 9002])
 
-    const result = await findSakeByBreweryOnlyFromPool({ nameJa: '世嬉の一', breweryJa: '世嬉の一酒造' }, pool)
+    const result = await findSakeByBreweryOnly({ nameJa: '世嬉の一', breweryJa: '世嬉の一酒造' }, pool)
 
     expect(result.kind).toBe('matched_brewery_only')
     if (result.kind !== 'matched_brewery_only') throw new Error('unreachable; for narrowing only')
@@ -1193,7 +1195,7 @@ describe('matches the real-bottle eval surfaced (#110)', () => {
     await pool.query(INSERT_BRAND, [9001, '花巴', '花巴', 9501, 'sakenowa', null, 'hash-hanatomoe-9001'])
     await pool.query('UPDATE brands SET name_romaji = $1 WHERE brand_id = $2', ['Hanatomoe', 9001])
 
-    const result = await findSakeByExtractionFromPool({ nameJa: 'ハナトモエ', breweryJa: '美吉野醸造' }, pool)
+    const result = await findSakeByExtraction({ nameJa: 'ハナトモエ', breweryJa: '美吉野醸造' }, pool)
 
     expect(result.kind).toBe('exact')
     if (result.kind !== 'exact') throw new Error('unreachable; for narrowing only')
@@ -1205,7 +1207,7 @@ describe('matches the real-bottle eval surfaced (#110)', () => {
     await pool.query(INSERT_BRAND, [9001, 'Choryo', '長龍', 9501, 'sakenowa', null, 'hash-choryo-9001'])
     await pool.query(INSERT_BRAND, [9002, 'Yoshinosugi no Taruzake', '吉野杉の樽酒', 9501, 'sakenowa', null, 'hash-taru-9002'])
 
-    const result = await findSakeByBreweryOnlyFromPool({ nameJa: '樽酒', breweryJa: '長龍酒造' }, pool)
+    const result = await findSakeByBreweryOnly({ nameJa: '樽酒', breweryJa: '長龍酒造' }, pool)
 
     expect(result.kind).toBe('matched_brewery_only')
     if (result.kind !== 'matched_brewery_only') throw new Error('unreachable; for narrowing only')
@@ -1249,7 +1251,7 @@ describe('Latin names, however they are spelled', () => {
     await pool.query('UPDATE brands SET name_romaji = $1 WHERE brand_id = $2', ['Yoshino Sugi no Tarusake', 9001])
     forgetRomajiIndex(pool)
 
-    const result = await findSakeByLatinBreweryFromPool(
+    const result = await findSakeByLatinBrewery(
       { nameJa: 'YOSHINOSUGI NO TARUZAKE', breweryJa: 'Choryo Shuzo' },
       pool,
     )

@@ -6,7 +6,7 @@ export default defineConfig({
     tsconfigPaths: true,
     alias: {
       // Mirror the unit-suite stub so integration tests can import
-      // server-only modules (e.g. lookup.ts) without Vite's
+      // server-only modules (e.g. catalogue-reads.ts) without Vite's
       // import-analysis tripping over the missing transitive.
       'server-only': fileURLToPath(new URL('./tests/stubs/server-only.ts', import.meta.url)),
     },

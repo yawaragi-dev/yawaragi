@@ -1,20 +1,11 @@
 import 'server-only'
 import type { Pool } from 'pg'
 import { debugAdd } from '@/lib/debug/debug-log'
-import type { Brand } from '../schemas/brand'
-import type { Brewery } from '../schemas/brewery'
-import type { FlavorChart } from '../schemas/flavor-chart'
-import type { Ranking, RankingKind } from '../schemas/ranking'
-import {
-  type BrandRow,
-  type BreweryRow,
-  type FlavorChartRow,
-  type RankingRow,
-  rowToBrand,
-  rowToBrewery,
-  rowToFlavorChart,
-  rowToRanking,
-} from './db'
+import type { Brand } from '@/lib/schemas/brand'
+import type { Brewery } from '@/lib/schemas/brewery'
+import { publicQuery } from '@/lib/supabase/public-query'
+import { getServerDbPool } from '@/lib/supabase/server-client'
+import { type BrandRow, type BreweryRow, rowToBrand, rowToBrewery } from './db'
 import {
   expandBrandLineVariants,
   expandBrandVariants,
@@ -23,199 +14,30 @@ import {
   stripOperationalSuffix,
 } from './brewery-variants'
 import { withFormerBreweryNames } from './former-brewery-names'
-import { kanaToRomaji } from './kana-romaji'
+import {
+  asLatinName,
+  breweryKanjiAgrees,
+  collapseSameReading,
+  containsJapaneseScript,
+  containsLatinAlpha,
+  expandLatinBrandVariants,
+  latinBreweryAgrees,
+  latinBreweryCandidates,
+  latinBreweryCore,
+  namesOverlapping,
+} from './label-match-rules'
 import { getRomajiIndex } from './romaji-index'
 import { looseRomajiKey, romajiKey } from './romaji-key'
 
-export { romajiKey } from './romaji-key'
-import { publicQuery } from '../supabase/public-query'
-import { getServerDbPool } from '../supabase/server-client'
-
-// All read queries filter `superseded_at IS NULL` so manual_curation
-// rows superseded by a later Sakenowa publish disappear from the
-// public read path while remaining in the table for audit. ADR-0014.
-const SELECT_BRAND_BY_ID = `
-  SELECT brand_id, name, name_kanji, name_romaji, brewery_id, source, confidence
-  FROM brands
-  WHERE brand_id = $1 AND superseded_at IS NULL
-`
-
-export async function lookupBrandFromPool(brandId: number, pool: Pool): Promise<Brand | null> {
-  const { rows } = await publicQuery<BrandRow>('brands', SELECT_BRAND_BY_ID, [brandId], pool)
-  if (rows.length === 0) return null
-  return rowToBrand(rows[0])
-}
-
-/**
- * Read-side helper. Server-only. Server components and route handlers call
- * this; tests should use `lookupBrandFromPool(brandId, testcontainerPool)`
- * instead so they don't depend on a `DATABASE_URL` env var.
- */
-export async function lookupBrand(brandId: number): Promise<Brand | null> {
-  return lookupBrandFromPool(brandId, getServerDbPool())
-}
-
-// JOIN-via-brand so the public contract stays brand-keyed (the page has a
-// brandId; it shouldn't need to know the brewery_id to fetch a brewery).
-const SELECT_BREWERY_BY_BRAND_ID = `
-  SELECT b.brewery_id, b.name, b.name_kanji, b.name_romaji, b.area_id, b.source, b.confidence
-  FROM breweries b
-  JOIN brands br ON br.brewery_id = b.brewery_id
-  WHERE br.brand_id = $1
-    AND b.superseded_at IS NULL
-    AND br.superseded_at IS NULL
-`
-
-export async function lookupBreweryByBrandFromPool(
-  brandId: number,
-  pool: Pool,
-): Promise<Brewery | null> {
-  const { rows } = await publicQuery<BreweryRow>(
-    'breweries',
-    SELECT_BREWERY_BY_BRAND_ID,
-    [brandId],
-    pool,
-  )
-  if (rows.length === 0) return null
-  return rowToBrewery(rows[0])
-}
-
-export async function lookupBreweryByBrand(brandId: number): Promise<Brewery | null> {
-  return lookupBreweryByBrandFromPool(brandId, getServerDbPool())
-}
-
-const SELECT_FLAVOR_CHART_BY_BRAND_ID = `
-  SELECT brand_id, f1, f2, f3, f4, f5, f6, source, confidence
-  FROM flavor_charts
-  WHERE brand_id = $1
-`
-
-export async function lookupFlavorChartFromPool(
-  brandId: number,
-  pool: Pool,
-): Promise<FlavorChart | null> {
-  const { rows } = await publicQuery<FlavorChartRow>(
-    'flavor_charts',
-    SELECT_FLAVOR_CHART_BY_BRAND_ID,
-    [brandId],
-    pool,
-  )
-  if (rows.length === 0) return null
-  return rowToFlavorChart(rows[0])
-}
-
-export async function lookupFlavorChart(brandId: number): Promise<FlavorChart | null> {
-  return lookupFlavorChartFromPool(brandId, getServerDbPool())
-}
-
-/**
- * The brewery's OTHER sakes — design v1.4 §9.9, "The brewery: story plus a
- * row of its other sakes."
- *
- * Why this exists at all: a visitor who searches "dassai" lands on one brand
- * and has no route to the other ones the same brewery makes (#325). 781 of
- * the catalogue's 1,354 breweries publish more than one brand, so for most
- * bottles this row is populated — and the missing link was a genuine dead end,
- * not a nice-to-have.
- *
- * Brewery-keyed via the brand, like `lookupBreweryByBrand` above, so the
- * caller still only needs the brandId it already has. The current brand is
- * excluded in SQL rather than filtered in JS, so `LIMIT` counts the rows the
- * page will actually show.
- *
- * Ordering is the same shortest-name-first rule `searchCatalogue` uses: with
- * no popularity signal in the mirror, the shortest name is the closest thing
- * to "the one they mean" — 獺祭 before 獺祭 磨き二割三分.
- */
-const SELECT_SIBLING_BRANDS = `
-  SELECT brand_id, name, name_kanji, name_romaji, brewery_id, source, confidence
-  FROM brands
-  WHERE brewery_id = (
-      SELECT brewery_id FROM brands WHERE brand_id = $1 AND superseded_at IS NULL
-    )
-    AND brand_id <> $1
-    AND superseded_at IS NULL
-  ORDER BY char_length(name_kanji) ASC, name_kanji ASC, brand_id ASC
-  LIMIT $2
-`
-
-export async function listSiblingBrandsFromPool(
-  brandId: number,
-  pool: Pool,
-  limit = 8,
-): Promise<readonly Brand[]> {
-  const { rows } = await publicQuery<BrandRow>(
-    'brands',
-    SELECT_SIBLING_BRANDS,
-    [brandId, limit],
-    pool,
-  )
-  return rows.map(rowToBrand)
-}
-
-export async function listSiblingBrands(
-  brandId: number,
-  limit?: number,
-): Promise<readonly Brand[]> {
-  return listSiblingBrandsFromPool(brandId, getServerDbPool(), limit)
-}
-
-// listRanking returns the top-N rows for a single ranking scope. For
-// kind='area' the caller must pass `areaId`; for kind='overall' the
-// scope is implicit (one global list per ADR-0002).
-export interface ListRankingArgs {
-  kind: RankingKind
-  limit: number
-  areaId?: number
-}
-
-const LIST_RANKING_OVERALL = `
-  SELECT kind, area_id, rank, brand_id, score, source, confidence
-  FROM rankings
-  WHERE kind = 'overall'
-  ORDER BY rank ASC
-  LIMIT $1
-`
-
-const LIST_RANKING_AREA = `
-  SELECT kind, area_id, rank, brand_id, score, source, confidence
-  FROM rankings
-  WHERE kind = 'area' AND area_id = $1
-  ORDER BY rank ASC
-  LIMIT $2
-`
-
-export async function listRankingFromPool(
-  args: ListRankingArgs,
-  pool: Pool,
-): Promise<Ranking[]> {
-  if (args.limit <= 0) return []
-  if (args.kind === 'overall') {
-    const { rows } = await publicQuery<RankingRow>(
-      'rankings',
-      LIST_RANKING_OVERALL,
-      [args.limit],
-      pool,
-    )
-    return rows.map(rowToRanking)
-  }
-  if (args.areaId === undefined) {
-    throw new Error("listRanking: kind='area' requires an areaId")
-  }
-  const { rows } = await publicQuery<RankingRow>(
-    'rankings',
-    LIST_RANKING_AREA,
-    [args.areaId, args.limit],
-    pool,
-  )
-  return rows.map(rowToRanking)
-}
-
-export async function listRanking(args: ListRankingArgs): Promise<Ranking[]> {
-  return listRankingFromPool(args, getServerDbPool())
-}
+// Like the reads in `catalogue-reads.ts`, every query here filters
+// `superseded_at IS NULL` (ADR-0014).
 
 // ---------- findSakeByExtraction ----------
+//
+// Each pass takes the pool last and defaults it to the app's
+// (`getServerDbPool()`, evaluated at call time, so a missing
+// `DATABASE_URL` rejects rather than throws); the cascade hands its pool
+// on to every pass it calls, and integration tests pass theirs.
 //
 // Given a `LabelScanExtraction` (kanji name + kanji brewery), resolve it
 // to a Sakenowa-mirrored Sake brand. PRD #105 §"Sakenowa lookup for
@@ -530,9 +352,9 @@ function breweryFromJoinedRow(row: BrandWithBreweryRow): Brewery {
   })
 }
 
-export async function findSakeByExtractionFromPool(
+export async function findSakeByExtraction(
   query: SakeLookupQuery,
-  pool: Pool,
+  pool: Pool = getServerDbPool(),
 ): Promise<FindSakeByExtractionResult> {
   // Brand and brewery variant expansion. Both passes compose:
   //   - kana-cross siblings (hiragana ↔ katakana — ~10 % of
@@ -607,7 +429,7 @@ export async function findSakeByExtractionFromPool(
   // rule on the Latin name: a row whose name matches in Latin AND whose
   // brewery is the one read is both fields agreeing.
   if (asLatinName(query.nameJa) !== null) {
-    const byLatin = await findSakeByLatinBrandFromPool(query, pool)
+    const byLatin = await findSakeByLatinBrand(query, pool)
     const candidates =
       byLatin.kind === 'matched_brand_only'
         ? [{ sake: byLatin.sake, brewery: byLatin.brewery }]
@@ -629,14 +451,14 @@ export async function findSakeByExtractionFromPool(
   // First pass returned 0. Delegate to the brand-only second pass
   // (also reachable from scan-action.ts when a field-swap is
   // suspected).
-  const brandOnly = await findSakeByBrandOnlyFromPool(query, pool)
+  const brandOnly = await findSakeByBrandOnly(query, pool)
   if (brandOnly.kind !== 'no_match') return brandOnly
 
   // Brand-only fallback returned 0. Delegate to the brewery-only
   // third pass — also reachable on its own from scan-action.ts when
   // the single-character-hallucination guard fires (brand suspect,
   // brewery still worth a shot).
-  const breweryOnly = await findSakeByBreweryOnlyFromPool(query, pool)
+  const breweryOnly = await findSakeByBreweryOnly(query, pool)
   if (breweryOnly.kind === 'matched_brewery_only') return breweryOnly
 
   // brewery-only returned ambiguous OR no_match. If ambiguous AND
@@ -662,7 +484,7 @@ export async function findSakeByExtractionFromPool(
         'Sakenowa',
         `brewery-only returned ambiguous; name_ja is Latin-shaped → trying Latin pass before falling back`,
       )
-      const latinFromAmbig = await findSakeByLatinBrandFromPool(query, pool)
+      const latinFromAmbig = await findSakeByLatinBrand(query, pool)
       if (latinFromAmbig.kind === 'matched_brand_only') {
         debugAdd(
           'Sakenowa',
@@ -703,7 +525,7 @@ export async function findSakeByExtractionFromPool(
       'Sakenowa',
       `brewery-only missed; trying field-swap (brand-only on brewery_ja "${query.breweryJa}")`,
     )
-    const fieldSwap = await findSakeByBrandOnlyFromPool(
+    const fieldSwap = await findSakeByBrandOnly(
       { nameJa: query.breweryJa, breweryJa: query.breweryJa },
       pool,
     )
@@ -725,7 +547,7 @@ export async function findSakeByExtractionFromPool(
   // `brands.name`.
   if (asLatinName(query.nameJa) !== null) {
     debugAdd('Sakenowa', `kanji + kana passes missed; trying Latin-name lookup on "${query.nameJa}"`)
-    const latinMatch = await findSakeByLatinBrandFromPool(query, pool)
+    const latinMatch = await findSakeByLatinBrand(query, pool)
     if (latinMatch.kind === 'matched_brand_only' || latinMatch.kind === 'ambiguous') {
       return latinMatch
     }
@@ -734,72 +556,6 @@ export async function findSakeByExtractionFromPool(
   return { kind: 'no_match', query }
 }
 
-/**
- * The catalogue sometimes lists one sake twice under one brewery, once per
- * script: 達磨正宗 and ダルマ正宗, both read "Daruma Masamune". Asking the
- * visitor to choose between them is asking nothing, so rows of one brewery
- * with one reading count as one — the kanji spelling, else the older row.
- */
-export function collapseSameReading<T extends { sake: Brand }>(candidates: readonly T[]): T[] {
-  const HAS_KANJI = /[一-鿿]/
-  const groups = new Map<string, T>()
-  for (const candidate of candidates) {
-    const { sake } = candidate
-    const reading = sake.nameRomaji ?? null
-    const key = reading === null ? `id:${sake.brandId}` : `${sake.breweryId}:${romajiKey(reading)}`
-    const kept = groups.get(key)
-    const better =
-      kept === undefined ||
-      (HAS_KANJI.test(sake.nameKanji) && !HAS_KANJI.test(kept.sake.nameKanji)) ||
-      (HAS_KANJI.test(sake.nameKanji) === HAS_KANJI.test(kept.sake.nameKanji) && sake.brandId < kept.sake.brandId)
-    if (better) groups.set(key, candidate)
-  }
-  return [...groups.values()]
-}
-
-/**
- * The first pass's brewery rule, for rows already in hand: the stored name
- * equals a variant as written, with its spaces removed, or in one of its
- * space-separated parts.
- */
-export function breweryKanjiAgrees(stored: string, variants: readonly string[]): boolean {
-  const parts = stored.split(/[\s　]+/)
-  return variants.includes(stored) || variants.includes(parts.join('')) || parts.some((p) => variants.includes(p))
-}
-
-/**
- * Which of a brewery's brand names the read is part of, or contains. A label
- * read as 樽酒 under 長龍酒造 is that brewery's 吉野杉の樽酒 and none of its
- * other lines. Names of one character are ignored on both sides.
- */
-export function namesOverlapping(read: string, storedNames: readonly string[]): number[] {
-  const reads = expandBrandVariants(read).filter((r) => Array.from(r).length >= 2)
-  return storedNames.flatMap((stored, index) =>
-    Array.from(stored).length >= 2 && reads.some((r) => stored.includes(r) || r.includes(stored)) ? [index] : [],
-  )
-}
-
-const JAPANESE_SCRIPT_REGEX_LOOKUP = /[぀-ゟ゠-ヿ一-鿿]/
-const LATIN_ALPHA_REGEX = /[A-Za-z]/
-
-function containsJapaneseScript(value: string): boolean {
-  return JAPANESE_SCRIPT_REGEX_LOOKUP.test(value)
-}
-
-function containsLatinAlpha(value: string): boolean {
-  return LATIN_ALPHA_REGEX.test(value)
-}
-
-/**
- * The name as Latin letters, if it can be compared with the catalogue's
- * romaji: a name read in Latin script as it is, a name read in kana
- * (ハナトモエ, a furigana くろかぶと) sounded out. `null` for a name with
- * kanji in it, which has no reading we can derive.
- */
-function asLatinName(value: string): string | null {
-  if (containsLatinAlpha(value) && !containsJapaneseScript(value)) return value
-  return kanaToRomaji(value)
-}
 
 /**
  * Brand-only fallback as a standalone seam. Real-world use cases:
@@ -823,9 +579,9 @@ export type BrandOnlyLookupResult = Extract<
   { kind: 'matched_brand_only' } | { kind: 'ambiguous' } | { kind: 'no_match' }
 >
 
-export async function findSakeByBrandOnlyFromPool(
+export async function findSakeByBrandOnly(
   query: SakeLookupQuery,
-  pool: Pool,
+  pool: Pool = getServerDbPool(),
 ): Promise<BrandOnlyLookupResult> {
   // `expandPossibleBrandVariants` adds the stem if the input ends
   // with an operational suffix — so `高清水酒造` also tries
@@ -873,114 +629,6 @@ export async function findSakeByBrandOnlyFromPool(
   }
 }
 
-export async function findSakeByBrandOnly(
-  query: SakeLookupQuery,
-): Promise<BrandOnlyLookupResult> {
-  return findSakeByBrandOnlyFromPool(query, getServerDbPool())
-}
-
-/**
- * Sake grade / style descriptors that are NEVER brand names. When a
- * Latin extraction begins with one of these, the first-word-strip
- * variant is suppressed — leaving just the verbatim and space-stripped
- * forms. Why: the model sometimes returns the descriptor text as the
- * brand (Kiku-Masamune, 2026-06-14: bottle reads "JUNMAI TARU SAKE
- * 菊正宗", model returned `name_ja: "JUNMAI TARU SAKE"`), and the
- * first-word-strip then dropped `"junmai"` into the lookup candidates.
- * Sakenowa has brands whose Latin name begins with `Junmai` (and
- * `Daiginjo`, etc.), so the bare descriptor would match an unrelated
- * brand and surface as `matched_brand_only` with a divergence card
- * pointing at the WRONG sake.
- *
- * Includes grade designations, brewing methods, filtration / aging
- * styles, and rice-state tokens. All lowercased; matched against the
- * lowercased first word of the input.
- */
-const SAKE_GRADE_TOKENS = new Set<string>([
-  'junmai',
-  'ginjo',
-  'daiginjo',
-  'honjozo',
-  'tokubetsu',
-  'futsushu',
-  'kimoto',
-  'yamahai',
-  'sokujo',
-  'nigori',
-  'namazake',
-  'nama',
-  'genshu',
-  'taru',
-  'taruzake',
-  'kijoshu',
-  'koshu',
-  'shiboritate',
-  'hiyaoroshi',
-  'sparkling',
-])
-
-/**
- * Expands a Latin brand candidate into the set of lookup keys we
- * actually query. Four transforms:
- *   - Verbatim (lowercased).
- *   - For multi-word inputs where the first word is substantial
- *     (≥ 4 characters) AND NOT in `SAKE_GRADE_TOKENS`, also try the
- *     first word alone. Catches `Kizakura Perle` → also try
- *     `Kizakura`. The grade-token guard prevents
- *     `JUNMAI TARU SAKE` → `junmai` matching unrelated brands.
- *   - Space-stripped form for `name_romaji` (which the #121 ingest
- *     pipeline stores as single-word camel Latin like `Tanigawadake`).
- *   - Leading words, grade words dropped: `SAWA NO HANA Kokoro` → also
- *     `sawa no hana` (and `sawanohana`).
- *
- * Returns lowercased strings so the SQL only has to LOWER() each
- * column on the right-hand side.
- */
-export function expandLatinBrandVariants(text: string): string[] {
-  const trimmed = text.trim()
-  if (trimmed.length === 0) return []
-  const verbatim = trimmed.toLowerCase()
-  // A hyphen is a word break: labels write DARUMA-MASAMUNE and NINKI-ICHI,
-  // the catalogue's romaji writes words or runs them together. The verbatim
-  // form stays a candidate for the names that do carry one (`Shangri-la`).
-  const lower = verbatim.replace(/[-‐‑–—]+/g, ' ').replace(/\s+/g, ' ').trim()
-  const variants = new Set<string>([verbatim, lower])
-  // First-word strip: "Kizakura Perle" → also try "Kizakura". 4-char
-  // floor so we don't match noise like "Big River" → "Big". Skip the
-  // strip entirely if the first word is a sake grade / style token
-  // (`junmai`, `daiginjo`, `taru`, …) — those are descriptors, never
-  // brand names.
-  const firstSpace = trimmed.indexOf(' ')
-  if (firstSpace >= 4) {
-    const firstWordLower = trimmed.slice(0, firstSpace).toLowerCase()
-    if (!SAKE_GRADE_TOKENS.has(firstWordLower)) {
-      variants.add(firstWordLower)
-    }
-  }
-  // Space-stripped form: the LLM-derived `name_romaji` column is
-  // populated by the #121 ingest pipeline using single-word camel-style
-  // Latin (e.g. `Tanigawadake`, `Kawatsuru Shuzo`'s brand `Kawatsuru`).
-  // A visitor / model who returns the natural space-separated form
-  // (`"Tanigawa Dake"`, `"Kawatsuru"`) should still match. Only adds
-  // a variant when the input actually contains a space (the
-  // already-spaceless case is covered by `lower`).
-  if (lower.includes(' ')) {
-    variants.add(lower.replace(/\s+/g, ''))
-  }
-  // Leading words, longest first, with grade words dropped wherever they
-  // sit: a label's Latin often runs the line and the product together —
-  // "SAWA NO HANA Kokoro" is 澤の花 "Sawa no Hana" plus the product "Kokoro",
-  // and "sawa" alone is not the line. Safe to widen: the SQL compares whole
-  // names for equality, so a prefix can only match a line with exactly that
-  // name. Two words or more, since one word is the first-word rule above.
-  const words = lower.split(/\s+/).filter((w) => !SAKE_GRADE_TOKENS.has(w))
-  for (let n = words.length; n >= 2; n--) {
-    const prefix = words.slice(0, n).join(' ')
-    variants.add(prefix)
-    variants.add(prefix.replace(/\s+/g, ''))
-  }
-  return [...variants]
-}
 
 /**
  * Latin-name brand lookup. Matches against BOTH the Sakenowa
@@ -1001,9 +649,9 @@ export function expandLatinBrandVariants(text: string): string[] {
  * model put in the brewery field even when the brand was matched
  * via the Latin column.
  */
-export async function findSakeByLatinBrandFromPool(
+export async function findSakeByLatinBrand(
   query: SakeLookupQuery,
-  pool: Pool,
+  pool: Pool = getServerDbPool(),
 ): Promise<BrandOnlyLookupResult> {
   const candidates = expandLatinBrandVariants(asLatinName(query.nameJa) ?? '')
   if (candidates.length === 0) return { kind: 'no_match', query }
@@ -1091,12 +739,6 @@ async function listBrandsByLooseLatinName(
   return rows.map((r) => ({ sake: brandFromJoinedRow(r), brewery: breweryFromJoinedRow(r) }))
 }
 
-export async function findSakeByLatinBrand(
-  query: SakeLookupQuery,
-): Promise<BrandOnlyLookupResult> {
-  return findSakeByLatinBrandFromPool(query, getServerDbPool())
-}
-
 // Brewery by its Latin name — for a label that names the maker in Latin
 // only, which is every importer's back label in the EU. Compared with the
 // LLM-derived `breweries.name_romaji` (97 % of rows have one). Same
@@ -1128,64 +770,6 @@ const SELECT_BRANDS_AND_BREWERIES_BY_BREWERY_ROMAJI = `
   LIMIT 60
 `
 
-/**
- * Words a Latin brewery name carries that say "this is a brewery" and no
- * more. A back label writes "Dewazakura Sake Brewery" where the catalogue's
- * romaji is "Dewazakura Shuzo"; with these dropped both are "dewazakura".
- */
-const GENERIC_BREWERY_WORDS = new Set<string>([
-  'sake',
-  'brewery',
-  'breweries',
-  'brewing',
-  'shuzo',
-  'shuzou',
-  'shuzoten',
-  'jozo',
-  'jouzo',
-  'shoten',
-  'co',
-  'ltd',
-  'inc',
-  'corp',
-  'corporation',
-  'company',
-  'the',
-])
-
-/** The words of a Latin brewery name that identify it, as romaji keys. */
-export function latinBreweryCore(text: string): string[] {
-  return text
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .split(/[^a-z0-9]+/)
-    .filter((word) => word.length > 0 && !GENERIC_BREWERY_WORDS.has(word))
-    .map(romajiKey)
-}
-
-/**
- * Does a brewery read in Latin off a label name the same brewery as the
- * catalogue's romaji? True when the identifying words of one are all among
- * the other's: "Rihaku Sake Brewery" and "Rihaku Shuzo", "Shiraki Brewery"
- * and "Shiraki Tsunesuke Shoten". An importer ("Ginza Berlin"), a country
- * or the brand repeated in the brewery field agrees with nothing.
- */
-export function latinBreweryAgrees(extracted: string, storedRomaji: string | null): boolean {
-  if (storedRomaji === null) return false
-  const a = latinBreweryCore(extracted)
-  const b = latinBreweryCore(storedRomaji)
-  if (a.length === 0 || b.length === 0) return false
-  const [shorter, longer] = a.length <= b.length ? [a, b] : [b, a]
-  return shorter.every((word) => longer.includes(word))
-}
-
-/** The romaji keys to look a Latin brewery name up under. */
-function latinBreweryCandidates(text: string): string[] {
-  const core = latinBreweryCore(text).join('')
-  if (core.length === 0) return []
-  return [core, ...['shuzo', 'jozo', 'shuzoten', 'shoten', 'sakebrewery'].map((suffix) => romajiKey(core + suffix))]
-}
 
 /**
  * The lookup for a label whose brewery was read in Latin script.
@@ -1198,18 +782,18 @@ function latinBreweryCandidates(text: string): string[] {
  * Where the brand finds nothing, the brewery's romaji alone may still name a
  * one-line brewery.
  */
-export async function findSakeByLatinBreweryFromPool(
+export async function findSakeByLatinBrewery(
   query: SakeLookupQuery,
-  pool: Pool,
+  pool: Pool = getServerDbPool(),
 ): Promise<FindSakeByExtractionResult> {
   // Kanji and kana names are looked up as written first; a kana name that
   // is no row's name is then sounded out and compared with the romaji.
   const nameIsLatin = containsLatinAlpha(query.nameJa) && !containsJapaneseScript(query.nameJa)
   let byBrand = nameIsLatin
-    ? await findSakeByLatinBrandFromPool(query, pool)
-    : await findSakeByBrandOnlyFromPool(query, pool)
+    ? await findSakeByLatinBrand(query, pool)
+    : await findSakeByBrandOnly(query, pool)
   if (byBrand.kind === 'no_match' && !nameIsLatin && asLatinName(query.nameJa) !== null) {
-    byBrand = await findSakeByLatinBrandFromPool(query, pool)
+    byBrand = await findSakeByLatinBrand(query, pool)
   }
 
   if (byBrand.kind === 'matched_brand_only') {
@@ -1267,7 +851,7 @@ export async function findSakeByLatinBreweryFromPool(
 
 /**
  * Brewery-only fallback as a standalone seam. Used as the third pass
- * of `findSakeByExtractionFromPool` AND as a direct call from
+ * of `findSakeByExtraction` AND as a direct call from
  * scan-action.ts when the single-character-hallucination guard fires
  * — the brand is likely junk, but if the brewery is real and
  * mono-brand, we can still resolve to the right sake.
@@ -1281,9 +865,9 @@ export type BreweryOnlyLookupResult = Extract<
   { kind: 'matched_brewery_only' } | { kind: 'ambiguous' } | { kind: 'no_match' }
 >
 
-export async function findSakeByBreweryOnlyFromPool(
+export async function findSakeByBreweryOnly(
   query: SakeLookupQuery,
-  pool: Pool,
+  pool: Pool = getServerDbPool(),
 ): Promise<BreweryOnlyLookupResult> {
   // Same composed expansion as the first-pass — kanji-variant +
   // operational-suffix — so a model that returned `高清水` (no
@@ -1403,16 +987,4 @@ export async function findSakeByBreweryOnlyFromPool(
     })),
     query,
   }
-}
-
-export async function findSakeByBreweryOnly(
-  query: SakeLookupQuery,
-): Promise<BreweryOnlyLookupResult> {
-  return findSakeByBreweryOnlyFromPool(query, getServerDbPool())
-}
-
-export async function findSakeByExtraction(
-  query: SakeLookupQuery,
-): Promise<FindSakeByExtractionResult> {
-  return findSakeByExtractionFromPool(query, getServerDbPool())
 }

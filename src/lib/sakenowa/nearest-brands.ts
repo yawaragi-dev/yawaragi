@@ -9,7 +9,7 @@ import { stripLabelQualifiers } from '@/lib/sakenowa/search-brands'
  * §5a "Did you mean" for a scan that found nothing: the catalogue sakes
  * nearest to what the label read, by name or by brewery.
  *
- * The lookup chain (`findSakeByExtractionFromPool`) only accepts exact
+ * The lookup chain (`findSakeByExtraction`) only accepts exact
  * matches, modulo kana, 旧/新 kanji and operational suffixes. That is right
  * for a match — a wrong sake is worse than none — but it leaves a near miss
  * (one misread character, a grade word glued to the name) as a dead end.

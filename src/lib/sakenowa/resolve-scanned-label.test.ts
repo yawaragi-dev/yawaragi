@@ -10,7 +10,7 @@ import type {
   BrandOnlyLookupResult,
   BreweryOnlyLookupResult,
   FindSakeByExtractionResult,
-} from './lookup'
+} from './label-match'
 
 // resolveScannedLabel owns the WHOLE label-matching job — every
 // pre-lookup guard (confidence-tier gate, placeholder sentinel,
@@ -21,7 +21,7 @@ import type {
 // the rate-limit gate. Here we inject a fake executor and drive the
 // guard × cascade interactions directly — no vision model, no
 // rate-limit, no Postgres. The passes themselves are covered against
-// real Postgres in `lookup.integration.test.ts`.
+// real Postgres in `catalogue.integration.test.ts`.
 
 // --- Fixtures ---------------------------------------------------------
 

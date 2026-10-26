@@ -8,7 +8,7 @@ import { makePgBrandsDB, makePgBreweriesDB } from './db'
  * `getExistingBrand/BreweryHashes` methods — specifically the
  * romaji-backfill sentinel that reclassifies pre-migration-0010
  * rows as "updated" on the next ingest. Integration coverage on a
- * real Postgres lives in `lookup.integration.test.ts` (testcontainers);
+ * real Postgres lives in `catalogue.integration.test.ts` (testcontainers);
  * this file is just for the read-side SQL shape.
  *
  * A real `pg.Pool` is mocked at the `.query()` boundary — we don't

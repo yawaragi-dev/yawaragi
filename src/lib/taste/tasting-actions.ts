@@ -12,7 +12,7 @@ import {
   type TastingPatch,
   TastingPatchSchema,
 } from '@/lib/schemas/tasting-input'
-import { lookupBrand, lookupFlavorChart } from '@/lib/sakenowa/lookup'
+import { lookupBrand, lookupFlavorChart } from '@/lib/sakenowa/catalogue-reads'
 import { withMaintainerCollection } from '@/lib/taste/maintainer-collection'
 import { tastingDayAt } from '@/lib/taste/tasting-day'
 import { countUsage } from '@/lib/stats/count-usage'

@@ -15,7 +15,7 @@ vi.mock('@clerk/nextjs/server', () => ({
 vi.mock('@/lib/auth/maintainer', () => ({
   currentUserIsMaintainer: vi.fn(async () => true),
 }))
-vi.mock('@/lib/sakenowa/lookup', () => ({
+vi.mock('@/lib/sakenowa/catalogue-reads', () => ({
   lookupFlavorChart: vi.fn(),
   lookupBrand: vi.fn(),
 }))
@@ -32,7 +32,7 @@ vi.mock('@/lib/collection/get-expression-store', () => ({
 import { currentUserIsMaintainer } from '@/lib/auth/maintainer'
 import { InMemoryCellarStore } from '@/lib/collection/in-memory-cellar-store'
 import { InMemoryExpressionStore } from '@/lib/collection/in-memory-expression-store'
-import { lookupBrand, lookupFlavorChart } from '@/lib/sakenowa/lookup'
+import { lookupBrand, lookupFlavorChart } from '@/lib/sakenowa/catalogue-reads'
 import { InMemoryJournalStore } from '@/lib/taste/in-memory-journal-store'
 import { rateNewTasting, undoTasting, updateTasting } from '@/lib/taste/tasting-actions'
 

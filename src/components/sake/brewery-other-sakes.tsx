@@ -1,5 +1,5 @@
 import { Link } from '@/i18n/navigation'
-import { listSiblingBrands } from '@/lib/sakenowa/lookup'
+import { listSiblingBrands } from '@/lib/sakenowa/catalogue-reads'
 import type { Brand } from '@/lib/schemas/brand'
 
 /**
