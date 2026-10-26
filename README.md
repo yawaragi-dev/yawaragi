@@ -46,7 +46,7 @@ _Snapshot generated 2026-10-26 from GitHub Issues + merged PRs. Regenerate with 
 - **Deterministic first, model second.** Similar sakes, "Did you mean", menu ranking and its reasons, and the cross-beverage bridge ("if you like Lagavulin 16…", a hand-curated table) involve no model call. The model reads photos; it does not invent mappings.
 - **Privacy by design, under German rules.** A GDPR posture with a records-of-processing table updated per feature ([ADR-0009](./docs/adr/0009-gdpr-compliance-posture.md)), photos discarded after the read, no Files API, a youth-protection age gate (JMStV), and a collection with versioned records, daily backups, export, restore and erasure ([ADR-0024](./docs/adr/0024-collection-storage-versioned-records-and-backup.md)).
 - **A designed product, ported screen by screen.** The Ginshu design system and its 91 reference screens live in [`design/`](./design); every port is checked against them, and [`docs/design-questions.md`](./docs/design-questions.md) is the running list of what the build asked the designers.
-- **Decisions are written down.** 26 ADRs in [`docs/adr/`](./docs/adr), 166 unit test files, 8 integration suites against a real Postgres, 22 Playwright specs.
+- **Decisions are written down.** 26 ADRs in [`docs/adr/`](./docs/adr), 200+ unit test files, 8 integration suites against a real Postgres, 28 Playwright specs (one of them a smoke test against a production build).
 - **Open source where it is reusable.** The MCP server over the Sakenowa mirror is its own MIT package, [`@yawaragi/sakenowa-mcp`](https://github.com/yawaragi-dev/sakenowa-mcp).
 
 Previously named "Kanpai"; renamed to avoid collision with [KANPAI London Craft Sake Brewery](https://kanpai.london/) — see [ADR-0004](./docs/adr/0004-project-name-yawaragi.md).
@@ -127,6 +127,7 @@ pnpm dev
 | `pnpm test:watch`         | Vitest watch mode                                        |
 | `pnpm test:integration`   | Vitest integration suite (testcontainers; needs Docker)  |
 | `pnpm test:e2e`           | Playwright                                               |
+| `pnpm test:smoke`         | Key routes against a production build (run `pnpm build` first) |
 | `pnpm lint`               | ESLint                                                   |
 | `pnpm typecheck`          | `tsc --noEmit`                                           |
 | `pnpm migrate`            | Apply pending SQL files in `supabase/migrations/` to `MIGRATE_DATABASE_URL` |
