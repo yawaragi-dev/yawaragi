@@ -126,11 +126,14 @@ const SELECT_TARGET_CHART = `
  * no `flavor_charts` row, and §6 specifies that state — "Empty (no profile for
  * this sake): a short line and the bottle-page link." The caller renders that,
  * rather than an empty list that reads as "nothing is similar".
+ *
+ * The pool defaults to the app's, evaluated at call time as in
+ * `catalogue-reads.ts`; tests pass their own.
  */
-export async function findSimilarBrandsFromPool(
+export async function findSimilarBrands(
   brandId: number,
-  pool: Pool,
   limit: number = SIMILAR_SAKES_LIMIT,
+  pool: Pool = getServerDbPool(),
 ): Promise<SimilarBrandsResult | null> {
   const { rows: targetRows } = await publicQuery<Record<string, string>>(
     'flavor_charts',
@@ -150,14 +153,6 @@ export async function findSimilarBrandsFromPool(
   )
 
   return { target, matches: rankCandidates(target, rows.map(toSimilarBrand), limit) }
-}
-
-/** Server-component entry point. Tests should pass their own pool instead. */
-export async function findSimilarBrands(
-  brandId: number,
-  limit: number = SIMILAR_SAKES_LIMIT,
-): Promise<SimilarBrandsResult | null> {
-  return findSimilarBrandsFromPool(brandId, getServerDbPool(), limit)
 }
 
 /**
