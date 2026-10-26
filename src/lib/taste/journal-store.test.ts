@@ -1,7 +1,12 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+import { InMemoryJournalStore } from '@/lib/collection/in-memory-record-store'
+import { UpstashJournalStore } from '@/lib/collection/upstash-record-store'
 import type { JournalEntry } from '@/lib/schemas/journal-entry'
-import { InMemoryJournalStore } from '@/lib/taste/in-memory-journal-store'
 import { journalKey, parseStoredEntries } from '@/lib/taste/journal-store'
+
+// What every collection store does — upsert, remove, clear, per-user scope,
+// read order, unreadable records — is the contract in `record-store.test.ts`.
+// This file pins what is the journal's own: its key and the commands it sends.
 
 const TARGET = { f1: 0.2, f2: 0.6, f3: 0.6, f4: 0.4, f5: 0.1, f6: 0.3 }
 
@@ -16,6 +21,19 @@ const entry = (id: string, occurredAt: number, over: Partial<JournalEntry> = {})
 })
 
 const USER = 'user_abc'
+
+// A fake `fetch` that records each command array (the JSON body) and returns the
+// queued `result` values in order, so tests can assert the exact Redis commands.
+function fakeFetch(results: unknown[]) {
+  const commands: string[][] = []
+  let call = 0
+  const impl = vi.fn(async (_url: string | URL | Request, init?: RequestInit) => {
+    commands.push(JSON.parse(String(init?.body)) as string[])
+    const result = results[call++] ?? null
+    return { ok: true, json: async () => ({ result }) } as Response
+  })
+  return { impl: impl as unknown as typeof fetch, commands }
+}
 
 describe('journalKey', () => {
   it('is scoped to the Clerk user id, not a session', () => {
@@ -36,51 +54,6 @@ describe('parseStoredEntries', () => {
   })
 })
 
-describe('InMemoryJournalStore', () => {
-  it('reads back an entry that was put', async () => {
-    const store = new InMemoryJournalStore()
-    await store.put(USER, entry('a', 10))
-    expect((await store.read(USER)).map((e) => e.id)).toEqual(['a'])
-  })
-
-  it('upserts by id — a second put with the same id edits, does not duplicate', async () => {
-    const store = new InMemoryJournalStore()
-    await store.put(USER, entry('a', 10))
-    await store.put(USER, entry('a', 10, { notes: 'edited' }))
-    const entries = await store.read(USER)
-    expect(entries).toHaveLength(1)
-    expect(entries[0]!.notes).toBe('edited')
-  })
-
-  it('returns entries oldest→newest regardless of insertion order', async () => {
-    const store = new InMemoryJournalStore()
-    await store.put(USER, entry('late', 30))
-    await store.put(USER, entry('early', 10))
-    expect((await store.read(USER)).map((e) => e.id)).toEqual(['early', 'late'])
-  })
-
-  it('removes one entry by id, leaving the rest', async () => {
-    const store = new InMemoryJournalStore()
-    await store.put(USER, entry('a', 10))
-    await store.put(USER, entry('b', 20))
-    await store.remove(USER, 'a')
-    expect((await store.read(USER)).map((e) => e.id)).toEqual(['b'])
-  })
-
-  it('clear erases the whole journal (the GDPR erasure path)', async () => {
-    const store = new InMemoryJournalStore()
-    await store.put(USER, entry('a', 10))
-    await store.clear(USER)
-    expect(await store.read(USER)).toEqual([])
-  })
-
-  it('scopes entries per user — one user cannot read another journal', async () => {
-    const store = new InMemoryJournalStore()
-    await store.put('user_a', entry('a', 10))
-    expect(await store.read('user_b')).toEqual([])
-  })
-})
-
 describe('journal reads across schema versions (ADR-0024)', () => {
   it('reads an entry stored before versioning as a current one', async () => {
     const store = new InMemoryJournalStore()
@@ -90,16 +63,44 @@ describe('journal reads across schema versions (ADR-0024)', () => {
 
     expect(await store.read(USER)).toEqual([entry('old', 10)])
   })
+})
 
-  it('leaves an unreadable record out of the journal but keeps it in the dump', async () => {
-    const store = new InMemoryJournalStore()
-    await store.put(USER, entry('a', 10))
-    store.putRaw(USER, 'future', JSON.stringify({ ...entry('future', 20), schemaVersion: 9 }))
+describe('the journal on Upstash', () => {
+  it('put issues HSET keyed by user + entry id (upsert), never EXPIRE (permanent)', async () => {
+    const { impl, commands } = fakeFetch([1])
+    await new UpstashJournalStore('https://kv', 'tok', impl).put('user_x', entry('e1', 7))
+    expect(commands).toEqual([['HSET', 'journal:user:user_x', 'e1', JSON.stringify(entry('e1', 7))]])
+    expect(commands.some((c) => c[0] === 'EXPIRE')).toBe(false)
+  })
 
-    expect((await store.read(USER)).map((e) => e.id)).toEqual(['a'])
-    const dump = await store.dump(USER)
-    expect(dump.rejected).toEqual([
-      expect.objectContaining({ store: 'journal', id: 'future', reason: 'newer' }),
-    ])
+  it('read issues HGETALL and parses the value half of the flat field/value array', async () => {
+    // HGETALL over REST returns [field0, value0, field1, value1, …].
+    const flat = ['e2', JSON.stringify(entry('e2', 20)), 'e1', JSON.stringify(entry('e1', 10))]
+    const { impl, commands } = fakeFetch([flat])
+    const entries = await new UpstashJournalStore('https://kv', 'tok', impl).read('user_x')
+    expect(commands[0]).toEqual(['HGETALL', 'journal:user:user_x'])
+    // Re-ordered oldest→newest despite the hash's arbitrary field order.
+    expect(entries.map((e) => e.id)).toEqual(['e1', 'e2'])
+  })
+
+  it('read tolerates a non-array result and corrupt entries', async () => {
+    const { impl: nonArray } = fakeFetch([null])
+    expect(await new UpstashJournalStore('https://kv', 'tok', nonArray).read('u')).toEqual([])
+
+    const { impl: corrupt } = fakeFetch([['e', '{bad', 'e3', JSON.stringify(entry('e3', 3))]])
+    const entries = await new UpstashJournalStore('https://kv', 'tok', corrupt).read('u')
+    expect(entries.map((e) => e.id)).toEqual(['e3'])
+  })
+
+  it('remove issues HDEL for one entry', async () => {
+    const { impl, commands } = fakeFetch([1])
+    await new UpstashJournalStore('https://kv', 'tok', impl).remove('user_x', 'e1')
+    expect(commands).toEqual([['HDEL', 'journal:user:user_x', 'e1']])
+  })
+
+  it('clear issues DEL', async () => {
+    const { impl, commands } = fakeFetch([1])
+    await new UpstashJournalStore('https://kv', 'tok', impl).clear('user_x')
+    expect(commands).toEqual([['DEL', 'journal:user:user_x']])
   })
 })

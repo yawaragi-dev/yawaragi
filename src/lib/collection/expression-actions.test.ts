@@ -23,10 +23,8 @@ import {
   renameOwnBottling,
   restoreOwnBottling,
 } from '@/lib/collection/expression-actions'
-import { InMemoryCellarStore } from '@/lib/collection/in-memory-cellar-store'
-import { InMemoryExpressionStore } from '@/lib/collection/in-memory-expression-store'
+import { InMemoryCellarStore, InMemoryExpressionStore, InMemoryJournalStore } from '@/lib/collection/in-memory-record-store'
 import { lookupBrand } from '@/lib/sakenowa/catalogue-reads'
-import { InMemoryJournalStore } from '@/lib/taste/in-memory-journal-store'
 
 const RIHAKU: Brand = {
   brandId: 12,

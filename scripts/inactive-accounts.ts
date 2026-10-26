@@ -14,10 +14,7 @@
  */
 import { BACKUP_BUCKET, backupPrefix } from '@/lib/collection/backup-storage'
 import { SupabaseBackupStorage } from '@/lib/collection/supabase-backup-storage'
-import { UpstashBottleHistoryStore } from '@/lib/collection/upstash-bottle-history-store'
-import { UpstashCellarStore } from '@/lib/collection/upstash-cellar-store'
-import { UpstashExpressionStore } from '@/lib/collection/upstash-expression-store'
-import { UpstashJournalStore } from '@/lib/taste/upstash-journal-store'
+import { UpstashBottleHistoryStore, UpstashCellarStore, UpstashExpressionStore, UpstashJournalStore } from '@/lib/collection/upstash-record-store'
 
 export interface AccountActivity {
   id: string

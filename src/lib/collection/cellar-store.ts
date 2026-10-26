@@ -1,39 +1,28 @@
-import { type StoreDump, decodeStoredFields } from '@/lib/collection/versioned-record'
-import { CELLAR_BOTTLE_CODEC, type CellarBottle } from '@/lib/schemas/cellar-bottle'
+import { type KeyedRecordStore, type RecordStoreSpec, recordStoreKey } from '@/lib/collection/record-store'
+import { CELLAR_BOTTLE_CODEC, type CellarBottle, cellarRowKey } from '@/lib/schemas/cellar-bottle'
 
 /**
- * Persistence seam for a User's Cellar (CONTEXT.md, ADR-0024) — the same
- * port + in-memory + Upstash pattern as {@link JournalStore}, so the eventual
- * Postgres adapter (ADR-0024 §5) is a third implementation, not a refactor.
+ * Persistence seam for a User's Cellar (CONTEXT.md, ADR-0024) — one of the
+ * four collection record kinds stored the same way (`record-store.ts`), so the
+ * eventual Postgres adapter (ADR-0024 §5) is a third implementation, not a
+ * refactor.
  *
  * One Redis hash per user, field = `cellarRowKey(row)`, value = a
  * JSON-encoded CellarBottle. One row per thing a bottle was logged against —
  * a sake, or one bottling of it — with a count, not one row per bottle.
- *
- * Not `server-only`: holds the interface and pure helpers the in-memory double
- * reuses. The Upstash adapter carries the marker.
+ * `read` returns rows in no particular order — the list sorts for display;
+ * `remove` takes a `cellarRowKey`.
  */
-export interface CellarStore {
-  /** The user's rows, in no particular order — the list sorts for display. */
-  read(userId: string): Promise<CellarBottle[]>
-  /** Readable rows plus the raw records that could not be decoded. */
-  dump(userId: string): Promise<StoreDump<CellarBottle>>
-  /** Upsert the row under `cellarRowKey(bottle)`. */
-  put(userId: string, bottle: CellarBottle): Promise<void>
-  /** Delete one row by its `cellarRowKey`. No-op if absent. */
-  remove(userId: string, rowKey: string): Promise<void>
-  /** Erase the whole cellar (GDPR erasure). */
-  clear(userId: string): Promise<void>
+export type CellarStore = KeyedRecordStore<CellarBottle>
+
+/** How the cellar is stored: `cellar:user:<clerkUserId>`, no TTL, unordered. */
+export const CELLAR_RECORDS: RecordStoreSpec<CellarBottle> = {
+  keyPrefix: 'cellar',
+  codec: CELLAR_BOTTLE_CODEC,
+  rowKey: cellarRowKey,
 }
 
 /** The Redis key for a user's cellar hash. No TTL: the cellar is permanent. */
 export function cellarKey(userId: string): string {
-  return `cellar:user:${userId}`
-}
-
-/** Decode a user's stored cellar hash through {@link CELLAR_BOTTLE_CODEC}. */
-export function decodeCellarHash(
-  fields: ReadonlyArray<readonly [id: string, raw: string]>,
-): StoreDump<CellarBottle> {
-  return decodeStoredFields(fields, CELLAR_BOTTLE_CODEC)
+  return recordStoreKey(CELLAR_RECORDS, userId)
 }

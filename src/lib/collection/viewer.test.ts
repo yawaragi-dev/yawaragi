@@ -1,10 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { InMemoryBottleHistoryStore } from '@/lib/collection/in-memory-bottle-history-store'
-import { InMemoryCellarStore } from '@/lib/collection/in-memory-cellar-store'
-import { InMemoryExpressionStore } from '@/lib/collection/in-memory-expression-store'
+import { InMemoryBottleHistoryStore, InMemoryCellarStore, InMemoryExpressionStore, InMemoryJournalStore } from '@/lib/collection/in-memory-record-store'
 import type { BottleHistoryStore } from '@/lib/collection/bottle-history-store'
 import { STUB_BOTTLE_HISTORY, STUB_CELLAR, STUB_EXPRESSIONS, STUB_JOURNAL_ENTRIES, STUB_JOURNAL_NOW } from '@/lib/taste/journal-stub'
-import { InMemoryJournalStore } from '@/lib/taste/in-memory-journal-store'
 
 const isMaintainer = vi.fn<() => Promise<boolean>>()
 const userId = vi.fn<() => string | null>()

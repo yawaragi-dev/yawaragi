@@ -29,11 +29,8 @@ import { parseMaintainerAllowlist } from '@/lib/auth/maintainer-allowlist'
 import { BACKUP_BUCKET, backupPrefix } from '@/lib/collection/backup-storage'
 import { restoreCollection } from '@/lib/collection/restore-collection'
 import { SupabaseBackupStorage } from '@/lib/collection/supabase-backup-storage'
-import { UpstashBottleHistoryStore } from '@/lib/collection/upstash-bottle-history-store'
-import { UpstashCellarStore } from '@/lib/collection/upstash-cellar-store'
-import { UpstashExpressionStore } from '@/lib/collection/upstash-expression-store'
+import { UpstashBottleHistoryStore, UpstashCellarStore, UpstashExpressionStore, UpstashJournalStore } from '@/lib/collection/upstash-record-store'
 import { parseCollectionExport } from '@/lib/schemas/journal-export'
-import { UpstashJournalStore } from '@/lib/taste/upstash-journal-store'
 
 function flag(argv: readonly string[], name: string): string | undefined {
   const i = argv.indexOf(`--${name}`)

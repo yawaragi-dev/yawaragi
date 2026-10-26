@@ -2,7 +2,7 @@ import 'server-only'
 
 import { env } from '@/env'
 import type { BottleHistoryStore } from '@/lib/collection/bottle-history-store'
-import { UpstashBottleHistoryStore } from '@/lib/collection/upstash-bottle-history-store'
+import { UpstashBottleHistoryStore } from '@/lib/collection/upstash-record-store'
 
 /**
  * The production {@link BottleHistoryStore}, or `null` when the Upstash env

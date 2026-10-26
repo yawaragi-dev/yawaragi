@@ -2,11 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { newCellarRow } from '@/lib/collection/cellar'
 import type { BackupStorage } from '@/lib/collection/backup-storage'
 import { eraseCollection } from '@/lib/collection/erase-collection'
-import { InMemoryBottleHistoryStore } from '@/lib/collection/in-memory-bottle-history-store'
-import { InMemoryCellarStore } from '@/lib/collection/in-memory-cellar-store'
-import { InMemoryExpressionStore } from '@/lib/collection/in-memory-expression-store'
+import { InMemoryBottleHistoryStore, InMemoryCellarStore, InMemoryExpressionStore, InMemoryJournalStore } from '@/lib/collection/in-memory-record-store'
 import type { JournalEntry } from '@/lib/schemas/journal-entry'
-import { InMemoryJournalStore } from '@/lib/taste/in-memory-journal-store'
 
 const entry = (id: string): JournalEntry => ({
   schemaVersion: 3,

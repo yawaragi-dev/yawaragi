@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { bottleHistoryKey } from '@/lib/collection/bottle-history-store'
-import { InMemoryBottleHistoryStore } from '@/lib/collection/in-memory-bottle-history-store'
-import { UpstashBottleHistoryStore } from '@/lib/collection/upstash-bottle-history-store'
+import { InMemoryBottleHistoryStore } from '@/lib/collection/in-memory-record-store'
+import { UpstashBottleHistoryStore } from '@/lib/collection/upstash-record-store'
 import { assertCodecComplete, decodeVersionedRecord } from '@/lib/collection/versioned-record'
 import {
   BOTTLE_EVENT_CODEC,
@@ -71,18 +71,6 @@ describe('bottle history storage', () => {
     await store.append('u', [event('a')])
     await store.append('u', [event('a')])
     expect(await store.read('u')).toHaveLength(1)
-  })
-
-  it('keeps an unreadable record in the dump rather than losing it, and clear erases everything', async () => {
-    const store = new InMemoryBottleHistoryStore()
-    store.putRaw('u', 'x', '{bad')
-    expect(await store.read('u')).toEqual([])
-    expect((await store.dump('u')).rejected).toEqual([
-      { store: 'bottle-history', id: 'x', raw: '{bad', reason: 'json' },
-    ])
-    expect(await store.size('u')).toBe(1)
-    await store.clear('u')
-    expect(await store.size('u')).toBe(0)
   })
 
   it('on Upstash, appends in one HSET keyed by event id and never sets an expiry', async () => {

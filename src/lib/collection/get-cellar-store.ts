@@ -2,7 +2,7 @@ import 'server-only'
 
 import { env } from '@/env'
 import type { CellarStore } from '@/lib/collection/cellar-store'
-import { UpstashCellarStore } from '@/lib/collection/upstash-cellar-store'
+import { UpstashCellarStore } from '@/lib/collection/upstash-record-store'
 
 /**
  * The production {@link CellarStore}, or `null` when the Upstash env pair is

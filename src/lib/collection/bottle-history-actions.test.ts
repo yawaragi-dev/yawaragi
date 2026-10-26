@@ -5,15 +5,15 @@ const h = vi.hoisted(() => ({ history: null as unknown }))
 vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn(async () => ({ userId: 'user_admin' })) }))
 vi.mock('@/lib/auth/maintainer', () => ({ currentUserIsMaintainer: vi.fn(async () => true) }))
 vi.mock('@/lib/taste/get-journal-store', async () => {
-  const { InMemoryJournalStore } = await import('@/lib/taste/in-memory-journal-store')
+  const { InMemoryJournalStore } = await import('@/lib/collection/in-memory-record-store')
   return { getJournalStore: vi.fn(() => new InMemoryJournalStore()) }
 })
 vi.mock('@/lib/collection/get-cellar-store', async () => {
-  const { InMemoryCellarStore } = await import('@/lib/collection/in-memory-cellar-store')
+  const { InMemoryCellarStore } = await import('@/lib/collection/in-memory-record-store')
   return { getCellarStore: vi.fn(() => new InMemoryCellarStore()) }
 })
 vi.mock('@/lib/collection/get-expression-store', async () => {
-  const { InMemoryExpressionStore } = await import('@/lib/collection/in-memory-expression-store')
+  const { InMemoryExpressionStore } = await import('@/lib/collection/in-memory-record-store')
   return { getExpressionStore: vi.fn(() => new InMemoryExpressionStore()) }
 })
 vi.mock('@/lib/collection/get-bottle-history-store', () => ({ getBottleHistoryStore: vi.fn(() => h.history) }))
@@ -21,7 +21,7 @@ vi.mock('@/lib/collection/get-bottle-history-store', () => ({ getBottleHistorySt
 import { currentUserIsMaintainer } from '@/lib/auth/maintainer'
 import { forgetBottleHad } from '@/lib/collection/bottle-history-actions'
 import { bottlesHad } from '@/lib/collection/bottles-had'
-import { InMemoryBottleHistoryStore } from '@/lib/collection/in-memory-bottle-history-store'
+import { InMemoryBottleHistoryStore } from '@/lib/collection/in-memory-record-store'
 import type { BottleEvent } from '@/lib/schemas/bottle-event'
 
 const USER = 'user_admin'

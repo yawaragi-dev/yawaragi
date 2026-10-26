@@ -30,10 +30,8 @@ vi.mock('@/lib/collection/get-expression-store', () => ({
 }))
 
 import { currentUserIsMaintainer } from '@/lib/auth/maintainer'
-import { InMemoryCellarStore } from '@/lib/collection/in-memory-cellar-store'
-import { InMemoryExpressionStore } from '@/lib/collection/in-memory-expression-store'
+import { InMemoryCellarStore, InMemoryExpressionStore, InMemoryJournalStore } from '@/lib/collection/in-memory-record-store'
 import { lookupBrand, lookupFlavorChart } from '@/lib/sakenowa/catalogue-reads'
-import { InMemoryJournalStore } from '@/lib/taste/in-memory-journal-store'
 import { rateNewTasting, undoTasting, updateTasting } from '@/lib/taste/tasting-actions'
 
 const CHART: FlavorChart = { source: 'sakenowa', brandId: 123, f1: 1, f2: 1, f3: 1, f4: 1, f5: 1, f6: 1 }
