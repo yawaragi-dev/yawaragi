@@ -22,6 +22,7 @@ import { lookupFlavorChart } from '@/lib/sakenowa/catalogue-reads'
 import { bottlingHoldings } from '@/lib/collection/bottling-changes'
 import { bottlesOf } from '@/lib/collection/cellar'
 import { entriesForExpression, resolveViewerJournal } from '@/lib/taste/viewer-journal'
+import { lastTastingOf } from '@/lib/taste/last-tasting'
 import { bottlingPageModel } from '@/lib/sake-page/bottling-page-model'
 
 /**
@@ -95,7 +96,6 @@ export default async function BottlingPage({ params, searchParams }: PageProps) 
   })
 
   const tastings = entriesForExpression(viewer.entries, bottling.id)
-  const lastTasting = tastings[0]
   // What this page shows — the line, the tags, the other bottlings, the
   // Sakenowa credit — is decided in `bottlingPageModel`, where it is
   // unit-tested; this component only renders it.
@@ -197,11 +197,7 @@ export default async function BottlingPage({ params, searchParams }: PageProps) 
           expressionId={bottling.id}
           sakeName={bottling.name}
           chart={chart}
-          history={
-            lastTasting && lastTasting.event.kind === 'rating'
-              ? { kind: 'last', triedAt: lastTasting.triedAt, rating: lastTasting.event.rating }
-              : { kind: 'first' }
-          }
+          history={lastTastingOf(tastings)}
           similar={null}
           // §9a: the count is this bottling's own row.
           cellar={

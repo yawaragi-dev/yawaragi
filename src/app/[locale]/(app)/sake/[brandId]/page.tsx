@@ -29,6 +29,7 @@ import { resolvePairing } from '@/lib/pairing/resolve-pairing'
 import { catalogueAxisStats } from '@/lib/taste/catalogue-mean'
 import { hasArrivedViaScan } from '@/lib/scan/arrived-via-scan'
 import { entriesForBrand, resolveViewerJournal } from '@/lib/taste/viewer-journal'
+import { lastTastingOf } from '@/lib/taste/last-tasting'
 import { sakePageModel } from '@/lib/sake-page/sake-page-model'
 
 /**
@@ -146,7 +147,6 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
   // §9.3: this sake's tastings, newest first — and the meta §5's panel shows
   // before the first tap ("Last logged 19 Sep · 4.5" / "First time for you").
   const tastings = viewer.canView ? entriesForBrand(viewer.entries, brandId) : []
-  const lastTasting = tastings[0]
   const ownBottlings = viewer.expressions.filter((e) => e.brandId === brandId)
 
   // Every decision about what this page shows — the brewery line, the region
@@ -357,11 +357,7 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
                 .reduce((n, b) => n + b.count, 0)}
             />
           }
-          history={
-            lastTasting && lastTasting.event.kind === 'rating'
-              ? { kind: 'last', triedAt: lastTasting.triedAt, rating: lastTasting.event.rating }
-              : { kind: 'first' }
-          }
+          history={lastTastingOf(tastings)}
           similar={
             model.offerSimilar ? (
               <Link

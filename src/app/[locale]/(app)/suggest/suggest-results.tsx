@@ -8,10 +8,8 @@ import {
   buildFlavorAxisStrings,
 } from '@/components/sake/flavor-profile-view'
 import { buildFlavorTermsStrings } from '@/components/sake/flavor-terms-sheet'
-import {
-  SakenowaAttribution,
-  requiresSakenowaAttribution,
-} from '@/components/sake/sakenowa-attribution'
+import { SakenowaAttribution } from '@/components/sake/sakenowa-attribution'
+import { requiresSakenowaAttribution } from '@/lib/provenance/sakenowa-attribution'
 import type { Suggestion } from '@/lib/schemas/suggestion'
 
 /**

@@ -49,7 +49,7 @@ import { resolveBadgeKind } from '@/lib/provenance/policy'
 // scan flow can land on a fully-manual (brand AND brewery both
 // `manual_curation`) record, thread sources through
 // `ScanActionState` and gate these renders with
-// `requiresSakenowaAttribution(sources)` from sakenowa-attribution.tsx.
+// `requiresSakenowaAttribution(sources)` from `@/lib/provenance/sakenowa-attribution`.
 import { CellarButton } from '@/components/collection/cellar-button'
 import { TastingLogPanel } from '@/components/journal/tasting-log-panel'
 import { OtherCandidates } from '@/components/scan/other-candidates'

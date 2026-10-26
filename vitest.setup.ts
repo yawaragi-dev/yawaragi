@@ -36,7 +36,7 @@ if (!process.env.ANTHROPIC_API_KEY) {
 // behaviour in a server context — just empty exports. pnpm's strict isolation
 // means our app code can't reach the transitive directly from the vitest
 // runner, so we mock it as a no-op. Without this, any test that imports a
-// `import 'server-only'` module (lookup.ts, server-client.ts, …) fails to
+// `import 'server-only'` module (catalogue-reads.ts, server-client.ts, …) fails to
 // resolve the package.
 vi.mock('server-only', () => ({}))
 

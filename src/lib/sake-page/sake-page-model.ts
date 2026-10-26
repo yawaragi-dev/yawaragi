@@ -1,4 +1,4 @@
-import { requiresSakenowaAttribution } from '@/components/sake/sakenowa-attribution'
+import { requiresSakenowaAttribution } from '@/lib/provenance/sakenowa-attribution'
 import type { GuideSlug } from '@/lib/guide/entries'
 import { regionEntryFor } from '@/lib/guide/regions'
 import { formerBreweryNameOf, type FormerBreweryName } from '@/lib/sakenowa/former-brewery-names'
