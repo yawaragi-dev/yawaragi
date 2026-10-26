@@ -215,9 +215,17 @@
     "sectionChatBody": "Tell us what you usually drink. We translate it into Japanese brewer vocabulary and suggest sake that fits.",
     "sectionProfileTitle": "Build a taste profile",
     "sectionProfileBody": "Over time, your reactions shape a personal flavor map you can compare with others.",
-    "hero": {
-      "photoAlt": "A chilled bottle of 木戸泉 (Kidoizumi) sake",
-      "exampleChip": "Example"
+    "loop": {
+      "label": "What the app does, shown with a made-up demo bottle",
+      "demoBottle": "Demo bottle",
+      "grade": "Junmai",
+      "notice": "Logged · {rating}",
+      "captionScan": "Point at the label.",
+      "captionResult": "See what it is and how it tastes.",
+      "captionRate": "One tap, and it’s in your journal.",
+      "captionPalate": "Your palate takes shape.",
+      "pause": "Pause the animation",
+      "play": "Play the animation"
     },
     "openApp": "Open the app",
     "kicker": "A journal for sake",
@@ -234,6 +242,13 @@
     "featureRateBody": "The star is the save. Add a note if you want, or detailed tasting notes later.",
     "featurePalateTitle": "Learn your palate",
     "featurePalateBody": "After three tastings it shows what you like — and why. Already know whisky or wine? Start from a drink you love.",
+    "proof": {
+      "label": "How Yawaragi is built",
+      "provenance": "Every value says where it came from",
+      "tested": "Tested against real label photos",
+      "private": "Your journal stays private",
+      "repo": "The code on GitHub"
+    },
     "privacyTitle": "Your journal stays yours",
     "privacyBody": "Everything works on your phone without an account. Nothing is posted publicly, and your ratings are only shared — anonymously — if you choose to.",
     "footer": {

@@ -530,9 +530,8 @@ export async function searchCatalogueFromPool(
  * database failure degrades to `unavailable` and the page says so.
  *
  * `getServerDbPool()` THROWS when `DATABASE_URL` is unset, which is CI's
- * Playwright webServer, so this catch is load-bearing in the same way
- * `getLandingSampleScan`'s is: without it every spec that loads `/search` with
- * a query fails and the suite slows to a crawl retrying. That is exactly the
+ * Playwright webServer, so this catch is load-bearing: without it every spec
+ * that loads `/search` with a query fails and the suite slows to a crawl retrying. That is exactly the
  * regression this guard prevents — and it is how CI caught the missing guard
  * in the first place.
  */

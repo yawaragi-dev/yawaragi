@@ -397,3 +397,172 @@ html[data-offline] [data-needs-network] {
   opacity: 0.45;
   pointer-events: none;
 }
+
+/*
+ * Design v1.8, K: the landing hero's loop (<LandingLoop />). One 11 s cycle —
+ * Scan 0–2.5 s · Result 2.5–5 s · Rate 5–7 s · Palate 7–10 s · hold, and a
+ * 300 ms crossfade back to the start. Keyframe percentages are seconds / 11.
+ *
+ * The RESTING styles are the reduced-motion frame K1 asks for — the Result
+ * frame, still, bars filled, nothing rated yet — and every animation is added
+ * only under `no-preference`, so a reduced-motion visitor (or a browser that
+ * runs no animation) gets that frame without anything having to switch off.
+ * Only opacity and transform move, so nothing reflows while it plays.
+ */
+.yw-loop-scan,
+.yw-loop-palate,
+.yw-loop-after-rate,
+.yw-loop-star,
+.yw-loop-tap,
+.yw-loop-notice,
+.yw-loop-cap-scan,
+.yw-loop-cap-rate,
+.yw-loop-cap-palate {
+  opacity: 0;
+}
+.yw-loop-bar {
+  transform: scaleX(var(--v));
+}
+.yw-loop-hex {
+  transform-box: view-box;
+  transform-origin: 160px 160px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .yw-loop {
+    --yw-loop: 11s;
+  }
+  .yw-loop-scan,
+  .yw-loop-cap-scan {
+    animation: yw-loop-scan var(--yw-loop) linear infinite;
+  }
+  .yw-loop-result {
+    animation: yw-loop-result var(--yw-loop) linear infinite;
+  }
+  .yw-loop-palate,
+  .yw-loop-cap-palate {
+    animation: yw-loop-palate var(--yw-loop) linear infinite;
+  }
+  .yw-loop-card {
+    animation: yw-loop-card var(--yw-loop) linear infinite;
+  }
+  .yw-loop-bar {
+    animation: yw-loop-bar var(--yw-loop) linear infinite both;
+    animation-delay: calc(var(--i) * 60ms);
+  }
+  .yw-loop-star {
+    animation: yw-loop-star var(--yw-loop) linear infinite both;
+    animation-delay: calc(var(--i) * 35ms);
+  }
+  .yw-loop-tap {
+    animation: yw-loop-tap var(--yw-loop) linear infinite;
+  }
+  .yw-loop-before-rate {
+    animation: yw-loop-before-rate var(--yw-loop) linear infinite;
+  }
+  .yw-loop-after-rate {
+    animation: yw-loop-after-rate var(--yw-loop) linear infinite;
+  }
+  .yw-loop-panel {
+    animation: yw-loop-panel var(--yw-loop) linear infinite;
+  }
+  .yw-loop-notice {
+    animation: yw-loop-notice var(--yw-loop) linear infinite;
+  }
+  .yw-loop-hex {
+    animation: yw-loop-hex var(--yw-loop) linear infinite;
+  }
+  .yw-loop-title {
+    animation: yw-loop-title var(--yw-loop) linear infinite;
+  }
+  .yw-loop-cap-result {
+    animation: yw-loop-cap-result var(--yw-loop) linear infinite;
+  }
+  .yw-loop-cap-rate {
+    animation: yw-loop-cap-rate var(--yw-loop) linear infinite;
+  }
+  /* The pause button, and the loop's own pause while scrolled out of view:
+     hold the frame where it is. */
+  .yw-loop[data-paused] *,
+  .yw-loop[data-paused] *::before,
+  .yw-loop[data-paused] *::after {
+    animation-play-state: paused !important;
+  }
+}
+
+/* Frames: 300 ms swaps; the last one is the crossfade back to Scan. */
+@keyframes yw-loop-scan {
+  0%, 22.727% { opacity: 1; }
+  25.455%, 97.273% { opacity: 0; }
+  100% { opacity: 1; }
+}
+@keyframes yw-loop-result {
+  0%, 22.727% { opacity: 0; }
+  25.455%, 63.636% { opacity: 1; }
+  66.364%, 100% { opacity: 0; }
+}
+@keyframes yw-loop-palate {
+  0%, 63.636% { opacity: 0; }
+  66.364%, 97.273% { opacity: 1; }
+  100% { opacity: 0; }
+}
+/* 2.5 s: the card rises (yw-rise, 340 ms). */
+@keyframes yw-loop-card {
+  0%, 22.727% { opacity: 0; transform: translateY(14px); animation-timing-function: ease-out; }
+  25.818%, 100% { opacity: 1; transform: none; }
+}
+/* 3 s: each bar fills over 600 ms, 60 ms after the one before. */
+@keyframes yw-loop-bar {
+  0%, 27.273% { transform: scaleX(0); animation-timing-function: ease-out; }
+  32.727%, 100% { transform: scaleX(var(--v)); }
+}
+/* 5 s: the tap on the fourth star, and stars one to four pop in (yw-pop,
+   35 ms apart). */
+@keyframes yw-loop-tap {
+  0%, 44.091% { opacity: 0; transform: scale(0.4); }
+  45.455% { opacity: 1; transform: scale(1); }
+  48.182%, 100% { opacity: 0; transform: scale(1.5); }
+}
+@keyframes yw-loop-star {
+  0%, 45.454% { opacity: 0; transform: scale(0.72); }
+  45.455% { opacity: 1; transform: scale(0.72); animation-timing-function: ease-out; }
+  47.273% { transform: scale(1.12); }
+  48.182%, 100% { opacity: 1; transform: scale(1); }
+}
+@keyframes yw-loop-before-rate {
+  0%, 45.454% { opacity: 1; }
+  45.455%, 100% { opacity: 0; }
+}
+@keyframes yw-loop-after-rate {
+  0%, 45.454% { opacity: 0; }
+  45.455%, 100% { opacity: 1; }
+}
+@keyframes yw-loop-panel {
+  0%, 45.455% { background-color: transparent; }
+  47.273%, 100% { background-color: var(--color-ginshu-100); }
+}
+/* 5.4 s: "Logged · 4" rises (yw-rise). */
+@keyframes yw-loop-notice {
+  0%, 49.091% { opacity: 0; transform: translateY(14px); animation-timing-function: ease-out; }
+  51.636%, 100% { opacity: 1; transform: none; }
+}
+/* 7.3 s: the hexagon grows from the centre over 1.2 s; 8.5 s: the title. */
+@keyframes yw-loop-hex {
+  0%, 66.364% { transform: scale(0); animation-timing-function: ease-out; }
+  77.273%, 100% { transform: scale(1); }
+}
+@keyframes yw-loop-title {
+  0%, 77.273% { opacity: 0; }
+  80%, 100% { opacity: 1; }
+}
+/* Captions follow their frame; Rate's takes over from Result's at 5 s. */
+@keyframes yw-loop-cap-result {
+  0%, 22.727% { opacity: 0; }
+  25.455%, 45.455% { opacity: 1; }
+  48.182%, 100% { opacity: 0; }
+}
+@keyframes yw-loop-cap-rate {
+  0%, 45.455% { opacity: 0; }
+  48.182%, 63.636% { opacity: 1; }
+  66.364%, 100% { opacity: 0; }
+}

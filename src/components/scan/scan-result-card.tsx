@@ -30,9 +30,7 @@ import { cn } from '@/lib/utils'
 /**
  * ADR-0015 / issue #163 (UX-B), redesigned in UX-F (#167) as the "elevated
  * bone card": the rich, in-place result shown after a confident scan on
- * `/scan`. Shared by design — UX-E's landing hero (#166) renders the same
- * card over a curated sample sake, and passes `exampleLabel` so the sample
- * is unmistakably flagged as an example rather than the visitor's own scan.
+ * `/scan`.
  *
  * Client component because:
  * - Its scan-flow caller (`<ScanForm />`) is client and passes the
@@ -47,7 +45,7 @@ import { cn } from '@/lib/utils'
 export interface ScanResultCardProps {
   /**
    * Client-only object URL created via `URL.createObjectURL(blob)` on the
-   * caller side (scan flow), or a static `public/` path (UX-E hero).
+   * caller side (scan flow).
    * `null` when the caller has no photo. The parent is responsible for
    * `URL.revokeObjectURL` on unmount / new pick.
    */
@@ -68,9 +66,8 @@ export interface ScanResultCardProps {
    */
   sakeHref: string
   /**
-   * Pre-resolved path to §6's "Similar sakes" list. Optional: the landing's
-   * example card omits it, because "browse five more like this" is an in-app
-   * action and the landing's job is to get you into the app first.
+   * Pre-resolved path to §6's "Similar sakes" list. Optional: the row is
+   * left out when the caller has none.
    */
   similarHref?: string
   /**
@@ -82,19 +79,9 @@ export interface ScanResultCardProps {
   flavorChart: FlavorChart | null
   /**
    * Provenance signal for the LLM-extracted sake name. Only rendered
-   * when the caller passes a value — the UX-E sample hero uses a
-   * curated Sakenowa row and has no `llm_extracted` provenance to
-   * surface, so it omits this prop.
+   * when the caller passes a value.
    */
   extractionConfidence?: number
-  /**
-   * When set, renders a small "Example" chip on the card (UX-F #167).
-   * The landing hero (#166) passes it so a visitor / recruiter can't
-   * mistake the curated sample for their own scan; the real scan flow
-   * omits it. The string is the localised chip label ("Example" /
-   * "Beispiel").
-   */
-  exampleLabel?: string
   /**
    * True while a rescan is in flight — the visitor picked a new photo
    * on top of a previously-matched result. The photo (already swapped
@@ -107,8 +94,7 @@ export interface ScanResultCardProps {
   /**
    * §5's log panel ("Your take"), rendered under the identity block. Passed
    * in rather than built here because only the scan flow has one, and only
-   * for a visitor who can keep a journal (ADR-0020): the landing's example
-   * card must never offer a star that saves somewhere.
+   * for a visitor who can keep a journal (ADR-0020).
    */
   logPanel?: ReactNode
   /**
@@ -124,7 +110,7 @@ export interface ScanResultCardProps {
   /**
    * What the read found on the label beyond the line's name (design v1.7
    * D4, 83). Model-read text, so the block carries the Read by AI badge;
-   * the rest of the card stays catalogue data. The landing's example omits it.
+   * the rest of the card stays catalogue data.
    */
   readBottling?: ScanBottling
   /**
@@ -153,7 +139,6 @@ export function ScanResultCard({
   similarHref,
   flavorChart,
   extractionConfidence,
-  exampleLabel,
   isStale = false,
   logPanel,
   nudge,
@@ -229,20 +214,11 @@ export function ScanResultCard({
       data-testid="scan-result-card"
       aria-busy={isStale || undefined}
     >
-      {exampleLabel && (
-        <span
-          className="absolute left-5 top-5 z-10 rounded-full bg-ground/85 px-3 py-1 text-section-label font-medium uppercase text-ink backdrop-blur"
-          data-testid="scan-result-example-badge"
-        >
-          {exampleLabel}
-        </span>
-      )}
 
       {/*
-        Container queries, not viewport ones. This card renders both full-width
-        on `/scan` and inside the landing hero's 390px phone frame (§0's "real
-        app screenshot"), and a `sm:` breakpoint asks the wrong question in the
-        second case: the viewport is 1280 while the card has 390 to work with,
+        Container queries, not viewport ones. This card once rendered inside
+        the landing hero's 390px phone frame too, and a `sm:` breakpoint asks
+        the wrong question there: the viewport is 1280 while the card has 390 to work with,
         so it took the two-column desktop layout and wrapped "Powered by /
         Sakenowa" down the side. `@md` is 448px of CONTAINER, so the card now
         answers "how much room do I have" instead of "how big is the screen" —
@@ -267,9 +243,8 @@ export function ScanResultCard({
                 className="relative h-[122px] w-[92px] shrink-0 overflow-hidden rounded-xl bg-ash-200 shadow-yw-sm"
                 data-testid="scan-result-photo-frame"
               >
-                {/* A blob: URL in the scan flow (next/image cannot take one);
-                    the landing hero passes a static path. Full opacity across
-                    rescans (#190). */}
+                {/* A blob: URL from the scan flow (next/image cannot take
+                    one). Full opacity across rescans (#190). */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={photoUrl} alt={photoAlt} className="h-full w-full object-cover" data-testid="scan-result-photo" />
               </div>
@@ -401,8 +376,7 @@ export function ScanResultCard({
               // (which read as a lesser / broken match), the empty branch is
               // a calm, discovery-framed "profile coming soon" panel. It
               // echoes the reverse-exemplar section's amber/stone bone-card
-              // vocabulary so it feels intentional in BOTH the scan flow and
-              // the UX-E landing hero. No Sakenowa attribution here — this
+              // vocabulary so it feels intentional. No Sakenowa attribution here — this
               // copy is our own UI chrome, not Sakenowa data (the card's
               // brand/brewery facts keep their inline attribution above).
               // Onward paths stay ON-TOPIC for this sake: "Full bottle page"

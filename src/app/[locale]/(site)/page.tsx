@@ -1,4 +1,4 @@
-import { Camera, Hexagon, Star } from '@phosphor-icons/react/dist/ssr'
+import { ArrowUpRight, Camera, Hexagon, Star } from '@phosphor-icons/react/dist/ssr'
 import type { Icon } from '@phosphor-icons/react'
 import { cookies } from 'next/headers'
 import { getTranslations } from 'next-intl/server'
@@ -8,11 +8,10 @@ import { routing } from '@/i18n/routing'
 import { AgeGate } from '@/components/legal/age-gate'
 import { LandingFooter } from '@/components/landing/landing-footer'
 import { LandingHeader } from '@/components/landing/landing-header'
-import { LandingHero } from '@/components/landing/landing-hero'
+import { LandingLoop } from '@/components/landing/landing-loop'
 import { Header } from '@/components/layout/header'
 import { LegalFooter } from '@/components/layout/legal-footer'
 import { hasAcceptedAgeGate } from '@/lib/legal/age-gate-cookie'
-import { getLandingSampleScan } from '@/lib/landing/sample-scan'
 
 /**
  * The landing page — design v1.4 §0.
@@ -21,15 +20,14 @@ import { getLandingSampleScan } from '@/lib/landing/sample-scan'
  * three feature cards, the privacy promise, and the five-item footer with the
  * Sakenowa credit.
  *
- * **Where the real example sits.** §0 puts a phone placeholder in the hero's
- * right column and tells us to "replace with a real app screenshot", so that
- * is where `<LandingHero />` goes — an actual scan result from the Sakenowa
- * mirror (UX-E #166), framed as the device. Two columns above ~700px, stacked
- * below, per §0.
+ * **The hero's phone is a loop** (design v1.8, K): scan → result → rate →
+ * palate, drawn with a made-up demo bottle, "Mihon (見本)". Two columns above
+ * ~700px, stacked below, per §0.
  *
- * It renders **only after the 18+ gate is accepted**, and is fetched lazily
- * for the same reason: it is Sakenowa flavor data, and JMStV allows none of
- * that before acceptance. That predates this port and is unchanged by it.
+ * It used to be a real catalogue sake's scan result (UX-E #166), which, being
+ * Sakenowa flavor data, could only render after the 18+ gate and needed the
+ * database. The demo bottle is neither a real sake nor catalogue data, so the
+ * loop renders before the gate too, and the landing reads no database at all.
  */
 export default async function LandingPage({
   params,
@@ -45,7 +43,6 @@ export default async function LandingPage({
   const t = await getTranslations('landing')
   const cookieJar = await cookies()
   const gateAccepted = hasAcceptedAgeGate(cookieJar)
-  const sample = gateAccepted ? await getLandingSampleScan() : null
 
   return (
     <>
@@ -98,11 +95,9 @@ export default async function LandingPage({
           <p className="text-meta text-ash-500">{t('smallPrint')}</p>
           </div>
 
-          {/* §0's right column. Absent until the 18+ gate is accepted — it is
-              Sakenowa flavour data, and JMStV allows none before acceptance —
-              so the hero is single-column for a visitor who has not confirmed.
-              That predates this port and is unchanged by it. */}
-          {sample && <LandingHero sample={sample} locale={locale} />}
+          {/* §0's right column: the loop (K). Made-up data only, so it is
+              the same before and after the 18+ gate. */}
+          <LandingLoop />
         </section>
 
         <section id="how" className="flex scroll-mt-6 flex-col gap-6 pb-14">
@@ -129,6 +124,31 @@ export default async function LandingPage({
           </div>
         </section>
 
+        {/* K4: one row of three plain lines, no numbers, ending with the
+            repository. The detail stays in the README. */}
+        <section aria-label={t('proof.label')} className="pb-14" data-testid="landing-proof">
+          <ul className="flex flex-wrap items-center gap-x-3 gap-y-2 text-subtle text-ash-600">
+            {(['provenance', 'tested', 'private'] as const).map((key) => (
+              <li key={key} className="flex items-center gap-3">
+                {t(`proof.${key}`)}
+                <span className="text-ash-400" aria-hidden="true">
+                  ·
+                </span>
+              </li>
+            ))}
+            <li>
+              <a
+                href={REPOSITORY_URL}
+                className="inline-flex min-h-8 items-center gap-1 rounded-sm text-ginshu-700 hover:text-ginshu-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+                data-testid="landing-proof-repo"
+              >
+                {t('proof.repo')}
+                <ArrowUpRight size={13} aria-hidden="true" />
+              </a>
+            </li>
+          </ul>
+        </section>
+
         <section
           className="flex flex-col items-start gap-3 rounded-xl border border-divider p-6"
           data-testid="landing-privacy-promise"
@@ -151,6 +171,9 @@ export default async function LandingPage({
     </>
   )
 }
+
+/** K4's link: the public repository, where the README carries the detail. */
+const REPOSITORY_URL = 'https://github.com/yawaragi-dev/yawaragi'
 
 interface FeatureCardProps {
   icon: Icon

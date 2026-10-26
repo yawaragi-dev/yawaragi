@@ -215,9 +215,17 @@
     "sectionChatBody": "Erzähl uns, was du sonst trinkst. Wir übersetzen das in die Sprache japanischer Brauer und schlagen Sake vor, der dazu passt.",
     "sectionProfileTitle": "Geschmacksprofil aufbauen",
     "sectionProfileBody": "Mit der Zeit formen deine Reaktionen eine persönliche Aromakarte, die du mit anderen vergleichen kannst.",
-    "hero": {
-      "photoAlt": "Eine gekühlte Flasche 木戸泉 (Kidoizumi) Sake",
-      "exampleChip": "Beispiel"
+    "loop": {
+      "label": "Was die App macht, gezeigt an einer erfundenen Demo-Flasche",
+      "demoBottle": "Demo-Flasche",
+      "grade": "Junmai",
+      "notice": "Eingetragen · {rating}",
+      "captionScan": "Auf das Etikett richten.",
+      "captionResult": "Sehen, was es ist und wie es schmeckt.",
+      "captionRate": "Ein Tipp, und es steht im Journal.",
+      "captionPalate": "Dein Geschmack nimmt Gestalt an.",
+      "pause": "Animation anhalten",
+      "play": "Animation abspielen"
     },
     "openApp": "Zur App",
     "kicker": "Ein Journal für Sake",
@@ -234,6 +242,13 @@
     "featureRateBody": "Der Stern ist das Speichern. Füge eine Notiz hinzu, wenn du magst, oder später ausführliche Verkostungsnotizen.",
     "featurePalateTitle": "Deinen Geschmack kennenlernen",
     "featurePalateBody": "Nach drei Verkostungen zeigt Yawaragi dir, was dir schmeckt — und warum. Du kennst dich mit Whisky oder Wein aus? Beginne bei einem Getränk, das du magst.",
+    "proof": {
+      "label": "Wie Yawaragi gebaut ist",
+      "provenance": "Jeder Wert sagt, woher er kommt",
+      "tested": "Getestet an echten Etikettfotos",
+      "private": "Dein Journal bleibt privat",
+      "repo": "Der Code auf GitHub"
+    },
     "privacyTitle": "Dein Journal bleibt deins",
     "privacyBody": "Alles funktioniert auf deinem Handy, ganz ohne Konto. Nichts wird öffentlich gepostet, und deine Bewertungen werden nur geteilt — anonym — wenn du es möchtest.",
     "footer": {
