@@ -8,6 +8,7 @@ import {
   getFlavorCharts,
   getFlavorTags,
   getRankings,
+  getBrandFlavorTags,
 } from '@/lib/sakenowa/client'
 import {
   makePgAreasDB,
@@ -17,6 +18,7 @@ import {
   makePgFlavorTagsDB,
   makePgIngestionRunsDB,
   makePgRankingsDB,
+  makePgBrandFlavorTagsDB,
 } from '@/lib/sakenowa/db'
 import { driveIngest, type IngestDriverResult } from '@/lib/sakenowa/ingest-driver'
 import { authorizeCronRequest } from '@/lib/cron/authorize'
@@ -134,6 +136,7 @@ export function createProductionDeps(): CronRouteDeps {
             getAreas,
             getFlavorTags,
             getRankings,
+            getBrandFlavorTags,
           },
           dbs: {
             breweries: makePgBreweriesDB(dataPool),
@@ -142,6 +145,7 @@ export function createProductionDeps(): CronRouteDeps {
             areas: makePgAreasDB(dataPool),
             flavorTags: makePgFlavorTagsDB(dataPool),
             rankings: makePgRankingsDB(dataPool),
+            brandFlavorTags: makePgBrandFlavorTagsDB(dataPool),
             ingestionRuns: makePgIngestionRunsDB(telemetryPool),
           },
         })

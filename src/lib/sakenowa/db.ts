@@ -32,6 +32,7 @@ import type { FlavorChart, FlavorChartSource } from '../schemas/flavor-chart'
 import type { FlavorTag, FlavorTagSource } from '../schemas/flavor-tag'
 import type { IngestionRun, IngestionRunStatus, PerTableCounts } from '../schemas/ingestion-run'
 import type { Ranking, RankingKind, RankingSource } from '../schemas/ranking'
+import type { BrandFlavorTag } from '../schemas/brand-flavor-tag'
 import type { ProvenanceSource } from '../schemas/with-provenance'
 
 export interface BrandUpsert {
@@ -730,6 +731,79 @@ export function rowToRanking(row: RankingRow): Ranking {
     ranking.confidence = Number(row.confidence)
   }
   return ranking
+}
+
+// ---------- BrandFlavorTags ----------
+//
+// Latest snapshot only, like rankings: TRUNCATE + INSERT inside the
+// caller's transaction (migration 0020).
+
+export interface BrandFlavorTagsDB {
+  /** Every brand_id in `brands`, to drop pairs whose brand Sakenowa no longer lists. */
+  getKnownBrandIds(): Promise<Set<number>>
+  /** Every tag_id in `flavor_tags`, for the same reason on the tag side. */
+  getKnownTagIds(): Promise<Set<number>>
+  replaceAll(rows: readonly BrandFlavorTag[], onChunk?: BatchProgress): Promise<void>
+  transaction<T>(fn: (tx: BrandFlavorTagsDB) => Promise<T>): Promise<T>
+}
+
+class PgBrandFlavorTagsDB implements BrandFlavorTagsDB {
+  constructor(private readonly executor: Pool | PoolClient) {}
+
+  async getKnownBrandIds(): Promise<Set<number>> {
+    const { rows } = await this.executor.query<{ brand_id: number }>('SELECT brand_id FROM brands')
+    return new Set(rows.map((r) => r.brand_id))
+  }
+
+  async getKnownTagIds(): Promise<Set<number>> {
+    const { rows } = await this.executor.query<{ tag_id: number }>('SELECT tag_id FROM flavor_tags')
+    return new Set(rows.map((r) => r.tag_id))
+  }
+
+  async replaceAll(rows: readonly BrandFlavorTag[], onChunk?: BatchProgress): Promise<void> {
+    // On any failure the caller's ROLLBACK keeps the previous snapshot.
+    await this.executor.query('TRUNCATE TABLE brand_flavor_tags')
+    for (let start = 0; start < rows.length; start += BATCH_SIZE) {
+      const chunk = rows.slice(start, start + BATCH_SIZE)
+      const placeholders: string[] = []
+      const values: unknown[] = []
+      for (const r of chunk) {
+        const i = values.length
+        placeholders.push(`($${i + 1}, $${i + 2}, $${i + 3}, $${i + 4})`)
+        values.push(r.brandId, r.tagId, r.position, r.source)
+      }
+      await this.executor.query(
+        `INSERT INTO brand_flavor_tags (brand_id, tag_id, position, source)
+         VALUES ${placeholders.join(', ')}`,
+        values,
+      )
+      onChunk?.(chunk.length)
+    }
+  }
+
+  async transaction<T>(fn: (tx: BrandFlavorTagsDB) => Promise<T>): Promise<T> {
+    if ('release' in this.executor) {
+      return fn(this)
+    }
+    const client = await (this.executor as Pool).connect()
+    try {
+      await client.query('BEGIN')
+      const result = await fn(new PgBrandFlavorTagsDB(client))
+      await client.query('COMMIT')
+      return result
+    } catch (err) {
+      await client.query('ROLLBACK').catch(() => {
+        /* swallow rollback failure; surface the original */
+      })
+      throw err
+    } finally {
+      client.release()
+    }
+  }
+}
+
+export function makePgBrandFlavorTagsDB(pool: Pool): BrandFlavorTagsDB {
+  return new PgBrandFlavorTagsDB(pool)
 }
 
 // ---------- IngestionRuns ----------

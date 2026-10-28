@@ -21,6 +21,7 @@ import { createHash } from 'node:crypto'
 import type {
   SakenowaArea,
   SakenowaBrand,
+  SakenowaBrandFlavorTags,
   SakenowaBrewery,
   SakenowaFlavorChart,
   SakenowaFlavorTag,
@@ -32,6 +33,7 @@ import type {
   AreasDB,
   AreaUpsert,
   BatchProgress,
+  BrandFlavorTagsDB,
   BrandsDB,
   BrandUpsert,
   BreweriesDB,
@@ -46,6 +48,7 @@ import type {
 } from './db'
 import type { Area } from '../schemas/area'
 import type { Brand } from '../schemas/brand'
+import type { BrandFlavorTag } from '../schemas/brand-flavor-tag'
 import type { Brewery } from '../schemas/brewery'
 import type { FlavorChart } from '../schemas/flavor-chart'
 import type { FlavorTag } from '../schemas/flavor-tag'
@@ -617,6 +620,68 @@ export async function ingestRankings(deps: RankingIngestionDeps): Promise<Rankin
   })
 }
 
+// ---------- Brand flavor tags ----------
+//
+// Which flavor tags each sake carries (#451, design v1.8 M3). Latest
+// snapshot only, like rankings: wholesale replace inside the transaction,
+// with pairs whose brand or tag the catalogue does not hold filtered out
+// first (both are foreign keys) and counted.
+
+export interface BrandFlavorTagIngestionDeps {
+  client: { getBrandFlavorTags: () => Promise<SakenowaBrandFlavorTags[]> }
+  db: BrandFlavorTagsDB
+  onProgress?: ProgressCallback
+}
+
+export interface BrandFlavorTagRunSummary {
+  /** Rows written. */
+  total: number
+  /** Pairs whose brand or tag is not in the catalogue. */
+  dropped: number
+}
+
+/**
+ * One row per (brand, tag), `position` = the tag's 1-based place in
+ * Sakenowa's array. A tag listed twice for one brand keeps its first place.
+ */
+export function sakenowaBrandFlavorTagsToRows(
+  payload: readonly SakenowaBrandFlavorTags[],
+): BrandFlavorTag[] {
+  const rows: BrandFlavorTag[] = []
+  for (const { brandId, tagIds } of payload) {
+    const seen = new Set<number>()
+    tagIds.forEach((tagId, index) => {
+      if (seen.has(tagId)) return
+      seen.add(tagId)
+      rows.push({ brandId, tagId, position: index + 1, source: 'sakenowa' })
+    })
+  }
+  return rows
+}
+
+export async function ingestBrandFlavorTags(
+  deps: BrandFlavorTagIngestionDeps,
+): Promise<BrandFlavorTagRunSummary> {
+  const allRows = sakenowaBrandFlavorTagsToRows(await deps.client.getBrandFlavorTags())
+
+  return deps.db.transaction(async (tx) => {
+    const [brandIds, tagIds] = await Promise.all([tx.getKnownBrandIds(), tx.getKnownTagIds()])
+    const rows = allRows.filter((r) => brandIds.has(r.brandId) && tagIds.has(r.tagId))
+    let written = 0
+    try {
+      await tx.replaceAll(rows, (rowsThisChunk) => {
+        written += rowsThisChunk
+        deps.onProgress?.(written, rows.length)
+      })
+    } catch (err) {
+      throw new Error(`Failed to replace ${rows.length} brand flavor tag row(s): ${formatPgError(err)}`, {
+        cause: err,
+      })
+    }
+    return { total: rows.length, dropped: allRows.length - rows.length }
+  })
+}
+
 // ---------- Source revision hash ----------
 //
 // SHA-256 over the canonical JSON of every Sakenowa payload the
@@ -639,6 +704,7 @@ export interface SourceRevisionInputs {
   areas?: SakenowaArea[]
   flavorTags?: SakenowaFlavorTag[]
   rankings?: SakenowaRankingsPayload
+  brandFlavorTags?: SakenowaBrandFlavorTags[]
 }
 
 export function computeSourceRevisionHash(inputs: SourceRevisionInputs): string {
@@ -651,6 +717,7 @@ export function computeSourceRevisionHash(inputs: SourceRevisionInputs): string 
     areas: inputs.areas ?? null,
     flavorTags: inputs.flavorTags ?? null,
     rankings: inputs.rankings ?? null,
+    brandFlavorTags: inputs.brandFlavorTags ?? null,
   })
   return createHash('sha256').update(canonical).digest('hex')
 }

@@ -61,6 +61,9 @@ export type PublicTable =
   // 0019: other names a sake or brewery is sold under (#413); read by the
   // romaji index for search and scan, and by the bottle page.
   | 'name_aliases'
+  // 0020: which Sakenowa flavor tags each sake carries (#451); read by
+  // Search for a typed flavor word ("grapefruit").
+  | 'brand_flavor_tags'
 
 /**
  * Tables whose rows are scoped to a single Clerk user. Reads/writes MUST

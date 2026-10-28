@@ -20,6 +20,9 @@ export const PerTableCounts = z.object({
   unchanged: z.number().int().nonnegative().optional(),
   total: z.number().int().nonnegative(),
   yearMonth: z.string().min(1).optional(),
+  // Set when a table's step was skipped rather than run: `table_missing`
+  // while brand_flavor_tags' migration (0020) has not been applied.
+  skipped: z.literal('table_missing').optional(),
 })
 export type PerTableCounts = z.infer<typeof PerTableCounts>
 
@@ -46,6 +49,7 @@ export const IngestionRunSchema = withProvenance(z.literal('manual_curation')).e
     areas: PerTableCounts.optional(),
     flavorTags: PerTableCounts.optional(),
     rankings: PerTableCounts.optional(),
+    brandFlavorTags: PerTableCounts.optional(),
   }),
   sourceRevisionHash: z.string().min(1),
   errorMessage: z.string().nullable(),

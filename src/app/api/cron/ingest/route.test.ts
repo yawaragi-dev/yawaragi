@@ -3,6 +3,7 @@ import { GET, handleCronIngestRequest, POST, type CronRouteDeps } from './route'
 import { driveIngest } from '@/lib/sakenowa/ingest-driver'
 import type {
   AreasDB,
+  BrandFlavorTagsDB,
   BrandsDB,
   BreweriesDB,
   FlavorChartsDB,
@@ -177,6 +178,7 @@ const stubFlavorChartsDB = stubBreweriesDB as unknown as FlavorChartsDB
 const stubAreasDB = stubBreweriesDB as unknown as AreasDB
 const stubFlavorTagsDB = stubBreweriesDB as unknown as FlavorTagsDB
 const stubRankingsDB = stubBreweriesDB as unknown as RankingsDB
+const stubBrandFlavorTagsDB = stubBreweriesDB as unknown as BrandFlavorTagsDB
 
 describe('GET /api/cron/ingest', () => {
   it('GET is the same handler as POST so Vercel Cron (which sends GET) is accepted', () => {
@@ -200,6 +202,7 @@ describe('POST /api/cron/ingest pipeline failure', () => {
       getAreas: async () => [],
       getFlavorTags: async () => [],
       getRankings: async () => ({ yearMonth: '202402', overall: [], areas: [] }),
+      getBrandFlavorTags: async () => [],
     }
 
     const deps: CronRouteDeps = {
@@ -214,6 +217,7 @@ describe('POST /api/cron/ingest pipeline failure', () => {
             areas: stubAreasDB,
             flavorTags: stubFlavorTagsDB,
             rankings: stubRankingsDB,
+            brandFlavorTags: stubBrandFlavorTagsDB,
             ingestionRuns: telemetryDB,
           },
         }),

@@ -495,7 +495,7 @@
   "search": {
     "title": "Find a sake",
     "fieldLabel": "Search the catalogue",
-    "placeholder": "Name, brewery or kanji",
+    "placeholder": "Name, brewery, kanji or a flavor",
     "submit": "Search",
     "clear": "Clear",
     "emptyTitle": "Type a name",
@@ -524,14 +524,20 @@
       "countCapped": "First {count} sakes · {filters} · A–Z",
       "noneTitle": "No sakes match this",
       "noneBody": "Try another prefecture, or a flavor on its own.",
-      "aboutRegion": "About {prefecture} ›"
+      "aboutRegion": "About {prefecture} ›",
+      "typeFlavorHint": "Or type a flavor — “grapefruit”, “melon” — to find sakes drinkers describe that way."
     },
     "suggestions": {
       "label": "Matching sakes",
       "yours": "Yours",
       "yourBottling": "Your bottling"
     },
-    "alsoSoldAs": "Also sold as {name}"
+    "alsoSoldAs": "Also sold as {name}",
+    "flavorWord": {
+      "count": "{count, plural, one {# sake} other {# sakes}} tagged “{word}”",
+      "countCapped": "First {shown} of {count} sakes tagged “{word}” · A–Z",
+      "row": "Tagged <ja>{kanji}</ja> ({word}) by Sakenowa drinkers"
+    }
   },
   "suggest": {
     "entry": {
