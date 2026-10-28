@@ -44,7 +44,12 @@ import {
   type ProgressCallback,
   type RankingIngestionDeps,
 } from './ingestion-pipeline'
-import type { BatchProgress } from './db'
+import type { BatchProgress, BrandFlavorTagsDB } from './db'
+import {
+  ingestBrandFlavorTags,
+  sakenowaBrandFlavorTagsToRows,
+} from './ingestion-pipeline'
+import type { BrandFlavorTag } from '../schemas/brand-flavor-tag'
 import type { Area } from '../schemas/area'
 import type { Brand } from '../schemas/brand'
 import type { Brewery } from '../schemas/brewery'
@@ -1155,6 +1160,81 @@ describe('ingestRankings', () => {
     // intentional: an empty rankings table after a known-brand-set wipe
     // is a more honest signal than stale rankings against missing brands.
     expect(db.replaceCalls).toBe(1)
+  })
+})
+
+// ============================================================
+// Brand flavor tags (design v1.8 M3, #451)
+// ============================================================
+
+describe('sakenowaBrandFlavorTagsToRows', () => {
+  it('turns each brand into one row per tag, keeping Sakenowa\'s order as a 1-based position', () => {
+    expect(
+      sakenowaBrandFlavorTagsToRows([
+        { brandId: 2, tagIds: [109, 3] },
+        { brandId: 1, tagIds: [] },
+      ]),
+    ).toEqual([
+      { brandId: 2, tagId: 109, position: 1, source: 'sakenowa' },
+      { brandId: 2, tagId: 3, position: 2, source: 'sakenowa' },
+    ])
+  })
+
+  it('keeps the first of a tag listed twice for one brand, so the primary key holds', () => {
+    expect(sakenowaBrandFlavorTagsToRows([{ brandId: 2, tagIds: [3, 3, 5] }])).toEqual([
+      { brandId: 2, tagId: 3, position: 1, source: 'sakenowa' },
+      { brandId: 2, tagId: 5, position: 3, source: 'sakenowa' },
+    ])
+  })
+})
+
+class FakeBrandFlavorTagsDB implements BrandFlavorTagsDB {
+  rows: BrandFlavorTag[] = []
+  knownBrandIds = new Set<number>()
+  knownTagIds = new Set<number>()
+  txOpened = 0
+
+  async getKnownBrandIds() {
+    return new Set(this.knownBrandIds)
+  }
+
+  async getKnownTagIds() {
+    return new Set(this.knownTagIds)
+  }
+
+  async replaceAll(rows: readonly BrandFlavorTag[], onChunk?: BatchProgress) {
+    this.rows = [...rows]
+    if (rows.length > 0) onChunk?.(rows.length)
+  }
+
+  async transaction<T>(fn: (tx: BrandFlavorTagsDB) => Promise<T>): Promise<T> {
+    this.txOpened++
+    return fn(this)
+  }
+}
+
+describe('ingestBrandFlavorTags', () => {
+  it('replaces the table with the pairs whose brand and tag are both in the catalogue, and counts the rest', async () => {
+    const db = new FakeBrandFlavorTagsDB()
+    db.knownBrandIds = new Set([2])
+    db.knownTagIds = new Set([3, 109])
+
+    const summary = await ingestBrandFlavorTags({
+      client: {
+        getBrandFlavorTags: async () => [
+          { brandId: 2, tagIds: [109, 3, 999] }, // 999: a tag /flavor-tags no longer lists
+          { brandId: 7, tagIds: [3] }, // 7: a brand /brands no longer lists
+        ],
+      },
+      db,
+    })
+
+    expect(summary).toEqual({ total: 2, dropped: 2 })
+    expect(db.rows).toEqual([
+      { brandId: 2, tagId: 109, position: 1, source: 'sakenowa' },
+      { brandId: 2, tagId: 3, position: 2, source: 'sakenowa' },
+    ])
+    expect(db.txOpened).toBe(1)
   })
 })
 

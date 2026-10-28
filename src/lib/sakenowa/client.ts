@@ -78,6 +78,22 @@ const FlavorTagsResponse = z.object({
   tags: z.array(z.unknown()),
 })
 
+// Sakenowa brand flavor tags (/brand-flavor-tags, documented at
+// https://muro.sakenowa.com/sakenowa-data): which of the /flavor-tags each
+// brand's drinkers used, as `{ brandId, tagIds }`. `tagIds` is an ordered
+// array of up to 20 ids; the docs do not say what the order means, so the
+// pipeline keeps it as `position` and nothing in the app sorts by it (design
+// v1.8 M4: no popularity order). Many brands carry an empty array.
+export const SakenowaBrandFlavorTags = z.object({
+  brandId: z.number().int().positive(),
+  tagIds: z.array(z.number().int().positive()),
+})
+export type SakenowaBrandFlavorTags = z.infer<typeof SakenowaBrandFlavorTags>
+
+const BrandFlavorTagsResponse = z.object({
+  flavorTags: z.array(z.unknown()),
+})
+
 // Sakenowa publishes a single /rankings endpoint that carries both
 // scopes — `overall` (a flat top list) and `areas` (per-prefecture
 // lists keyed by areaId). yearMonth is the snapshot month (e.g.
@@ -139,6 +155,7 @@ async function fetchAndParseEnvelope<T>(
     | '/flavor-charts'
     | '/areas'
     | '/flavor-tags'
+    | '/brand-flavor-tags'
     | '/rankings',
   envelope: z.ZodType<T>,
 ): Promise<T> {
@@ -283,6 +300,22 @@ export async function getFlavorTags(
       endpoint: '/flavor-tags',
       skipped: invalid,
       total: data.tags.length,
+      summary,
+    })
+  }
+  return valid
+}
+
+export async function getBrandFlavorTags(
+  opts: { onSkippedRows?: SkippedRowsReporter } = {},
+): Promise<SakenowaBrandFlavorTags[]> {
+  const data = await fetchAndParseEnvelope('/brand-flavor-tags', BrandFlavorTagsResponse)
+  const { valid, invalid, summary } = filterRowsBySchema(data.flavorTags, SakenowaBrandFlavorTags)
+  if (invalid > 0) {
+    ;(opts.onSkippedRows ?? defaultSkippedReporter)({
+      endpoint: '/brand-flavor-tags',
+      skipped: invalid,
+      total: data.flavorTags.length,
       summary,
     })
   }

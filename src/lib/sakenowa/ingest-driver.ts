@@ -16,13 +16,14 @@
  * without re-deriving it.
  *
  * Run order matches the FK graph: breweries → brands → flavor_charts →
- * areas → flavor_tags → rankings → ingestion_runs. See
+ * areas → flavor_tags → rankings → brand_flavor_tags → ingestion_runs. See
  * `scripts/ingest-sakenowa.ts` (slice 5 / 9) for the original prose.
  */
 import { randomUUID } from 'node:crypto'
 import type {
   SakenowaArea,
   SakenowaBrand,
+  SakenowaBrandFlavorTags,
   SakenowaBrewery,
   SakenowaFlavorChart,
   SakenowaFlavorTag,
@@ -30,6 +31,7 @@ import type {
 } from './client'
 import type {
   AreasDB,
+  BrandFlavorTagsDB,
   BrandsDB,
   BreweriesDB,
   FlavorChartsDB,
@@ -42,6 +44,7 @@ import type { IngestionRun } from '../schemas/ingestion-run'
 import {
   computeSourceRevisionHash,
   ingestAreas,
+  ingestBrandFlavorTags,
   ingestBrands,
   ingestBreweries,
   ingestFlavorCharts,
@@ -59,6 +62,7 @@ export interface SakenowaSource {
   getAreas(): Promise<SakenowaArea[]>
   getFlavorTags(): Promise<SakenowaFlavorTag[]>
   getRankings(): Promise<SakenowaRankingsPayload>
+  getBrandFlavorTags(): Promise<SakenowaBrandFlavorTags[]>
 }
 
 export interface IngestDriverDBs {
@@ -68,6 +72,7 @@ export interface IngestDriverDBs {
   areas: AreasDB
   flavorTags: FlavorTagsDB
   rankings: RankingsDB
+  brandFlavorTags: BrandFlavorTagsDB
   /**
    * Telemetry-only. Production wires this to a *separate* pg.Pool so the
    * `ingestion_runs` row still lands even if the data pool is errored /
@@ -111,6 +116,7 @@ export type TableLabel =
   | 'areas'
   | 'flavorTags'
   | 'rankings'
+  | 'brandFlavorTags'
 
 /**
  * Result shape returned to the caller. Round-trips through
@@ -187,6 +193,14 @@ function rankingCounts(s: RankingRunSummary): PerTableCounts {
   return { total: s.total, yearMonth: s.yearMonth }
 }
 
+/** Postgres `undefined_table` (42P01), on the error or the one it wraps. */
+function isUndefinedTable(err: unknown): boolean {
+  for (let e: unknown = err; e instanceof Error; e = e.cause) {
+    if ((e as Error & { code?: string }).code === '42P01') return true
+  }
+  return false
+}
+
 export async function driveIngest(
   deps: { sakenowa: SakenowaSource; dbs: IngestDriverDBs },
   options: DriveIngestOptions = {},
@@ -205,6 +219,7 @@ export async function driveIngest(
   let fetchedAreas: SakenowaArea[] | undefined
   let fetchedFlavorTags: SakenowaFlavorTag[] | undefined
   let fetchedRankings: SakenowaRankingsPayload | undefined
+  let fetchedBrandFlavorTags: SakenowaBrandFlavorTags[] | undefined
 
   let status: IngestionRun['status'] = 'success'
   let errorMessage: string | null = null
@@ -300,6 +315,27 @@ export async function driveIngest(
       onProgress: reportProgress('rankings'),
     })
     perTable.rankings = rankingCounts(rankingsSummary)
+
+    // Migration 0020 (#451). Until `pnpm migrate` has created the table the
+    // step is skipped, not failed: the daily cron may run the new code first,
+    // and nothing else depends on these rows (Search shows no flavor-word
+    // results without them).
+    try {
+      const tagPairs = await ingestBrandFlavorTags({
+        client: {
+          getBrandFlavorTags: async () => {
+            fetchedBrandFlavorTags = await deps.sakenowa.getBrandFlavorTags()
+            return fetchedBrandFlavorTags
+          },
+        },
+        db: deps.dbs.brandFlavorTags,
+        onProgress: reportProgress('brandFlavorTags'),
+      })
+      perTable.brandFlavorTags = { total: tagPairs.total }
+    } catch (err) {
+      if (!isUndefinedTable(err)) throw err
+      perTable.brandFlavorTags = { total: 0, skipped: 'table_missing' }
+    }
   } catch (err) {
     status = 'failed'
     errorMessage = err instanceof Error ? err.message : String(err)
@@ -313,6 +349,7 @@ export async function driveIngest(
     areas: fetchedAreas,
     flavorTags: fetchedFlavorTags,
     rankings: fetchedRankings,
+    brandFlavorTags: fetchedBrandFlavorTags,
   })
 
   // Telemetry write is wrapped — a failed write here MUST NOT mask the

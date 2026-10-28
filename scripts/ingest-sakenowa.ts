@@ -23,6 +23,7 @@ import {
   getFlavorCharts,
   getFlavorTags,
   getRankings,
+  getBrandFlavorTags,
 } from '../src/lib/sakenowa/client'
 import {
   makePgAreasDB,
@@ -32,6 +33,7 @@ import {
   makePgFlavorTagsDB,
   makePgIngestionRunsDB,
   makePgRankingsDB,
+  makePgBrandFlavorTagsDB,
 } from '../src/lib/sakenowa/db'
 import {
   driveIngest,
@@ -48,6 +50,7 @@ const TABLE_LABEL_TEXT: Record<TableLabel, string> = {
   areas: 'areas',
   flavorTags: 'flavor_tags',
   rankings: 'rankings',
+  brandFlavorTags: 'brand_flavor_tags',
 }
 
 interface BarRenderer {
@@ -115,7 +118,7 @@ async function main(): Promise<number> {
   try {
     const result = await driveIngest(
       {
-        sakenowa: { getBreweries, getBrands, getFlavorCharts, getAreas, getFlavorTags, getRankings },
+        sakenowa: { getBreweries, getBrands, getFlavorCharts, getAreas, getFlavorTags, getRankings, getBrandFlavorTags },
         dbs: {
           breweries: makePgBreweriesDB(pool),
           brands: makePgBrandsDB(pool),
@@ -123,6 +126,7 @@ async function main(): Promise<number> {
           areas: makePgAreasDB(pool),
           flavorTags: makePgFlavorTagsDB(pool),
           rankings: makePgRankingsDB(pool),
+          brandFlavorTags: makePgBrandFlavorTagsDB(pool),
           ingestionRuns: makePgIngestionRunsDB(telemetryPool),
         },
       },
@@ -147,7 +151,11 @@ async function main(): Promise<number> {
       for (const [key, counts] of Object.entries(result.perTable)) {
         if (!counts) continue
         const label = TABLE_LABEL_TEXT[key as TableLabel]
-        if (key === 'rankings') {
+        if (counts.skipped === 'table_missing') {
+          console.log(`! ${label}: skipped — the table does not exist yet; run \`pnpm migrate\`, then \`pnpm ingest\` again`)
+        } else if (key === 'brandFlavorTags') {
+          console.log(`✓ ${label}: ${counts.total} rows`)
+        } else if (key === 'rankings') {
           console.log(`✓ ${label}: ${counts.total} rows${counts.yearMonth ? ` (yearMonth=${counts.yearMonth})` : ''}`)
         } else {
           console.log(

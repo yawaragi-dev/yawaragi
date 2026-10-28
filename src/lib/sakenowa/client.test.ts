@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   getAreas,
+  getBrandFlavorTags,
   getBrands,
   getBreweries,
   getFlavorCharts,
@@ -532,5 +533,45 @@ describe('getRankings', () => {
 
     expect(rankings.areas).toHaveLength(1)
     expect(skipped.at(-1)?.summary).toContain('areas:')
+  })
+})
+
+describe('getBrandFlavorTags', () => {
+  it('reads the documented /brand-flavor-tags endpoint: one row per brand, its tag ids in order', async () => {
+    const fetchSpy = vi.fn<typeof fetch>(async () =>
+      okJson({
+        copyright: 'Sakenowa',
+        flavorTags: [
+          { brandId: 1, tagIds: [] },
+          { brandId: 2, tagIds: [3, 5, 12] },
+        ],
+      }),
+    )
+    vi.stubGlobal('fetch', fetchSpy)
+
+    const rows = await getBrandFlavorTags()
+
+    expect(fetchSpy).toHaveBeenCalledWith('https://muro.sakenowa.com/sakenowa-data/api/brand-flavor-tags')
+    expect(rows).toEqual([
+      { brandId: 1, tagIds: [] },
+      { brandId: 2, tagIds: [3, 5, 12] },
+    ])
+  })
+
+  it('drops a malformed row and reports it, keeping the rest', async () => {
+    stubFetch(async () =>
+      okJson({ flavorTags: [{ brandId: 2, tagIds: [3] }, { brandId: 'x', tagIds: [3] }] }),
+    )
+    const reports: number[] = []
+
+    const rows = await getBrandFlavorTags({ onSkippedRows: ({ skipped }) => reports.push(skipped) })
+
+    expect(rows).toEqual([{ brandId: 2, tagIds: [3] }])
+    expect(reports).toEqual([1])
+  })
+
+  it('throws on envelope drift rather than writing nothing silently', async () => {
+    stubFetch(async () => okJson({ tags: [] }))
+    await expect(getBrandFlavorTags()).rejects.toThrow(SakenowaError)
   })
 })
