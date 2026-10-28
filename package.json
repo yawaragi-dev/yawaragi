@@ -40,8 +40,9 @@
     "journal:erase": "tsx --conditions react-server --env-file=.env.local scripts/erase-collection.ts",
     "accounts:inactive": "tsx --conditions react-server --env-file=.env.local scripts/inactive-accounts.ts",
     "eval": "tsx --conditions=react-server --env-file=.env.local scripts/eval.ts",
-    "db:resync": "npm run db:reset -- --yes && npm run migrate && npm run ingest",
-    "verify": "npm run lint && npm run typecheck && npm run test && npm run test:integration && npm run test:e2e && npm run i18n:audit && npm run anthropic-files:audit"
+    "db:resync": "pnpm db:reset --yes && pnpm migrate && pnpm ingest",
+    "docs:check": "node scripts/docs-check.ts",
+    "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm test:integration && pnpm test:e2e && pnpm i18n:audit && pnpm anthropic-files:audit && pnpm docs:check"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.76",

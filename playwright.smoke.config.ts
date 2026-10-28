@@ -25,6 +25,7 @@ function definedEnvOnly(): Record<string, string> {
 export default defineConfig({
   testDir: './e2e',
   testMatch: 'smoke-prod.spec.ts',
+  forbidOnly: !!process.env.CI,
   // A production server answers in milliseconds; a retry would only hide a
   // flake (see the "no flaky tests" rule), so there are none.
   retries: 0,

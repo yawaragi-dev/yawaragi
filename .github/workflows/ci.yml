@@ -1,11 +1,15 @@
 name: CI
 
+# No `paths-ignore` on pull_request: "Verify (typecheck, lint, unit, audit,
+# e2e)" is a required check on main, and GitHub leaves a required check from
+# a workflow skipped by path filtering "Pending", which blocks merging — a
+# docs-only PR could never merge (#551). Instead every PR runs the cheap
+# `changes` job, and `verify` is skipped by its `if:` when only docs changed:
+# a job skipped by a conditional reports "Success". See
+# https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/collaborating-on-repositories-with-code-quality-features/troubleshooting-required-status-checks
+# `push` to main keeps its filter: no check is required on a push.
 on:
   pull_request:
-    paths-ignore:
-      - '**/*.md'
-      - 'docs/**'
-      - 'LICENSE'
   push:
     branches: [main]
     paths-ignore:
@@ -72,10 +76,80 @@ env:
   # LANGFUSE_HOST: (defaults to https://cloud.langfuse.com inside @langfuse/otel)
 
 jobs:
+  # Decides whether `verify` has anything to check, and runs the light docs
+  # check (skill frontmatter, no added `.only(`) on every PR, docs-only ones
+  # included: those are the PRs `verify` skips (#530 slipped through as one).
+  changes:
+    name: Changes and docs check
+    runs-on: ubuntu-latest
+    outputs:
+      code: ${{ steps.diff.outputs.code }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # The whole history, so the diff below can find the merge base.
+          fetch-depth: 0
+
+      # Anything outside Markdown, docs/ and LICENSE counts as code: the set
+      # the old `paths-ignore` skipped. On a push to main, always "true"
+      # (the push filter above already dropped docs-only pushes).
+      - name: Did anything besides docs change?
+        id: diff
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if [ "$EVENT" != "pull_request" ]; then
+            echo "code=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          changed="$(git diff --name-only "$BASE_SHA...$HEAD_SHA")"
+          echo "Changed files:"
+          echo "$changed"
+          # A here-string, not `echo | grep -q`: the runner's bash uses
+          # pipefail, and grep -q quitting early can SIGPIPE the echo.
+          if grep -qvE '(\.md$|^docs/|^LICENSE$)' <<< "$changed"; then
+            echo "code=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Only docs changed: Verify will be skipped."
+            echo "code=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Plain Node, no `pnpm install`: the script only uses node: builtins and
+      # Node 22 strips its types.
+      - uses: actions/setup-node@v7
+        if: github.event_name == 'pull_request'
+        with:
+          node-version: 22
+
+      - name: Docs check (skill frontmatter, no added .only)
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: node scripts/docs-check.ts --base "$BASE_SHA"
+
   verify:
+    # This name is the required check on main: keep it byte-identical.
     name: Verify (typecheck, lint, unit, audit, e2e)
+    needs: changes
+    # Skipped (which reports "Success" to the required check) only when
+    # `changes` succeeded and found docs alone. If `changes` failed (the docs
+    # check found something, or the diff broke) this job still runs and fails
+    # at its first step: a job whose `needs` failed is skipped, and GitHub
+    # says such a job "may not block merging". `!cancelled()` is what lets it
+    # run after a failed `needs`.
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.code == 'true') }}
     runs-on: ubuntu-latest
     steps:
+      - name: Stop if the changes job failed
+        if: ${{ needs.changes.result != 'success' }}
+        env:
+          RESULT: ${{ needs.changes.result }}
+        run: |
+          echo "::error::The 'Changes and docs check' job ended '$RESULT'; see its log."
+          exit 1
+
       - uses: actions/checkout@v7
 
       # Version is pinned via package.json `packageManager` field for
