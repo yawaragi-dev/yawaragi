@@ -127,7 +127,7 @@ pnpm dev
 | `pnpm test:watch`         | Vitest watch mode                                        |
 | `pnpm test:integration`   | Vitest integration suite (testcontainers; needs Docker)  |
 | `pnpm test:e2e`           | Playwright                                               |
-| `pnpm test:smoke`         | Key routes against a production build (run `pnpm build` first) |
+| `pnpm test:smoke`         | Key routes against a production build (run `pnpm build` first); with `SMOKE_BASE_URL=https://yawaragi.dev`, against the live site instead (read-only) — CI does that after every production deploy |
 | `pnpm lint`               | ESLint                                                   |
 | `pnpm typecheck`          | `tsc --noEmit`                                           |
 | `pnpm migrate`            | Apply pending SQL files in `supabase/migrations/` to `MIGRATE_DATABASE_URL` |

@@ -9,11 +9,19 @@
 //
 // No DATABASE_URL on CI: the sake page, which needs the catalogue, is
 // skipped there, and nothing else here depends on it.
+//
+// With SMOKE_BASE_URL set the spec runs against a live deployment (after
+// every production deploy, .github/workflows/smoke-production.yml). There it
+// stays read-only: only GETs, so the age gate is passed by setting its cookie
+// rather than by its accept button (a Server Action POST that also counts an
+// acceptance in the usage stats), and the sake page is required, not skipped,
+// since production has the catalogue.
 import { existsSync } from 'node:fs'
 import { expect, test, type Page } from '@playwright/test'
 
 const CONSENT_COOKIE_VALUE = JSON.stringify({ version: 1, analytics: false, marketing: false })
 const AGE_GATE_COOKIE_VALUE = JSON.stringify({ v: 1, ts: Date.now() })
+const REMOTE = Boolean(process.env.SMOKE_BASE_URL)
 
 async function load(page: Page, path: string) {
   const response = await page.goto(path)
@@ -49,10 +57,15 @@ test.describe('production build', () => {
     expect(unknown!.status()).toBe(404)
   })
 
-  test('the landing, the age gate and the app behind it', async ({ page }) => {
+  test('the landing, the age gate and the app behind it', async ({ context, page, baseURL }) => {
     await load(page, '/en')
     await expect(page.getByTestId('age-gate')).toBeVisible()
-    await page.getByTestId('age-gate-accept').click()
+    if (REMOTE) {
+      await context.addCookies([{ name: 'yawaragi_age_gate', value: AGE_GATE_COOKIE_VALUE, url: baseURL! }])
+      await load(page, '/en')
+    } else {
+      await page.getByTestId('age-gate-accept').click()
+    }
     await expect(page.getByTestId('age-gate')).toBeHidden()
     // The hero's loop is drawn with a made-up bottle, so it needs no catalogue.
     await expect(page.getByTestId('landing-hero')).toBeVisible()
@@ -77,10 +90,11 @@ test.describe('production build', () => {
     // Without a database the page throws by design ("DATABASE_URL is not
     // set"), dev or production alike; CI has none. `next start` reads
     // .env.local itself, so locally it usually has one.
-    test.skip(!process.env.DATABASE_URL && !existsSync('.env.local'), 'needs the catalogue (DATABASE_URL)')
+    test.skip(!REMOTE && !process.env.DATABASE_URL && !existsSync('.env.local'), 'needs the catalogue (DATABASE_URL)')
     await context.addCookies([{ name: 'yawaragi_age_gate', value: AGE_GATE_COOKIE_VALUE, url: baseURL! }])
     await load(page, '/en/sake/1')
-    test.skip((await page.getByTestId('sake-brand-page').count()) === 0, 'needs the catalogue (DATABASE_URL)')
+    if (REMOTE) await expect(page.getByTestId('sake-brand-page')).toBeVisible()
+    else test.skip((await page.getByTestId('sake-brand-page').count()) === 0, 'needs the catalogue (DATABASE_URL)')
     await expectHeading(page, /\S/)
   })
 
