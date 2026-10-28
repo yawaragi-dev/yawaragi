@@ -6,7 +6,7 @@
 // `useActionState`. Every one of those is a concrete client-only need
 // per CLAUDE.md.
 
-import { startTransition, useActionState, useEffect, useReducer, useRef, useSyncExternalStore } from 'react'
+import { useEffect, useRef } from 'react'
 import type { FormEvent } from 'react'
 import { useTranslations } from 'next-intl'
 import {
@@ -67,30 +67,14 @@ import {
   downscaleImage,
 } from '@/lib/scan/downscale'
 import { scanAction } from '@/lib/scan/scan-action'
-import { browserIsOnline, reachable, settleRequest } from '@/lib/network/settle-request'
+import { reachable } from '@/lib/network/settle-request'
 import { ScanNudge } from '@/components/scan/scan-nudge'
 import { readListAction } from '@/lib/scan/list-action'
 import { addOwnBottling as addOwnBottlingAction } from '@/lib/collection/expression-actions'
-import { INITIAL_LIST_ACTION_STATE, type ListActionState } from '@/lib/scan/list-action-state'
 import { ListProblem, ListReading, ListResults } from '@/components/scan/list-results'
-import {
-  INITIAL_SCAN_ACTION_STATE,
-  type BothPhotosGuess,
-  type ScanActionState,
-  type ScanCandidate,
-} from '@/lib/scan/scan-action-state'
-import { EARLIER_READ_TTL_MS } from '@/lib/scan/earlier-read'
-import {
-  INITIAL_SCAN_SESSION,
-  SCAN_SLOW_MS,
-  SCAN_TIMEOUT_MS,
-  cameraStatus,
-  earlierReadFor,
-  isWorking,
-  scanSessionReducer,
-  shownState,
-  type NudgeKind,
-} from '@/lib/scan/scan-session'
+import { type BothPhotosGuess, type ScanActionState, type ScanCandidate } from '@/lib/scan/scan-action-state'
+import type { NudgeKind } from '@/lib/scan/scan-session'
+import { useScanSession } from '@/lib/scan/use-scan-session'
 import { appendMatchToHistory } from '@/lib/scan/scan-history'
 import { rememberScannedPhoto } from '@/lib/scan/scanned-photo'
 import { rememberScannedBottling } from '@/lib/scan/scanned-bottling'
@@ -160,15 +144,6 @@ interface ScanFormProps {
  * why. A "Scan again" dismisses the result and the viewfinder returns; see
  * `view` for why that is one value rather than five conditions.
  */
-function subscribeOnline(onChange: () => void) {
-  window.addEventListener('online', onChange)
-  window.addEventListener('offline', onChange)
-  return () => {
-    window.removeEventListener('online', onChange)
-    window.removeEventListener('offline', onChange)
-  }
-}
-
 /** A bottling saved from the label: "unavailable" when the network loses it (S6). */
 const addOwnBottling = reachable(addOwnBottlingAction)
 
@@ -217,64 +192,19 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
   const scanCount = useScanHistoryCount()
   /**
    * Everything the screen remembers between taps that is not the read
-   * itself: dismissed and stale answers, the rule-16 clock, a scan the
-   * network lost, the list sheet, the bottling choice (`scan-session.ts`).
+   * itself — dismissed and stale answers, the rule-16 clock, a scan the
+   * network lost, the list sheet, the bottling choice (`scan-session.ts`) —
+   * with the Server Actions, timers and online events that drive it.
    */
-  const [session, dispatch] = useReducer(scanSessionReducer, INITIAL_SCAN_SESSION)
+  const scan = useScanSession({
+    locale,
+    scan: scanAction,
+    readList: readListAction,
+    onUnanswered: (failure) => pushClientEvent(`scan not answered: ${failure}`),
+  })
+  const { session, dispatch, state, listState, isListPending, isPending, view, earlierRead } = scan
   const { connectionFailure, askedFor, listOpen, downscaleFailed, photoUrl, lineViewFor, anyBottlingFor, labelBottlingIds } =
     session
-  /** What the last scan sent, for "Send again" to send unchanged. */
-  const lastScanFormRef = useRef<FormData | null>(null)
-  const sendTokenRef = useRef(0)
-  /** Stops waiting for the read in flight (S4's Cancel). */
-  const cancelScanRef = useRef<(() => void) | null>(null)
-  const online = useSyncExternalStore(subscribeOnline, browserIsOnline, () => true)
-  const [state, formAction, isActionPending] = useActionState<ScanActionState, FormData>(
-    async (previous, formData) => {
-      const cancelled = new Promise<void>((resolve) => {
-        cancelScanRef.current = resolve
-      })
-      const settled = await settleRequest(scanAction(previous, formData), {
-        timeoutMs: SCAN_TIMEOUT_MS,
-        isOnline: browserIsOnline,
-        cancelled,
-      })
-      cancelScanRef.current = null
-      if (settled.ok) {
-        dispatch({ type: 'answered' })
-        return settled.value
-      }
-      pushClientEvent(`scan not answered: ${settled.failure}`)
-      dispatch({ type: 'unanswered', failure: settled.failure })
-      return previous
-    },
-    INITIAL_SCAN_ACTION_STATE,
-  )
-  // §7: the whole menu or shelf, read from the same photo on request. A list
-  // that could not be read for the network says so the way any other failed
-  // read does.
-  const [listState, listFormAction, isListPending] = useActionState<ListActionState, FormData>(
-    async (previous, formData) => {
-      const settled = await settleRequest(readListAction(previous, formData), {
-        timeoutMs: SCAN_TIMEOUT_MS,
-        isOnline: browserIsOnline,
-      })
-      return settled.ok ? settled.value : { status: 'failed' }
-    },
-    INITIAL_LIST_ACTION_STATE,
-  )
-  /**
-   * The downscaled photo last sent to the scan, for "Rank these for you" to
-   * send again. Memory only, like the preview: the server keeps no photo
-   * between the two calls (ADR-0009).
-   */
-  const photoBlobRef = useRef<Blob | null>(null)
-  /** The photo `listState` was read from. */
-  const listReadFor = useRef<Blob | null>(null)
-  // #408: the read on screen, for the next photo to be resolved with, until
-  // it goes stale. The read itself is `state`, which `useActionState` keeps
-  // until the next submission.
-  const earlierRead = earlierReadFor(session, state)
   const tBottling = useTranslations('bottling')
   const tCard = useTranslations('scan.resultCard')
   // Per-scan timing origin. Initialized to 0 so the ref initializer
@@ -315,18 +245,8 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
   // details →" link back to `/sake/[brandId]` (still the deep-dive
   // permalink). The `matched_brand_only` / `matched_brewery_only`
   // divergence variants continue to render their divergence card in
-  // place as they always have.
-  //
-  // Revoke the client-only object URL for the label photo when the
-  // dependent value changes (React runs this cleanup with the previous
-  // `photoUrl` closed over before running the next effect) OR when the
-  // form unmounts. This is the single point of `revokeObjectURL` — a
-  // second call from inside `onFileChange` would double-revoke.
-  useEffect(() => {
-    return () => {
-      if (photoUrl) URL.revokeObjectURL(photoUrl)
-    }
-  }, [photoUrl])
+  // place as they always have. The photo's `blob:` URL is created and
+  // revoked by `useScanSession`.
 
   // Mirror every successful match into the per-tab history so the
   // consensus mechanism can vote across recent scans. Tracks
@@ -388,12 +308,6 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
     }
   }, [state])
 
-  // #408: a read is usable for the next photo for a few minutes only.
-  useEffect(() => {
-    const timer = setTimeout(() => dispatch({ type: 'readExpired', read: state }), EARLIER_READ_TTL_MS)
-    return () => clearTimeout(timer)
-  }, [state])
-
   // Mirror the server-side trace from the latest action result into
   // the app-level debug store. Guarded against re-renders that carry
   // the same `state.debugLog` reference: we only push when the array
@@ -453,42 +367,8 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
     )
   }
 
-  /**
-   * Send a scan — a new photo, or the same one again — and start the clock
-   * for "Taking longer than usual".
-   */
-  function sendScan(formData: FormData, how: 'photoSent' | 'resent') {
-    const token = ++sendTokenRef.current
-    dispatch({ type: how, token })
-    window.setTimeout(() => dispatch({ type: 'slowTimerFired', token }), SCAN_SLOW_MS)
-    startTransition(() => formAction(formData))
-  }
-
-  /** "Send again" after a scan the network lost: the same photo, unchanged. */
-  function onSendAgain() {
-    const formData = lastScanFormRef.current
-    if (!formData) return
-    sendScan(formData, 'resent')
-  }
-
   function onPickClick() {
     dispatch({ type: 'backToCamera' })
-  }
-
-  /** §5a → §7: read the whole list in the photo just scanned. */
-  function onRankClick(kind: 'menu' | 'shelf') {
-    const photo = photoBlobRef.current
-    if (!photo) return
-    dispatch({ type: 'listOpened', kind })
-    // Back from the list and "Rank these" again: the same photo was read
-    // already, and reading it twice pays twice for the same answer.
-    if (listReadFor.current === photo && listState.status === 'read') return
-    listReadFor.current = photo
-    const formData = new FormData()
-    formData.set('image', photo, 'list.jpg')
-    formData.set('kind', kind)
-    formData.set('locale', locale)
-    startTransition(() => listFormAction(formData))
   }
 
   async function onFileChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -507,8 +387,8 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
   async function handleFile(file: File) {
     // A new attempt supersedes whatever the visitor dismissed to get here.
     // The client-only photo preview URL is set up BEFORE the async downscale
-    // kicks off; the effect below revokes the previous URL when it lands.
-    dispatch({ type: 'photoTaken', photoUrl: URL.createObjectURL(file) })
+    // kicks off; `useScanSession` revokes the previous one when it lands.
+    scan.photoTaken(file)
     // New scan attempt — reset the relative-time origin so subsequent
     // events show time since pick. Events accumulate in the app-level
     // store (intentionally NOT cleared here) so the operator can scroll
@@ -529,21 +409,8 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
         `downscaled to ${downscaled.size} bytes in ${Date.now() - downscaleStart}ms`,
         { ratio: Number((downscaled.size / file.size).toFixed(2)) },
       )
-      photoBlobRef.current = downscaled
-      const formData = new FormData()
-      formData.set('image', downscaled, 'label.jpg')
-      formData.set('locale', locale)
-      // #408: what the last scan read, so a photo of another side can be
-      // resolved with both. The server reads this photo blind and uses the
-      // earlier read only if this one finds no single sake by itself.
-      if (earlierRead) formData.set('earlierRead', JSON.stringify(earlierRead))
-      lastScanFormRef.current = formData
       pushClientEvent('submitting FormData to scanAction')
-      // useActionState's action must be invoked from a transition. We
-      // can't keep the await above inside startTransition (transitions
-      // can't span an async boundary), so `sendScan` opens one here once
-      // the blob is ready and lets React schedule the action.
-      sendScan(formData, 'photoSent')
+      scan.sendPhoto(downscaled)
     } catch {
       // The downscale uses standard browser APIs (createImageBitmap,
       // canvas.toBlob) so a failure here usually means the file isn't
@@ -558,8 +425,6 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
       if (uploadInputRef.current) uploadInputRef.current.value = ''
     }
   }
-
-  const isPending = isWorking(session, isActionPending)
 
   // The two pickers are the ENTRY affordance: they are how a visitor with
   // nothing on screen starts a scan. Once a result is on screen, the
@@ -595,7 +460,6 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
   // of the read — so the working state only ever appeared on a first scan.
   // A scan the network lost shows its own screen; the result before it (kept
   // in `state` so the retry still sends the earlier read) is not drawn under it.
-  const view = shownState(session, state, isActionPending)
   // Design v1.7 (85): one of the visitor's bottlings fits the label, so the
   // scan opens it rather than the line.
   const fitting =
@@ -800,14 +664,14 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
    * online, the button says so.
    */
   function connectionStatus() {
-    const status = cameraStatus(session, { isActionPending, online })
+    const status = scan.cameraStatus
     if (status === null) return null
     if (status.kind === 'slow') {
       return {
         testId: 'scan-camera-slow',
         title: tCamera('slowTitle'),
         hint: tCamera('slowHint'),
-        action: { label: tCamera('cancel'), testId: 'scan-camera-cancel', onClick: () => cancelScanRef.current?.() },
+        action: { label: tCamera('cancel'), testId: 'scan-camera-cancel', onClick: scan.cancel },
       }
     }
     const sendIcon = <PaperPlaneTilt size={16} aria-hidden="true" />
@@ -820,7 +684,7 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
         action: {
           label: status.back ? tOutcome('sendNow') : tOutcome('sendAgain'),
           testId: 'scan-send-again',
-          onClick: onSendAgain,
+          onClick: scan.sendAgain,
           icon: sendIcon,
           accent: true,
         },
@@ -833,7 +697,7 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
       held: true,
       title: tOutcome('timedOut.title'),
       hint: tOutcome('timedOut.body'),
-      action: { label: tOutcome('sendAgain'), testId: 'scan-send-again', onClick: onSendAgain, icon: sendIcon, accent: true },
+      action: { label: tOutcome('sendAgain'), testId: 'scan-send-again', onClick: scan.sendAgain, icon: sendIcon, accent: true },
       foot: tOutcome('newPhoto'),
     }
   }
@@ -1132,7 +996,7 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
             {list && ranking === 'rank' && (
               <button
                 type="button"
-                onClick={() => onRankClick(list)}
+                onClick={() => scan.rank(list)}
                 className="flex min-h-11 items-center justify-center gap-2 rounded-xl border-[1.5px] border-ginshu-400 px-4 text-body font-medium text-ginshu-700 transition-colors hover:bg-ginshu-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
                 data-testid="scan-outcome-rank"
               >
