@@ -8,20 +8,6 @@ A sake companion for people who can't read the label. Point the camera at a bott
 
 > *Yawaragi-mizu* (和らぎ水) is the water drunk between sake sips — a palate reset, not a replacement. This app accompanies and clarifies; it doesn't compete with the sake.
 
-<!-- progress:start -->
-
-## Milestone progress
-
-_Snapshot generated 2026-10-26 from GitHub Issues + merged PRs. Regenerate with `pnpm progress`. Detail: [docs/PROGRESS.md](./docs/PROGRESS.md)._
-
-| Milestone | Progress | Issues | ETA (median) |
-| --- | --- | --- | --- |
-| **M1 (Phase 0) — Compliance & i18n foundation** | `░░░░░░░░░░░░░░░░░░░░` n/a | 5 / 5 | done |
-| **M2 (Phase 2) — Data foundation** | `░░░░░░░░░░░░░░░░░░░░` n/a | 11 / 12 | done |
-| **M3 (Phases 3–5) — Flagship surfaces** | `░░░░░░░░░░░░░░░░░░░░` n/a | 11 / 11 | done |
-
-<!-- progress:end -->
-
 ## What it does
 
 **For anyone (after the 18+ gate):**
@@ -139,7 +125,6 @@ pnpm dev
 | `pnpm db:resync`          | One-shot: `db:reset --yes && migrate && ingest`          |
 | `pnpm verify`             | Full chain (lint + typecheck + test + integration + e2e + audits) — **needs Docker** |
 | `pnpm eval <suite>`       | Run an eval suite: `label-scan-jp`, `label-scan-pairs`, `list-read-jp`, `suggest-jp`. See `evals/<suite>/README.md` (the label scan runs offline from saved reads with `LABEL_SCAN_EVAL_OFFLINE=1`) |
-| `pnpm progress`           | Refresh the milestone-progress dashboard (README block + `docs/PROGRESS.md`) |
 
 ## Project documentation
 
@@ -147,7 +132,6 @@ pnpm dev
 - [`CONTEXT.md`](./CONTEXT.md) — domain glossary; read before naming variables/types
 - [`docs/adr/`](./docs/adr) — architecture decision records
 - [`docs/PRE-GO-LIVE.md`](./docs/PRE-GO-LIVE.md) — hard gates before any public launch
-- [`docs/PROGRESS.md`](./docs/PROGRESS.md) — milestone-progress dashboard with ETAs, methodology, and what is NOT measured
 - [`docs/deploying.md`](./docs/deploying.md) — Vercel deployment, env vars, vendor DPAs, plan-tier audit
 - [`docs/NAMING-RESEARCH.md`](./docs/NAMING-RESEARCH.md) — naming decision rationale
 

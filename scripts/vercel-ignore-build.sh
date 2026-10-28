@@ -4,9 +4,8 @@
 # that is Vercel's contract.
 #
 # Why: every deployment's function bundles count toward Hobby's 10 GB of
-# Functions Storage for 30 days. Half of main's commits change only docs —
-# the progress bot's README/PROGRESS.md refresh after every merge, docs-only
-# PRs — and each one used to ship an identical production build.
+# Functions Storage for 30 days. Docs-only commits on main
+# would each ship an identical production build.
 
 # Previews are off in this project: PR branches are deployed on demand by
 # .github/workflows/vercel-deploy.yml, which builds in CI (--prebuilt) and
