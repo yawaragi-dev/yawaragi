@@ -51,7 +51,9 @@ export function checkSkillFrontmatter(content: string, file: string): DocsCheckP
 }
 
 const TEST_FILE = /(\.(test|spec)\.[cm]?[jt]sx?$)|(^|\/)e2e\/.*\.[cm]?[jt]sx?$/
-const ONLY_CALL = /\b(test|it|describe)(\.(skip|concurrent|serial|parallel|sequential))*\.only\s*\(/
+// Anchored to the start of the line, where a test or suite call sits, so a
+// `.only(` inside a string (this script's own test fixtures) is not one.
+const ONLY_CALL = /^\s*(test|it|describe)(\.(describe|skip|concurrent|serial|parallel|sequential))*\.only\s*\(/
 
 /**
  * Test files whose added lines call `.only(`, from a unified diff

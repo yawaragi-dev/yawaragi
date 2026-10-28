@@ -84,6 +84,11 @@ describe('findAddedOnly', () => {
     expect(findAddedOnly(diff)).toEqual([])
   })
 
+  it('reports an indented .only, and ignores one inside a string', () => {
+    expect(findAddedOnly(diffOf('src/a.test.ts', ["  it.only('nested', () => {})"]))).toHaveLength(1)
+    expect(findAddedOnly(diffOf('src/a.test.ts', ["  expect(run(\"it.only('x')\")).toBe(1)"]))).toEqual([])
+  })
+
   it('ignores a skip, which the repo uses for database-gated tests', () => {
     expect(findAddedOnly(diffOf('e2e/a.spec.ts', ["test.skip(!process.env.DATABASE_URL, 'needs a DB')"]))).toEqual([])
   })
