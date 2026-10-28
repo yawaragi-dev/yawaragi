@@ -1,0 +1,90 @@
+name: Production smoke
+
+# After every production deploy, the production smoke (e2e/smoke-prod.spec.ts,
+# the same spec CI's verify job runs on `next start`) runs against the live
+# site, so a route that only breaks on real infra (#518: every /learn entry
+# answered 500 in production while dev was fine) shows as a red X on the
+# commit within minutes instead of being found by a visitor.
+#
+# Trigger: Vercel's Git integration deploys main and posts GitHub deployment
+# statuses. A run starts for each status; the job only proceeds for a
+# `success` status on the `Production` environment (the name Vercel reports).
+# GitHub runs the workflow file as of the deployed commit (GITHUB_SHA is that
+# commit), so this starts working with the first deploy that contains it.
+#
+# Target: the public domain, not the status's environment_url — that is the
+# per-deployment *.vercel.app URL, which Vercel Deployment Protection puts
+# behind SSO. The domain needs no secret. Before testing, the job waits until
+# the domain serves the deployed commit (About shows "build <short sha>"), so
+# it never passes on the previous deployment.
+#
+# Read-only: GETs only — no scans, no Server Actions, nothing paid. The one
+# side effect is the anonymous "visit" tally (ADR-0009, "Aggregate usage
+# counters"): each Playwright test is a fresh browser, so a run adds a few
+# visits to the day's production count.
+on:
+  deployment_status:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PRODUCTION_URL: https://yawaragi.dev
+
+jobs:
+  smoke:
+    name: Smoke against production
+    runs-on: ubuntu-latest
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.deployment_status.state == 'success' &&
+       github.event.deployment.environment == 'Production')
+    timeout-minutes: 15
+    # On the job, not the workflow: every deployment status (previews, pending)
+    # starts a run whose job is skipped, and a workflow-level group would let
+    # those cancel a real check. A newer production deploy supersedes the one
+    # still being checked.
+    concurrency:
+      group: production-smoke
+      cancel-in-progress: true
+    steps:
+      - name: Wait for the domain to serve this deployment
+        if: github.event_name == 'deployment_status'
+        env:
+          DEPLOYED_SHA: ${{ github.event.deployment.sha }}
+        run: |
+          want="${DEPLOYED_SHA:0:7}"
+          for i in $(seq 1 30); do
+            # About lists "{version} · build {short sha}" behind the 18+ gate.
+            gate=$(printf '%%7B%%22v%%22%%3A1%%2C%%22ts%%22%%3A%s%%7D' "$(date +%s000)")
+            served=$(curl -s --max-time 30 -b "yawaragi_age_gate=$gate" "$PRODUCTION_URL/en/account/about" \
+              | grep -o 'build [0-9a-f]\{7\}' | head -1 | cut -d' ' -f2 || true)
+            if [ "$served" = "$want" ]; then
+              echo "$PRODUCTION_URL serves $want"
+              exit 0
+            fi
+            echo "serving '${served:-?}', waiting for $want"
+            sleep 10
+          done
+          echo "::error::$PRODUCTION_URL did not serve build $want within 5 minutes (still '${served:-?}')."
+          exit 1
+
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Install Chrome for Playwright
+        run: pnpm exec playwright install chrome
+
+      - name: Production smoke
+        env:
+          SMOKE_BASE_URL: ${{ env.PRODUCTION_URL }}
+        run: pnpm test:smoke
