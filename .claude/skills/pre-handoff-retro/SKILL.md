@@ -49,7 +49,7 @@ Walk this list against the changes the session shipped:
 - **`docs/adr/*`** — does any ADR's "decided" wording contradict what the code actually does after this session's changes? Quoting examples: an ADR that said "we'll use X" when the code now uses Y.
 - **`docs/PRE-GO-LIVE.md`** — launch-gate items. New surface that needs a "verified once" checkbox before launch?
 - **`docs/runbooks/*`** — operational changes on-call would need to know?
-- **Auto-regenerated docs** — `docs/PROGRESS.md`, generated API references, etc. — confirm CI / scripts caught them; if not, regenerate manually.
+- **Auto-regenerated docs** — generated API references, etc. — confirm CI / scripts caught them; if not, regenerate manually.
 
 For each finding: cite the file + line, name what's stale, propose the smallest fix.
 
