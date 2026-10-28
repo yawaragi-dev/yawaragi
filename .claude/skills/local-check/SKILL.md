@@ -15,7 +15,7 @@ The maintainer reviews UI PRs by hand, one at a time, on `http://localhost:3000`
 ## 2. Make the branch current
 
 - `unset GITHUB_TOKEN; gh pr view <n> --json mergeable,headRefName,headRefOid`.
-- If it is behind main or `CONFLICTING`, rebase it in the worktree that owns it, resolve by intent (memory `rebase-is-integration-not-automation`; CLAUDE.md's design paragraph: take main's side, re-apply the PR's sentence), `pnpm -s typecheck`, push with `--force-with-lease`, check `headRefOid`. CI must run on the new head before the merge, not before the check.
+- If it is behind main or `CONFLICTING`, rebase it in the worktree that owns it, resolve by intent (memory `rebase-is-integration-not-automation`; `docs/design-port-status.md`: take main's side, re-apply the PR's sentence), `pnpm -s typecheck`, push with `--force-with-lease`, check `headRefOid`. CI must run on the new head before the merge, not before the check.
 
 ## 3. Put it on :3000
 
