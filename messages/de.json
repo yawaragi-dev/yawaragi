@@ -495,7 +495,7 @@
   "search": {
     "title": "Sake finden",
     "fieldLabel": "Katalog durchsuchen",
-    "placeholder": "Name, Brauerei oder Kanji",
+    "placeholder": "Name, Brauerei, Kanji oder ein Geschmack",
     "submit": "Suchen",
     "clear": "Zurücksetzen",
     "emptyTitle": "Gib einen Namen ein",
@@ -524,14 +524,20 @@
       "countCapped": "Die ersten {count} Sake · {filters} · A–Z",
       "noneTitle": "Kein Sake passt dazu",
       "noneBody": "Versuch eine andere Präfektur oder nur den Geschmack.",
-      "aboutRegion": "Über {prefecture} ›"
+      "aboutRegion": "Über {prefecture} ›",
+      "typeFlavorHint": "Oder tippe einen Geschmack ein — „Grapefruit“, „Melone“ — und finde Sake, die so beschrieben werden."
     },
     "suggestions": {
       "label": "Passende Sake",
       "yours": "Deins",
       "yourBottling": "Deine Abfüllung"
     },
-    "alsoSoldAs": "Auch erhältlich als {name}"
+    "alsoSoldAs": "Auch erhältlich als {name}",
+    "flavorWord": {
+      "count": "{count, plural, one {# Sake} other {# Sake}} mit dem Tag „{word}“",
+      "countCapped": "Die ersten {shown} von {count} Sake mit dem Tag „{word}“ · A–Z",
+      "row": "Von Sakenowa-Nutzern mit <ja>{kanji}</ja> ({word}) getaggt"
+    }
   },
   "suggest": {
     "entry": {

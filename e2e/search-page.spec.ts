@@ -16,7 +16,7 @@
 // `DATABASE_URL` the page 500d rather than degrading.
 import { expect, test } from '@playwright/test'
 import { BASE_URL } from './_base-url'
-import { findAnyBrandId } from './_db-fixtures'
+import { countGrapefruitTaggedBrands, findAnyBrandId } from './_db-fixtures'
 
 const AGE_GATE_COOKIE = {
   name: 'yawaragi_age_gate',
@@ -74,6 +74,8 @@ test.describe('§8 search', () => {
     // of promising a list that would always be blank.
     await expect(page.getByTestId('search-empty')).toBeVisible()
     await expect(page.getByTestId('search-results')).toHaveCount(0)
+    // Design v1.8 M3: flavor words are typed, and the empty field says so.
+    await expect(page.getByTestId('search-browse-flavor-hint')).toContainText('“grapefruit”, “melon”')
 
     await context.close()
   })
@@ -431,6 +433,42 @@ test.describe('other names a sake is sold under (#413, design v1.7 E1)', () => {
 
     await page.goto('/en/search?q=poet')
     await expect(page.getByTestId('search-result-also-sold-as')).toHaveCount(0)
+
+    await context.close()
+  })
+})
+
+test.describe('§8 flavor words (design v1.8 M3, #451)', () => {
+  test('a flavor word lists the sakes Sakenowa drinkers tagged that way, each saying so', async ({ browser }) => {
+    const tagged = await countGrapefruitTaggedBrands()
+    test.skip(tagged === null, 'brand_flavor_tags not migrated or ingested (migration 0020, `pnpm ingest`)')
+    const { context, page } = await searchPage(browser)
+
+    await page.goto('/en/search?q=grapefruit')
+
+    await expect(page.getByTestId('search-flavor-count')).toContainText(`${tagged} sake`)
+    await expect(page.getByTestId('search-flavor-count')).toContainText('tagged “grapefruit”')
+    const rows = page.getByTestId('search-flavor-results').getByTestId('search-result-row')
+    await expect(rows.first()).toContainText('Tagged グレープフルーツ (grapefruit) by Sakenowa drinkers')
+    await expect(page.getByTestId('search-no-match')).toHaveCount(0)
+    await expect(page.getByTestId('search-add-yourself')).toHaveCount(0)
+
+    // The German word finds the same sakes.
+    await page.goto('/en/search?q=Grapefruit')
+    await expect(page.getByTestId('search-flavor-count')).toContainText(`${tagged} sake`)
+
+    await context.close()
+  })
+
+  test('without the catalogue a flavor word is answered like any other query', async ({ browser }, testInfo) => {
+    testInfo.skip(dbUp, 'Needs a run with no reachable mirror — the inverse of the DB-bound specs')
+    const { context, page } = await searchPage(browser)
+
+    await page.goto('/en/search?q=grapefruit')
+
+    await expect(page.getByTestId('search-page')).toBeVisible()
+    await expect(page.getByTestId('search-flavor-word')).toHaveCount(0)
+    await expect(page.getByTestId('search-unavailable')).toBeVisible()
 
     await context.close()
   })

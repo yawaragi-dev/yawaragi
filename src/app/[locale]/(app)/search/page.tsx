@@ -24,6 +24,8 @@ import {
   type CatalogueSearchResult,
 } from '@/lib/sakenowa/search-brands'
 import { countUsage } from '@/lib/stats/count-usage'
+import { matchFlavorWord } from '@/lib/search/flavor-words'
+import { sakesTaggedWith, type FlavorTaggedSakes } from '@/lib/sakenowa/flavor-tag-search'
 
 /**
  * §8 Search ("Type it") — `/[locale]/search`.
@@ -55,6 +57,15 @@ import { countUsage } from '@/lib/stats/count-usage'
  * The dashed "Add {query} yourself" row is in for a visitor who can keep a
  * journal (design v1.6, ADR-0025): it saves the typed name as a bottling of
  * their own and opens its page to rate.
+ *
+ * **A flavor word** (design v1.8 M3, #451): when the whole query is one of
+ * the English or German words in `flavor-words.ts` ("grapefruit",
+ * "Melone"), the sakes Sakenowa drinkers tagged that way are listed first,
+ * A–Z, each row saying which tag it carries. The spec does not say what
+ * happens to name matches then, so they stay, under their own count, and
+ * "nothing matches" is not said while the flavor list has rows. No "Add it
+ * yourself" row then: the visitor typed a flavor, not a bottle. Before
+ * migration 0020 and `pnpm ingest` the flavor list is simply absent.
  *
  * The rows are Sakenowa brand rows, and the credit for them is line 1 of the
  * end-of-screen block, directly under the list (design v1.5 rule 15; CLAUDE.md
@@ -94,6 +105,7 @@ function firstQueryValue(value: string | string[] | undefined): string {
 
 /** What the page shows before there is a query worth sending. */
 const NO_SEARCH: Awaited<ReturnType<typeof searchCatalogue>> = { kind: 'ok', matches: [] }
+const NO_FLAVOR: FlavorTaggedSakes = { total: 0, matches: [] }
 
 export default async function SearchPage({ params, searchParams }: PageProps) {
   const { locale } = await params
@@ -111,18 +123,22 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
   const tCredit = await getTranslations('sakenowaAttribution')
 
   const specific = isCatalogueQuerySpecific(query)
+  const flavorWord = specific ? matchFlavorWord(query, locale) : null
   if (specific) countUsage('search')
   else if (browsing) countUsage('browse')
   // `searchCatalogue` never throws — a mirror failure comes back as
   // `unavailable` rather than 500ing a screen whose field, empty state and
   // camera bridge all still work. See its docstring for why this surface
   // degrades where `/sake/*` does not.
-  const [outcome, viewer, browsed, counts] = await Promise.all([
+  const [outcome, viewer, browsed, counts, flavorSakes] = await Promise.all([
     specific ? searchCatalogue(query) : NO_SEARCH,
     cookies().then(resolveViewerJournal),
     browsing ? browseCatalogue(filter) : null,
     query.length === 0 ? prefectureCounts() : null,
+    // Never throws; "none" without the table, its rows or a database.
+    flavorWord ? sakesTaggedWith(flavorWord.tags) : NO_FLAVOR,
   ])
+  const flavorRows = flavorSakes.matches.length > 0
   const matches = browsed ? (browsed.kind === 'ok' ? browsed.matches : []) : outcome.kind === 'ok' ? outcome.matches : []
   const filterWords = [
     ...(filter.areaId !== null ? [getPrefectureNames(filter.areaId)?.nameEn ?? ''] : []),
@@ -139,7 +155,7 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
       className="mx-auto flex w-full max-w-3xl flex-col gap-5 px-5 py-6"
       data-testid="search-page"
       // Rule 15: no rows on screen, nothing of the catalogue's to credit.
-      {...(matches.length === 0 ? { 'data-no-catalogue-data': '' } : {})}
+      {...(matches.length === 0 && !flavorRows ? { 'data-no-catalogue-data': '' } : {})}
     >
       {/* §8's top row: back · the field. `-ml-3` pulls the 44px target back so
           the glyph lines up with the page gutter. */}
@@ -223,6 +239,37 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
 
       {query.length === 0 && <SearchBrowse filter={filter} counts={counts} locale={locale} />}
 
+      {flavorWord && flavorRows && (
+        <section className="flex flex-col gap-3" data-testid="search-flavor-word">
+          {/* Design v1.8 M3 (104): "{n} sakes tagged "grapefruit"", A–Z (M4). */}
+          <h1 className="text-section-label uppercase text-ash-600" data-testid="search-flavor-count">
+            {flavorSakes.total > flavorSakes.matches.length
+              ? t('flavorWord.countCapped', {
+                  shown: flavorSakes.matches.length,
+                  count: flavorSakes.total,
+                  word: query.trim(),
+                })
+              : t('flavorWord.count', { count: flavorSakes.total, word: query.trim() })}
+          </h1>
+          <ol className="flex flex-col" data-testid="search-flavor-results">
+            {flavorSakes.matches.map((match) => (
+              <SearchResultRow
+                key={match.brandId}
+                match={match}
+                breweryUnknown={t('breweryUnknown')}
+                tagged={t.rich('flavorWord.row', {
+                  kanji: match.tagKanji,
+                  word: flavorWord.word,
+                  ja: (chunks) => <span lang="ja">{chunks}</span>,
+                })}
+              />
+            ))}
+          </ol>
+          {/* One disclosure per screen: the name list below carries it when it has rows. */}
+          {matches.length === 0 && <RomajiDisclosure id="search-romaji" />}
+        </section>
+      )}
+
       {browsing ? (
         browsed?.kind === 'unavailable' ? (
           <section className="flex flex-col gap-2" data-testid="search-unavailable">
@@ -288,6 +335,8 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
           </Link>
         </section>
       ) : matches.length === 0 ? (
+        // The flavor list above already answered the query.
+        flavorRows ? null : (
         <section className="flex flex-col gap-2" data-testid="search-no-match">
           <h1 className="text-card-heading font-medium text-ink">{t('noMatchTitle')}</h1>
           <p className="text-body text-ash-600">{t('noMatchBody')}</p>
@@ -300,6 +349,7 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
             {t('noMatchScanCta')}
           </Link>
         </section>
+        )
       ) : (
         <>
           {outcome.kind === 'ok' && outcome.searchedInstead !== undefined && (
@@ -343,7 +393,8 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
           now, details later'". Whatever the search said — matches, none, or
           the catalogue out of reach — the bottle in hand can still be kept.
           Only for a visitor who can keep a journal (ADR-0020). */}
-      {specific && viewer.canLog && <AddItYourselfRow query={query} />}
+      {/* Not after a flavor word (design v1.8 M3): that names no bottle. */}
+      {specific && viewer.canLog && !flavorRows && <AddItYourselfRow query={query} />}
     </main>
   )
 }
@@ -374,11 +425,14 @@ function SearchResultRow({
   match,
   breweryUnknown,
   alsoSoldAs,
+  tagged,
 }: {
   match: CatalogueSearchResult
   breweryUnknown: string
   /** "Also sold as {name}" when the row matched only through another name (#413). */
   alsoSoldAs?: string
+  /** "Tagged グレープフルーツ (grapefruit) by Sakenowa drinkers" under a flavor word (v1.8 M3). */
+  tagged?: React.ReactNode
 }) {
   return (
     <li>
@@ -412,6 +466,11 @@ function SearchResultRow({
             // Design v1.7 (E1, 88): 12px neutral-700, under the meta.
             <span className="text-meta text-ash-700" data-testid="search-result-also-sold-as">
               {alsoSoldAs}
+            </span>
+          )}
+          {tagged && (
+            <span className="text-meta text-ash-600" data-testid="search-result-tagged">
+              {tagged}
             </span>
           )}
         </span>

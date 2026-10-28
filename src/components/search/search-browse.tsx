@@ -77,6 +77,10 @@ export async function SearchBrowse({ filter, counts, locale }: {
           {t('aboutRegion', { prefecture: prefecture.nameEn })}
         </Link>
       )}
+      {/* Design v1.8 M3 (102): flavor words are typed, not picked. */}
+      <p className="text-subtle text-ash-600" data-testid="search-browse-flavor-hint">
+        {t('typeFlavorHint')}
+      </p>
     </section>
   )
 }

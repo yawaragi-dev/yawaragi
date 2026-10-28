@@ -263,3 +263,20 @@ export async function findMonoBrandBreweryFixture(): Promise<
   if (!row) return null
   return { breweryJa: row.name_kanji, brandId: row.brand_id }
 }
+
+// How many live sakes carry Sakenowa's グレープフルーツ tag (id 109), or null
+// when `brand_flavor_tags` (migration 0020, #451) does not exist yet, holds
+// no such row, or there is no DATABASE_URL. The flavor-word spec skips then.
+export async function countGrapefruitTaggedBrands(): Promise<number | null> {
+  try {
+    const row = await queryOne<{ n: number }>(`
+      SELECT count(*)::int AS n
+      FROM brand_flavor_tags t
+      JOIN brands b ON b.brand_id = t.brand_id AND b.superseded_at IS NULL
+      WHERE t.tag_id = 109
+    `)
+    return row && row.n > 0 ? row.n : null
+  } catch {
+    return null
+  }
+}
