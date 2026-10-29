@@ -17,10 +17,15 @@ const noMatch: ScanActionState = { status: 'no_match', extraction, candidates: [
 
 /** A scan whose answers the test hands out one by one. */
 function scanServer() {
-  const calls: { formData: FormData; answer: (s: ScanActionState) => void; fail: (e: unknown) => void }[] = []
+  const calls: {
+    formData: FormData
+    signal: AbortSignal
+    answer: (s: ScanActionState) => void
+    fail: (e: unknown) => void
+  }[] = []
   const scan = vi.fn(
-    (_previous: ScanActionState, formData: FormData) =>
-      new Promise<ScanActionState>((answer, fail) => calls.push({ formData, answer, fail })),
+    (formData: FormData, signal: AbortSignal) =>
+      new Promise<ScanActionState>((answer, fail) => calls.push({ formData, signal, answer, fail })),
   )
   return { scan, calls }
 }
@@ -94,6 +99,38 @@ describe('useScanSession', () => {
     await settle()
     expect(result.current.state.status).toBe('idle')
     expect(result.current.cameraStatus).toEqual({ kind: 'timed_out' })
+  })
+
+  it('ends the request on Cancel, and sends again at once while the first is still out', async () => {
+    const server = scanServer()
+    const { result } = mount(server.scan)
+    act(() => {
+      result.current.photoTaken(photo())
+      result.current.sendPhoto(new Blob(['small']))
+    })
+    await settle()
+    act(() => result.current.cancel())
+    await settle()
+    expect(server.calls[0]!.signal.aborted).toBe(true)
+    expect(result.current.isPending).toBe(false)
+
+    act(() => result.current.sendAgain())
+    await settle()
+    expect(server.scan).toHaveBeenCalledTimes(2)
+    await act(async () => server.calls[1]!.answer(noMatch))
+    await settle()
+    expect(result.current.state.status).toBe('no_match')
+    expect(result.current.cameraStatus).toBeNull()
+  })
+
+  it('ends the request it gave up on after 30 s', async () => {
+    const server = scanServer()
+    const { result } = mount(server.scan)
+    act(() => result.current.sendPhoto(new Blob(['small'])))
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(30_000)
+    })
+    expect(server.calls[0]!.signal.aborted).toBe(true)
   })
 
   it('gives up on a read after 30 s', async () => {

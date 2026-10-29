@@ -66,7 +66,7 @@ import {
   browserCanvasFactory,
   downscaleImage,
 } from '@/lib/scan/downscale'
-import { scanAction } from '@/lib/scan/scan-action'
+import { fetchScan } from '@/lib/scan/fetch-scan'
 import { reachable } from '@/lib/network/settle-request'
 import { ScanNudge } from '@/components/scan/scan-nudge'
 import { readListAction } from '@/lib/scan/list-action'
@@ -125,8 +125,8 @@ interface ScanFormProps {
  *      `URL.createObjectURL` preview that never leaves the browser)
  *      AND downscale it via `<canvas>.toBlob` +
  *      `createImageBitmap({ imageOrientation: 'from-image' })`.
- *   3. We submit a `FormData` carrying the downscaled JPEG to the
- *      `scanAction` Server Action via `useActionState`.
+ *   3. We send a `FormData` carrying the downscaled JPEG to
+ *      `POST /{locale}/scan/read` (`fetchScan`, abortable for S4's Cancel).
  *   4. On a `matched` result we render `<ScanResultCard />` IN PLACE —
  *      photo + name + flavor chart + a "Full bottle page" row. The
  *      previous S1/S3 behaviour of `router.push`ing to `/sake/[brandId]`
@@ -194,11 +194,12 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
    * Everything the screen remembers between taps that is not the read
    * itself — dismissed and stale answers, the rule-16 clock, a scan the
    * network lost, the list sheet, the bottling choice (`scan-session.ts`) —
-   * with the Server Actions, timers and online events that drive it.
+   * with the scan request, §7's Server Action, timers and online events
+   * that drive it.
    */
   const scan = useScanSession({
     locale,
-    scan: scanAction,
+    scan: (formData, signal) => fetchScan(locale, formData, signal),
     readList: readListAction,
     onUnanswered: (failure) => pushClientEvent(`scan not answered: ${failure}`),
   })
@@ -409,7 +410,7 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
         `downscaled to ${downscaled.size} bytes in ${Date.now() - downscaleStart}ms`,
         { ratio: Number((downscaled.size / file.size).toFixed(2)) },
       )
-      pushClientEvent('submitting FormData to scanAction')
+      pushClientEvent('sending the photo to the scan')
       scan.sendPhoto(downscaled)
     } catch {
       // The downscale uses standard browser APIs (createImageBitmap,

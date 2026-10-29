@@ -34,7 +34,7 @@ export type VisionProviderKey =
 
 export const DEFAULT_VISION_PROVIDER_KEY: VisionProviderKey = 'anthropic-haiku-5-5'
 
-// Tier-2 retry provider used by `scanAction` when tier-1 (Haiku) can't
+// Tier-2 retry provider used by `scanLabel` when tier-1 (Haiku) can't
 // resolve the bottle. Exported as a named constant so the retry site
 // and the registry are kept in sync (changing this string also changes
 // the registry entry both refer to).
@@ -149,7 +149,7 @@ export function getDefaultVisionProvider(): VisionProvider {
  * provider without touching call sites.
  *
  * One env-driven override: when `VISION_PROVIDER=e2e-stub` is set, EVERY
- * requested key resolves to the stub. `scanAction` requests the tier-1
+ * requested key resolves to the stub. `scanLabel` requests the tier-1
  * (`anthropic-haiku-4-5`) and tier-2 (`anthropic-sonnet-4-6`) keys as
  * hardcoded literals, so without this override the Playwright spec's
  * `VISION_PROVIDER=e2e-stub` would be ignored and the tool loop would

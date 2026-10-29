@@ -41,16 +41,19 @@ test('a scan with no connection keeps the photo on the camera, says so again, an
   await context.close()
 })
 
-test('a scan that is slow says so after 10 s, and Cancel keeps the photo to send again', async ({ browser }) => {
+test('a scan that is slow says so after 10 s; Cancel stops waiting at once, and the photo goes again without waiting for the first', async ({ browser }) => {
   const context = await browser.newContext({ locale: 'en-US' })
   await context.addCookies([AGE_GATE_COOKIE])
   const page = await context.newPage()
   await page.goto(`${BASE_URL}/en/scan`)
   await expect(page.locator('input[type=file]').first()).toBeAttached()
-  // Hold the scan's Server Action call past the 10 s mark.
-  await page.route(`${BASE_URL}/en/scan`, async (route) => {
-    if (route.request().method() !== 'POST') return route.continue()
-    await new Promise((resolve) => setTimeout(resolve, 14_000))
+  // Hold the first scan far past anything the test waits for: Cancel must not
+  // depend on it coming back (it used to: a Server Action cannot be aborted,
+  // and the screen stayed on "Reading" until it answered). The resend answers.
+  let scans = 0
+  await page.route(`${BASE_URL}/en/scan/read`, async (route) => {
+    scans += 1
+    if (scans === 1) await new Promise((resolve) => setTimeout(resolve, 90_000))
     await route.continue().catch(() => {})
   })
   await page.locator('input[type=file]').first().setInputFiles('e2e/fixtures/dassai-label.jpg')
@@ -58,9 +61,14 @@ test('a scan that is slow says so after 10 s, and Cancel keeps the photo to send
   await expect(page.getByTestId('scan-camera-slow')).toHaveText('Taking longer than usual', { timeout: 13_000 })
   await page.getByTestId('scan-camera-cancel').click()
 
-  await expect(page.getByTestId('scan-error-timed-out')).toBeVisible()
+  await expect(page.getByTestId('scan-error-timed-out')).toBeVisible({ timeout: 2_000 })
   await expect(page.getByTestId('scan-camera-still')).toBeVisible()
-  await expect(page.getByTestId('scan-send-again')).toBeVisible()
+  await page.getByTestId('scan-send-again').click()
+  await expect(page.getByTestId('scan-error-timed-out')).toHaveCount(0)
+  // The resend's answer, whichever outcome the stub's read lands on (no catalogue on CI).
+  await expect(page.locator('[data-testid^="scan-result-"]').first()).toBeVisible({ timeout: 10_000 })
+  expect(scans).toBe(2)
+  await expect(page.getByTestId('app-error')).toHaveCount(0)
   await context.close()
 })
 

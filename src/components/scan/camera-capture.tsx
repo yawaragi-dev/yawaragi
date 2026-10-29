@@ -223,7 +223,7 @@ export function CameraCapture({
       (blob) => {
         if (!blob) return
         // Handed on as a File, not a Blob, so it enters the SAME pipeline the
-        // file input feeds — `downscaleImage` then `scanAction`. One capture
+        // file input feeds — `downscaleImage` then `fetchScan`. One capture
         // path downstream of two capture sources is what keeps the gallery a
         // true fallback rather than a parallel implementation.
         onCapture(new File([blob], 'label.jpg', { type: 'image/jpeg' }))
