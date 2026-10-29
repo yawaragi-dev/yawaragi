@@ -36,10 +36,9 @@ export interface BothPhotosGuess {
 }
 
 /**
- * Tagged-union state returned by `scanAction`. Lives in its own module
- * because Next's `'use server'` rule forbids non-async exports from an
- * actions file — only async functions are allowed. Types and constants
- * have to live somewhere else and be re-imported on both sides.
+ * Tagged-union state returned by `scanLabel` (as JSON from
+ * `POST /{locale}/scan/read`). Lives in its own module because the scan
+ * itself is server-only and the screen imports these types and constants.
  */
 type ScanActionStateBase =
   | { status: 'idle' }

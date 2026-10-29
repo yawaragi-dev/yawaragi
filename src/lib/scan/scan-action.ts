@@ -1,5 +1,4 @@
-'use server'
-
+import 'server-only'
 import { cookies } from 'next/headers'
 import { env } from '@/env'
 import { readAnonymousSessionCookie } from '@/lib/legal/anonymous-session-cookie'
@@ -28,7 +27,14 @@ import { classifyScanOutcome } from './scan-outcome'
 import { countUsage } from '@/lib/stats/count-usage'
 
 /**
- * The label-scan Server Action, called by `<ScanForm />`.
+ * One label scan, as `POST /{locale}/scan/read` answers it
+ * (`src/app/[locale]/(app)/scan/read/route.ts`) for `<ScanForm />`.
+ *
+ * Not a Server Action: the browser cannot abort one, and Next runs them one
+ * at a time, so a read the visitor cancelled (design v1.9 S4) kept the
+ * screen waiting and held every resend behind it until it came back. A
+ * route under the proxy is fetched with an `AbortController` and still sees
+ * the Clerk session, the session cookie and the 18+ gate.
  *
  * It does the outside work around one read of a label: parses the form,
  * answers a resent photo from the read cache, pays the rate limit BEFORE any
@@ -58,32 +64,24 @@ function isLocale(value: string): value is Locale {
 }
 
 /**
- * Server Action invoked by `<ScanForm />`. `_prev` is the previous
- * `useActionState` value (ignored — every submission is fresh). The
- * `formData` carries the downscaled JPEG under `image` and the visitor's
- * locale under `locale` so the redirect URL is locale-correct without
- * the action having to re-derive it from headers.
+ * `formData` carries the downscaled JPEG under `image`, the visitor's locale
+ * under `locale` and, for a second photo of the same bottle, what the last
+ * scan read under `earlierRead`.
  */
-export async function scanAction(
-  _prev: ScanActionState,
-  formData: FormData,
-): Promise<ScanActionState> {
+export async function scanLabel(formData: FormData): Promise<ScanActionState> {
   // #287 slice D — one Langfuse span per scan, with the tier-2 retry rate
   // recorded on it. Sonnet 4.6 costs ~6x Haiku and fires on every tier-1
   // status except a clean `matched`, so the retry rate is the dominant
   // driver of scan spend and nothing tracked it before.
   const result = await withActionSpan(
     { name: 'scan-action', classify: classifyScanOutcome },
-    () => runScanAction(_prev, formData),
+    () => runScanAction(formData),
   )
   countUsage(`scan:${result.status}`)
   return result
 }
 
-async function runScanAction(
-  _prev: ScanActionState,
-  formData: FormData,
-): Promise<ScanActionState> {
+async function runScanAction(formData: FormData): Promise<ScanActionState> {
   // Read the debug cookie up-front. When set, every downstream module
   // (rate-limit, vision, Sakenowa) appends per-step events via
   // `getCurrentDebugLog()` / `debugAdd(...)` — no parameter threading

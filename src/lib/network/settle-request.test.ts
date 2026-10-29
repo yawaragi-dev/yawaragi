@@ -39,6 +39,14 @@ describe('settleRequest', () => {
     })
   })
 
+  it('calls a request the caller aborted a timeout, not a server error', async () => {
+    const aborted = Promise.reject(new DOMException('The operation was aborted.', 'AbortError'))
+    await expect(settleRequest(aborted, { timeoutMs: 1000, isOnline: online })).resolves.toEqual({
+      ok: false,
+      failure: 'timed_out',
+    })
+  })
+
   it('gives up on a request that never answers', async () => {
     vi.useFakeTimers()
     const settled = settleRequest(new Promise<never>(() => {}), { timeoutMs: 60_000, isOnline: online })

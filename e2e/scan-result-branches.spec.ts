@@ -240,8 +240,8 @@ test.describe('scan result branches (#109 PR B)', () => {
     // Hold the read open long enough to look at it.
     let release: () => void = () => {}
     const held = new Promise<void>((resolve) => (release = resolve))
-    await page.route('**/en/scan', async (route) => {
-      if (route.request().method() === 'POST') await held
+    await page.route('**/en/scan/read', async (route) => {
+      await held
       await route.continue()
     })
     await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
