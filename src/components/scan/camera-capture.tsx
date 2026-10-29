@@ -366,9 +366,17 @@ export function CameraCapture({
             </div>
           </div>
 
-          {/* -- Hint: 58px minimum, may grow to three lines for German -- */}
+          {/*
+            -- Hint: room for its tallest state from the start --
+            The tallest is "No connection" with its hint, Send again, "Still no
+            connection." and "Or take a new photo" (168px in English). Holding
+            that height while the camera only says "Scan a label" means a
+            status arriving 10 s into a read, or a line added under Send again,
+            fills the room below the title instead of pushing the frame up
+            and the text with it. German may still grow it.
+          */}
           <div
-            className="flex min-h-[58px] flex-none flex-col items-center gap-1 text-center text-balance"
+            className="flex min-h-[168px] flex-none flex-col items-center gap-1 text-center text-balance"
             data-testid="scan-camera-hint"
             // Announced, because this is where "reading the label" is said.
             aria-live="polite"

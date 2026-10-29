@@ -562,3 +562,13 @@ K's loop is in (scan → result → rate → palate, the demo bottle "Mihon (見
 5. **After (a):** does the past row show anything ("Back in your cellar" for a moment), or stay as it was, with only the confirmation saying something happened?
 6. **German:** "Bottles you've had" is "Flaschen, die du hattest". The action label sits on a 390px row next to a long sake name, so a short German verb matters. "Wieder in den Keller"?
 7. **The swipe and the ⋯ as built (#533).** AB6 says rows are removed "by swipe or the row's ⋯, written", but 132 draws neither. What we built: a ⋯ at the end of each row. A swipe to the left (touch and pen only) moves the row with the finger, up to 96px, and lets it spring back. Past 64px it opens the same inline question as the ⋯ ("Take {name} off this list? It goes from your history for good." · Keep it · Remove). Nothing is removed by the swipe alone. No colour or label shows under the row while it moves. Should the swipe reveal something behind the row: a red "Remove" area, or the add-back action from question 2 on the other side? Should the ⋯ stay once the swipe is drawn, given keyboard and screen-reader users need it?
+
+## AF. The camera's status lines: room held from the start
+
+Rule 16 on the camera (114, 115) draws "Taking longer than usual · Cancel" and "No connection · Send again · Still no connection. · Or take a new photo" under the frame, with the frame moving up to make room. On a phone that reads as a jump: ten seconds into a read the frame and the text above it move, and they move again when "Still no connection." is added under Send again.
+
+**What we built instead:** the hint area under the frame holds the height of its tallest state (168px in English) from the start, with its first line where "Scan a label" is now. The status lines fill that room below the title; nothing above them moves. On a 390×844 screen the frame keeps its full 212×292 (it had room to spare); on a short screen it gives up a little height for good, keeping its shape. German may still grow the area. The app's offline line above the camera still pushes the screen down by its own height when the connection drops.
+
+**Questions:**
+1. Is the held room right, or would you rather the status lines sit over the lower part of the frame (the frame staying put and the lines covering it while they show)?
+2. With room held, "Scan a label" sits above empty space while nothing is wrong. Should that space carry something (it is where "How to read a label" and the first-scan shape cards already go), or stay empty?
