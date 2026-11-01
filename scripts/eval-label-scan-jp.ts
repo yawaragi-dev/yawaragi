@@ -115,8 +115,8 @@ import {
   resolveScannedLabel,
   type ResolveScannedLabelResult,
 } from '@/lib/sakenowa/resolve-scanned-label'
-import { LABEL_SCAN_PROMPTS } from '@/lib/ai/vision/anthropic-haiku-provider'
-import type { LabelScanExtraction } from '@/lib/schemas/label-scan-extraction'
+import { LABEL_SCAN_PROMPTS, SEVERAL_BOTTLES_PROMPTS } from '@/lib/ai/vision/anthropic-haiku-provider'
+import type { LabelScanExtraction, SeveralBottlesRead } from '@/lib/schemas/label-scan-extraction'
 import { bottleExtraction, firstReadStands, landLabel, twoBottleReadsOf, type NotOneBottleOfSake } from '@/lib/scan/read-kind'
 import { canJudge, judgeBottles, judgeLanding, type BottlesShown, type BottlesVerdict, type Landing, type Verdict } from '~/evals/label-scan-jp/judge'
 import { charAccuracy } from '~/evals/label-scan-jp/levenshtein'
@@ -129,6 +129,7 @@ import {
   type GroundTruthEntry,
   type PhotoKind,
   type PhotoView,
+  type SavedBottlesRead,
   type SavedRead,
   type SavedReadsFile,
 } from '~/evals/label-scan-jp/schemas'
@@ -255,8 +256,8 @@ const sha = (data: string | Uint8Array) => createHash('sha256').update(data).dig
  * What a saved read was made with, besides the photo: the provider key (which
  * names the model) and the prompt. A read is reused only while both hold.
  */
-function providerFingerprint(key: string): string {
-  return key === 'e2e-stub' ? 'stub' : sha(`${LABEL_SCAN_PROMPTS.system}\n${LABEL_SCAN_PROMPTS.user}`)
+function providerFingerprint(key: string, prompts: { system: string; user: string } = LABEL_SCAN_PROMPTS): string {
+  return key === 'e2e-stub' ? 'stub' : sha(`${prompts.system}\n${prompts.user}`)
 }
 
 function loadSavedReads(): SavedReadsFile {
@@ -270,8 +271,9 @@ function loadSavedReads(): SavedReadsFile {
  */
 function writeSavedReads(saved: SavedReadsFile): void {
   // The stub reads nothing; keeping its answers would only churn the file.
-  const providers = Object.fromEntries(Object.entries(saved.providers).filter(([key]) => key !== 'e2e-stub'))
-  writeFileSync(SAVED_READS_PATH, `${JSON.stringify({ ...saved, providers }, null, 1)}\n`)
+  const real = <T>(byKey: Record<string, T>) => Object.fromEntries(Object.entries(byKey).filter(([key]) => key !== 'e2e-stub'))
+  const file = { ...saved, providers: real(saved.providers), ...(saved.bottleReads ? { bottleReads: real(saved.bottleReads) } : {}) }
+  writeFileSync(SAVED_READS_PATH, `${JSON.stringify(file, null, 1)}\n`)
 }
 
 /** Resolve the provider list from env → config file → default. */
@@ -371,8 +373,8 @@ async function judge(
  * for two, each bottle looked up on its own, one sake when both rows are it,
  * and the shelf otherwise.
  */
-async function bottlesShown(extraction: LabelScanExtraction): Promise<BottlesShown> {
-  const reads = twoBottleReadsOf(extraction)
+async function bottlesShown(extraction: LabelScanExtraction, bottlesRead: SeveralBottlesRead | null): Promise<BottlesShown> {
+  const reads = bottlesRead && twoBottleReadsOf(bottlesRead)
   if (!reads) return { kind: 'shelf' }
   const rows = await Promise.all(reads.map((read) => landingOf(bottleExtraction(extraction, read))))
   const [a, b] = rows
@@ -576,6 +578,35 @@ async function main() {
     const previous = saved.providers[key]
     const reads: Record<string, SavedRead> = previous?.fingerprint === fingerprint ? previous.reads : {}
     saved.providers[key] = { fingerprint, reads }
+    const bottlesFingerprint = providerFingerprint(key, SEVERAL_BOTTLES_PROMPTS)
+    const previousBottles = saved.bottleReads?.[key]
+    const bottleReads: Record<string, SavedBottlesRead> =
+      previousBottles?.fingerprint === bottlesFingerprint ? previousBottles.reads : {}
+    saved.bottleReads = { ...saved.bottleReads, [key]: { fingerprint: bottlesFingerprint, reads: bottleReads } }
+    /**
+     * The scan's second request for a photo its label read called several
+     * bottles (`read-label.ts`), saved and reused like the label reads. A
+     * failed read is the shelf, as in the scan.
+     */
+    const bottlesReadOf = async (file: string, photoSha: string, blob: Blob): Promise<SeveralBottlesRead | null> => {
+      const kept = FRESH ? undefined : bottleReads[file]
+      if (kept && kept.photoSha === photoSha) {
+        return 'error' in kept ? null : { source: 'llm_extracted', bottle_count: kept.bottle_count, bottles: kept.bottles, confidence: kept.confidence }
+      }
+      if (OFFLINE) return null
+      if (key !== 'e2e-stub' && THROTTLE_MS > 0) await sleep(THROTTLE_MS)
+      called++
+      try {
+        const read = await provider.readBottles(blob)
+        bottleReads[file] = { photoSha, bottle_count: read.bottle_count, bottles: read.bottles, confidence: read.confidence }
+        return read
+      } catch (err) {
+        bottleReads[file] = { photoSha, error: err instanceof Error ? err.message : String(err) }
+        return null
+      } finally {
+        writeSavedReads(saved)
+      }
+    }
     let reused = 0
     let called = 0
 
@@ -603,8 +634,6 @@ async function main() {
             other_names: savedRead.other_names,
             name_romaji: savedRead.name_romaji,
             brewery_romaji: savedRead.brewery_romaji,
-            bottle_count: savedRead.bottle_count,
-            bottles: savedRead.bottles,
             confidence: savedRead.confidence,
             source: 'llm_extracted',
           }
@@ -632,8 +661,6 @@ async function main() {
             other_names: extraction.other_names,
             name_romaji: extraction.name_romaji,
             brewery_romaji: extraction.brewery_romaji,
-            bottle_count: extraction.bottle_count,
-            bottles: extraction.bottles,
             confidence: extraction.confidence,
             latencyMs,
           }
@@ -646,7 +673,13 @@ async function main() {
           canResolve && canJudge(gt) ? await resolveAndJudge(extraction, gt) : undefined
         const bottles =
           canResolve && gt.subject === 'several_bottles' && !gt.items?.some((item) => item.main)
-            ? judgeBottles(gt.items ?? [], await bottlesShown(extraction))
+            ? judgeBottles(
+                gt.items ?? [],
+                await bottlesShown(
+                  extraction,
+                  extraction.subject === 'several_bottles' ? await bottlesReadOf(file, photoSha, blob) : null,
+                ),
+              )
             : undefined
         photos.push({
           file,

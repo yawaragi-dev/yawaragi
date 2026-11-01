@@ -4,7 +4,9 @@ import { cookies } from 'next/headers'
 import { debugAdd } from '@/lib/debug/debug-log'
 import {
   LabelScanExtractionSchema,
+  SeveralBottlesReadSchema,
   type LabelScanExtraction,
+  type SeveralBottlesRead,
 } from '@/lib/schemas/label-scan-extraction'
 import type { VisionProvider } from './vision-provider'
 
@@ -40,20 +42,28 @@ const DEFAULT_EXTRACTION: LabelScanExtraction = LabelScanExtractionSchema.parse(
 /** Cookie the Playwright specs set to inject a per-test extraction. */
 export const E2E_VISION_COOKIE = 'yawaragi_e2e_vision'
 
-async function readInjectedExtraction(): Promise<LabelScanExtraction | null> {
+/** The test's injected payload, decoded, or null when there is none. */
+async function readInjectedPayload(): Promise<Record<string, unknown> | null> {
   try {
     const jar = await cookies()
     const raw = jar.get(E2E_VISION_COOKIE)?.value
     if (!raw) return null
-    const json = Buffer.from(raw, 'base64').toString('utf8')
-    const parsed: unknown = JSON.parse(json)
-    if (typeof parsed !== 'object' || parsed === null) return null
-    const { name_ja, brewery_ja, confidence, subject, drink, brewery_printed, other_names, bottling, name_romaji, brewery_romaji, legibility, bottle_count, bottles } =
-      parsed as Record<string, unknown>
+    const parsed: unknown = JSON.parse(Buffer.from(raw, 'base64').toString('utf8'))
+    return typeof parsed === 'object' && parsed !== null ? (parsed as Record<string, unknown>) : null
+  } catch {
+    return null
+  }
+}
+
+async function readInjectedExtraction(): Promise<LabelScanExtraction | null> {
+  try {
+    const parsed = await readInjectedPayload()
+    if (parsed === null) return null
+    const { name_ja, brewery_ja, confidence, subject, drink, brewery_printed, other_names, bottling, name_romaji, brewery_romaji, legibility } =
+      parsed
     // Pin `source` here; the injected payload carries model-output fields
     // only — the three every read has, and the optional ones a test wants
-    // (what the photo shows, what the drink is, the bottling, the bottles in
-    // a photo of several). Schema.parse
+    // (what the photo shows, what the drink is, the bottling). Schema.parse
     // enforces the field contract so a malformed cookie can't smuggle a bad
     // shape into the pipeline.
     return LabelScanExtractionSchema.parse({
@@ -69,8 +79,6 @@ async function readInjectedExtraction(): Promise<LabelScanExtraction | null> {
       brewery_romaji,
       legibility,
       bottling,
-      bottle_count,
-      bottles,
     })
   } catch {
     // Missing request scope (unit test), malformed base64/JSON, or a
@@ -105,6 +113,23 @@ export function createE2eStubVisionProvider(): VisionProvider {
         { name_ja: extraction.name_ja, confidence: extraction.confidence },
       )
       return extraction
+    },
+
+    async readBottles(): Promise<SeveralBottlesRead> {
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error('e2e-stub vision provider is not allowed in production.')
+      }
+      // The same cookie carries the bottles a test wants for a photo of
+      // several; without them, two unreadable bottles — a shelf of two.
+      const injected = await readInjectedPayload()
+      const read = SeveralBottlesReadSchema.safeParse({
+        source: 'llm_extracted',
+        bottle_count: injected?.bottle_count,
+        bottles: injected?.bottles,
+        confidence: injected?.confidence,
+      })
+      debugAdd('Vision', 'e2e-stub: returning bottles (no model call)', { injected: read.success })
+      return read.success ? read.data : { source: 'llm_extracted', bottle_count: 2, bottles: [], confidence: 0.5 }
     },
   }
 }

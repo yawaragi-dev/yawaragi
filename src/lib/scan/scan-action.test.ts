@@ -90,7 +90,10 @@ const DASSAI_EXTRACTION = {
 // --- Helpers ----------------------------------------------------------
 
 function readsAs(read: Record<string, unknown>): VisionProvider {
-  return { extractLabel: async () => LabelScanExtractionSchema.parse({ source: 'llm_extracted', ...read }) }
+  return {
+    extractLabel: async () => LabelScanExtractionSchema.parse({ source: 'llm_extracted', ...read }),
+    readBottles: async () => Promise.reject(new Error('no bottles read was expected')),
+  }
 }
 
 /**

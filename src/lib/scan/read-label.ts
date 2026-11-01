@@ -71,6 +71,8 @@ export interface ReadLabelTrace {
   /** Tier 1's outcome, or why it had none of its own. */
   tier1Status: ScanActionState['status'] | 'skipped_second_photo' | 'matched_brewery_not_printed'
   tier2Used: boolean
+  /** For a photo of several bottles: what the bottles read said, or that it threw. */
+  bottlesRead?: 'two_bottles' | 'shelf' | 'failed'
   /** Whether the earlier read was needed and gave a guess; absent on a first scan. */
   earlierRead?: 'not_needed' | 'guess' | 'no_guess'
 }
@@ -83,13 +85,15 @@ export interface ReadLabelResult {
 export async function readLabel(input: ReadLabelInput, deps: ReadLabelDeps): Promise<ReadLabelResult> {
   const { image, locale, earlierRead } = input
   const trace = await readWithTiers(image, locale, earlierRead !== null, deps)
-  const withGuesses = await withNearestCandidates(trace.state, locale, deps.catalogue)
+  const bottles = await withTwoBottles(trace.state, image, locale, deps)
+  const withGuesses = await withNearestCandidates(bottles.state, locale, deps.catalogue)
   const { state, earlierReadOutcome } = await withEarlierRead(withGuesses, earlierRead, locale, deps.catalogue)
   return {
     state,
     trace: {
       tier1Status: trace.tier1Status,
       tier2Used: trace.tier2Used,
+      ...(bottles.asked ? { bottlesRead: bottles.asked } : {}),
       ...(earlierReadOutcome ? { earlierRead: earlierReadOutcome } : {}),
     },
   }
@@ -193,15 +197,8 @@ async function readOnce(
     // provider parses the model output through `LabelScanExtractionSchema`,
     // pinning `source` to `'llm_extracted'`.
     const extraction = await provider.extractLabel(image)
-    const breweryPrinted = extraction.brewery_printed
-    const twoBottles = twoBottleReadsOf(extraction)
-    if (twoBottles) {
-      // Still a photo of several bottles for the two-tier rule: tier 1's
-      // count is the one tier 2 is asked again about.
-      return { kind: 'not_one_bottle', breweryPrinted, state: await readTwoBottles(extraction, twoBottles, locale, catalogue) }
-    }
     const { kind, reading } = await readingOf(extraction, locale, catalogue)
-    return { kind, breweryPrinted, state: reading }
+    return { kind, breweryPrinted: extraction.brewery_printed, state: reading }
   } catch (err) {
     const name = err instanceof Error ? err.name : 'UnknownError'
     const message = err instanceof Error ? err.message : String(err)
@@ -241,6 +238,34 @@ async function readingOf(
       return { kind: landing.kind, reading: { status: 'low_confidence', extraction } }
     default:
       return { kind: landing.kind, reading: await mapResolvedToState(landing, extraction, locale, catalogue) }
+  }
+}
+
+/**
+ * Design v1.7 §5a: a photo the label read called `several_bottles` is asked
+ * once more, by tier 2, how many bottles stand in it and what each says. Two
+ * become "Which bottle do you mean?"; three or more stay the shelf outcome,
+ * as does a photo whose bottles read fails. A request of its own because
+ * putting the bottles on the label read cost single-bottle reads (see
+ * `SeveralBottlesReadSchema`); only these photos pay for it.
+ */
+async function withTwoBottles(
+  state: ScanActionState,
+  image: Blob,
+  locale: Locale,
+  deps: ReadLabelDeps,
+): Promise<{ state: ScanActionState; asked?: ReadLabelTrace['bottlesRead'] }> {
+  if (state.status !== 'not_one_bottle' || state.subject !== 'several_bottles') return { state }
+  try {
+    const read = await deps.tier2().readBottles(image)
+    const twoBottles = twoBottleReadsOf(read)
+    if (!twoBottles) return { state, asked: 'shelf' }
+    return { state: await readTwoBottles(state.extraction, twoBottles, locale, deps.catalogue), asked: 'two_bottles' }
+  } catch (err) {
+    debugAdd('ScanAction', 'reading the bottles threw; keeping the shelf outcome', {
+      message: err instanceof Error ? err.message.slice(0, 300) : String(err),
+    }, 'warn')
+    return { state, asked: 'failed' }
   }
 }
 

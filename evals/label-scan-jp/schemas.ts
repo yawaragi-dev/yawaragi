@@ -325,8 +325,6 @@ export const SavedReadSchema = z.union([
     other_names: z.array(z.string()).optional(),
     name_romaji: z.string().optional(),
     brewery_romaji: z.string().optional(),
-    bottle_count: z.number().int().min(1).optional(),
-    bottles: z.array(ScanBottleReadSchema).optional(),
     confidence: z.number().min(0).max(1),
     latencyMs: z.number().int().nonnegative(),
   }),
@@ -335,19 +333,38 @@ export const SavedReadSchema = z.union([
 
 export type SavedRead = z.infer<typeof SavedReadSchema>
 
-/**
- * `recordings/reads.json`: provider key → the prompt fingerprint its reads
- * were made with, and the reads by photo filename. A provider's reads are
- * dropped as a whole when the prompt changes.
- */
-export const SavedReadsFileSchema = z.object({
-  providers: z.record(
+/** One bottles read (the second request for a photo of several bottles), kept like a label read. */
+export const SavedBottlesReadSchema = z.union([
+  z.object({
+    photoSha: z.string().min(1),
+    bottle_count: z.number().int().min(1),
+    bottles: z.array(ScanBottleReadSchema),
+    confidence: z.number().min(0).max(1),
+  }),
+  z.object({ photoSha: z.string().min(1), error: z.string() }),
+])
+
+export type SavedBottlesRead = z.infer<typeof SavedBottlesReadSchema>
+
+const savedReadsOf = <T extends z.ZodType>(read: T) =>
+  z.record(
     z.string().min(1),
     z.object({
       fingerprint: z.string().min(1),
-      reads: z.record(z.string().min(1), SavedReadSchema),
+      reads: z.record(z.string().min(1), read),
     }),
-  ),
+  )
+
+/**
+ * `recordings/reads.json`: provider key → the prompt fingerprint its reads
+ * were made with, and the reads by photo filename. A provider's reads are
+ * dropped as a whole when the prompt changes. The bottles reads are kept
+ * apart, so a change to one request leaves the other's reads usable.
+ */
+export const SavedReadsFileSchema = z.object({
+  providers: savedReadsOf(SavedReadSchema),
+  /** The bottles reads, by provider, under the bottles request's own fingerprint. */
+  bottleReads: savedReadsOf(SavedBottlesReadSchema).optional(),
 })
 
 export type SavedReadsFile = z.infer<typeof SavedReadsFileSchema>

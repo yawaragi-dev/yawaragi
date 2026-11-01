@@ -9,7 +9,7 @@ import type { ResolveScannedLabelResult } from '@/lib/sakenowa/resolve-scanned-l
 import type { Brand } from '@/lib/schemas/brand'
 import type { Brewery } from '@/lib/schemas/brewery'
 import type { EarlierScanRead } from '@/lib/schemas/earlier-scan-read'
-import { LabelScanExtractionSchema } from '@/lib/schemas/label-scan-extraction'
+import { LabelScanExtractionSchema, SeveralBottlesReadSchema } from '@/lib/schemas/label-scan-extraction'
 import { readLabel, type LabelCatalogue, type ReadLabelDeps } from './read-label'
 
 // The label-reading pipeline against fake models and a fake catalogue: no
@@ -37,13 +37,24 @@ const PHOTO = new Blob([new Uint8Array([1, 2, 3])], { type: 'image/jpeg' })
 
 // --- Fakes ------------------------------------------------------------
 
-/** A vision provider that reads every photo as `read` (schema-parsed, as a real one returns it). */
-function readsAs(read: Record<string, unknown>): VisionProvider {
-  return { extractLabel: vi.fn(async () => LabelScanExtractionSchema.parse({ source: 'llm_extracted', ...read })) }
+/**
+ * A vision provider that reads every photo as `read`, and its bottles as
+ * `bottles` (schema-parsed, as a real one returns them). Asking for bottles
+ * it was given none of fails the read.
+ */
+function readsAs(read: Record<string, unknown>, bottles?: Record<string, unknown>): VisionProvider {
+  return {
+    extractLabel: vi.fn(async () => LabelScanExtractionSchema.parse({ source: 'llm_extracted', ...read })),
+    readBottles: vi.fn(async () =>
+      bottles
+        ? SeveralBottlesReadSchema.parse({ source: 'llm_extracted', confidence: 0.8, ...bottles })
+        : Promise.reject(new Error('no bottles read was expected')),
+    ),
+  }
 }
 
 function throws(err: Error): VisionProvider {
-  return { extractLabel: vi.fn(async () => Promise.reject(err)) }
+  return { extractLabel: vi.fn(async () => Promise.reject(err)), readBottles: vi.fn(async () => Promise.reject(err)) }
 }
 
 /** A tier that must not be asked: building it fails the test. */
@@ -473,20 +484,15 @@ function mockModelReturning(extraction: unknown): MockLanguageModelV3 {
 }
 
 describe('readLabel — two bottles in one photo (design v1.7 §5a, 74)', () => {
-  const TWO = {
-    subject: 'several_bottles',
-    name_ja: '獺祭',
-    brewery_ja: '旭酒造',
-    confidence: 0.8,
-    bottle_count: 2,
-  }
+  const SEVERAL = { subject: 'several_bottles', name_ja: '獺祭', brewery_ja: '旭酒造', confidence: 0.8 }
   const left = { position: 'left', drink: 'sake', name_ja: '獺祭', brewery_printed: true, brewery_ja: '旭酒造', name_romaji: 'Dassai', brewery_romaji: 'Asahi Shuzō', confidence: 0.9 }
   const right = { position: 'right', drink: 'unknown', name_ja: '高清水', brewery_printed: false, brewery_ja: '秋田酒類製造', name_romaji: 'Takashimizu', brewery_romaji: 'Akita Shurui Seizō', confidence: 0.8 }
   const byName = (name: string): ResolveScannedLabelResult =>
     name === '獺祭' ? EXACT_DASSAI : name === '高清水' ? { kind: 'exact', sake: TAKASHIMIZU } : NO_MATCH
 
-  /** Several bottles never stand on tier 1, so both tiers read the photo. */
-  const bothTiers = (read: Record<string, unknown>) => deps(readsAs(read), readsAs(read), catalogueByName())
+  /** Several bottles never stand on tier 1; tier 2 reads the photo, then its bottles. */
+  const severalBottles = (bottles?: Record<string, unknown>) =>
+    deps(readsAs(SEVERAL), readsAs(SEVERAL, bottles), catalogueByName())
 
   function catalogueByName() {
     return fakeCatalogue({
@@ -496,7 +502,7 @@ describe('readLabel — two bottles in one photo (design v1.7 §5a, 74)', () => 
   }
 
   it('asks which bottle is meant, each bottle looked up on its own label', async () => {
-    const { state } = await scan(bothTiers({ ...TWO, bottles: [left, right] }))
+    const { state, trace } = await scan(severalBottles({ bottle_count: 2, bottles: [left, right] }))
     expect(state.status).toBe('two_bottles')
     if (state.status !== 'two_bottles') return
     expect(state.bottles.map((b) => [b.position, b.breweryPrinted, b.reading.status])).toEqual([
@@ -504,15 +510,29 @@ describe('readLabel — two bottles in one photo (design v1.7 §5a, 74)', () => 
       ['right', false, 'matched'],
     ])
     expect(state.bottles[1]!.reading).toMatchObject({ brandId: TAKASHIMIZU.brandId, breweryRomaji: 'Akita Shurui Seizo' })
+    expect(trace.bottlesRead).toBe('two_bottles')
   })
 
   it('answers with the sake when both bottles are the same one', async () => {
-    const { state } = await scan(bothTiers({ ...TWO, bottles: [left, { ...left, position: 'right' }] }))
+    const { state } = await scan(severalBottles({ bottle_count: 2, bottles: [left, { ...left, position: 'right' }] }))
     expect(state).toMatchObject({ status: 'matched', brandId: DASSAI.brandId })
   })
 
   it('treats three or more bottles as a shelf', async () => {
-    const { state } = await scan(bothTiers({ ...TWO, bottle_count: 3, bottles: [left, right] }))
+    const { state } = await scan(severalBottles({ bottle_count: 3, bottles: [left, right] }))
     expect(state).toMatchObject({ status: 'not_one_bottle', subject: 'several_bottles' })
+  })
+
+  it('stays a shelf when reading the bottles fails', async () => {
+    const { state, trace } = await scan(severalBottles())
+    expect(state).toMatchObject({ status: 'not_one_bottle', subject: 'several_bottles' })
+    expect(trace.bottlesRead).toBe('failed')
+  })
+
+  it('never asks about bottles for a photo of one', async () => {
+    const tier1 = readsAs(DASSAI_READ)
+    const { trace } = await scan(deps(tier1, readsAs(DASSAI_READ), fakeCatalogue({ resolved: [EXACT_DASSAI] })))
+    expect(tier1.readBottles).not.toHaveBeenCalled()
+    expect(trace.bottlesRead).toBeUndefined()
   })
 })

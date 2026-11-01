@@ -3,6 +3,7 @@ import {
   type LabelScanExtraction,
   type NonSakeDrink,
   type ScanBottleRead,
+  type SeveralBottlesRead,
 } from '@/lib/schemas/label-scan-extraction'
 
 /**
@@ -73,15 +74,13 @@ export function firstReadStands(kind: string, breweryPrinted: boolean | undefine
 /**
  * Design v1.7 §5a: two bottles of equal weight are "Which bottle do you
  * mean?", one row per bottle the model could read; three or more are a
- * shelf. The model counts the bottles in the frame and lists the readable
- * ones; this says which case a read is. `null` for anything but two
+ * shelf. The bottles read counts the bottles in the frame and lists the
+ * readable ones; this says which case it is. `null` for anything but two
  * bottles with at least one name read. Shared by the scan and the eval.
  */
-export function twoBottleReadsOf(
-  extraction: Pick<LabelScanExtraction, 'subject' | 'bottle_count' | 'bottles'>,
-): readonly ScanBottleRead[] | null {
-  if (extraction.subject !== 'several_bottles' || extraction.bottle_count !== 2) return null
-  const bottles = (extraction.bottles ?? []).slice(0, 2)
+export function twoBottleReadsOf(read: Pick<SeveralBottlesRead, 'bottle_count' | 'bottles'>): readonly ScanBottleRead[] | null {
+  if (read.bottle_count !== 2) return null
+  const bottles = read.bottles.slice(0, 2)
   return bottles.length > 0 ? bottles : null
 }
 
