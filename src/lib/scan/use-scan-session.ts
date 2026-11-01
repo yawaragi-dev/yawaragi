@@ -1,6 +1,6 @@
 'use client'
 
-import { startTransition, useActionState, useEffect, useReducer, useRef, useState, useSyncExternalStore } from 'react'
+import { useEffect, useReducer, useRef, useState, useSyncExternalStore } from 'react'
 import type { Locale } from '@/i18n/routing'
 import {
   browserIsOnline,
@@ -21,6 +21,7 @@ import {
   scanSessionReducer,
   shownState,
   type ListKind,
+  type ScanSessionEvent,
 } from './scan-session'
 
 interface UseScanSessionOptions {
@@ -30,16 +31,18 @@ interface UseScanSessionOptions {
    * is aborted when the visitor cancels or the 30 s stop fires.
    */
   scan: (formData: FormData, signal: AbortSignal) => Promise<ScanActionState>
-  /** §7's list read (`readListAction`). */
-  readList: (previous: ListActionState, formData: FormData) => Promise<ListActionState>
+  /**
+   * §7's list read (`fetchList`). `signal` is aborted when the visitor
+   * leaves the list screen, retakes the photo, or the 30 s stop fires.
+   */
+  readList: (formData: FormData, signal: AbortSignal) => Promise<ListActionState>
   /** Told when a scan did not come back, for the debug panel. */
   onUnanswered?: (failure: ConnectionFailure) => void
 }
 
 /**
  * The scan screen's session, wired to the world: the scan request and §7's
- * Server Action, the
- * rule-16 timers (10 s "Taking longer than usual", the 30 s stop, the
+ * list read, the rule-16 timers (10 s "Taking longer than usual", the 30 s stop, the
  * five-minute life of a read for pairing the next photo), the browser's
  * online and offline events, and the `blob:` URL of the visitor's photo.
  * Each of them becomes an event for `scanSessionReducer`; the screen reads
@@ -58,8 +61,11 @@ export function useScanSession({ locale, scan, readList, onUnanswered }: UseScan
    * between the two calls (ADR-0009).
    */
   const photoBlobRef = useRef<Blob | null>(null)
-  /** The photo `listState` was read from. */
+  /** The photo `listState` was read from, or is being read from. */
   const listReadFor = useRef<Blob | null>(null)
+  const listTokenRef = useRef(0)
+  /** Stops waiting for the list read in flight and ends its request. */
+  const cancelListRef = useRef<(() => void) | null>(null)
   const online = useSyncExternalStore(subscribeOnline, browserIsOnline, () => true)
 
   // The scan's answer, kept by hand rather than by `useActionState`: a Server
@@ -106,19 +112,59 @@ export function useScanSession({ locale, scan, readList, onUnanswered }: UseScan
     // The answer before stays, so a resend still pairs with its read.
     dispatch({ type: 'unanswered', failure: settled.failure })
   }
-  // §7: the whole menu or shelf, read from the same photo on request. A list
-  // that could not be read for the network says so the way any other failed
-  // read does.
-  const [listState, listFormAction, isListPending] = useActionState<ListActionState, FormData>(
-    async (previous, formData) => {
-      const settled = await settleRequest(readList(previous, formData), {
+  // §7: the whole menu or shelf, read from the same photo on request. Kept by
+  // hand for the same reason as the scan's answer: leaving the list screen
+  // ends the request, rather than the screen waiting for an answer nobody
+  // will see, with the next request queued behind it.
+  const [listState, setListState] = useState<ListActionState>(INITIAL_LIST_ACTION_STATE)
+  const [isListPending, setListPending] = useState(false)
+  /** A server error from the list read, rethrown in render for the error page. */
+  const [listError, setListError] = useState<unknown>(null)
+  if (listError) throw listError
+
+  async function runList(formData: FormData, token: number) {
+    const controller = new AbortController()
+    const left = new Promise<void>((resolve) => {
+      cancelListRef.current = resolve
+    })
+    setListPending(true)
+    let settled
+    try {
+      settled = await settleRequest(readList(formData, controller.signal), {
         timeoutMs: SCAN_TIMEOUT_MS,
         isOnline: browserIsOnline,
+        cancelled: left,
       })
-      return settled.ok ? settled.value : { status: 'failed' }
-    },
-    INITIAL_LIST_ACTION_STATE,
-  )
+    } catch (error) {
+      if (listTokenRef.current === token) setListError(error)
+      return
+    } finally {
+      // Ends a read given up on (the list left, the 30 s stop); a no-op once it answered.
+      controller.abort()
+    }
+    // The visitor left the list, or asked for another: this answer is not the screen's.
+    if (listTokenRef.current !== token) return
+    cancelListRef.current = null
+    setListPending(false)
+    // A list that could not be read for the network says so the way any
+    // other failed read does.
+    setListState(settled.ok ? settled.value : { status: 'failed' })
+  }
+
+  /** The list screen closed: the read on its way is not wanted any more. */
+  function leaveList() {
+    const cancel = cancelListRef.current
+    if (!cancel) return
+    listTokenRef.current++
+    cancelListRef.current = null
+    // Not read after all, so "Rank these" again reads it again.
+    listReadFor.current = null
+    setListPending(false)
+    cancel()
+  }
+
+  // Leaving the scan screen altogether ends the list read too.
+  useEffect(() => () => cancelListRef.current?.(), [])
 
   // ADR-0015 / #163: the in-place result card shows the visitor's own label
   // photo, from a `blob:` URL of the ORIGINAL file that never leaves the
@@ -153,9 +199,19 @@ export function useScanSession({ locale, scan, readList, onUnanswered }: UseScan
     void runScan(formData, token)
   }
 
+  /**
+   * The reducer's dispatch, which also ends §7's read in flight when an event
+   * closes the list screen: its Back, its "Retake", or any other way back to
+   * the camera.
+   */
+  function dispatchEvent(event: ScanSessionEvent) {
+    if (session.listOpen !== null && scanSessionReducer(session, event).listOpen === null) leaveList()
+    dispatch(event)
+  }
+
   return {
     session,
-    dispatch,
+    dispatch: dispatchEvent,
     /** The action's last answer; see `view` for what the screen shows. */
     state,
     isActionPending,
@@ -211,7 +267,10 @@ export function useScanSession({ locale, scan, readList, onUnanswered }: UseScan
       formData.set('image', photo, 'list.jpg')
       formData.set('kind', kind)
       formData.set('locale', locale)
-      startTransition(() => listFormAction(formData))
+      // A read still on its way (there should be none: leaving the list ends it) is superseded.
+      leaveList()
+      listReadFor.current = photo
+      void runList(formData, ++listTokenRef.current)
     },
   }
 }

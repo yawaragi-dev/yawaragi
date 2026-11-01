@@ -30,7 +30,27 @@ function scanServer() {
   return { scan, calls }
 }
 
-const readList = vi.fn(async (): Promise<ListActionState> => ({ status: 'failed' }))
+const readList = vi.fn<(formData: FormData, signal: AbortSignal) => Promise<ListActionState>>(async () => ({ status: 'failed' }))
+
+/** A list read that never answers on its own, so the test sees what ends it. */
+function heldListRead() {
+  const signals: AbortSignal[] = []
+  readList.mockImplementation((_formData, signal) => {
+    signals.push(signal)
+    return new Promise<ListActionState>(() => {})
+  })
+  return signals
+}
+
+/** A menu photo scanned and answered, ready for "Rank these for you". */
+async function scannedMenu() {
+  const server = scanServer()
+  const hook = mount(server.scan)
+  act(() => hook.result.current.sendPhoto(new Blob(['menu'])))
+  await act(async () => server.calls[0]!.answer(noMatch))
+  await settle()
+  return hook
+}
 const photo = () => new File(['jpeg'], 'label.jpg', { type: 'image/jpeg' })
 
 function setOnline(value: boolean) {
@@ -48,7 +68,8 @@ const settle = () => act(async () => {
 })
 
 beforeEach(() => {
-  readList.mockClear()
+  readList.mockReset()
+  readList.mockResolvedValue({ status: 'failed' })
   vi.useFakeTimers()
   vi.spyOn(URL, 'createObjectURL').mockImplementation(() => `blob:${Math.random()}`)
   vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {})
@@ -218,5 +239,49 @@ describe('useScanSession', () => {
     await settle()
     expect(readList).toHaveBeenCalledTimes(1)
     expect(result.current.session.listOpen).toBe('menu')
+  })
+
+  it('ends the list read at once when the visitor goes back from the list screen', async () => {
+    const signals = heldListRead()
+    const { result } = await scannedMenu()
+
+    act(() => result.current.rank('menu'))
+    await settle()
+    expect(result.current.isListPending).toBe(true)
+    act(() => result.current.dispatch({ type: 'listClosed' }))
+    await settle()
+    expect(signals[0]!.aborted).toBe(true)
+    expect(result.current.isListPending).toBe(false)
+    expect(result.current.session.listOpen).toBeNull()
+
+    // Not read, so opening the list again reads it again.
+    act(() => result.current.rank('menu'))
+    await settle()
+    expect(readList).toHaveBeenCalledTimes(2)
+    expect(signals[1]!.aborted).toBe(false)
+  })
+
+  it('ends the list read when the visitor retakes the photo from the list screen', async () => {
+    const signals = heldListRead()
+    const { result } = await scannedMenu()
+
+    act(() => result.current.rank('shelf'))
+    await settle()
+    act(() => result.current.dispatch({ type: 'backToCamera' }))
+    await settle()
+    expect(signals[0]!.aborted).toBe(true)
+  })
+
+  it('gives up on a list read after 30 s, ending its request and saying it failed', async () => {
+    const signals = heldListRead()
+    const { result } = await scannedMenu()
+
+    act(() => result.current.rank('menu'))
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(30_000)
+    })
+    expect(signals[0]!.aborted).toBe(true)
+    expect(result.current.isListPending).toBe(false)
+    expect(result.current.listState.status).toBe('failed')
   })
 })

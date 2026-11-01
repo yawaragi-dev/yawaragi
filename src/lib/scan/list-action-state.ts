@@ -5,7 +5,7 @@ import type { ListCurrency } from '@/lib/schemas/list-scan-extraction'
 
 /**
  * Wire shapes for design v1.7 §7, "Menu and shelf results". Kept apart from
- * the `'use server'` action because that file may export async functions only.
+ * the server-only list read so the browser side can import them.
  */
 
 /** One line of the list as it was read, for the row's "what was read" and a bottling's own row. */

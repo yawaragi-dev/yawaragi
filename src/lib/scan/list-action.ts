@@ -1,4 +1,4 @@
-'use server'
+import 'server-only'
 
 import { cookies } from 'next/headers'
 import { getPathname } from '@/i18n/navigation'
@@ -31,8 +31,12 @@ import { countUsage } from '@/lib/stats/count-usage'
  * The photo arrives again rather than being kept from the scan: label images
  * are process-and-discard (ADR-0009), so the server never holds it between
  * the two calls. It is read inline and dropped, like the label read.
+ *
+ * Served by `POST /{locale}/scan/list` rather than a Server Action, so the
+ * browser can abort it (#557 did the same for the label scan): leaving the
+ * list screen, retaking the photo or the 30 s stop end the request.
  */
-export async function readListAction(_prev: ListActionState, formData: FormData): Promise<ListActionState> {
+export async function readListPhoto(formData: FormData): Promise<ListActionState> {
   const result = await withActionSpan({ name: 'list-action', classify: classifyListOutcome }, () => run(formData))
   if (result.status === 'read') countUsage('list_read')
   return result
