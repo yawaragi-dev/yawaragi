@@ -26,7 +26,11 @@
  *
  * # Metric
  *
- * `recall@k = |intersect(returned_topK, expected)| / |expected|`
+ * Headline: normalized recall@k = hits / min(k, |expected|), so a perfect
+ * top k scores 1.0 whatever the answer key's size (#289). Raw recall@k
+ * (hits / |expected|) and its ceiling are printed beside it for
+ * continuity with the numbers documented before #289. The arithmetic
+ * lives in `evals/suggest-jp/metrics.ts`.
  *
  * # Rate-limit posture
  *
@@ -40,6 +44,7 @@
 import { performance } from 'node:perf_hooks'
 import { GROUND_TRUTH } from '~/evals/suggest-jp/ground-truth'
 import { QUERIES } from '~/evals/suggest-jp/queries'
+import { meanRecall, recallAtK, type RecallAtK } from '~/evals/suggest-jp/metrics'
 import { GroundTruthListSchema, QueryListSchema } from '~/evals/suggest-jp/schemas'
 import { SUGGEST_MODEL, SUGGEST_MODEL_PRICES } from '@/lib/suggest/suggest-model'
 import type { SuggestActionState } from '@/lib/suggest/suggest-action-state'
@@ -49,8 +54,8 @@ interface QueryResult {
   latencyMs: number
   returnedBrandIds: number[]
   expectedBrandIds: number[]
-  recallAt3: number
-  recallAt5: number
+  recallAt3: RecallAtK
+  recallAt5: RecallAtK
   status: 'ok' | 'no_match' | 'rate_limited' | 'error'
   detail?: string
   // Populated when the endpoint returns a `debugLog` with a
@@ -130,8 +135,8 @@ async function main() {
         detail = state.status + ('reason' in state ? `:${state.reason}` : '')
       }
 
-      const recallAt3 = recall(returnedBrandIds.slice(0, 3), gt.expectedBrandIds)
-      const recallAt5 = recall(returnedBrandIds.slice(0, 5), gt.expectedBrandIds)
+      const recallAt3 = recallAtK(returnedBrandIds, gt.expectedBrandIds, 3)
+      const recallAt5 = recallAtK(returnedBrandIds, gt.expectedBrandIds, 5)
       const usage = extractUsage(state.debugLog)
 
       results.push({
@@ -159,7 +164,7 @@ async function main() {
           ? `  in=${usage.inputTokens}(read=${usage.cacheReadTokens ?? 0} write=${usage.cacheWriteTokens ?? 0}) out=${usage.outputTokens}`
           : ''
       console.log(
-        `${marker} r@3=${recallAt3.toFixed(2)}  r@5=${recallAt5.toFixed(2)}  ${Math.round(latency)}ms${detail ? `  (${detail})` : ''}${usageSuffix}`,
+        `${marker} nr@3=${recallAt3.normalized.toFixed(2)}  nr@5=${recallAt5.normalized.toFixed(2)}  (raw r@3=${recallAt3.raw.toFixed(2)}/${recallAt3.attainable.toFixed(2)}  r@5=${recallAt5.raw.toFixed(2)}/${recallAt5.attainable.toFixed(2)})  ${Math.round(latency)}ms${detail ? `  (${detail})` : ''}${usageSuffix}`,
       )
     } catch (err) {
       const latency = performance.now() - t0
@@ -169,8 +174,8 @@ async function main() {
         latencyMs: Math.round(latency),
         returnedBrandIds: [],
         expectedBrandIds: gt.expectedBrandIds,
-        recallAt3: 0,
-        recallAt5: 0,
+        recallAt3: recallAtK([], gt.expectedBrandIds, 3),
+        recallAt5: recallAtK([], gt.expectedBrandIds, 5),
         status: 'error',
         detail: message,
       })
@@ -182,22 +187,28 @@ async function main() {
   console.log(`## Summary`)
   console.log(``)
   console.log(
-    `| model | tool-set | queries | ok | no-match | rate-limited | error | mean r@3 | mean r@5 | median latency (ms) |`,
+    `Headline: nr@k = hits / min(k, |expected|) — 1.000 is a perfect top k. Raw r@k = hits / |expected| (the pre-#289 number) is shown as "raw / ceiling", where the ceiling is the best raw score the answer key allows.`,
+  )
+  console.log(``)
+  console.log(
+    `| model | tool-set | queries | ok | no-match | rate-limited | error | mean nr@3 | mean nr@5 | raw r@3 / ceiling | raw r@5 / ceiling | median latency (ms) |`,
   )
   console.log(
-    `|-------|----------|---------|----|----------|--------------|-------|----------|----------|---------------------|`,
+    `|-------|----------|---------|----|----------|--------------|-------|-----------|-----------|-------------------|-------------------|---------------------|`,
   )
 
   const ok = results.filter((r) => r.status === 'ok')
   const noMatch = results.filter((r) => r.status === 'no_match').length
   const rateLimited = results.filter((r) => r.status === 'rate_limited').length
   const errored = results.filter((r) => r.status === 'error').length
-  const meanRecall3 = ok.length
-    ? (ok.reduce((s, r) => s + r.recallAt3, 0) / ok.length).toFixed(3)
-    : 'n/a'
-  const meanRecall5 = ok.length
-    ? (ok.reduce((s, r) => s + r.recallAt5, 0) / ok.length).toFixed(3)
-    : 'n/a'
+  // Means over answered queries only, as before #289; the ceiling is
+  // averaged over the same queries so "raw / ceiling" compares like
+  // with like.
+  const mean3 = meanRecall(ok.map((r) => r.recallAt3))
+  const mean5 = meanRecall(ok.map((r) => r.recallAt5))
+  const fmtNormalized = (m: typeof mean3) => (m ? m.normalized.toFixed(3) : 'n/a')
+  const fmtRaw = (m: typeof mean3) =>
+    m ? `${m.raw.toFixed(3)} / ${m.attainable.toFixed(3)}` : 'n/a'
   // Median across successful runs — a rate-limited response has zero
   // meaningful latency (just the round-trip to the KV) and would drag
   // the median down misleadingly.
@@ -205,7 +216,7 @@ async function main() {
   const medianLatency = median(okLatencies.length ? okLatencies : results.map((r) => r.latencyMs))
 
   console.log(
-    `| ${SUGGEST_MODEL} | sakenowa-mcp+mapCrossBeverage | ${queries.length} | ${ok.length} | ${noMatch} | ${rateLimited} | ${errored} | ${meanRecall3} | ${meanRecall5} | ${medianLatency} |`,
+    `| ${SUGGEST_MODEL} | sakenowa-mcp+mapCrossBeverage | ${queries.length} | ${ok.length} | ${noMatch} | ${rateLimited} | ${errored} | ${fmtNormalized(mean3)} | ${fmtNormalized(mean5)} | ${fmtRaw(mean3)} | ${fmtRaw(mean5)} | ${medianLatency} |`,
   )
 
   const usageResults = results.filter((r) => r.inputTokens != null)
@@ -248,15 +259,15 @@ async function main() {
   console.log(``)
   console.log(`## Per-query detail`)
   console.log(``)
-  console.log(`| query id | status | returned brandIds (top-5) | expected size | r@3 | r@5 | ms | in | out | cache read |`)
-  console.log(`|----------|--------|---------------------------|---------------|-----|-----|-----|-----|-----|------------|`)
+  console.log(`| query id | status | returned brandIds (top-5) | expected size | nr@3 | nr@5 | raw r@3 / ceiling | raw r@5 / ceiling | ms | in | out | cache read |`)
+  console.log(`|----------|--------|---------------------------|---------------|------|------|-------------------|-------------------|-----|-----|-----|------------|`)
   for (const r of results) {
     const returned = r.returnedBrandIds.slice(0, 5).join(', ')
     const inTok = r.inputTokens != null ? String(r.inputTokens) : '—'
     const outTok = r.outputTokens != null ? String(r.outputTokens) : '—'
     const cacheRead = r.cacheReadTokens != null ? String(r.cacheReadTokens) : '—'
     console.log(
-      `| ${r.queryId} | ${r.status}${r.detail ? ` (${r.detail})` : ''} | ${returned || '—'} | ${r.expectedBrandIds.length} | ${r.recallAt3.toFixed(2)} | ${r.recallAt5.toFixed(2)} | ${r.latencyMs} | ${inTok} | ${outTok} | ${cacheRead} |`,
+      `| ${r.queryId} | ${r.status}${r.detail ? ` (${r.detail})` : ''} | ${returned || '—'} | ${r.expectedBrandIds.length} | ${r.recallAt3.normalized.toFixed(2)} | ${r.recallAt5.normalized.toFixed(2)} | ${r.recallAt3.raw.toFixed(2)} / ${r.recallAt3.attainable.toFixed(2)} | ${r.recallAt5.raw.toFixed(2)} / ${r.recallAt5.attainable.toFixed(2)} | ${r.latencyMs} | ${inTok} | ${outTok} | ${cacheRead} |`,
     )
   }
 }
@@ -314,21 +325,6 @@ function extractUsage(
     cacheWriteTokens: typeof d.cacheWrite === 'number' ? d.cacheWrite : undefined,
     cacheHitRatio: typeof d.cacheHitRatio === 'number' ? d.cacheHitRatio : undefined,
   }
-}
-
-function recall(returned: number[], expected: readonly number[]): number {
-  if (expected.length === 0) return 0
-  const expectedSet = new Set(expected)
-  // Dedup on the returned side. If the LLM emits the same brandId
-  // twice inside the topK (unlikely — the Suggestion schema doesn't
-  // enforce uniqueness — but possible for a runaway tool loop),
-  // a naive count would double-hit. Recall is defined over the
-  // SET intersection, not the multiset, so seenHits gates.
-  const seenHits = new Set<number>()
-  for (const id of returned) {
-    if (expectedSet.has(id)) seenHits.add(id)
-  }
-  return seenHits.size / expected.length
 }
 
 function median(values: number[]): number {

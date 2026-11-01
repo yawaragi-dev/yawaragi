@@ -53,8 +53,9 @@ export const QueryListSchema = z.array(QuerySchema)
 
 /**
  * Ground truth entry — the set of Sakenowa brandIds that constitute
- * an "acceptable" answer for a given query. Recall@k is
- * `intersect(returned_topK, expected) / expected.length`.
+ * an "acceptable" answer for a given query. The headline score is
+ * normalized recall@k, `hits / min(k, expected.length)` — see
+ * `metrics.ts`.
  *
  * `rationale` is a short human note explaining WHY those brandIds are
  * the right answer — critical for anyone re-curating the set later.
@@ -64,7 +65,10 @@ export const QueryListSchema = z.array(QuerySchema)
  *
  *   - `expectedBrandIds` may hold more than K entries. The eval takes
  *     the intersection with the top-K returned, so a larger expected
- *     set is a looser bar (more brands "count" as correct).
+ *     set is a looser bar (more brands "count" as correct). Raw
+ *     recall@k (`hits / expected.length`) cannot exceed
+ *     `k / expected.length` on such a set, which is why the headline
+ *     divides by `min(k, expected.length)` instead (#289).
  *   - Empty expected sets are rejected — a query with no known
  *     acceptable answer can't be scored, so it doesn't belong in the
  *     harness. Remove it or add answers instead.

@@ -34,25 +34,46 @@ prevents this from ever shipping to production.
 - `queries.ts` — the 15 seed queries, typed via `QuerySchema`.
 - `ground-truth.ts` — expected Sakenowa brand IDs per query.
 - `schemas.ts` — Zod shapes both files parse against at load time.
+- `metrics.ts` — recall@k (normalized, raw and its ceiling); tests
+  in `metrics.test.ts`.
 
 `scripts/eval.ts` dispatches, `scripts/eval-suggest-jp.ts` runs.
 
 ## Metric
 
-`recall@k = intersect(returned_topK, expected) / |expected|`
+The headline is **normalized recall@k** (`nr@k`):
+
+`nr@k = |intersect(returned_topK, expected)| / min(k, |expected|)`
 
 - `returned_topK` = the first K brand IDs the suggest action
   returned (in the order the LLM produced them).
 - `expected` = the ground-truth brand-id set for that query.
 
+A perfect top k scores **1.0 whatever the size of the answer key**.
+That matters because most answer keys hold 8–10 brands while the
+list is 3–5 long.
+
+**Raw recall@k** (`r@k = hits / |expected|`, the only number before
+#289) is still printed beside it, as `raw / ceiling`. The ceiling is
+`min(k, |expected|) / |expected|`, the best raw score that query
+allows: a 10-brand key caps raw r@5 at 0.50 no matter how good the
+answer. On the current 15 queries a perfect run reaches a mean raw
+**r@3 of 0.514** and **r@5 of 0.679**, so the documented raw
+baselines below are not "about half right" — read them against that
+ceiling. Keep quoting raw r@k when comparing with those older runs;
+quote nr@k for everything else.
+
 k = 3 and k = 5 are both reported. The suggest schema caps the
 result list at 6, so k=5 already covers most of what a visitor sees.
+Means are taken over answered (`ok`) queries, each weighted equally.
+The arithmetic lives in `metrics.ts` and is unit-tested in
+`metrics.test.ts` — the only part of this eval `pnpm test` runs.
 
 Recall is chosen over precision because a suggest result list is
 short (3–6) and there's no single "right" answer for most queries.
-An LLM that returns 5 brands where 2 are in the ground truth set of
-8 gets 2/8 = 0.25 — a fair reflection that some brands were on-point
-and others were divergent-but-not-wrong.
+An LLM that returns 5 brands where 2 are in a ground-truth set of
+8 gets nr@5 = 2/5 = 0.40 (raw 2/8 = 0.25 against a ceiling of 0.625)
+— some brands were on-point and others divergent-but-not-wrong.
 
 ## Prompt-cache signal
 
@@ -77,9 +98,10 @@ Post-recipe-refresh baseline (#175/#176 fix, 2026-07-06):
 - 72-76% cache hit ratio across the 15-query run (down slightly
   from S7's 77% — topK=30 responses are larger)
 - $0.17-0.20/run (vs S7's $0.16, up ~20% for the recall gain)
-- Mean recall@3 = 0.42, mean recall@5 = 0.52-0.54
+- Mean raw recall@3 = 0.42, mean raw recall@5 = 0.52-0.54 (raw
+  r@k, before #289; ceilings 0.514 and 0.679)
 
-Prior S7 baseline (for reference): mean r@3=0.39, r@5=0.46,
+Prior S7 baseline (for reference): mean raw r@3=0.39, r@5=0.46,
 $0.16/run, 77% cache hit ratio.
 
 ## How ground truth was built
@@ -130,7 +152,8 @@ eval at all.
 ## Reading the output
 
 Two tables. The **summary** shows one row per (model, tool-set) —
-mean recall and median latency. The **per-query detail** shows the
+mean nr@3 / nr@5 (the headline), mean raw r@k beside its ceiling, and
+median latency. The **per-query detail** shows the
 brand IDs the LLM actually returned per query, so a failure mode
 ("LLM ignored the Kubota name and returned Dassai") is diagnosable
 without spelunking through Langfuse traces. Both are pastable into
