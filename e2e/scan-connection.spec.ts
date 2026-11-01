@@ -42,6 +42,7 @@ test('a scan with no connection keeps the photo on the camera, says so again, an
 })
 
 test('a scan that is slow says so after 10 s; Cancel stops waiting at once, and the photo goes again without waiting for the first', async ({ browser }) => {
+  test.setTimeout(60_000)
   const context = await browser.newContext({ locale: 'en-US' })
   await context.addCookies([AGE_GATE_COOKIE])
   const page = await context.newPage()
@@ -65,8 +66,13 @@ test('a scan that is slow says so after 10 s; Cancel stops waiting at once, and 
   await expect(page.getByTestId('scan-camera-still')).toBeVisible()
   await page.getByTestId('scan-send-again').click()
   await expect(page.getByTestId('scan-error-timed-out')).toHaveCount(0)
-  // The resend's answer, whichever outcome the stub's read lands on (no catalogue on CI).
-  await expect(page.locator('[data-testid^="scan-result-"]').first()).toBeVisible({ timeout: 10_000 })
+  // The resend's answer, whichever outcome it lands on: a result with the local
+  // catalogue, another outcome or an error screen on CI, which has none. It is
+  // the first request the server sees, so on the dev server it waits for the
+  // route to compile as well.
+  await expect(
+    page.locator('[data-testid^="scan-result-"], [data-testid^="scan-outcome-"], [data-testid^="scan-error-"]').first(),
+  ).toBeVisible({ timeout: 30_000 })
   expect(scans).toBe(2)
   await expect(page.getByTestId('app-error')).toHaveCount(0)
   await context.close()
