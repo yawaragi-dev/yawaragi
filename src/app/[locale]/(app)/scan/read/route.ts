@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { isCrossSite } from '@/lib/network/cross-site'
 import { scanLabel } from '@/lib/scan/scan-action'
 
 /**
@@ -11,12 +12,7 @@ import { scanLabel } from '@/lib/scan/scan-action'
  * itself sees.
  */
 export async function POST(request: Request) {
-  // What Next checks for a Server Action: a POST from another site is
-  // refused, so no page elsewhere can spend a visitor's scans (or ours).
-  const origin = request.headers.get('origin')
-  if (origin !== null && new URL(origin).host !== new URL(request.url).host) {
-    return new NextResponse(null, { status: 403 })
-  }
+  if (isCrossSite(request)) return new NextResponse(null, { status: 403 })
   let formData: FormData
   try {
     formData = await request.formData()

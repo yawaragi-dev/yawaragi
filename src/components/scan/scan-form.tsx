@@ -69,7 +69,7 @@ import {
 import { fetchScan } from '@/lib/scan/fetch-scan'
 import { reachable } from '@/lib/network/settle-request'
 import { ScanNudge } from '@/components/scan/scan-nudge'
-import { readListAction } from '@/lib/scan/list-action'
+import { fetchList } from '@/lib/scan/fetch-list'
 import { addOwnBottling as addOwnBottlingAction } from '@/lib/collection/expression-actions'
 import { ListProblem, ListReading, ListResults } from '@/components/scan/list-results'
 import { type BothPhotosGuess, type ScanActionState, type ScanCandidate } from '@/lib/scan/scan-action-state'
@@ -200,7 +200,7 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
   const scan = useScanSession({
     locale,
     scan: (formData, signal) => fetchScan(locale, formData, signal),
-    readList: readListAction,
+    readList: (formData, signal) => fetchList(locale, formData, signal),
     onUnanswered: (failure) => pushClientEvent(`scan not answered: ${failure}`),
   })
   const { session, dispatch, state, listState, isListPending, isPending, view, earlierRead } = scan
