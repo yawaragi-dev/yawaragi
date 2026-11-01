@@ -36,7 +36,7 @@ import {
 import { EARLIEST_TASTING_DAY, type TastingPatch } from '@/lib/schemas/tasting-input'
 import * as saves from '@/lib/taste/tasting-actions'
 import { browserIsOnline, reachable } from '@/lib/network/settle-request'
-import { europeanDay } from '@/lib/taste/tasting-day'
+import { useDateFormatter } from '@/i18n/date-locale-provider'
 import { cn } from '@/lib/utils'
 
 // Saves that the network loses answer "unavailable" (Couldn't save) instead
@@ -93,6 +93,7 @@ export function DetailedNotesSheet({
   onSaved?: (notes: DetailedNotes) => void
 }) {
   const t = useTranslations('detailedNotes')
+  const dates = useDateFormatter()
   const [notes, setNotes] = useState<DetailedNotes>(initial ?? {})
   // The first part, so the sheet reads top-down in "look, smell, taste,
   // decide" order. §10 opens Palate; the maintainer preferred the first.
@@ -348,15 +349,15 @@ export function DetailedNotesSheet({
             <label htmlFor={`tried-on-${entryId}`} className="text-section-label uppercase text-ash-600">
               {t('triedOn')}
             </label>
-            {/* A native date input draws the day in the browser's own format
-                (US-style for an English browser), which no attribute can
-                change. So the day is shown European-style, day first, and the
-                input lies transparent on top of it: tapping still opens the
-                system picker, and assistive tech still gets a real date field.
-                Following the visitor's own locale instead is #371. */}
+            {/* A native date input draws the day in the browser's UI-language
+                format (US-style for an English browser), which no attribute
+                can change. So the day is shown in the visitor's regional
+                format (#371), and the input lies transparent on top of it:
+                tapping still opens the system picker, and assistive tech
+                still gets a real date field. */}
             <span className="relative inline-flex min-h-11 items-center rounded-md border border-divider bg-ground px-3 text-body text-ink focus-within:ring-2 focus-within:ring-ginshu-600">
               <span aria-hidden="true" data-testid="detailed-notes-tried-on-shown">
-                {europeanDay(day)}
+                {dates.day(day)}
               </span>
               <CalendarBlank size={16} aria-hidden="true" className="ml-2 text-ash-600" />
               <input

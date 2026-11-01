@@ -97,11 +97,23 @@ a{align-self:flex-start;padding:10px 18px;border:1px solid #cf8a6e;border-radius
     return e;
   }
   function none() { lists.appendChild(el('p', null, w.none)); }
+  // The app's language with the browser's region, as regionalDateLocale()
+  // does in the app (#371): this page is cached, so no request header.
+  function dateLocale(app) {
+    try {
+      var tag = (navigator.languages && navigator.languages[0]) || navigator.language;
+      var region = tag && new Intl.Locale(tag).maximize().region;
+      if (!region) return app;
+      var l = new Intl.Locale(app, { region: region }).toString();
+      return Intl.DateTimeFormat.supportedLocalesOf([l]).length ? l : app;
+    } catch (e) { return app; }
+  }
   function draw(copy) {
     if (!copy || !(copy.v >= 1 && copy.v <= c.version)) return none();
-    var day = new Intl.DateTimeFormat(c.locale, { day: '2-digit' });
-    var month = new Intl.DateTimeFormat(c.locale, { month: 'short' });
-    var when = new Intl.DateTimeFormat(c.locale, { dateStyle: 'medium', timeStyle: 'short' });
+    var loc = dateLocale(c.locale);
+    var day = new Intl.DateTimeFormat(loc, { day: '2-digit', timeZone: 'UTC' });
+    var month = new Intl.DateTimeFormat(loc, { month: 'short', timeZone: 'UTC' });
+    var when = new Intl.DateTimeFormat(loc, { dateStyle: 'medium', timeStyle: 'short' });
     document.getElementById('saved').textContent = w.saved.replace('{date}', when.format(new Date(copy.savedAt)));
     lists.appendChild(el('h2', null, w.journal));
     var journal = el('ul');

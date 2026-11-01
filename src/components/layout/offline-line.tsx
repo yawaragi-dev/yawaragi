@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { WifiHigh, WifiSlash } from '@phosphor-icons/react/dist/ssr'
+import { useDateLocale } from '@/i18n/date-locale-provider'
+import { createDateFormatter } from '@/i18n/regional-dates'
 
 const BACK_ONLINE_MS = 2_400
 
@@ -54,6 +56,7 @@ export function OfflineLine({
   const tab = useSearchParams().get('tab')
   const [shown, setShown] = useState<{ kind: 'offline' | 'back'; asOf: number } | null>(null)
   const loadedAt = useRef<number>(0)
+  const dateLocale = useDateLocale(locale)
 
   // When this screen was last shown with a connection: "as of" on Z1's line.
   useEffect(() => {
@@ -80,7 +83,8 @@ export function OfflineLine({
   if (shown === null) return null
 
   const screen = pathname.replace(/^\/[a-z]{2}(?=\/|$)/, '')
-  const time = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' }).format(shown.asOf)
+  // Only ever shown after the browser reports offline, so its clock is the visitor's.
+  const time = createDateFormatter(dateLocale).time(shown.asOf)
   let text = messages.offline
   let sub: string | null = null
   if (hasCollection && screen === '/collection') {

@@ -1,4 +1,4 @@
-import { cookies } from 'next/headers'
+import { cookies, headers } from 'next/headers'
 import { hasLocale, NextIntlClientProvider } from 'next-intl'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { Geist_Mono, Inter } from 'next/font/google'
@@ -7,6 +7,8 @@ import type { Metadata, Viewport } from 'next'
 import { ClerkProvider } from '@clerk/nextjs'
 import { auth } from '@clerk/nextjs/server'
 import { routing } from '@/i18n/routing'
+import { DateLocaleProvider } from '@/i18n/date-locale-provider'
+import { regionalDateLocale } from '@/i18n/regional-dates'
 import { ClientHistoryTracker } from '@/components/layout/client-history-tracker'
 import { RegisterServiceWorker } from '@/components/pwa/register-service-worker'
 import { ClearOfflineCopy } from '@/components/offline/clear-offline-copy'
@@ -63,6 +65,9 @@ export default async function LocaleLayout({
   // redirect from /scan to /sake/[brandId].
   const debugMode = await isDebugEnabled(cookieJar)
   const tSignIn = await getTranslations({ locale, namespace: 'signIn' })
+  // Dates follow the visitor's region, not the UI language (#371). Worked out
+  // once here and handed to client components, so server and browser agree.
+  const dateLocale = regionalDateLocale(locale, (await headers()).get('accept-language'))
 
   // ClerkProvider wraps NextIntlClientProvider so Clerk's auth context is
   // available to any client component that also needs the intl context.
@@ -132,23 +137,25 @@ export default async function LocaleLayout({
           style={{ paddingBottom: 'var(--debug-panel-h, 0px)' }}
         >
           <NextIntlClientProvider>
-            {/* Renders nothing. Counts this session's client-side navigations
-                so rule 11's back arrow knows whether there is an in-app page
-                behind the visitor. Mounted here rather than per route group
-                because the move it most needs to notice is `(app)` → `(site)`,
-                which is how the legal documents are reached. */}
-            <ClientHistoryTracker />
-            <RegisterServiceWorker />
-            <ClearOfflineCopy />
-            {/* Signing in or out changes what every server-rendered `<Show>`
-                and maintainer gate should say; this re-renders them. */}
-            <RefreshOnAuthChange
-              serverUserId={userId}
-              signInPending={isSignInPending(cookieJar)}
-              label={tSignIn('authWall')}
-            />
-            {children}
-            <DebugPanelMount debugMode={debugMode} />
+            <DateLocaleProvider locale={dateLocale}>
+              {/* Renders nothing. Counts this session's client-side navigations
+                  so rule 11's back arrow knows whether there is an in-app page
+                  behind the visitor. Mounted here rather than per route group
+                  because the move it most needs to notice is `(app)` → `(site)`,
+                  which is how the legal documents are reached. */}
+              <ClientHistoryTracker />
+              <RegisterServiceWorker />
+              <ClearOfflineCopy />
+              {/* Signing in or out changes what every server-rendered `<Show>`
+                  and maintainer gate should say; this re-renders them. */}
+              <RefreshOnAuthChange
+                serverUserId={userId}
+                signInPending={isSignInPending(cookieJar)}
+                label={tSignIn('authWall')}
+              />
+              {children}
+              <DebugPanelMount debugMode={debugMode} />
+            </DateLocaleProvider>
           </NextIntlClientProvider>
         </body>
       </html>

@@ -1,5 +1,6 @@
 import { CaretDown, CaretUp, MagnifyingGlass, MapPin, Seal, SlidersHorizontal, Star } from '@phosphor-icons/react/dist/ssr'
-import { getFormatter, getTranslations } from 'next-intl/server'
+import { getTranslations } from 'next-intl/server'
+import { getDateFormatter } from '@/i18n/regional-dates.server'
 import { Link } from '@/i18n/navigation'
 import {
   type Facet,
@@ -53,7 +54,7 @@ export async function JournalFilters({
   search: boolean
 }) {
   const t = await getTranslations('collection.filters')
-  const format = await getFormatter()
+  const format = await getDateFormatter()
   const prefName = (id: number) => getPrefectureNames(id)?.nameEn ?? String(id)
   const starsName = (band: number) => (band === 5 ? t('fiveStars') : t('starBand', { from: band, to: `${band}.5` }))
   const monthName = (month: string) =>
