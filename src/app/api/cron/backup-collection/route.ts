@@ -6,12 +6,9 @@ import { BACKUP_BUCKET, type BackupStorage } from '@/lib/collection/backup-stora
 import type { BottleHistoryStore } from '@/lib/collection/bottle-history-store'
 import type { CellarStore } from '@/lib/collection/cellar-store'
 import type { ExpressionStore } from '@/lib/collection/expression-store'
-import { getBottleHistoryStore } from '@/lib/collection/get-bottle-history-store'
-import { getCellarStore } from '@/lib/collection/get-cellar-store'
-import { getExpressionStore } from '@/lib/collection/get-expression-store'
+import { upstashCollectionStores } from '@/lib/collection/collection-source'
 import { type BackupUserResult, runCollectionBackup } from '@/lib/collection/run-collection-backup'
 import { SupabaseBackupStorage } from '@/lib/collection/supabase-backup-storage'
-import { getJournalStore } from '@/lib/taste/get-journal-store'
 import type { JournalStore } from '@/lib/taste/journal-store'
 
 /**
@@ -85,18 +82,15 @@ export function createProductionDeps(): BackupRouteDeps {
     expectedSecret: env.CRON_SECRET,
     userIds: [...parseMaintainerAllowlist(env.MAINTAINER_USER_IDS)],
     build: () => {
-      const journal = getJournalStore()
-      const cellar = getCellarStore()
-      const expressions = getExpressionStore()
-      const bottleHistory = getBottleHistoryStore()
+      const stores = upstashCollectionStores()
       const url = env.NEXT_PUBLIC_SUPABASE_URL
       const key = env.SUPABASE_SERVICE_ROLE_KEY
-      if (!journal || !cellar || !expressions || !bottleHistory || !url || !key) return null
+      if (!stores || !url || !key) return null
       return {
-        journal,
-        cellar,
-        expressions,
-        bottleHistory,
+        journal: stores.journal,
+        cellar: stores.cellar,
+        expressions: stores.expressions,
+        bottleHistory: stores.history,
         storage: new SupabaseBackupStorage(url, key, BACKUP_BUCKET),
       }
     },

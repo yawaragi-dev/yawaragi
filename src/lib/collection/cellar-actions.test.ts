@@ -1,25 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-const h = vi.hoisted(() => ({
-  journal: null as unknown,
-  cellar: null as unknown,
-  expressions: null as unknown,
-  history: null as unknown,
-}))
+const h = vi.hoisted(() => ({ source: null as unknown as InMemoryCollectionSource }))
 
-vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn(async () => ({ userId: 'user_admin' })) }))
-vi.mock('@/lib/auth/maintainer', () => ({ currentUserIsMaintainer: vi.fn(async () => true) }))
+vi.mock('@/lib/collection/collection-source', () => ({ collectionSource: () => h.source }))
+
 vi.mock('@/lib/sakenowa/catalogue-reads', () => ({ lookupBrand: vi.fn() }))
-vi.mock('@/lib/taste/get-journal-store', () => ({ getJournalStore: vi.fn(() => h.journal) }))
-vi.mock('@/lib/collection/get-cellar-store', () => ({ getCellarStore: vi.fn(() => h.cellar) }))
-vi.mock('@/lib/collection/get-expression-store', () => ({
-  getExpressionStore: vi.fn(() => h.expressions),
-}))
-vi.mock('@/lib/collection/get-bottle-history-store', () => ({
-  getBottleHistoryStore: vi.fn(() => h.history),
-}))
 
-import { currentUserIsMaintainer } from '@/lib/auth/maintainer'
 import {
   addToCellar,
   editCellarRow,
@@ -27,14 +13,15 @@ import {
   openCellarBottle,
   removeFromCellar,
 } from '@/lib/collection/cellar-actions'
-import { InMemoryBottleHistoryStore, InMemoryCellarStore, InMemoryExpressionStore, InMemoryJournalStore } from '@/lib/collection/in-memory-record-store'
+import { InMemoryCollectionSource } from '@/lib/collection/in-memory-collection'
+import type { InMemoryBottleHistoryStore } from '@/lib/collection/in-memory-record-store'
 import { cellarRowKey } from '@/lib/schemas/cellar-bottle'
 import { lookupBrand } from '@/lib/sakenowa/catalogue-reads'
 
 const USER = 'user_admin'
-const cellar = () => h.cellar as InMemoryCellarStore
-const expressions = () => h.expressions as InMemoryExpressionStore
-const history = () => h.history as InMemoryBottleHistoryStore
+const cellar = () => h.source.cellar
+const expressions = () => h.source.expressions
+const history = () => h.source.history as InMemoryBottleHistoryStore
 /** The history as [kind, count, size] lines, oldest first. */
 const ledger = async () =>
   (await history().read(USER)).map((e) => [e.kind, e.count, e.sizeMl, e.seeded ?? false])
@@ -56,11 +43,7 @@ const bottling = {
 
 beforeEach(() => {
   vi.clearAllMocks()
-  h.journal = new InMemoryJournalStore()
-  h.cellar = new InMemoryCellarStore()
-  h.expressions = new InMemoryExpressionStore()
-  h.history = new InMemoryBottleHistoryStore()
-  vi.mocked(currentUserIsMaintainer).mockResolvedValue(true)
+  h.source = new InMemoryCollectionSource(USER)
   vi.mocked(lookupBrand).mockResolvedValue({
     brandId: 7,
     name: 'Jikon',
@@ -165,7 +148,7 @@ describe('the cellar, from the sheet and the row buttons', () => {
   })
 
   it('stores nothing for someone who is not a maintainer', async () => {
-    vi.mocked(currentUserIsMaintainer).mockResolvedValue(false)
+    h.source.ownerId = false
     expect(await addToCellar({ brandId: 7 }, ONE)).toEqual({ status: 'forbidden' })
     expect(await cellar().read(USER)).toEqual([])
   })

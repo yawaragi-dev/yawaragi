@@ -13,7 +13,7 @@ import { DeleteAccountRow, ExportJournalRow } from '@/components/account/your-da
 import { SettingsGroup, SettingsLinkRow, SettingsRow } from '@/components/account/settings-row'
 import { Link } from '@/i18n/navigation'
 import { routing } from '@/i18n/routing'
-import { getJournalStore } from '@/lib/taste/get-journal-store'
+import { upstashCollectionStores } from '@/lib/collection/collection-source'
 
 /**
  * §15 Account — the first slice.
@@ -181,10 +181,10 @@ export default async function AccountPage({ params }: PageProps) {
  */
 async function tastingCountOfViewer(): Promise<number | null> {
   const { userId } = await auth()
-  const journal = getJournalStore()
-  if (!userId || !journal) return null
+  const stores = upstashCollectionStores()
+  if (!userId || !stores) return null
   try {
-    return (await journal.read(userId)).length
+    return (await stores.journal.read(userId)).length
   } catch {
     return null
   }

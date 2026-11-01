@@ -1,16 +1,11 @@
 import 'server-only'
 
-import { auth } from '@clerk/nextjs/server'
 import type { cookies } from 'next/headers'
-import { currentUserIsMaintainer } from '@/lib/auth/maintainer'
-import { getBottleHistoryStore } from '@/lib/collection/get-bottle-history-store'
-import { getCellarStore } from '@/lib/collection/get-cellar-store'
-import { getExpressionStore } from '@/lib/collection/get-expression-store'
+import { isCollectionClosed, openCollection } from '@/lib/collection/open-collection'
 import { readSampleJournal, wantsSampleCollection } from '@/lib/demo/sample-mode'
 import type { BottleEvent } from '@/lib/schemas/bottle-event'
 import type { CellarBottle } from '@/lib/schemas/cellar-bottle'
 import type { Expression } from '@/lib/schemas/expression'
-import { getJournalStore } from '@/lib/taste/get-journal-store'
 import {
   STUB_JOURNAL_NOW,
   resolveBottleHistoryStub,
@@ -106,24 +101,24 @@ export async function resolveViewer(cookieJar: CookieJar): Promise<Viewer> {
   }
 
   const now = Date.now()
-  if (await currentUserIsMaintainer()) {
-    const { userId } = await auth()
-    const journal = getJournalStore()
-    const cellar = getCellarStore()
-    const expressions = getExpressionStore()
-    const history = getBottleHistoryStore()
-    if (!userId) {
-      return viewer({ kind: 'own', canLog: false, readOnly: false, now, copyOwner: undefined }, { ...NOTHING, history: async () => null })
-    }
+  const opened = await openCollection()
+  if (!isCollectionClosed(opened)) {
+    const { userId, journal, cellar, expressions, history } = opened
     return viewer(
-      { kind: 'own', canLog: Boolean(journal && cellar && expressions), readOnly: false, now, copyOwner: userId },
+      { kind: 'own', canLog: true, readOnly: false, now, copyOwner: userId },
       {
         journal: () => resolveMaintainerJournal({ store: journal, userId, now }),
-        cellar: async () => (cellar ? cellar.read(userId) : []),
-        expressions: async () => (expressions ? expressions.read(userId) : []),
+        cellar: () => cellar.read(userId),
+        expressions: () => expressions.read(userId),
         history: async () => (history ? history.read(userId).catch(() => null) : null),
       },
     )
+  }
+  if (opened.status === 'unavailable' || opened.maintainer) {
+    // A maintainer, but no stores to read (or no user id to read them for):
+    // their own screen, with nothing on it and no star that saves nothing.
+    const copyOwner = opened.status === 'unavailable' ? opened.userId : undefined
+    return viewer({ kind: 'own', canLog: false, readOnly: false, now, copyOwner }, { ...NOTHING, history: async () => null })
   }
 
   if (wantsSampleCollection(cookieJar)) {
