@@ -92,9 +92,10 @@ test.describe('scan entry route', () => {
     const tabBar = (await page.getByTestId('tab-bar').boundingBox())!
     expect(imprintBox.y + imprintBox.height).toBeLessThanOrEqual(tabBar.y)
     // Leaving the camera by a tab brings the end-of-screen block back: the
-    // rule that hides it follows the camera, not the visit.
-    await page.getByTestId('tab-home').click()
-    await expect(page).toHaveURL(/\/en\/home$/)
+    // rule that hides it follows the camera, not the visit. (Palate, not
+    // Home: at phone width the dev server's corner badge sits over Home.)
+    await page.getByTestId('tab-palate').click()
+    await expect(page).toHaveURL(/\/en\/profile$/)
     await expect(page.getByTestId('site-footer')).toBeVisible()
     await context.close()
   })
