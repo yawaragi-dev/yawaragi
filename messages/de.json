@@ -300,6 +300,7 @@
     "brand": {
       "breweryLabel": "Brauerei",
       "littlePublished": "Wenig veröffentlicht",
+      "breweryNotRecorded": "Brauerei nicht erfasst",
       "formerBrewery": "früher {name} <kanji></kanji>",
       "similarAction": "Ähnliche",
       "serveLabel": "Serviertemperatur",
@@ -1081,7 +1082,9 @@
       "title": "Den Sake gefunden, nicht die Brauerei",
       "body": "Der Name passt zu {line} im Katalog, aber die gelesene Brauerei ist nicht die dort eingetragene. Wenn es dieser ist, wähle ihn aus.",
       "candidates": "Ist es dieser?",
-      "reason": "Gleicher Name · auf dem Etikett steht die Brauerei {extracted}"
+      "reason": "Gleicher Name · auf dem Etikett steht die Brauerei {extracted}",
+      "bodyBreweryNotRecorded": "Der Name passt zu {line} im Katalog, der aber keine Brauerei dafür erfasst. Wenn es dieser ist, wähle ihn aus.",
+      "breweryNotRecorded": "Brauerei nicht erfasst"
     },
     "breweryOnly": {
       "kicker": "Teilweise gefunden",
@@ -1096,7 +1099,8 @@
       "body": "Das Etikett passt zu mehr als einem Sake im Katalog.",
       "candidates": "Am nächsten im Katalog",
       "reasonSharedBrewery": "Gleiche Brauerei · gleicher Name",
-      "reasonName": "Gleicher Name · {brewery}"
+      "reasonName": "Gleicher Name · {brewery}",
+      "reasonNameOnly": "Gleicher Name"
     },
     "candidateReason": {
       "name": "Ähnlicher Name",

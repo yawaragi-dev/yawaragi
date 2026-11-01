@@ -29,6 +29,7 @@ _Avoid_: Log, Check-in, Review
 
 **Brewery**:
 The company that produces Sakes (酒蔵, *sakagura*). Matches Sakenowa's `brewery` 1:1.
+Except its **placeholder breweries**: 48 nameless rows, one per prefecture plus one for "other", that Sakenowa files a Sake under when it has no maker on record (#419). A placeholder is not a Brewery: the app shows "Brewery not recorded" with the prefecture, never counts it as a brewery, and never lets it agree with a brewery read on a label (`isPlaceholderBrewery`).
 _Avoid_: Sakagura, Kuramoto, House, Producer
 
 **Prefecture**:

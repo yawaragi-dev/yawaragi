@@ -1261,3 +1261,40 @@ describe('Latin names, however they are spelled', () => {
     expect(result.sake).toMatchObject({ brandId: 9001 })
   })
 })
+
+describe("Sakenowa's placeholder breweries (#419)", () => {
+  // One nameless row per prefecture stands for "maker not on record". It is
+  // no brewery, so no brewery a label names, not even an empty one, agrees
+  // with it, and its sakes are not one brewery's lines.
+  async function seedHokkaidoPlaceholder(): Promise<void> {
+    await seedBrewery({ breweryId: 9501, name: '', nameKanji: '', areaId: 1 })
+    await pool.query(
+      `INSERT INTO brands
+         (brand_id, name, name_kanji, brewery_id, source, confidence, content_hash)
+       VALUES ($1, $2, $3, $4, $5, $6, $7), ($8, $9, $10, $11, $12, $13, $14)`,
+      [
+        9001, 'Kutchan', '倶知安', 9501, 'sakenowa', null, 'hash-kutchan-9001',
+        9002, 'Other', '北の何か', 9501, 'sakenowa', null, 'hash-other-9002',
+      ],
+    )
+  }
+
+  it('never confirms a sake by its placeholder brewery: the brand alone matched, and the catalogue names no brewery', async () => {
+    await seedHokkaidoPlaceholder()
+
+    const result = await findSakeByExtraction({ nameJa: '倶知安', breweryJa: '' }, pool)
+
+    expect(result.kind).toBe('matched_brand_only')
+    if (result.kind !== 'matched_brand_only') throw new Error('unreachable; for narrowing only')
+    expect(result.sake).toMatchObject({ brandId: 9001 })
+    expect(result.breweryDivergence.stored).toBe('')
+  })
+
+  it("does not offer a placeholder's sakes as one brewery's lines", async () => {
+    await seedHokkaidoPlaceholder()
+
+    const result = await findSakeByBreweryOnly({ nameJa: '寺田', breweryJa: '' }, pool)
+
+    expect(result.kind).toBe('no_match')
+  })
+})

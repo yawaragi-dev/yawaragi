@@ -4,6 +4,7 @@ import type { Locale } from '@/i18n/routing'
 import type { VisionProvider } from '@/lib/ai/vision/vision-provider'
 import { debugAdd } from '@/lib/debug/debug-log'
 import { isKanjiVariant } from '@/lib/sakenowa/kanji-variants'
+import { getPrefectureNames } from '@/lib/sakenowa/prefecture'
 import type { NearestBrand } from '@/lib/sakenowa/nearest-brands'
 import type { ResolveScannedLabelResult, ScannedLabel } from '@/lib/sakenowa/resolve-scanned-label'
 import type { Brand } from '@/lib/schemas/brand'
@@ -370,6 +371,7 @@ async function mapResolvedToState(
         breweryDivergence: {
           ...resolved.breweryDivergence,
           storedRomaji: bestRomaji(resolved.brewery),
+          storedPrefecture: getPrefectureNames(resolved.brewery.areaId)?.nameEn ?? null,
         },
         sakeKanji: preferExtractedWhenVariant(extraction.name_ja, resolved.sake.nameKanji),
         sakeRomaji: bestRomaji(resolved.sake),
@@ -432,7 +434,11 @@ async function withNearestCandidates<S extends ScanActionState>(
   const toCandidate = ({ row, reason, sameBrewery }: NearestBrand): ScanCandidate => ({
     ...sakeRefOf(
       row,
-      row.breweryKanji === null ? null : { nameKanji: row.breweryKanji, nameRomaji: row.breweryRomaji, areaId: row.areaId },
+      // A placeholder brewery arrives with no names but its prefecture; `sakeRefOf`
+      // keeps the prefecture and names no brewery.
+      row.breweryKanji === null && row.areaId === null
+        ? null
+        : { nameKanji: row.breweryKanji ?? '', nameRomaji: row.breweryRomaji, areaId: row.areaId },
       locale,
     ),
     reason,
@@ -494,7 +500,7 @@ async function withEarlierRead(
 
 /** One row of the disambiguation list, its brewery and prefecture denormalised onto it. */
 function ambiguousCandidate(c: { sake: Brand; brewery: Brewery }, locale: Locale) {
-  return { ...sakeRefOf(c.sake, c.brewery, locale), breweryKanji: c.brewery.nameKanji }
+  return sakeRefOf(c.sake, c.brewery, locale)
 }
 
 /**

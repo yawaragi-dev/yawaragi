@@ -22,6 +22,9 @@ const brewery: Brewery = {
   areaId: 15, // Niigata
 }
 
+// Sakenowa's "maker not on record" row for Niigata (#419): an area, no name.
+const niigataPlaceholder: Brewery = { ...brewery, breweryId: 798, name: '', nameKanji: '', nameRomaji: null }
+
 const chart: FlavorChart = {
   source: 'sakenowa',
   brandId: 1,
@@ -59,13 +62,20 @@ describe('sakePageModel — the Sakenowa credit', () => {
     expect(sakePageModel(input()).showSakenowaAttribution).toBe(true)
   })
 
-  it('does not credit Sakenowa for a hidden placeholder brewery when nothing shown is theirs', () => {
+  it('credits Sakenowa for the prefecture a placeholder brewery records, even when nothing else shown is theirs', () => {
     const model = sakePageModel(
       input({
         brand: { ...brand, source: 'user_corrected' },
-        brewery: { ...brewery, name: '', nameKanji: '', nameRomaji: null },
+        brewery: niigataPlaceholder,
         flavorChart: null,
       }),
+    )
+    expect(model.showSakenowaAttribution).toBe(true)
+  })
+
+  it('does not credit Sakenowa when the catalogue has no brewery and nothing shown is theirs', () => {
+    const model = sakePageModel(
+      input({ brand: { ...brand, source: 'user_corrected' }, brewery: null, flavorChart: null }),
     )
     expect(model.showSakenowaAttribution).toBe(false)
   })
@@ -88,13 +98,26 @@ describe('sakePageModel — the brewery line', () => {
     expect(line?.prefecture?.nameEn).toBe('Niigata')
   })
 
-  it('hides the brewery when Sakenowa only knows a placeholder for it', () => {
-    const model = sakePageModel(input({ brewery: { ...brewery, name: '', nameKanji: '', nameRomaji: null } }))
+  it('names no brewery when Sakenowa only knows a placeholder for it, and says the maker is not recorded', () => {
+    const model = sakePageModel(input({ brewery: niigataPlaceholder }))
     expect(model.brewery).toBeNull()
+    expect(model.breweryNotRecorded?.prefecture?.nameEn).toBe('Niigata')
+  })
+
+  it('says the maker is not recorded, made outside Japan, for the "other" placeholder', () => {
+    const model = sakePageModel(input({ brewery: { ...niigataPlaceholder, breweryId: 1147, areaId: 0 } }))
+    expect(model.breweryNotRecorded?.prefecture?.nameEn).toBe('International')
+    expect(model.region).toBeNull()
+  })
+
+  it('does not say the maker is not recorded for a named brewery', () => {
+    expect(sakePageModel(input()).breweryNotRecorded).toBeNull()
   })
 
   it('hides the brewery when the catalogue has none for this sake', () => {
-    expect(sakePageModel(input({ brewery: null })).brewery).toBeNull()
+    const model = sakePageModel(input({ brewery: null }))
+    expect(model.brewery).toBeNull()
+    expect(model.breweryNotRecorded).toBeNull()
   })
 
   it('names the brewery older bottles carry when a rename is on record', () => {
@@ -118,9 +141,12 @@ describe('sakePageModel — the region line', () => {
     expect(sakePageModel(input({ brewery: { ...brewery, areaId: 13 } })).region).toBeNull()
   })
 
-  it('shows no region line when the brewery is hidden', () => {
-    const model = sakePageModel(input({ brewery: { ...brewery, name: '', nameKanji: '', nameRomaji: null } }))
-    expect(model.region).toBeNull()
+  it('keeps the region line for a placeholder brewery, whose prefecture is known', () => {
+    expect(sakePageModel(input({ brewery: niigataPlaceholder })).region?.prefectureEn).toBe('Niigata')
+  })
+
+  it('shows no region line when the catalogue has no brewery for the sake', () => {
+    expect(sakePageModel(input({ brewery: null })).region).toBeNull()
   })
 })
 
@@ -154,10 +180,8 @@ describe('sakePageModel — the brewery section', () => {
     expect(sakePageModel(input({ siblings: [] })).brewerySection).toBeNull()
   })
 
-  it('leaves the section out for a hidden brewery, whatever its siblings', () => {
-    const model = sakePageModel(
-      input({ brewery: { ...brewery, name: '', nameKanji: '', nameRomaji: null }, siblings: [sibling] }),
-    )
+  it('does not offer a placeholder\'s other sakes, which are unrelated bottles from one prefecture', () => {
+    const model = sakePageModel(input({ brewery: niigataPlaceholder, siblings: [sibling] }))
     expect(model.brewerySection).toBeNull()
   })
 })

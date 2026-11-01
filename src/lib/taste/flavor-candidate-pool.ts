@@ -5,6 +5,7 @@ import type { Pool } from 'pg'
 import { publicQuery } from '@/lib/supabase/public-query'
 import { getServerDbPool } from '@/lib/supabase/server-client'
 import { getPrefectureNames } from '@/lib/sakenowa/prefecture'
+import { shownBreweryNames } from '@/lib/schemas/brewery'
 import type { FlavorCandidate } from '@/lib/taste/taste-recommender'
 
 /**
@@ -40,11 +41,12 @@ interface PoolQueryRow {
 
 /** Pure row → candidate mapper (Number-converts the axes). Exported for tests. */
 export function poolRowToCandidate(row: PoolQueryRow): FlavorCandidatePoolRow {
+  const { breweryKanji, breweryRomaji } = shownBreweryNames(row.brewery_kanji, row.brewery_romaji)
   return {
     brandId: row.brand_id,
     nameJa: row.name_kanji,
     nameRomaji: row.name_romaji,
-    brewery: row.brewery_romaji ?? row.brewery_kanji,
+    brewery: breweryRomaji ?? breweryKanji,
     prefecture: row.area_id === null ? null : (getPrefectureNames(row.area_id)?.nameEn ?? null),
     f1: Number(row.f1),
     f2: Number(row.f2),

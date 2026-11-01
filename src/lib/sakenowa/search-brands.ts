@@ -6,6 +6,7 @@ import { kanaToRomaji } from '@/lib/sakenowa/kana-romaji'
 import { getRomajiIndex, type RomajiIndex } from '@/lib/sakenowa/romaji-index'
 import { looseRomajiKey, romajiKey } from '@/lib/sakenowa/romaji-key'
 import { isCatalogueQuerySpecific } from './catalogue-query'
+import { shownBreweryNames } from '@/lib/schemas/brewery'
 
 /**
  * Deterministic sake search over the public `brands` mirror (ADR-0010, pg-direct)
@@ -599,8 +600,7 @@ function toCatalogueResult(row: CatalogueSearchRow): CatalogueSearchResult {
     brandId: row.brand_id,
     nameKanji: row.name_kanji,
     nameRomaji: row.name_romaji,
-    breweryKanji: row.brewery_kanji,
-    breweryRomaji: row.brewery_romaji,
+    ...shownBreweryNames(row.brewery_kanji, row.brewery_romaji),
     // 0 is Sakenowa's "Other", a brewery outside the 47 prefectures.
     areaId: row.area_id && row.area_id > 0 ? row.area_id : null,
   }

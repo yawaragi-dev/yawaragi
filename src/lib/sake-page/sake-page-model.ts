@@ -44,8 +44,16 @@ export interface SakePageModel {
    * the ingest has not produced a transliteration yet (#121).
    */
   displayName: string
-  /** The brewery line, or `null` when the page hides the brewery. */
+  /** The brewery line, or `null` when the catalogue names no brewery. */
   brewery: BreweryLine | null
+  /**
+   * #419: set where the catalogue files the sake under Sakenowa's "maker not
+   * on record" placeholder (one per prefecture, plus one for "other"). The
+   * page says so — "Brewery not recorded · Hokkaido" — instead of naming a
+   * brewery, and keeps the prefecture, which the placeholder does know.
+   * `null` otherwise, including when the catalogue has no brewery row at all.
+   */
+  breweryNotRecorded: { prefecture: PrefectureNames | null } | null
   /**
    * §9.9 "The brewery": the same line as {@link brewery}, or `null` when the
    * section is left out. §9.9 is "story plus a row of its other sakes. Hidden
@@ -81,9 +89,11 @@ export interface SakePageModel {
 
 export function sakePageModel(input: SakePageInput): SakePageModel {
   const { brand, flavorChart } = input
-  // Hide the brewery entirely for Sakenowa placeholder rows (~48 in the
-  // dataset). "Brewery:" with no name reads worse than no section.
-  const shown = input.brewery !== null && !isPlaceholderBrewery(input.brewery) ? input.brewery : null
+  // Sakenowa's placeholder rows (48: one per prefecture, one for "other") are
+  // not breweries (#419): no name, no "other sakes of this brewery" (they are
+  // unrelated bottles from one prefecture). Only their prefecture is shown.
+  const placeholder = input.brewery !== null && isPlaceholderBrewery(input.brewery) ? input.brewery : null
+  const shown = input.brewery !== null && placeholder === null ? input.brewery : null
   const brewery: BreweryLine | null = shown && {
     nameKanji: shown.nameKanji,
     nameRomaji: shown.nameRomaji,
@@ -95,17 +105,19 @@ export function sakePageModel(input: SakePageInput): SakePageModel {
 
   // ADR-0014: the Sakenowa credit shows only when at least one RENDERED
   // record on the page is Sakenowa-sourced. A hidden brewery is not rendered.
+  // A placeholder's prefecture is rendered, so its row counts.
+  const breweryNotRecorded = placeholder && { prefecture: getPrefectureNames(placeholder.areaId) }
   const renderedSources = new Set<string>([brand.source])
   if (shown) renderedSources.add(shown.source)
+  if (placeholder) renderedSources.add(placeholder.source)
   if (flavorChart) renderedSources.add(flavorChart.source)
 
-  // A hidden brewery has no prefecture, so no region line either.
-  const regionSlug = shown ? regionEntryFor(shown.areaId) : null
+  // The region line follows the prefecture, which a placeholder knows too.
+  const prefecture = brewery?.prefecture ?? breweryNotRecorded?.prefecture ?? null
+  const regionSlug = prefecture && input.brewery ? regionEntryFor(input.brewery.areaId) : null
   const regionLead = regionSlug ? firstSentence(input.regionAnswer(regionSlug)) : ''
   const region: RegionLine | null =
-    regionSlug && regionLead && brewery?.prefecture
-      ? { slug: regionSlug, lead: regionLead, prefectureEn: brewery.prefecture.nameEn }
-      : null
+    regionSlug && regionLead && prefecture ? { slug: regionSlug, lead: regionLead, prefectureEn: prefecture.nameEn } : null
 
   const brewerySection = brewery && input.siblings.length > 0 ? brewery : null
   const showRomajiDisclosure =
@@ -116,6 +128,7 @@ export function sakePageModel(input: SakePageInput): SakePageModel {
   return {
     displayName: brand.nameRomaji ?? brand.nameKanji,
     brewery,
+    breweryNotRecorded,
     brewerySection,
     showRomajiDisclosure,
     region,

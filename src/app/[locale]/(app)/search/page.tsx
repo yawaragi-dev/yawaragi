@@ -457,9 +457,14 @@ function SearchResultRow({
                 {match.breweryRomaji && <span>({match.breweryRomaji})</span>}
               </>
             ) : (
-              // ~48 brands point at a placeholder brewery row. Saying so beats
-              // an empty line that reads as a rendering bug.
-              <span>{breweryUnknown}</span>
+              // 265 sakes sit under Sakenowa's "maker not on record" placeholder
+              // (#419), one per prefecture. Saying so, with the prefecture it
+              // does record, beats an empty line that reads as a rendering bug.
+              <span>
+                {[breweryUnknown, match.areaId ? getPrefectureNames(match.areaId)?.nameEn : null]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </span>
             )}
           </span>
           {alsoSoldAs && (

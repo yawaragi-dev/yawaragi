@@ -2,7 +2,7 @@ import 'server-only'
 import { debugAdd } from '@/lib/debug/debug-log'
 import type { Brand } from '@/lib/schemas/brand'
 import { expandBrandVariants, expandBreweryVariants } from './brewery-variants'
-import type { Brewery } from '@/lib/schemas/brewery'
+import { isPlaceholderBrewery, type Brewery } from '@/lib/schemas/brewery'
 import { latinBreweryAgrees, namesOverlapping } from './label-match-rules'
 import { romajiKey } from './romaji-key'
 import {
@@ -68,10 +68,18 @@ function sameBreweryAsRead(a: string, b: string): boolean {
   return expandBreweryVariants(a).some((v) => variants.includes(v))
 }
 
-/** The one brewery a result points at; none for a list that spans several. */
+/**
+ * The one brewery a result points at; none for a list that spans several,
+ * and none for Sakenowa's "maker not on record" placeholder (#419): two
+ * sakes filed under it share a prefecture, not a maker.
+ */
 function breweryIdOf(resolved: ResolveScannedLabelResult): number | null {
+  if (resolved.kind === 'matched_brand_only' || resolved.kind === 'matched_brewery_only') {
+    return isPlaceholderBrewery(resolved.brewery) ? null : resolved.sake.breweryId
+  }
   if (isOneSake(resolved)) return resolved.sake.breweryId
   if (resolved.kind !== 'ambiguous') return null
+  if (resolved.candidates.some((c) => isPlaceholderBrewery(c.brewery))) return null
   const ids = new Set(resolved.candidates.map((c) => c.brewery.breweryId))
   return ids.size === 1 ? [...ids][0] : null
 }

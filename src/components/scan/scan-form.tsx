@@ -42,6 +42,7 @@ import { getPathname } from '@/i18n/navigation'
 import { CameraCapture } from '@/components/scan/camera-capture'
 import { ProvenanceBadgeView } from '@/components/sake/provenance-badge'
 import { resolveBadgeKind } from '@/lib/provenance/policy'
+import { isPlaceholderBrewery } from '@/lib/schemas/brewery'
 // Per ADR-0014, attribution should render conditionally on the
 // rendered-source-set. In scan-form we render brewery kanji from a
 // Sakenowa-sourced brewery row in every status that mounts
@@ -699,14 +700,19 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
     // Send again (design v1.9 S5, 114). See `connectionStatus`.
     if (connectionFailure) return null
     switch (view.status) {
-      case 'matched_brand_only':
+      case 'matched_brand_only': {
+        // #419: the catalogue files this sake under a "maker not on record"
+        // placeholder, so there is no brewery to disagree with the label's.
+        const breweryNotRecorded = isPlaceholderBrewery({ nameKanji: view.breweryDivergence.stored })
         return (
           <ScanOutcome
             testId="scan-result-matched-brand-only"
             icon={icon(ArrowsDownUp)}
             kicker={tOutcome('brandOnly.kicker')}
             title={tOutcome('brandOnly.title')}
-            body={tOutcome('brandOnly.body', { line: view.sakeRomaji ?? view.sakeKanji })}
+            body={tOutcome(breweryNotRecorded ? 'brandOnly.bodyBreweryNotRecorded' : 'brandOnly.body', {
+              line: view.sakeRomaji ?? view.sakeKanji,
+            })}
             onRescan={onPickClick}
             suggestOtherSide
             canKeep={canLog}
@@ -725,13 +731,16 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
                   href: view.sakeHref,
                   name: view.sakeRomaji ?? view.sakeKanji,
                   kanji: view.sakeRomaji ? view.sakeKanji : null,
-                  where: view.breweryDivergence.storedRomaji ?? view.breweryDivergence.stored,
+                  where: breweryNotRecorded
+                    ? join(tOutcome('brandOnly.breweryNotRecorded'), view.breweryDivergence.storedPrefecture)
+                    : (view.breweryDivergence.storedRomaji ?? view.breweryDivergence.stored),
                   reason: tOutcome('brandOnly.reason', { extracted: view.breweryDivergence.extracted }),
                 },
               ],
             }}
           />
         )
+      }
       case 'matched_brewery_only':
         return (
           <ScanOutcome
@@ -769,7 +778,10 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
         )
       case 'ambiguous': {
         const candidates = Array.isArray(view.candidates) ? view.candidates : []
-        const sharedBrewery = new Set(candidates.map((c) => c.breweryKanji)).size === 1
+        // A placeholder brewery has no name (#419): two sakes "under" it share
+        // a prefecture, not a maker.
+        const sharedBrewery =
+          candidates.every((c) => c.breweryKanji !== null) && new Set(candidates.map((c) => c.breweryKanji)).size === 1
         return (
           <ScanOutcome
             testId="scan-result-ambiguous"
@@ -798,7 +810,9 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
                 where: join(c.breweryRomaji ?? c.breweryKanji, c.prefectureName),
                 reason: sharedBrewery
                   ? tOutcome('ambiguous.reasonSharedBrewery')
-                  : tOutcome('ambiguous.reasonName', { brewery: c.breweryRomaji ?? c.breweryKanji }),
+                  : c.breweryKanji === null
+                    ? tOutcome('ambiguous.reasonNameOnly')
+                    : tOutcome('ambiguous.reasonName', { brewery: c.breweryRomaji ?? c.breweryKanji }),
               })),
             }}
           />

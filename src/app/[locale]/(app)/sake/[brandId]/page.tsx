@@ -268,6 +268,23 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
                 )}
               </p>
             )}
+            {model.breweryNotRecorded && (
+              // #419: Sakenowa files this sake under its "maker not on record"
+              // placeholder. Say so, with the prefecture it does record.
+              <p className="text-body text-ash-600" data-testid="bottle-brewery-not-recorded">
+                <span>{t('breweryNotRecorded')}</span>
+                {model.breweryNotRecorded.prefecture && (
+                  <>
+                    <span className="mx-1.5 text-ash-500" aria-hidden="true">
+                      ·
+                    </span>
+                    <span lang="en" data-testid="prefecture-name-en">
+                      {model.breweryNotRecorded.prefecture.nameEn}
+                    </span>
+                  </>
+                )}
+              </p>
+            )}
             {formerBrewery && (
               <p className="text-meta text-ash-600" data-testid="bottle-former-brewery">
                 {t.rich('formerBrewery', {
