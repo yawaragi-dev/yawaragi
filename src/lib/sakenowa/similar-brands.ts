@@ -4,6 +4,7 @@ import { findSimilarByFlavor, type FlavorAxes } from '@/lib/flavor/flavor-simila
 import { FlavorChartSource } from '@/lib/schemas/flavor-chart'
 import { publicQuery } from '@/lib/supabase/public-query'
 import { getServerDbPool } from '@/lib/supabase/server-client'
+import { shownBreweryNames } from '@/lib/schemas/brewery'
 
 /**
  * §6 "Similar sakes": the nearest brands to one brand, by flavour.
@@ -193,8 +194,7 @@ function toSimilarBrand(row: CandidateRow): SimilarBrand {
     brandId: row.brand_id,
     nameKanji: row.name_kanji,
     nameRomaji: row.name_romaji,
-    breweryKanji: row.brewery_kanji,
-    breweryRomaji: row.brewery_romaji,
+    ...shownBreweryNames(row.brewery_kanji, row.brewery_romaji),
     chartSource: FlavorChartSource.parse(row.chart_source),
   }
 }

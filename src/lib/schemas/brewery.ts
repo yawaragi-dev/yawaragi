@@ -41,8 +41,29 @@ export type Brewery = z.infer<typeof BrewerySchema>
 
 export const parseBrewery = (input: unknown): Brewery => BrewerySchema.parse(input)
 
-// `true` when the row is one of Sakenowa's placeholder breweries (empty
-// name marker). The page suppresses the brewery section in this case;
-// future code should branch on this rather than testing `name === ''`
-// inline.
-export const isPlaceholderBrewery = (brewery: Brewery): boolean => brewery.name === ''
+/**
+ * `true` when the row is one of Sakenowa's placeholder breweries: 48 rows,
+ * one per prefecture (ids 784–830) and one for "other" (1147), that stand
+ * for "maker not on record" (#419). They carry an area and no name at all —
+ * `name`, `name_kanji` and `name_romaji` are all empty — so the empty kanji
+ * name is the marker. A placeholder is not a brewery: never show it as one,
+ * never count it as one, and never let it agree with a brewery read on a
+ * label. Branch on this rather than testing `name === ''` inline.
+ */
+export const isPlaceholderBrewery = (brewery: { readonly nameKanji: string }): boolean =>
+  brewery.nameKanji.trim() === ''
+
+/**
+ * A list row's brewery names as the row may show them: both `null` where the
+ * catalogue has no brewery for the sake (a LEFT JOIN that found none) or only
+ * a placeholder. Every row that renders "brewery · prefecture" then shows the
+ * prefecture alone, and nothing reads an empty name as a brewery.
+ */
+export function shownBreweryNames(
+  kanji: string | null,
+  romaji: string | null,
+): { breweryKanji: string | null; breweryRomaji: string | null } {
+  return kanji === null || isPlaceholderBrewery({ nameKanji: kanji })
+    ? { breweryKanji: null, breweryRomaji: null }
+    : { breweryKanji: kanji, breweryRomaji: romaji }
+}

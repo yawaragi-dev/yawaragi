@@ -27,6 +27,12 @@ const AKITA_SHURUI: Brewery = { breweryId: 60, name: 'Akita Shurui Seizo', nameK
 const KIKU: Brand = { brandId: 300, name: 'Kiku-Masamune', nameKanji: '菊正宗', nameRomaji: 'Kiku-Masamune', breweryId: 70, source: 'sakenowa' }
 const KIKU_BREWERY: Brewery = { breweryId: 70, name: 'Kiku-Masamune Sake Brewing', nameKanji: '菊正宗酒造', nameRomaji: 'Kiku-Masamune Sake Brewing', areaId: 27, source: 'sakenowa' }
 
+// #419: Sakenowa files sakes whose maker it does not know under one nameless
+// row per prefecture. 倶知安 sits under Hokkaidō's, though its label names 二世古酒造.
+const KUTCHAN: Brand = { brandId: 500, name: 'Kutchan', nameKanji: '倶知安', nameRomaji: 'Kutchan', breweryId: 784, source: 'sakenowa' }
+const HOKKAIDO_PLACEHOLDER: Brewery = { breweryId: 784, name: '', nameKanji: '', nameRomaji: null, areaId: 1, source: 'sakenowa' }
+const OTHER_HOKKAIDO_SAKE: Brand = { brandId: 501, name: 'Other', nameKanji: '倶知安 別', nameRomaji: null, breweryId: 784, source: 'sakenowa' }
+
 const DASSAI_READ = { name_ja: '獺祭', brewery_ja: '旭酒造', confidence: 0.95 }
 const EARLIER_READ: EarlierScanRead = { name_ja: '人気一', brewery_ja: '人気酒造', other_names: [], confidence: 0.7 }
 
@@ -232,6 +238,71 @@ describe('readLabel — where a read lands', () => {
     expect(state.candidates).toEqual([
       expect.objectContaining({ sakeHref: '/de/sake/100?from=scan', nameKanji: '獺祭', breweryRomaji: 'Asahi Shuzo', prefectureName: 'Yamaguchi' }),
       expect.objectContaining({ sakeHref: '/de/sake/300?from=scan', breweryKanji: '菊正宗酒造', prefectureName: 'Osaka' }),
+    ])
+  })
+
+  it('names no brewery for a sure match the catalogue files under a placeholder', async () => {
+    const catalogue = fakeCatalogue({
+      resolved: [{ kind: 'exact', sake: KUTCHAN }],
+      breweryOf: vi.fn(async () => HOKKAIDO_PLACEHOLDER),
+    })
+    const read = readsAs({ name_ja: '倶知安', brewery_ja: '二世古酒造', confidence: 0.95 })
+
+    const { state } = await scan(deps(read, neverAsked(), catalogue))
+
+    expect(state).toMatchObject({ status: 'matched', brandId: 500, breweryRomaji: null })
+  })
+
+  it('says the catalogue records no brewery, with its prefecture, when only the brand matched a sake under a placeholder', async () => {
+    const catalogue = fakeCatalogue({
+      resolved: [{
+        kind: 'matched_brand_only',
+        sake: KUTCHAN,
+        brewery: HOKKAIDO_PLACEHOLDER,
+        breweryDivergence: { extracted: '二世古酒造', stored: '' },
+        query: { nameJa: '倶知安', breweryJa: '二世古酒造' },
+      }],
+    })
+    const read = readsAs({ name_ja: '倶知安', brewery_ja: '二世古酒造', confidence: 0.9 })
+
+    const { state } = await scan(deps(read, read, catalogue))
+
+    expect(state).toMatchObject({
+      status: 'matched_brand_only',
+      breweryDivergence: { extracted: '二世古酒造', stored: '', storedRomaji: null, storedPrefecture: 'Hokkaido' },
+    })
+  })
+
+  it('lists sakes under a placeholder by prefecture alone, never as one shared brewery', async () => {
+    const catalogue = fakeCatalogue({
+      resolved: [{
+        kind: 'ambiguous',
+        candidates: [{ sake: KUTCHAN, brewery: HOKKAIDO_PLACEHOLDER }, { sake: OTHER_HOKKAIDO_SAKE, brewery: HOKKAIDO_PLACEHOLDER }],
+        query: { nameJa: '倶知安', breweryJa: '二世古酒造' },
+      }],
+    })
+    const read = readsAs({ name_ja: '倶知安', brewery_ja: '二世古酒造', confidence: 0.9 })
+
+    const { state } = await scan(deps(read, read, catalogue))
+
+    expect(state.status === 'ambiguous' && state.candidates).toEqual([
+      expect.objectContaining({ brandId: 500, breweryKanji: null, breweryRomaji: null, prefectureName: 'Hokkaido' }),
+      expect.objectContaining({ brandId: 501, breweryKanji: null, breweryRomaji: null, prefectureName: 'Hokkaido' }),
+    ])
+  })
+
+  it('keeps the prefecture of a "Did you mean" sake whose brewery is not recorded', async () => {
+    const catalogue = fakeCatalogue({
+      resolved: [NO_MATCH],
+      nearest: vi.fn(async () => [
+        { row: { brandId: 500, nameKanji: '倶知安', nameRomaji: 'Kutchan', breweryKanji: null, breweryRomaji: null, areaId: 1 }, reason: 'name' as const, sameBrewery: false },
+      ]),
+    })
+
+    const { state } = await scan(deps(readsAs(DASSAI_READ), readsAs(DASSAI_READ), catalogue))
+
+    expect(state.status === 'no_match' && state.candidates).toEqual([
+      expect.objectContaining({ brandId: 500, breweryKanji: null, breweryRomaji: null, prefectureName: 'Hokkaido' }),
     ])
   })
 

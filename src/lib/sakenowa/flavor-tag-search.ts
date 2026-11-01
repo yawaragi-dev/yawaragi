@@ -4,6 +4,7 @@ import type { Pool, PoolClient } from 'pg'
 import { getServerDbPool } from '@/lib/supabase/server-client'
 import { publicQuery } from '@/lib/supabase/public-query'
 import type { CatalogueSearchResult } from '@/lib/sakenowa/search-brands'
+import { shownBreweryNames } from '@/lib/schemas/brewery'
 
 /** A–Z and possibly long (甘味 sits on ~1,400 sakes); past this many it says "first". */
 export const MAX_FLAVOR_TAG_RESULTS = 200
@@ -76,8 +77,7 @@ export async function sakesTaggedWith(
         brandId: row.brand_id,
         nameKanji: row.name_kanji,
         nameRomaji: row.name_romaji,
-        breweryKanji: row.brewery_kanji,
-        breweryRomaji: row.brewery_romaji,
+        ...shownBreweryNames(row.brewery_kanji, row.brewery_romaji),
         tagKanji: row.tag_name ?? kanjiById.get(row.tag_id) ?? '',
       })),
     }

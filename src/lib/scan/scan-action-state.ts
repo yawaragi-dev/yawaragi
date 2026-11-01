@@ -113,8 +113,13 @@ export type ScanReading =
        * Sakenowa brewery has neither a `nameRomaji` nor a `name`
        * (rare). No romaji for `extracted` — it's the model's
        * Japanese-only output.
+       *
+       * `stored` is empty where the catalogue files the sake under Sakenowa's
+       * "maker not on record" placeholder (#419): then nothing contradicts the
+       * label's brewery, the catalogue just names none, and the card says so
+       * with `storedPrefecture` (absent on states cached before it existed).
        */
-      breweryDivergence: { extracted: string; stored: string; storedRomaji: string | null }
+      breweryDivergence: { extracted: string; stored: string; storedRomaji: string | null; storedPrefecture?: string | null }
       /**
        * Canonical brand kanji from Sakenowa. Displayed prominently in
        * the divergence card. We prefer the catalogue form over
@@ -193,10 +198,11 @@ export type ScanReading =
        * Each with its brewery's prefecture (e.g. "Gunma"), from the static
        * `manual_curation` area map, so a visitor facing same-brand-across-
        * breweries collisions (Hakushika: Ibaraki vs Hyogo) can pick by
-       * region. The brewery is always known here: every ambiguous-producing
-       * pass joins both sides.
+       * region. Every ambiguous-producing pass joins both sides, but the
+       * brewery may be Sakenowa's "maker not on record" placeholder (#419):
+       * its names are then null and only the prefecture is shown.
        */
-      candidates: readonly (SakeRef & { breweryKanji: string })[]
+      candidates: readonly SakeRef[]
       /** Set when this photo and the previous one together point at a sake. */
       bothPhotos?: BothPhotosGuess
     }

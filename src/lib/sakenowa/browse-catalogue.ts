@@ -7,6 +7,7 @@ import { publicQuery } from '@/lib/supabase/public-query'
 import { catalogueAxisStats } from '@/lib/taste/catalogue-mean'
 import { flavorBound, type BrowseFilter } from '@/lib/sakenowa/browse-filter'
 import type { CatalogueSearchResult } from '@/lib/sakenowa/search-brands'
+import { shownBreweryNames } from '@/lib/schemas/brewery'
 
 /** A filtered list is A–Z and can be long; past this many it says "first". */
 export const MAX_BROWSE_RESULTS = 200
@@ -67,8 +68,7 @@ export async function browseCatalogue(filter: BrowseFilter): Promise<BrowseOutco
         brandId: row.brand_id,
         nameKanji: row.name_kanji,
         nameRomaji: row.name_romaji,
-        breweryKanji: row.brewery_kanji,
-        breweryRomaji: row.brewery_romaji,
+        ...shownBreweryNames(row.brewery_kanji, row.brewery_romaji),
       })),
     }
   } catch {

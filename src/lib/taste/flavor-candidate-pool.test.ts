@@ -53,4 +53,22 @@ describe('poolRowToCandidate', () => {
     })
     expect(candidate.nameRomaji).toBeNull()
   })
+
+  it("names no brewery on the card for a sake Sakenowa files under a placeholder, keeping its prefecture (#419)", () => {
+    const candidate = poolRowToCandidate({
+      brand_id: 500,
+      name_kanji: '倶知安',
+      name_romaji: 'Kutchan',
+      brewery_kanji: '',
+      brewery_romaji: null,
+      area_id: 1,
+      f1: '0',
+      f2: '0',
+      f3: '0',
+      f4: '0',
+      f5: '0',
+      f6: '0',
+    })
+    expect(candidate).toMatchObject({ brewery: null, prefecture: 'Hokkaido' })
+  })
 })

@@ -4,13 +4,15 @@ import { publicQuery } from '@/lib/supabase/public-query'
 import { getServerDbPool } from '@/lib/supabase/server-client'
 import type { BottleFactsLookup } from '@/lib/collection/bottle-history-stats'
 import type { BottleEvent } from '@/lib/schemas/bottle-event'
+import { isPlaceholderBrewery } from '@/lib/schemas/brewery'
 import type { Expression } from '@/lib/schemas/expression'
 import type { JournalEntry } from '@/lib/schemas/journal-entry'
 import type { EntryFacts } from './journal-filter'
 
 interface BrandPlace {
   areaId: number | null
-  brewery: { id: number; nameKanji: string; nameRomaji: string | null }
+  /** `null` for Sakenowa's "maker not on record" placeholder: the prefecture is known, the brewery is not. */
+  brewery: { id: number; nameKanji: string; nameRomaji: string | null } | null
 }
 
 /**
@@ -44,7 +46,10 @@ export async function brandPlaces(brandIds: readonly number[]): Promise<Map<numb
         {
           // areaId 0 is Sakenowa's "Other": a brewery outside Japan's prefectures.
           areaId: row.area_id > 0 ? row.area_id : null,
-          brewery: { id: row.brewery_id, nameKanji: row.name_kanji, nameRomaji: row.name_romaji },
+          // A placeholder is no brewery: not a filter chip, not one of "your breweries".
+          brewery: isPlaceholderBrewery({ nameKanji: row.name_kanji })
+            ? null
+            : { id: row.brewery_id, nameKanji: row.name_kanji, nameRomaji: row.name_romaji },
         },
       ]),
     )

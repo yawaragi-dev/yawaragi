@@ -4,6 +4,7 @@ import { publicQuery } from '@/lib/supabase/public-query'
 import { getServerDbPool } from '@/lib/supabase/server-client'
 import { generateKanjiVariants } from '@/lib/sakenowa/kanji-variants'
 import { stripLabelQualifiers } from '@/lib/sakenowa/search-brands'
+import { shownBreweryNames } from '@/lib/schemas/brewery'
 
 /**
  * §5a "Did you mean" for a scan that found nothing: the catalogue sakes
@@ -184,8 +185,7 @@ export async function findNearestBrandsFromPool(
       brandId: r.brand_id,
       nameKanji: r.name_kanji,
       nameRomaji: r.name_romaji,
-      breweryKanji: r.brewery_kanji,
-      breweryRomaji: r.brewery_romaji,
+      ...shownBreweryNames(r.brewery_kanji, r.brewery_romaji),
       areaId: r.area_id,
     })),
     options,

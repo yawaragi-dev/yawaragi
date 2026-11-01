@@ -2,7 +2,7 @@ import 'server-only'
 import type { Pool } from 'pg'
 import { debugAdd } from '@/lib/debug/debug-log'
 import type { Brand } from '@/lib/schemas/brand'
-import type { Brewery } from '@/lib/schemas/brewery'
+import { isPlaceholderBrewery, type Brewery } from '@/lib/schemas/brewery'
 import { publicQuery } from '@/lib/supabase/public-query'
 import { getServerDbPool } from '@/lib/supabase/server-client'
 import { type BrandRow, type BreweryRow, rowToBrand, rowToBrewery } from './db'
@@ -154,11 +154,14 @@ const SELECT_BRANDS_BY_KANJI_EXTRACTION = `
   -- on any one of its space-separated parts: Sakenowa stores some names with
   -- a space the label does not print ('仙台伊澤家 勝山酒造', 38 such
   -- breweries), and a label often prints only the last part ('勝山酒造').
+  -- A placeholder brewery (empty name, #419; see isPlaceholderBrewery) is no
+  -- brewery, so it never agrees with the one a label names.
   WHERE br.name_kanji = ANY($1) AND (
          b.name_kanji = ANY($2)
       OR regexp_replace(b.name_kanji, '[[:space:]　]+', '', 'g') = ANY($2)
       OR regexp_split_to_array(b.name_kanji, '[[:space:]　]+') && $2::text[]
     )
+    AND b.name_kanji <> ''
     AND br.superseded_at IS NULL
     AND b.superseded_at IS NULL
   ORDER BY br.brand_id
@@ -242,12 +245,14 @@ const SELECT_BRANDS_AND_BREWERIES_BY_BREWERY_KANJI = `
     b.confidence         AS brewery_confidence
   FROM brands br
   JOIN breweries b ON b.brewery_id = br.brewery_id
-  -- Spaces and parts as in the first pass.
+  -- Spaces and parts as in the first pass; a placeholder brewery (#419) is
+  -- not a brewery to find, and its "sakes" are unrelated bottles.
   WHERE (
          b.name_kanji = ANY($1)
       OR regexp_replace(b.name_kanji, '[[:space:]　]+', '', 'g') = ANY($1)
       OR regexp_split_to_array(b.name_kanji, '[[:space:]　]+') && $1::text[]
     )
+    AND b.name_kanji <> ''
     AND br.superseded_at IS NULL
     AND b.superseded_at IS NULL
   ORDER BY
@@ -436,7 +441,8 @@ export async function findSakeByExtraction(
         : byLatin.kind === 'ambiguous'
           ? byLatin.candidates
           : []
-    const agrees = (c: { brewery: Brewery }) => breweryKanjiAgrees(c.brewery.nameKanji, breweryVariants)
+    const agrees = (c: { brewery: Brewery }) =>
+      !isPlaceholderBrewery(c.brewery) && breweryKanjiAgrees(c.brewery.nameKanji, breweryVariants)
     let agreeing = collapseSameReading(candidates.filter(agrees))
     if (agreeing.length === 0) {
       // Nothing as spelled; voicing ignored, the brewery still has to agree.

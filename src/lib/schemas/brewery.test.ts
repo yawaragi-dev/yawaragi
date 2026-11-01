@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { BrewerySchema, isPlaceholderBrewery, parseBrewery, type Brewery } from './brewery'
+import { BrewerySchema, isPlaceholderBrewery, parseBrewery, shownBreweryNames, type Brewery } from './brewery'
 
 const validBrewery = {
   source: 'sakenowa',
@@ -74,24 +74,45 @@ describe('Brewery schema', () => {
 })
 
 describe('isPlaceholderBrewery', () => {
-  const base: Brewery = {
+  // Sakenowa's "maker not on record" row for Hokkaidō (#419).
+  const hokkaidoPlaceholder: Brewery = {
     source: 'sakenowa',
-    breweryId: 785,
+    breweryId: 784,
     name: '',
     nameKanji: '',
     nameRomaji: null,
-    areaId: 2,
+    areaId: 1,
   }
 
-  it('returns true for Sakenowa placeholder rows (empty name)', () => {
-    expect(isPlaceholderBrewery(base)).toBe(true)
+  it("recognises Sakenowa's per-prefecture placeholder, which has an area and no name", () => {
+    expect(isPlaceholderBrewery(hokkaidoPlaceholder)).toBe(true)
   })
 
-  it('returns false for fully-named breweries', () => {
-    expect(isPlaceholderBrewery({ ...base, name: '麗人酒造', nameKanji: '麗人酒造' })).toBe(false)
+  it('recognises the "other" placeholder outside the prefectures too', () => {
+    const other: Brewery = { ...hokkaidoPlaceholder, breweryId: 1147, areaId: 0 }
+    expect(isPlaceholderBrewery(other)).toBe(true)
   })
 
-  it('returns true regardless of areaId (placeholders cover both Japanese + foreign)', () => {
-    expect(isPlaceholderBrewery({ ...base, areaId: 0 })).toBe(true)
+  it('treats a name of only spaces as no name', () => {
+    expect(isPlaceholderBrewery({ nameKanji: ' 　' })).toBe(true)
+  })
+
+  it('does not mistake a named brewery for a placeholder', () => {
+    const niseko: Brewery = { ...hokkaidoPlaceholder, breweryId: 923, name: '二世古酒造', nameKanji: '二世古酒造' }
+    expect(isPlaceholderBrewery(niseko)).toBe(false)
+  })
+})
+
+describe('shownBreweryNames', () => {
+  it("keeps a real brewery's names for a list row", () => {
+    expect(shownBreweryNames('旭酒造', 'Asahi Shuzo')).toEqual({ breweryKanji: '旭酒造', breweryRomaji: 'Asahi Shuzo' })
+  })
+
+  it('names no brewery for a sake filed under a placeholder, so the row shows its prefecture alone', () => {
+    expect(shownBreweryNames('', null)).toEqual({ breweryKanji: null, breweryRomaji: null })
+  })
+
+  it('names no brewery where the catalogue has none for the sake', () => {
+    expect(shownBreweryNames(null, null)).toEqual({ breweryKanji: null, breweryRomaji: null })
   })
 })
