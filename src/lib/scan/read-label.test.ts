@@ -480,8 +480,8 @@ describe('readLabel — two bottles in one photo (design v1.7 §5a, 74)', () => 
     confidence: 0.8,
     bottle_count: 2,
   }
-  const left = { position: 'left', name_ja: '獺祭', brewery_ja: '旭酒造', brewery_printed: true, confidence: 0.9 }
-  const right = { position: 'right', name_ja: '高清水', brewery_ja: '秋田酒類製造', brewery_printed: false, confidence: 0.8 }
+  const left = { position: 'left', drink: 'sake', name_ja: '獺祭', brewery_printed: true, brewery_ja: '旭酒造', name_romaji: 'Dassai', brewery_romaji: 'Asahi Shuzō', confidence: 0.9 }
+  const right = { position: 'right', drink: 'unknown', name_ja: '高清水', brewery_printed: false, brewery_ja: '秋田酒類製造', name_romaji: 'Takashimizu', brewery_romaji: 'Akita Shurui Seizō', confidence: 0.8 }
   const byName = (name: string): ResolveScannedLabelResult =>
     name === '獺祭' ? EXACT_DASSAI : name === '高清水' ? { kind: 'exact', sake: TAKASHIMIZU } : NO_MATCH
 

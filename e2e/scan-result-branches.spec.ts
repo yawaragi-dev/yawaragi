@@ -47,7 +47,16 @@ interface Injection {
   drink?: 'sake' | 'shochu' | 'awamori' | 'umeshu' | 'liqueur' | 'other' | 'unknown'
   bottling?: { product_name?: string; grade?: string; styles?: string[]; polishing_ratio?: number }
   bottle_count?: number
-  bottles?: { position: string; name_ja: string; brewery_ja: string; brewery_printed?: boolean; name_romaji?: string; confidence: number }[]
+  bottles?: {
+    position: string
+    drink: string
+    name_ja: string
+    brewery_printed: boolean
+    brewery_ja: string
+    name_romaji: string
+    brewery_romaji: string
+    confidence: number
+  }[]
 }
 
 // A read the scan cannot stand on: low confidence, and a brewery that does
@@ -736,8 +745,17 @@ test.describe('scan result branches (#109 PR B)', () => {
         subject: 'several_bottles',
         bottle_count: 2,
         bottles: [
-          { position: 'left', name_ja: '獺祭', brewery_ja: '旭酒造', brewery_printed: true, confidence: 0.9 },
-          { position: 'right', name_ja: '架空銘柄零一', brewery_ja: '架空酒造零', name_romaji: 'Kakū Meigara', confidence: 0.8 },
+          { position: 'left', drink: 'sake', name_ja: '獺祭', brewery_printed: true, brewery_ja: '旭酒造', name_romaji: 'Dassai', brewery_romaji: 'Asahi Shuzō', confidence: 0.9 },
+          {
+            position: 'right',
+            drink: 'unknown',
+            name_ja: '架空銘柄零一',
+            brewery_printed: false,
+            brewery_ja: '架空酒造零',
+            name_romaji: 'Kakū Meigara',
+            brewery_romaji: 'Kakū Shuzō',
+            confidence: 0.8,
+          },
         ],
       }),
     ])

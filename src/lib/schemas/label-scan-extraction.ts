@@ -118,15 +118,20 @@ export type ScanBottlePosition = z.infer<typeof ScanBottlePositionSchema>
  * One bottle in a photo of several (design v1.7 §5a, 74: "Which bottle do you
  * mean?"), read by the same rules as the photo's main fields, from that
  * bottle's label alone.
+ *
+ * Every field is required, unlike the photo's own: Anthropic's structured
+ * output refuses a schema with too many optional fields ("Schema is too
+ * complex"), and an array of objects multiplies them. The model can always
+ * answer each: `unknown` for the drink, its best reading for the romaji.
  */
 export const ScanBottleReadSchema = z.object({
   position: ScanBottlePositionSchema,
-  drink: ScanDrinkSchema.optional(),
+  drink: ScanDrinkSchema,
   name_ja: z.string().min(1),
-  brewery_printed: z.boolean().optional(),
+  brewery_printed: z.boolean(),
   brewery_ja: z.string().min(1),
-  name_romaji: z.string().optional(),
-  brewery_romaji: z.string().optional(),
+  name_romaji: z.string(),
+  brewery_romaji: z.string(),
   confidence: z.number().min(0).max(1),
 })
 export type ScanBottleRead = z.infer<typeof ScanBottleReadSchema>

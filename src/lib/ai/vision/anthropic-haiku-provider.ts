@@ -221,7 +221,7 @@ THIS BOTTLING (bottling). The brand names a family; the label usually says more 
 
 SEVERAL BOTTLES (bottle_count, bottles). Only when subject is several_bottles; leave both out otherwise.
    - bottle_count: how many bottles stand in the frame, counting the ones whose label you cannot read too. Write 4 for four or more.
-   - bottles: one entry per bottle whose name you can read, in the order they stand from left to right, at most four. For each, read that bottle's own label alone, by the same rules as above: name_ja, brewery_printed, brewery_ja, name_romaji, brewery_romaji, drink and confidence. position says where it stands as the photo shows it: left, middle or right; front or back when one stands in front of the other.
+   - bottles: one entry per bottle whose name you can read, in the order they stand from left to right, at most four. For each, read that bottle's own label alone, by the same rules as above, and fill every field: drink (unknown when its label prints no category), name_ja, brewery_printed, brewery_ja, name_romaji, brewery_romaji and confidence. position says where it stands as the photo shows it: left, middle or right; front or back when one stands in front of the other.
    - Two bottles of the same sake are two entries with the same name.
    - Never copy a name from one bottle to another, and never list a bottle you cannot read; a bottle you cannot read counts in bottle_count only.
 
