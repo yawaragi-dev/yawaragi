@@ -2,7 +2,7 @@
 
 Open questions the build has run into and settled provisionally, so they can be handed to the designers in one go. Each says what is built today, so nobody has to guess. Opened 2026-10-13; filed as #417.
 
-Round two (blocks I–R), round three (blocks S, T, U and V), round four (blocks W–Z, with a priority order across everything still open) round five (blocks AA and AB) and round six (blocks AC, AD and AE) are at the end of the file.
+Round two (blocks I–R), round three (blocks S, T, U and V), round four (blocks W–Z, with a priority order across everything still open) round five (blocks AA and AB) and round six (blocks AC, AD and AE), and the later blocks AF and AG, are at the end of the file.
 
 The design snapshot these refer to is `design/README.md`, v1.6.2.
 
@@ -572,3 +572,36 @@ Rule 16 on the camera (114, 115) draws "Taking longer than usual · Cancel" and 
 **Questions:**
 1. Is the held room right, or would you rather the status lines sit over the lower part of the frame (the frame staying put and the lines covering it while they show)?
 2. With room held, "Scan a label" sits above empty space while nothing is wrong. Should that space carry something (it is where "How to read a label" and the first-scan shape cards already go), or stay empty?
+
+## AG. Picking a bottle from the cellar for a dish (not drawn yet)
+
+The maintainer wants the reverse of "Goes with" (Q): **I'm eating this; which bottle in my cellar goes with it?** Nothing is built in the app. There is a throwaway prototype with three layouts on one unlinked route (`/en/collection/prototype-dish-pairing`, behind the 18+ gate, fixture cellar). Each answer below is what we propose, and each is drawn in at least one of the variants.
+
+**What it can and cannot say.** Only the pairing table from Q (seven kinds of sake, 18 foods, each with named sources). No model and no free text, and no food the table does not name. A dish kind leads to the kinds whose foods it covers. Each cellar bottle is read the way "Goes with" reads it on its page (a style it names, a ginjo-family grade, or its flavor chart against the catalogue), which picks its kind. A bottle matches when its kind is one of those. Whatever picked the kind is said on the row ("By its style", "Junmai Daiginjō is usually fragrant", "From the flavor chart (Sakenowa), for the whole line"). One caveat line with ⓘ opens "Where these pairings come from" (§16), listing the sources of the kinds this dish reaches. The dish chosen is not stored anywhere, so this collects no new personal data.
+
+**The dish kinds,** grouped from the table's own foods. Every food sits in exactly one group:
+
+| Chip | The table's foods | Kinds it reaches |
+|---|---|---|
+| Raw fish and shellfish | sashimi, crab, raw oysters | kunshu, soshu |
+| Fried fish | fried white fish | soshu |
+| Grilled eel | unagi | koshu |
+| Chilled tofu | hiyayakko | soshu |
+| Dashi and simmered dishes | oden, pork and daikon | junshu |
+| Rich meat dishes | sukiyaki, foie gras | junshu, kijoshu |
+| Spicy dishes | curry, kimchi | nigori |
+| Cheese | fresh, hard and washed-rind cheese | kunshu, sparkling, koshu, nigori |
+| Desserts and sweets | dark chocolate, ice cream, fruit desserts, dried fruit | kijoshu, sparkling, koshu |
+
+"Grilled fish" would overclaim: unagi is the only grilled fish any source gives.
+
+**Questions:**
+1. **Where does the entry live?** *Proposed:* a "Pick for a dish" action at the top of the Cellar segment of Collection, beside "{n} bottles · {open} open", shown only when the cellar has bottles. The prototype tries both things it could open. Variants A and B open a screen of its own ("back · Pick for a dish"). Variant C opens a strip of dish chips over the same list, which re-sorts in place. Should it also be reachable from Home, or from "Goes with" on a bottle page ("What else in my cellar goes with this?")? We'd say no for now.
+2. **How are dishes picked?** *Proposed:* chips, one dish at a time, the nine above. A tap picks a chip and a second tap clears it. No free text, because anything typed would have to be matched to a food by guessing. Variant A shows all nine wrapped above the results. Variant B asks first, as a tall list where each row names the foods it stands for, then shows the answer. Variant C uses a sideways strip. Are nine chips too many? Should two or three dishes be pickable at once (a whole meal)? Are the chip names right, in particular "Chilled tofu", which has only one food behind it?
+3. **How do bottles the table can't place show?** *Proposed:* listed, never hidden, in a group of their own at the end, "Our table can't place these", each with one line on why. Either "Genshu, muroka and taruzake change a sake too much: no source pairs them as a kind." or "Its label and flavor chart (Sakenowa) say too little to pick a kind." Bottles the table places, but with other dishes, get a group too: "In your cellar, for other dishes", with their kind. A shows both groups open. B folds them into "{n} bottles for other dishes" and "{n} bottles our table can't place". C dims them in the list with "For other dishes · {kind}" or "No pairing in our table". Open, folded or dimmed?
+4. **What does a bottle row say?** *Proposed,* in this order: the name and "× n · size" as in the cellar; "Often served with: {the table's foods for this dish}"; what picked the kind ("By its style · For soshu (爽酒), light, smooth sake"); the cellar's own state line ("Open 6 days — best finished this week" in the accent); "Usually served 雪冷え yukihie, about 5°C or 花冷え hanahie, about 10°C". Order: bottles that match first; among them, open bottles to finish soon first, then the other open ones, then the sealed ones (the cellar's own order). B gives the first match a large "Start with" card. Is "Start with" too close to a recommendation? It names a bottle the visitor already owns, so we think it stays discovery. Is the row too long? The serving line could move to the large card only.
+5. **Empty states.** *Proposed:*
+   - **Empty cellar:** the entry is not shown in the Cellar segment at all. If the screen is reached anyway, it shows "Nothing in the cellar yet. Add the bottles you own with "Add to cellar" on any sake, and this will look through them for a dish." and "Find a sake" (to Search).
+   - **Nothing matches:** "Nothing in your cellar for this one. Our table gives this dish to {kinds}. None of your bottles is one of those kinds." The other two groups stay below, so the visitor still sees their whole cellar. We'd add no "Find a {kind}" link: it would send the visitor towards buying, and JMStV wants discovery wording. A link to Learn on the kind would be fine. Wanted?
+6. **The three layouts.** A (chips and groups, its own screen), B (one question, then one answer), C (inside the cellar list). Which one, or which parts of each?
+7. **German.** "Für ein Gericht wählen" is long for a button on a 390px row beside the bottle count. Something shorter, such as "Zum Essen"?

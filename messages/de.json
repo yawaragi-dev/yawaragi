@@ -2369,5 +2369,67 @@
     "empty": "Hier ist gerade nichts. Eine Flasche, die du aufbrauchst oder aus dem Keller nimmst, erscheint hier.",
     "toCellar": "Zurück zum Keller",
     "unavailable": "Diese Liste ließ sich gerade nicht laden. Deine Flaschen sind sicher — versuch es gleich noch einmal."
+  },
+  "prototypeDishPairing": {
+    "title": "Für ein Gericht wählen",
+    "entry": "Für ein Gericht wählen",
+    "intro": "Wähle, was du isst. Wir schauen in unserer Tabelle nach, welche Arten Sake dazu genannt werden, und dann, welche deiner Flaschen zu diesen Arten gehören.",
+    "dishesLabel": "Was gibt es?",
+    "choose": "Wähle ein Gericht, um zu sehen, was aus deinem Keller oft dazu gereicht wird.",
+    "dishes": {
+      "rawSeafood": "Roher Fisch und Meeresfrüchte",
+      "friedFish": "Frittierter Fisch",
+      "grilledEel": "Gegrillter Aal",
+      "lightChilled": "Kalter Tofu",
+      "dashiSimmered": "Dashi und Geschmortes",
+      "richMeat": "Kräftige Fleischgerichte",
+      "spicy": "Scharfe Gerichte",
+      "cheese": "Käse",
+      "sweets": "Desserts und Süßes"
+    },
+    "groupMatches": "Wird oft dazu gereicht",
+    "groupElsewhere": "In deinem Keller, für andere Gerichte",
+    "groupUnplaced": "Diese kann unsere Tabelle nicht zuordnen",
+    "matchCount": "{count, plural, =0 {Keine Flasche} one {# Flasche} other {# Flaschen}} oft dazu gereicht",
+    "food": "Oft gereicht zu: {food}",
+    "kindFor": "Art: {kind}",
+    "basis": {
+      "style": "Nach seinem Stil",
+      "grade": "Ein {grade} ist meist duftend",
+      "chart": "Aus dem Geschmacksprofil (Sakenowa), für die ganze Linie"
+    },
+    "unplaced": {
+      "styleUnpaired": "Genshu, Muroka und Taruzake verändern einen Sake zu stark: Keine Quelle nennt Begleiter für sie als Art.",
+      "tooLittle": "Etikett und Geschmacksprofil (Sakenowa) sagen zu wenig, um eine Art zu bestimmen."
+    },
+    "caveat": "Aus einer von Hand gepflegten Tabelle, nach Art des Sakes. Abfüllungen können abweichen.",
+    "sheetHow": "Jedes Gericht hier ist eine Gruppe von Speisen aus unserer Tabelle. Wir suchen die Arten Sake, die die Quellen für diese Speisen nennen, und lesen dann jede Flasche in deinem Keller so, wie es „Passt zu“ auf ihrer Seite tut: nach einem Stil, den sie nennt, ihrem Grad oder ihrem Geschmacksprofil (Sakenowa) im Vergleich zum Katalog. Flaschen, die sich nicht zuordnen lassen, stehen getrennt da, nicht versteckt.",
+    "noneTitle": "Dafür ist nichts in deinem Keller",
+    "noneBody": "Unsere Tabelle nennt für dieses Gericht {kinds}. Keine deiner Flaschen gehört zu diesen Arten.",
+    "kindsJoin": "; ",
+    "emptyTitle": "Noch nichts im Keller",
+    "emptyBody": "Füge die Flaschen, die du hast, mit „In den Keller“ bei einem Sake hinzu, dann sucht dies darin nach einem Gericht.",
+    "emptyAction": "Einen Sake finden",
+    "startWith": "Fang an mit",
+    "alsoFits": "Wird auch oft dazu gereicht",
+    "changeDish": "Anderes Gericht",
+    "showUnplaced": "{count, plural, one {# Flasche} other {# Flaschen}}, die unsere Tabelle nicht zuordnen kann",
+    "showElsewhere": "{count, plural, one {# Flasche} other {# Flaschen}} für andere Gerichte",
+    "clear": "Zurücksetzen",
+    "matchTag": "Passt dazu",
+    "notForThis": "Für andere Gerichte",
+    "noPairing": "Keine Begleiter in unserer Tabelle",
+    "prototype": {
+      "badge": "Prototyp",
+      "previous": "Vorheriges Layout",
+      "next": "Nächstes Layout",
+      "cellarFull": "Keller: voll",
+      "cellarEmpty": "Keller: leer",
+      "variants": {
+        "A": "Chips und Gruppen",
+        "B": "Eine Frage, eine Antwort",
+        "C": "In der Kellerliste"
+      }
+    }
   }
 }
