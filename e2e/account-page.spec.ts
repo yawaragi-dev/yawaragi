@@ -145,9 +145,10 @@ test.describe('§15 account', () => {
     await expect(page.getByTestId('site-footer')).toContainText('Drink responsibly')
 
     // Still there everywhere else, which is the Impressumspflicht
-    // reachability this slice deliberately does not trade away.
+    // reachability this slice deliberately does not trade away. The camera
+    // has no end-of-screen block, so it carries the Impressum itself.
     await page.goto('/en/scan')
-    await expect(page.getByTestId('site-footer')).toBeVisible()
+    await expect(page.getByTestId('scan-camera-imprint-link')).toBeVisible()
 
     await context.close()
   })

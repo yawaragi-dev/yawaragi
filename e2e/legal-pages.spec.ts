@@ -36,7 +36,7 @@ test.describe('the legal pages are not a one-way door', () => {
     const page = await context.newPage()
 
     await page.goto('/en/scan')
-    await page.getByTestId('footer-imprint-link').click()
+    await page.getByTestId('scan-camera-imprint-link').click()
     await expect(page).toHaveURL(/\/en\/imprint$/)
 
     // The arrow is present on a page with no tab bar…

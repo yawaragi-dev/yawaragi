@@ -20,6 +20,7 @@ import {
   supportsTorch,
 } from '@/lib/scan/camera'
 import { Link } from '@/i18n/navigation'
+import { LEGAL_LINKS } from '@/components/layout/legal-links'
 import { cn } from '@/lib/utils'
 
 /**
@@ -130,6 +131,7 @@ export function CameraCapture({
   status = null,
 }: CameraCaptureProps) {
   const t = useTranslations('scan.camera')
+  const tFooter = useTranslations('footer')
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const [state, setState] = useState<CameraState>('starting')
@@ -440,7 +442,7 @@ export function CameraCapture({
       {/* -- Bottom controls: 1fr · shutter · 1fr --------------------- */}
       {showControls && (
         <div
-          className="grid flex-none grid-cols-[1fr_auto_1fr] items-center gap-2 px-5 pb-4 pt-2"
+          className="grid flex-none grid-cols-[1fr_auto_1fr] items-center gap-2 px-5 pb-1 pt-2"
           data-testid="scan-camera-controls"
         >
           <div className="flex justify-start">
@@ -484,6 +486,33 @@ export function CameraCapture({
           </div>
         </div>
       )}
+
+      {/*
+        -- Legal line: Impressum · Privacy notice --
+        Not in §4: the design keeps the end-of-screen block off the camera,
+        and the shell hides it here (globals.css) so the pane has nothing to
+        scroll. But the Impressum has to stay "unmittelbar erreichbar" from
+        every screen (§5 TMG / §18 MStV), and the camera has no avatar to
+        reach Account through. So the same two links sit on the camera's
+        bottom edge, under the controls: quiet, ink at half strength, the
+        smallest type, with a tap area taller than the text.
+      */}
+      <nav
+        aria-label={tFooter('label')}
+        className="flex flex-none items-center justify-center gap-x-3.5 pb-1 text-micro"
+        data-testid="scan-camera-legal"
+      >
+        {LEGAL_LINKS.map(({ href, messageKey, testIdPart }) => (
+          <Link
+            key={href}
+            href={href}
+            data-testid={`scan-camera-${testIdPart}-link`}
+            className="whitespace-nowrap rounded-sm px-1 py-1.5 text-camera-ink/55 transition-colors hover:text-camera-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+          >
+            {tFooter(messageKey)}
+          </Link>
+        ))}
+      </nav>
     </section>
   )
 }

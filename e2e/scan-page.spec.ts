@@ -68,6 +68,21 @@ test.describe('scan entry route', () => {
     const pane = page.locator('[data-app-pane]')
     expect(await pane.evaluate((el) => el.scrollHeight - el.clientHeight)).toBe(0)
     await expect(page.getByTestId('site-footer')).toBeHidden()
+    // The Impressum stays one tap away (§5 TMG / §18 MStV): the camera's own
+    // legal line, on screen, under the shutter.
+    const imprint = page.getByTestId('scan-camera-imprint-link')
+    await expect(imprint).toBeVisible()
+    await expect(page.getByTestId('scan-camera-privacy-link')).toBeVisible()
+    const shutter = (await page.getByTestId('scan-camera-shutter').boundingBox())!
+    const imprintBox = (await imprint.boundingBox())!
+    expect(imprintBox.y).toBeGreaterThanOrEqual(shutter.y + shutter.height)
+    const tabBar = (await page.getByTestId('tab-bar').boundingBox())!
+    expect(imprintBox.y + imprintBox.height).toBeLessThanOrEqual(tabBar.y)
+    // Leaving the camera by a tab brings the end-of-screen block back: the
+    // rule that hides it follows the camera, not the visit.
+    await page.getByTestId('tab-home').click()
+    await expect(page).toHaveURL(/\/en\/home$/)
+    await expect(page.getByTestId('site-footer')).toBeVisible()
     await context.close()
   })
 

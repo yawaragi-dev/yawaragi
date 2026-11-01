@@ -132,3 +132,19 @@ describe('the live camera', () => {
     expect(first.queryByTestId('scan-camera-read-a-label')).toBeNull()
   })
 })
+
+describe('the legal line on the camera', () => {
+  it('keeps the Impressum and the privacy notice one tap away, even with no camera on this device', () => {
+    // §5 TMG / §18 MStV: the Impressum is reachable from every screen. The
+    // camera has no end-of-screen block, so it carries the links itself, in
+    // every state, the "No camera here" panel included.
+    const camera = renderCamera()
+    expect(camera.getByTestId('scan-camera-unavailable')).toBeTruthy()
+    const imprint = camera.getByTestId('scan-camera-imprint-link')
+    expect(imprint.textContent).toBe('Impressum')
+    expect(imprint.getAttribute('href')).toBe('/en/imprint')
+    const privacy = camera.getByTestId('scan-camera-privacy-link')
+    expect(privacy.textContent).toBe('Privacy notice')
+    expect(privacy.getAttribute('href')).toBe('/en/privacy')
+  })
+})
