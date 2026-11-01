@@ -27,6 +27,7 @@ import {
   pickCollectionSegment,
 } from '@/lib/collection/segment'
 import type { JournalEntry } from '@/lib/schemas/journal-entry'
+import { isDishGroupId } from '@/lib/pairing/bottles-for-dish'
 
 /**
  * §11 Collection — the Journal and Cellar segments. Reference screenshots 19, 20.
@@ -208,7 +209,15 @@ export default async function CollectionTabPage({ params, searchParams }: PagePr
         </section>
       ) : segment === 'cellar' ? (
         <>
-          <CellarList rows={cellar} now={viewer.now} readOnly={viewer.readOnly} />
+          <CellarList
+            rows={cellar}
+            now={viewer.now}
+            readOnly={viewer.readOnly}
+            expressions={expressions}
+            // "Pick for a dish" (design question AG): the dish lives in the
+            // URL and in the list's own state, nowhere else.
+            dish={isDishGroupId(query.dish) ? query.dish : null}
+          />
           {/* v1.10 AB6: last under the cellar rows, once a bottle has left it. */}
           {bottlesHad(history ?? []).length > 0 && <BottlesHadRow />}
           {/* ADR-0014: the Sakenowa credit is line 1 of the end-of-screen

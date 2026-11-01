@@ -1,8 +1,13 @@
 import { getTranslations } from 'next-intl/server'
 import { Drop, HourglassMedium, LockSimple, Stack } from '@phosphor-icons/react/dist/ssr'
+import { CellarDishPick, type DishPickRow } from '@/components/collection/cellar-dish-pick'
 import { CellarRowActions } from '@/components/collection/cellar-row-actions'
 import { cellarFreshness, cellarSummary, sortCellar } from '@/lib/collection/cellar'
+import type { DishGroupId } from '@/lib/pairing/bottles-for-dish'
+import { cataloguePairingDeps } from '@/lib/pairing/catalogue-pairing-deps'
+import { type PairingDeps, pairingOf } from '@/lib/pairing/pairing-of'
 import { type CellarBottle, cellarRowKey } from '@/lib/schemas/cellar-bottle'
+import type { Expression } from '@/lib/schemas/expression'
 import { cn } from '@/lib/utils'
 
 /**
@@ -20,16 +25,29 @@ import { cn } from '@/lib/utils'
  * No brewery line under the name: the row stores the sake's name (ADR-0024),
  * not its brewery, and looking every brewery up on render is the per-row
  * lookup denormalising exists to avoid.
+ *
+ * "Pick for a dish" (design question AG, layout C) re-sorts these same rows
+ * in the browser (`CellarDishPick`). Each row's pairing is read here, once,
+ * the way its own page reads it; a line whose chart cannot be read (no
+ * mirror, a failed lookup) is simply one the table cannot place.
  */
 export async function CellarList({
   rows,
   now,
   readOnly = false,
+  expressions = [],
+  dish = null,
+  pairingDeps = cataloguePairingDeps,
 }: {
   rows: readonly CellarBottle[]
   now: number
   /** The sample collection: the rows, with no way to open, pour or edit. */
   readOnly?: boolean
+  /** The visitor's own bottlings, so a row of one is paired by its grade and styles. */
+  expressions?: readonly Expression[]
+  /** The dish in `?dish=`, picked when the page loads. */
+  dish?: DishGroupId | null
+  pairingDeps?: PairingDeps
 }) {
   const t = await getTranslations('cellar')
 
@@ -47,93 +65,98 @@ export async function CellarList({
   }
 
   const { bottles, open } = cellarSummary(rows)
-
-  return (
-    <section className="flex flex-col" data-testid="cellar-list">
-      <p className="pb-2 text-meta text-ash-700" data-testid="cellar-summary">
-        {t('summary', { bottles, open })}
-      </p>
-      <ul className="flex flex-col" role="list">
-        {sortCellar(rows, now).map((row) => {
-          const f = cellarFreshness(row, now)
-          const soon = f.kind === 'open' && f.drinkSoon
-          const StateIcon = f.kind === 'unopened' ? LockSimple : soon ? HourglassMedium : Drop
-          const rowKey = cellarRowKey(row)
-          // v1.6 §11: a bottling's row leads with the bottling name, the
-          // line's kanji under it — the journal's order.
-          const name = row.expression?.name ?? row.sake.nameRomaji ?? row.sake.nameKanji
-          const kanjiUnder = name !== row.sake.nameKanji ? row.sake.nameKanji : null
-          return (
-            <li
-              key={rowKey}
-              className="flex gap-3 border-b border-divider py-3"
-              data-testid="cellar-row"
-              data-row-key={rowKey}
-            >
-              {/* No bottle thumb: v1.5 rule 14 — there is no image to show, and
-                  a permanent striped placeholder is gone with it. */}
-              <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                <span className="flex items-baseline gap-2">
-                  <span
-                    className="min-w-0 flex-1 text-card-heading font-medium text-ink"
-                    lang={row.expression ? undefined : row.sake.nameRomaji ? 'en' : 'ja'}
-                    data-testid="cellar-row-name"
-                  >
-                    {name}
-                  </span>
-                  {/* v1.6.2 §11: "× 1 · 720 ml" once the row has a size. A row
-                      from before the sheet has none, and shows a count only
-                      when there is more than one bottle, as before. */}
-                  {row.sizeMl !== null ? (
-                    <span className="shrink-0 text-meta text-ash-700" data-testid="cellar-row-count">
-                      {t('countBadgeSize', { count: row.count, ml: row.sizeMl })}
-                    </span>
-                  ) : (
-                    row.count > 1 && (
-                      <span className="shrink-0 text-meta text-ash-700" data-testid="cellar-row-count">
-                        {t('countBadge', { count: row.count })}
-                      </span>
-                    )
-                  )}
-                </span>
-                {/* Latin name first, kanji under it — screenshot 20, and the
-                    journal list's order, so one sake reads the same in both
-                    segments. */}
-                {kanjiUnder && (
-                  <span className="text-meta text-ash-600" lang="ja">
-                    {kanjiUnder}
-                  </span>
-                )}
-                <span
-                  className={cn(
-                    'mt-0.5 flex items-center gap-1.5 text-meta',
-                    soon ? 'text-ginshu-700' : 'text-ash-700',
-                  )}
-                  data-testid="cellar-state"
-                >
-                  <StateIcon size={14} aria-hidden="true" />
-                  {f.kind === 'unopened'
-                    ? t(row.nama ? 'unopenedNama' : 'unopened')
-                    : soon
-                      ? t('drinkSoon', { days: f.days })
-                      : t(row.nama ? 'openNama' : 'open', { days: f.days })}
-                </span>
-                {!readOnly && (
-                  <CellarRowActions
-                    target={row.expression ? { expressionId: row.expression.id } : { brandId: row.brandId! }}
-                    rowKey={rowKey}
-                    name={name}
-                    isOpen={f.kind === 'open'}
-                    count={row.count}
-                    sizeMl={row.sizeMl}
-                    nama={row.nama}
-                  />
-                )}
-              </span>
-            </li>
-          )
-        })}
-      </ul>
-    </section>
+  const sorted = sortCellar(rows, now)
+  const pairings = await Promise.all(
+    sorted.map((row) =>
+      pairingOf(
+        {
+          kind: 'cellar',
+          bottle: row,
+          expression: row.expression ? (expressions.find((e) => e.id === row.expression!.id) ?? null) : null,
+        },
+        pairingDeps,
+      ),
+    ),
   )
+
+  const pickRows: DishPickRow[] = sorted.map((row, i) => {
+    const f = cellarFreshness(row, now)
+    const soon = f.kind === 'open' && f.drinkSoon
+    const StateIcon = f.kind === 'unopened' ? LockSimple : soon ? HourglassMedium : Drop
+    const rowKey = cellarRowKey(row)
+    // v1.6 §11: a bottling's row leads with the bottling name, the
+    // line's kanji under it — the journal's order.
+    const name = row.expression?.name ?? row.sake.nameRomaji ?? row.sake.nameKanji
+    const kanjiUnder = name !== row.sake.nameKanji ? row.sake.nameKanji : null
+    return {
+      key: rowKey,
+      pairing: pairings[i],
+      // No bottle thumb: v1.5 rule 14 — there is no image to show, and a
+      // permanent striped placeholder is gone with it.
+      head: (
+        <>
+          <span className="flex items-baseline gap-2">
+            <span
+              className="min-w-0 flex-1 text-card-heading font-medium text-ink"
+              lang={row.expression ? undefined : row.sake.nameRomaji ? 'en' : 'ja'}
+              data-testid="cellar-row-name"
+            >
+              {name}
+            </span>
+            {/* v1.6.2 §11: "× 1 · 720 ml" once the row has a size. A row
+                from before the sheet has none, and shows a count only
+                when there is more than one bottle, as before. */}
+            {row.sizeMl !== null ? (
+              <span className="shrink-0 text-meta text-ash-700" data-testid="cellar-row-count">
+                {t('countBadgeSize', { count: row.count, ml: row.sizeMl })}
+              </span>
+            ) : (
+              row.count > 1 && (
+                <span className="shrink-0 text-meta text-ash-700" data-testid="cellar-row-count">
+                  {t('countBadge', { count: row.count })}
+                </span>
+              )
+            )}
+          </span>
+          {/* Latin name first, kanji under it — screenshot 20, and the
+              journal list's order, so one sake reads the same in both
+              segments. */}
+          {kanjiUnder && (
+            <span className="text-meta text-ash-600" lang="ja">
+              {kanjiUnder}
+            </span>
+          )}
+        </>
+      ),
+      tail: (
+        <>
+          <span
+            className={cn('mt-0.5 flex items-center gap-1.5 text-meta', soon ? 'text-ginshu-700' : 'text-ash-700')}
+            data-testid="cellar-state"
+          >
+            <StateIcon size={14} aria-hidden="true" />
+            {f.kind === 'unopened'
+              ? t(row.nama ? 'unopenedNama' : 'unopened')
+              : soon
+                ? t('drinkSoon', { days: f.days })
+                : t(row.nama ? 'openNama' : 'open', { days: f.days })}
+          </span>
+          {!readOnly && (
+            <CellarRowActions
+              target={row.expression ? { expressionId: row.expression.id } : { brandId: row.brandId! }}
+              rowKey={rowKey}
+              name={name}
+              isOpen={f.kind === 'open'}
+              count={row.count}
+              sizeMl={row.sizeMl}
+              nama={row.nama}
+            />
+          )}
+        </>
+      ),
+    }
+  })
+
+  // Keyed on the URL's dish, so a link that names another dish starts from it.
+  return <CellarDishPick key={dish ?? ''} rows={pickRows} summary={t('summary', { bottles, open })} initialDish={dish} />
 }
