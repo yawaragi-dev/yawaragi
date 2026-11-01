@@ -1,18 +1,17 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-// What the scan Server Action itself owns: parsing the form before any I/O,
-// the rate-limit gate (and its RATE_LIMIT_BYPASS escape hatch), handing the
+// What the scan itself owns: parsing the form before it pays, what it does
+// with a refused or admitted request and the budget left, handing the
 // photo to the label pipeline with the registry's two tiers, recording what
 // the read cost on the Langfuse span, and adding the visitor's own bottlings
 // to a match. Where a read lands — the two-tier rule, every result state,
 // the guesses, the second photo — is `read-label.test.ts`, against fakes.
 // The end-to-end flow runs in `e2e/scan-*.spec.ts` with VISION_PROVIDER=e2e-stub.
 
-// The rate limit lets a signed-in maintainer through. These tests are about
-// anonymous visitors, and Clerk's auth() has no request to read here.
-vi.mock('@/lib/auth/maintainer', () => ({
-  currentUserIsMaintainer: async () => false,
-}))
+// The meter — debug log, span, rate limit before the model, usage counter —
+// is tested once in `metered-call.test.ts`. Here it admits or refuses as
+// each test says, so these tests are about what the scan does either way.
+vi.mock('@/lib/metering/metered-call', () => import('@/lib/metering/fake-metered-call'))
 
 // The visitor's journal, read only to list their own bottlings of a matched
 // sake. Clerk and Upstash have nothing to answer with in a unit test.
@@ -24,13 +23,6 @@ const resolveViewerJournalMock = vi.fn(async () => ({
 }))
 vi.mock('@/lib/taste/viewer-journal', () => ({
   resolveViewerJournal: () => resolveViewerJournalMock(),
-}))
-
-// Stubbed so a branch that should short-circuit before I/O fails loudly if
-// it reaches for cookies() or headers().
-vi.mock('next/headers', () => ({
-  cookies: vi.fn(),
-  headers: vi.fn(),
 }))
 
 // The registry builds Anthropic providers, which want a key; these tests hand
@@ -53,31 +45,21 @@ vi.mock('@/lib/ai/observability/action-span', async () => {
   return { ...actual, recordActionMetadata: vi.fn() }
 })
 
-vi.mock('@/lib/rate-limit/config-gate', () => ({
-  // Null by default: the action skips rate-limit enforcement, as with the
-  // env unset outside production. A test overrides it to run the config path.
-  assertRateLimitConfig: vi.fn().mockReturnValue(null),
-}))
-
-import { cookies, headers } from 'next/headers'
+import { fakeMeter, resetFakeMeter } from '@/lib/metering/fake-metered-call'
 import { getVisionProvider } from '@/lib/ai/vision/registry'
 import type { VisionProvider } from '@/lib/ai/vision/vision-provider'
 import { recordActionMetadata } from '@/lib/ai/observability/action-span'
 import { resolveScannedLabel } from '@/lib/sakenowa/resolve-scanned-label'
 import { lookupBreweryByBrand } from '@/lib/sakenowa/catalogue-reads'
-import { assertRateLimitConfig } from '@/lib/rate-limit/config-gate'
 import { LabelScanExtractionSchema } from '@/lib/schemas/label-scan-extraction'
 import { scanLabel } from './scan-action'
 import type { Brand } from '@/lib/schemas/brand'
 import type { Brewery } from '@/lib/schemas/brewery'
 
-const cookiesMock = vi.mocked(cookies)
-const headersMock = vi.mocked(headers)
 const getVisionProviderMock = vi.mocked(getVisionProvider)
 const resolveScannedLabelMock = vi.mocked(resolveScannedLabel)
 const lookupBreweryByBrandMock = vi.mocked(lookupBreweryByBrand)
 const recordActionMetadataMock = vi.mocked(recordActionMetadata)
-const assertRateLimitConfigMock = vi.mocked(assertRateLimitConfig)
 
 // --- Fixtures ---------------------------------------------------------
 
@@ -107,16 +89,6 @@ const DASSAI_EXTRACTION = {
 
 // --- Helpers ----------------------------------------------------------
 
-/** An empty cookie jar and empty headers: no debug cookie, no session. */
-function stubEmptyRequestContext() {
-  cookiesMock.mockResolvedValue({
-    get: () => undefined,
-  } as unknown as Awaited<ReturnType<typeof cookies>>)
-  headersMock.mockResolvedValue({
-    get: () => null,
-  } as unknown as Awaited<ReturnType<typeof headers>>)
-}
-
 function readsAs(read: Record<string, unknown>): VisionProvider {
   return { extractLabel: async () => LabelScanExtractionSchema.parse({ source: 'llm_extracted', ...read }) }
 }
@@ -140,16 +112,14 @@ function jpegFormData(locale = 'en'): FormData {
   return fd
 }
 
+afterEach(() => {
+  resetFakeMeter()
+})
+
 // --- Input validation ------------------------------------------------
 
 describe('scanLabel — input validation', () => {
-  it('rejects a submission with no image blob before hitting any downstream I/O', async () => {
-    // If cookies() is reached the mock crashes — that's the loud
-    // failure we want. The invalid_input check must fire first.
-    cookiesMock.mockResolvedValue({
-      get: () => undefined,
-    } as unknown as Awaited<ReturnType<typeof cookies>>)
-
+  it('rejects a submission with no image blob before it pays for a scan', async () => {
     const fd = new FormData()
     fd.set('locale', 'en')
     const state = await scanLabel(fd)
@@ -158,16 +128,12 @@ describe('scanLabel — input validation', () => {
     if (state.status === 'invalid_input') {
       expect(state.reason).toBe('missing_image')
     }
-    // The rate-limit path is never entered when the image is missing.
-    expect(assertRateLimitConfigMock).not.toHaveBeenCalled()
+    // The rate limit is never taken when the image is missing.
+    expect(fakeMeter.calls).toEqual([expect.objectContaining({ paid: false })])
     expect(getVisionProviderMock).not.toHaveBeenCalled()
   })
 
   it('rejects a submission with an empty (zero-byte) image blob', async () => {
-    cookiesMock.mockResolvedValue({
-      get: () => undefined,
-    } as unknown as Awaited<ReturnType<typeof cookies>>)
-
     const fd = new FormData()
     fd.set('image', new Blob([], { type: 'image/jpeg' }))
     fd.set('locale', 'en')
@@ -177,14 +143,11 @@ describe('scanLabel — input validation', () => {
     if (state.status === 'invalid_input') {
       expect(state.reason).toBe('missing_image')
     }
+    expect(fakeMeter.calls[0]?.paid).toBe(false)
     expect(getVisionProviderMock).not.toHaveBeenCalled()
   })
 
   it('rejects a submission whose locale is not a configured routing locale', async () => {
-    cookiesMock.mockResolvedValue({
-      get: () => undefined,
-    } as unknown as Awaited<ReturnType<typeof cookies>>)
-
     const fd = new FormData()
     fd.set('image', new Blob([new Uint8Array([1])], { type: 'image/jpeg' }))
     // The routing manifest declares ['en', 'de']; a stale client build
@@ -196,6 +159,7 @@ describe('scanLabel — input validation', () => {
     if (state.status === 'invalid_input') {
       expect(state.reason).toBe('unsupported_locale')
     }
+    expect(fakeMeter.calls[0]?.paid).toBe(false)
     expect(getVisionProviderMock).not.toHaveBeenCalled()
   })
 
@@ -204,10 +168,6 @@ describe('scanLabel — input validation', () => {
     // include the field at all. The action must treat this as
     // unsupported_locale (the tagged-state grammar has no
     // "missing_locale" variant, so the two collapse into one).
-    cookiesMock.mockResolvedValue({
-      get: () => undefined,
-    } as unknown as Awaited<ReturnType<typeof cookies>>)
-
     const fd = new FormData()
     fd.set('image', new Blob([new Uint8Array([1])], { type: 'image/jpeg' }))
     const state = await scanLabel(fd)
@@ -219,38 +179,63 @@ describe('scanLabel — input validation', () => {
   })
 })
 
-// --- session_missing (post-#161 middleware refactor) ------------------
+// --- The meter: which budget, refused, admitted ------------------------
 
-describe('scanLabel — session_missing (post-#161 middleware refactor)', () => {
+describe('scanLabel — the scan budget', () => {
   afterEach(() => {
-    assertRateLimitConfigMock.mockReturnValue(null)
+    vi.clearAllMocks()
   })
 
-  it('returns session_missing when the anonymous-session cookie is absent and rate-limit env is fully configured', async () => {
-    // Simulate a fully-configured rate-limit env — the config-gate
-    // returns a real config bundle. The action then tries to read the
-    // cookie and hits the empty jar; the read-only refactor surfaces
-    // that as a typed state instead of throwing or writing a fresh
-    // cookie.
-    assertRateLimitConfigMock.mockReturnValueOnce({
-      secret: 'test-secret-32-characters-minimum',
-      salt: 'test-salt-16chars',
-      kvUrl: 'https://kv.example.test',
-      kvToken: 'test-token',
-    })
-    cookiesMock.mockResolvedValue({
-      get: () => undefined,
-    } as unknown as Awaited<ReturnType<typeof cookies>>)
-    headersMock.mockResolvedValue({
-      get: () => null,
-    } as unknown as Awaited<ReturnType<typeof headers>>)
+  it('spends the vision-scan budget under the scan-action span and counts the scan by its outcome', async () => {
+    stubVisionTiers(readsAs(DASSAI_EXTRACTION))
+    resolveScannedLabelMock.mockResolvedValueOnce({ kind: 'exact', sake: DASSAI_BRAND })
+    lookupBreweryByBrandMock.mockResolvedValueOnce(ASAHI_SHUZO)
+
+    await scanLabel(jpegFormData())
+
+    expect(fakeMeter.calls).toEqual([
+      { bucket: 'vision-scan', span: 'scan-action', paid: true, counted: 'scan:matched' },
+    ])
+  })
+
+  it('answers session_missing without reading the label when the request has no session cookie', async () => {
+    fakeMeter.next = { status: 'session_missing' }
 
     const state = await scanLabel(jpegFormData())
 
     expect(state.status).toBe('session_missing')
-    // The vision provider is never reached — session_missing
-    // short-circuits before the two-tier extraction pipeline.
     expect(getVisionProviderMock).not.toHaveBeenCalled()
+  })
+
+  it('answers rate_limited without reading the label once the free scans are used', async () => {
+    fakeMeter.next = { status: 'rate_limited', retryAfterSec: 3600 }
+
+    const state = await scanLabel(jpegFormData())
+
+    expect(state).toEqual({ status: 'rate_limited', retryAfterSec: 3600 })
+    expect(getVisionProviderMock).not.toHaveBeenCalled()
+    expect(fakeMeter.calls[0]?.counted).toBe('scan:rate_limited')
+  })
+
+  it('tells the visitor how many free scans are left after this one', async () => {
+    fakeMeter.next = { remaining: 1 }
+    stubVisionTiers(readsAs(DASSAI_EXTRACTION))
+    resolveScannedLabelMock.mockResolvedValueOnce({ kind: 'exact', sake: DASSAI_BRAND })
+    lookupBreweryByBrandMock.mockResolvedValueOnce(ASAHI_SHUZO)
+
+    const state = await scanLabel(jpegFormData())
+
+    expect(state).toMatchObject({ status: 'matched', scansLeft: 1 })
+  })
+
+  it('says nothing about scans left where none are counted', async () => {
+    stubVisionTiers(readsAs(DASSAI_EXTRACTION))
+    resolveScannedLabelMock.mockResolvedValueOnce({ kind: 'exact', sake: DASSAI_BRAND })
+    lookupBreweryByBrandMock.mockResolvedValueOnce(ASAHI_SHUZO)
+
+    const state = await scanLabel(jpegFormData())
+
+    expect(state).not.toHaveProperty('scansLeft')
   })
 })
 
@@ -262,7 +247,6 @@ describe('scanLabel — reading the label', () => {
   })
 
   it('answers with the cheap model’s match and records that tier 2 was not needed', async () => {
-    stubEmptyRequestContext()
     stubVisionTiers(readsAs(DASSAI_EXTRACTION))
     resolveScannedLabelMock.mockResolvedValueOnce({ kind: 'exact', sake: DASSAI_BRAND })
     lookupBreweryByBrandMock.mockResolvedValueOnce(ASAHI_SHUZO)
@@ -275,7 +259,6 @@ describe('scanLabel — reading the label', () => {
   })
 
   it('records the tier-1 outcome and the tier-2 model when the better model had to read it again', async () => {
-    stubEmptyRequestContext()
     stubVisionTiers(readsAs(DASSAI_EXTRACTION), readsAs(DASSAI_EXTRACTION))
     resolveScannedLabelMock
       .mockResolvedValueOnce({ kind: 'no_match', query: { nameJa: '獺祭', breweryJa: '旭酒造' } })
@@ -294,7 +277,6 @@ describe('scanLabel — reading the label', () => {
   })
 
   it('sends a second photo to tier 2 at once and records whether the earlier read was needed', async () => {
-    stubEmptyRequestContext()
     stubVisionTiers(readsAs({ ...DASSAI_EXTRACTION, name_ja: 'never read' }), readsAs(DASSAI_EXTRACTION))
     resolveScannedLabelMock.mockResolvedValueOnce({ kind: 'exact', sake: DASSAI_BRAND })
     lookupBreweryByBrandMock.mockResolvedValueOnce(ASAHI_SHUZO)
@@ -311,7 +293,6 @@ describe('scanLabel — reading the label', () => {
   })
 
   it('reads a malformed earlier read as a first scan', async () => {
-    stubEmptyRequestContext()
     stubVisionTiers(readsAs(DASSAI_EXTRACTION))
     resolveScannedLabelMock.mockResolvedValueOnce({ kind: 'exact', sake: DASSAI_BRAND })
     lookupBreweryByBrandMock.mockResolvedValueOnce(ASAHI_SHUZO)
@@ -328,11 +309,9 @@ describe('scanLabel — reading the label', () => {
 describe('scanLabel — the visitor’s own bottlings of the matched sake', () => {
   afterEach(() => {
     vi.clearAllMocks()
-    assertRateLimitConfigMock.mockReturnValue(null)
   })
 
   it('lists them with the one the label names first', async () => {
-    stubEmptyRequestContext()
     stubVisionTiers(readsAs({ ...DASSAI_EXTRACTION, bottling: { grade: 'junmai_daiginjo' } }))
     resolveScannedLabelMock.mockResolvedValueOnce({ kind: 'exact', sake: DASSAI_BRAND })
     lookupBreweryByBrandMock.mockResolvedValueOnce(ASAHI_SHUZO)
@@ -359,7 +338,6 @@ describe('scanLabel — the visitor’s own bottlings of the matched sake', () =
   })
 
   it('keeps the match when the journal cannot be read', async () => {
-    stubEmptyRequestContext()
     stubVisionTiers(readsAs(DASSAI_EXTRACTION))
     resolveScannedLabelMock.mockResolvedValueOnce({ kind: 'exact', sake: DASSAI_BRAND })
     lookupBreweryByBrandMock.mockResolvedValueOnce(ASAHI_SHUZO)
@@ -368,96 +346,5 @@ describe('scanLabel — the visitor’s own bottlings of the matched sake', () =
     const state = await scanLabel(jpegFormData())
 
     expect(state.status).toBe('matched')
-  })
-})
-
-// --- RATE_LIMIT_BYPASS escape hatch (from round 6a of #161) ----------
-
-describe('scanLabel — RATE_LIMIT_BYPASS escape hatch', () => {
-  // The bypass is a top-of-function short-circuit inside `enforceRateLimit`
-  // (see scan-action.ts § "Dev/preview escape hatch"). It's covered at
-  // the env-parse and prod-guard layers by config-gate.test.ts, but the
-  // action-boundary behaviour — that the bypass fires BEFORE
-  // assertRateLimitConfig / the cookie read / the KV round-trip — is
-  // only observable here. Regression insurance for the "someone
-  // refactors enforceRateLimit and moves the guard below the config
-  // gate" future.
-  afterEach(() => {
-    vi.unstubAllEnvs()
-    vi.resetModules()
-  })
-
-  it('short-circuits enforceRateLimit before touching config-gate when RATE_LIMIT_BYPASS=1', async () => {
-    // Env must be set BEFORE we resetModules + dynamic-import, because
-    // `env` is parsed at module load in src/env.ts (Zod .parse on
-    // process.env). Same stubEnv + reset + dynamic-import shape as
-    // `src/lib/ai/mcp/registry.test.ts`'s missing-env-var test.
-    vi.stubEnv('RATE_LIMIT_BYPASS', '1')
-    vi.resetModules()
-
-    const { scanLabel: freshScanLabel } = await import('./scan-action')
-    const { getVisionProvider: freshGetVision } = await import(
-      '@/lib/ai/vision/registry'
-    )
-    const { assertRateLimitConfig: freshAssertConfig } = await import(
-      '@/lib/rate-limit/config-gate'
-    )
-    const { cookies: freshCookies } = await import('next/headers')
-
-    const freshGetVisionMock = vi.mocked(freshGetVision)
-    const freshAssertConfigMock = vi.mocked(freshAssertConfig)
-    const freshCookiesMock = vi.mocked(freshCookies)
-
-    // Fresh call-history so `not.toHaveBeenCalled()` asserts THIS
-    // test's behaviour, not accumulation across the file's module
-    // lifetime.
-    freshAssertConfigMock.mockClear()
-
-    // Cookie jar reachable for the up-front debug-cookie read. No
-    // debug cookie set — the DebugLog stays undefined and every
-    // downstream `debugAdd` is a no-op.
-    freshCookiesMock.mockResolvedValue({
-      get: () => undefined,
-    } as unknown as Awaited<ReturnType<typeof cookies>>)
-
-    // Reach through the bypass to the vision provider → throw there.
-    // That the code reaches extractLabel is the PROOF the bypass fired:
-    // if it hadn't, the action would return `session_missing` (since
-    // assertRateLimitConfig returns null and the cookie is empty) or
-    // `rate_limited`, never touching the vision provider.
-    freshGetVisionMock.mockReturnValue({
-      extractLabel: vi
-        .fn()
-        .mockRejectedValue(new Error('bypass-fired — vision provider reached')),
-    })
-
-    // Swallow + assert the warn — the guard emits `console.warn` on
-    // every bypass firing so an operator tailing logs sees a clear
-    // "you have an escape hatch active" line.
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
-
-    // Minimal FormData with a non-empty JPEG blob and a valid locale.
-    // The blob just needs `size > 0` for the invalid_input check to
-    // pass — the mocked extractLabel throws before the bytes matter.
-    const formData = new FormData()
-    formData.set('image', new Blob([new Uint8Array([1, 2, 3])], { type: 'image/jpeg' }))
-    formData.set('locale', 'en')
-
-    const state = await freshScanLabel(formData)
-
-    // extraction_failed proves the code reached the vision provider
-    // (past the rate-limit gate). rate_limited or session_missing
-    // would prove the bypass DIDN'T fire.
-    expect(state.status).toBe('extraction_failed')
-    // The bypass short-circuits BEFORE assertRateLimitConfig runs —
-    // the whole point of the escape hatch is to skip the config check
-    // entirely so dev iteration works without KV credentials.
-    expect(freshAssertConfigMock).not.toHaveBeenCalled()
-    // The warn line makes the escape hatch observable in local /
-    // preview logs. `'[scan]'` prefix distinguishes it from the
-    // sibling suggest-action's `'[suggest]'` warn.
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/RATE_LIMIT_BYPASS/))
-
-    warnSpy.mockRestore()
   })
 })

@@ -1,16 +1,14 @@
 'use server'
 
-import { cookies } from 'next/headers'
 import { env } from '@/env'
 import {
   knownCrossBeverageDescriptors,
   resolveCrossBeverageTarget,
 } from '@/lib/cross-beverage/forward-lookup'
-import { DebugLog, debugAdd, runWithDebugLog } from '@/lib/debug/debug-log'
-import { isDebugEnabled } from '@/lib/debug/debug-access'
+import { debugAdd } from '@/lib/debug/debug-log'
 import type { FlavorAxes } from '@/lib/flavor/flavor-similarity'
 import { readAnonymousSessionCookie } from '@/lib/legal/anonymous-session-cookie'
-import { enforceRateLimit } from '@/lib/rate-limit/enforce-rate-limit'
+import { meteredCall, type CookieJar } from '@/lib/metering/metered-call'
 import type { FlavorProfile } from '@/lib/schemas/flavor-profile'
 import type { TasteEvent } from '@/lib/schemas/taste-event'
 import { lookupFlavorChart } from '@/lib/sakenowa/catalogue-reads'
@@ -67,58 +65,54 @@ async function recordTasteEvent(
   label: string,
   resolveTarget: () => Promise<ResolvedTarget>,
 ): Promise<TasteActionState> {
-  const cookieJar = await cookies()
-  const log = (await isDebugEnabled(cookieJar)) ? new DebugLog() : undefined
-
-  const result = await runWithDebugLog(log, async (): Promise<TasteActionState> => {
+  // No Langfuse span and no usage counter here: the debug log and the
+  // `taste` rate limit before the store is touched are the meter's.
+  return meteredCall<TasteActionState>({ bucket: 'taste', logPrefix: '[taste]' }, async (meter) => {
     debugAdd('TasteAction', `entered: ${label}`)
-
-    const rateLimit = await enforceRateLimit({
-      bucket: 'taste',
-      logPrefix: '[taste]',
-      debug: debugAdd,
-    })
-    if (rateLimit.kind === 'session_missing') return { status: 'session_missing' }
-    if (!rateLimit.allowed) return { status: 'rate_limited', retryAfterSec: rateLimit.retryAfterSec }
-
-    const secret = env.SESSION_COOKIE_SECRET
-    if (!secret) {
-      debugAdd(
-        'TasteAction',
-        'SESSION_COOKIE_SECRET unset — cannot resolve session (non-production)',
-        undefined,
-        'warn',
-      )
-      return { status: 'unavailable' }
-    }
-    const session = readAnonymousSessionCookie(cookieJar, secret)
-    if (!session) return { status: 'session_missing' }
-
-    const store = getTasteEventStore()
-    if (!store) {
-      debugAdd(
-        'TasteAction',
-        'taste store env unset — cannot persist (non-production)',
-        undefined,
-        'warn',
-      )
-      return { status: 'unavailable' }
-    }
-
-    const resolved = await resolveTarget()
-    if (!resolved.ok) return resolved.state
-
-    await store.append(session.sid, resolved.event)
-    const events = await store.read(session.sid)
-    const profile = deriveTasteProfile(events, Date.now())
-    debugAdd('TasteAction', 'event recorded', {
-      kind: resolved.event.kind,
-      eventCount: events.length,
-    })
-    return { status: 'ok', profile }
+    return meter.pay(() => recordPaid(meter.cookieJar, resolveTarget))
   })
+}
 
-  return log ? { ...result, debugLog: log.toArray() } : result
+/** What an admitted taste request does: resolve the session, resolve the target, append, derive. */
+async function recordPaid(
+  cookieJar: CookieJar,
+  resolveTarget: () => Promise<ResolvedTarget>,
+): Promise<TasteActionState> {
+  const secret = env.SESSION_COOKIE_SECRET
+  if (!secret) {
+    debugAdd(
+      'TasteAction',
+      'SESSION_COOKIE_SECRET unset — cannot resolve session (non-production)',
+      undefined,
+      'warn',
+    )
+    return { status: 'unavailable' }
+  }
+  const session = readAnonymousSessionCookie(cookieJar, secret)
+  if (!session) return { status: 'session_missing' }
+
+  const store = getTasteEventStore()
+  if (!store) {
+    debugAdd(
+      'TasteAction',
+      'taste store env unset — cannot persist (non-production)',
+      undefined,
+      'warn',
+    )
+    return { status: 'unavailable' }
+  }
+
+  const resolved = await resolveTarget()
+  if (!resolved.ok) return resolved.state
+
+  await store.append(session.sid, resolved.event)
+  const events = await store.read(session.sid)
+  const profile = deriveTasteProfile(events, Date.now())
+  debugAdd('TasteAction', 'event recorded', {
+    kind: resolved.event.kind,
+    eventCount: events.length,
+  })
+  return { status: 'ok', profile }
 }
 
 /**
