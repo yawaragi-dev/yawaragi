@@ -117,8 +117,8 @@ import {
 } from '@/lib/sakenowa/resolve-scanned-label'
 import { LABEL_SCAN_PROMPTS } from '@/lib/ai/vision/anthropic-haiku-provider'
 import type { LabelScanExtraction } from '@/lib/schemas/label-scan-extraction'
-import { firstReadStands, landLabel, type NotOneBottleOfSake } from '@/lib/scan/read-kind'
-import { canJudge, judgeLanding, type Landing, type Verdict } from '~/evals/label-scan-jp/judge'
+import { bottleExtraction, firstReadStands, landLabel, twoBottleReadsOf, type NotOneBottleOfSake } from '@/lib/scan/read-kind'
+import { canJudge, judgeBottles, judgeLanding, type BottlesShown, type BottlesVerdict, type Landing, type Verdict } from '~/evals/label-scan-jp/judge'
 import { charAccuracy } from '~/evals/label-scan-jp/levenshtein'
 import { photosInTheWrongFolder } from '~/evals/label-scan-jp/photo-folders'
 import { inSuite, isRunSuite } from '~/evals/label-scan-jp/suites'
@@ -195,6 +195,8 @@ interface PhotoResult {
   breweryPrinted?: boolean
   /** The model's self-reported confidence, 0..1. */
   confidence?: number
+  /** Several bottles, none the subject: which screen the scan chose, and where each row landed. */
+  bottles?: BottlesVerdict
 }
 
 interface ProviderResult {
@@ -362,6 +364,34 @@ async function judge(
     landedOn = `${resolved.sake.brandId}:${resolved.sake.nameKanji}`
   }
   return { kind: resolved.kind, landedOn, verdict: judgeLanding(entry, landing) }
+}
+
+/**
+ * What the scan shows for a photo of several bottles (`read-label.ts`): rows
+ * for two, each bottle looked up on its own, one sake when both rows are it,
+ * and the shelf otherwise.
+ */
+async function bottlesShown(extraction: LabelScanExtraction): Promise<BottlesShown> {
+  const reads = twoBottleReadsOf(extraction)
+  if (!reads) return { kind: 'shelf' }
+  const rows = await Promise.all(reads.map((read) => landingOf(bottleExtraction(extraction, read))))
+  const [a, b] = rows
+  if (a?.kind === 'one' && b?.kind === 'one' && a.brandId === b.brandId) return { kind: 'one' }
+  return { kind: 'two', rows }
+}
+
+/** Where one bottle's read lands, as a verdict needs it; a lookup error is no sake. */
+async function landingOf(extraction: LabelScanExtraction): Promise<Landing> {
+  try {
+    const resolved = await landLabel(extraction, () => resolveScannedLabel(extraction))
+    if (resolved.kind === 'ambiguous') return { kind: 'list', brandIds: resolved.candidates.map((c) => c.sake.brandId) }
+    if (resolved.kind === 'exact' || resolved.kind === 'matched_brand_only' || resolved.kind === 'matched_brewery_only') {
+      return { kind: 'one', brandId: resolved.sake.brandId }
+    }
+    return { kind: 'none' }
+  } catch {
+    return { kind: 'none' }
+  }
 }
 
 /**
@@ -573,6 +603,8 @@ async function main() {
             other_names: savedRead.other_names,
             name_romaji: savedRead.name_romaji,
             brewery_romaji: savedRead.brewery_romaji,
+            bottle_count: savedRead.bottle_count,
+            bottles: savedRead.bottles,
             confidence: savedRead.confidence,
             source: 'llm_extracted',
           }
@@ -600,6 +632,8 @@ async function main() {
             other_names: extraction.other_names,
             name_romaji: extraction.name_romaji,
             brewery_romaji: extraction.brewery_romaji,
+            bottle_count: extraction.bottle_count,
+            bottles: extraction.bottles,
             confidence: extraction.confidence,
             latencyMs,
           }
@@ -610,10 +644,15 @@ async function main() {
         const exactMatch = nameAccuracy === 1 && breweryAccuracy === 1
         const resolution =
           canResolve && canJudge(gt) ? await resolveAndJudge(extraction, gt) : undefined
+        const bottles =
+          canResolve && gt.subject === 'several_bottles' && !gt.items?.some((item) => item.main)
+            ? judgeBottles(gt.items ?? [], await bottlesShown(extraction))
+            : undefined
         photos.push({
           file,
           view: gt.view,
           resolution,
+          ...(bottles ? { bottles } : {}),
           nameAccuracy,
           breweryAccuracy,
           exactMatch,
@@ -690,6 +729,7 @@ async function main() {
   printComparisonTable(sakeBottles, sakeBottleCount)
   if (canResolve) printResolutionTable(sakeBottles)
   if (corpus.length > sakeBottleCount) printOtherKindsTable(otherKinds, kindOf, canResolve)
+  if (canResolve) printBottlesTable(otherKinds)
   printPerPhotoDetail(providerResults)
   // The lookup holds a pg pool open; the run is over.
   process.exit(0)
@@ -786,6 +826,35 @@ function printOtherKindsTable(results: ProviderResult[], kindOf: Map<string, Pho
   console.log(
     `right: no sake shown (or, where one bottle of several is clearly the subject, that bottle). ` +
       `in photo: a catalogue row for something in the frame that is not the answer. wrong: a sake that is not in the frame.`,
+  )
+  console.log(``)
+}
+
+/**
+ * Design v1.7 §5a on photos of several bottles none of which is the subject:
+ * did the scan pick the screen the photo calls for (rows for two bottles, the
+ * shelf for more), and where did the rows land.
+ */
+function printBottlesTable(results: ProviderResult[]) {
+  console.log(`## Two bottles or a shelf`)
+  console.log(``)
+  console.log(`| provider | photos | two bottles: rows shown | shelf: shelf shown | rows right | rows wrong | rows none |`)
+  console.log(`|----------|--------|-------------------------|--------------------|------------|------------|-----------|`)
+  for (const r of results) {
+    if (r.constructionError) continue
+    const judged = r.photos.flatMap((p) => (p.bottles ? [p.bottles] : []))
+    if (judged.length === 0) continue
+    const two = judged.filter((b) => b.expectedTwo)
+    const shelf = judged.filter((b) => !b.expectedTwo)
+    const sum = (key: 'rowsRight' | 'rowsWrong' | 'rowsNone') => judged.reduce((n, b) => n + b[key], 0)
+    console.log(
+      `| ${r.key} | ${judged.length} | ${two.filter((b) => b.rightScreen).length} of ${two.length} | ${shelf.filter((b) => b.rightScreen).length} of ${shelf.length} | ${sum('rowsRight')} | ${sum('rowsWrong')} | ${sum('rowsNone')} |`,
+    )
+  }
+  console.log(``)
+  console.log(
+    `rows right: a row on a sake that is in the photo. wrong: on one that is not. none: the row found no single sake ` +
+      `(not in the catalogue, unsure, or not sake). "Rows shown" counts two bottles of one sake answered with that sake as right.`,
   )
   console.log(``)
 }

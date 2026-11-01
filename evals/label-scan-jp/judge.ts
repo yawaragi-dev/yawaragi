@@ -79,3 +79,39 @@ function judgeTarget(target: readonly number[], alsoInPhoto: readonly number[], 
   }
   return landing.brandIds.some((id) => target.includes(id) || alsoInPhoto.includes(id)) ? 'in_list' : 'wrong'
 }
+
+/**
+ * Design v1.7 §5a on a photo of several bottles none of which is the subject:
+ * two bottles ask "Which bottle do you mean?", three or more are a shelf. What
+ * the scan showed is `shelf` (the outcome without rows), `two` (one row per
+ * bottle, `rows` where each landed), or `one` (both rows the same sake, so
+ * that sake). A row is right when it lands on a sake one of the photo's
+ * bottles is, wrong when it lands on any other, and `none` when it found no
+ * single sake.
+ */
+export type BottlesShown = { kind: 'shelf' } | { kind: 'one' } | { kind: 'two'; rows: readonly Landing[] }
+
+export interface BottlesVerdict {
+  /** The photo holds two bottles (`items` lists two). */
+  expectedTwo: boolean
+  /** The scan chose the screen the photo calls for: rows for two, the shelf for more. */
+  rightScreen: boolean
+  rowsRight: number
+  rowsWrong: number
+  rowsNone: number
+}
+
+export function judgeBottles(items: readonly { expectedBrandIds: readonly number[] }[], shown: BottlesShown): BottlesVerdict {
+  const expectedTwo = items.length === 2
+  const inPhoto = items.flatMap((item) => item.expectedBrandIds)
+  const rows = shown.kind === 'two' ? shown.rows : []
+  const hits = (landing: Landing) =>
+    landing.kind === 'one' ? inPhoto.includes(landing.brandId) : landing.kind === 'list' && landing.brandIds.some((id) => inPhoto.includes(id))
+  return {
+    expectedTwo,
+    rightScreen: expectedTwo ? shown.kind !== 'shelf' : shown.kind === 'shelf',
+    rowsRight: rows.filter((row) => row.kind !== 'none' && hits(row)).length,
+    rowsWrong: rows.filter((row) => row.kind !== 'none' && !hits(row)).length,
+    rowsNone: rows.filter((row) => row.kind === 'none').length,
+  }
+}

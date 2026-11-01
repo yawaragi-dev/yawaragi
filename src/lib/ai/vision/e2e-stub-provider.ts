@@ -48,11 +48,12 @@ async function readInjectedExtraction(): Promise<LabelScanExtraction | null> {
     const json = Buffer.from(raw, 'base64').toString('utf8')
     const parsed: unknown = JSON.parse(json)
     if (typeof parsed !== 'object' || parsed === null) return null
-    const { name_ja, brewery_ja, confidence, subject, drink, brewery_printed, other_names, bottling, name_romaji, brewery_romaji, legibility } =
+    const { name_ja, brewery_ja, confidence, subject, drink, brewery_printed, other_names, bottling, name_romaji, brewery_romaji, legibility, bottle_count, bottles } =
       parsed as Record<string, unknown>
     // Pin `source` here; the injected payload carries model-output fields
     // only — the three every read has, and the optional ones a test wants
-    // (what the photo shows, what the drink is, the bottling). Schema.parse
+    // (what the photo shows, what the drink is, the bottling, the bottles in
+    // a photo of several). Schema.parse
     // enforces the field contract so a malformed cookie can't smuggle a bad
     // shape into the pipeline.
     return LabelScanExtractionSchema.parse({
@@ -68,6 +69,8 @@ async function readInjectedExtraction(): Promise<LabelScanExtraction | null> {
       brewery_romaji,
       legibility,
       bottling,
+      bottle_count,
+      bottles,
     })
   } catch {
     // Missing request scope (unit test), malformed base64/JSON, or a

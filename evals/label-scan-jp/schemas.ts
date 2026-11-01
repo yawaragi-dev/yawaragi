@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import {
+  ScanBottleReadSchema,
   ScanBottlingSchema,
   ScanDrinkSchema,
   ScanLegibilitySchema,
@@ -324,6 +325,8 @@ export const SavedReadSchema = z.union([
     other_names: z.array(z.string()).optional(),
     name_romaji: z.string().optional(),
     brewery_romaji: z.string().optional(),
+    bottle_count: z.number().int().min(1).optional(),
+    bottles: z.array(ScanBottleReadSchema).optional(),
     confidence: z.number().min(0).max(1),
     latencyMs: z.number().int().nonnegative(),
   }),

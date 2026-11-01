@@ -950,7 +950,10 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
                   onSelect: () => dispatch({ type: 'bottlePicked', index }),
                   name,
                   kanji: kanji === name ? null : kanji,
-                  where: read ? (read.brewery_romaji ?? read.brewery_ja) : null,
+                  // The catalogue's brewery once the bottle is found, else what was read.
+                  where:
+                    (bottle.reading.status === 'matched' ? bottle.reading.breweryRomaji : null) ??
+                    (read ? (read.brewery_romaji ?? read.brewery_ja) : null),
                   reason: tOutcome(bottle.breweryPrinted ? 'twoBottles.reasonNameAndBrewery' : 'twoBottles.reasonName', {
                     position: tOutcome(`twoBottles.position.${bottle.position}`),
                   }),

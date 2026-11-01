@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { canJudge, judgeLanding, type Landing } from './judge'
+import { canJudge, judgeBottles, judgeLanding, type Landing } from './judge'
 import { GroundTruthEntrySchema, photoKind } from './schemas'
 
 const none: Landing = { kind: 'none' }
@@ -198,5 +198,29 @@ describe('a photo with no bottle in it', () => {
     expect(GroundTruthEntrySchema.safeParse({ ...entry, items: [{ name_ja: '七田', expectedBrandIds: [] }] }).success).toBe(
       false,
     )
+  })
+})
+
+describe('judgeBottles — two bottles or a shelf (design v1.7 §5a)', () => {
+  const two = [{ expectedBrandIds: [1] }, { expectedBrandIds: [2] }]
+  const shelf = [...two, { expectedBrandIds: [3] }]
+
+  it('wants rows for two bottles, and counts each row by whether its sake is in the photo', () => {
+    expect(judgeBottles(two, { kind: 'two', rows: [{ kind: 'one', brandId: 2 }, { kind: 'one', brandId: 9 }] })).toEqual({
+      expectedTwo: true,
+      rightScreen: true,
+      rowsRight: 1,
+      rowsWrong: 1,
+      rowsNone: 0,
+    })
+  })
+
+  it('wants the shelf for three or more bottles', () => {
+    expect(judgeBottles(shelf, { kind: 'shelf' }).rightScreen).toBe(true)
+    expect(judgeBottles(shelf, { kind: 'two', rows: [{ kind: 'none' }] })).toMatchObject({ rightScreen: false, rowsNone: 1 })
+  })
+
+  it('counts the shelf shown for two bottles as the wrong screen', () => {
+    expect(judgeBottles(two, { kind: 'shelf' }).rightScreen).toBe(false)
   })
 })
