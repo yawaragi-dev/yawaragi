@@ -4,10 +4,11 @@ import type { NearestReason } from '@/lib/sakenowa/nearest-brands'
 import type { LabelScanExtraction, NonSakeDrink, ScanGrade } from '@/lib/schemas/label-scan-extraction'
 
 /**
- * A catalogue sake offered as a guess — §5a's "Did you mean" and §5's
- * Best-guess "Not sure?" list — from `nearest-brands.ts`, with why.
+ * A catalogue sake as the scan screen names it: enough for a row (Latin name
+ * over the kanji, brewery, prefecture) and the link to its page. Built in one
+ * place, `sakeRefOf` (`sake-ref.ts`), wherever the scan points at a sake.
  */
-export interface ScanCandidate {
+export interface SakeRef {
   brandId: number
   sakeHref: string
   nameKanji: string
@@ -15,6 +16,13 @@ export interface ScanCandidate {
   breweryKanji: string | null
   breweryRomaji: string | null
   prefectureName: string | null
+}
+
+/**
+ * A catalogue sake offered as a guess — §5a's "Did you mean" and §5's
+ * Best-guess "Not sure?" list — from `nearest-brands.ts`, with why.
+ */
+export interface ScanCandidate extends SakeRef {
   reason: NearestReason
   /** The brewery is the one that was read, not a lookalike. */
   sameBrewery: boolean
@@ -25,24 +33,14 @@ export interface ScanCandidate {
  * photo (#408): a guess resting on two photos, shown beside this photo's
  * own outcome and never in place of it.
  */
-export interface BothPhotosGuess {
-  brandId: number
-  sakeHref: string
-  nameKanji: string
-  nameRomaji: string | null
-  breweryKanji: string | null
-  breweryRomaji: string | null
-  prefectureName: string | null
-}
+export type BothPhotosGuess = SakeRef
 
 /**
- * Tagged-union state returned by `scanLabel` (as JSON from
- * `POST /{locale}/scan/read`). Lives in its own module because the scan
- * itself is server-only and the screen imports these types and constants.
+ * What one bottle read as: the catalogue's answer to one label, or why the
+ * catalogue was not asked (not sake, not one bottle, nothing legible). A
+ * photo of two bottles holds one of these per bottle.
  */
-type ScanActionStateBase =
-  | { status: 'idle' }
-  | { status: 'invalid_input'; reason: 'missing_image' | 'unsupported_locale' }
+export type ScanReading =
   | {
       status: 'matched'
       extraction: LabelScanExtraction
@@ -191,26 +189,14 @@ type ScanActionStateBase =
   | {
       status: 'ambiguous'
       extraction: LabelScanExtraction
-      candidates: readonly {
-        brandId: number
-        sakeHref: string
-        nameKanji: string
-        nameRomaji: string | null
-        breweryKanji: string
-        breweryRomaji: string | null
-        /**
-         * Editorial Hepburn prefecture name for the candidate's
-         * brewery (e.g. "Gunma"), derived from
-         * `getPrefectureNames(brewery.areaId)` — the static
-         * `manual_curation` area map, NOT a new query. `null` when
-         * the areaId is unknown to the map. Shown in the
-         * disambiguation row / shared-brewery header so a visitor
-         * facing same-brand-across-breweries collisions (Hakushika:
-         * Ibaraki vs Hyogo) can pick by region. A proper noun, so it
-         * reads identically across locales.
-         */
-        prefectureName: string | null
-      }[]
+      /**
+       * Each with its brewery's prefecture (e.g. "Gunma"), from the static
+       * `manual_curation` area map, so a visitor facing same-brand-across-
+       * breweries collisions (Hakushika: Ibaraki vs Hyogo) can pick by
+       * region. The brewery is always known here: every ambiguous-producing
+       * pass joins both sides.
+       */
+      candidates: readonly (SakeRef & { breweryKanji: string })[]
       /** Set when this photo and the previous one together point at a sake. */
       bothPhotos?: BothPhotosGuess
     }
@@ -239,6 +225,25 @@ type ScanActionStateBase =
       subject: 'menu' | 'several_bottles' | 'no_bottle'
     }
   /**
+   * The read is too unsure to look up, or the side photographed carries no
+   * writing. The extraction is carried for the read card and for pairing
+   * the next photo with this one (#408).
+   */
+  | {
+      status: 'low_confidence'
+      extraction: LabelScanExtraction
+      /** Set when this photo and the previous one together point at a sake. */
+      bothPhotos?: BothPhotosGuess
+    }
+
+/**
+ * Why a scan has no reading at all: nothing sent yet, a request the server
+ * refused, or a read that failed on our side.
+ */
+export type ScanRequestOutcome =
+  | { status: 'idle' }
+  | { status: 'invalid_input'; reason: 'missing_image' | 'unsupported_locale' }
+  /**
    * Phase 3 / S2 (#107): the per-visitor rate limit on the vision-scan
    * bucket has been exhausted. The UI renders a localized "you've
    * reached today's limit, try again in X" message using
@@ -262,26 +267,6 @@ type ScanActionStateBase =
       status: 'session_missing'
     }
   /**
-   * Phase 3 / S3 (#108) PLACEHOLDER: the vision provider produced an
-   * extraction whose confidence is below the auto/confirm threshold.
-   * S3 has no UI for medium / low confidence yet — S4 (#109) lands the
-   * three-tier UX (auto/confirm/retry). Until then the action returns
-   * this tagged state and the UI renders a localized "we couldn't read
-   * the label clearly, try a closer shot" message. The `extraction` is
-   * carried through so a future S4 confirm-card can use it without a
-   * second scan.
-   *
-   * S4 will likely split this into `confirm` (medium) and `retry`
-   * (low), at which point the placeholder copy is replaced; the action
-   * change is local and the rest of the wire-shape is unaffected.
-   */
-  | {
-      status: 'low_confidence'
-      extraction: LabelScanExtraction
-      /** Set when this photo and the previous one together point at a sake. */
-      bothPhotos?: BothPhotosGuess
-    }
-  /**
    * Catch-all for unhandled throws inside the action — Anthropic API
    * outages, the vision schema parse failing after retries on a
    * non-sake image, Sakenowa DB connectivity, etc. Without this state
@@ -299,6 +284,13 @@ type ScanActionStateBase =
       status: 'extraction_failed'
       reason: string
     }
+
+/**
+ * Tagged-union state returned by `scanLabel` (as JSON from
+ * `POST /{locale}/scan/read`). Lives in its own module because the scan
+ * itself is server-only and the screen imports these types and constants.
+ */
+type ScanActionStateBase = ScanRequestOutcome | ScanReading
 
 /**
  * Optional server-side trace attached to every action result when the
@@ -319,3 +311,29 @@ export type ScanActionState = ScanActionStateBase & {
 }
 
 export const INITIAL_SCAN_ACTION_STATE: ScanActionState = { status: 'idle' }
+
+/**
+ * The catalogue sake a reading landed on, whichever status carries it, with
+ * the catalogue's own kanji (never the model's misread): `matched_brand_only`
+ * holds it on `sakeKanji`, `matched_brewery_only` on `brandDivergence.stored`.
+ * `null` for a reading that names no one sake.
+ */
+export function landedSakeOf(
+  reading: ScanActionState,
+): { brandId: number; sakeHref: string; nameKanji: string; nameRomaji: string | null } | null {
+  switch (reading.status) {
+    case 'matched':
+      return { brandId: reading.brandId, sakeHref: reading.sakeHref, nameKanji: reading.extraction.name_ja, nameRomaji: reading.sakeRomaji }
+    case 'matched_brand_only':
+      return { brandId: reading.brandId, sakeHref: reading.sakeHref, nameKanji: reading.sakeKanji, nameRomaji: reading.sakeRomaji }
+    case 'matched_brewery_only':
+      return {
+        brandId: reading.brandId,
+        sakeHref: reading.sakeHref,
+        nameKanji: reading.brandDivergence.stored,
+        nameRomaji: reading.brandDivergence.storedRomaji,
+      }
+    default:
+      return null
+  }
+}
