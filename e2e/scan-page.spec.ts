@@ -52,6 +52,25 @@ test.describe('scan entry route', () => {
     await context.close()
   })
 
+  test('the camera fills the screen down to the tab bar, with nothing to scroll to', async ({ browser }) => {
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 } })
+    // Consent given: an open cookie banner adds room to scroll the pane's end
+    // out from under it, on purpose.
+    await context.addCookies([
+      AGE_GATE_COOKIE,
+      { name: 'yawaragi_consent', value: JSON.stringify({ version: 1, analytics: false, marketing: false }), url: BASE_URL },
+    ])
+    const page = await context.newPage()
+    await page.goto('/en/scan')
+    await expect(page.getByTestId('scan-camera')).toBeVisible()
+    // §4: the shutter never needs a scroll, and the end-of-screen block (which
+    // ends scrolling screens) is not under the camera to scroll to.
+    const pane = page.locator('[data-app-pane]')
+    expect(await pane.evaluate((el) => el.scrollHeight - el.clientHeight)).toBe(0)
+    await expect(page.getByTestId('site-footer')).toBeHidden()
+    await context.close()
+  })
+
   test('/en/scan renders the camera when the gate cookie is set', async ({
     browser,
   }) => {

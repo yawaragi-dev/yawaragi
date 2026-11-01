@@ -256,6 +256,7 @@ export function CameraCapture({
       className="flex h-[100cqh] min-h-[440px] w-full flex-col bg-camera text-camera-ink"
       data-testid="scan-camera"
       data-camera-state={state}
+      data-camera-ground=""
     >
       {/* -- Top row: 44px · title · 44px ------------------------------- */}
       <div className="grid grid-cols-[44px_minmax(0,1fr)_44px] items-center px-3.5 py-3">

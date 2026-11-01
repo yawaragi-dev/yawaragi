@@ -131,7 +131,9 @@ export default async function AppShellLayout({ children }: { children: React.Rea
       >
         {children}
         {/* Inside the scrolling pane, so the Impressum stays reachable from
-            every app screen without a second fixed bar. See <LegalFooter />. */}
+            every app screen without a second fixed bar. See <LegalFooter />.
+            Not under the camera, which is the whole pane and never scrolls
+            (`[data-camera-ground]` in globals.css). */}
         <LegalFooter credit />
         {/* While the cookie banner is open it floats over the bottom of the
             pane (§2: it does not block the app). This spacer, as tall as the

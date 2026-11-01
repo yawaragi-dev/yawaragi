@@ -566,3 +566,14 @@ html[data-offline] [data-needs-network] {
   48.182%, 63.636% { opacity: 1; }
   66.364%, 100% { opacity: 0; }
 }
+
+/*
+ * §4: the camera is the whole app pane, down to the tab bar, and never
+ * scrolls. The end-of-screen block ends scrolling screens; under the camera
+ * it only made the pane scroll by its own height. The Impressum is reached
+ * from the avatar on every other tab screen, and from every screen the scan
+ * leads to.
+ */
+[data-app-pane]:has([data-camera-ground]) > [data-end-of-screen] {
+  display: none;
+}
