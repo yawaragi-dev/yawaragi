@@ -78,6 +78,9 @@ export const PAIRING_ROWS: readonly PairingRow[] = ROWS.map((row) => PairingRowS
 
 export type PairingRowId = (typeof ROWS)[number]['id']
 
+/** A food the table names, as its message key (`pairings.rows.<row>.<food>`). */
+export type PairingFood = (typeof ROWS)[number]['foods'][number]
+
 export function pairingRow(id: PairingRowId): PairingRow {
   return PAIRING_ROWS.find((row) => row.id === id)!
 }
