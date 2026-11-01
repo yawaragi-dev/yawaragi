@@ -72,7 +72,7 @@ import { ScanNudge } from '@/components/scan/scan-nudge'
 import { readListAction } from '@/lib/scan/list-action'
 import { addOwnBottling as addOwnBottlingAction } from '@/lib/collection/expression-actions'
 import { ListProblem, ListReading, ListResults } from '@/components/scan/list-results'
-import { type BothPhotosGuess, type ScanActionState, type ScanCandidate } from '@/lib/scan/scan-action-state'
+import { landedSakeOf, type BothPhotosGuess, type ScanActionState, type ScanCandidate } from '@/lib/scan/scan-action-state'
 import type { NudgeKind } from '@/lib/scan/scan-session'
 import { useScanSession } from '@/lib/scan/use-scan-session'
 import { appendMatchToHistory } from '@/lib/scan/scan-history'
@@ -249,55 +249,14 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
   // place as they always have. The photo's `blob:` URL is created and
   // revoked by `useScanSession`.
 
-  // Mirror every successful match into the per-tab history so the
-  // consensus mechanism can vote across recent scans. Tracks
-  // `matched` (auto + confirm tier) and `matched_brand_only` (the
-  // brewery-divergence path from #127) — those are the two states
-  // that carry a real brandId + sakeHref. Idempotent against the
-  // same state being re-rendered: we don't track timestamps to
-  // dedupe because every action invocation produces a fresh state
-  // object with a fresh `tMs` upstream.
+  // Mirror every scan that landed on one catalogue sake into the per-tab
+  // history so the consensus mechanism can vote across recent scans, with
+  // the catalogue's kanji rather than the model's read. Idempotent against
+  // the same state being re-rendered: every scan produces a fresh state
+  // object, and only a fresh one runs this.
   useEffect(() => {
-    if (
-      state.status === 'matched' ||
-      state.status === 'matched_brand_only' ||
-      state.status === 'matched_brewery_only'
-    ) {
-      // For brewery-only matches the extracted name_ja is the
-      // misread brand kanji — store the brand's CATALOGUE kanji
-      // (already on `brandDivergence.stored`) so the history's
-      // displayed kanji and the consensus card both show the
-      // correct value, not the hallucination. Same for the romaji:
-      // the brewery-only state's `brandDivergence.storedRomaji` is
-      // the catalogue brand's romaji; the other two carry it on
-      // `sakeRomaji` directly.
-      // Prefer the catalogue brand kanji over the model's
-      // extraction whenever it's available — the canonical form is
-      // always more accurate, and in the field-swap rescue path the
-      // extraction's name_ja is the model's single-char hallucination
-      // (not the brand at all). `matched_brand_only` carries
-      // `sakeKanji`; `matched_brewery_only` puts the canonical brand
-      // kanji on `brandDivergence.stored`; `matched` (auto / confirm
-      // tier) doesn't carry it today, so fall back to extraction
-      // there.
-      const nameKanji =
-        state.status === 'matched_brewery_only'
-          ? state.brandDivergence.stored
-          : state.status === 'matched_brand_only'
-          ? state.sakeKanji
-          : state.extraction.name_ja
-      const nameRomaji =
-        state.status === 'matched_brewery_only'
-          ? state.brandDivergence.storedRomaji
-          : state.sakeRomaji
-      appendMatchToHistory({
-        brandId: state.brandId,
-        sakeHref: state.sakeHref,
-        nameKanji,
-        nameRomaji,
-        tMs: Date.now(),
-      })
-    }
+    const sake = landedSakeOf(state)
+    if (sake) appendMatchToHistory({ ...sake, tMs: Date.now() })
   }, [state])
 
   // The label's bottling, for the sake page the result leads to: its "Add

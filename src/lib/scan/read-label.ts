@@ -1,22 +1,20 @@
 import 'server-only'
 
-import { getPathname } from '@/i18n/navigation'
 import type { Locale } from '@/i18n/routing'
 import type { VisionProvider } from '@/lib/ai/vision/vision-provider'
 import { debugAdd } from '@/lib/debug/debug-log'
 import { isKanjiVariant } from '@/lib/sakenowa/kanji-variants'
 import type { NearestBrand } from '@/lib/sakenowa/nearest-brands'
-import { getPrefectureNames } from '@/lib/sakenowa/prefecture'
 import type { ResolveScannedLabelResult, ScannedLabel } from '@/lib/sakenowa/resolve-scanned-label'
 import type { Brand } from '@/lib/schemas/brand'
 import type { Brewery } from '@/lib/schemas/brewery'
 import type { EarlierScanRead } from '@/lib/schemas/earlier-scan-read'
 import type { FlavorChart } from '@/lib/schemas/flavor-chart'
 import type { LabelScanExtraction } from '@/lib/schemas/label-scan-extraction'
-import { ARRIVED_VIA_SCAN_QUERY } from './arrived-via-scan'
 import { CONFIDENCE_AUTO_THRESHOLD } from './confidence-tier'
 import { firstReadStands, landLabel } from './read-kind'
-import type { ScanActionState, ScanCandidate } from './scan-action-state'
+import { bestRomaji, sakeHrefFor, sakeRefOf } from './sake-ref'
+import type { ScanActionState, ScanCandidate, ScanReading } from './scan-action-state'
 
 /**
  * Reading one label photo, from the vision models to the state the scan
@@ -242,7 +240,7 @@ async function mapResolvedToState(
   extraction: LabelScanExtraction,
   locale: Locale,
   catalogue: LabelCatalogue,
-): Promise<ScanActionState> {
+): Promise<ScanReading> {
   switch (resolved.kind) {
     case 'low_confidence':
       return { status: 'low_confidence', extraction }
@@ -350,13 +348,11 @@ async function withNearestCandidates(
 ): Promise<ScanActionState> {
   const read = (extraction: LabelScanExtraction) => ({ name: extraction.name_ja, brewery: extraction.brewery_ja })
   const toCandidate = ({ row, reason, sameBrewery }: NearestBrand): ScanCandidate => ({
-    brandId: row.brandId,
-    sakeHref: sakeHrefFor(row.brandId, locale),
-    nameKanji: row.nameKanji,
-    nameRomaji: row.nameRomaji,
-    breweryKanji: row.breweryKanji,
-    breweryRomaji: row.breweryRomaji,
-    prefectureName: row.areaId === null ? null : (getPrefectureNames(row.areaId)?.nameEn ?? null),
+    ...sakeRefOf(
+      row,
+      row.breweryKanji === null ? null : { nameKanji: row.breweryKanji, nameRomaji: row.breweryRomaji, areaId: row.areaId },
+      locale,
+    ),
     reason,
     sameBrewery,
   })
@@ -403,15 +399,7 @@ async function withEarlierRead(
       earlierReadOutcome,
       state: {
         ...state,
-        bothPhotos: {
-          brandId: guess.sake.brandId,
-          sakeHref: sakeHrefFor(guess.sake.brandId, locale),
-          nameKanji: guess.sake.nameKanji,
-          nameRomaji: bestRomaji(guess.sake),
-          breweryKanji: brewery?.nameKanji ?? null,
-          breweryRomaji: brewery ? bestRomaji(brewery) : null,
-          prefectureName: brewery ? (getPrefectureNames(brewery.areaId)?.nameEn ?? null) : null,
-        },
+        bothPhotos: sakeRefOf(guess.sake, brewery, locale),
       },
     }
   } catch (err) {
@@ -422,46 +410,9 @@ async function withEarlierRead(
   }
 }
 
-/**
- * Locale-aware `/sake/[brandId]` pathname. The `?from=scan` query is what
- * lets the bottle page offer "Not the bottle you scanned?" and show the
- * visitor's photo (see `arrived-via-scan.ts`).
- */
-function sakeHrefFor(brandId: number, locale: Locale): string {
-  return getPathname({
-    locale,
-    href: {
-      pathname: '/sake/[brandId]',
-      params: { brandId: String(brandId) },
-      query: ARRIVED_VIA_SCAN_QUERY,
-    },
-  })
-}
-
-/**
- * Best-available English label for a Sakenowa entity: the LLM-derived
- * `nameRomaji` (#121) over Sakenowa's published `name`. Null only when both
- * are empty (CONTEXT.md "Naming convention" allows an empty brewery name).
- */
-function bestRomaji(entity: Pick<Brand | Brewery, 'name' | 'nameRomaji'>): string | null {
-  if (entity.nameRomaji) return entity.nameRomaji
-  if (entity.name) return entity.name
-  return null
-}
-
 /** One row of the disambiguation list, its brewery and prefecture denormalised onto it. */
 function ambiguousCandidate(c: { sake: Brand; brewery: Brewery }, locale: Locale) {
-  return {
-    brandId: c.sake.brandId,
-    sakeHref: sakeHrefFor(c.sake.brandId, locale),
-    nameKanji: c.sake.nameKanji,
-    nameRomaji: bestRomaji(c.sake),
-    breweryKanji: c.brewery.nameKanji,
-    breweryRomaji: bestRomaji(c.brewery),
-    // From the static editorial area map (manual_curation): no DB round-trip.
-    // `nameEn` is a proper noun and reads the same in EN and DE.
-    prefectureName: getPrefectureNames(c.brewery.areaId)?.nameEn ?? null,
-  }
+  return { ...sakeRefOf(c.sake, c.brewery, locale), breweryKanji: c.brewery.nameKanji }
 }
 
 /**
