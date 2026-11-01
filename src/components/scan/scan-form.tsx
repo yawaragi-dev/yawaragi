@@ -34,6 +34,8 @@ import {
   WarningCircle,
   PaperPlaneTilt,
   IdentificationCard,
+  Copy,
+  ArrowLeft,
 } from '@phosphor-icons/react/dist/ssr'
 import { useRouter } from 'next/navigation'
 import { getPathname } from '@/i18n/navigation'
@@ -925,6 +927,41 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
             aboutOtherDrinks
           />
         )
+      case 'two_bottles':
+        // Design v1.7 §5a (74): one row per bottle whose name was read, each
+        // opening that bottle's own reading. No read card, no keep.
+        return (
+          <ScanOutcome
+            testId="scan-result-two-bottles"
+            icon={icon(Copy)}
+            kicker={tOutcome('twoBottles.kicker')}
+            title={tOutcome('twoBottles.title')}
+            body={tOutcome('twoBottles.body')}
+            onRescan={onPickClick}
+            candidates={{
+              label: tOutcome('twoBottles.rows'),
+              rows: view.bottles.map((bottle, index) => {
+                const sake = landedSakeOf(bottle.reading)
+                const read = 'extraction' in bottle.reading ? bottle.reading.extraction : null
+                const name = sake?.nameRomaji ?? (read ? readName(read.name_ja, read.name_romaji) : '')
+                const kanji = sake ? sake.nameKanji : read && read.name_romaji ? read.name_ja : null
+                return {
+                  key: `bottle-${index}`,
+                  onSelect: () => dispatch({ type: 'bottlePicked', index }),
+                  name,
+                  kanji: kanji === name ? null : kanji,
+                  // The catalogue's brewery once the bottle is found, else what was read.
+                  where:
+                    (bottle.reading.status === 'matched' ? bottle.reading.breweryRomaji : null) ??
+                    (read ? (read.brewery_romaji ?? read.brewery_ja) : null),
+                  reason: tOutcome(bottle.breweryPrinted ? 'twoBottles.reasonNameAndBrewery' : 'twoBottles.reasonName', {
+                    position: tOutcome(`twoBottles.position.${bottle.position}`),
+                  }),
+                }
+              }),
+            }}
+          />
+        )
       case 'not_one_bottle': {
         // Design v1.7 §5a (72, 73): a menu or a shelf is the way into §7.
         const list = view.subject === 'menu' ? 'menu' : view.subject === 'several_bottles' ? 'shelf' : null
@@ -1114,6 +1151,18 @@ export function ScanForm({ locale, debugMode = false, canLog = false, signedIn =
         `empty:hidden` drops the gutter's padding when there is nothing in it.
       */}
       <div className="flex flex-col items-stretch gap-4 px-5 py-5 empty:hidden">
+        {state.status === 'two_bottles' && session.bottle !== null && hasResult && (
+          // Back from one bottle to "Which bottle do you mean?" (design v1.7 §5a, 74).
+          <button
+            type="button"
+            onClick={() => dispatch({ type: 'bottlesShown' })}
+            className="-ml-2 flex min-h-11 items-center gap-1.5 self-start rounded-md px-2 text-subtle font-medium text-ginshu-700 transition-colors hover:bg-ash-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
+            data-testid="scan-two-bottles-back"
+          >
+            <ArrowLeft size={16} aria-hidden="true" />
+            {tOutcome('twoBottles.back')}
+          </button>
+        )}
 
         {outcome}
         {view.status === 'matched' && (

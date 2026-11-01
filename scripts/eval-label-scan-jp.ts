@@ -115,10 +115,10 @@ import {
   resolveScannedLabel,
   type ResolveScannedLabelResult,
 } from '@/lib/sakenowa/resolve-scanned-label'
-import { LABEL_SCAN_PROMPTS } from '@/lib/ai/vision/anthropic-haiku-provider'
-import type { LabelScanExtraction } from '@/lib/schemas/label-scan-extraction'
-import { firstReadStands, landLabel, type NotOneBottleOfSake } from '@/lib/scan/read-kind'
-import { canJudge, judgeLanding, type Landing, type Verdict } from '~/evals/label-scan-jp/judge'
+import { LABEL_SCAN_PROMPTS, SEVERAL_BOTTLES_PROMPTS } from '@/lib/ai/vision/anthropic-haiku-provider'
+import type { LabelScanExtraction, SeveralBottlesRead } from '@/lib/schemas/label-scan-extraction'
+import { bottleExtraction, firstReadStands, landLabel, twoBottleReadsOf, type NotOneBottleOfSake } from '@/lib/scan/read-kind'
+import { canJudge, judgeBottles, judgeLanding, type BottlesShown, type BottlesVerdict, type Landing, type Verdict } from '~/evals/label-scan-jp/judge'
 import { charAccuracy } from '~/evals/label-scan-jp/levenshtein'
 import { photosInTheWrongFolder } from '~/evals/label-scan-jp/photo-folders'
 import { inSuite, isRunSuite } from '~/evals/label-scan-jp/suites'
@@ -129,6 +129,7 @@ import {
   type GroundTruthEntry,
   type PhotoKind,
   type PhotoView,
+  type SavedBottlesRead,
   type SavedRead,
   type SavedReadsFile,
 } from '~/evals/label-scan-jp/schemas'
@@ -195,6 +196,8 @@ interface PhotoResult {
   breweryPrinted?: boolean
   /** The model's self-reported confidence, 0..1. */
   confidence?: number
+  /** Several bottles, none the subject: which screen the scan chose, and where each row landed. */
+  bottles?: BottlesVerdict
 }
 
 interface ProviderResult {
@@ -253,8 +256,8 @@ const sha = (data: string | Uint8Array) => createHash('sha256').update(data).dig
  * What a saved read was made with, besides the photo: the provider key (which
  * names the model) and the prompt. A read is reused only while both hold.
  */
-function providerFingerprint(key: string): string {
-  return key === 'e2e-stub' ? 'stub' : sha(`${LABEL_SCAN_PROMPTS.system}\n${LABEL_SCAN_PROMPTS.user}`)
+function providerFingerprint(key: string, prompts: { system: string; user: string } = LABEL_SCAN_PROMPTS): string {
+  return key === 'e2e-stub' ? 'stub' : sha(`${prompts.system}\n${prompts.user}`)
 }
 
 function loadSavedReads(): SavedReadsFile {
@@ -268,8 +271,9 @@ function loadSavedReads(): SavedReadsFile {
  */
 function writeSavedReads(saved: SavedReadsFile): void {
   // The stub reads nothing; keeping its answers would only churn the file.
-  const providers = Object.fromEntries(Object.entries(saved.providers).filter(([key]) => key !== 'e2e-stub'))
-  writeFileSync(SAVED_READS_PATH, `${JSON.stringify({ ...saved, providers }, null, 1)}\n`)
+  const real = <T>(byKey: Record<string, T>) => Object.fromEntries(Object.entries(byKey).filter(([key]) => key !== 'e2e-stub'))
+  const file = { ...saved, providers: real(saved.providers), ...(saved.bottleReads ? { bottleReads: real(saved.bottleReads) } : {}) }
+  writeFileSync(SAVED_READS_PATH, `${JSON.stringify(file, null, 1)}\n`)
 }
 
 /** Resolve the provider list from env → config file → default. */
@@ -362,6 +366,34 @@ async function judge(
     landedOn = `${resolved.sake.brandId}:${resolved.sake.nameKanji}`
   }
   return { kind: resolved.kind, landedOn, verdict: judgeLanding(entry, landing) }
+}
+
+/**
+ * What the scan shows for a photo of several bottles (`read-label.ts`): rows
+ * for two, each bottle looked up on its own, one sake when both rows are it,
+ * and the shelf otherwise.
+ */
+async function bottlesShown(extraction: LabelScanExtraction, bottlesRead: SeveralBottlesRead | null): Promise<BottlesShown> {
+  const reads = bottlesRead && twoBottleReadsOf(bottlesRead)
+  if (!reads) return { kind: 'shelf' }
+  const rows = await Promise.all(reads.map((read) => landingOf(bottleExtraction(extraction, read))))
+  const [a, b] = rows
+  if (a?.kind === 'one' && b?.kind === 'one' && a.brandId === b.brandId) return { kind: 'one' }
+  return { kind: 'two', rows }
+}
+
+/** Where one bottle's read lands, as a verdict needs it; a lookup error is no sake. */
+async function landingOf(extraction: LabelScanExtraction): Promise<Landing> {
+  try {
+    const resolved = await landLabel(extraction, () => resolveScannedLabel(extraction))
+    if (resolved.kind === 'ambiguous') return { kind: 'list', brandIds: resolved.candidates.map((c) => c.sake.brandId) }
+    if (resolved.kind === 'exact' || resolved.kind === 'matched_brand_only' || resolved.kind === 'matched_brewery_only') {
+      return { kind: 'one', brandId: resolved.sake.brandId }
+    }
+    return { kind: 'none' }
+  } catch {
+    return { kind: 'none' }
+  }
 }
 
 /**
@@ -546,6 +578,35 @@ async function main() {
     const previous = saved.providers[key]
     const reads: Record<string, SavedRead> = previous?.fingerprint === fingerprint ? previous.reads : {}
     saved.providers[key] = { fingerprint, reads }
+    const bottlesFingerprint = providerFingerprint(key, SEVERAL_BOTTLES_PROMPTS)
+    const previousBottles = saved.bottleReads?.[key]
+    const bottleReads: Record<string, SavedBottlesRead> =
+      previousBottles?.fingerprint === bottlesFingerprint ? previousBottles.reads : {}
+    saved.bottleReads = { ...saved.bottleReads, [key]: { fingerprint: bottlesFingerprint, reads: bottleReads } }
+    /**
+     * The scan's second request for a photo its label read called several
+     * bottles (`read-label.ts`), saved and reused like the label reads. A
+     * failed read is the shelf, as in the scan.
+     */
+    const bottlesReadOf = async (file: string, photoSha: string, blob: Blob): Promise<SeveralBottlesRead | null> => {
+      const kept = FRESH ? undefined : bottleReads[file]
+      if (kept && kept.photoSha === photoSha) {
+        return 'error' in kept ? null : { source: 'llm_extracted', bottle_count: kept.bottle_count, bottles: kept.bottles, confidence: kept.confidence }
+      }
+      if (OFFLINE) return null
+      if (key !== 'e2e-stub' && THROTTLE_MS > 0) await sleep(THROTTLE_MS)
+      called++
+      try {
+        const read = await provider.readBottles(blob)
+        bottleReads[file] = { photoSha, bottle_count: read.bottle_count, bottles: read.bottles, confidence: read.confidence }
+        return read
+      } catch (err) {
+        bottleReads[file] = { photoSha, error: err instanceof Error ? err.message : String(err) }
+        return null
+      } finally {
+        writeSavedReads(saved)
+      }
+    }
     let reused = 0
     let called = 0
 
@@ -610,10 +671,21 @@ async function main() {
         const exactMatch = nameAccuracy === 1 && breweryAccuracy === 1
         const resolution =
           canResolve && canJudge(gt) ? await resolveAndJudge(extraction, gt) : undefined
+        const bottles =
+          canResolve && gt.subject === 'several_bottles' && !gt.items?.some((item) => item.main)
+            ? judgeBottles(
+                gt.items ?? [],
+                await bottlesShown(
+                  extraction,
+                  extraction.subject === 'several_bottles' ? await bottlesReadOf(file, photoSha, blob) : null,
+                ),
+              )
+            : undefined
         photos.push({
           file,
           view: gt.view,
           resolution,
+          ...(bottles ? { bottles } : {}),
           nameAccuracy,
           breweryAccuracy,
           exactMatch,
@@ -690,6 +762,7 @@ async function main() {
   printComparisonTable(sakeBottles, sakeBottleCount)
   if (canResolve) printResolutionTable(sakeBottles)
   if (corpus.length > sakeBottleCount) printOtherKindsTable(otherKinds, kindOf, canResolve)
+  if (canResolve) printBottlesTable(otherKinds)
   printPerPhotoDetail(providerResults)
   // The lookup holds a pg pool open; the run is over.
   process.exit(0)
@@ -786,6 +859,35 @@ function printOtherKindsTable(results: ProviderResult[], kindOf: Map<string, Pho
   console.log(
     `right: no sake shown (or, where one bottle of several is clearly the subject, that bottle). ` +
       `in photo: a catalogue row for something in the frame that is not the answer. wrong: a sake that is not in the frame.`,
+  )
+  console.log(``)
+}
+
+/**
+ * Design v1.7 §5a on photos of several bottles none of which is the subject:
+ * did the scan pick the screen the photo calls for (rows for two bottles, the
+ * shelf for more), and where did the rows land.
+ */
+function printBottlesTable(results: ProviderResult[]) {
+  console.log(`## Two bottles or a shelf`)
+  console.log(``)
+  console.log(`| provider | photos | two bottles: rows shown | shelf: shelf shown | rows right | rows wrong | rows none |`)
+  console.log(`|----------|--------|-------------------------|--------------------|------------|------------|-----------|`)
+  for (const r of results) {
+    if (r.constructionError) continue
+    const judged = r.photos.flatMap((p) => (p.bottles ? [p.bottles] : []))
+    if (judged.length === 0) continue
+    const two = judged.filter((b) => b.expectedTwo)
+    const shelf = judged.filter((b) => !b.expectedTwo)
+    const sum = (key: 'rowsRight' | 'rowsWrong' | 'rowsNone') => judged.reduce((n, b) => n + b[key], 0)
+    console.log(
+      `| ${r.key} | ${judged.length} | ${two.filter((b) => b.rightScreen).length} of ${two.length} | ${shelf.filter((b) => b.rightScreen).length} of ${shelf.length} | ${sum('rowsRight')} | ${sum('rowsWrong')} | ${sum('rowsNone')} |`,
+    )
+  }
+  console.log(``)
+  console.log(
+    `rows right: a row on a sake that is in the photo. wrong: on one that is not. none: the row found no single sake ` +
+      `(not in the catalogue, unsure, or not sake). "Rows shown" counts two bottles of one sake answered with that sake as right.`,
   )
   console.log(``)
 }

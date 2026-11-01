@@ -4,7 +4,9 @@ import type { LanguageModel } from 'ai'
 import { anthropic } from '@ai-sdk/anthropic'
 import {
   LabelScanExtractionSchema,
+  SeveralBottlesReadSchema,
   type LabelScanExtraction,
+  type SeveralBottlesRead,
 } from '@/lib/schemas/label-scan-extraction'
 import { ZDR_ACTIVE } from '@/lib/ai/zdr-status'
 import { debugAdd } from '@/lib/debug/debug-log'
@@ -230,6 +232,22 @@ const USER_PROMPT =
  */
 export const LABEL_SCAN_PROMPTS = { system: SYSTEM_PROMPT, user: USER_PROMPT } as const
 
+/**
+ * The second request for a photo of several bottles. It shares the label
+ * read's instructions (and their cache entry), so every reading rule above
+ * holds for each bottle; only the question and the answer's shape differ.
+ */
+const BOTTLES_USER_PROMPT = `This photo shows several bottles. Do not read it as one label this time: count the bottles and read each one.
+
+- bottle_count: how many bottles stand in the frame, counting the ones whose label you cannot read too. Write 4 for four or more.
+- bottles: one entry per bottle whose name you can read, in the order they stand from left to right, at most four. For each, read that bottle's own label alone, by the rules in the system prompt, and fill every field: drink (unknown when its label prints no category), name_ja, brewery_printed, brewery_ja, name_romaji, brewery_romaji and confidence. position says where it stands as the photo shows it: left, middle or right; front or back when one stands in front of the other.
+- Two bottles of the same sake are two entries with the same name.
+- Never copy a name from one bottle to another, and never list a bottle you cannot read; a bottle you cannot read counts in bottle_count only.
+- confidence: how sure you are of the count and the names together, between 0 and 1.`
+
+/** The bottles request's question, for the eval runner's saved-read fingerprint. */
+export const SEVERAL_BOTTLES_PROMPTS = { system: SYSTEM_PROMPT, user: BOTTLES_USER_PROMPT } as const
+
 export function createAnthropicHaikuProvider(
   options: AnthropicHaikuProviderOptions = {},
 ): VisionProvider {
@@ -245,112 +263,137 @@ export function createAnthropicHaikuProvider(
   // fired" on a fresh provider per test without a beforeEach reset.
   let zdrWarnedOnce = false
 
+  /**
+   * One request to the model with the photo inline: the label read, or the
+   * bottles in a photo of several. Both send the same instructions, so they
+   * share one prompt-cache entry.
+   */
+  async function ask(
+    jpegBlob: Blob,
+    request: {
+      functionId: string
+      schema: typeof LabelScanExtractionSchema | typeof SeveralBottlesReadSchema
+      schemaName: string
+      schemaDescription: string
+      userPrompt: string
+    },
+  ): Promise<{ object: unknown; elapsedMs: number }> {
+    if (nodeEnv === 'production' && !zdrActive && !zdrWarnedOnce) {
+      // ADR-0009 § "Retention is documented per data type" already
+      // documents 7-day standard Anthropic retention as the
+      // acceptable baseline (reduced from 30 on 2025-09-14). ZDR is
+      // the pre-DACH-launch upgrade, not a hard prerequisite for any
+      // production call. Warn (rather than throw) so the application
+      // stays in sync with the documented posture: the warning is a
+      // reminder to flip ZDR_ACTIVE once the contract is on file,
+      // not a refusal to serve traffic.
+      console.warn(
+        '[scan] Anthropic Zero Data Retention is not active; calls go to /v1/messages with the 7-day standard retention window (acknowledged in ADR-0009 RoPA). Flip ZDR_ACTIVE in src/lib/ai/zdr-status.ts after the ZDR contract is on file to silence this warning.',
+      )
+      zdrWarnedOnce = true
+    }
+
+    const resolvedModel = model ?? anthropic('claude-haiku-4-5')
+    const resolvedModelId =
+      typeof resolvedModel === 'object' &&
+      resolvedModel !== null &&
+      'modelId' in resolvedModel
+        ? String((resolvedModel as { modelId: unknown }).modelId)
+        : 'unknown'
+
+    // Convert the JPEG blob to a Uint8Array. The AI SDK's `FilePart`
+    // with `data: Uint8Array` is serialised by `@ai-sdk/anthropic`
+    // into inline base64 in the `/v1/messages` request body — never
+    // through `/v1/files`. The forbidden-pattern audit (`pnpm
+    // anthropic-files:audit`) protects against any regression here.
+    //
+    // AI SDK 7 deprecated the `image` content part in favour of a
+    // `file` part with an `image/*` media type. The replacement matters
+    // beyond the deprecation warning: `FilePart.data` is now a tagged
+    // union, and only `{ type: 'data' }` (raw bytes / base64) is
+    // ZDR-eligible. `{ type: 'reference' }` is the Files-API upload
+    // shape that CLAUDE.md forbids — `anthropic-haiku-provider.test.ts`
+    // asserts the discriminant so a regression is caught in CI.
+    const arrayBuffer = await jpegBlob.arrayBuffer()
+    const bytes = new Uint8Array(arrayBuffer)
+
+    debugAdd('Vision', `calling ${resolvedModelId} with ${bytes.length} bytes of inline JPEG`, {
+      mediaType: jpegBlob.type || 'image/jpeg',
+      modelId: resolvedModelId,
+    })
+
+    const start = Date.now()
+    const { object, usage } = await tracedGenerateObject(
+      {
+        functionId: request.functionId,
+        metadata: {
+          'model.id': resolvedModelId,
+          ...telemetryMetadata,
+        },
+      },
+      {
+        model: resolvedModel,
+        schema: request.schema,
+        schemaName: request.schemaName,
+        schemaDescription: request.schemaDescription,
+        // The instructions are the same for every scan and are most of
+        // the input (4,113 tokens of about 5,000; the photo is the
+        // rest), so they are marked for Anthropic's prompt cache. A scan
+        // within five minutes of another on the same model reads them
+        // at a tenth of the price (a twentieth on Sonnet 5.5); a scan
+        // after a quiet spell writes them at 1.25x. It pays once more
+        // than about one scan in five is a hit — a visitor photographing
+        // two sides of a bottle is enough.
+        //
+        // Measured 2026-10-13 over three fresh reads of 79 photos: 81%
+        // of input tokens read from the cache; a tier-2 call costs about
+        // $0.005 warm against $0.013 uncached, and $0.015 cold.
+        //
+        // The message form is load-bearing: a bare string cannot carry
+        // `providerOptions`, and the marker would be dropped silently.
+        // Minimum cacheable size for both 5.5 models is 512 tokens
+        // (docs, 2026-10-13); the eval's cost line prints the tokens
+        // read from the cache — zero there means it stopped working.
+        instructions: {
+          role: 'system',
+          content: SYSTEM_PROMPT,
+          providerOptions: { anthropic: { cacheControl: { type: 'ephemeral' as const } } },
+        },
+        ...(effort ? { providerOptions: { anthropic: { effort } } } : {}),
+        messages: [
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: request.userPrompt },
+              {
+                type: 'file',
+                data: { type: 'data', data: bytes },
+                mediaType: jpegBlob.type || 'image/jpeg',
+              },
+            ],
+          },
+        ],
+      },
+    )
+    const elapsedMs = Date.now() - start
+    options.onUsage?.({
+      inputTokens: usage.inputTokens ?? 0,
+      outputTokens: usage.outputTokens ?? 0,
+      cacheReadTokens: usage.inputTokenDetails?.cacheReadTokens ?? 0,
+      cacheWriteTokens: usage.inputTokenDetails?.cacheWriteTokens ?? 0,
+    })
+    return { object, elapsedMs }
+  }
+
   return {
     async extractLabel(jpegBlob: Blob): Promise<LabelScanExtraction> {
-      if (nodeEnv === 'production' && !zdrActive && !zdrWarnedOnce) {
-        // ADR-0009 § "Retention is documented per data type" already
-        // documents 7-day standard Anthropic retention as the
-        // acceptable baseline (reduced from 30 on 2025-09-14). ZDR is
-        // the pre-DACH-launch upgrade, not a hard prerequisite for any
-        // production call. Warn (rather than throw) so the application
-        // stays in sync with the documented posture: the warning is a
-        // reminder to flip ZDR_ACTIVE once the contract is on file,
-        // not a refusal to serve traffic.
-        console.warn(
-          '[scan] Anthropic Zero Data Retention is not active; calls go to /v1/messages with the 7-day standard retention window (acknowledged in ADR-0009 RoPA). Flip ZDR_ACTIVE in src/lib/ai/zdr-status.ts after the ZDR contract is on file to silence this warning.',
-        )
-        zdrWarnedOnce = true
-      }
-
-      const resolvedModel = model ?? anthropic('claude-haiku-4-5')
-      const resolvedModelId =
-        typeof resolvedModel === 'object' &&
-        resolvedModel !== null &&
-        'modelId' in resolvedModel
-          ? String((resolvedModel as { modelId: unknown }).modelId)
-          : 'unknown'
-
-      // Convert the JPEG blob to a Uint8Array. The AI SDK's `FilePart`
-      // with `data: Uint8Array` is serialised by `@ai-sdk/anthropic`
-      // into inline base64 in the `/v1/messages` request body — never
-      // through `/v1/files`. The forbidden-pattern audit (`pnpm
-      // anthropic-files:audit`) protects against any regression here.
-      //
-      // AI SDK 7 deprecated the `image` content part in favour of a
-      // `file` part with an `image/*` media type. The replacement matters
-      // beyond the deprecation warning: `FilePart.data` is now a tagged
-      // union, and only `{ type: 'data' }` (raw bytes / base64) is
-      // ZDR-eligible. `{ type: 'reference' }` is the Files-API upload
-      // shape that CLAUDE.md forbids — `anthropic-haiku-provider.test.ts`
-      // asserts the discriminant so a regression is caught in CI.
-      const arrayBuffer = await jpegBlob.arrayBuffer()
-      const bytes = new Uint8Array(arrayBuffer)
-
-      debugAdd('Vision', `calling ${resolvedModelId} with ${bytes.length} bytes of inline JPEG`, {
-        mediaType: jpegBlob.type || 'image/jpeg',
-        modelId: resolvedModelId,
-      })
-
-      const start = Date.now()
-      const { object, usage } = await tracedGenerateObject(
-        {
-          functionId: 'scan-extract-label',
-          metadata: {
-            'model.id': resolvedModelId,
-            ...telemetryMetadata,
-          },
-        },
-        {
-          model: resolvedModel,
-          schema: LabelScanExtractionSchema,
-          schemaName: 'LabelScanExtraction',
-          schemaDescription:
-            'Sake label extraction: name and brewery in original script, other names printed for the sake, plus confidence.',
-          // The instructions are the same for every scan and are most of
-          // the input (4,113 tokens of about 5,000; the photo is the
-          // rest), so they are marked for Anthropic's prompt cache. A scan
-          // within five minutes of another on the same model reads them
-          // at a tenth of the price (a twentieth on Sonnet 5.5); a scan
-          // after a quiet spell writes them at 1.25x. It pays once more
-          // than about one scan in five is a hit — a visitor photographing
-          // two sides of a bottle is enough.
-          //
-          // Measured 2026-10-13 over three fresh reads of 79 photos: 81%
-          // of input tokens read from the cache; a tier-2 call costs about
-          // $0.005 warm against $0.013 uncached, and $0.015 cold.
-          //
-          // The message form is load-bearing: a bare string cannot carry
-          // `providerOptions`, and the marker would be dropped silently.
-          // Minimum cacheable size for both 5.5 models is 512 tokens
-          // (docs, 2026-10-13); the eval's cost line prints the tokens
-          // read from the cache — zero there means it stopped working.
-          instructions: {
-            role: 'system',
-            content: SYSTEM_PROMPT,
-            providerOptions: { anthropic: { cacheControl: { type: 'ephemeral' as const } } },
-          },
-          ...(effort ? { providerOptions: { anthropic: { effort } } } : {}),
-          messages: [
-            {
-              role: 'user',
-              content: [
-                { type: 'text', text: USER_PROMPT },
-                {
-                  type: 'file',
-                  data: { type: 'data', data: bytes },
-                  mediaType: jpegBlob.type || 'image/jpeg',
-                },
-              ],
-            },
-          ],
-        },
-      )
-      const elapsedMs = Date.now() - start
-      options.onUsage?.({
-        inputTokens: usage.inputTokens ?? 0,
-        outputTokens: usage.outputTokens ?? 0,
-        cacheReadTokens: usage.inputTokenDetails?.cacheReadTokens ?? 0,
-        cacheWriteTokens: usage.inputTokenDetails?.cacheWriteTokens ?? 0,
+      const { object, elapsedMs } = await ask(jpegBlob, {
+        functionId: 'scan-extract-label',
+        schema: LabelScanExtractionSchema,
+        schemaName: 'LabelScanExtraction',
+        schemaDescription:
+          'Sake label extraction: name and brewery in original script, other names printed for the sake, plus confidence.',
+        userPrompt: USER_PROMPT,
       })
 
       // `generateObject` already runs the schema parse, so `object` is
@@ -376,6 +419,23 @@ export function createAnthropicHaikuProvider(
       })
 
       return extraction
+    },
+
+    async readBottles(jpegBlob: Blob): Promise<SeveralBottlesRead> {
+      const { object, elapsedMs } = await ask(jpegBlob, {
+        functionId: 'scan-read-bottles',
+        schema: SeveralBottlesReadSchema,
+        schemaName: 'SeveralBottlesRead',
+        schemaDescription: 'The bottles in a photo of several: how many, and the name and brewery of each readable one.',
+        userPrompt: BOTTLES_USER_PROMPT,
+      })
+      const read = SeveralBottlesReadSchema.parse(object)
+      debugAdd('Vision', `bottles returned in ${elapsedMs}ms`, {
+        bottle_count: read.bottle_count,
+        bottles: read.bottles,
+        confidence: read.confidence,
+      })
+      return read
     },
   }
 }

@@ -227,3 +227,28 @@ describe('which bottling the bottle in hand is logged as', () => {
     expect(session).toMatchObject({ anyBottlingFor: 'blob:1', lineViewFor: 'blob:1|own-1' })
   })
 })
+
+describe('"Which bottle do you mean?"', () => {
+  const other: ScanActionState = { status: 'low_confidence', extraction }
+  const two: ScanActionState = {
+    status: 'two_bottles',
+    extraction,
+    bottles: [
+      { position: 'left', breweryPrinted: true, reading: noMatch },
+      { position: 'right', breweryPrinted: false, reading: other },
+    ],
+  }
+  const answered = [...SENT, { type: 'answered' } as const]
+
+  it('shows the two bottles, then the one picked, and goes back to the two', () => {
+    expect(shownState(run(answered), two, false)).toBe(two)
+    const picked = run([...answered, { type: 'bottlePicked', index: 1 }])
+    expect(shownState(picked, two, false)).toBe(other)
+    expect(shownState(scanSessionReducer(picked, { type: 'bottlesShown' }), two, false)).toBe(two)
+  })
+
+  it('forgets the bottle picked once the next photo is taken', () => {
+    const next = run([...answered, { type: 'bottlePicked', index: 0 }, { type: 'photoTaken', photoUrl: 'blob:2' }])
+    expect(next.bottle).toBeNull()
+  })
+})

@@ -143,6 +143,8 @@ async function runScanAction(formData: FormData, meter: Meter): Promise<ScanActi
         : { 'scan.tier1Status': trace.tier1Status, 'scan.tier2Used': false },
     )
     if (trace.earlierRead) recordActionMetadata({ 'scan.earlierRead': trace.earlierRead })
+    // A photo of several bottles costs one more tier-2 call; this counts them.
+    if (trace.bottlesRead) recordActionMetadata({ 'scan.bottlesRead': trace.bottlesRead })
     // Keep the answer as the catalogue resolved it, then add the visitor's bottlings.
     if (cached) await cached.cache.set(cached.key, state)
     const answered = await withOwnBottlings(state, cookieJar)
@@ -160,6 +162,16 @@ async function runScanAction(formData: FormData, meter: Meter): Promise<ScanActi
  * keeps a journal has any. A failure here leaves the scan as it was.
  */
 async function withOwnBottlings(state: ScanActionState, cookieJar: CookieJar): Promise<ScanActionState> {
+  // Each of two bottles opens as its own reading, so each gets its bottlings.
+  if (state.status === 'two_bottles') {
+    const bottles = await Promise.all(
+      state.bottles.map(async (bottle) => ({
+        ...bottle,
+        reading: (await withOwnBottlings(bottle.reading, cookieJar)) as typeof bottle.reading,
+      })),
+    )
+    return { ...state, bottles }
+  }
   if (state.status !== 'matched') return state
   try {
     const viewer = await resolveViewerJournal(cookieJar)

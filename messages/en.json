@@ -1151,6 +1151,22 @@
       "body": "This side has only a picture. The name is usually on the opposite side, or on a small label near the base.",
       "photo": "The side you photographed"
     },
+    "twoBottles": {
+      "kicker": "Two bottles",
+      "title": "Which bottle do you mean?",
+      "body": "Two bottles share the photo and neither is clearly the one. Pick yours, or scan one at a time.",
+      "rows": "Read from your photo",
+      "reasonNameAndBrewery": "{position} · name and brewery read",
+      "reasonName": "{position} · name read",
+      "position": {
+        "left": "Left",
+        "middle": "Middle",
+        "right": "Right",
+        "front": "Front",
+        "back": "Back"
+      },
+      "back": "Both bottles"
+    },
     "notOneBottle": {
       "menu": {
         "kicker": "A menu",

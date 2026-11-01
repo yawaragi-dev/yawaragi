@@ -101,6 +101,30 @@ describe('createAnthropicHaikuProvider', () => {
     expect(result).toEqual(DASSAI_OBJECT)
   })
 
+  it('reads the bottles of a photo of several with the label read\'s instructions, asked its own question', async () => {
+    const prompts: DoGenerateOptions['prompt'][] = []
+    const bottles = {
+      source: 'llm_extracted',
+      bottle_count: 2,
+      bottles: [{ position: 'left', drink: 'sake', name_ja: '獺祭', brewery_printed: true, brewery_ja: '旭酒造', name_romaji: 'Dassai', brewery_romaji: 'Asahi Shuzo', confidence: 0.9 }],
+      confidence: 0.8,
+    }
+    const doGenerate: DoGenerateFn = async (options): Promise<DoGenerateResult> => {
+      prompts.push(options.prompt)
+      const object = prompts.length === 1 ? DASSAI_OBJECT : bottles
+      return { ...(await doGenerateOk()), content: [{ type: 'text', text: JSON.stringify(object) }] }
+    }
+    const provider = createAnthropicHaikuProvider({ model: new MockLanguageModelV3({ doGenerate }), zdrActive: true, nodeEnv: 'test' })
+
+    await provider.extractLabel(jpegBlob())
+    expect(await provider.readBottles(jpegBlob())).toEqual(bottles)
+
+    const [label, several] = prompts
+    // One cache entry serves both: the instructions are the same.
+    expect(several!.find((m) => m.role === 'system')).toEqual(label!.find((m) => m.role === 'system'))
+    expect(JSON.stringify(several!.find((m) => m.role === 'user'))).toContain('count the bottles')
+  })
+
   it('throws when the model returns a response missing required fields', async () => {
     // The model omitted `confidence` — the schema requires it. We expect
     // the AI SDK's structured-output validation to throw before our

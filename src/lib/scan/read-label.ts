@@ -10,11 +10,11 @@ import type { Brand } from '@/lib/schemas/brand'
 import type { Brewery } from '@/lib/schemas/brewery'
 import type { EarlierScanRead } from '@/lib/schemas/earlier-scan-read'
 import type { FlavorChart } from '@/lib/schemas/flavor-chart'
-import type { LabelScanExtraction } from '@/lib/schemas/label-scan-extraction'
+import type { LabelScanExtraction, ScanBottleRead } from '@/lib/schemas/label-scan-extraction'
 import { CONFIDENCE_AUTO_THRESHOLD } from './confidence-tier'
-import { firstReadStands, landLabel } from './read-kind'
+import { bottleExtraction, firstReadStands, landLabel, twoBottleReadsOf } from './read-kind'
 import { bestRomaji, sakeHrefFor, sakeRefOf } from './sake-ref'
-import type { ScanActionState, ScanCandidate, ScanReading } from './scan-action-state'
+import { landedSakeOf, type ScanActionState, type ScanBottle, type ScanCandidate, type ScanReading } from './scan-action-state'
 
 /**
  * Reading one label photo, from the vision models to the state the scan
@@ -71,6 +71,8 @@ export interface ReadLabelTrace {
   /** Tier 1's outcome, or why it had none of its own. */
   tier1Status: ScanActionState['status'] | 'skipped_second_photo' | 'matched_brewery_not_printed'
   tier2Used: boolean
+  /** For a photo of several bottles: what the bottles read said, or that it threw. */
+  bottlesRead?: 'two_bottles' | 'shelf' | 'failed'
   /** Whether the earlier read was needed and gave a guess; absent on a first scan. */
   earlierRead?: 'not_needed' | 'guess' | 'no_guess'
 }
@@ -83,13 +85,15 @@ export interface ReadLabelResult {
 export async function readLabel(input: ReadLabelInput, deps: ReadLabelDeps): Promise<ReadLabelResult> {
   const { image, locale, earlierRead } = input
   const trace = await readWithTiers(image, locale, earlierRead !== null, deps)
-  const withGuesses = await withNearestCandidates(trace.state, locale, deps.catalogue)
+  const bottles = await withTwoBottles(trace.state, image, locale, deps)
+  const withGuesses = await withNearestCandidates(bottles.state, locale, deps.catalogue)
   const { state, earlierReadOutcome } = await withEarlierRead(withGuesses, earlierRead, locale, deps.catalogue)
   return {
     state,
     trace: {
       tier1Status: trace.tier1Status,
       tier2Used: trace.tier2Used,
+      ...(bottles.asked ? { bottlesRead: bottles.asked } : {}),
       ...(earlierReadOutcome ? { earlierRead: earlierReadOutcome } : {}),
     },
   }
@@ -193,21 +197,8 @@ async function readOnce(
     // provider parses the model output through `LabelScanExtractionSchema`,
     // pinning `source` to `'llm_extracted'`.
     const extraction = await provider.extractLabel(image)
-    const landing = await landLabel(extraction, () => catalogue.resolve(extraction))
-    const breweryPrinted = extraction.brewery_printed
-    switch (landing.kind) {
-      case 'not_one_bottle':
-        return { kind: landing.kind, breweryPrinted, state: { status: 'not_one_bottle', extraction, subject: landing.subject } }
-      case 'not_sake':
-        return { kind: landing.kind, breweryPrinted, state: { status: 'not_sake', extraction, drink: landing.drink } }
-      // Nothing written on this side (design v1.7 G): there is no name to look
-      // up, so the catalogue is not asked — the answer does not depend on it
-      // being reachable.
-      case 'no_text':
-        return { kind: landing.kind, breweryPrinted, state: { status: 'low_confidence', extraction } }
-      default:
-        return { kind: landing.kind, breweryPrinted, state: await mapResolvedToState(landing, extraction, locale, catalogue) }
-    }
+    const { kind, reading } = await readingOf(extraction, locale, catalogue)
+    return { kind, breweryPrinted: extraction.brewery_printed, state: reading }
   } catch (err) {
     const name = err instanceof Error ? err.name : 'UnknownError'
     const message = err instanceof Error ? err.message : String(err)
@@ -226,6 +217,96 @@ async function readOnce(
     )
     return { kind: 'failed', breweryPrinted: undefined, state: { status: 'extraction_failed', reason: name } }
   }
+}
+
+/** One bottle's label → its reading, and where it landed for the two-tier rule. */
+async function readingOf(
+  extraction: LabelScanExtraction,
+  locale: Locale,
+  catalogue: LabelCatalogue,
+): Promise<{ kind: string; reading: ScanReading }> {
+  const landing = await landLabel(extraction, () => catalogue.resolve(extraction))
+  switch (landing.kind) {
+    case 'not_one_bottle':
+      return { kind: landing.kind, reading: { status: 'not_one_bottle', extraction, subject: landing.subject } }
+    case 'not_sake':
+      return { kind: landing.kind, reading: { status: 'not_sake', extraction, drink: landing.drink } }
+    // Nothing written on this side (design v1.7 G): there is no name to look
+    // up, so the catalogue is not asked — the answer does not depend on it
+    // being reachable.
+    case 'no_text':
+      return { kind: landing.kind, reading: { status: 'low_confidence', extraction } }
+    default:
+      return { kind: landing.kind, reading: await mapResolvedToState(landing, extraction, locale, catalogue) }
+  }
+}
+
+/**
+ * Design v1.7 §5a: a photo the label read called `several_bottles` is asked
+ * once more, by tier 2, how many bottles stand in it and what each says. Two
+ * become "Which bottle do you mean?"; three or more stay the shelf outcome,
+ * as does a photo whose bottles read fails. A request of its own because
+ * putting the bottles on the label read cost single-bottle reads (see
+ * `SeveralBottlesReadSchema`); only these photos pay for it.
+ */
+async function withTwoBottles(
+  state: ScanActionState,
+  image: Blob,
+  locale: Locale,
+  deps: ReadLabelDeps,
+): Promise<{ state: ScanActionState; asked?: ReadLabelTrace['bottlesRead'] }> {
+  if (state.status !== 'not_one_bottle' || state.subject !== 'several_bottles') return { state }
+  try {
+    const read = await deps.tier2().readBottles(image)
+    const twoBottles = twoBottleReadsOf(read)
+    if (!twoBottles) return { state, asked: 'shelf' }
+    return { state: await readTwoBottles(state.extraction, twoBottles, locale, deps.catalogue), asked: 'two_bottles' }
+  } catch (err) {
+    debugAdd('ScanAction', 'reading the bottles threw; keeping the shelf outcome', {
+      message: err instanceof Error ? err.message.slice(0, 300) : String(err),
+    }, 'warn')
+    return { state, asked: 'failed' }
+  }
+}
+
+/**
+ * Design v1.7 §5a (74): each of two bottles looked up on its own, with the
+ * guesses its outcome shows. The same bottle twice — two of one sake, or two
+ * reads of one name the catalogue lacks — leaves nothing to choose between,
+ * so the answer is that bottle's reading alone.
+ */
+async function readTwoBottles(
+  photo: LabelScanExtraction,
+  reads: readonly ScanBottleRead[],
+  locale: Locale,
+  catalogue: LabelCatalogue,
+): Promise<ScanActionState> {
+  const bottles: ScanBottle[] = await Promise.all(
+    reads.map(async (read) => {
+      const { reading } = await readingOf(bottleExtraction(photo, read), locale, catalogue)
+      return {
+        position: read.position,
+        breweryPrinted: read.brewery_printed === true,
+        reading: await withNearestCandidates(reading, locale, catalogue),
+      }
+    }),
+  )
+  const [first, second] = bottles
+  if (first && second && sameBottle(first.reading, second.reading)) {
+    debugAdd('ScanAction', 'two bottles of one sake — answering with it', {})
+    return first.reading
+  }
+  debugAdd('ScanAction', 'returning two_bottles', { bottles: bottles.map((b) => [b.position, b.reading.status]) })
+  return { status: 'two_bottles', extraction: photo, bottles }
+}
+
+/** Two readings of one bottle: the same catalogue sake, or the same name and brewery where none was found. */
+function sameBottle(a: ScanReading, b: ScanReading): boolean {
+  const sakeA = landedSakeOf(a)
+  const sakeB = landedSakeOf(b)
+  if (sakeA || sakeB) return sakeA?.brandId === sakeB?.brandId
+  if (!('extraction' in a) || !('extraction' in b)) return false
+  return a.status === b.status && a.extraction.name_ja === b.extraction.name_ja && a.extraction.brewery_ja === b.extraction.brewery_ja
 }
 
 /**
@@ -341,11 +422,11 @@ async function mapResolvedToState(
  * `no_match` is always read again, and reading the catalogue for a result
  * that is thrown away is wasted work. A sure match asks nothing.
  */
-async function withNearestCandidates(
-  state: ScanActionState,
+async function withNearestCandidates<S extends ScanActionState>(
+  state: S,
   locale: Locale,
   catalogue: LabelCatalogue,
-): Promise<ScanActionState> {
+): Promise<S> {
   const read = (extraction: LabelScanExtraction) => ({ name: extraction.name_ja, brewery: extraction.brewery_ja })
   const toCandidate = ({ row, reason, sameBrewery }: NearestBrand): ScanCandidate => ({
     ...sakeRefOf(

@@ -110,6 +110,47 @@ export const ScanBottlingSchema = z.object({
 })
 export type ScanBottling = z.infer<typeof ScanBottlingSchema>
 
+/** Where a bottle stands in a photo of several, as the visitor sees it. */
+export const ScanBottlePositionSchema = z.enum(['left', 'middle', 'right', 'front', 'back'])
+export type ScanBottlePosition = z.infer<typeof ScanBottlePositionSchema>
+
+/**
+ * One bottle in a photo of several (design v1.7 §5a, 74: "Which bottle do you
+ * mean?"), read by the same rules as a label's main fields, from that
+ * bottle's label alone.
+ *
+ * Every field is required: Anthropic's structured output refuses a schema
+ * with too many optional fields ("Schema is too complex"), and an array of
+ * objects multiplies them. The model can always answer each: `unknown` for
+ * the drink, its best reading for the romaji.
+ */
+export const ScanBottleReadSchema = z.object({
+  position: ScanBottlePositionSchema,
+  drink: ScanDrinkSchema,
+  name_ja: z.string().min(1),
+  brewery_printed: z.boolean(),
+  brewery_ja: z.string().min(1),
+  name_romaji: z.string(),
+  brewery_romaji: z.string(),
+  confidence: z.number().min(0).max(1),
+})
+export type ScanBottleRead = z.infer<typeof ScanBottleReadSchema>
+
+/**
+ * The bottles in a photo of several, read on their own after the label read
+ * said `several_bottles`. A request of its own rather than more fields on the
+ * label read: on the full eval (2026-11-01) adding them there cost three
+ * single-bottle photos the label read had got right, in two fresh runs.
+ */
+export const SeveralBottlesReadSchema = withProvenance(z.literal('llm_extracted')).extend({
+  /** How many bottles stand in the frame, the unreadable ones too; 4 for four or more. Two is "Which bottle do you mean?"; more is a shelf. */
+  bottle_count: z.number().int().min(1),
+  /** Each bottle whose name can be read, left to right. */
+  bottles: z.array(ScanBottleReadSchema),
+  confidence: z.number().min(0).max(1),
+})
+export type SeveralBottlesRead = z.infer<typeof SeveralBottlesReadSchema>
+
 export const LabelScanExtractionSchema = withProvenance(z.literal('llm_extracted'))
   .extend({
     /** Optional: absent on reads made before the field existed. */

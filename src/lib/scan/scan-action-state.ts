@@ -1,7 +1,7 @@
 import type { DebugEvent } from '@/lib/debug/debug-log'
 import type { FlavorChart } from '@/lib/schemas/flavor-chart'
 import type { NearestReason } from '@/lib/sakenowa/nearest-brands'
-import type { LabelScanExtraction, NonSakeDrink, ScanGrade } from '@/lib/schemas/label-scan-extraction'
+import type { LabelScanExtraction, NonSakeDrink, ScanBottlePosition, ScanGrade } from '@/lib/schemas/label-scan-extraction'
 
 /**
  * A catalogue sake as the scan screen names it: enough for a row (Latin name
@@ -285,12 +285,33 @@ export type ScanRequestOutcome =
       reason: string
     }
 
+/** One bottle of two in a photo, and what its label read as. */
+export interface ScanBottle {
+  position: ScanBottlePosition
+  /** Its brewery was printed on its label, not supplied by the model: "name and brewery read". */
+  breweryPrinted: boolean
+  reading: ScanReading
+}
+
+/**
+ * Design v1.7 §5a (74): two bottles of equal weight share the photo, and
+ * neither is clearly the one. "Which bottle do you mean?", one row per
+ * bottle whose name could be read, each opening its own reading. The
+ * photo's own extraction (its most prominent bottle) is kept for the debug
+ * trace; the screen shows no read card.
+ */
+export interface ScanTwoBottles {
+  status: 'two_bottles'
+  extraction: LabelScanExtraction
+  bottles: readonly ScanBottle[]
+}
+
 /**
  * Tagged-union state returned by `scanLabel` (as JSON from
  * `POST /{locale}/scan/read`). Lives in its own module because the scan
  * itself is server-only and the screen imports these types and constants.
  */
-type ScanActionStateBase = ScanRequestOutcome | ScanReading
+type ScanActionStateBase = ScanRequestOutcome | ScanReading | ScanTwoBottles
 
 /**
  * Optional server-side trace attached to every action result when the

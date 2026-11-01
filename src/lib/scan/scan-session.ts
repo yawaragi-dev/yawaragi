@@ -86,6 +86,12 @@ export interface ScanSession {
   anyBottlingFor: string | null
   /** Bottlings created from a label on this screen, by `brandId|name`. */
   labelBottlingIds: Readonly<Record<string, string>>
+  /**
+   * "Which bottle do you mean?" (design v1.7 §5a, 74): the bottle picked, by
+   * its place in the answer's list, whose own reading the screen shows.
+   * `null` on the list itself and on every other answer.
+   */
+  bottle: number | null
 }
 
 export const INITIAL_SCAN_SESSION: ScanSession = {
@@ -102,6 +108,7 @@ export const INITIAL_SCAN_SESSION: ScanSession = {
   lineViewFor: null,
   anyBottlingFor: null,
   labelBottlingIds: {},
+  bottle: null,
 }
 
 export type ScanSessionEvent =
@@ -139,6 +146,10 @@ export type ScanSessionEvent =
   | { type: 'loggedAs'; anyBottlingFor: string | null }
   /** The label's bottling was created at the first rating or bottle added. */
   | { type: 'labelBottlingCreated'; key: string; id: string }
+  /** A row of "Which bottle do you mean?": that bottle's reading opens. */
+  | { type: 'bottlePicked'; index: number }
+  /** Back from one bottle's reading to the two. */
+  | { type: 'bottlesShown' }
 
 export function scanSessionReducer(session: ScanSession, event: ScanSessionEvent): ScanSession {
   switch (event.type) {
@@ -153,6 +164,7 @@ export function scanSessionReducer(session: ScanSession, event: ScanSessionEvent
         dismissed: true,
         photoUrl: null,
         downscaleFailed: false,
+        bottle: null,
       }
     case 'nudged':
       return { ...scanSessionReducer(session, { type: 'backToCamera' }), askedFor: event.kind }
@@ -166,6 +178,7 @@ export function scanSessionReducer(session: ScanSession, event: ScanSessionEvent
         dismissed: false,
         downscaling: true,
         photoUrl: event.photoUrl,
+        bottle: null,
       }
     case 'photoUnreadable':
       return { ...session, downscaleFailed: true, downscaling: false }
@@ -197,6 +210,10 @@ export function scanSessionReducer(session: ScanSession, event: ScanSessionEvent
       return { ...session, anyBottlingFor: event.anyBottlingFor }
     case 'labelBottlingCreated':
       return { ...session, labelBottlingIds: { ...session.labelBottlingIds, [event.key]: event.id } }
+    case 'bottlePicked':
+      return { ...session, bottle: event.index }
+    case 'bottlesShown':
+      return { ...session, bottle: null }
   }
 }
 
@@ -217,9 +234,9 @@ export function isWorking(session: ScanSession, isActionPending: boolean): boole
  * underneath the card it was meant to replace — impossible.
  */
 export function shownState(session: ScanSession, state: ScanActionState, isActionPending: boolean): ScanActionState {
-  return session.dismissed || isWorking(session, isActionPending) || session.connectionFailure
-    ? INITIAL_SCAN_ACTION_STATE
-    : state
+  if (session.dismissed || isWorking(session, isActionPending) || session.connectionFailure) return INITIAL_SCAN_ACTION_STATE
+  const picked = state.status === 'two_bottles' && session.bottle !== null ? state.bottles[session.bottle] : undefined
+  return picked ? picked.reading : state
 }
 
 /** #408: what the next photo may be resolved together with, unless the read has gone stale. */
