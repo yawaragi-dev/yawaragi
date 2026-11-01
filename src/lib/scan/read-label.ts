@@ -49,13 +49,11 @@ export interface LabelCatalogue {
 
 export interface ReadLabelDeps {
   /**
-   * The two tiers, built when first asked for — tier 2 is never built on a
-   * scan tier 1 settles.
+   * The tiers, built when first asked for — tier 2 is never built on a scan
+   * tier 1 settles. Without a tier 2, tier 1's read is the answer.
    */
   tier1: () => VisionProvider
-  tier2: () => VisionProvider
-  /** Tier 2's name, for the debug line that says it was asked. */
-  tier2Name: string
+  tier2?: { provider: () => VisionProvider; name: string }
   catalogue: LabelCatalogue
 }
 
@@ -100,6 +98,9 @@ export async function readLabel(input: ReadLabelInput, deps: ReadLabelDeps): Pro
 }
 
 /**
+ * Since #414 the scan runs one model (Sonnet 5.5) and no tier 2, so the read
+ * below is tier 1's alone. The two-tier rule stays for a cheaper first model:
+ *
  * The two-tier rule. Tier 1 is the cheap model, enough for clear bottles;
  * tier 2 is materially better at brush-style kanji on busy backgrounds, at
  * many times the cost. The examples below date from the Haiku 4.5 / Sonnet
@@ -143,13 +144,13 @@ async function readWithTiers(
   secondPhoto: boolean,
   deps: ReadLabelDeps,
 ): Promise<{ state: ScanActionState; tier1Status: ReadLabelTrace['tier1Status']; tier2Used: boolean }> {
-  if (secondPhoto) {
-    const tier2 = await readOnce(deps.tier2(), image, locale, deps.catalogue)
+  if (secondPhoto && deps.tier2) {
+    const tier2 = await readOnce(deps.tier2.provider(), image, locale, deps.catalogue)
     return { state: tier2.state, tier1Status: 'skipped_second_photo', tier2Used: true }
   }
 
   const tier1 = await readOnce(deps.tier1(), image, locale, deps.catalogue)
-  if (firstReadStands(tier1.kind, tier1.breweryPrinted)) {
+  if (!deps.tier2 || firstReadStands(tier1.kind, tier1.breweryPrinted)) {
     // Recorded on the cheap path too — a retry RATE needs the denominator.
     return { state: tier1.state, tier1Status: tier1.state.status, tier2Used: false }
   }
@@ -157,11 +158,11 @@ async function readWithTiers(
   const tier1BreweryNotPrinted = tier1.kind === 'exact' && tier1.breweryPrinted === false
   debugAdd(
     'ScanAction',
-    `tier-1 (Haiku) returned ${tier1.state.status} — retrying with tier-2 (${deps.tier2Name})`,
+    `tier-1 returned ${tier1.state.status} — retrying with tier-2 (${deps.tier2.name})`,
     { tier1Status: tier1.state.status, tier1BreweryNotPrinted },
     'warn',
   )
-  const tier2 = await readOnce(deps.tier2(), image, locale, deps.catalogue)
+  const tier2 = await readOnce(deps.tier2.provider(), image, locale, deps.catalogue)
   return {
     state: tier2.state,
     // Which tier-1 outcome drives the retry is what says whether to tune the
@@ -257,7 +258,7 @@ async function withTwoBottles(
 ): Promise<{ state: ScanActionState; asked?: ReadLabelTrace['bottlesRead'] }> {
   if (state.status !== 'not_one_bottle' || state.subject !== 'several_bottles') return { state }
   try {
-    const read = await deps.tier2().readBottles(image)
+    const read = await (deps.tier2?.provider ?? deps.tier1)().readBottles(image)
     const twoBottles = twoBottleReadsOf(read)
     if (!twoBottles) return { state, asked: 'shelf' }
     return { state: await readTwoBottles(state.extraction, twoBottles, locale, deps.catalogue), asked: 'two_bottles' }

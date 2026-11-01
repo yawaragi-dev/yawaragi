@@ -32,13 +32,21 @@ export type VisionProviderKey =
   | 'anthropic-sonnet-5-5-low'
   | 'e2e-stub'
 
-export const DEFAULT_VISION_PROVIDER_KEY: VisionProviderKey = 'anthropic-haiku-5-5'
+/**
+ * The model that reads every label. Since #414 (2026-11-01) it is Sonnet 5.5
+ * alone: on the full eval it was as right as Haiku 5.5 with a Sonnet retry
+ * (123 against 122 of 136, 4 wrong against 5) at about half the wait (median
+ * 4.5 s against 8.4 s), for about $0.0025 more a scan.
+ */
+export const DEFAULT_VISION_PROVIDER_KEY: VisionProviderKey = 'anthropic-sonnet-5-5'
 
-// Tier-2 retry provider used by `scanLabel` when tier-1 (Haiku) can't
-// resolve the bottle. Exported as a named constant so the retry site
-// and the registry are kept in sync (changing this string also changes
-// the registry entry both refer to).
-export const TIER_2_VISION_PROVIDER_KEY: VisionProviderKey = 'anthropic-sonnet-5-5'
+/**
+ * The model asked again when the first read's answer does not stand
+ * (`read-label.ts`), or null to read once. Null since #414; set a cheaper
+ * `DEFAULT_VISION_PROVIDER_KEY` and a key here to bring the two-tier rule
+ * back.
+ */
+export const TIER_2_VISION_PROVIDER_KEY: VisionProviderKey | null = null
 
 /**
  * Registry — string key to factory function. We register factories rather

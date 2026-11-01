@@ -173,8 +173,11 @@ interface Resolution {
  * today, and the pair it ran until 2026-10-12.
  */
 const TIER_PAIRS: readonly { label: string; tier1: VisionProviderKey; tier2: VisionProviderKey }[] = [
-  { label: 'two-tier (as shipped)', tier1: DEFAULT_VISION_PROVIDER_KEY, tier2: TIER_2_VISION_PROVIDER_KEY },
-  { label: 'two-tier (tier 1 at low effort)', tier1: 'anthropic-haiku-5-5-low', tier2: TIER_2_VISION_PROVIDER_KEY },
+  ...(TIER_2_VISION_PROVIDER_KEY
+    ? [{ label: 'two-tier (as shipped)', tier1: DEFAULT_VISION_PROVIDER_KEY, tier2: TIER_2_VISION_PROVIDER_KEY }]
+    : []),
+  { label: 'two-tier (Haiku 5.5 → Sonnet 5.5, until #414)', tier1: 'anthropic-haiku-5-5', tier2: 'anthropic-sonnet-5-5' },
+  { label: 'two-tier (tier 1 at low effort)', tier1: 'anthropic-haiku-5-5-low', tier2: 'anthropic-sonnet-5-5' },
   { label: 'two-tier (Haiku 4.5 → Sonnet 4.6)', tier1: 'anthropic-haiku-4-5', tier2: 'anthropic-sonnet-4-6' },
 ]
 

@@ -96,14 +96,10 @@ function readsAs(read: Record<string, unknown>): VisionProvider {
   }
 }
 
-/**
- * The registry answers the tier-1 key with `tier1` and the tier-2 key with
- * `tier2`; asking for tier 2 when none is given fails the scan loudly.
- */
-function stubVisionTiers(tier1: VisionProvider, tier2?: VisionProvider) {
+/** The registry answers the scan's one model (#414) with `provider`; any other key fails the scan loudly. */
+function stubVisionTiers(provider: VisionProvider) {
   getVisionProviderMock.mockImplementation((key) => {
-    if (key === 'anthropic-haiku-5-5') return tier1
-    if (key === 'anthropic-sonnet-5-5' && tier2) return tier2
+    if (key === 'anthropic-sonnet-5-5') return provider
     throw new Error(`unexpected vision provider key: ${key}`)
   })
 }
@@ -249,7 +245,7 @@ describe('scanLabel — reading the label', () => {
     vi.clearAllMocks()
   })
 
-  it('answers with the cheap model’s match and records that tier 2 was not needed', async () => {
+  it('reads the label once, with Sonnet, and records that no second model was asked', async () => {
     stubVisionTiers(readsAs(DASSAI_EXTRACTION))
     resolveScannedLabelMock.mockResolvedValueOnce({ kind: 'exact', sake: DASSAI_BRAND })
     lookupBreweryByBrandMock.mockResolvedValueOnce(ASAHI_SHUZO)
@@ -261,26 +257,19 @@ describe('scanLabel — reading the label', () => {
     expect(recordActionMetadataMock).toHaveBeenCalledWith({ 'scan.tier1Status': 'matched', 'scan.tier2Used': false })
   })
 
-  it('records the tier-1 outcome and the tier-2 model when the better model had to read it again', async () => {
-    stubVisionTiers(readsAs(DASSAI_EXTRACTION), readsAs(DASSAI_EXTRACTION))
-    resolveScannedLabelMock
-      .mockResolvedValueOnce({ kind: 'no_match', query: { nameJa: '獺祭', breweryJa: '旭酒造' } })
-      .mockResolvedValueOnce({ kind: 'exact', sake: DASSAI_BRAND })
-    lookupBreweryByBrandMock.mockResolvedValueOnce(ASAHI_SHUZO)
+  it('answers with that one read even when it found nothing', async () => {
+    stubVisionTiers(readsAs(DASSAI_EXTRACTION))
+    resolveScannedLabelMock.mockResolvedValueOnce({ kind: 'no_match', query: { nameJa: '獺祭', breweryJa: '旭酒造' } })
 
     const state = await scanLabel(jpegFormData())
 
-    expect(state.status).toBe('matched')
-    expect(getVisionProviderMock).toHaveBeenCalledWith('anthropic-sonnet-5-5')
-    expect(recordActionMetadataMock).toHaveBeenCalledWith({
-      'scan.tier1Status': 'no_match',
-      'scan.tier2Used': true,
-      'scan.tier2Provider': 'anthropic-sonnet-5-5',
-    })
+    expect(state.status).toBe('no_match')
+    expect(getVisionProviderMock).toHaveBeenCalledTimes(1)
+    expect(recordActionMetadataMock).toHaveBeenCalledWith({ 'scan.tier1Status': 'no_match', 'scan.tier2Used': false })
   })
 
-  it('sends a second photo to tier 2 at once and records whether the earlier read was needed', async () => {
-    stubVisionTiers(readsAs({ ...DASSAI_EXTRACTION, name_ja: 'never read' }), readsAs(DASSAI_EXTRACTION))
+  it('reads a second photo with the same model and records whether the earlier read was needed', async () => {
+    stubVisionTiers(readsAs(DASSAI_EXTRACTION))
     resolveScannedLabelMock.mockResolvedValueOnce({ kind: 'exact', sake: DASSAI_BRAND })
     lookupBreweryByBrandMock.mockResolvedValueOnce(ASAHI_SHUZO)
     const formData = jpegFormData()
@@ -290,8 +279,6 @@ describe('scanLabel — reading the label', () => {
 
     expect(state.status).toBe('matched')
     expect(getVisionProviderMock).toHaveBeenCalledTimes(1)
-    expect(getVisionProviderMock).toHaveBeenCalledWith('anthropic-sonnet-5-5')
-    expect(recordActionMetadataMock).toHaveBeenCalledWith(expect.objectContaining({ 'scan.tier1Status': 'skipped_second_photo' }))
     expect(recordActionMetadataMock).toHaveBeenCalledWith({ 'scan.earlierRead': 'not_needed' })
   })
 
@@ -304,7 +291,7 @@ describe('scanLabel — reading the label', () => {
 
     await scanLabel(formData)
 
-    expect(getVisionProviderMock).toHaveBeenCalledWith('anthropic-haiku-5-5')
+    expect(getVisionProviderMock).toHaveBeenCalledWith('anthropic-sonnet-5-5')
     expect(recordActionMetadataMock).not.toHaveBeenCalledWith(expect.objectContaining({ 'scan.earlierRead': expect.anything() }))
   })
 })

@@ -122,6 +122,7 @@ async function runScanAction(formData: FormData, meter: Meter): Promise<ScanActi
   // call. A spent budget or a missing session cookie comes back as
   // `rate_limited` / `session_missing` and the vision provider is never
   // reached.
+  const tier2Key = TIER_2_VISION_PROVIDER_KEY
   return meter.pay(async ({ remaining }) => {
     // The label itself — tier 1, tier 2 when tier 1's answer does not stand,
     // the catalogue, the guesses beside the answer — is `readLabel`'s.
@@ -129,8 +130,7 @@ async function runScanAction(formData: FormData, meter: Meter): Promise<ScanActi
       { image, locale: localeRaw, earlierRead },
       {
         tier1: () => getVisionProvider(DEFAULT_VISION_PROVIDER_KEY),
-        tier2: () => getVisionProvider(TIER_2_VISION_PROVIDER_KEY),
-        tier2Name: TIER_2_VISION_PROVIDER_KEY,
+        ...(tier2Key ? { tier2: { provider: () => getVisionProvider(tier2Key), name: tier2Key } } : {}),
         catalogue: SCAN_CATALOGUE,
       },
     )
@@ -139,7 +139,7 @@ async function runScanAction(formData: FormData, meter: Meter): Promise<ScanActi
     // `scan.tier1Status` says WHICH tier-1 outcome is driving it.
     recordActionMetadata(
       trace.tier2Used
-        ? { 'scan.tier1Status': trace.tier1Status, 'scan.tier2Used': true, 'scan.tier2Provider': TIER_2_VISION_PROVIDER_KEY }
+        ? { 'scan.tier1Status': trace.tier1Status, 'scan.tier2Used': true, 'scan.tier2Provider': tier2Key ?? '' }
         : { 'scan.tier1Status': trace.tier1Status, 'scan.tier2Used': false },
     )
     if (trace.earlierRead) recordActionMetadata({ 'scan.earlierRead': trace.earlierRead })

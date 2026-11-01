@@ -54,7 +54,7 @@ To drive any scan/suggest UI state in dev without a bottle photo or paid API cal
 
 Claude model ids are pinned as string literals, so nothing fails when a newer family ships — check them rather than trusting them:
 
-- Label scan, both tiers: `src/lib/ai/vision/registry.ts` (`DEFAULT_VISION_PROVIDER_KEY`, `TIER_2_VISION_PROVIDER_KEY`)
+- Label scan: `src/lib/ai/vision/registry.ts` (`DEFAULT_VISION_PROVIDER_KEY`; `TIER_2_VISION_PROVIDER_KEY` is null since #414 — one model, no retry)
 - Suggestions: `src/lib/suggest/suggest-model.ts` (`SUGGEST_MODEL`)
 - Romaji ingest: `src/lib/sakenowa/romaji.ts` (`ROMAJI_MODEL`)
 - Menu and shelf reading (§7): `src/lib/ai/vision/list-reader.ts` (`LIST_READER_MODEL`, `LIST_READER_EFFORT`) — compared on `pnpm eval list-read-jp`
