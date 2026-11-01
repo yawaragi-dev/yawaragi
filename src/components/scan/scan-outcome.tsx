@@ -38,7 +38,9 @@ import { KeepItAnyway } from '@/components/sake/add-unlisted-bottling'
 
 export interface OutcomeCandidate {
   key: string | number
-  href: string
+  /** Where the row leads; or `onSelect`, for a row that changes this screen instead. */
+  href?: string
+  onSelect?: () => void
   /** Latin name when there is one, else the kanji. */
   name: string
   /** The kanji, shown small after a Latin name; `null` when `name` is it. */
@@ -402,13 +404,9 @@ export function CandidateRows({
 }) {
   return (
     <ul className="flex flex-col" role="list" data-testid={testId} id={id}>
-      {rows.slice(0, 3).map((row) => (
-        <li key={row.key} className="border-b border-divider">
-          <NextLink
-            href={row.href}
-            className="flex min-h-14 items-center gap-3 py-3 transition-colors hover:bg-ash-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600"
-            data-testid={`scan-outcome-candidate-${row.key}`}
-          >
+      {rows.slice(0, 3).map((row) => {
+        const body = (
+          <>
             <span className="flex min-w-0 flex-1 flex-col gap-0.5">
               <span className="flex flex-wrap items-baseline gap-x-2">
                 <span className="text-card-heading font-medium text-ink">{row.name}</span>
@@ -422,9 +420,24 @@ export function CandidateRows({
               <span className="text-meta text-ash-700">{row.reason}</span>
             </span>
             <CaretRight size={16} aria-hidden="true" className="shrink-0 text-ash-500" />
-          </NextLink>
-        </li>
-      ))}
+          </>
+        )
+        const className =
+          'flex min-h-14 w-full items-center gap-3 py-3 text-left transition-colors hover:bg-ash-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ginshu-600'
+        return (
+          <li key={row.key} className="border-b border-divider">
+            {row.onSelect || row.href === undefined ? (
+              <button type="button" onClick={row.onSelect} className={className} data-testid={`scan-outcome-candidate-${row.key}`}>
+                {body}
+              </button>
+            ) : (
+              <NextLink href={row.href} className={className} data-testid={`scan-outcome-candidate-${row.key}`}>
+                {body}
+              </NextLink>
+            )}
+          </li>
+        )
+      })}
     </ul>
   )
 }

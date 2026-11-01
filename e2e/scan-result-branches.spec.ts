@@ -46,6 +46,8 @@ interface Injection {
   brewery_romaji?: string
   drink?: 'sake' | 'shochu' | 'awamori' | 'umeshu' | 'liqueur' | 'other' | 'unknown'
   bottling?: { product_name?: string; grade?: string; styles?: string[]; polishing_ratio?: number }
+  bottle_count?: number
+  bottles?: { position: string; name_ja: string; brewery_ja: string; brewery_printed?: boolean; name_romaji?: string; confidence: number }[]
 }
 
 // A read the scan cannot stand on: low confidence, and a brewery that does
@@ -721,6 +723,39 @@ test.describe('scan result branches (#109 PR B)', () => {
     await expect(outcome).toContainText('This looks like a shelf')
     await expect(page.getByTestId('scan-outcome-sign-in-to-rank')).toBeVisible()
     await expect(page.getByTestId('scan-result-card')).toHaveCount(0)
+    await context.close()
+  })
+
+  test('two bottles ask which one is meant, and each opens its own answer', async ({ browser }, testInfo) => {
+    testInfo.skip(!dbUp, 'Sakenowa mirror not populated — DB-bound spec')
+    const { context, page } = await scanPageWith(browser, [
+      injectionCookie({
+        name_ja: '獺祭',
+        brewery_ja: '旭酒造',
+        confidence: 0.9,
+        subject: 'several_bottles',
+        bottle_count: 2,
+        bottles: [
+          { position: 'left', name_ja: '獺祭', brewery_ja: '旭酒造', brewery_printed: true, confidence: 0.9 },
+          { position: 'right', name_ja: '架空銘柄零一', brewery_ja: '架空酒造零', name_romaji: 'Kakū Meigara', confidence: 0.8 },
+        ],
+      }),
+    ])
+    await page.goto('/en/scan')
+    await page.getByTestId('scan-file-input').setInputFiles(FIXTURE_IMAGE)
+
+    // Design v1.7 §5a (74): one row per bottle, by where it stands and what was read.
+    const outcome = page.getByTestId('scan-result-two-bottles')
+    await expect(outcome).toContainText('Which bottle do you mean?')
+    await expect(page.getByTestId('scan-outcome-candidate-bottle-0')).toContainText('Left · name and brewery read')
+    await expect(page.getByTestId('scan-outcome-candidate-bottle-1')).toContainText('Kakū Meigara')
+    await expect(page.getByTestId('scan-outcome-candidate-bottle-1')).toContainText('Right · name read')
+
+    await page.getByTestId('scan-outcome-candidate-bottle-1').click()
+    await expect(page.getByTestId('scan-result-no-match')).toBeVisible()
+    await page.getByTestId('scan-two-bottles-back').click()
+    await page.getByTestId('scan-outcome-candidate-bottle-0').click()
+    await expect(page.getByTestId('scan-result-card')).toBeVisible()
     await context.close()
   })
 

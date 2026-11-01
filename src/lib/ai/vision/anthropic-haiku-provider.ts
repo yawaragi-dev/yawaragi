@@ -175,7 +175,7 @@ CRITICAL — script and field-identity rules:
 
 WHAT THE PHOTO SHOWS (subject). Decide this first:
    - one_bottle: one bottle (or its label) is the subject. A close-up of a label, a label filling the frame, or only part of a bottle is one_bottle too. A neighbouring bottle at the edge of the frame or on the shelf behind does not change this: read the bottle the photo is of.
-   - several_bottles: two or more bottles share the frame and none is clearly the one being photographed. Read the most prominent one into the fields below.
+   - several_bottles: two or more bottles share the frame and none is clearly the one being photographed. Read the most prominent one into the fields below, then fill bottle_count and bottles (see SEVERAL BOTTLES).
    - menu: a menu, a drinks list, a shelf card or a price list — printed text naming drinks, not a bottle. Read the first or most prominent drink into the fields below.
    - no_bottle: there is no bottle, bottle label, can, carton or drinks list in the photo at all — a loose tag or leaflet that is not a bottle's label, a glass, a table, a room. If you can see any part of a bottle or its label, it is not no_bottle. Fill name_ja and brewery_ja with "?" unless the photo prints a drink's name — one of the two exceptions to rule 5.
 
@@ -218,6 +218,12 @@ THIS BOTTLING (bottling). The brand names a family; the label usually says more 
    - grade: the grade the label prints — junmai_daiginjo (純米大吟醸), daiginjo (大吟醸), junmai_ginjo (純米吟醸), ginjo (吟醸), tokubetsu_junmai (特別純米), junmai (純米), tokubetsu_honjozo (特別本醸造), honjozo (本醸造), futsushu (普通酒, or 上撰 / 佳撰 with no grade). Latin spellings count ("Junmai Ginjo"). Leave it out when no grade is printed.
    - styles: each style word printed — nama (生酒, 生), namachozo (生貯蔵), namazume (生詰), genshu (原酒), muroka (無濾過), nigori (にごり), sparkling (スパークリング, 発泡), koshu (古酒, 熟成), kimoto (生酛), yamahai (山廃), taruzake (樽酒), kijoshu (貴醸酒), hiyaoroshi (ひやおろし).
    - polishing_ratio: the polishing ratio in percent where printed (精米歩合 60% → 60).
+
+SEVERAL BOTTLES (bottle_count, bottles). Only when subject is several_bottles; leave both out otherwise.
+   - bottle_count: how many bottles stand in the frame, counting the ones whose label you cannot read too. Write 4 for four or more.
+   - bottles: one entry per bottle whose name you can read, in the order they stand from left to right, at most four. For each, read that bottle's own label alone, by the same rules as above: name_ja, brewery_printed, brewery_ja, name_romaji, brewery_romaji, drink and confidence. position says where it stands as the photo shows it: left, middle or right; front or back when one stands in front of the other.
+   - Two bottles of the same sake are two entries with the same name.
+   - Never copy a name from one bottle to another, and never list a bottle you cannot read; a bottle you cannot read counts in bottle_count only.
 
 Return only what is visible on the label. Do not translate, do not transliterate kana into kanji, do not invent any field. Romanise only into name_romaji, brewery_romaji and product_name_romaji; never into name_ja, brewery_ja or product_name. If the image is not a sake label at all, lower the confidence score significantly rather than producing a plausible-sounding guess.`
 
@@ -372,6 +378,8 @@ export function createAnthropicHaikuProvider(
         name_romaji: extraction.name_romaji,
         brewery_romaji: extraction.brewery_romaji,
         bottling: extraction.bottling,
+        bottle_count: extraction.bottle_count,
+        bottles: extraction.bottles,
         confidence: extraction.confidence,
       })
 

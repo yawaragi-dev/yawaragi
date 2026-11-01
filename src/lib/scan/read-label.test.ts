@@ -471,3 +471,48 @@ function mockModelReturning(extraction: unknown): MockLanguageModelV3 {
   })
   return new MockLanguageModelV3({ doGenerate })
 }
+
+describe('readLabel — two bottles in one photo (design v1.7 §5a, 74)', () => {
+  const TWO = {
+    subject: 'several_bottles',
+    name_ja: '獺祭',
+    brewery_ja: '旭酒造',
+    confidence: 0.8,
+    bottle_count: 2,
+  }
+  const left = { position: 'left', name_ja: '獺祭', brewery_ja: '旭酒造', brewery_printed: true, confidence: 0.9 }
+  const right = { position: 'right', name_ja: '高清水', brewery_ja: '秋田酒類製造', brewery_printed: false, confidence: 0.8 }
+  const byName = (name: string): ResolveScannedLabelResult =>
+    name === '獺祭' ? EXACT_DASSAI : name === '高清水' ? { kind: 'exact', sake: TAKASHIMIZU } : NO_MATCH
+
+  /** Several bottles never stand on tier 1, so both tiers read the photo. */
+  const bothTiers = (read: Record<string, unknown>) => deps(readsAs(read), readsAs(read), catalogueByName())
+
+  function catalogueByName() {
+    return fakeCatalogue({
+      resolve: vi.fn(async (label) => byName(label.name_ja)),
+      breweryOf: vi.fn(async (brandId: number) => (brandId === TAKASHIMIZU.brandId ? AKITA_SHURUI : ASAHI_SHUZO)),
+    })
+  }
+
+  it('asks which bottle is meant, each bottle looked up on its own label', async () => {
+    const { state } = await scan(bothTiers({ ...TWO, bottles: [left, right] }))
+    expect(state.status).toBe('two_bottles')
+    if (state.status !== 'two_bottles') return
+    expect(state.bottles.map((b) => [b.position, b.breweryPrinted, b.reading.status])).toEqual([
+      ['left', true, 'matched'],
+      ['right', false, 'matched'],
+    ])
+    expect(state.bottles[1]!.reading).toMatchObject({ brandId: TAKASHIMIZU.brandId, breweryRomaji: 'Akita Shurui Seizo' })
+  })
+
+  it('answers with the sake when both bottles are the same one', async () => {
+    const { state } = await scan(bothTiers({ ...TWO, bottles: [left, { ...left, position: 'right' }] }))
+    expect(state).toMatchObject({ status: 'matched', brandId: DASSAI.brandId })
+  })
+
+  it('treats three or more bottles as a shelf', async () => {
+    const { state } = await scan(bothTiers({ ...TWO, bottle_count: 3, bottles: [left, right] }))
+    expect(state).toMatchObject({ status: 'not_one_bottle', subject: 'several_bottles' })
+  })
+})

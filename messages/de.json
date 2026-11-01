@@ -1151,6 +1151,22 @@
       "body": "Auf dieser Seite ist nur ein Bild. Der Name steht meist auf der gegenüberliegenden Seite oder auf einem kleinen Etikett unten an der Flasche.",
       "photo": "Die Seite, die du fotografiert hast"
     },
+    "twoBottles": {
+      "kicker": "Zwei Flaschen",
+      "title": "Welche Flasche meinst du?",
+      "body": "Zwei Flaschen sind auf dem Foto, und keine ist eindeutig die gemeinte. Wähle deine aus oder scanne eine nach der anderen.",
+      "rows": "Aus deinem Foto gelesen",
+      "reasonNameAndBrewery": "{position} · Name und Brauerei gelesen",
+      "reasonName": "{position} · Name gelesen",
+      "position": {
+        "left": "Links",
+        "middle": "Mitte",
+        "right": "Rechts",
+        "front": "Vorne",
+        "back": "Hinten"
+      },
+      "back": "Beide Flaschen"
+    },
     "notOneBottle": {
       "menu": {
         "kicker": "Eine Karte",

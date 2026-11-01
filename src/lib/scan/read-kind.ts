@@ -2,6 +2,7 @@ import {
   nonSakeDrinkOf,
   type LabelScanExtraction,
   type NonSakeDrink,
+  type ScanBottleRead,
 } from '@/lib/schemas/label-scan-extraction'
 
 /**
@@ -67,4 +68,40 @@ export async function landLabel<Resolved extends { kind: string }>(
  */
 export function firstReadStands(kind: string, breweryPrinted: boolean | undefined): boolean {
   return kind === 'exact' && breweryPrinted !== false
+}
+
+/**
+ * Design v1.7 §5a: two bottles of equal weight are "Which bottle do you
+ * mean?", one row per bottle the model could read; three or more are a
+ * shelf. The model counts the bottles in the frame and lists the readable
+ * ones; this says which case a read is. `null` for anything but two
+ * bottles with at least one name read. Shared by the scan and the eval.
+ */
+export function twoBottleReadsOf(
+  extraction: Pick<LabelScanExtraction, 'subject' | 'bottle_count' | 'bottles'>,
+): readonly ScanBottleRead[] | null {
+  if (extraction.subject !== 'several_bottles' || extraction.bottle_count !== 2) return null
+  const bottles = (extraction.bottles ?? []).slice(0, 2)
+  return bottles.length > 0 ? bottles : null
+}
+
+/**
+ * One bottle of a photo of several, as a read of one bottle: its own name,
+ * brewery, drink and confidence, nothing from the other bottle. The bottling
+ * and other names were read for the photo's most prominent bottle, which may
+ * not be this one, so neither is carried.
+ */
+export function bottleExtraction(photo: LabelScanExtraction, bottle: ScanBottleRead): LabelScanExtraction {
+  return {
+    source: photo.source,
+    subject: 'one_bottle',
+    legibility: 'read',
+    ...(bottle.drink ? { drink: bottle.drink } : {}),
+    name_ja: bottle.name_ja,
+    ...(bottle.brewery_printed === undefined ? {} : { brewery_printed: bottle.brewery_printed }),
+    brewery_ja: bottle.brewery_ja,
+    ...(bottle.name_romaji ? { name_romaji: bottle.name_romaji } : {}),
+    ...(bottle.brewery_romaji ? { brewery_romaji: bottle.brewery_romaji } : {}),
+    confidence: bottle.confidence,
+  }
 }
