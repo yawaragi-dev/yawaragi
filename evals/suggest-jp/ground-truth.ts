@@ -33,9 +33,10 @@ import type { GroundTruthEntry } from './schemas'
  *
  * All brand IDs verified present in `flavor_charts` at eval-build time
  * (2026-07-05). A future ingest might add new brands to these sets;
- * the eval doesn't care — recall is `intersect / expected.length`, so
- * extra returned brands don't penalise, and extra expected brands
- * just widen the pass zone.
+ * the eval doesn't care — the headline is normalized recall
+ * (`hits / min(k, expected.length)`, see `metrics.ts`), so extra
+ * returned brands don't penalise, and extra expected brands just
+ * widen the pass zone without lowering the best attainable score.
  */
 export const GROUND_TRUTH: readonly GroundTruthEntry[] = [
   // ============================================================
