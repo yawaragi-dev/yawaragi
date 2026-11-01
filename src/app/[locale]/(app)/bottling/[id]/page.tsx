@@ -1,8 +1,8 @@
 import { cookies } from 'next/headers'
 import { notFound } from 'next/navigation'
 import { GoesWith } from '@/components/sake/goes-with'
-import { resolvePairing, stylesFromWords } from '@/lib/pairing/resolve-pairing'
-import { catalogueAxisStats } from '@/lib/taste/catalogue-mean'
+import { pairingOf } from '@/lib/pairing/pairing-of'
+import { cataloguePairingDeps, lookupFlavorChartSafe } from '@/lib/pairing/catalogue-pairing-deps'
 import type { Metadata } from 'next'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { CaretRight } from '@phosphor-icons/react/dist/ssr'
@@ -17,8 +17,6 @@ import { LineBlock } from '@/components/sake/line-block'
 import { ReadingByAiLine } from '@/components/sake/reading-by-ai-line'
 import { RomajiDisclosure } from '@/components/sake/romaji-disclosure'
 import { SakenowaAttribution } from '@/components/sake/sakenowa-attribution'
-import type { FlavorChart } from '@/lib/schemas/flavor-chart'
-import { lookupFlavorChart } from '@/lib/sakenowa/catalogue-reads'
 import { bottlingHoldings } from '@/lib/collection/bottling-changes'
 import { bottlesOf } from '@/lib/collection/cellar'
 import { entriesForExpression, resolveViewerJournal } from '@/lib/taste/viewer-journal'
@@ -56,19 +54,6 @@ interface PageProps {
 // Private to its author: never indexed, and the title names nothing.
 export const metadata: Metadata = { robots: { index: false, follow: false } }
 
-/**
- * The line's chart, or `null` when it has none — or when the mirror cannot be
- * reached. The bottling is the visitor's own record and renders without the
- * catalogue; a lookup failure must not take their page down with it.
- */
-async function lookupFlavorChartSafe(brandId: number): Promise<FlavorChart | null> {
-  try {
-    return await lookupFlavorChart(brandId)
-  } catch {
-    return null
-  }
-}
-
 export default async function BottlingPage({ params, searchParams }: PageProps) {
   const { locale, id } = await params
   // "Keep it anyway" and "Add it yourself" land here with `?rate=1`: the
@@ -81,19 +66,16 @@ export default async function BottlingPage({ params, searchParams }: PageProps) 
   if (!bottling) notFound()
   const { brandId } = bottling
 
-  const [chart, t, axisStats] = await Promise.all([
+  // The line's chart, or `null` when it has none or the mirror cannot be
+  // reached: the bottling is the visitor's own record and renders without the
+  // catalogue. The pairing reads the same chart (deduped per request) — the
+  // bottling's own grade and styles first, the chart only when they say
+  // nothing a pairing can use (#336).
+  const [chart, t, pairing] = await Promise.all([
     brandId === null ? null : lookupFlavorChartSafe(brandId),
     getTranslations('bottling'),
-    brandId === null ? null : catalogueAxisStats(),
+    pairingOf({ kind: 'bottling', expression: bottling }, cataloguePairingDeps),
   ])
-  // The bottling's own grade and styles first; its line's chart only when
-  // they say nothing a pairing can use (#336).
-  const pairing = resolvePairing({
-    styles: stylesFromWords(bottling.styles ?? []),
-    grade: bottling.grade,
-    chart,
-    stats: axisStats,
-  })
 
   const tastings = entriesForExpression(viewer.entries, bottling.id)
   // What this page shows — the line, the tags, the other bottlings, the

@@ -25,8 +25,8 @@ import { ScanReturnHint } from '@/components/scan/scan-return-hint'
 import { SakenowaAttribution } from '@/components/sake/sakenowa-attribution'
 import { FEATURES } from '@/lib/features'
 import { GoesWith } from '@/components/sake/goes-with'
-import { resolvePairing } from '@/lib/pairing/resolve-pairing'
-import { catalogueAxisStats } from '@/lib/taste/catalogue-mean'
+import { pairingOf } from '@/lib/pairing/pairing-of'
+import { cataloguePairingDeps } from '@/lib/pairing/catalogue-pairing-deps'
 import { hasArrivedViaScan } from '@/lib/scan/arrived-via-scan'
 import { entriesForBrand, resolveViewerJournal } from '@/lib/taste/viewer-journal'
 import { lastTastingOf } from '@/lib/taste/last-tasting'
@@ -125,13 +125,15 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
     notFound()
   }
 
-  const [brand, brewery, flavorChart, siblings, viewer, axisStats, otherNames] = await Promise.all([
+  const [brand, brewery, flavorChart, siblings, viewer, pairing, otherNames] = await Promise.all([
     lookupBrandCached(brandId),
     lookupBreweryCached(brandId),
     lookupFlavorChartCached(brandId),
     listSiblingBrandsSafe(brandId),
     cookies().then(resolveViewerJournal),
-    catalogueAxisStats(),
+    // The line's chart against the catalogue. Reads the page's own chart
+    // lookup, so the request asks the mirror once.
+    pairingOf({ kind: 'sake', brandId }, { ...cataloguePairingDeps, lookupChart: lookupFlavorChartCached }),
     otherNamesOf(brandId),
   ])
   if (!brand) {
@@ -169,7 +171,6 @@ export default async function SakeBrandPage({ params, searchParams }: PageProps)
   const romaji = brand.nameRomaji
   const { brewery: breweryLine, brewerySection, region } = model
   const formerBrewery = breweryLine?.former ?? null
-  const pairing = resolvePairing({ chart: flavorChart, stats: axisStats })
 
   return (
     <main
