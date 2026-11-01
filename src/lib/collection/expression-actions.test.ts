@@ -1,29 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Brand } from '@/lib/schemas/brand'
 
-const h = vi.hoisted(() => ({
-  journal: null as unknown,
-  cellar: null as unknown,
-  expressions: null as unknown,
-}))
+const h = vi.hoisted(() => ({ source: null as unknown as InMemoryCollectionSource }))
 
-vi.mock('@clerk/nextjs/server', () => ({ auth: vi.fn(async () => ({ userId: 'user_admin' })) }))
-vi.mock('@/lib/auth/maintainer', () => ({ currentUserIsMaintainer: vi.fn(async () => true) }))
+vi.mock('@/lib/collection/collection-source', () => ({ collectionSource: () => h.source }))
+
 vi.mock('@/lib/sakenowa/catalogue-reads', () => ({ lookupBrand: vi.fn() }))
-vi.mock('@/lib/taste/get-journal-store', () => ({ getJournalStore: vi.fn(() => h.journal) }))
-vi.mock('@/lib/collection/get-cellar-store', () => ({ getCellarStore: vi.fn(() => h.cellar) }))
-vi.mock('@/lib/collection/get-expression-store', () => ({
-  getExpressionStore: vi.fn(() => h.expressions),
-}))
 
-import { currentUserIsMaintainer } from '@/lib/auth/maintainer'
 import {
   addOwnBottling,
   deleteOwnBottling,
   renameOwnBottling,
   restoreOwnBottling,
 } from '@/lib/collection/expression-actions'
-import { InMemoryCellarStore, InMemoryExpressionStore, InMemoryJournalStore } from '@/lib/collection/in-memory-record-store'
+import { InMemoryCollectionSource } from '@/lib/collection/in-memory-collection'
 import { lookupBrand } from '@/lib/sakenowa/catalogue-reads'
 
 const RIHAKU: Brand = {
@@ -35,9 +25,9 @@ const RIHAKU: Brand = {
   source: 'sakenowa',
 }
 const USER = 'user_admin'
-const store = () => h.expressions as InMemoryExpressionStore
-const journal = () => h.journal as InMemoryJournalStore
-const cellar = () => h.cellar as InMemoryCellarStore
+const store = () => h.source.expressions
+const journal = () => h.source.journal
+const cellar = () => h.source.cellar
 
 const TARGET = { f1: 0.2, f2: 0.6, f3: 0.6, f4: 0.4, f5: 0.1, f6: 0.3 }
 
@@ -72,10 +62,7 @@ async function seedBottlingOfASake(): Promise<string> {
 
 beforeEach(() => {
   vi.clearAllMocks()
-  h.journal = new InMemoryJournalStore()
-  h.cellar = new InMemoryCellarStore()
-  h.expressions = new InMemoryExpressionStore()
-  vi.mocked(currentUserIsMaintainer).mockResolvedValue(true)
+  h.source = new InMemoryCollectionSource(USER)
   vi.mocked(lookupBrand).mockResolvedValue(RIHAKU)
 })
 
@@ -145,7 +132,7 @@ describe('adding your own bottling of a sake', () => {
   })
 
   it('stores nothing for someone who is not a maintainer', async () => {
-    vi.mocked(currentUserIsMaintainer).mockResolvedValue(false)
+    h.source.ownerId = false
     expect(await addOwnBottling({ brandId: 12, name: 'Nama' })).toEqual({ status: 'forbidden' })
     expect(await store().read(USER)).toEqual([])
   })
@@ -350,7 +337,7 @@ describe('deleting a bottling you added', () => {
   it('does nothing for a bottling that is not yours, or for someone who is not a maintainer', async () => {
     expect(await deleteOwnBottling('nope')).toEqual({ status: 'not_found' })
     const id = await seedBottlingOfASake()
-    vi.mocked(currentUserIsMaintainer).mockResolvedValue(false)
+    h.source.ownerId = false
     expect(await deleteOwnBottling(id)).toEqual({ status: 'forbidden' })
     expect(await renameOwnBottling({ expressionId: id, name: 'Poet' })).toEqual({ status: 'forbidden' })
   })

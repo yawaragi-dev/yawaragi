@@ -3,13 +3,10 @@
 import { auth, clerkClient } from '@clerk/nextjs/server'
 import { env } from '@/env'
 import { BACKUP_BUCKET } from '@/lib/collection/backup-storage'
+import { upstashCollectionStores } from '@/lib/collection/collection-source'
 import { eraseCollection } from '@/lib/collection/erase-collection'
-import { getBottleHistoryStore } from '@/lib/collection/get-bottle-history-store'
-import { getCellarStore } from '@/lib/collection/get-cellar-store'
-import { getExpressionStore } from '@/lib/collection/get-expression-store'
 import { SupabaseBackupStorage } from '@/lib/collection/supabase-backup-storage'
 import { describeError, logFailure } from '@/lib/observability/log-failure'
-import { getJournalStore } from '@/lib/taste/get-journal-store'
 import { buildCollectionExport } from '@/lib/taste/journal-export'
 
 /**
@@ -31,11 +28,9 @@ export type ExportResult =
 export async function exportMyCollection(): Promise<ExportResult> {
   const { userId } = await auth()
   if (!userId) return { status: 'forbidden' }
-  const journal = getJournalStore()
-  const cellar = getCellarStore()
-  const expressions = getExpressionStore()
-  const bottleHistory = getBottleHistoryStore()
-  if (!journal || !cellar || !expressions || !bottleHistory) return { status: 'unavailable' }
+  const stores = upstashCollectionStores()
+  if (!stores) return { status: 'unavailable' }
+  const { journal, cellar, expressions, history: bottleHistory } = stores
   try {
     const exportedAt = Date.now()
     const [j, c, x, h] = await Promise.all([
@@ -76,15 +71,13 @@ export async function deleteMyAccount(confirm: 'delete-permanently'): Promise<De
   if (confirm !== 'delete-permanently') return { status: 'forbidden' }
   const { userId } = await auth()
   if (!userId) return { status: 'forbidden' }
-  const journal = getJournalStore()
-  const cellar = getCellarStore()
-  const expressions = getExpressionStore()
-  const bottleHistory = getBottleHistoryStore()
+  const stores = upstashCollectionStores()
   const url = env.NEXT_PUBLIC_SUPABASE_URL
   const key = env.SUPABASE_SERVICE_ROLE_KEY
-  if (!journal || !cellar || !expressions || !bottleHistory || !url || !key) {
+  if (!stores || !url || !key) {
     return { status: 'unavailable' }
   }
+  const { journal, cellar, expressions, history: bottleHistory } = stores
   try {
     const backups = new SupabaseBackupStorage(url, key, BACKUP_BUCKET)
     await eraseCollection({ userId, journal, cellar, expressions, bottleHistory, backups })

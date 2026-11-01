@@ -82,7 +82,7 @@ The integer every stored record (JournalEntry, CellarBottle, Expression, BottleE
 _Avoid_: Revision (implies edit history), Migration version (that is the SQL migrations' numbering)
 
 **Collection**:
-The user-facing container for everything a *User* has accumulated, and the third tab. Three segments: **TastingJournal** (what you drank), **Cellar** (what you own), **Wishlist** (what you want). A grouping in the UI only — there is no Collection record; each segment is its own store. Introduced by design v1.4 §11.
+The user-facing container for everything a *User* has accumulated, and the third tab. Three segments: **TastingJournal** (what you drank), **Cellar** (what you own), **Wishlist** (what you want). A grouping in the UI only — there is no Collection record; each segment is its own store. Introduced by design v1.4 §11. In code, a request reaches those stores only through `openCollection()` (`src/lib/collection/open-collection.ts`), which applies the maintainer gate (ADR-0020) and answers with the stores or why there are none; every collection write and every **Viewer** goes through it.
 _Avoid_: Library, My sakes, Shelf (that reads as the Cellar), Inventory (commercial)
 
 **Viewer**:

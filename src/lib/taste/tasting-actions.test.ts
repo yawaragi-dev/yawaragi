@@ -3,34 +3,16 @@ import type { Brand } from '@/lib/schemas/brand'
 import type { Expression } from '@/lib/schemas/expression'
 import type { FlavorChart } from '@/lib/schemas/flavor-chart'
 
-const h = vi.hoisted(() => ({
-  journal: null as unknown,
-  cellar: null as unknown,
-  expressions: null as unknown,
-}))
+const h = vi.hoisted(() => ({ source: null as unknown as InMemoryCollectionSource }))
 
-vi.mock('@clerk/nextjs/server', () => ({
-  auth: vi.fn(async () => ({ userId: 'user_admin' })),
-}))
-vi.mock('@/lib/auth/maintainer', () => ({
-  currentUserIsMaintainer: vi.fn(async () => true),
-}))
+vi.mock('@/lib/collection/collection-source', () => ({ collectionSource: () => h.source }))
+
 vi.mock('@/lib/sakenowa/catalogue-reads', () => ({
   lookupFlavorChart: vi.fn(),
   lookupBrand: vi.fn(),
 }))
-vi.mock('@/lib/taste/get-journal-store', () => ({
-  getJournalStore: vi.fn(() => h.journal),
-}))
-vi.mock('@/lib/collection/get-cellar-store', () => ({
-  getCellarStore: vi.fn(() => h.cellar),
-}))
-vi.mock('@/lib/collection/get-expression-store', () => ({
-  getExpressionStore: vi.fn(() => h.expressions),
-}))
 
-import { currentUserIsMaintainer } from '@/lib/auth/maintainer'
-import { InMemoryCellarStore, InMemoryExpressionStore, InMemoryJournalStore } from '@/lib/collection/in-memory-record-store'
+import { InMemoryCollectionSource } from '@/lib/collection/in-memory-collection'
 import { lookupBrand, lookupFlavorChart } from '@/lib/sakenowa/catalogue-reads'
 import { rateNewTasting, undoTasting, updateTasting } from '@/lib/taste/tasting-actions'
 
@@ -44,8 +26,8 @@ const BRAND: Brand = {
   source: 'sakenowa',
 }
 const USER = 'user_admin'
-const journal = () => h.journal as InMemoryJournalStore
-const expressions = () => h.expressions as InMemoryExpressionStore
+const journal = () => h.source.journal
+const expressions = () => h.source.expressions
 const OWN_BOTTLING: Expression = {
   schemaVersion: 1,
   id: 'x1',
@@ -65,10 +47,7 @@ async function rated(rating = 4.5) {
 
 beforeEach(() => {
   vi.clearAllMocks()
-  h.journal = new InMemoryJournalStore()
-  h.cellar = new InMemoryCellarStore()
-  h.expressions = new InMemoryExpressionStore()
-  vi.mocked(currentUserIsMaintainer).mockResolvedValue(true)
+  h.source = new InMemoryCollectionSource(USER)
   vi.mocked(lookupFlavorChart).mockResolvedValue(CHART)
   vi.mocked(lookupBrand).mockResolvedValue(BRAND)
 })
@@ -168,7 +147,7 @@ describe('tapping a star', () => {
   })
 
   it('stores nothing for someone who is not a maintainer', async () => {
-    vi.mocked(currentUserIsMaintainer).mockResolvedValue(false)
+    h.source.ownerId = false
     expect(await rateNewTasting({ brandId: 123, rating: 4 })).toEqual({ status: 'forbidden' })
     expect(await journal().read(USER)).toEqual([])
   })
