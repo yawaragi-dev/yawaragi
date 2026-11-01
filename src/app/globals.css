@@ -566,3 +566,18 @@ html[data-offline] [data-needs-network] {
   48.182%, 63.636% { opacity: 1; }
   66.364%, 100% { opacity: 0; }
 }
+
+/*
+ * §4: the camera is the whole app pane, down to the tab bar, and never
+ * scrolls. The end-of-screen block ends scrolling screens; under the camera
+ * it only made the pane scroll by its own height. The camera carries the
+ * Impressum and Privacy notice links itself, on its bottom edge
+ * (`<CameraCapture />`), so they stay one tap away here too.
+ *
+ * `:has` matches only while the camera is in the pane: no route is kept
+ * mounted off screen (no `cacheComponents`), so leaving the Scan tab brings
+ * the block back. Pinned in e2e/scan-page.spec.ts.
+ */
+[data-app-pane]:has([data-camera-ground]) > [data-end-of-screen] {
+  display: none;
+}

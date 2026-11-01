@@ -220,10 +220,12 @@ test.describe('app shell — tab bar', () => {
   test('keeps the Impressum reachable from an app screen', async ({ browser }) => {
     const { context, page } = await appPage(browser)
 
+    // The camera has no end-of-screen block (nothing scrolls under it), so it
+    // carries the two links itself.
     await page.goto('/en/scan')
 
-    await expect(page.getByTestId('footer-imprint-link')).toBeVisible()
-    await expect(page.getByTestId('footer-privacy-link')).toBeVisible()
+    await expect(page.getByTestId('scan-camera-imprint-link')).toBeVisible()
+    await expect(page.getByTestId('scan-camera-privacy-link')).toBeVisible()
 
     await context.close()
   })

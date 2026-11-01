@@ -3,6 +3,7 @@ import { Link } from '@/i18n/navigation'
 import { CookieSettingsLink } from '@/components/legal/cookie-settings-link'
 import { FooterCredit } from '@/components/layout/footer-credit'
 import { FooterVersion } from '@/components/layout/footer-version'
+import { LEGAL_LINKS } from '@/components/layout/legal-links'
 import { appVersion } from '@/lib/app/app-version'
 
 /**
@@ -58,17 +59,16 @@ export async function LegalFooter({ credit = false }: { credit?: boolean } = {})
     // v1.5 rule 15, the end-of-screen block: last in every scrolling app
     // screen, 28px under the content (screens end with `py-6`, so 4px more
     // here), left-aligned on the content column, 12px neutral-600, no divider.
-    <footer className="flex flex-col gap-1 px-5 pt-1 pb-5 text-meta leading-normal text-ash-600" data-testid="site-footer">
+    <footer className="flex flex-col gap-1 px-5 pt-1 pb-5 text-meta leading-normal text-ash-600" data-testid="site-footer" data-end-of-screen="">
       {credit && <FooterCredit />}
       <nav className="flex flex-wrap items-center gap-x-3.5" aria-label={t('label')}>
         {/* Design v1.10 AA6: Account's line starts with the version. */}
         <FooterVersion text={t('version', { version, build })} />
-        <Link href="/imprint" data-testid="footer-imprint-link" className={LINK_CLASS_NAME}>
-          {t('imprintLink')}
-        </Link>
-        <Link href="/privacy" data-testid="footer-privacy-link" className={LINK_CLASS_NAME}>
-          {t('privacyLink')}
-        </Link>
+        {LEGAL_LINKS.map(({ href, messageKey, testIdPart }) => (
+          <Link key={href} href={href} data-testid={`footer-${testIdPart}-link`} className={LINK_CLASS_NAME}>
+            {t(messageKey)}
+          </Link>
+        ))}
         <CookieSettingsLink className={`${LINK_CLASS_NAME} cursor-pointer`} />
         {/* Not a link: it is a statement, and #162 forbids a dead destination. */}
         <span className="whitespace-nowrap py-1.5" data-testid="footer-drink-responsibly">
