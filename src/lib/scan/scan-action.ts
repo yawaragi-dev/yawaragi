@@ -1,5 +1,4 @@
 import 'server-only'
-import { cookies } from 'next/headers'
 import { env } from '@/env'
 import { readAnonymousSessionCookie } from '@/lib/legal/anonymous-session-cookie'
 import { type ReadCache, readCacheKey, upstashReadCache } from './read-cache'
@@ -13,10 +12,9 @@ import {
   DEFAULT_VISION_PROVIDER_KEY,
   TIER_2_VISION_PROVIDER_KEY,
 } from '@/lib/ai/vision/registry'
-import { recordActionMetadata, withActionSpan } from '@/lib/ai/observability/action-span'
-import { DebugLog, debugAdd, runWithDebugLog } from '@/lib/debug/debug-log'
-import { isDebugEnabled } from '@/lib/debug/debug-access'
-import { enforceRateLimit } from '@/lib/rate-limit/enforce-rate-limit'
+import { recordActionMetadata } from '@/lib/ai/observability/action-span'
+import { debugAdd } from '@/lib/debug/debug-log'
+import { meteredCall, type CookieJar, type Meter } from '@/lib/metering/metered-call'
 import { lookupBreweryByBrand, lookupFlavorChart } from '@/lib/sakenowa/catalogue-reads'
 import { resolveScannedLabel } from '@/lib/sakenowa/resolve-scanned-label'
 import { resolveWithEarlierRead } from '@/lib/sakenowa/resolve-with-earlier-read'
@@ -24,7 +22,6 @@ import { findNearestBrands } from '@/lib/sakenowa/nearest-brands'
 import { parseEarlierScanRead } from '@/lib/schemas/earlier-scan-read'
 import type { ScanActionState } from './scan-action-state'
 import { classifyScanOutcome } from './scan-outcome'
-import { countUsage } from '@/lib/stats/count-usage'
 
 /**
  * One label scan, as `POST /{locale}/scan/read` answers it
@@ -38,9 +35,10 @@ import { countUsage } from '@/lib/stats/count-usage'
  *
  * It does the outside work around one read of a label: parses the form,
  * answers a resent photo from the read cache, pays the rate limit BEFORE any
- * paid model call (the cost-protection invariant), opens the Langfuse span
- * and the debug log, records what the read cost on the span, and adds the
- * visitor's own bottlings to a match. The read itself — the two vision tiers,
+ * paid model call (the cost-protection invariant, kept by `meteredCall`,
+ * which also opens the Langfuse span and the debug log and counts the
+ * scan), records what the read cost on the span, and adds the visitor's own
+ * bottlings to a match. The read itself — the two vision tiers,
  * the catalogue lookup, the guesses beside the answer — is `readLabel`
  * (`read-label.ts`), which gets the registry's providers and the Sakenowa
  * mirror from here.
@@ -73,84 +71,58 @@ export async function scanLabel(formData: FormData): Promise<ScanActionState> {
   // recorded on it. Sonnet 4.6 costs ~6x Haiku and fires on every tier-1
   // status except a clean `matched`, so the retry rate is the dominant
   // driver of scan spend and nothing tracked it before.
-  const result = await withActionSpan(
-    { name: 'scan-action', classify: classifyScanOutcome },
-    () => runScanAction(formData),
-  )
-  countUsage(`scan:${result.status}`)
-  return result
-}
-
-async function runScanAction(formData: FormData): Promise<ScanActionState> {
-  // Read the debug cookie up-front. When set, every downstream module
-  // (rate-limit, vision, Sakenowa) appends per-step events via
-  // `getCurrentDebugLog()` / `debugAdd(...)` — no parameter threading
-  // through stable seams. The accumulated events are attached to the
-  // response under `debugLog` so the client `<DebugPanel />` can render
-  // them next to its own client-side events.
-  const cookieJar = await cookies()
-  const log = (await isDebugEnabled(cookieJar)) ? new DebugLog() : undefined
-
-  let scansLeft: number | undefined
-  const result = await runWithDebugLog(log, async (): Promise<ScanActionState> => {
-    const image = formData.get('image')
-    if (!(image instanceof Blob) || image.size === 0) {
-      debugAdd('ScanAction', 'invalid_input: missing or empty image blob', undefined, 'warn')
-      return { status: 'invalid_input', reason: 'missing_image' }
-    }
-    debugAdd('ScanAction', `received image (${image.size} bytes, ${image.type || 'no MIME'})`)
-
-    const localeRaw = formData.get('locale')
-    if (typeof localeRaw !== 'string' || !isLocale(localeRaw)) {
-      debugAdd('ScanAction', `invalid_input: unsupported locale "${String(localeRaw)}"`, undefined, 'warn')
-      return { status: 'invalid_input', reason: 'unsupported_locale' }
-    }
-    // #408: what the previous scan in this tab read, if the visitor is
-    // photographing another side. Never passed to the vision call — the
-    // photo is read blind — and consulted only after this scan has its own
-    // answer. Malformed or absent is the same as a first scan.
-    const earlierRead = parseEarlierScanRead(formData.get('earlierRead'))
-
-    // Design v1.9 S4: the same photo sent again within ten minutes (its
-    // answer was lost on the way back) gets the stored answer — before the
-    // rate limit, so it does not use another free scan, and with no model
-    // call. The visitor's own bottlings are looked up fresh either way.
-    const cached = await openReadCache(cookieJar, image, localeRaw, earlierRead)
-    if (cached) {
-      const hit = await cached.cache.get(cached.key)
-      if (hit) {
-        debugAdd('ScanAction', 'same photo within 10 min → stored answer, no model call, no scan used')
-        recordActionMetadata({ 'scan.cacheHit': true })
-        return withOwnBottlings(hit)
-      }
-    }
-    /** Keep the answer as the catalogue resolved it, then add the visitor's bottlings. */
-    const finish = async (resolved: ScanActionState) => {
-      if (cached) await cached.cache.set(cached.key, resolved)
-      return withOwnBottlings(resolved)
-    }
-
-    // Rate-limit gate. Post-#161 middleware refactor: reads the
-    // `yawaragi_session` cookie the proxy stamped before render and
-    // consults the vision-scan bucket. Never mutates the cookie —
-    // `src/proxy.ts` is the sole writer, so calling `cookies().set(...)`
-    // from an action invoked mid-render (like the suggest surface) no
-    // longer crashes with `Cookies can only be modified in a Server
-    // Action or Route Handler`. On exhaustion the action returns the
-    // tagged `rate_limited` state and never reaches the vision provider.
-    const rateLimit = await enforceRateLimit({
+  // The span, the debug log, the `vision-scan` rate limit and the
+  // `scan:<status>` usage counter are the meter's (`metered-call.ts`).
+  return meteredCall(
+    {
       bucket: 'vision-scan',
       logPrefix: '[scan]',
-      debug: debugAdd,
-    })
-    if (rateLimit.kind === 'session_missing') {
-      return { status: 'session_missing' }
-    }
-    if (!rateLimit.allowed) {
-      return { status: 'rate_limited', retryAfterSec: rateLimit.retryAfterSec }
-    }
-    scansLeft = rateLimit.remaining
+      span: { name: 'scan-action', classify: classifyScanOutcome },
+      count: (result) => `scan:${result.status}`,
+    },
+    (meter) => runScanAction(formData, meter),
+  )
+}
 
+async function runScanAction(formData: FormData, meter: Meter): Promise<ScanActionState> {
+  const image = formData.get('image')
+  if (!(image instanceof Blob) || image.size === 0) {
+    debugAdd('ScanAction', 'invalid_input: missing or empty image blob', undefined, 'warn')
+    return { status: 'invalid_input', reason: 'missing_image' }
+  }
+  debugAdd('ScanAction', `received image (${image.size} bytes, ${image.type || 'no MIME'})`)
+
+  const localeRaw = formData.get('locale')
+  if (typeof localeRaw !== 'string' || !isLocale(localeRaw)) {
+    debugAdd('ScanAction', `invalid_input: unsupported locale "${String(localeRaw)}"`, undefined, 'warn')
+    return { status: 'invalid_input', reason: 'unsupported_locale' }
+  }
+  // #408: what the previous scan in this tab read, if the visitor is
+  // photographing another side. Never passed to the vision call — the
+  // photo is read blind — and consulted only after this scan has its own
+  // answer. Malformed or absent is the same as a first scan.
+  const earlierRead = parseEarlierScanRead(formData.get('earlierRead'))
+
+  // Design v1.9 S4: the same photo sent again within ten minutes (its
+  // answer was lost on the way back) gets the stored answer — before the
+  // rate limit, so it does not use another free scan, and with no model
+  // call. The visitor's own bottlings are looked up fresh either way.
+  const { cookieJar } = meter
+  const cached = await openReadCache(cookieJar, image, localeRaw, earlierRead)
+  if (cached) {
+    const hit = await cached.cache.get(cached.key)
+    if (hit) {
+      debugAdd('ScanAction', 'same photo within 10 min → stored answer, no model call, no scan used')
+      recordActionMetadata({ 'scan.cacheHit': true })
+      return withOwnBottlings(hit, cookieJar)
+    }
+  }
+
+  // The rate limit is paid here, after the read cache and before any model
+  // call. A spent budget or a missing session cookie comes back as
+  // `rate_limited` / `session_missing` and the vision provider is never
+  // reached.
+  return meter.pay(async ({ remaining }) => {
     // The label itself — tier 1, tier 2 when tier 1's answer does not stand,
     // the catalogue, the guesses beside the answer — is `readLabel`'s.
     const { state, trace } = await readLabel(
@@ -171,13 +143,11 @@ async function runScanAction(formData: FormData): Promise<ScanActionState> {
         : { 'scan.tier1Status': trace.tier1Status, 'scan.tier2Used': false },
     )
     if (trace.earlierRead) recordActionMetadata({ 'scan.earlierRead': trace.earlierRead })
-    return finish(state)
+    // Keep the answer as the catalogue resolved it, then add the visitor's bottlings.
+    if (cached) await cached.cache.set(cached.key, state)
+    const answered = await withOwnBottlings(state, cookieJar)
+    return remaining === undefined ? answered : { ...answered, scansLeft: remaining }
   })
-
-  // Attach the accumulated trace to the response. Stripped when debug
-  // is off so non-debug visitors never see it.
-  const counted = scansLeft === undefined ? result : { ...result, scansLeft }
-  return log ? { ...counted, debugLog: log.toArray() } : counted
 }
 
 /**
@@ -189,10 +159,10 @@ async function runScanAction(formData: FormData): Promise<ScanActionState> {
  * Only a match has a sake to hang bottlings on, and only a visitor who
  * keeps a journal has any. A failure here leaves the scan as it was.
  */
-async function withOwnBottlings(state: ScanActionState): Promise<ScanActionState> {
+async function withOwnBottlings(state: ScanActionState, cookieJar: CookieJar): Promise<ScanActionState> {
   if (state.status !== 'matched') return state
   try {
-    const viewer = await resolveViewerJournal(await cookies())
+    const viewer = await resolveViewerJournal(cookieJar)
     const own = viewer.expressions.filter((e) => e.brandId === state.brandId)
     if (own.length === 0) return state
     const fits = ownBottlingForRead(state.extraction.bottling, own)
@@ -217,7 +187,7 @@ async function withOwnBottlings(state: ScanActionState): Promise<ScanActionState
  * Upstash or session secret (CI, a fresh checkout), or no session cookie.
  */
 async function openReadCache(
-  cookieJar: Awaited<ReturnType<typeof cookies>>,
+  cookieJar: CookieJar,
   image: Blob,
   locale: string,
   earlierRead: unknown,

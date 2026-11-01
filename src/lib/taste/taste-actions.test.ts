@@ -7,10 +7,9 @@ import type { FlavorChart } from '@/lib/schemas/flavor-chart'
 // beforeEach (once the import is available), and the factory reads it lazily.
 const h = vi.hoisted(() => ({ store: null as unknown }))
 
-vi.mock('next/headers', () => ({
-  // Debug cookie absent → no DebugLog created (keeps assertions on state, not trace).
-  cookies: vi.fn(async () => ({ get: () => undefined })),
-}))
+// The meter (debug log, `taste` rate limit before the store) is tested once in
+// `metered-call.test.ts`; here it admits or refuses as each test says.
+vi.mock('@/lib/metering/metered-call', () => import('@/lib/metering/fake-metered-call'))
 vi.mock('@/env', () => ({
   env: {
     SESSION_COOKIE_SECRET: 'test-secret',
@@ -18,9 +17,6 @@ vi.mock('@/env', () => ({
     UPSTASH_REDIS_REST_TOKEN: 'tok',
     RATE_LIMIT_BYPASS: undefined,
   },
-}))
-vi.mock('@/lib/rate-limit/enforce-rate-limit', () => ({
-  enforceRateLimit: vi.fn(async () => ({ kind: 'allowed', allowed: true, retryAfterSec: 0 })),
 }))
 vi.mock('@/lib/legal/anonymous-session-cookie', () => ({
   readAnonymousSessionCookie: vi.fn(() => ({ sid: 'test-sid' })),
@@ -33,7 +29,7 @@ vi.mock('@/lib/taste/get-taste-event-store', () => ({
 }))
 
 import { InMemoryTasteEventStore } from '@/lib/taste/in-memory-taste-event-store'
-import { enforceRateLimit } from '@/lib/rate-limit/enforce-rate-limit'
+import { fakeMeter, resetFakeMeter } from '@/lib/metering/fake-metered-call'
 import { readAnonymousSessionCookie } from '@/lib/legal/anonymous-session-cookie'
 import { lookupFlavorChart } from '@/lib/sakenowa/catalogue-reads'
 import { applyCrossBeverage, applyScanResult, rateSake } from '@/lib/taste/taste-actions'
@@ -55,7 +51,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   vi.mocked(lookupFlavorChart).mockReset()
   h.store = new InMemoryTasteEventStore()
-  vi.mocked(enforceRateLimit).mockResolvedValue({ kind: 'allowed', allowed: true, retryAfterSec: 0 })
+  resetFakeMeter()
   vi.mocked(readAnonymousSessionCookie).mockReturnValue({ sid: 'test-sid' } as never)
 })
 
@@ -80,7 +76,7 @@ describe('rateSake', () => {
   it('rejects invalid input before rate-limiting or any lookup', async () => {
     const result = await rateSake(123, 9) // rating out of 0.5–5
     expect(result.status).toBe('invalid_input')
-    expect(enforceRateLimit).not.toHaveBeenCalled()
+    expect(fakeMeter.calls).toEqual([])
     expect(lookupFlavorChart).not.toHaveBeenCalled()
   })
 
@@ -112,11 +108,7 @@ describe('rateSake', () => {
   })
 
   it('returns rate_limited without persisting when the limiter denies', async () => {
-    vi.mocked(enforceRateLimit).mockResolvedValue({
-      kind: 'denied',
-      allowed: false,
-      retryAfterSec: 3600,
-    })
+    fakeMeter.next = { status: 'rate_limited', retryAfterSec: 3600 }
     const result = await rateSake(123, 5)
     expect(result).toMatchObject({ status: 'rate_limited', retryAfterSec: 3600 })
     expect(lookupFlavorChart).not.toHaveBeenCalled()
@@ -124,8 +116,14 @@ describe('rateSake', () => {
   })
 
   it('surfaces session_missing from the limiter', async () => {
-    vi.mocked(enforceRateLimit).mockResolvedValue({ kind: 'session_missing' })
+    fakeMeter.next = { status: 'session_missing' }
     expect((await rateSake(123, 5)).status).toBe('session_missing')
+  })
+
+  it('spends the taste budget, with no span and nothing counted', async () => {
+    vi.mocked(lookupFlavorChart).mockResolvedValue(CHART)
+    await rateSake(123, 5)
+    expect(fakeMeter.calls).toEqual([{ bucket: 'taste', paid: true, counted: null }])
   })
 
   it('accumulates events across calls', async () => {
@@ -176,6 +174,6 @@ describe('applyCrossBeverage', () => {
   it('rejects an empty descriptor as invalid input', async () => {
     const result = await applyCrossBeverage({ descriptor: '   ', beverage: 'whisky' })
     expect(result.status).toBe('invalid_input')
-    expect(enforceRateLimit).not.toHaveBeenCalled()
+    expect(fakeMeter.calls).toEqual([])
   })
 })

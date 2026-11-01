@@ -31,9 +31,9 @@ export type RateLimitDecision =
 
 /**
  * Optional structured-debug sink. Mirrors the exact type of `debugAdd` from
- * `@/lib/debug/debug-log` (type-only import, no runtime coupling) so scan can
- * forward its `debugAdd` and have the rate-limit decision show up in the scan
- * debug panel; suggest (and the taste actions) pass nothing.
+ * `@/lib/debug/debug-log` (type-only import, no runtime coupling) so
+ * `meteredCall` can forward `debugAdd` and have the rate-limit decision show
+ * up in every metered surface's debug panel.
  */
 export type RateLimitDebug = typeof debugAdd
 

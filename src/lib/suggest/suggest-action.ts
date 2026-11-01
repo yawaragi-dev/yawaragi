@@ -1,6 +1,5 @@
 'use server'
 
-import { cookies } from 'next/headers'
 import type { MCPClient } from '@ai-sdk/mcp'
 import { anthropic } from '@ai-sdk/anthropic'
 import { isStepCount } from 'ai'
@@ -8,9 +7,8 @@ import { isStepCount } from 'ai'
 import { getDefaultMcpClient } from '@/lib/ai/mcp/registry'
 import { recordActionMetadata, withActionSpan } from '@/lib/ai/observability/action-span'
 import { tracedGenerateText } from '@/lib/ai/observability/langfuse-trace'
-import { DebugLog, debugAdd, runWithDebugLog } from '@/lib/debug/debug-log'
-import { isDebugEnabled } from '@/lib/debug/debug-access'
-import { enforceRateLimit } from '@/lib/rate-limit/enforce-rate-limit'
+import { debugAdd } from '@/lib/debug/debug-log'
+import { meteredCall, type CookieJar } from '@/lib/metering/metered-call'
 import { hydrateFlavorProfiles } from './hydrate-flavor-profiles'
 import { parseSuggestionsFromText } from './parse-suggestions'
 import {
@@ -102,19 +100,11 @@ async function runSuggestAction(seed: SuggestSeed): Promise<SuggestActionState> 
     return { status: 'invalid_input', reason: 'malformed_seed' }
   }
 
-  // Read the debug cookie up-front for the RSC-invoked action. When
-  // set, every downstream module in the same request participates in
-  // the same log via `getCurrentDebugLog()` / `debugAdd(...)` — no
-  // parameter threading through helpers, no plumbing changes for
-  // future refactors. The response returns the log under `debugLog`
-  // so the client `<DebugLogPusher />` island can render it in the
-  // panel. When the cookie is absent the log is `undefined` and every
-  // `debugAdd(...)` is a cheap no-op — no per-request accumulator
-  // overhead.
-  const cookieJar = await cookies()
-  const log = (await isDebugEnabled(cookieJar)) ? new DebugLog() : undefined
-
-  const result = await runWithDebugLog(log, async (): Promise<SuggestActionState> => {
+  // The debug log and the `suggestions` rate limit before the tool loop are
+  // the meter's (`metered-call.ts`). The span and the usage counter stay in
+  // `suggestAction`, because the seed is checked inside the span but before
+  // any cookie is read.
+  return meteredCall({ bucket: 'suggestions', logPrefix: '[suggest]' }, async (meter): Promise<SuggestActionState> => {
     debugAdd('SuggestAction', 'entered', {
       seedKind: seed.kind,
       ...(seed.kind === 'brand'
@@ -128,7 +118,7 @@ async function runSuggestAction(seed: SuggestSeed): Promise<SuggestActionState> 
     // for whole-server override) to exercise the full RSC render path
     // without burning Anthropic credit or requiring a live MCP server.
     // Production fails closed via the guard inside `resolveSuggestStub`.
-    const stubbed = await resolveSuggestStub(seed)
+    const stubbed = await resolveSuggestStub(seed, meter.cookieJar)
     if (stubbed !== null) {
       debugAdd('SuggestAction', 'stub short-circuit fired', {
         status: stubbed.status,
@@ -136,378 +126,362 @@ async function runSuggestAction(seed: SuggestSeed): Promise<SuggestActionState> 
       return stubbed
     }
 
-    // 2. Rate-limit gate. Post-#161 middleware refactor: reads the
-    //    `yawaragi_session` cookie the proxy stamped and consults the
-    //    `suggestions` bucket. Never mutates the cookie — the proxy is
-    //    the sole writer, so this action can safely run mid-render from
-    //    the RSC page without hitting Next.js 15's "cookies can only be
-    //    modified in a Server Action or Route Handler" guard. Non-prod
-    //    without env skips (see scan-action for the same posture).
-    const rateLimit = await enforceRateLimit({ bucket: 'suggestions', logPrefix: '[suggest]' })
-    if (rateLimit.kind === 'session_missing') {
-      debugAdd('SuggestAction', 'session_missing — cookie absent', undefined, 'warn')
-      return { status: 'session_missing' }
-    }
-    if (!rateLimit.allowed) {
-      debugAdd(
-        'RateLimit',
-        `denied — retry after ${rateLimit.retryAfterSec}s`,
-        { retryAfterSec: rateLimit.retryAfterSec },
-        'warn',
-      )
-      return { status: 'rate_limited', retryAfterSec: rateLimit.retryAfterSec }
-    }
-    debugAdd('RateLimit', 'allowed', { retryAfterSec: rateLimit.retryAfterSec })
-
-    // 3. Open the MCP client. Both the env-missing case (registry factory
-    //    throws with a clear "set MCP_SAKENOWA_URL" message) and the
-    //    transport-failure case (network / auth against the sakenowa-mcp
-    //    HTTP endpoint) surface as `service_unavailable` so the page can
-    //    render a specific "temporarily unreachable" copy rather than a
-    //    Next error page. Always close in `finally`.
-    let client: MCPClient | undefined
-    try {
-      debugAdd('MCP', 'opening client')
-      try {
-        client = await getDefaultMcpClient()
-      } catch (err) {
-        // The registry-thrown message includes "MCP_SAKENOWA_URL" for the
-        // unset case; other failures (bad URL, DNS, TLS) also land here.
-        // All of them are "service unavailable" from the visitor's POV.
-        const message = err instanceof Error ? err.message : String(err)
-        console.warn('[suggest] MCP client open failed:', err)
-        debugAdd('MCP', 'client open failed', { error: message }, 'error')
-        return { status: 'service_unavailable' }
-      }
-      debugAdd('MCP', `client open — ${client.serverInfo.name}@${client.serverInfo.version}`)
-
-      let mcpTools
-      try {
-        mcpTools = await client.tools()
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err)
-        console.warn('[suggest] MCP tools() failed:', err)
-        debugAdd('MCP', 'tools() failed', { error: message }, 'error')
-        return { status: 'service_unavailable' }
-      }
-      const mcpToolNames = Object.keys(mcpTools)
-      debugAdd('MCP', `${mcpToolNames.length} tools advertised`, {
-        tools: mcpToolNames,
-      })
-
-      const tools = buildSuggestToolSet(mcpTools)
-      debugAdd('SuggestAction', `built tool set (${Object.keys(tools).length} tools)`, {
-        tools: Object.keys(tools),
-      })
-
-      // 4. One tool loop. The system prompt tells the model to (a) use the
-      //    MCP tools for seed-mode discovery, (b) never invent cross-
-      //    beverage mappings beyond what `mapCrossBeverage` returns, and
-      //    (c) emit the final answer as a JSON array of Suggestion
-      //    records. `isStepCount(6)` bounds the runaway case (a model
-      //    stuck in a tool-call loop) — five tool calls plus one final
-      //    text emit is more than a well-formed suggest tool loop should
-      //    ever need.
-      let llmResult
-      // #287 slice A — the drift early-warning signal.
-      //
-      // #270's signature was the model re-issuing an IDENTICAL tool call
-      // after the MCP server's Zod rejected it: same tool, same args,
-      // three times, eating half the step budget before `stopWhen` fired.
-      // A well-formed loop never repeats a call verbatim — there is no
-      // reason to ask the same question twice — so a non-zero duplicate
-      // count is a reliable tell that the model and the tool schema have
-      // stopped agreeing. Watching this rate surfaces the next drift in
-      // days rather than the month #270 took.
-      const toolCallCounts = new Map<string, number>()
-      let duplicateToolCalls = 0
-      let totalToolCalls = 0
-      try {
-        debugAdd('SuggestAction', 'starting tool loop', {
-          model: SUGGEST_MODEL,
-          ...(seed.kind === 'brand'
-            ? { seedBrandId: seed.brandId }
-            : { seedQuery: seed.query }),
-        })
-        llmResult = await tracedGenerateText(
-          {
-            functionId: 'suggest-tool-loop',
-            // String values only: AI SDK 7 dropped `TelemetrySettings.
-            // metadata`, so trace identity now rides on Langfuse's
-            // `propagateAttributes`, which accepts string-valued
-            // metadata and drops anything else with a console warning.
-            // `seed.brandId` is a number — stringify it explicitly
-            // rather than lose the attribute in production.
-            metadata: {
-              'seed.kind': seed.kind,
-              ...(seed.kind === 'brand'
-                ? { 'seed.brandId': String(seed.brandId) }
-                : { 'seed.query': seed.query }),
-            },
-          },
-          {
-            model: anthropic(SUGGEST_MODEL),
-            tools,
-            stopWhen: isStepCount(6),
-            // The system prompt rides in `instructions` as a
-            // `SystemModelMessage` — NOT as a bare string, and NOT as a
-            // `role: 'system'` entry in `messages`.
-            //
-            // AI SDK 7 rejects system messages inside `messages` at
-            // runtime ("System messages are not allowed in the prompt or
-            // messages fields. Use the instructions option instead."),
-            // which is a *runtime* error the type checker does not catch —
-            // it broke the whole tool loop on the v7 bump. There is an
-            // `allowSystemInMessages: true` escape hatch; we deliberately
-            // don't use it, because `instructions` is the supported shape.
-            //
-            // The object form is load-bearing. `Instructions` is
-            // `string | SystemModelMessage | SystemModelMessage[]`, and
-            // only the message form carries `providerOptions` — the AI SDK
-            // types say so outright: "if you need to pass additional
-            // provider options (e.g. for caching), a `SystemModelMessage`".
-            // Collapsing this to `instructions: SUGGEST_SYSTEM_PROMPT`
-            // would type-check, run fine, and silently drop
-            // `cacheControl`, costing the ~72-76% cache hit ratio below
-            // with no error and no failing test.
-            //
-            // Combined with the cacheControl on `mapCrossBeverage` (the
-            // last tool in the bundle — see
-            // `src/lib/ai/tools/map-cross-beverage.ts`), this gives
-            // Anthropic two prompt-cache breakpoints: one after the tools
-            // block, one after the system block.
-            //
-            // Haiku 4.5 minimum cacheable prefix (per Anthropic docs):
-            // 4096 tokens. Verified by direct-API probe 2026-07-06 —
-            // sub-4096 requests are silently dropped (no error, no
-            // warning). SUGGEST_SYSTEM_PROMPT is deliberately sized so
-            // the system + tools bundle exceeds 4096 tokens; measured
-            // ~5087 after the #175/#176 recipe expansion. **If you edit
-            // SUGGEST_SYSTEM_PROMPT and shrink it, caching may silently
-            // stop working.** The eval will show cacheReadTokens=0 in
-            // its output when this happens. Re-verify with a manual
-            // probe against `/api/debug/eval-suggest` and inspect the
-            // `usage totals` debug entry.
-            //
-            // Haiku 5.5 (the model since 2026-10-12): the same prefix
-            // measures 6897 tokens and is cached — 80% hit ratio, 15 of 15
-            // queries answered, recall@5 0.50, median 8.9 s and $0.02 a run,
-            // against 0.49, 13.1 s and $0.19 on Haiku 4.5 the same day. Its
-            // documented minimum was not looked up; if the prefix shrinks,
-            // check the eval's cache read column again.
-            //
-            // Earlier, on Haiku 4.5 (#175/#176 fix, 2026-07-06):
-            //   - 72-76% cache hit ratio across a 15-query eval run
-            //     (down slightly from S7's 77% because topK=30 responses
-            //     are larger and per-request output variance grew)
-            //   - $0.17-0.20/run at Haiku 4.5 pricing (up ~20% from S7)
-            //   - mean recall@3 0.42, recall@5 0.52-0.54 (up from 0.36/0.42)
-            instructions: {
-              role: 'system',
-              content: SUGGEST_SYSTEM_PROMPT,
-              providerOptions: {
-                anthropic: {
-                  cacheControl: { type: 'ephemeral' as const },
-                },
-              },
-            },
-            messages: [
-              {
-                role: 'user',
-                content: buildSeedPrompt(seed),
-              },
-            ],
-            // Per-step debug affordance (round 6b). Round 5 shipped the
-            // milestone-level entries (entered / rate-limit / MCP client
-            // open / tool loop start / tool loop returned / hydrate);
-            // this callback fills the gap inside the loop by emitting
-            // one line per tool call, one per tool result, and one
-            // per-step summary. `debugAdd(...)` is a no-op when
-            // `getCurrentDebugLog()` is undefined, so this fires on every
-            // request but short-circuits for non-debug visitors — the
-            // debug-mode branch stays at the log layer, not the LLM-call
-            // config shape.
-            //
-            // No automated test: `MockLanguageModelV3` scripting for a
-            // multi-tool sequence would be disproportionate for the
-            // signal here (existing suggest-action tests cover the
-            // surrounding decision branches). Verified manually via
-            // `/en/suggest?seed=<N>` with the `yawaragi_debug=1` cookie
-            // and `RATE_LIMIT_BYPASS=1` env — the debug panel shows
-            // `tool-call:`, `tool-result:`, and `step complete` lines
-            // for each MCP call inside the loop.
-            // `onStepEnd` — AI SDK 7's name for what v6 called
-            // `onStepFinish` (the old key still works but is
-            // `@deprecated`; the callback type is a straight alias, so
-            // the body is unchanged).
-            onStepEnd: (step) => {
-              for (const call of step.toolCalls) {
-                const argsPreview = JSON.stringify(call.input).slice(0, 200)
-                debugAdd('SuggestAction', `tool-call: ${call.toolName}(${argsPreview})`)
-
-                // Keyed on tool + full args, not the preview — two calls
-                // differing only past the 200-char truncation are genuinely
-                // different calls and must not count as a repeat.
-                totalToolCalls += 1
-                const signature = `${call.toolName}:${JSON.stringify(call.input)}`
-                const timesSeen = (toolCallCounts.get(signature) ?? 0) + 1
-                toolCallCounts.set(signature, timesSeen)
-                if (timesSeen > 1) duplicateToolCalls += 1
-              }
-              for (const result of step.toolResults) {
-                const outputPreview = JSON.stringify(result.output).slice(0, 150)
-                debugAdd(
-                  'SuggestAction',
-                  `tool-result: ${result.toolName} → ${outputPreview}`,
-                )
-              }
-              if (step.text && step.text.length > 0) {
-                debugAdd(
-                  'SuggestAction',
-                  `text-generation step (${step.text.length} chars)`,
-                )
-              }
-              debugAdd('SuggestAction', 'step complete', {
-                finishReason: step.finishReason,
-                usage: step.usage,
-              })
-            },
-          },
-        )
-        debugAdd('SuggestAction', `tool loop returned (${llmResult.text?.length ?? 0} chars of final text)`)
-        // Aggregate token usage across all tool-loop steps. Emit
-        // cache-hit ratio so a maintainer running the eval or
-        // debugging a slow visitor request can spot a caching
-        // regression at a glance (ratio > 0.5 means the prompt-
-        // cache breakpoints on system + tools are working; ratio
-        // near 0 means the 5-minute TTL expired between steps or
-        // the breakpoints were bypassed). Suggest-action.ts is
-        // the only current consumer of prompt caching; when scan-
-        // action migrates, extract this into a shared helper.
-        const usage = llmResult.totalUsage
-        const cacheRead = usage.inputTokenDetails?.cacheReadTokens ?? 0
-        const cacheWrite = usage.inputTokenDetails?.cacheWriteTokens ?? 0
-        const noCache = usage.inputTokenDetails?.noCacheTokens ?? 0
-        const totalInput = cacheRead + cacheWrite + noCache
-        const cacheHitRatio = totalInput > 0 ? cacheRead / totalInput : 0
-        debugAdd('SuggestAction', 'usage totals', {
-          input: usage.inputTokens,
-          output: usage.outputTokens,
-          total: usage.totalTokens,
-          cacheRead,
-          cacheWrite,
-          noCache,
-          cacheHitRatio: Number(cacheHitRatio.toFixed(3)),
-        })
-        // #287 — the same numbers onto the action span. `debugAdd` above
-        // is a no-op unless the visitor holds the debug cookie, so until
-        // now prompt-cache health was invisible in production and could
-        // only be read by hand-driving a debug session. CLAUDE.md requires
-        // re-verifying the hit ratio whenever a cached prompt changes;
-        // this makes a regression chartable instead of a manual probe.
-        recordActionMetadata({
-          'usage.inputTokens': usage.inputTokens,
-          'usage.outputTokens': usage.outputTokens,
-          'cache.readTokens': cacheRead,
-          'cache.writeTokens': cacheWrite,
-          'cache.noCacheTokens': noCache,
-          'cache.hitRatio': Number(cacheHitRatio.toFixed(3)),
-          'loop.steps': llmResult.steps?.length ?? 0,
-          'tools.calls': totalToolCalls,
-          'tools.duplicateCalls': duplicateToolCalls,
-        })
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err)
-        console.warn('[suggest] tool loop failed:', message)
-        debugAdd('SuggestAction', 'tool loop failed', { error: message }, 'error')
-        return { status: 'error', reason: 'tool_loop_failed' }
-      }
-
-      // 5. Parse the model's final text into a Suggestion[] via the
-      //    field-level provenance-pinned schema. An empty list is the
-      //    honest no-match outcome — the page renders the noMatch copy
-      //    instead of a card list. NEVER fabricate a card.
-      //
-      //    "Honest" depends on the loop having actually FINISHED. If it
-      //    stopped because `stopWhen(isStepCount(...))` fired, the last step
-      //    still wanted to call tools (`finishReason === 'tool-calls'`) and
-      //    the model never got a turn to emit its JSON answer — the text we
-      //    hold is mid-reasoning prose, which parses to zero rows. Reporting
-      //    that as "no matches" tells the visitor no such sake exists when
-      //    the truth is we ran out of budget. Checked below, after the parse,
-      //    so a run that hit the cap but still produced usable rows is kept.
-      let suggestions
-      try {
-        suggestions = parseSuggestionsFromText(llmResult.text ?? '')
-        debugAdd('SuggestAction', `parsed ${suggestions.length} suggestions`, {
-          brandIds: suggestions.map((s) => s.brandId.value),
-        })
-        // An answer that was written but yielded no rows is a format the
-        // parser does not know, not "no such sake". Keep the text in the
-        // debug log so the next such format can be read off it.
-        if (suggestions.length === 0 && (llmResult.text ?? '').trim().length > 0) {
-          debugAdd('SuggestAction', 'final text held no parseable rows', {
-            text: (llmResult.text ?? '').slice(0, 4000),
-          })
-        }
-      } catch (err) {
-        // parseSuggestionsFromText itself doesn't throw (parses defensively);
-        // catch is a belt-and-suspenders against a future refactor.
-        const message = err instanceof Error ? err.message : String(err)
-        console.warn('[suggest] parse failed:', message)
-        debugAdd('SuggestAction', 'parse failed', { error: message }, 'error')
-        return { status: 'error', reason: 'parse_failed' }
-      }
-
-      if (suggestions.length === 0 && llmResult.finishReason === 'tool-calls') {
-        debugAdd(
-          'SuggestAction',
-          'step budget exhausted before a final answer',
-          { finishReason: llmResult.finishReason, steps: llmResult.steps?.length },
-          'error',
-        )
-        return { status: 'error', reason: 'step_budget_exhausted' }
-      }
-
-      // 6. Fan-out `get_sake_details` in parallel to hydrate each card
-      //    with its canonical Sakenowa flavor_profile (six axes). The
-      //    LLM tool loop above cannot emit axis positions — the schema
-      //    pins the source literal to `sakenowa`, so any hallucinated
-      //    profile from the LLM would fail parse and get dropped. This
-      //    deterministic post-enrichment is the only path axis data
-      //    reaches the visible card. Failures are isolated per brand:
-      //    a rejected lookup or a null flavorProfile drops the field
-      //    from that card only; the rest of the list still renders.
-      try {
-        debugAdd('Hydrate', `fan-out starting (${suggestions.length} brandIds)`)
-        const beforeHydration = suggestions.length
-        suggestions = await hydrateFlavorProfiles(suggestions, mcpTools)
-        const hydrated = suggestions.filter((s) => s.flavor_profile != null).length
-        debugAdd('Hydrate', `fan-out complete — ${hydrated}/${beforeHydration} cards have a flavor profile`)
-      } catch (err) {
-        // hydrateFlavorProfiles catches per-brand failures internally via
-        // Promise.allSettled; this outer catch is belt-and-suspenders
-        // against a future refactor that throws before the fan-out.
-        const message = err instanceof Error ? err.message : String(err)
-        console.warn('[suggest] flavor-profile fan-out failed:', message)
-        debugAdd('Hydrate', 'fan-out failed (whole)', { error: message }, 'error')
-        // Do NOT fail the action — the LLM's reasoning is still useful.
-      }
-
-      debugAdd('SuggestAction', `returning ok with ${suggestions.length} suggestions`)
-      return { status: 'ok', suggestions }
-    } finally {
-      if (client != null) {
-        try {
-          await client.close()
-        } catch {
-          // Best-effort close — same pattern as the smoke route.
-        }
-      }
-    }
+    // 2. Rate-limit gate. Reads the `yawaragi_session` cookie the proxy
+    //    stamped and consults the `suggestions` bucket; a spent budget or a
+    //    missing cookie comes back as `rate_limited` / `session_missing`
+    //    and the MCP client and the model are never reached.
+    return meter.pay(() => runToolLoop(seed))
   })
+}
 
-  return log ? { ...result, debugLog: log.toArray() } : result
+/** Steps 3–6, for a request the rate limit admitted. */
+async function runToolLoop(seed: SuggestSeed): Promise<SuggestActionState> {
+  // 3. Open the MCP client. Both the env-missing case (registry factory
+  //    throws with a clear "set MCP_SAKENOWA_URL" message) and the
+  //    transport-failure case (network / auth against the sakenowa-mcp
+  //    HTTP endpoint) surface as `service_unavailable` so the page can
+  //    render a specific "temporarily unreachable" copy rather than a
+  //    Next error page. Always close in `finally`.
+  let client: MCPClient | undefined
+  try {
+    debugAdd('MCP', 'opening client')
+    try {
+      client = await getDefaultMcpClient()
+    } catch (err) {
+      // The registry-thrown message includes "MCP_SAKENOWA_URL" for the
+      // unset case; other failures (bad URL, DNS, TLS) also land here.
+      // All of them are "service unavailable" from the visitor's POV.
+      const message = err instanceof Error ? err.message : String(err)
+      console.warn('[suggest] MCP client open failed:', err)
+      debugAdd('MCP', 'client open failed', { error: message }, 'error')
+      return { status: 'service_unavailable' }
+    }
+    debugAdd('MCP', `client open — ${client.serverInfo.name}@${client.serverInfo.version}`)
+
+    let mcpTools
+    try {
+      mcpTools = await client.tools()
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      console.warn('[suggest] MCP tools() failed:', err)
+      debugAdd('MCP', 'tools() failed', { error: message }, 'error')
+      return { status: 'service_unavailable' }
+    }
+    const mcpToolNames = Object.keys(mcpTools)
+    debugAdd('MCP', `${mcpToolNames.length} tools advertised`, {
+      tools: mcpToolNames,
+    })
+
+    const tools = buildSuggestToolSet(mcpTools)
+    debugAdd('SuggestAction', `built tool set (${Object.keys(tools).length} tools)`, {
+      tools: Object.keys(tools),
+    })
+
+    // 4. One tool loop. The system prompt tells the model to (a) use the
+    //    MCP tools for seed-mode discovery, (b) never invent cross-
+    //    beverage mappings beyond what `mapCrossBeverage` returns, and
+    //    (c) emit the final answer as a JSON array of Suggestion
+    //    records. `isStepCount(6)` bounds the runaway case (a model
+    //    stuck in a tool-call loop) — five tool calls plus one final
+    //    text emit is more than a well-formed suggest tool loop should
+    //    ever need.
+    let llmResult
+    // #287 slice A — the drift early-warning signal.
+    //
+    // #270's signature was the model re-issuing an IDENTICAL tool call
+    // after the MCP server's Zod rejected it: same tool, same args,
+    // three times, eating half the step budget before `stopWhen` fired.
+    // A well-formed loop never repeats a call verbatim — there is no
+    // reason to ask the same question twice — so a non-zero duplicate
+    // count is a reliable tell that the model and the tool schema have
+    // stopped agreeing. Watching this rate surfaces the next drift in
+    // days rather than the month #270 took.
+    const toolCallCounts = new Map<string, number>()
+    let duplicateToolCalls = 0
+    let totalToolCalls = 0
+    try {
+      debugAdd('SuggestAction', 'starting tool loop', {
+        model: SUGGEST_MODEL,
+        ...(seed.kind === 'brand'
+          ? { seedBrandId: seed.brandId }
+          : { seedQuery: seed.query }),
+      })
+      llmResult = await tracedGenerateText(
+        {
+          functionId: 'suggest-tool-loop',
+          // String values only: AI SDK 7 dropped `TelemetrySettings.
+          // metadata`, so trace identity now rides on Langfuse's
+          // `propagateAttributes`, which accepts string-valued
+          // metadata and drops anything else with a console warning.
+          // `seed.brandId` is a number — stringify it explicitly
+          // rather than lose the attribute in production.
+          metadata: {
+            'seed.kind': seed.kind,
+            ...(seed.kind === 'brand'
+              ? { 'seed.brandId': String(seed.brandId) }
+              : { 'seed.query': seed.query }),
+          },
+        },
+        {
+          model: anthropic(SUGGEST_MODEL),
+          tools,
+          stopWhen: isStepCount(6),
+          // The system prompt rides in `instructions` as a
+          // `SystemModelMessage` — NOT as a bare string, and NOT as a
+          // `role: 'system'` entry in `messages`.
+          //
+          // AI SDK 7 rejects system messages inside `messages` at
+          // runtime ("System messages are not allowed in the prompt or
+          // messages fields. Use the instructions option instead."),
+          // which is a *runtime* error the type checker does not catch —
+          // it broke the whole tool loop on the v7 bump. There is an
+          // `allowSystemInMessages: true` escape hatch; we deliberately
+          // don't use it, because `instructions` is the supported shape.
+          //
+          // The object form is load-bearing. `Instructions` is
+          // `string | SystemModelMessage | SystemModelMessage[]`, and
+          // only the message form carries `providerOptions` — the AI SDK
+          // types say so outright: "if you need to pass additional
+          // provider options (e.g. for caching), a `SystemModelMessage`".
+          // Collapsing this to `instructions: SUGGEST_SYSTEM_PROMPT`
+          // would type-check, run fine, and silently drop
+          // `cacheControl`, costing the ~72-76% cache hit ratio below
+          // with no error and no failing test.
+          //
+          // Combined with the cacheControl on `mapCrossBeverage` (the
+          // last tool in the bundle — see
+          // `src/lib/ai/tools/map-cross-beverage.ts`), this gives
+          // Anthropic two prompt-cache breakpoints: one after the tools
+          // block, one after the system block.
+          //
+          // Haiku 4.5 minimum cacheable prefix (per Anthropic docs):
+          // 4096 tokens. Verified by direct-API probe 2026-07-06 —
+          // sub-4096 requests are silently dropped (no error, no
+          // warning). SUGGEST_SYSTEM_PROMPT is deliberately sized so
+          // the system + tools bundle exceeds 4096 tokens; measured
+          // ~5087 after the #175/#176 recipe expansion. **If you edit
+          // SUGGEST_SYSTEM_PROMPT and shrink it, caching may silently
+          // stop working.** The eval will show cacheReadTokens=0 in
+          // its output when this happens. Re-verify with a manual
+          // probe against `/api/debug/eval-suggest` and inspect the
+          // `usage totals` debug entry.
+          //
+          // Haiku 5.5 (the model since 2026-10-12): the same prefix
+          // measures 6897 tokens and is cached — 80% hit ratio, 15 of 15
+          // queries answered, recall@5 0.50, median 8.9 s and $0.02 a run,
+          // against 0.49, 13.1 s and $0.19 on Haiku 4.5 the same day. Its
+          // documented minimum was not looked up; if the prefix shrinks,
+          // check the eval's cache read column again.
+          //
+          // Earlier, on Haiku 4.5 (#175/#176 fix, 2026-07-06):
+          //   - 72-76% cache hit ratio across a 15-query eval run
+          //     (down slightly from S7's 77% because topK=30 responses
+          //     are larger and per-request output variance grew)
+          //   - $0.17-0.20/run at Haiku 4.5 pricing (up ~20% from S7)
+          //   - mean recall@3 0.42, recall@5 0.52-0.54 (up from 0.36/0.42)
+          instructions: {
+            role: 'system',
+            content: SUGGEST_SYSTEM_PROMPT,
+            providerOptions: {
+              anthropic: {
+                cacheControl: { type: 'ephemeral' as const },
+              },
+            },
+          },
+          messages: [
+            {
+              role: 'user',
+              content: buildSeedPrompt(seed),
+            },
+          ],
+          // Per-step debug affordance (round 6b). Round 5 shipped the
+          // milestone-level entries (entered / rate-limit / MCP client
+          // open / tool loop start / tool loop returned / hydrate);
+          // this callback fills the gap inside the loop by emitting
+          // one line per tool call, one per tool result, and one
+          // per-step summary. `debugAdd(...)` is a no-op when
+          // `getCurrentDebugLog()` is undefined, so this fires on every
+          // request but short-circuits for non-debug visitors — the
+          // debug-mode branch stays at the log layer, not the LLM-call
+          // config shape.
+          //
+          // No automated test: `MockLanguageModelV3` scripting for a
+          // multi-tool sequence would be disproportionate for the
+          // signal here (existing suggest-action tests cover the
+          // surrounding decision branches). Verified manually via
+          // `/en/suggest?seed=<N>` with the `yawaragi_debug=1` cookie
+          // and `RATE_LIMIT_BYPASS=1` env — the debug panel shows
+          // `tool-call:`, `tool-result:`, and `step complete` lines
+          // for each MCP call inside the loop.
+          // `onStepEnd` — AI SDK 7's name for what v6 called
+          // `onStepFinish` (the old key still works but is
+          // `@deprecated`; the callback type is a straight alias, so
+          // the body is unchanged).
+          onStepEnd: (step) => {
+            for (const call of step.toolCalls) {
+              const argsPreview = JSON.stringify(call.input).slice(0, 200)
+              debugAdd('SuggestAction', `tool-call: ${call.toolName}(${argsPreview})`)
+
+              // Keyed on tool + full args, not the preview — two calls
+              // differing only past the 200-char truncation are genuinely
+              // different calls and must not count as a repeat.
+              totalToolCalls += 1
+              const signature = `${call.toolName}:${JSON.stringify(call.input)}`
+              const timesSeen = (toolCallCounts.get(signature) ?? 0) + 1
+              toolCallCounts.set(signature, timesSeen)
+              if (timesSeen > 1) duplicateToolCalls += 1
+            }
+            for (const result of step.toolResults) {
+              const outputPreview = JSON.stringify(result.output).slice(0, 150)
+              debugAdd(
+                'SuggestAction',
+                `tool-result: ${result.toolName} → ${outputPreview}`,
+              )
+            }
+            if (step.text && step.text.length > 0) {
+              debugAdd(
+                'SuggestAction',
+                `text-generation step (${step.text.length} chars)`,
+              )
+            }
+            debugAdd('SuggestAction', 'step complete', {
+              finishReason: step.finishReason,
+              usage: step.usage,
+            })
+          },
+        },
+      )
+      debugAdd('SuggestAction', `tool loop returned (${llmResult.text?.length ?? 0} chars of final text)`)
+      // Aggregate token usage across all tool-loop steps. Emit
+      // cache-hit ratio so a maintainer running the eval or
+      // debugging a slow visitor request can spot a caching
+      // regression at a glance (ratio > 0.5 means the prompt-
+      // cache breakpoints on system + tools are working; ratio
+      // near 0 means the 5-minute TTL expired between steps or
+      // the breakpoints were bypassed). Suggest-action.ts is
+      // the only current consumer of prompt caching; when scan-
+      // action migrates, extract this into a shared helper.
+      const usage = llmResult.totalUsage
+      const cacheRead = usage.inputTokenDetails?.cacheReadTokens ?? 0
+      const cacheWrite = usage.inputTokenDetails?.cacheWriteTokens ?? 0
+      const noCache = usage.inputTokenDetails?.noCacheTokens ?? 0
+      const totalInput = cacheRead + cacheWrite + noCache
+      const cacheHitRatio = totalInput > 0 ? cacheRead / totalInput : 0
+      debugAdd('SuggestAction', 'usage totals', {
+        input: usage.inputTokens,
+        output: usage.outputTokens,
+        total: usage.totalTokens,
+        cacheRead,
+        cacheWrite,
+        noCache,
+        cacheHitRatio: Number(cacheHitRatio.toFixed(3)),
+      })
+      // #287 — the same numbers onto the action span. `debugAdd` above
+      // is a no-op unless the visitor holds the debug cookie, so until
+      // now prompt-cache health was invisible in production and could
+      // only be read by hand-driving a debug session. CLAUDE.md requires
+      // re-verifying the hit ratio whenever a cached prompt changes;
+      // this makes a regression chartable instead of a manual probe.
+      recordActionMetadata({
+        'usage.inputTokens': usage.inputTokens,
+        'usage.outputTokens': usage.outputTokens,
+        'cache.readTokens': cacheRead,
+        'cache.writeTokens': cacheWrite,
+        'cache.noCacheTokens': noCache,
+        'cache.hitRatio': Number(cacheHitRatio.toFixed(3)),
+        'loop.steps': llmResult.steps?.length ?? 0,
+        'tools.calls': totalToolCalls,
+        'tools.duplicateCalls': duplicateToolCalls,
+      })
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      console.warn('[suggest] tool loop failed:', message)
+      debugAdd('SuggestAction', 'tool loop failed', { error: message }, 'error')
+      return { status: 'error', reason: 'tool_loop_failed' }
+    }
+
+    // 5. Parse the model's final text into a Suggestion[] via the
+    //    field-level provenance-pinned schema. An empty list is the
+    //    honest no-match outcome — the page renders the noMatch copy
+    //    instead of a card list. NEVER fabricate a card.
+    //
+    //    "Honest" depends on the loop having actually FINISHED. If it
+    //    stopped because `stopWhen(isStepCount(...))` fired, the last step
+    //    still wanted to call tools (`finishReason === 'tool-calls'`) and
+    //    the model never got a turn to emit its JSON answer — the text we
+    //    hold is mid-reasoning prose, which parses to zero rows. Reporting
+    //    that as "no matches" tells the visitor no such sake exists when
+    //    the truth is we ran out of budget. Checked below, after the parse,
+    //    so a run that hit the cap but still produced usable rows is kept.
+    let suggestions
+    try {
+      suggestions = parseSuggestionsFromText(llmResult.text ?? '')
+      debugAdd('SuggestAction', `parsed ${suggestions.length} suggestions`, {
+        brandIds: suggestions.map((s) => s.brandId.value),
+      })
+      // An answer that was written but yielded no rows is a format the
+      // parser does not know, not "no such sake". Keep the text in the
+      // debug log so the next such format can be read off it.
+      if (suggestions.length === 0 && (llmResult.text ?? '').trim().length > 0) {
+        debugAdd('SuggestAction', 'final text held no parseable rows', {
+          text: (llmResult.text ?? '').slice(0, 4000),
+        })
+      }
+    } catch (err) {
+      // parseSuggestionsFromText itself doesn't throw (parses defensively);
+      // catch is a belt-and-suspenders against a future refactor.
+      const message = err instanceof Error ? err.message : String(err)
+      console.warn('[suggest] parse failed:', message)
+      debugAdd('SuggestAction', 'parse failed', { error: message }, 'error')
+      return { status: 'error', reason: 'parse_failed' }
+    }
+
+    if (suggestions.length === 0 && llmResult.finishReason === 'tool-calls') {
+      debugAdd(
+        'SuggestAction',
+        'step budget exhausted before a final answer',
+        { finishReason: llmResult.finishReason, steps: llmResult.steps?.length },
+        'error',
+      )
+      return { status: 'error', reason: 'step_budget_exhausted' }
+    }
+
+    // 6. Fan-out `get_sake_details` in parallel to hydrate each card
+    //    with its canonical Sakenowa flavor_profile (six axes). The
+    //    LLM tool loop above cannot emit axis positions — the schema
+    //    pins the source literal to `sakenowa`, so any hallucinated
+    //    profile from the LLM would fail parse and get dropped. This
+    //    deterministic post-enrichment is the only path axis data
+    //    reaches the visible card. Failures are isolated per brand:
+    //    a rejected lookup or a null flavorProfile drops the field
+    //    from that card only; the rest of the list still renders.
+    try {
+      debugAdd('Hydrate', `fan-out starting (${suggestions.length} brandIds)`)
+      const beforeHydration = suggestions.length
+      suggestions = await hydrateFlavorProfiles(suggestions, mcpTools)
+      const hydrated = suggestions.filter((s) => s.flavor_profile != null).length
+      debugAdd('Hydrate', `fan-out complete — ${hydrated}/${beforeHydration} cards have a flavor profile`)
+    } catch (err) {
+      // hydrateFlavorProfiles catches per-brand failures internally via
+      // Promise.allSettled; this outer catch is belt-and-suspenders
+      // against a future refactor that throws before the fan-out.
+      const message = err instanceof Error ? err.message : String(err)
+      console.warn('[suggest] flavor-profile fan-out failed:', message)
+      debugAdd('Hydrate', 'fan-out failed (whole)', { error: message }, 'error')
+      // Do NOT fail the action — the LLM's reasoning is still useful.
+    }
+
+    debugAdd('SuggestAction', `returning ok with ${suggestions.length} suggestions`)
+    return { status: 'ok', suggestions }
+  } finally {
+    if (client != null) {
+      try {
+        await client.close()
+      } catch {
+        // Best-effort close — same pattern as the smoke route.
+      }
+    }
+  }
 }
 
 // -------------------- prompt --------------------
@@ -657,8 +631,7 @@ function buildSeedPrompt(seed: SuggestSeed): string {
  * carries one of the recognised stub modes (`ok`, `no_match`, etc). No
  * signing / validation — this is a non-production seam only.
  */
-async function readSuggestStubCookie(): Promise<string | null> {
-  const jar = await cookies()
+function readSuggestStubCookie(jar: CookieJar): string | null {
   return jar.get('yawaragi_suggest_stub')?.value ?? null
 }
 
@@ -689,13 +662,13 @@ async function readSuggestStubCookie(): Promise<string | null> {
  * deploy, the guard below refuses to short-circuit. Same posture as the
  * vision-provider e2e-stub.
  */
-async function resolveSuggestStub(seed: SuggestSeed): Promise<SuggestActionState | null> {
+async function resolveSuggestStub(seed: SuggestSeed, jar: CookieJar): Promise<SuggestActionState | null> {
   if (process.env.NODE_ENV === 'production') return null
   // Env var wins over cookie; cookie exists so each Playwright browser
   // context can pick its own stub mode without restarting the shared
   // webserver.
   const envMode = process.env.SUGGEST_STUB
-  const mode = envMode && envMode !== '' ? envMode : await readSuggestStubCookie()
+  const mode = envMode && envMode !== '' ? envMode : readSuggestStubCookie(jar)
   if (mode == null || mode === '') return null
 
   // Deterministic anchor id so the stub cards render regardless of the

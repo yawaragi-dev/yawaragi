@@ -1,13 +1,10 @@
 import 'server-only'
 
-import { cookies } from 'next/headers'
 import { getPathname } from '@/i18n/navigation'
 import { routing, type Locale } from '@/i18n/routing'
 import { getListReader } from '@/lib/ai/vision/list-reader'
-import { withActionSpan } from '@/lib/ai/observability/action-span'
-import { DebugLog, debugAdd, runWithDebugLog } from '@/lib/debug/debug-log'
-import { isDebugEnabled } from '@/lib/debug/debug-access'
-import { enforceRateLimit } from '@/lib/rate-limit/enforce-rate-limit'
+import { debugAdd } from '@/lib/debug/debug-log'
+import { meteredCall, type Meter } from '@/lib/metering/metered-call'
 import { lookupFlavorChart } from '@/lib/sakenowa/catalogue-reads'
 import { resolveScannedLabel } from '@/lib/sakenowa/resolve-scanned-label'
 import { ARRIVED_VIA_SCAN_QUERY } from '@/lib/scan/arrived-via-scan'
@@ -16,7 +13,6 @@ import type { ListActionState } from './list-action-state'
 import { classifyListOutcome } from './list-outcome'
 import { matchList } from './match-list'
 import { rankList } from './rank-list'
-import { countUsage } from '@/lib/stats/count-usage'
 
 /**
  * Design v1.7 §7: "Rank these for you". Reads the whole menu or shelf in the
@@ -37,35 +33,37 @@ import { countUsage } from '@/lib/stats/count-usage'
  * list screen, retaking the photo or the 30 s stop end the request.
  */
 export async function readListPhoto(formData: FormData): Promise<ListActionState> {
-  const result = await withActionSpan({ name: 'list-action', classify: classifyListOutcome }, () => run(formData))
-  if (result.status === 'read') countUsage('list_read')
-  return result
+  // The span, the debug log, the `vision-scan` rate limit and the
+  // `list_read` usage counter are the meter's (`metered-call.ts`).
+  return meteredCall(
+    {
+      bucket: 'vision-scan',
+      logPrefix: '[list]',
+      span: { name: 'list-action', classify: classifyListOutcome },
+      count: (result) => (result.status === 'read' ? 'list_read' : null),
+    },
+    (meter) => run(formData, meter),
+  )
 }
 
-async function run(formData: FormData): Promise<ListActionState> {
-  const cookieJar = await cookies()
-  const log = (await isDebugEnabled(cookieJar)) ? new DebugLog() : undefined
-  const result = await runWithDebugLog(log, async (): Promise<ListActionState> => {
-    const image = formData.get('image')
-    const kind = formData.get('kind')
-    const locale = formData.get('locale')
-    if (
-      !(image instanceof Blob) ||
-      image.size === 0 ||
-      (kind !== 'menu' && kind !== 'shelf') ||
-      typeof locale !== 'string' ||
-      !(routing.locales as readonly string[]).includes(locale)
-    ) {
-      return { status: 'invalid_input' }
-    }
+async function run(formData: FormData, meter: Meter): Promise<ListActionState> {
+  const image = formData.get('image')
+  const kind = formData.get('kind')
+  const locale = formData.get('locale')
+  if (
+    !(image instanceof Blob) ||
+    image.size === 0 ||
+    (kind !== 'menu' && kind !== 'shelf') ||
+    typeof locale !== 'string' ||
+    !(routing.locales as readonly string[]).includes(locale)
+  ) {
+    return { status: 'invalid_input' }
+  }
 
-    const viewer = await resolveViewerJournal(cookieJar)
-    if (!viewer.canLog) return { status: 'not_allowed' }
+  const viewer = await resolveViewerJournal(meter.cookieJar)
+  if (!viewer.canLog) return { status: 'not_allowed' }
 
-    const rateLimit = await enforceRateLimit({ bucket: 'vision-scan', logPrefix: '[list]', debug: debugAdd })
-    if (rateLimit.kind === 'session_missing') return { status: 'session_missing' }
-    if (!rateLimit.allowed) return { status: 'rate_limited', retryAfterSec: rateLimit.retryAfterSec }
-
+  return meter.pay(async (): Promise<ListActionState> => {
     try {
       const read = await getListReader().readList(image, kind)
       const matched = await matchList(read, {
@@ -102,5 +100,4 @@ async function run(formData: FormData): Promise<ListActionState> {
       return { status: 'failed' }
     }
   })
-  return log ? { ...result, debugLog: log.toArray() } : result
 }
