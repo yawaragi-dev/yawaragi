@@ -2369,5 +2369,67 @@
     "empty": "Nothing here now. A bottle you finish or take out of the cellar appears here.",
     "toCellar": "Back to the cellar",
     "unavailable": "This list couldn’t be loaded just now. Your bottles are safe — try again in a moment."
+  },
+  "prototypeDishPairing": {
+    "title": "Pick for a dish",
+    "entry": "Pick for a dish",
+    "intro": "Choose what you’re eating. We look up the kinds of sake our pairing table gives for it, then which of your bottles are one of those kinds.",
+    "dishesLabel": "What’s on the table?",
+    "choose": "Choose a dish to see what in your cellar is often served with it.",
+    "dishes": {
+      "rawSeafood": "Raw fish and shellfish",
+      "friedFish": "Fried fish",
+      "grilledEel": "Grilled eel",
+      "lightChilled": "Chilled tofu",
+      "dashiSimmered": "Dashi and simmered dishes",
+      "richMeat": "Rich meat dishes",
+      "spicy": "Spicy dishes",
+      "cheese": "Cheese",
+      "sweets": "Desserts and sweets"
+    },
+    "groupMatches": "Often served with this",
+    "groupElsewhere": "In your cellar, for other dishes",
+    "groupUnplaced": "Our table can’t place these",
+    "matchCount": "{count, plural, =0 {No bottle} one {# bottle} other {# bottles}} often served with this",
+    "food": "Often served with: {food}",
+    "kindFor": "For {kind}",
+    "basis": {
+      "style": "By its style",
+      "grade": "{grade} is usually fragrant",
+      "chart": "From the flavor chart (Sakenowa), for the whole line"
+    },
+    "unplaced": {
+      "styleUnpaired": "Genshu, muroka and taruzake change a sake too much: no source pairs them as a kind.",
+      "tooLittle": "Its label and flavor chart (Sakenowa) say too little to pick a kind."
+    },
+    "caveat": "From a hand-curated pairing table, by kind of sake. Bottlings vary.",
+    "sheetHow": "Each dish here is a group of foods from our pairing table. We find the kinds of sake the sources give for those foods, then read each bottle in your cellar the way “Goes with” does on its page: by a style it names, its grade, or its flavor chart (Sakenowa) against the catalogue. Bottles that can’t be placed are listed apart, not hidden.",
+    "noneTitle": "Nothing in your cellar for this one",
+    "noneBody": "Our table gives this dish to {kinds}. None of your bottles is one of those kinds.",
+    "kindsJoin": "; ",
+    "emptyTitle": "Nothing in the cellar yet",
+    "emptyBody": "Add the bottles you own with “Add to cellar” on any sake, and this will look through them for a dish.",
+    "emptyAction": "Find a sake",
+    "startWith": "Start with",
+    "alsoFits": "Also often served with this",
+    "changeDish": "Change dish",
+    "showUnplaced": "{count, plural, one {# bottle} other {# bottles}} our table can’t place",
+    "showElsewhere": "{count, plural, one {# bottle} other {# bottles}} for other dishes",
+    "clear": "Clear",
+    "matchTag": "Goes with this",
+    "notForThis": "For other dishes",
+    "noPairing": "No pairing in our table",
+    "prototype": {
+      "badge": "Prototype",
+      "previous": "Previous layout",
+      "next": "Next layout",
+      "cellarFull": "Cellar: full",
+      "cellarEmpty": "Cellar: empty",
+      "variants": {
+        "A": "Chips and groups",
+        "B": "One question, one answer",
+        "C": "Inside the cellar list"
+      }
+    }
   }
 }
