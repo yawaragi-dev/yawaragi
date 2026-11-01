@@ -45,6 +45,8 @@ export async function settleRequest<T>(
   const answered = request.then(
     (value): Settled<T> => ({ ok: true, value }),
     (error: unknown): Settled<T> => {
+      // A request the caller aborted (its Cancel, its own stop) after giving up on it.
+      if (error instanceof DOMException && error.name === 'AbortError') return { ok: false, failure: 'timed_out' }
       if (error instanceof TypeError || !isOnline()) return { ok: false, failure: 'offline' }
       throw error
     },

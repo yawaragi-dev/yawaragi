@@ -67,8 +67,7 @@ import { resolveScannedLabel } from '@/lib/sakenowa/resolve-scanned-label'
 import { lookupBreweryByBrand } from '@/lib/sakenowa/catalogue-reads'
 import { assertRateLimitConfig } from '@/lib/rate-limit/config-gate'
 import { LabelScanExtractionSchema } from '@/lib/schemas/label-scan-extraction'
-import { scanAction } from './scan-action'
-import { INITIAL_SCAN_ACTION_STATE } from './scan-action-state'
+import { scanLabel } from './scan-action'
 import type { Brand } from '@/lib/schemas/brand'
 import type { Brewery } from '@/lib/schemas/brewery'
 
@@ -143,7 +142,7 @@ function jpegFormData(locale = 'en'): FormData {
 
 // --- Input validation ------------------------------------------------
 
-describe('scanAction — input validation', () => {
+describe('scanLabel — input validation', () => {
   it('rejects a submission with no image blob before hitting any downstream I/O', async () => {
     // If cookies() is reached the mock crashes — that's the loud
     // failure we want. The invalid_input check must fire first.
@@ -153,7 +152,7 @@ describe('scanAction — input validation', () => {
 
     const fd = new FormData()
     fd.set('locale', 'en')
-    const state = await scanAction(INITIAL_SCAN_ACTION_STATE, fd)
+    const state = await scanLabel(fd)
 
     expect(state.status).toBe('invalid_input')
     if (state.status === 'invalid_input') {
@@ -172,7 +171,7 @@ describe('scanAction — input validation', () => {
     const fd = new FormData()
     fd.set('image', new Blob([], { type: 'image/jpeg' }))
     fd.set('locale', 'en')
-    const state = await scanAction(INITIAL_SCAN_ACTION_STATE, fd)
+    const state = await scanLabel(fd)
 
     expect(state.status).toBe('invalid_input')
     if (state.status === 'invalid_input') {
@@ -191,7 +190,7 @@ describe('scanAction — input validation', () => {
     // The routing manifest declares ['en', 'de']; a stale client build
     // could POST a locale from a since-removed manifest entry.
     fd.set('locale', 'fr')
-    const state = await scanAction(INITIAL_SCAN_ACTION_STATE, fd)
+    const state = await scanLabel(fd)
 
     expect(state.status).toBe('invalid_input')
     if (state.status === 'invalid_input') {
@@ -211,7 +210,7 @@ describe('scanAction — input validation', () => {
 
     const fd = new FormData()
     fd.set('image', new Blob([new Uint8Array([1])], { type: 'image/jpeg' }))
-    const state = await scanAction(INITIAL_SCAN_ACTION_STATE, fd)
+    const state = await scanLabel(fd)
 
     expect(state.status).toBe('invalid_input')
     if (state.status === 'invalid_input') {
@@ -222,7 +221,7 @@ describe('scanAction — input validation', () => {
 
 // --- session_missing (post-#161 middleware refactor) ------------------
 
-describe('scanAction — session_missing (post-#161 middleware refactor)', () => {
+describe('scanLabel — session_missing (post-#161 middleware refactor)', () => {
   afterEach(() => {
     assertRateLimitConfigMock.mockReturnValue(null)
   })
@@ -246,7 +245,7 @@ describe('scanAction — session_missing (post-#161 middleware refactor)', () =>
       get: () => null,
     } as unknown as Awaited<ReturnType<typeof headers>>)
 
-    const state = await scanAction(INITIAL_SCAN_ACTION_STATE, jpegFormData())
+    const state = await scanLabel(jpegFormData())
 
     expect(state.status).toBe('session_missing')
     // The vision provider is never reached — session_missing
@@ -257,7 +256,7 @@ describe('scanAction — session_missing (post-#161 middleware refactor)', () =>
 
 // --- The read, and what it cost ---------------------------------------
 
-describe('scanAction — reading the label', () => {
+describe('scanLabel — reading the label', () => {
   afterEach(() => {
     vi.clearAllMocks()
   })
@@ -268,7 +267,7 @@ describe('scanAction — reading the label', () => {
     resolveScannedLabelMock.mockResolvedValueOnce({ kind: 'exact', sake: DASSAI_BRAND })
     lookupBreweryByBrandMock.mockResolvedValueOnce(ASAHI_SHUZO)
 
-    const state = await scanAction(INITIAL_SCAN_ACTION_STATE, jpegFormData())
+    const state = await scanLabel(jpegFormData())
 
     expect(state).toMatchObject({ status: 'matched', brandId: 100, sakeHref: '/en/sake/100?from=scan', breweryRomaji: 'Asahi Shuzo' })
     expect(getVisionProviderMock).toHaveBeenCalledTimes(1)
@@ -283,7 +282,7 @@ describe('scanAction — reading the label', () => {
       .mockResolvedValueOnce({ kind: 'exact', sake: DASSAI_BRAND })
     lookupBreweryByBrandMock.mockResolvedValueOnce(ASAHI_SHUZO)
 
-    const state = await scanAction(INITIAL_SCAN_ACTION_STATE, jpegFormData())
+    const state = await scanLabel(jpegFormData())
 
     expect(state.status).toBe('matched')
     expect(getVisionProviderMock).toHaveBeenCalledWith('anthropic-sonnet-5-5')
@@ -302,7 +301,7 @@ describe('scanAction — reading the label', () => {
     const formData = jpegFormData()
     formData.set('earlierRead', JSON.stringify({ name_ja: '人気一', brewery_ja: '人気酒造', other_names: [], confidence: 0.7 }))
 
-    const state = await scanAction(INITIAL_SCAN_ACTION_STATE, formData)
+    const state = await scanLabel(formData)
 
     expect(state.status).toBe('matched')
     expect(getVisionProviderMock).toHaveBeenCalledTimes(1)
@@ -319,14 +318,14 @@ describe('scanAction — reading the label', () => {
     const formData = jpegFormData()
     formData.set('earlierRead', 'not json')
 
-    await scanAction(INITIAL_SCAN_ACTION_STATE, formData)
+    await scanLabel(formData)
 
     expect(getVisionProviderMock).toHaveBeenCalledWith('anthropic-haiku-5-5')
     expect(recordActionMetadataMock).not.toHaveBeenCalledWith(expect.objectContaining({ 'scan.earlierRead': expect.anything() }))
   })
 })
 
-describe('scanAction — the visitor’s own bottlings of the matched sake', () => {
+describe('scanLabel — the visitor’s own bottlings of the matched sake', () => {
   afterEach(() => {
     vi.clearAllMocks()
     assertRateLimitConfigMock.mockReturnValue(null)
@@ -348,7 +347,7 @@ describe('scanAction — the visitor’s own bottlings of the matched sake', () 
       ],
     })
 
-    const state = await scanAction(INITIAL_SCAN_ACTION_STATE, jpegFormData())
+    const state = await scanLabel(jpegFormData())
 
     expect(state.status).toBe('matched')
     if (state.status === 'matched') {
@@ -366,7 +365,7 @@ describe('scanAction — the visitor’s own bottlings of the matched sake', () 
     lookupBreweryByBrandMock.mockResolvedValueOnce(ASAHI_SHUZO)
     resolveViewerJournalMock.mockRejectedValueOnce(new Error('store down'))
 
-    const state = await scanAction(INITIAL_SCAN_ACTION_STATE, jpegFormData())
+    const state = await scanLabel(jpegFormData())
 
     expect(state.status).toBe('matched')
   })
@@ -374,7 +373,7 @@ describe('scanAction — the visitor’s own bottlings of the matched sake', () 
 
 // --- RATE_LIMIT_BYPASS escape hatch (from round 6a of #161) ----------
 
-describe('scanAction — RATE_LIMIT_BYPASS escape hatch', () => {
+describe('scanLabel — RATE_LIMIT_BYPASS escape hatch', () => {
   // The bypass is a top-of-function short-circuit inside `enforceRateLimit`
   // (see scan-action.ts § "Dev/preview escape hatch"). It's covered at
   // the env-parse and prod-guard layers by config-gate.test.ts, but the
@@ -396,10 +395,7 @@ describe('scanAction — RATE_LIMIT_BYPASS escape hatch', () => {
     vi.stubEnv('RATE_LIMIT_BYPASS', '1')
     vi.resetModules()
 
-    const { scanAction: freshScanAction } = await import('./scan-action')
-    const { INITIAL_SCAN_ACTION_STATE: freshInitialState } = await import(
-      './scan-action-state'
-    )
+    const { scanLabel: freshScanLabel } = await import('./scan-action')
     const { getVisionProvider: freshGetVision } = await import(
       '@/lib/ai/vision/registry'
     )
@@ -447,7 +443,7 @@ describe('scanAction — RATE_LIMIT_BYPASS escape hatch', () => {
     formData.set('image', new Blob([new Uint8Array([1, 2, 3])], { type: 'image/jpeg' }))
     formData.set('locale', 'en')
 
-    const state = await freshScanAction(freshInitialState, formData)
+    const state = await freshScanLabel(formData)
 
     // extraction_failed proves the code reached the vision provider
     // (past the rate-limit gate). rate_limited or session_missing

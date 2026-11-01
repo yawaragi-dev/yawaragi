@@ -1,6 +1,6 @@
 'use client'
 
-import { startTransition, useActionState, useEffect, useReducer, useRef, useSyncExternalStore } from 'react'
+import { startTransition, useActionState, useEffect, useReducer, useRef, useState, useSyncExternalStore } from 'react'
 import type { Locale } from '@/i18n/routing'
 import {
   browserIsOnline,
@@ -25,8 +25,11 @@ import {
 
 interface UseScanSessionOptions {
   locale: Locale
-  /** The scan's Server Action (`scanAction`); passed in so a test can answer it. */
-  scan: (previous: ScanActionState, formData: FormData) => Promise<ScanActionState>
+  /**
+   * Sends one scan (`fetchScan`); passed in so a test can answer it. `signal`
+   * is aborted when the visitor cancels or the 30 s stop fires.
+   */
+  scan: (formData: FormData, signal: AbortSignal) => Promise<ScanActionState>
   /** §7's list read (`readListAction`). */
   readList: (previous: ListActionState, formData: FormData) => Promise<ListActionState>
   /** Told when a scan did not come back, for the debug panel. */
@@ -34,7 +37,8 @@ interface UseScanSessionOptions {
 }
 
 /**
- * The scan screen's session, wired to the world: the two Server Actions, the
+ * The scan screen's session, wired to the world: the scan request and §7's
+ * Server Action, the
  * rule-16 timers (10 s "Taking longer than usual", the 30 s stop, the
  * five-minute life of a read for pairing the next photo), the browser's
  * online and offline events, and the `blob:` URL of the visitor's photo.
@@ -46,7 +50,7 @@ export function useScanSession({ locale, scan, readList, onUnanswered }: UseScan
   /** What the last scan sent, for "Send again" to send unchanged. */
   const lastScanFormRef = useRef<FormData | null>(null)
   const sendTokenRef = useRef(0)
-  /** Stops waiting for the read in flight (S4's Cancel). */
+  /** Stops waiting for the read in flight and ends its request (S4's Cancel). */
   const cancelScanRef = useRef<(() => void) | null>(null)
   /**
    * The downscaled photo last sent to the scan, for "Rank these for you" to
@@ -58,28 +62,50 @@ export function useScanSession({ locale, scan, readList, onUnanswered }: UseScan
   const listReadFor = useRef<Blob | null>(null)
   const online = useSyncExternalStore(subscribeOnline, browserIsOnline, () => true)
 
-  const [state, formAction, isActionPending] = useActionState<ScanActionState, FormData>(
-    async (previous, formData) => {
-      const cancelled = new Promise<void>((resolve) => {
-        cancelScanRef.current = resolve
-      })
-      const settled = await settleRequest(scan(previous, formData), {
+  // The scan's answer, kept by hand rather than by `useActionState`: a Server
+  // Action cannot be aborted, and React kept the screen pending until a
+  // cancelled one came back, with every resend queued behind it.
+  const [state, setState] = useState<ScanActionState>(INITIAL_SCAN_ACTION_STATE)
+  /** The send in flight, by token; `null` when none is. */
+  const [inFlight, setInFlight] = useState<number | null>(null)
+  const isActionPending = inFlight !== null
+  /** A server error from the scan, rethrown in render for the error page. */
+  const [scanError, setScanError] = useState<unknown>(null)
+  if (scanError) throw scanError
+
+  async function runScan(formData: FormData, token: number) {
+    const controller = new AbortController()
+    const cancelled = new Promise<void>((resolve) => {
+      cancelScanRef.current = resolve
+    })
+    setInFlight(token)
+    let settled
+    try {
+      settled = await settleRequest(scan(formData, controller.signal), {
         timeoutMs: SCAN_TIMEOUT_MS,
         isOnline: browserIsOnline,
         cancelled,
       })
-      cancelScanRef.current = null
-      if (settled.ok) {
-        dispatch({ type: 'answered' })
-        return settled.value
-      }
-      onUnanswered?.(settled.failure)
-      dispatch({ type: 'unanswered', failure: settled.failure })
-      // The answer before stays, so a resend still pairs with its read.
-      return previous
-    },
-    INITIAL_SCAN_ACTION_STATE,
-  )
+    } catch (error) {
+      if (sendTokenRef.current === token) setScanError(error)
+      return
+    } finally {
+      // Ends a request given up on (Cancel, the 30 s stop); a no-op once it answered.
+      controller.abort()
+    }
+    // A later send replaced this one: its answer, or its failure, is not the screen's any more.
+    if (sendTokenRef.current !== token) return
+    cancelScanRef.current = null
+    setInFlight(null)
+    if (settled.ok) {
+      dispatch({ type: 'answered' })
+      setState(settled.value)
+      return
+    }
+    onUnanswered?.(settled.failure)
+    // The answer before stays, so a resend still pairs with its read.
+    dispatch({ type: 'unanswered', failure: settled.failure })
+  }
   // §7: the whole menu or shelf, read from the same photo on request. A list
   // that could not be read for the network says so the way any other failed
   // read does.
@@ -122,10 +148,9 @@ export function useScanSession({ locale, scan, readList, onUnanswered }: UseScan
     const token = ++sendTokenRef.current
     dispatch({ type: how, token })
     window.setTimeout(() => dispatch({ type: 'slowTimerFired', token }), SCAN_SLOW_MS)
-    // useActionState's action must be invoked from a transition. The
-    // downscale before this cannot sit inside one (a transition cannot span
-    // an async boundary), so the transition opens here once the blob is ready.
-    startTransition(() => formAction(formData))
+    // A resend while an earlier read is still on its way supersedes it.
+    cancelScanRef.current?.()
+    void runScan(formData, token)
   }
 
   return {
@@ -168,7 +193,7 @@ export function useScanSession({ locale, scan, readList, onUnanswered }: UseScan
       send(formData, 'resent')
     },
 
-    /** S4's Cancel: stop waiting for the read in flight. */
+    /** S4's Cancel: stop waiting for the read in flight, and end its request. */
     cancel() {
       cancelScanRef.current?.()
     },
