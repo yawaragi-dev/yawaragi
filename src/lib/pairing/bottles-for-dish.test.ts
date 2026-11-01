@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { FlavorProfile } from '@/lib/schemas/flavor-profile'
-import { PAIRING_ROWS } from './pairing-table'
-import { DISH_GROUPS, bottlesForDish, isDishGroupId, rowsForDish } from './bottles-for-dish'
+import { PAIRING_ROWS, pairingRow } from './pairing-table'
+import { DISH_GROUPS, bottlesForDish, isDishGroupId, rowsForDish, sortForDish } from './bottles-for-dish'
 import type { PairingDeps, PairingSubject } from './pairing-of'
 import type { AxisStats } from './resolve-pairing'
 
@@ -107,5 +107,25 @@ describe('picking a bottle from the cellar for a dish', () => {
 
   it('with an empty cellar, finds nothing in any group', async () => {
     expect(await pick('sweets', [])).toEqual({ matches: [], others: [], unplaceable: [] })
+  })
+})
+
+describe('re-sorting bottles already read, as the cellar does when a dish is tapped', () => {
+  const placed = [
+    { bottle: 'open-soon-rich', pairing: { row: pairingRow('junshu'), basis: 'chart' as const, source: 'sakenowa_inferred' as const } },
+    { bottle: 'open-cloudy', pairing: { row: pairingRow('nigori'), basis: 'style' as const, source: 'manual_curation' as const } },
+    { bottle: 'unknown', pairing: null },
+    { bottle: 'sealed-aged', pairing: { row: pairingRow('koshu'), basis: 'style' as const, source: 'manual_curation' as const } },
+  ]
+
+  it('gives the same answer for every dish without reading anything again', () => {
+    const cheese = sortForDish('cheese', placed)
+    expect(cheese.matches.map((m) => m.bottle)).toEqual(['open-cloudy', 'sealed-aged'])
+    expect(cheese.others.map((o) => o.bottle)).toEqual(['open-soon-rich'])
+    expect(cheese.unplaceable.map((u) => u.bottle)).toEqual(['unknown'])
+
+    const meat = sortForDish('richMeat', placed)
+    expect(meat.matches.map((m) => [m.bottle, m.foods])).toEqual([['open-soon-rich', ['sukiyaki']]])
+    expect(meat.others.map((o) => o.bottle)).toEqual(['open-cloudy', 'sealed-aged'])
   })
 })
