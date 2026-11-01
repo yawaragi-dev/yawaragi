@@ -110,6 +110,27 @@ export const ScanBottlingSchema = z.object({
 })
 export type ScanBottling = z.infer<typeof ScanBottlingSchema>
 
+/** Where a bottle stands in a photo of several, as the visitor sees it. */
+export const ScanBottlePositionSchema = z.enum(['left', 'middle', 'right', 'front', 'back'])
+export type ScanBottlePosition = z.infer<typeof ScanBottlePositionSchema>
+
+/**
+ * One bottle in a photo of several (design v1.7 §5a, 74: "Which bottle do you
+ * mean?"), read by the same rules as the photo's main fields, from that
+ * bottle's label alone.
+ */
+export const ScanBottleReadSchema = z.object({
+  position: ScanBottlePositionSchema,
+  drink: ScanDrinkSchema.optional(),
+  name_ja: z.string().min(1),
+  brewery_printed: z.boolean().optional(),
+  brewery_ja: z.string().min(1),
+  name_romaji: z.string().optional(),
+  brewery_romaji: z.string().optional(),
+  confidence: z.number().min(0).max(1),
+})
+export type ScanBottleRead = z.infer<typeof ScanBottleReadSchema>
+
 export const LabelScanExtractionSchema = withProvenance(z.literal('llm_extracted'))
   .extend({
     /** Optional: absent on reads made before the field existed. */
@@ -156,6 +177,17 @@ export const LabelScanExtractionSchema = withProvenance(z.literal('llm_extracted
     name_romaji: z.string().optional(),
     brewery_romaji: z.string().optional(),
     bottling: ScanBottlingSchema.optional(),
+    /**
+     * `several_bottles` only: how many bottles stand in the frame (4 for four
+     * or more). Two is "Which bottle do you mean?"; more is a shelf.
+     */
+    bottle_count: z.number().int().min(1).optional(),
+    /**
+     * `several_bottles` only: each bottle whose name can be read, left to
+     * right. No length limit, for the reason `other_names` has none; the scan
+     * uses the first two.
+     */
+    bottles: z.array(ScanBottleReadSchema).optional(),
   })
   .extend({
     confidence: z.number().min(0).max(1),
