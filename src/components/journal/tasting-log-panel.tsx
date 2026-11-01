@@ -16,7 +16,8 @@ import {
 } from '@/lib/schemas/detailed-notes'
 import type { QuickTag } from '@/lib/schemas/journal-entry'
 import { isAxisQuickTag, quickTagAxis, quickTagsFor } from '@/lib/taste/quick-tags'
-import { europeanDay, tastingDayOf } from '@/lib/taste/tasting-day'
+import { tastingDayOf } from '@/lib/taste/tasting-day'
+import { useDateFormatter } from '@/i18n/date-locale-provider'
 import { ratingBand } from '@/lib/taste/rating-band'
 import * as saves from '@/lib/taste/tasting-actions'
 import { browserIsOnline, reachable } from '@/lib/network/settle-request'
@@ -139,6 +140,7 @@ export function TastingLogPanel({
   const tNotes = useTranslations('detailedNotes')
   const tBand = useTranslations('rating.band')
   const format = useFormatter()
+  const dates = useDateFormatter()
   const router = useRouter()
 
   const [rating, setRating] = useState(existing?.rating ?? 0)
@@ -391,7 +393,7 @@ export function TastingLogPanel({
     ? t('deleteConfirm', {
         rating: format.number(rating, { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
         name: sakeName,
-        date: europeanDay(tastingDayOf(logged.loggedAt)),
+        date: dates.day(tastingDayOf(logged.loggedAt)),
       })
     : ''
 
@@ -414,11 +416,7 @@ export function TastingLogPanel({
         // The visitor's own clock — "21:40" means the time where they are
         // sitting. Only ever formatted in the browser (it appears after a
         // tap), so the server and the client cannot disagree about it.
-        time: format.dateTime(new Date(logged.loggedAt), {
-          hour: '2-digit',
-          minute: '2-digit',
-          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        }),
+        time: dates.time(logged.loggedAt),
         n: logged.tastingNumber,
       })
     : history?.kind === 'first'
@@ -426,7 +424,7 @@ export function TastingLogPanel({
       : history?.kind === 'last'
         ? t('lastLogged', {
             // UTC, like the journal list and §9.3, so one tasting has one date.
-            date: format.dateTime(new Date(history.triedAt), {
+            date: dates.dateTime(new Date(history.triedAt), {
               day: 'numeric',
               month: 'short',
               timeZone: 'UTC',
@@ -471,7 +469,7 @@ export function TastingLogPanel({
           <span aria-hidden="true" className="block h-3.5 w-0.5 rounded-full bg-ginshu-500" />
           <h3 id={`tasting-log-${uid}-heading`} className="text-card-heading font-medium text-ink">
             {existing
-              ? t('yourTastingOn', { date: europeanDay(tastingDayOf(existing.triedAt)) })
+              ? t('yourTastingOn', { date: dates.day(tastingDayOf(existing.triedAt)) })
               : logged
                 ? t('logged')
                 : t('yourTake')}

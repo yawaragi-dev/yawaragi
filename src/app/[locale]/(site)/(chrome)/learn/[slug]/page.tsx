@@ -2,7 +2,8 @@ import type { Metadata } from 'next'
 import { hasAcceptedAgeGate } from '@/lib/legal/age-gate-cookie'
 import { cookies } from 'next/headers'
 import { hasLocale } from 'next-intl'
-import { getFormatter, getTranslations, setRequestLocale } from 'next-intl/server'
+import { getTranslations, setRequestLocale } from 'next-intl/server'
+import { getDateFormatter } from '@/i18n/regional-dates.server'
 import { notFound } from 'next/navigation'
 import { ArrowSquareOut, ListBullets } from '@phosphor-icons/react/dist/ssr'
 import { OpenTheApp } from '@/components/learn/open-the-app'
@@ -61,7 +62,7 @@ export default async function LearnEntryPage({ params }: PageProps) {
 
   const entry = guideEntry(slug)
   const t = await getTranslations('learn')
-  const format = await getFormatter()
+  const format = await getDateFormatter(locale)
   // The entry's own strings. Every key asked for below is checked against the
   // catalogue by `entries.test.ts`, so a missing one fails CI, not this page.
   const text = (key: string) => t(`entries.${slug}.${key}` as `entries.${GuideSlug}.title`)

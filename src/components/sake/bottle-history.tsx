@@ -1,4 +1,5 @@
-import { getFormatter, getTranslations } from 'next-intl/server'
+import { getTranslations } from 'next-intl/server'
+import { getDateFormatter } from '@/i18n/regional-dates.server'
 import { BottleSection } from '@/components/sake/bottle-section'
 import { StarRow } from '@/components/journal/star-row'
 import { EditableTasting } from '@/components/sake/editable-tasting'
@@ -54,7 +55,7 @@ export async function BottleHistory({
   const Row = readOnly ? StaticTasting : EditableTasting
   const t = await getTranslations('tasting')
   const tJournal = await getTranslations('journal')
-  const format = await getFormatter({ locale })
+  const format = await getDateFormatter(locale)
 
   return (
     <BottleSection

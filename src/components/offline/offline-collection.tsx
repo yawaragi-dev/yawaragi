@@ -7,6 +7,8 @@ import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
 import { StarRow } from '@/components/journal/star-row'
 import { type OfflineCollectionCopy, readOfflineCopy } from '@/lib/offline/collection-copy'
 import { cn } from '@/lib/utils'
+import { useDateLocale } from '@/i18n/date-locale-provider'
+import { createDateFormatter } from '@/i18n/regional-dates'
 
 /** Ask the app shell to show the saved copy (Collection tapped with no connection). */
 export const OPEN_OFFLINE_COLLECTION = 'yw:offline-collection'
@@ -48,6 +50,7 @@ export interface OfflineCollectionMessages {
 export function OfflineCollection({ messages, locale }: { messages: OfflineCollectionMessages; locale: string }) {
   const router = useRouter()
   const pathname = usePathname()
+  const dateLocale = useDateLocale(locale)
   const [copy, setCopy] = useState<OfflineCollectionCopy | null>(null)
   const [open, setOpen] = useState<{ tab: 'journal' | 'cellar' } | null>(null)
   const [sheet, setSheet] = useState<Entry | null>(null)
@@ -98,9 +101,11 @@ export function OfflineCollection({ messages, locale }: { messages: OfflineColle
     return () => document.removeEventListener('click', onClick, { capture: true })
   }, [open])
 
-  const time = (ms: number) => new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' }).format(ms)
+  // Drawn only once a copy is read in the browser, so the visitor's clock is safe here.
+  const format = createDateFormatter(dateLocale)
+  const time = (ms: number) => format.time(ms)
   const day = (ms: number, part: 'day' | 'month') =>
-    new Intl.DateTimeFormat(locale, part === 'day' ? { day: '2-digit', timeZone: 'UTC' } : { month: 'short', timeZone: 'UTC' }).format(ms)
+    format.dateTime(ms, part === 'day' ? { day: '2-digit', timeZone: 'UTC' } : { month: 'short', timeZone: 'UTC' })
   const visible = open && copy && !pathname.endsWith('/collection')
 
   return (

@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { NextIntlClientProvider } from 'next-intl'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import en from '~/messages/en.json'
+import { DateLocaleProvider } from '@/i18n/date-locale-provider'
 
 const rateNewTasting = vi.fn()
 const updateTasting = vi.fn()
@@ -17,11 +18,13 @@ const { TastingLogPanel } = await import('./tasting-log-panel')
 // Floral and light lead; a Dassai-like chart.
 const CHART = { f1: 0.62, f2: 0.3, f3: 0.12, f4: 0.35, f5: 0.28, f6: 0.55 }
 
-function renderPanel(props: Partial<Parameters<typeof TastingLogPanel>[0]> = {}) {
+function renderPanel(props: Partial<Parameters<typeof TastingLogPanel>[0]> = {}, dateLocale = 'en-GB') {
   const onSaved = vi.fn()
   render(
     <NextIntlClientProvider locale="en" messages={en} timeZone="UTC">
-      <TastingLogPanel brandId={7} sakeName="Jikon" chart={CHART} history={{ kind: 'first' }} onSaved={onSaved} {...props} />
+      <DateLocaleProvider locale={dateLocale}>
+        <TastingLogPanel brandId={7} sakeName="Jikon" chart={CHART} history={{ kind: 'first' }} onSaved={onSaved} {...props} />
+      </DateLocaleProvider>
     </NextIntlClientProvider>,
   )
   return { onSaved }
@@ -55,6 +58,22 @@ describe('§5 log panel', () => {
     expect(screen.getByTestId('tasting-log-meta').textContent).toMatch(/2nd time$/)
     expect(screen.getByTestId('undo-notice').textContent).toContain('Logged · palate updated')
     expect(onSaved).toHaveBeenCalled()
+  })
+
+  it.each([
+    ['en-GB', /^\d{2}:\d{2} · 2nd time$/],
+    ['en-US', /^\d{2}:\d{2}\s(AM|PM) · 2nd time$/],
+  ])('says when it was logged on the visitor\'s own clock (%s)', async (dateLocale, meta) => {
+    renderPanel({}, dateLocale)
+    fireEvent.click(screen.getByTestId('star-rating-4'))
+    await waitFor(() => expect(screen.getByText('Logged')).toBeTruthy())
+    expect(screen.getByTestId('tasting-log-meta').textContent).toMatch(meta)
+  })
+
+  it('names an earlier tasting\'s day in the visitor\'s own format', () => {
+    const existing = { entryId: 'old', rating: 4, triedAt: Date.UTC(2026, 6, 18, 12), tastingNumber: 1 }
+    renderPanel({ existing }, 'en-US')
+    expect(screen.getByText('Your tasting · 07/18/2026')).toBeTruthy()
   })
 
   it('logs on the bottling the scan decides at the first tap, and only then', async () => {
@@ -190,7 +209,7 @@ describe('§5 log panel', () => {
     renderPanel({
       existing: { entryId: 'old', rating: 3.5, notes: 'Pear', tags: ['warm'], triedAt: Date.UTC(2026, 6, 18, 12), tastingNumber: 2 },
     })
-    expect(screen.getByText('Your tasting · 18.07.2026')).toBeTruthy()
+    expect(screen.getByText('Your tasting · 18/07/2026')).toBeTruthy()
     expect(screen.getByTestId('tasting-log-meta').textContent).toBe('Changes save as you go')
     expect((screen.getByTestId('tasting-log-note') as HTMLTextAreaElement).value).toBe('Pear')
     expect(screen.getByTestId('tasting-tag-warm').getAttribute('aria-pressed')).toBe('true')
@@ -215,7 +234,7 @@ describe('§5 log panel', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Delete tasting' }))
     expect(undoTasting).not.toHaveBeenCalled()
     // v1.5 §5: the confirmation names what goes — its rating, sake and day.
-    const question = 'Delete your 4.0 tasting of Jikon from 18.07.2026? This can’t be undone.'
+    const question = 'Delete your 4.0 tasting of Jikon from 18/07/2026? This can’t be undone.'
     expect(screen.getByText(question)).toBeTruthy()
 
     fireEvent.click(screen.getByRole('button', { name: 'Keep' }))

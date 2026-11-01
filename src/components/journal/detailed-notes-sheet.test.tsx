@@ -2,6 +2,8 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { NextIntlClientProvider } from 'next-intl'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import en from '~/messages/en.json'
+import de from '~/messages/de.json'
+import { DateLocaleProvider } from '@/i18n/date-locale-provider'
 
 const updateTasting = vi.fn()
 vi.mock('@/lib/taste/tasting-actions', () => ({
@@ -10,18 +12,23 @@ vi.mock('@/lib/taste/tasting-actions', () => ({
 
 const { DetailedNotesSheet } = await import('./detailed-notes-sheet')
 
-function renderSheet(initial?: Parameters<typeof DetailedNotesSheet>[0]['initial']) {
+function renderSheet(
+  initial?: Parameters<typeof DetailedNotesSheet>[0]['initial'],
+  { locale = 'en', dateLocale = 'en-GB' }: { locale?: 'en' | 'de'; dateLocale?: string } = {},
+) {
   const onSaved = vi.fn()
   render(
-    <NextIntlClientProvider locale="en" messages={en} timeZone="UTC">
-      <DetailedNotesSheet
-        entryId="e1"
-        initial={initial}
-        initialDay="2026-10-08"
-        open
-        onOpenChange={() => {}}
-        onSaved={onSaved}
-      />
+    <NextIntlClientProvider locale={locale} messages={locale === 'de' ? de : en} timeZone="UTC">
+      <DateLocaleProvider locale={dateLocale}>
+        <DetailedNotesSheet
+          entryId="e1"
+          initial={initial}
+          initialDay="2026-10-08"
+          open
+          onOpenChange={() => {}}
+          onSaved={onSaved}
+        />
+      </DateLocaleProvider>
     </NextIntlClientProvider>,
   )
   return { onSaved }
@@ -45,15 +52,23 @@ describe('§10 detailed notes', () => {
     const { onSaved } = renderSheet()
     const day = screen.getByLabelText('Tasted on') as HTMLInputElement
     expect(day.value).toBe('2026-10-08')
-    // Shown day first, European style, whatever the browser's own format.
-    expect(screen.getByTestId('detailed-notes-tried-on-shown').textContent).toBe('08.10.2026')
+    expect(screen.getByTestId('detailed-notes-tried-on-shown').textContent).toBe('08/10/2026')
     expect(day.max).toBe(new Date().toLocaleDateString('en-CA'))
     expect(day.min).toBe('2000-01-01')
 
     fireEvent.change(day, { target: { value: '2026-10-01' } })
     await waitFor(() => expect(updateTasting).toHaveBeenLastCalledWith('e1', { triedOn: '2026-10-01' }))
-    expect(screen.getByTestId('detailed-notes-tried-on-shown').textContent).toBe('01.10.2026')
+    expect(screen.getByTestId('detailed-notes-tried-on-shown').textContent).toBe('01/10/2026')
     expect(onSaved).toHaveBeenCalled()
+  })
+
+  it.each([
+    ['en', 'en-US', '10/08/2026'],
+    ['en', 'en-DE', '08/10/2026'],
+    ['de', 'de-DE', '08.10.2026'],
+  ] as const)('shows the day of the tasting in the visitor\'s own format (%s UI, %s region)', (locale, dateLocale, shown) => {
+    renderSheet(undefined, { locale, dateLocale })
+    expect(screen.getByTestId('detailed-notes-tried-on-shown').textContent).toBe(shown)
   })
 
   it('does not save a half-typed or cleared day', () => {

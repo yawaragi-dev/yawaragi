@@ -1,5 +1,6 @@
 import { CaretRight, ClockCounterClockwise } from '@phosphor-icons/react/dist/ssr'
-import { getFormatter, getTranslations } from 'next-intl/server'
+import { getTranslations } from 'next-intl/server'
+import { getDateFormatter } from '@/i18n/regional-dates.server'
 import { HadBottleRow } from '@/components/collection/had-bottle-row'
 import { Link } from '@/i18n/navigation'
 import type { HadBottle } from '@/lib/collection/bottles-had'
@@ -45,7 +46,7 @@ export async function BottlesHadList({
   now: number
 }) {
   const t = await getTranslations('bottlesHad')
-  const format = await getFormatter()
+  const format = await getDateFormatter()
   const thisYear = new Date(now).getUTCFullYear()
   const date = (at: number) =>
     format.dateTime(new Date(at), {

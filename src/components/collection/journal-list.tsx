@@ -1,4 +1,5 @@
-import { getFormatter, getTranslations } from 'next-intl/server'
+import { getTranslations } from 'next-intl/server'
+import { getDateFormatter } from '@/i18n/regional-dates.server'
 import { Link } from '@/i18n/navigation'
 import type { JournalEntry } from '@/lib/schemas/journal-entry'
 import { FullNotesChip } from '@/components/collection/full-notes-chip'
@@ -38,7 +39,7 @@ export async function JournalList({
   // shared with the log form, so there is one string rather than two copies
   // that can drift.
   const t = await getTranslations('journal')
-  const format = await getFormatter({ locale })
+  const format = await getDateFormatter(locale)
 
   return (
     <ul className="flex flex-col" role="list" data-testid="journal-list">
