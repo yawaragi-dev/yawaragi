@@ -52,7 +52,7 @@ async function main() {
     JSON.parse(readFileSync(path.join(EVAL_DIR, 'recordings', 'reads.json'), 'utf8')),
   )
   const tier1 = saved.providers[DEFAULT_VISION_PROVIDER_KEY]?.reads ?? {}
-  const tier2 = saved.providers[TIER_2_VISION_PROVIDER_KEY]?.reads ?? {}
+  const tier2 = (TIER_2_VISION_PROVIDER_KEY && saved.providers[TIER_2_VISION_PROVIDER_KEY]?.reads) || {}
 
   const photos: Photo[] = []
   for (const [file, entry] of Object.entries(groundTruth)) {

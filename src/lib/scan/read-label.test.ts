@@ -80,8 +80,7 @@ function fakeCatalogue(answers: Partial<LabelCatalogue> & { resolved?: ResolveSc
 function deps(tier1: VisionProvider | (() => VisionProvider), tier2: VisionProvider | (() => VisionProvider), catalogue: LabelCatalogue): ReadLabelDeps {
   return {
     tier1: typeof tier1 === 'function' ? tier1 : () => tier1,
-    tier2: typeof tier2 === 'function' ? tier2 : () => tier2,
-    tier2Name: 'tier-2-model',
+    tier2: { provider: typeof tier2 === 'function' ? tier2 : () => tier2, name: 'tier-2-model' },
     catalogue,
   }
 }
@@ -304,7 +303,7 @@ describe('readLabel — the cheap model first, the better one when its answer do
     expect(log.toArray()).toContainEqual(expect.objectContaining({
       source: 'ScanAction',
       level: 'warn',
-      message: 'tier-1 (Haiku) returned no_match — retrying with tier-2 (tier-2-model)',
+      message: 'tier-1 returned no_match — retrying with tier-2 (tier-2-model)',
     }))
   })
 
@@ -482,6 +481,26 @@ function mockModelReturning(extraction: unknown): MockLanguageModelV3 {
   })
   return new MockLanguageModelV3({ doGenerate })
 }
+
+describe('readLabel — one model, no second tier (#414)', () => {
+  it("answers with the one read, even when it would have been asked again", async () => {
+    const only = readsAs(DASSAI_READ)
+    const { state, trace } = await scan({ tier1: () => only, catalogue: fakeCatalogue({ resolved: [NO_MATCH] }) })
+    expect(state.status).toBe('no_match')
+    expect(trace).toMatchObject({ tier2Used: false, tier1Status: 'no_match' })
+    expect(only.extractLabel).toHaveBeenCalledTimes(1)
+  })
+
+  it('reads a second photo of the bottle with the same model', async () => {
+    const only = readsAs(DASSAI_READ)
+    const { trace } = await scan(
+      { tier1: () => only, catalogue: fakeCatalogue({ resolved: [EXACT_DASSAI] }) },
+      { earlierRead: EARLIER_READ },
+    )
+    expect(trace.tier2Used).toBe(false)
+    expect(only.extractLabel).toHaveBeenCalledTimes(1)
+  })
+})
 
 describe('readLabel — two bottles in one photo (design v1.7 §5a, 74)', () => {
   const SEVERAL = { subject: 'several_bottles', name_ja: '獺祭', brewery_ja: '旭酒造', confidence: 0.8 }
