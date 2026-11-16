@@ -74,7 +74,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
-    "@playwright/test": "^1.64.0",
+    "@playwright/test": "^1.64.1",
     "@tailwindcss/postcss": "^4",
     "@testcontainers/postgresql": "~12.1.0",
     "@testing-library/dom": "^10.4.2",
@@ -83,14 +83,14 @@
     "@types/pg": "~8.23.1",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
-    "@vitejs/plugin-react": "^6.1.2",
+    "@vitejs/plugin-react": "^6.2.1",
     "eslint": "^9",
     "eslint-config-next": "16.4.1",
-    "happy-dom": "^21.0.3",
+    "happy-dom": "^21.0.4",
     "pg": "~8.23.0",
     "tailwindcss": "^4",
     "tsx": "^4.23.15",
     "typescript": "^6",
-    "vitest": "^5.0.5"
+    "vitest": "^5.1.0"
   }
 }
