@@ -15,6 +15,7 @@ import {
   ThermometerSimple,
 } from '@phosphor-icons/react/dist/ssr'
 import { BottleSection } from '@/components/sake/bottle-section'
+import { PairingSourceLinks } from '@/components/sake/pairing-source-links'
 import { keepBracketsTogether } from '@/lib/text/keep-brackets-together'
 import { InfoSheet } from '@/components/ui/info-sheet'
 import type { Pairing } from '@/lib/pairing/resolve-pairing'
@@ -77,15 +78,7 @@ export async function GoesWith({ pairing, id }: { pairing: Pairing; id: string }
           </p>
           <p className="mb-3">{t('sheet.startingPoint')}</p>
           <p className="mb-1 font-medium text-ink">{t('sheet.sources')}</p>
-          <ul className="flex flex-col gap-1" role="list">
-            {row.sources.map((s) => (
-              <li key={s.url}>
-                <a href={s.url} target="_blank" rel="noopener noreferrer" className="text-ginshu-700 underline underline-offset-4">
-                  {s.label}
-                </a>
-              </li>
-            ))}
-          </ul>
+          <PairingSourceLinks sources={row.sources} />
         </InfoSheet>
       </div>
       <ul className="flex flex-col gap-3" role="list">

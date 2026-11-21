@@ -263,6 +263,56 @@ test.describe('/en/collection?tab=cellar — §11 Cellar (ADR-0024)', () => {
     await context.close()
   })
 
+  test('"Pick for a dish" re-sorts the cellar in place, and puts it back', async ({ browser }) => {
+    const context = await browser.newContext({ locale: 'en-US' })
+    await context.addCookies([AGE_GATE_COOKIE, CONSENT_COOKIE, journalStub('populated')])
+    const page = await context.newPage()
+
+    await page.goto('/en/collection?tab=cellar')
+    const rows = page.getByTestId('cellar-row')
+    await expect(rows).toHaveCount(5)
+    await expect(rows.nth(0).getByTestId('cellar-row-name')).toHaveText('Shintotsukawa')
+
+    // Design question AG, layout C: a strip of dishes over the same list.
+    await page.getByRole('button', { name: 'Pick for a dish' }).click()
+    await page.getByRole('button', { name: 'Fried fish' }).click()
+    await expect(page).toHaveURL(/[?&]dish=friedFish/)
+
+    // The two bottles marked nama are soshu by their style, whatever the
+    // catalogue holds (CI has no mirror, so the others are unplaced there;
+    // a local mirror may place more). Matches lead, each saying what it
+    // goes with and what placed it.
+    await expect(rows.nth(0)).toHaveAttribute('data-dish', 'match')
+    const bottling = page.locator('[data-row-key="x:stub-bottling|720|n"]')
+    await expect(bottling).toHaveAttribute('data-dish', 'match')
+    await expect(bottling.getByTestId('dish-pick-food')).toHaveText('Often served with: Fried white fish')
+    await expect(bottling.getByTestId('dish-pick-basis')).toContainText('By its style')
+    await expect(page.locator('[data-row-key="3|1800|n"]')).toHaveAttribute('data-dish', 'match')
+    // The actions stay on every row, matched or not.
+    await expect(page.getByTestId('cellar-edit-3|1800|n')).toBeVisible()
+    await expect(page.getByTestId('info-sheet-cellar-dish-pick-caveat')).toHaveText(
+      'From a hand-curated pairing table, by kind of sake. Bottlings vary.',
+    )
+
+    // Nothing in this cellar is nigori, the one kind the table gives spicy dishes.
+    await page.getByRole('button', { name: 'Spicy dishes' }).click()
+    await expect(page.getByTestId('dish-pick-none')).toContainText('nigori')
+    await expect(rows).toHaveCount(5)
+
+    // "Clear" puts the cellar back as it was, and the dish leaves the URL.
+    await page.getByRole('button', { name: 'Clear' }).click()
+    await expect(rows.nth(0).getByTestId('cellar-row-name')).toHaveText('Shintotsukawa')
+    await expect(page).not.toHaveURL(/dish=/)
+
+    // A link that names a dish opens on it.
+    await page.goto('/en/collection?tab=cellar&dish=friedFish')
+    await expect(page.getByRole('button', { name: 'Fried fish' })).toHaveAttribute('aria-pressed', 'true')
+    await expect(bottling).toHaveAttribute('data-dish', 'match')
+
+    await expect(page.getByText('Powered by Sakenowa')).toBeVisible()
+    await context.close()
+  })
+
   test('an empty cellar says what it is for', async ({ browser }) => {
     const context = await browser.newContext({ locale: 'en-US' })
     await context.addCookies([AGE_GATE_COOKIE, CONSENT_COOKIE, journalStub('empty')])

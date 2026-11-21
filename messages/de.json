@@ -890,7 +890,28 @@
     "addedMany": "{added, plural, one {Flasche hinzugefügt} other {# Flaschen hinzugefügt}} · {count} im Keller",
     "notAddedOffline": "Nicht hinzugefügt · keine Verbindung. Hier geht nichts verloren.",
     "notSavedOffline": "Nicht gespeichert · keine Verbindung. Hier geht nichts verloren.",
-    "tryAgain": "Noch einmal versuchen"
+    "tryAgain": "Noch einmal versuchen",
+    "dishPick": {
+      "entry": "Für ein Gericht wählen",
+      "clear": "Zurücksetzen",
+      "dishesLabel": "Was gibt es?",
+      "choose": "Wähle ein Gericht, um zu sehen, was aus deinem Keller oft dazu gereicht wird.",
+      "matchCount": "{count, plural, =0 {Keine Flasche} one {# Flasche} other {# Flaschen}} oft dazu gereicht",
+      "food": "Oft gereicht zu: {food}",
+      "basis": {
+        "style": "Nach seinem Stil",
+        "grade": "Ein {grade} ist meist duftend",
+        "chart": "Aus dem Geschmacksprofil (Sakenowa), für die ganze Linie"
+      },
+      "kindFor": "Art: {kind}",
+      "otherDishes": "Für andere Gerichte · {kind}",
+      "noPairing": "Keine Begleiter in unserer Tabelle",
+      "caveat": "Aus einer von Hand gepflegten Tabelle, nach Art des Sakes. Abfüllungen können abweichen.",
+      "sheetHow": "Jedes Gericht hier ist eine Gruppe von Speisen aus unserer Tabelle. Wir suchen die Arten Sake, die die Quellen für diese Speisen nennen, und lesen dann jede Flasche in deinem Keller so, wie es „Passt zu“ auf ihrer Seite tut: nach einem Stil, den sie nennt, ihrem Grad oder ihrem Geschmacksprofil (Sakenowa) im Vergleich zum Katalog. Flaschen, die sich nicht zuordnen lassen, bleiben in der Liste, nicht versteckt.",
+      "noneTitle": "Dafür ist nichts in deinem Keller",
+      "noneBody": "Unsere Tabelle nennt für dieses Gericht {kinds}. Keine deiner Flaschen gehört zu diesen Arten.",
+      "kindsJoin": "; "
+    }
   },
   "detailedNotes": {
     "title": "Ausführliche Notizen",
@@ -2329,6 +2350,17 @@
         },
         "note": "Nigori reicht von süß und cremig bis trocken; diese passen zu den süßeren, cremigeren."
       }
+    },
+    "dishes": {
+      "rawSeafood": "Roher Fisch und Meeresfrüchte",
+      "friedFish": "Frittierter Fisch",
+      "grilledEel": "Gegrillter Aal",
+      "lightChilled": "Kalter Tofu",
+      "dashiSimmered": "Dashi und Geschmortes",
+      "richMeat": "Kräftige Fleischgerichte",
+      "spicy": "Scharfe Gerichte",
+      "cheese": "Käse",
+      "sweets": "Desserts und Süßes"
     }
   },
   "offline": {

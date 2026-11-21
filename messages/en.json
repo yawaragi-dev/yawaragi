@@ -890,7 +890,28 @@
     "addedMany": "{added, plural, one {Bottle added} other {# bottles added}} · {count} in cellar",
     "notAddedOffline": "Not added · no connection. Nothing here is lost.",
     "notSavedOffline": "Not saved · no connection. Nothing here is lost.",
-    "tryAgain": "Try again"
+    "tryAgain": "Try again",
+    "dishPick": {
+      "entry": "Pick for a dish",
+      "clear": "Clear",
+      "dishesLabel": "What’s on the table?",
+      "choose": "Choose a dish to see what in your cellar is often served with it.",
+      "matchCount": "{count, plural, =0 {No bottle} one {# bottle} other {# bottles}} often served with this",
+      "food": "Often served with: {food}",
+      "basis": {
+        "style": "By its style",
+        "grade": "{grade} is usually fragrant",
+        "chart": "From the flavor chart (Sakenowa), for the whole line"
+      },
+      "kindFor": "for {kind}",
+      "otherDishes": "For other dishes · {kind}",
+      "noPairing": "No pairing in our table",
+      "caveat": "From a hand-curated pairing table, by kind of sake. Bottlings vary.",
+      "sheetHow": "Each dish here is a group of foods from our pairing table. We find the kinds of sake the sources give for those foods, then read each bottle in your cellar the way “Goes with” does on its page: by a style it names, its grade, or its flavor chart (Sakenowa) against the catalogue. Bottles that can’t be placed stay in the list, not hidden.",
+      "noneTitle": "Nothing in your cellar for this one",
+      "noneBody": "Our table gives this dish to {kinds}. None of your bottles is one of those kinds.",
+      "kindsJoin": "; "
+    }
   },
   "detailedNotes": {
     "title": "Detailed notes",
@@ -2329,6 +2350,17 @@
         },
         "note": "Nigori runs from sweet and creamy to dry; these suit the sweeter, creamier ones."
       }
+    },
+    "dishes": {
+      "rawSeafood": "Raw fish and shellfish",
+      "friedFish": "Fried fish",
+      "grilledEel": "Grilled eel",
+      "lightChilled": "Chilled tofu",
+      "dashiSimmered": "Dashi and simmered dishes",
+      "richMeat": "Rich meat dishes",
+      "spicy": "Spicy dishes",
+      "cheese": "Cheese",
+      "sweets": "Desserts and sweets"
     }
   },
   "offline": {

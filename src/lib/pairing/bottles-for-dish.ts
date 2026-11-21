@@ -4,18 +4,17 @@ import type { Pairing } from './resolve-pairing'
 
 /**
  * The inverse of "Goes with": I'm eating this — which of my bottles goes with
- * it? Not wired to any screen yet; the layout is design question block AG
- * (`docs/design-questions.md`, draft PR #562's prototype).
+ * it? Drawn on the Cellar segment as "Pick for a dish" (design question AG,
+ * layout C: the list re-sorts in place; `CellarDishPick`).
  *
  * Dish groups are the pairing table's own foods, grouped. Every food sits in
  * exactly one group and no group names a food the table lacks, so a dish can
  * only reach what the sources say. "Grilled eel" rather than "grilled fish":
  * unagi is the only grilled fish any source gives.
  *
- * TODO(design AG): the groups have no display names yet. The prototype's
- * chip names ("Raw fish and shellfish", "Dashi and simmered dishes"…) are
- * proposals awaiting the designers; add `pairings.dishes.<id>` messages (EN
- * and DE) with the screen that shows them, not before.
+ * Display names are `pairings.dishes.<id>` (EN and DE). They are the
+ * prototype's proposals; design question AG still asks the designers to
+ * confirm them.
  */
 export const DISH_GROUPS = [
   { id: 'rawSeafood', foods: ['sashimi', 'crab', 'oysters'] },
@@ -85,18 +84,32 @@ export async function bottlesForDish<B>(
   bottles: readonly B[],
   deps: PairingDeps & { subjectOf: (bottle: B) => PairingSubject },
 ): Promise<DishPick<B>> {
-  const wanted: readonly string[] = dishFoods(dish)
   const pairings = await Promise.all(bottles.map((bottle) => pairingOf(deps.subjectOf(bottle), deps)))
+  return sortForDish(
+    dish,
+    bottles.map((bottle, i) => ({ bottle, pairing: pairings[i] })),
+  )
+}
+
+/**
+ * `bottlesForDish` for bottles whose pairing is already read. Synchronous and
+ * free of lookups, so the Cellar can read every bottle once on the server and
+ * re-sort in the browser as a dish is tapped.
+ */
+export function sortForDish<B>(
+  dish: DishGroupId,
+  placed: readonly { bottle: B; pairing: Pairing | null }[],
+): DishPick<B> {
+  const wanted: readonly string[] = dishFoods(dish)
   const pick: DishPick<B> = { matches: [], others: [], unplaceable: [] }
-  bottles.forEach((bottle, i) => {
-    const pairing = pairings[i]
+  for (const { bottle, pairing } of placed) {
     if (!pairing) {
       pick.unplaceable.push({ bottle })
-      return
+      continue
     }
     const foods = pairing.row.foods.filter((food) => wanted.includes(food))
     if (foods.length > 0) pick.matches.push({ bottle, pairing, foods })
     else pick.others.push({ bottle, pairing })
-  })
+  }
   return pick
 }
